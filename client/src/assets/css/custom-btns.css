@@ -1,0 +1,223 @@
+.ant-popover .ant-popover-content .popver-footer-btn .ant-btn-primary,
+.ant-modal-content .ant-modal-body .ant-btn-primary,
+.ant-layout .ant-btn-primary,
+.ant-layout-header .ant-btn-primary {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    -webkit-transition: all 0.2s ease-in;
+    -moz-transition: all 0.2s ease-in;
+    transition: all 0.2s ease-in;
+    color: #fff;
+    border-color: #185d87;
+    background-image: linear-gradient(-303deg, rgb(4, 72, 121), rgb(31, 125, 192) 56%, rgb(4, 72, 121));
+
+
+}
+
+
+/* 5-3-25 start*/
+.square-primary-btn span.ant-btn-icon {
+    padding-right: 5px;
+}
+.addleave-btn span.ant-btn-icon {
+    padding-right: 5px;
+}
+/* 5-3-25 end*/
+.ant-popover .ant-popover-content .popver-footer-btn .ant-btn-primary:hover,
+.ant-modal-content .ant-modal-body .ant-btn-primary:hover,
+.ant-layout .ant-btn-primary:hover,
+.ant-layout-content .ant-layout-header .ant-btn-primary:hover {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+    color: #fff;
+    background-image: linear-gradient(-303deg, rgb(0, 39, 66), rgb(39, 114, 168) 56%, rgb(4, 49, 82));
+}
+
+.ant-popover .ant-popover-content .popver-footer-btn .ant-btn-primary::before,
+.ant-modal-content .ant-modal-body .ant-btn-primary::before,
+.ant-layout .ant-btn-primary:hover::before,
+.export-btn:hover::before,
+.import-btn:hover::before,
+.ant-layout-header .ant-btn-primary:hover::before {
+    -webkit-animation: sh02 0.5s 0s linear;
+    -moz-animation: sh02 0.5s 0s linear;
+    animation: sh02 0.5s 0s linear;
+}
+.ant-popover .ant-popover-content .popver-footer-btn .ant-btn-primary::before,
+.ant-modal-content .ant-modal-body .ant-btn-primary::before,
+.ant-layout .ant-btn-primary::before,
+.ant-layout .export-btn::before,
+.ant-layout .import-btn::before,
+.ant-layout.ant-layout-header .ant-btn-primary::before {
+    content: '';
+    display: block;
+    width: 0px;
+    height: 86%;
+    position: absolute;
+    top: 7%;
+    left: 0%;
+    opacity: 0;
+    background: #fff;
+    box-shadow: 0 0 50px 30px #fff;
+    -webkit-transform: skewX(-20deg);
+    -moz-transform: skewX(-20deg);
+    -ms-transform: skewX(-20deg);
+    -o-transform: skewX(-20deg);
+    transform: skewX(-20deg);
+
+}
+
+@keyframes sh02 {
+    from {
+        opacity: 0;
+        left: 0%;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        left: 100%;
+    }
+}
+
+.ant-popover .ant-popover-content .popver-footer-btn .ant-btn-primary:active
+.ant-modal-content .ant-modal-body .ant-btn-primary:active,
+.ant-layout .ant-btn-primary:active,
+.ant-layout-header .ant-btn-primary:active {
+    -webkit-transition: box-shadow 0.2s ease-in;
+    -moz-transition: box-shadow 0.2s ease-in;
+    transition: box-shadow 0.2s ease-in;
+}
+
+
+
+/* .ant-btn.ant-btn-default.ant-btn-color-default.ant-btn-variant-outlined.import-btn {
+    text-align: center;
+    text-transform: uppercase;
+    transition: 0.5s;
+    background-size: 200% auto;
+    color: #fff;
+    border-radius: 3px;
+    background-image: linear-gradient(to right, #055c49 0%, #00a35f 51%, #055c49 100%);
+    border: 1px solid #00a35f;
+}
+
+.ant-btn.ant-btn-default.ant-btn-color-default.ant-btn-variant-outlined.import-btn:hover {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+    border: 1px solid #00a35f;
+    color: #fff;
+}
+
+.ant-btn.ant-btn-default.ant-btn-color-default.ant-btn-variant-outlined.import-btn:hover::before {
+    -webkit-animation: sh02 0.5s 0s linear;
+    -moz-animation: sh02 0.5s 0s linear;
+    animation: sh02 0.5s 0s linear;
+}
+
+.ant-btn.ant-btn-default.ant-btn-color-default.ant-btn-variant-outlined.import-btn::before {
+    content: '';
+    display: block;
+    width: 0px;
+    height: 86%;
+    position: absolute;
+    top: 7%;
+    left: 0%;
+    opacity: 0;
+    background: #fff;
+    box-shadow: 0 0 50px 30px #fff;
+    -webkit-transform: skewX(-20deg);
+    -moz-transform: skewX(-20deg);
+    -ms-transform: skewX(-20deg);
+    -o-transform: skewX(-20deg);
+    transform: skewX(-20deg);
+} */
+
+.import-btn {
+    align-items: center;
+
+    border: 1px solid #185d87;
+    color: var(--primary-color);
+    display: inline-flex;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    height: auto;
+    background-color: #fff;
+    font-weight: 500;
+    border-radius: 3px;
+    line-height: normal;
+    transition: all .3s ease;
+    cursor: pointer;
+    border-radius: 3px;
+    position: relative;
+}
+.ant-btn.ant-btn-variant-outlined.export-btn,
+.ant-btn.ant-btn-variant-outlined.export-btn:hover,
+.import-btn:hover {
+    background-color: #fff;
+
+}
+
+.dropdown-button {
+    background-color: #fff;
+    color: var(--primary-color);
+    font-weight: 500;
+    box-shadow: none;
+    border: none;
+}
+
+.ant-dropdown-trigger.dropdown-button.ant-btn-variant-outlined.ant-btn:hover {
+    background-color: #ffff;
+    box-shadow: none;
+    color: rgb(1, 113, 194);
+}
+
+.ant-layout .export-btn {
+    background-color: #f1f1f1;
+    border: 1px solid #185d87;
+    color: var(--primary-color);
+    display: inline-flex;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    height: auto;
+    font-weight: 500;
+    border-radius: 3px;
+    line-height: normal;
+    transition: all .3sease;
+    cursor: pointer;
+    border-radius: 3px;
+    position: relative;
+}
+.filter-btn,
+.ant-layout .ant-layout-content .filter-btn, 
+.ant-layout .ant-layout-content .filter-btn.ant-btn-primary {
+    font-weight: 500;
+    height: auto;
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+    border-radius: 3px;
+    padding: 7px 16px;
+}
+.ant-delete,
+.ant-layout .ant-layout-content .ant-reject,
+.ant-layout .ant-layout-content .ant-delete {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fee2e2 !important;
+}
+
+.ant-modal-content .ant-modal-body .ant-delete:hover,
+.ant-layout .ant-layout-content .ant-reject:hover,
+.ant-layout .ant-layout-content .ant-delete:hover {
+    background: #fee2e2 !important;
+    border-radius: 3px;
+    color: #dc2626 !important;
+    border: 1px solid #fee2e2 !important;
+}

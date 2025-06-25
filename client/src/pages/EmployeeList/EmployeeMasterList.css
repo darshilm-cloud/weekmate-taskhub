@@ -1,0 +1,32 @@
+.heading-main {
+    display: flex;
+    justify-content: space-between;
+}
+
+.add-btn-wrapper {
+    padding: 10px;
+    justify-content: center;
+    display: flex;
+}
+
+.add-btn-wrapper button {
+    margin: 10px;
+}
+
+.employee-card .ant-tabs-nav-wrap {
+    justify-content: center;
+}
+
+.employee-card .profile-sub-head .head-box-inner {
+    max-width: 100% !important;
+    width: 100%;
+}
+
+.user-module-wrapper .ant-card-body {
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+}
+
+.user-module-wrapper .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+    padding: 10px 16px;
+}

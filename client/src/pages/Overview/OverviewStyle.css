@@ -1,0 +1,100 @@
+.new-project-overview .project-panel .project-time-task {
+    max-width: 100%;
+    justify-content: space-between;
+}
+
+.new-project-overview .project-time-task .hourTable {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.new-project-overview .project-time-task .ReactApexChart {
+    flex: 0 0 50%;
+    max-width: 50%;
+    display: flex;
+    justify-content: center;
+}
+
+.modal-overview-details .assignees-list {
+    max-height: 300px;
+    overflow-x: auto;
+}
+
+.modal-overview-details .error-message {
+    justify-content: center;
+    display: flex;
+    color: rgb(19 19 19 / 50%);
+}
+
+.new-project-overview .ant-spin-container .ant-table-content {
+    height: 100%;
+}
+
+.peoject-page .task-table {
+    width: 50%;
+    margin-left: 40px;
+}
+
+.overdue_block {
+    display: flex;
+    align-items: center;
+}
+
+.overdue_block span.overdue_date {
+    border: 1px solid #187CB7;
+    padding: 4px 12px 4px 12px;
+    margin-right: 20px;
+    font-size: 12px;
+    line-height: 22px;
+    white-space: nowrap;
+}
+
+.overdue_block p {
+    margin-bottom: 0;
+    color: #000;
+    margin-right: 10px;
+    word-break: break-word;
+}
+
+
+.overdue_block span.highlabel {
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 10px;
+    letter-spacing: .5px;
+    display: inline-block;
+    color: #fff;
+}
+
+
+.peoject-page .task-table td:first-child {
+    font-weight: 600;
+}
+
+.peoject-page .task-table th.ant-table-cell {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.peoject-page .task-table td:nth-child(2),
+.peoject-page .task-table td:nth-child(3) {
+    color: #187CB7;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.overview-task-list {
+    height: calc(100vh - 230px);
+    overflow: auto;
+    max-height: 500px;
+    border-radius: 8px;
+}
+
+.assignees-clients{
+    display: flex;
+    justify-content: space-between;    
+}
+
+.overview-assignees-clients{
+    width: 300px;
+}

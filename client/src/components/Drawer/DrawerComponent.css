@@ -1,0 +1,30 @@
+.common-drawer-projectlist-wrapper .ant-drawer-body {
+    background-color: unset;
+}
+
+.project-name-drawers {
+    display: flex;
+    gap: 12px;
+}
+
+.common-drawer-projectlist-wrapper .project-name-drawers p {
+    word-wrap: break-word;
+    word-break: break-all;
+    margin-bottom: 1rem;
+}
+
+.common-drawer-projectlist-wrapper .ant-drawer-close {
+    top: 8px;
+}
+
+.common-drawer-projectlist-wrapper {
+    box-shadow: 4px 0px 7px 1px #c9c9c966;
+}
+
+.common-drawer-projectlist-wrapper .no-data-found-drawer-antd {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: .3;
+}

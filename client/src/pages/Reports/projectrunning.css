@@ -1,0 +1,250 @@
+.project-running-reports .header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background: #cccccc33;
+    margin: 0;
+    padding: 25px 30px;
+}
+
+.project-running-reports-fillter-wrapper>h1 {
+    font-size: 30px;
+    color: #746e6e;
+}
+
+.project-running-reports .project-running-reports-fillter {
+    flex: 0 0 25%;
+    max-width: 25%;
+    height: 100%;
+}
+
+.project-running-reports .project-running-reports-fillter .ant-select-multiple {
+    width: 100%;
+    height: 100%;
+}
+
+.main-time-sheet-project-wrapper th.ant-table-cell.ant-table-column-has-sorters {
+    background:rgb(21 80 123) !important;
+    padding: 10px;
+    color: #fff;
+}
+
+.project-running-reports :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down.active,
+.project-running-reports span.anticon.anticon-caret-up.ant-table-column-sorter-up.active {
+    background: transparent;
+}
+
+.project-running-reports :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-up,
+:where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down {
+    font-size: 12px;
+    color: #ffff !important;
+}
+
+.project-running-reports .ant-table-column-sorter-down,
+.project-running-reports .ant-table-column-sorter-up {
+    color: #fff !important;
+}
+
+.project-running-reports .ant-table.ant-table-small .ant-table-thead .ant-table-column-sorters {
+    padding: 0px 8px;
+}
+
+.project-running-reports .ant-table-header .ant-table-column-sorter-down,
+.project-running-reports .ant-table-header .ant-table-column-sorter-up {
+    font-size: 10px;
+}
+
+.project-running-reports .ant-table-header .ant-table-column-sorters {
+    font-size: 16px;
+}
+
+.project-running-reports .project-running-reports .ant-select-multiple {
+    width: 100%;
+    height: 100%;
+}
+
+.project-running-reports .project-running-reports-fillter-wrapper {
+    flex: 0 0 50%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.project-running-reports .ant-select-multiple .ant-select-selector {
+    border-radius: unset;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+    border: unset;
+    border: none;
+}
+
+.project-running-reports .project-running-reports-fillter>h3 {
+    font-size: 14px;
+    color: rgb(7 169 114);
+    margin-bottom: 0;
+    text-align: end;
+}
+
+.project-running-reports .project-running-reports-fillter>span {
+    font-size: 30px;
+    color: rgb(7 169 114);
+    text-align: end;
+    display: block;
+}
+
+.project-running-reports .ant-select-multiple .ant-select-selection-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    transition: all 0.3s;
+    color: #000;
+}
+
+.main-time-sheet-project-wrapper :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-thead th.ant-table-column-has-sorters:hover {
+    background: rgba(0, 143, 251, 0.85);
+}
+
+.project-running-reports .project-panel-table-data {
+    position: relative;
+    padding: 20px 0;
+    height: 100%;
+}
+
+.project-running-reports :where(.css-dev-only-do-not-override-dkbvqv).ant-form-item .ant-form-item-control-input-content {
+    height: 100%;
+}
+
+.project-running-reports .ant-spin-container .ant-table-thead .ant-table-cell-scrollbar {
+    display: none;
+}
+
+
+.project-running-reports .project-panel-table-data .ant-table-header>table {
+    table-layout: unset !important;
+}
+
+.main-time-sheet-project-wrapper {
+    height: 100%;
+    max-height: calc(100vh - 83px);
+}
+
+.project-running-reports-fillter .ant-form-item-control-input,
+.project-running-reports-fillter .ant-form-item,
+.project-running-reports-fillter .ant-form-item>div {
+    height: 100%;
+}
+
+.project-running-reports .ant-table-tbody>tr>td {
+    word-break: break-all;
+    padding: 10px 10px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.project-running-reports .project-running-reports-fillter-wrapper {
+    align-items: center;
+}
+
+.project-running-reports .project-panel-header {
+    text-align: right;
+}
+
+.ant-popover-inner-content .project-running-sort-by-popup .fi-rr-caret-left {
+    margin-bottom: 6px;
+    margin-right: 10px;
+}
+
+.ant-popover-inner-content>p {
+    text-align: end;
+}
+
+.project-runnig-sort-by-listing>p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.project-runnig-sort-by-listing>p>i {
+    margin-left: 15px;
+}
+
+.project-running-reports .ant-form-item-control-input .ant-form-item-control-input-content {
+    padding: 0;
+}
+
+.project-runnig-data-wrapper>[ options="[object Object]"] {
+    flex: 0 0 50%;
+    max-width: 50%;
+
+}
+
+.apexcharts-tooltip {
+    background: #f3f3f3;
+    color: #000;
+}
+
+.project-running-reports-fillter .project-panel-header {
+    height: 100%;
+}
+
+.no-data-found-div>h1 {
+    position: absolute;
+    top: 50%;
+    opacity: .3;
+    right: 50%;
+}
+
+.project-running-reports .ant-form-item-control-input-content {
+    height: 100%;
+}
+
+.main-time-sheet-project-wrapper .project-running-reports .project-running-reports-fillter-wrapper .ant-select-selector {
+    max-height: 56px;
+    overflow: auto;
+    height: 100%;
+}
+
+
+@media screen and (max-width:1580px) {
+    .project-running-reports .project-running-reports-fillter-wrapper {
+        flex: 0 0 65%;
+    }
+}
+
+@media screen and (max-width:1300px) {
+    .project-running-reports .project-running-reports-fillter-wrapper {
+        flex: 0 0 75%;
+    }
+
+    .project-running-reports .ant-table-container .ant-table-thead>tr>th {
+        white-space: unset;
+    }
+
+    .project-running-reports .ant-table-tbody .ant-table-row :nth-child(6),
+    .project-running-reports .ant-table-tbody .ant-table-row :nth-child(4) {
+        white-space: unset;
+    }
+
+    .project-running-reports .ant-table-header .ant-table-column-sorters {
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width:1180px) {
+    .project-running-reports .project-running-reports-fillter-wrapper {
+        flex: 0 0 80%;
+    }
+
+    .project-running-reports .project-running-reports-fillter {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+
+}
+
+@media screen and (max-width:1024px) {
+    .project-runnig-data-wrapper>[ options="[object Object]"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}

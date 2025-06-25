@@ -1,0 +1,257 @@
+.time-sheet .peoject-page>.header>div {
+  flex: 0 0 calc(14.28% - 10px);
+  max-width: 14.28%;
+  margin: 5px;
+}
+
+.time-sheet .peoject-page .ant-select-selector {
+  border-radius: unset;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+  border: unset;
+  border: none;
+}
+
+.time-sheet-report-main-wrapper .ant-select-selector .ant-select-selection-placeholder {
+  color: #000;
+}
+
+.time-sheet-report-main-wrapper .time-sheet .panel-total-hours>h3 {
+  font-size: 14px;
+  color: rgb(7 169 114);
+  margin-bottom: 0;
+
+}
+
+.time-sheet-report-main-wrapper .main-header>.project-name {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.time-sheet-report-main-wrapper .project-name>.timesheet-startend-date>div {
+  border-radius: unset;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+  border: unset;
+  border: none;
+
+}
+
+.time-sheet-report-main-wrapper .timesheet-startend-date {
+
+  max-width: 50%;
+  display: flex;
+  justify-content: end;
+}
+
+.time-sheet-report-main-wrapper .project-name>h3 {
+  font-size: 30px;
+  color: #746e6e;
+}
+
+.apexcharts-tooltip {
+  background: #f3f3f3;
+  color: #000;
+}
+
+.time-sheet .panel-total-hours>span {
+  font-size: 30px;
+  color: rgb(7 169 114);
+}
+
+.time-sheet-report-main-wrapper .peoject-page>.header {
+  background: #cccccc33;
+  padding: 25px 30px;
+}
+
+.time-sheet-report-main-wrapper .ant-picker-range .ant-picker-suffix .anticon-calendar,
+.time-sheet-report-main-wrapper .ant-picker-range .ant-picker-range-separator .anticon-swap-right,
+.time-sheet-report-main-wrapper .ant-picker-range input::placeholder {
+  color: #746e6e;
+  font-size: 18px;
+  font-weight: 500;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.time-sheet-report-main-wrapper .time-sheet .ant-table-header thead.ant-table-thead tr:first-child {
+  background: rgba(0, 143, 251, 0.85) !important;
+}
+
+.time-sheet .ant-table-header .ant-table-column-sorter-down,
+.time-sheet .ant-table-header .ant-table-column-sorter-up,
+.time-sheet .ant-table-header .ant-table-column-sorters {
+  color: #fff;
+  font-size: 20px;
+}
+
+.time-sheet .peoject-page {
+  width: calc(100% - 66px);
+  width: 100%;
+  background: #fff;
+  max-height: calc(100vh - 310px);
+}
+
+.time-sheet .left-time-sheet-data {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 20px 0;
+  position: relative;
+  width: 100%;
+}
+
+.time-sheet .right-time-sheet-data {
+  flex: 0 0 30%;
+  max-width: 30%;
+  padding: 20px 0;
+}
+
+
+.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-thead th.ant-table-column-has-sorters:hover {
+  background: rgba(0, 143, 251, 0.85);
+}
+
+.time-sheet-report-main-wrapper .ant-table-small .ant-table-thead>tr>th {
+  background: rgba(0, 143, 251, 0.85) !important;
+}
+
+.time-sheet .ant-table.ant-table-small .ant-table-thead .ant-table-column-sorters {
+  padding: 0px 8px;
+  color: #fff;
+}
+
+.time-sheet-edit-btn {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  right: 25px;
+}
+
+.time-sheet .ant-table-row td.ant-table-cell:nth-child(4),
+.time-sheet .ant-table-row td.ant-table-cell:nth-child(3),
+.time-sheet .ant-table-row td.ant-table-cell:nth-child(2) {
+  white-space: wrap;
+}
+
+.time-sheet .ant-table-header .ant-table-column-sorter-down,
+.time-sheet .ant-table-header .ant-table-column-sorter-up {
+  font-size: 10px;
+  color: #fff;
+}
+
+.time-sheet .ant-table-header .ant-table-column-sorters {
+  font-size: 16px;
+}
+
+.time-sheet-report-main-wrapper .new-project-overview .peoject-page {
+  max-height: calc(100vh - 200px);
+}
+
+.time-sheet-report-main-wrapper .main-time-sheet-report-wrapper {
+  height: 100%;
+  max-height: calc(100vh - 150px);
+}
+
+.time-sheet-report-main-wrapper {
+  height: 100%;
+  max-height: calc(100vh - 100px);
+}
+
+.time-sheet .peoject-page>.header>div.panel-total-hours {
+  text-align: end;
+}
+
+.time-sheet .project-panel-header {
+  text-align: end;
+}
+
+.ant-popover-inner-content .time-sheet-sort-by-popup .fi-rr-caret-right {
+  margin-bottom: 6px;
+  margin-left: 10px;
+}
+
+.time-sheet-short-by-listing>p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down.active,
+.time-sheet span.anticon.anticon-caret-up.ant-table-column-sorter-up.active {
+  background: transparent;
+}
+
+.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-up,
+:where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down {
+  font-size: 12px;
+  color: #ffff;
+}
+
+.time-sheet .sheet-data-wrapper .ant-table-column-sorter-down,
+.time-sheet .sheet-data-wrapper .ant-table-column-sorter-up {
+  color: #fff;
+}
+
+.time-sheet .project-panel-header>div {
+  flex-wrap: wrap;
+}
+
+.time-sheet .project-panel-header>div>[options="[object Object]"] {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+
+.time-sheet .ant-select-selector {
+  max-height: 56px;
+  overflow: auto;
+}
+
+.left-time-sheet-data .no-data-found {
+  text-align: center;
+  opacity: 0.3;
+}
+
+.time-wrapper-left .sidebar-menu-links .active>div {
+  word-break: break-word;
+}
+
+@media screen and (max-width:1680px) {
+  .time-sheet .project-panel-header>div>[options="[object Object]"] {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media screen and (max-width:1450px) {
+  .time-sheet .left-time-sheet-data {
+    flex: 0 0 calc(100% - 40px);
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width:1300px) {
+  .sheet-data-wrapper {
+    flex-wrap: wrap;
+  }
+
+  .time-sheet .peoject-page,
+  .time-sheet .left-time-sheet-data {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width:1200px) {
+  .time-sheet .peoject-page>.header>div {
+    min-width: 170px;
+  }
+
+  .time-sheet-report-main-wrapper .peoject-page>.header {
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width:1024px) {
+  .time-sheet .project-panel-header>div>[options="[object Object]"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,389 @@
+.log-time-modal .ant-form-item-label {
+  min-width: 88px;
+}
+
+.log-time-modal .overview-modal-wrapper .folder-comment .ant-form-item {
+  width: 100%;
+  max-width: 175px;
+}
+
+.log-time-modal .description-loggedtime-details {
+  width: 100%;
+}
+
+.add-time-module-pop .ant-form-horizontal .modal-footer-flex {
+  padding: 15px 0;
+}
+
+.add-time-module-pop .ant-row {
+  margin: 10px 0;
+}
+
+.add-time-module-pop .ant-row .ant-input {
+  padding: 8px 11px;
+}
+
+.timeforpms .ant-input {
+  width: 100px;
+}
+
+.add-time-module-pop .ant-row .ant-picker {
+  width: 100%;
+}
+
+.add-time-module-pop .overview-modal-wrapper {
+  padding: 20px;
+  padding-top: 10px;
+}
+
+/* .log-time-modal .logtime-left-wrapper {
+  flex: 0 0 70%;
+  max-width: 70%;
+} */
+
+.log-time-modal .logtime-right-wrapper {
+  max-width: 100%;
+  flex: 0 0 30%;
+}
+
+.logtime-right-wrapper>div {
+  justify-content: space-between;
+}
+
+.logtime-right-wrapper p {
+  margin-bottom: 10px;
+}
+
+.ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
+  margin-left: 0;
+}
+
+.log-time-modal .overview-modal-wrapper>.timesheet-logged-details-left-panel {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding-right: 20px;
+}
+
+
+.log-time-modal .overview-modal-wrapper>div [type="submit"] {
+  margin-bottom: 0;
+}
+
+.left-time-sheet-data td.ant-table-cell>span {
+  word-break: break-word;
+}
+
+.log-time-modal .ck.ck-editor__main>.ck-editor__editable {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.add-time-module-pop .hours_min_container .hours_input {
+  width: 100%;
+}
+
+.add-time-module-pop .ck.ck-editor__main>.ck-editor__editable {
+  max-height: 200px;
+  overflow: auto;
+}
+
+.time-block-table .time-description-text {
+  word-wrap: break-word;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.time-block-table .ant-table-tbody>tr>td {
+  word-break: normal;
+  white-space: nowrap;
+}
+.time-block-table .ant-table-tbody>tr>td:nth-child(7){
+  white-space: unset;
+}
+:where(.css-dev-only-do-not-override-mzwlov).ant-table-wrapper .ant-table-container table>thead>tr:first-child>*:first-child {
+  border-start-start-radius: 0px;
+}
+
+:where(.css-dev-only-do-not-override-mzwlov).ant-table-wrapper .ant-table-container table>thead>tr:first-child>*:last-child {
+  border-start-end-radius: 0px;
+}
+
+.time-block-table .time-description-text .task-panel-wrapper .time-wrapper-left {
+  max-width: 270px;
+}
+
+.task-panel-wrapper .time-wrapper-right {
+  max-width: calc(100% - 270px);
+  flex: 0 0 calc(100% - 270px);
+  overflow-y: auto;
+  max-height: calc(100vh - 135px);
+}
+
+.time-wrapper-left .time-module-hour-bar {
+  white-space: nowrap;
+}
+
+.time-block-table .ant-table-tbody [class="anticon anticon-eye"] {
+  margin-left: 5px;
+  display: block;
+}
+
+.time-block-table .ant-table-container table>thead>tr:first-child th:last-child {
+  text-align: center;
+}
+
+.logged-time-text-wrapper>p {
+  word-break: break-word;
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: inherit;
+}
+
+.time-module-all-users span {
+  color: #131313;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.time-module-all-users [class="fi fi-rr-users"] {
+  color: #358cc0;
+}
+
+.time-module-all-users h6 {
+  color: #93989a;
+}
+
+.time-module-date-range {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-module-date-range .ant-checkbox-wrapper {
+  margin-left: 0px;
+}
+
+.time-module-user-pop {
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.time-module-user-pop .assigness-data .ant-checkbox-wrapper+.ant-checkbox-wrapper {
+  margin: 0;
+}
+
+.time-module-user-pop .ant-checkbox+span {
+  font-weight: 400;
+}
+
+.time-module-user-pop .ant-input-wrapper {
+  margin: 5px 0;
+}
+
+.time-module-user-pop .user-btn-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.time-module-user-pop .assigness-data {
+  max-height: 200px;
+  overflow-y: auto;
+
+}
+
+.time-module-all-users {
+  cursor: pointer;
+}
+
+.task-time-wrapper .time-block-table .ant-table-tbody>tr>td:nth-child(6),
+
+.task-time-wrapper .time-block-table .ant-table-tbody>tr>td:nth-child(5) {
+ white-space: nowrap;
+}
+
+.log-time-modal .main-wrapper-btn {
+  display: flex;
+  gap: 5px;
+}
+
+.log-time-modal .right-task-detail-panel .comment-list-wrapper {
+  width: 100%;
+  max-height: 320px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.log-time-modal .overview-modal-wrapper .fileAttachment_Box {
+  height: 130px;
+}
+
+.log-time-modal .overview-modal-wrapper.task-detail-panel {
+  padding: 0 20px;
+}
+
+.log-time-modal .task-detail-panel .right-task-detail-panel {
+  max-width: 50%;
+  flex: 0 0 50%;
+  border-radius: unset;
+}
+
+.log-time-modal .right-task-detail-panel .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners {
+  height: 130px;
+}
+
+.log-time-modal .timesheet-logged-details-left-panel .log-time-details {
+  border-radius: unset;
+  margin-bottom: 30px;
+  align-items: start;
+}
+
+.log-time-modal .logged-time-text-wrapper {
+  margin: 20px 0;
+}
+
+.log-time-modal .update-logged-time-button {
+  margin: 20px 0;
+}
+
+.log-time-modal .d-flex.project-bg.align-center {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.log-time-modal .timesheet-logged-details-left-panel h5 {
+  width: 80px;
+}
+
+.log-time-modal .timesheet-logged-details-left-panel .modal-header {
+  padding: 16px 30px 16px 16px;
+}
+
+.log-time-modal .timesheet-logged-details-left-panel {
+  border-right: 1px solid #ECF0F5;
+}
+
+
+/* ------------------------------------ 04/09/2024 ---------------------- */
+
+
+
+.time-for-pms-modal .timesheet-logged-details-left-panel .log-time-details {
+  flex-direction: row;
+}
+
+.time-for-pms-modal .logtime-left-wrapper {
+  max-width: 50%;
+  flex-direction: row;
+  width: 100%;
+}
+
+.time-for-pms-modal .logtime-right-wrapper {
+  max-width: 50%;
+  width: 100%;
+  flex: 0 0 50%;
+}
+
+
+.time-for-pms-modal .overview-modal-wrapper .ant-row {
+  flex-direction: column;
+  align-items: baseline;
+}
+
+.time-for-pms-modal .overview-modal-wrapper .ant-row .ant-col {
+  padding: 0 5px;
+  width: 100%;
+  text-align: left;
+}
+
+.time-for-pms-modal .timeforpms {
+  gap: 10px;
+  align-items: end;
+}
+
+.time-for-pms-modal .myChng .myChngLft {
+  align-items: center;
+}
+
+.time-for-pms-modal .myChng .myChngLft .loggtime-avatar {
+  max-width: 30%;
+  width: 100%;
+}
+
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .log-time-details {
+  flex-direction: row;
+}
+
+.log-time-modal .TFP .logtime-right-wrapper .timesheet-logged-details-left-panel .ant-picker {
+  max-width: 100%;
+  width: 100%;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .timeforpms .ant-input {
+  max-width: 100%;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .task-detail-panel .log-time-details .logtime-left-wrapper {
+  max-width: 50%;
+  align-items: center;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .logtime-right-wrapper.myChngRght {
+  max-width: 50%;
+  width: 100%;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .timeforpms .ant-row.ant-form-item-row.css-dev-only-do-not-override-dkbvqv {
+  flex-direction: column;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .logtime-right-wrapper .timeforpms .timefor-pms-min {
+  display: flex;
+  align-items: end;
+}
+
+.log-time-modal .TFP .timesheet-logged-details-left-panel .ant-row.ant-form-item-row.css-dev-only-do-not-override-dkbvqv {
+  flex-direction: column;
+  align-items: baseline;
+}
+
+.logtime-right-wrapper.myChngRght .ant-form-item-control {
+  width: 100%;
+}
+
+.overview-modal-wrapper.task-detail-panel.TFP .ant-row.ant-form-item-row.css-dev-only-do-not-override-j9bb5n {
+  flex-direction: column;
+  align-items: baseline;
+}
+
+.overview-modal-wrapper.TFP .timesheet-logged-details-left-panel .log-time-details .logtime-left-wrapper {
+  width: 100%;
+  max-width: 50%;
+  justify-content: space-between;
+}
+
+@media screen and (max-width: 1180px) {
+  .time-block-table .ant-table-tbody>tr>td {
+    padding: 13px 10px;
+    zoom: 88%;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .profileleftbar {
+    max-width: 230px;
+  }
+
+  .time-block-table .ant-table-tbody>tr>td {
+    padding: 10px;
+  }
+
+  .times-wrapper .time-wrapper-right {
+    max-width: calc(100% - 230px);
+    flex: 0 0 calc(100% - 230px);
+  }
+
+  .task-panel-wrapper .time-wrapper-right {
+    max-height: calc(100vh - 74px);
+  }
+}

@@ -1,0 +1,10 @@
+/* Add this CSS to your stylesheet */
+.ck-editor__editable {
+    min-height: 150px; /* Initial small height */
+    max-height: 500px; /* Maximum height before scrollbar appears */
+    overflow-y: auto;  /* Enable vertical scrollbar */
+  }
+  
+  
+  
+  

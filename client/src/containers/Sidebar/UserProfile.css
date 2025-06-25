@@ -1,0 +1,206 @@
+  .notidication-modal .notification-content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 600;
+    align-items: center;
+  }
+
+  .notidication-modal ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .notidication-modal ul li {
+    border-left: 2px solid #197FBB;
+    padding-left: 5px;
+    margin-bottom: 10px;
+    background: #eeeeee52;
+  }
+  .notidication-modal .filter-notification-checkbox ul li {
+    /* border-left: none; */
+    background: none;
+  }
+
+  .filter-notification-checkbox ul {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.filter-notification-checkbox ul li.active {
+  color: #fff;
+  border-color: #038fde;
+  background: #038fde;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+  color: #ffffff ;
+  background-color: #038fde !important;
+   padding:8px 20px;
+  border-radius:20px;
+  cursor:pointer
+
+}
+.filter-notification-checkbox ul li{
+  padding:8px 20px;
+  border-radius:20px;
+  border:1px solid #000;
+  cursor:pointer
+}
+
+.filter-notification-checkbox ul>li {
+  display: flex;
+  margin-right: 5px;
+  align-items: baseline;
+  gap: 5px;
+}
+
+  .notidication-modal .notification-time {
+    color: #808080c4;
+  }
+
+  .notifiction-pop {
+    width: 425px;
+  }
+
+  .notidication-modal button:nth-child(1) {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    color: #197FBB;
+    cursor: pointer;
+
+  }
+
+  .notidication-modal button:nth-child(2) {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    color: red;
+    cursor: pointer;
+
+  }
+
+  .bell-icon {
+    position: relative;
+    /* Establishes a positioning context for absolute positioning inside */
+    display: inline-block;
+    /* Ensures the container fits its content */
+    cursor: pointer;
+  }
+
+  .bell-icon .fi {
+    font-size: 20px;
+    /* Adjust size as needed */
+  }
+
+  .notidication-modal p {
+    word-break: break-word;
+    white-space: normal;
+    word-wrap: break-word;
+
+  }
+
+  .notidication-modal {
+    max-width: 425px;
+    padding: 0 10px;
+  }
+
+  .bell-icon .count {
+    position: absolute;
+    top: -10px;
+    /* Adjust position as needed */
+    right: -10px;
+    /* Adjust position as needed */
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px;
+    font-size: 10px;
+    line-height: 12px;
+    /* Ensures the text aligns vertically */
+    min-width: 17px;
+    min-height: 17px;
+    max-height: 17px;
+    width: 100%;
+    max-width: fit-content;
+    /* Ensures that the circle has a minimum size */
+    text-align: center;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+    /* Optional: adds a shadow for better visibility */
+  }
+
+  .setting-main-wrapper .no-bullets {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .setting-main-wrapper .ant-form-item {
+    margin-bottom: 0;
+    margin-top: 2%;
+  }
+
+  .setting-main-wrapper .no-bullets .ant-checkbox-wrapper>span {
+    font-size: 12px;
+  }
+
+  .setting-wrapper .no-bullets {
+    padding-right: 20px;
+  }
+
+  .setting-main-wrapper .setting-wrapper {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-left: 10px;
+    overflow-x: hidden;
+  }
+
+  .setting-api-note {
+    font-weight: bolder;
+    margin-bottom: 28px;
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .modal-footer-flex-setting-api {
+    margin-left: 25px;
+  }
+
+  .logosettings-wrapper .upload-btn-img-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logosettings-wrapper .upload-btn-img-wrapper>img {
+    max-width: 40%;
+    width: 100%;
+  }
+
+  .logosettings-wrapper .upload-btn-img-wrapper>button {
+    margin-bottom: 0;
+    align-items: center;
+  }
+
+  .setting-main-wrapper .ant-modal-body [role="tablist"] {
+    margin-bottom: 0;
+  }
+
+  .setting-main-wrapper .logosettings-wrapper {
+    margin-bottom: 15px;
+  }
+
+  .logosettings-wrapper h4 {
+    display: inline;
+  }
+
+  .logo-view-wrapper {
+    height: 50px;
+    width: 150px;
+  }
+
+
+  .favicon-view-wrapper {
+    height: 50px;
+    width: 150px;
+    display: flex;
+  }

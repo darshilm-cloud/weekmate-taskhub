@@ -1,0 +1,947 @@
+.estimated_time_input_container {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    margin: 10px 0;
+}
+
+.hours_input {
+    width: 80px;
+    height: 35px;
+    padding: 8px;
+    border: 1px solid #d9d9d9;
+}
+
+.hours_min_container {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.estimated_time_btn {
+    padding: 0 10px !important;
+    margin: 0 !important;
+    height: 35px !important;
+}
+
+.estimated_setTime_container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.fileAttachment_container {
+    margin: 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.fileAttachment_Box {
+    background: #e6e4dd;
+    height: 120px;
+    width: 90px;
+    padding: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.fileNameTxtellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.taskHeader {
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+}
+
+.task-model .comment-list-wrapper span.ant-badge {
+    width: 100%;
+    flex: 0 0 calc(33.33% - 12px);
+    max-width: calc(33.33% - 12px);
+}
+
+.subsListContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+
+.task-wrapper .add-project-wrapper .add-btn {
+    padding: 0px 10px;
+    line-height: 0;
+}
+
+.task-model .table-right .flex-table {
+    gap: 5px;
+    margin: 5px 0;
+
+}
+
+.task-wrapper .add-project-wrapper {
+    margin-bottom: 10px;
+}
+
+.task-history-inner.task-detail-inner.issue .table-schedule-wrapper .flex-table {
+    white-space: nowrap;
+}
+
+/* .profileleftbar .design-graph-inactive .label-of {
+    max-width: 125px;
+} */
+
+.notes-wrapper .design-graph>span {
+    word-break: break-word;
+}
+
+.task-wrapper .profileleftbar>ul {
+    overflow-y: auto;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+.page-layout .task-wrapper .block-status-content {
+    align-items: center;
+}
+
+/* .project-wrapper .add-task {
+    margin-bottom: 0;
+} */
+
+.task-wrapper .status-content.after-border {
+    border-left: 1px solid #ccc;
+    padding-left: 10px;
+}
+
+.task-wrapper .block-status-content .after-border {
+    position: relative;
+}
+
+.task-detail-panel .left-task-detail-panel {
+    max-width: 60%;
+}
+
+.task-wrapper .design-graph:hover {
+    cursor: pointer;
+
+}
+
+.design-graph-wrapper {
+    margin-bottom: 5px;
+}
+
+.task-wrapper .profilerightbar .project-task-section {
+    height: 100%;
+    max-height: calc(100vh - 194px);
+}
+
+
+
+.task-wrapper .profileleftbar>ul {
+    max-height: calc(100vh - 255px);
+    padding-right: 5px !important;
+}
+
+.task-wrapper .profilerightbar {
+    max-width: calc(100% - 270px);
+}
+
+.fileAttachment_viewBox {
+    background: #e6e4dd;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-direction: column;
+    flex: 0 0 calc(20% - 5px);
+    max-width: calc(20% - 5px);
+}
+
+.task-model .task-history-inner .main-wrapper-btn {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    max-width: 85%;
+}
+
+.task-model .task-editbtn {
+    max-width: 12%;
+    flex: 0 0 12%;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.task-overview-modal-wrapper .ant-select-multiple .ant-select-selection-item-content {
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.task-model .head-toolbar button.ant-btn {
+    background: transparent;
+}
+
+.add-task-modal {
+    width: 650px !important;
+}
+
+.add-task-modal .task-list-pop-wrapper .ant-form-item-control-input-content {
+    margin-top: 0;
+    padding: 0;
+}
+
+.add-task-modal .task-list-pop-wrapper .ant-form-item {
+    margin-bottom: 20px;
+}
+
+.add-task-modal .overview-modal-wrapper .task-list-pop-wrapper .list-clear-btn {
+    display: block;
+    margin: 12px 0;
+}
+
+.add-task-modal .overview-modal-wrapper .list-modal-stages {
+    margin-bottom: 20px;
+}
+
+.add-task-modal .overview-modal-wrapper .subsListContainer {
+    align-items: flex-start;
+}
+
+.subsListContainer .list-modal-inner-stage {
+    flex: 0 0 20%;
+    max-width: 20%;
+}
+
+.add-task-modal .overview-modal-wrapper .subsListContainer .ant-form-item {
+    flex: 0 0 60%;
+    max-width: 80%;
+    margin-bottom: 0;
+}
+
+.add-task-modal .overview-modal-wrapper .ant-form-horizontal .modal-footer-flex {
+    padding: 15px 0;
+}
+
+.add-task-modal .overview-modal-wrapper .overview-modal-wrapper {
+    padding: 20px;
+}
+
+.add-task-modal .overview-modal-wrapper .topic-cancel-wrapper .list-modal-stages {
+    max-height: 230px;
+    overflow-y: auto;
+}
+
+.ant-avatar-string {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%) !important;
+    top: 50%;
+}
+
+/* --------------- add task pop -------------- */
+.hours_min_container .hours_input {
+    width: 100%;
+}
+
+.fileAttachment_box-img [aria-label="file-image"] {
+    display: block;
+    padding: 5px;
+}
+
+.add-task-modal .modal-footer-flex .flex-btn {
+    margin-bottom: 0;
+}
+
+.ant-form-item {
+    width: 100%;
+}
+
+.ant-picker {
+    width: 100%;
+}
+
+.task-detail-popup .fileAttachment_viewBox>a {
+    white-space: normal;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.task-inner-card .table-schedule-wrapper .table-left {
+    max-width: 25%;
+
+
+}
+
+.task-inner-card .table-schedule-wrapper .table-left .ant-avatar-image {
+    text-align: center;
+    display: block;
+    margin: auto;
+    vertical-align: middle;
+}
+
+.task-overview-modal-wrapper .table-schedule-wrapper .table-left {
+    max-width: 30%;
+}
+
+.task-overview-modal-wrapper .table-schedule-wrapper ul li .table-right {
+    max-width: 50%;
+}
+
+.model-task-add-details .table-schedule-wrapper .table-left {
+    max-width: 30%;
+}
+
+.task-inner-card .table-schedule-wrapper .flex-table>div {
+    max-width: fit-content;
+    background-color: transparent;
+}
+
+.task-detail-inner .project-comments-block h3>div {
+    font-size: 14px;
+}
+
+.edit-comment-task-model .ant-form-horizontal .overview-modal-main-wrapper .modal-footer-flex {
+    padding: 0;
+}
+
+.task-detail-panel {
+    height: 100%;
+    max-height: 737px;
+    min-height: 737px;
+}
+
+.task-overview-modal-wrapper .ant-form-horizontal .modal-footer-flex {
+    padding: 15px 0;
+}
+
+.task-model .left-task-detail-panel .task-inner-card {
+    padding: 16px;
+    max-height: calc(100% - 65px);
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.task-model .attachment-comment .table-schedule-wrapper ul {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+    padding: 10px 0;
+}
+
+.right-task-detail-panel .right-toolbar {
+    border-radius: 0 10px 0px 0;
+}
+
+.task-model .left-task-detail-panel .item-inner>p {
+    max-height: 200px;
+    overflow: auto;
+}
+
+.task-model .task-inner-card .right-task-detail-panel {
+    max-width: 100%;
+}
+
+.task-detail-panel .right-task-detail-panel .table-schedule-wrapper {
+    margin-top: 0;
+}
+
+.add-task-modal .overview-modal-wrapper .list-modal-stages .subsListContainer .ant-form-item {
+    flex: 0 0 40%;
+    max-width: 40%;
+    margin-bottom: 0;
+}
+
+.list-modal-stages .subsListContainer .list-modal-inner-stage {
+    flex: 0 0 55%;
+    max-width: 55%;
+}
+
+.left-task-detail-panel .table-right {
+    vertical-align: middle;
+}
+
+.model-task-add-details .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.model-task-add-details .subsListContainer {
+    margin-bottom: 5px;
+}
+
+.task-overview-modal-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.bug-task-panel .task-detail-panel .right-task-detail-panel {
+    max-width: 100%;
+    width: 100%;
+}
+
+.bug-task-panel .left-task-detail-panel {
+    width: 100%;
+    border-right: 1px solid #ECF0F5;
+    max-width: 60%;
+}
+
+.task-detail-inner .project-comments-block div>h3 {
+    padding-left: 10px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.project-comments-block .project-search .ant-avatar-circle>div {
+    max-width: 30px;
+    max-height: 30px;
+    object-fit: cover;
+}
+
+.edit-comment-task-model .ant-form {
+    padding: 16px;
+}
+
+.table-right .flex-table>button {
+    margin-bottom: 0;
+}
+
+.task-elipse-pop>.status-content {
+    margin-bottom: 5px;
+}
+
+.task-model .task-detail-inner.comments .comment-textarea {
+    margin: 10px 0 0;
+    width: 100%;
+}
+
+.task-history-inner.task-detail-inner.issue .table-schedule-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.task-history-inner.task-detail-inner.issue .table-left>.flex-table>a {
+    word-break: break-word;
+    white-space: normal;
+    word-wrap: break-word;
+    width: 300px;
+}
+
+.task-detail-popup .ant-modal-content button.ant-modal-close {
+    top: 15px;
+}
+
+.task-history-inner.task-detail-inner.issue .table-schedule-wrapper ul li .table-right {
+    white-space: nowrap;
+    width: 400px !important;
+}
+
+.task-history-inner.task-detail-inner.issue .table-right .flex-table {
+    display: inline;
+    margin-left: 8px;
+}
+
+.left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table {
+
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.project-task-section .assignee-task-time {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.project-task-section .assignee-name {
+    justify-content: space-between;
+}
+
+.project-task-section .assignee-name .task-time {
+    padding-top: 0;
+}
+
+.left-task-detail-panel .table-schedule-wrapper .table-left input[name="issue"] {
+    width: 100%;
+    min-width: 250px;
+}
+
+.ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
+    margin-left: 0;
+}
+
+
+.project-task-section .assignee-task-time .fi-rr-clock {
+    margin-top: 3px;
+}
+
+.right-task-detail-panel .task-all-file-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.assignees-popover.stages-task-popover {
+    width: 120px;
+    padding: 5px;
+}
+
+.workflow-stages-task-main-wrapper {
+    padding: 0;
+}
+
+.stages-task-popover .workflow-stages-task {
+    margin-bottom: 10px;
+}
+
+.discussion-wrapper .head-box-inner {
+    max-width: max-content;
+}
+
+.task-detail-panel .right-task-detail-panel .task-detail-inner {
+    position: relative;
+    padding: 10px;
+    justify-content: space-between;
+}
+
+.right-task-detail-panel .task-no-comments {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: .5;
+}
+
+.task-detail-panel .table-schedule-wrapper .bug-iconwrapper .flex-table {
+    margin-bottom: 4px;
+    margin-top: 0px;
+}
+
+.task-detail-panel .attachment-comment .bug-iconwrapper {
+    display: flex;
+    align-items: center;
+}
+
+.task-detail-panel .attachment-comment .table-left .add-bug {
+    min-width: 250px;
+    display: block;
+    height: 30px;
+}
+
+.task-aad-time-pop .hours_min_container .hours_input {
+    width: 100%;
+}
+
+.edit-comment-task-model .ant-mentions {
+    min-height: 90px
+}
+
+.task-aad-time-pop .modal-header {
+    justify-content: unset;
+}
+
+
+.edit-comment-task-model .ant-mentions>textarea {
+    min-height: 90px;
+}
+
+.right-popover-wrapper .ant-input-search {
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+.right-popover-wrapper .assigness-data {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.right-popover-wrapper .popver-footer-btn>button {
+    margin-bottom: 0;
+    margin-top: -7px;
+}
+
+.right-popover-wrapper .assigness-data li {
+    margin-bottom: 5px;
+}
+
+.right-popover-wrapper.popover-task {
+    min-width: 200px;
+}
+
+.task-box .task-comment-hour-detail-wrapper,
+.task-box .task-due-date-wrapper {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.task-box .task-due-date-wrapper .task-due-date>a,
+.task-box .task-due-date-wrapper .task-due-date {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.88);
+    gap: 8px;
+    display: flex;
+    padding-left: 2px;
+    align-items: center;
+}
+
+.task-box .task-comment-hour-detail-wrapper .task-comment-bar a {
+    color: rgba(0, 0, 0, 0.88);
+}
+
+.task-box .task-comment-hour-detail-wrapper {
+    padding-top: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.88);
+    margin-bottom: 0;
+}
+
+.task-box .task-comment-hour-detail-wrapper .task-comment-bar {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.status-content [class="fi fi-rr-file-import"] {
+    cursor: pointer;
+}
+
+.header_tabination .tab_menu li {
+    padding: 10px 16px 10px;
+}
+
+.import-export-pop-box .status-content {
+    margin-bottom: 5px;
+}
+
+.import-export-pop-box {
+    background: #fff;
+    padding: 20px;
+    border-radius: 9px;
+    box-shadow: -1px 1px 3px 0px #bbbb;
+    position: absolute;
+    right: 50%;
+    top: 60%;
+    transform: translate(0%, 17%);
+    width: 140px;
+}
+
+.import-export-pop-wrapper {
+    position: relative;
+}
+
+.task-sub-header {
+    display: flex;
+    width: 100%;
+    max-width: 95%;
+    justify-content: space-between;
+}
+
+
+.task-elipse-pop .sample-csv {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: space-between;
+
+}
+
+.task-logged-details-wrapper .ant-table-body {
+    max-height: calc(100vh - 260px) !important;
+    overflow: auto;
+    overflow-x: hidden;
+}
+
+.task-logged-details-wrapper .ant-table-tbody>tr>td {
+    white-space: normal;
+    border: none;
+    word-wrap: break-word;
+    padding: 10px;
+    word-break: break-all;
+}
+
+.ant-table-tbody .loggedtimedetails>div {
+    padding-left: 55px;
+    padding-right: 20px;
+}
+
+.task-logged-details-wrapper .ant-table-wrapper .ant-table {
+    border-radius: 8px;
+}
+
+.task-logged-details-wrapper .ant-table-wrapper .ant-table-row-expand-icon {
+    border-radius: 100%;
+}
+
+.logged-by-wrapper .logged-by-wrapper .logged-user {
+    margin-right: 10px;
+}
+
+.logged-by-wrapper .logged-user {
+    margin-right: 10px;
+    max-width: 25px;
+    max-height: 25px;
+}
+
+.loggedtimedetails-wrapper .ant-table-content {
+    height: 100%;
+    max-height: 530px;
+    overflow: auto;
+}
+
+.task-detail-panel .main-avatar-wrapper .comment-sender-name {
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 15px;
+    gap: 10px;
+    align-items: center;
+}
+
+.right-toolbar .right-toolbar-tab {
+    position: relative;
+}
+
+.task-schedule-wrapper {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    background: #F2F2F2;
+    margin-bottom: 16px;
+    padding: 16px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.table-schedule-wrapper .task-schedule-wrapper li .table-left,
+.table-schedule-wrapper .task-schedule-wrapper li .table-right {
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+}
+
+.model-task-add-details .ck.ck-editor__main {
+    height: unset;
+}
+
+.page-layout .task-wrapper .block-status-content {
+    max-width: 50%;
+}
+
+.task-model .task-inner-card .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.task-model .task-inner-card .modal-footer-flex .flex-btn {
+    margin-bottom: 0;
+}
+
+.task-model .task-inner-card .modal-footer-flex {
+    margin-top: 10px;
+}
+
+.task-model .task-inner-card .flex-table .ant-select .ant-select-selector {
+    width: 78px;
+}
+
+.task-model .task-inner-card .ant-select-dropdown {
+    padding: 5px;
+}
+
+.task-model .task-inner-card .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+    height: 32px;
+}
+
+.task-model .task-inner-card .ant-select-focused:where(.css-dev-only-do-not-override-mzwlov).ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer) .ant-select-selector {
+    height: 32px;
+}
+
+
+.task-model .flex-table .ant-picker {
+    background-color: unset;
+}
+
+.task-model .ant-form-horizontal .ant-row {
+    margin-left: unset;
+    margin-right: unset;
+}
+
+
+.task-model .task-inner-card .ant-form-item {
+    margin-bottom: 0;
+}
+
+.task-model .task-fileAttachment-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.task-fileAttachment-wrapper .ant-row {
+    margin-left: unset;
+    margin-right: unset;
+}
+.task-model .task-inner-card .table-schedule-wrapper .estimated_time_input_container{
+    align-items: normal;
+}
+.task-model .right-task-detail-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 100px;
+    overflow-y: auto;
+    height: 100%;
+}
+.task-comment-icon{
+    display: flex;
+    gap: 5px
+}
+/* -------------------------------- aug 16 ritesh ----------------------------- */
+.profile-sub-head .update-workflow-status {
+    width: 100%;
+    max-width: 30%;
+    margin: 0 0 -20px 5px;
+}
+
+.profile-sub-head .update-workflow-status .ant-form {
+    display: flex;
+    justify-content: space-between;
+}
+
+.profile-sub-head .update-workflow-status .ant-form-horizontal .ant-row {
+    margin: 0;
+}
+
+.profile-sub-head .update-workflow-status .ant-form-item {
+    max-width: max-content;
+}
+
+.profile-sub-head.update-task .head-box-inner {
+    max-width: 100%;
+    width: 100%;
+}
+
+.profile-sub-head.update-task {
+    height: auto;
+    min-height: 10%;
+}
+
+.profile-sub-head.update-task .head-box-inner .update-workflow-status .update-workflow-status-form {
+    display: flex;
+    gap: 10%;
+}
+
+@media screen and (max-width: 916px) {
+    .profile-sub-head.update-task .head-box-inner .update-workflow-status {
+        max-width: 90%;
+    }
+    .profile-sub-head.update-task .head-box-inner .update-workflow-status .update-workflow-status-form {
+        flex-wrap: wrap;
+    }
+    .profile-sub-head.update-task .head-box-inner .update-workflow-status .ant-form.ant-form-horizontal{
+        justify-content: unset;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .profile-sub-head.update-task .head-box-inner .update-workflow-status {
+        max-width: 100%;
+    }
+}
+
+/* ---------------------- */
+@media screen and (max-width: 1280px) {
+    .page-layout .task-wrapper .block-status-content {
+        max-width: 60%;
+    }
+}
+
+@media screen and (max-width: 1180px) {
+    .bugs-task-wrapper .block-status-content {
+        gap: 8px;
+        max-width: 40%;
+        width: 100%;
+
+    }
+
+    .project-wrapper i[class="fa-solid fa-ellipsis-vertical"] {
+        right: 2%;
+
+    }
+
+    .task-sub-header {
+        max-width: 100%;
+    }
+
+    .page-layout .task-wrapper .block-status-content {
+        gap: 10px;
+    }
+
+    .block-status-content .status-content span {
+        font-size: 12px;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .block-status-content {
+        gap: 10px;
+    }
+
+    .task-wrapper .profilerightbar {
+        max-width: calc(100% - 230px);
+    }
+
+
+
+
+    .design-graph-inactive span.label-of,
+    .task-wrapper .design-graph span.label-of {
+        font-size: 12px;
+        max-width: 85%;
+    }
+
+    .discussion-wrapper .design-graph-inactive .discussion-pin-wrapper,
+    .discussion-wrapper .design-graph .discussion-pin-wrapper {
+        flex: 0 0 70%;
+        max-width: 70%;
+    }
+
+    .task-wrapper .design-graph-inactive .process_list {
+        max-width: 30%;
+        flex: 0 0 30%;
+    }
+
+    .task-wrapper .ant-progress-line .ant-progress-inner {
+        left: 32%;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .task-wrapper .profileleftbar>ul {
+        max-height: calc(100vh - 187px);
+    }
+
+    .ant-layout>.gx-layout-content {
+        height: calc(100vh - 37px);
+    }
+
+    .task-wrapper .profilerightbar .project-task-section {
+        max-height: calc(100vh - 148px);
+    }
+
+    .ant-popover-inner .ant-menu {
+        background: #fff;
+        border: none;
+        border-inline-end: none !important;
+    }
+
+}

@@ -1,0 +1,12 @@
+{
+  "PMS_ROLES": {
+    "SUPER_ADMIN": "Super Admin",
+    "ADMIN": "Admin",
+    "USER": "User",
+    "CLIENT": "Client",
+    "PC": "PC",
+    "TL": "TL",
+    "AM": "AM"
+  },
+  "COLORS": ["#FF5733", "#3357FF", "#FF33F6", "#ffaa33", "#1298b3", "#a68f0d"]
+}

@@ -1,0 +1,376 @@
+.form-rows {
+    align-items: center;
+    justify-content: center;
+
+}
+
+.feedback-form {
+    margin-top: 20px;
+}
+
+.feedback-form .ant-form .ant-form-item-row .ant-col-sm-16 {
+    max-width: 100%;
+}
+
+.feedback-form .feedback-submit-button-form {
+    text-align: center;
+}
+
+.feedback-form .ant-form-horizontal .ant-row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.feedback-form-view-detail-form .employee-details .employee-main-information>.ant-row {
+    justify-content: center;
+    margin: 0;
+}
+
+.feedback-form-view-detail-form .employee-details .employee-main-information .feedback-detail-views {
+    max-width: 25%;
+}
+
+/* .feedback-form-view-detail-form .ant-card-body {
+    height: 100%;
+    max-height: calc(100% - 320px);
+    overflow-y: auto;
+} */
+.complaint-details-form :where(.css-dev-only-do-not-override-qnu6hi).ant-form-item .ant-form-item-control-input .feedback-details-submit-button {
+    text-align: center;
+    margin: 20px
+}
+
+.ticket-comment .ticket-desc-body {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    word-break: break-all;
+    white-space: break-spaces;
+}
+
+.ticket-comment .edit-delete ul {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+    padding: 5px 0;
+}
+
+.ticket-comment .edit-delete ul li {
+    display: inline-block;
+    position: relative;
+    padding-right: 8px;
+}
+
+
+.feedback-form-view-detail-form .inout-header.mb2.text-left {
+    /* text-align: center; */
+    border-bottom: 1px solid #038fde;
+    padding: 15px;
+    background: #ecf0f5;
+    margin-bottom: 1rem;
+}
+
+.feedback-form-view-detail-form {
+    height: 100%;
+    overflow: auto;
+}
+
+.project-details-data .title {
+    font-weight: 600;
+}
+
+.project-details {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+}
+
+.Complaint-status-form {
+    margin-top: 20px;
+}
+
+.feedbackForm-card {
+    height: auto;
+    margin-bottom: 5px;
+    position: relative;
+}
+
+.Complaint-status-form .complaint-status-form-inner .ant-row {
+    display: flex;
+    justify-content: center;
+}
+
+.Complaint-status-form .feedback-details-submit-button-form .ant-row {
+    justify-content: center;
+}
+
+.edit-complaint-status-btn {
+    position: absolute;
+    top: 14px;
+    right: 15px;
+    background: #187CB7;
+    color: #fff;
+    font-weight: 600;
+    padding: 5px 15px;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.ticket-wrapper {
+    margin-top: 10px;
+}
+
+.comment-user-name {
+    margin: 0;
+}
+
+.ticket-user {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: underline;
+    color: #6b6b6b;
+    font-size: 14px;
+
+}
+
+.comment-actions div {
+    cursor: pointer;
+}
+
+/* ===============================================18-10-2024 ===============================================*/
+.gx-app-login-content:where(.css-dev-only-do-not-override-qnu6hi).ant-form-item .ant-form-item-control-input {
+    min-height: 80px;
+    border-radius: 7px;
+    overflow: auto;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    padding: 8px;
+}
+
+.gx-app-login-content .ant-input {
+    background-color: #fff !important;
+}
+
+p.attatch-complaint-item {
+    margin: 0;
+    margin-top: 10px;
+}
+
+.complaint-comment-item {
+    max-height: 100px;
+    overflow: auto;
+    background: #ecf0f5;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.show-feedback-detail-modal {
+    overflow: auto;
+    height: 100%;
+}
+
+.show-feedback-detail-modal .ant-modal-content .ant-modal-body {
+    max-height: 500px;
+    overflow: auto;
+}
+
+/* .peoject-page form.ant-form.ant-form-horizontal {
+    padding: 20px;
+    width: 80%;
+    margin: 0 auto;
+    margin-top: 20px;
+} */
+
+.peoject-page .popover-footer-btn {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* .peoject-page .ant-form-item-label>label {
+    white-space: pre-line;
+    font-size: 16px;
+    display: block;
+    height: 40px;
+    text-align: left;
+} */
+
+.gx-app-login-content .ant-form-item-control-input-content textarea.ant-input {
+    height: 100px !important;
+}
+
+.ant-form-item-control-input-content textarea.ant-input {
+    padding: 12px !important;
+}
+
+.peoject-page .feedback-form h2 {
+    font-size: 33px;
+    margin-left: 20px;
+    border-bottom: 1px solid #d7d6d6;
+    margin-bottom: 27px;
+    padding-bottom: 20px;
+    text-align: center;
+}
+
+.gx-app-login-content .inout-header h2 {
+    font-size: 33px;
+    margin-left: 20px;
+    border-bottom: 1px solid #d7d6d6;
+    margin-bottom: 27px;
+    padding-bottom: 20px;
+    text-align: center;
+}
+
+/* .ant-form-item label.ant-form-item-required {
+    height: 70px;
+    color: rgba(0, 0, 0, 0.88);
+    font-size: 14px;
+    white-space: break-spaces;
+    display: block;
+    text-align: left;
+} */
+
+.gx-app-login-content .popover-footer-btn {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 60px;
+}
+
+.complaint-consumer-resolution-feedback-form .popover-footer-btn .ant-btn-primary {
+    width: unset !important;
+}
+
+.ant-btn-primary label.ant-form-item-required {
+    height: auto;
+}
+
+/* .ant-form-item .ant-form-item-label>label {
+    position: relative;
+    display: block;
+    align-items: center;
+    max-width: 100%;
+    height: 20px;
+    color: rgba(0, 0, 0, 0.88);
+    font-size: 14px;
+    text-align: left;
+    width: 100%;
+    padding-left: 7px;
+    margin-top: 13px;
+
+} */
+
+
+@media (max-width:1024px) {
+    .ant-form-item .ant-form-item-label>label {
+        font-size: 13px;
+    }
+
+    .feedback-form-div-second .ant-row.ant-form-item-row {
+        height: 70px;
+        width: 100% !important;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width:767px) {
+    .ticket-history .scroll450 .ticket-wrapper {
+        margin-top: 30px;
+    }
+
+    .ticket-desc-body .complaint-comment-item {
+        max-height: 150px;
+        overflow: auto;
+        background: #ecf0f5;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .ticket-comment .ticket-history {
+        margin-top: 30px;
+    }
+
+    .feedback-detail-views .ant-form-item-has-success {
+        margin-top: 20px;
+    }
+
+    .Complaint-status-form .ant-row.css-dev-only-do-not-override-qnu6hi {
+        padding: 0 5px;
+    }
+
+    form.ant-form-horizontal .ant-row.css-dev-only-do-not-override-qnu6hi {
+        padding: 0 3px;
+    }
+
+    .account-login .gx-app-login-content {
+        padding: 50px 20px !important;
+        height: auto !important;
+        width: 100%;
+    }
+
+    form.complaint-consumer-resolution-feedback-form {
+        margin-top: 30px !important;
+    }
+}
+
+
+.greeting-msg-feedback h1.message-gratitude {
+    font-size: 35px;
+    text-align: center;
+    border-radius: 18px;
+    margin-top: 30px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.greeting-msg-feedback {
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 60%;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 300px;
+}
+
+.greeting-msg-feedback p {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    font-size: 16px;
+}
+
+.icon-checked-submitted-feedback i {
+    color: #187cb7;
+    font-size: 200px;
+    display: block;
+    text-align: center;
+}
+
+@media(max-width:767px) {
+    .greeting-msg-feedback {
+        margin-top: 63px !important;
+    }
+}
+
+.feedback-form-div-second .ant-row.ant-form-item-row {
+    height: 70px;
+    width: 90%;
+    margin: 0 auto;
+}
+
+form.complaint-consumer-resolution-feedback-form {
+    margin-top: 60px;
+}

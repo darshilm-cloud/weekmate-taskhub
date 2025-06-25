@@ -1,0 +1,314 @@
+.time-logged-main-wrapper .custom-table {
+    width: 100%;
+}
+
+.time-logged-main-wrapper .custom-table td,
+.time-logged-main-wrapper .custom-table th {
+    border: 1px solid #dddddd;
+    border-right: none;
+    padding: 4px 8px !important;
+    height: 50px;
+
+}
+
+.no-data-found-my-log-time {
+    position: absolute;
+    top: 50%;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+
+}
+
+.time-logged-main-wrapper .custom-table thead th {
+    text-align: center;
+}
+
+.time-logged-main-wrapper .custom-table td {
+    font-size: 14px;
+}
+
+.time-logged-main-wrapper tr {
+    border-right: none;
+}
+
+.time-logged-main-wrapper .custom-table th:nth-child(1),
+.time-logged-main-wrapper .custom-table td:nth-child(1) {
+    border-left: none;
+    white-space: nowrap;
+}
+
+.time-logged-main-wrapper .ant-avatar,
+.time-logged-main-wrapper .ant-avatar-image {
+    margin-right: 10px;
+}
+
+.time-logged-main-wrapper .custom-table td>h6 {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+
+}
+
+.time-logged-main-wrapper .logtime-task {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1px 4px;
+    font-size: 10px;
+    border-radius: 3px;
+    line-height: 22px;
+}
+
+.time-logged-main-wrapper .text-align-center {
+    text-align: center;
+}
+
+.logtime-pop-wrapper .log-time-data {
+    overflow-y: auto;
+    height: 100%;
+    max-height: 180px;
+}
+
+.logtime-pop-wrapper .popver-footer-btn {
+    justify-content: space-between;
+}
+
+.time-logged-main-wrapper .profile-sub-head div span>svg {
+    color: #358CC0;
+    margin: 0 3px;
+}
+
+.logtime-pop-wrapper .popver-footer-btn>button {
+    margin-bottom: 0;
+}
+
+.clickable-roww {
+    cursor: pointer;
+}
+
+.time-logged-main-wrapper .grand-total>span,
+.time-logged-main-wrapper .grand-total {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+
+}
+
+.logtime-date-wrapper {
+    display: flex;
+    margin-top: 10px;
+    gap: 15px;
+    flex-flow: column;
+}
+
+.logtime-date>label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.log-time-modal .ant-form-item-label {
+    min-width: 88px;
+}
+
+.log-time-modal .description-loggedtime-details {
+    width: 100%;
+}
+
+.log-time-modal .ck.ck-editor__main>.ck-editor__editable {
+    max-height: 200px;
+    overflow: auto;
+}
+
+.log-time-modal .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners {
+    max-height: 100%;
+    overflow: auto;
+    height: 220px;
+}
+
+.logtime-right-wrapper p {
+    margin-bottom: 5px;
+}
+
+
+.edit-delete-btn-wrapper {
+    display: flex;
+    justify-content: space-around;
+    max-width: 100px;
+    margin: 0 auto;
+}
+
+
+.time-logged-main-wrapper th.time-logged-bug,
+.time-logged-main-wrapper th.time-logged-time,
+.time-logged-main-wrapper th.time-logged-date,
+.time-logged-main-wrapper th.time-logged-createdby {
+    width: 10%;
+}
+
+.time-logged-main-wrapper th.time-logged-task {
+    width: 15%;
+}
+
+.time-logged-main-wrapper th.time-logged-action {
+    width: 5%;
+}
+
+
+
+.time-logged-main-wrapper td.border-none {
+    border-left: none;
+    border-right: none;
+}
+
+/* ------------------------------------------- 04/09/2024 ------------------------------------ */
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .logtime-right-wrapper {
+    width: 100%;
+    max-width: 60%;
+    flex: 0 0 60%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .loggtime-main-wrapper {
+    width: 100%;
+    max-width: 40%;
+    flex: 0 0 40%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .loggtime-main-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .loggtime-main-wrapper .logged-by-wrapper {
+    flex: 1;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper input#edit_form_Hours {
+    max-width: 110px;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .my-logged-time-edit {
+    width: 100%;
+    max-width: 92px;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper input#edit_form_Minutes {
+    width: 100%;
+    max-width: 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .date-time-picker {
+    width: 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .minutes,
+.my-logtime-modal .overview-modal-wrapper .hours {
+    width: 100%;
+    max-width: 100px;
+}
+
+.my-logtime-modal .overview-modal-wrapper .date-time-picker .ant-picker {
+    width: 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .date-time-picker .ant-picker .ant-form-item-control {
+    max-width: 222px;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .ant-form-item-control-input {
+    width: 100%;
+    max-width: 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .ant-picker.ant-picker-invalid.ant-picker-outlined.ant-picker-status-success.css-dev-only-do-not-override-mzwlov {
+    width: 100%;
+    height: 100%;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .hours-time-wrapper {
+    width: 100%;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.my-logtime-modal.ant-modal-body .ant-form-item-label label {
+    font-size: 12px;
+    text-transform: capitalize;
+    font-family: sans-serif;
+}
+
+.my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .ant-row {
+    margin: 0 -5px;
+    justify-content: space-between;
+}
+
+.log-time-modal .hours-time-wrapper {
+    width: 100%;
+}
+
+.log-time-modal .log-time-details .loggtime-main-wrapper {
+    max-width: 40%;
+    width: 100%;
+}
+
+.log-time-modal .log-time-details .logtime-right-wrapper {
+    max-width: 60%;
+    width: 100%;
+}
+
+.log-time-modal .log-time-details .logtime-right-wrapper .hours-time-wrapper .ant-row.ant-form-item-row.css-dev-only-do-not-override-dkbvqv {
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+
+.log-time-modal .overview-modal-wrapper .logtime-left-wrapper .logtime-right-wrapper .hours-time-wrapper .ant-form-item-control {
+    max-width: 215px;
+}
+
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper {
+    max-width: 100%;
+    width: 100%;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper .logtime-right-wrapper,
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper .loggtime-main-wrapper {
+    max-width: 60%;
+    width: 100%;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .loggtime-main-wrapper {
+    display: flex;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logged-by-wrapper {
+    width: 100%;
+    max-width: 70%;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper .logtime-right-wrapper .date-time-wrapper {
+    display: flex;
+    white-space: nowrap;
+    align-items: center;
+}
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper .logtime-right-wrapper p.my-logged-time-edit {
+    min-width: 104px;
+}
+
+
+
+.log-time-modal .overview-modal-wrapper .log-time-details .logtime-left-wrapper .logtime-right-wrapper .date-time-wrapper .hours {
+    max-width: 89px;
+    margin-right: 2px;
+}

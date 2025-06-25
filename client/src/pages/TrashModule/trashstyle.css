@@ -1,0 +1,58 @@
+.main-trash-wrapper .trash-heaser-btn-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.main-trash-wrapper header.ant-layout-header.main-header {
+
+    padding-top: 0 !important;
+}
+
+.main-trash-wrapper .action-buttons>button {
+    margin-bottom: 0;
+    line-height: 17px;
+    padding: 9px 12px;
+}
+
+.main-trash-wrapper .action-buttons {
+    border-radius: 20px;
+    border: 1px solid;
+}
+
+.main-trash-wrapper {
+    height: 100%;
+}
+
+.main-trash-wrapper ul.tab_menu li {
+    padding: 10px 16px 10px;
+}
+
+/* .main-trash-wrapper .ant-spin-container .ant-table-content {
+    height: calc(100vh - 340px);
+    overflow: auto;
+} */
+
+.main-trash-wrapper .ant-table-content .ant-table-tbody tr :nth-child(5) {
+    min-width: unset;
+}
+
+.main-trash-wrapper .header_tabination {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: end;
+
+}
+
+.main-trash-wrapper .ant-card-body {
+    padding: 15px;
+}
+
+.project_title_main_div>span {
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    max-width: 100%;
+}
