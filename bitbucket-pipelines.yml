@@ -1,0 +1,43 @@
+image: node:14
+
+definitions:
+  caches:
+    sonar: ~/.sonar/cache
+  steps:
+    - step: &build_and_test
+        name: Build and Test
+        caches:
+          - node
+        script:
+          - npm install
+          #- npm run build
+          #- npm test
+    - step: &sonarqube_analysis
+        name: SonarQube Analysis
+        image: sonarsource/sonar-scanner-cli:latest
+        caches:
+          - sonar
+        script:
+          - sonar-scanner
+            -Dsonar.projectKey=jselsner_elsnerpms_AY4N0IuwfFtGl2GK4wKU
+            -Dsonar.host.url=$SONAR_HOST_URL
+            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.projectName="ElsnerPMS"
+            -Dsonar.projectVersion="0.1.0"
+            -Dsonar.sources=.
+            -Dsonar.javascript.lcov.reportPaths=client/coverage/lcov.info,socket/coverage/lcov.info
+            -Dsonar.inclusions="client/**/*,server/**/*.*,socket/**/*.*"
+            -Dsonar.exclusions="**/node_modules/**,client/build/**,server/node_modules/**,socket/node_modules/**"
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.qualitygate.wait=true
+            -X
+
+pipelines:
+  default:
+    - step: *build_and_test
+    - step: *sonarqube_analysis
+
+  branches:
+    master:
+      - step: *build_and_test
+      - step: *sonarqube_analysis

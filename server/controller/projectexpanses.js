@@ -1,0 +1,1540 @@
+const Joi = require("joi");
+// const ProjectExpanses = require("../models/projectExpanses");
+const { errorResponse, successResponse, catchBlockErrorResponse } = require("../helpers/response");
+// const { statusCode, messages } = require("../helpers/constants");
+const { statusCode } = require("../helpers/constant");
+const mongoose = require("mongoose");
+const _ = require("lodash");
+
+const ProjectExpanses = require("../models/projectexpanses");
+const {
+  getRefModelFromLoginUser,
+  getCreatedUpdatedDeletedByQuery,
+  generateCSV,
+} = require("../helpers/common");
+const { checkUserIsSuperAdmin } = require("./authentication");
+
+const {
+  getPagination,
+  getTotalCountQuery,
+  searchDataArr,
+  getAggregationPagination,
+} = require("../helpers/queryHelper");
+const messages = require("../helpers/messages");
+const multer = require("multer");
+const fs = require("fs");
+const configs = require("../configs");
+
+const path = require("path");
+const { newProjectExpecesMail, approveProjectExpecesMail, paidProjectExpecesMail } = require("../template/projectexpanss");
+const pmsClients = require("../models/pmsClients");
+
+
+const uploadPath = "public/projectexpense";
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    console.log(file, 'fileT');
+
+    cb(null, `${Date.now()}_${file.originalname}`);
+  },
+});
+
+const upload = multer({
+  storage,
+}).array("projectexpences", 5); // Match frontend key "projectexpences"
+
+
+
+
+exports.addProjectExpense = async (req, res) => {
+  try {
+    // ✅ Access Control: Allowed Roles & Static Employee ID
+    const allowedRoles = ["PC", "TL", "Admin", "Super Admin"];
+    const staticEmployeeId = process.env.ACCOUNTANT_ID
+      ;
+
+    if (!allowedRoles.includes(req.user.pms_role_id.role_name) && req.user._id.toString() !== staticEmployeeId) {
+      return errorResponse(res, statusCode.UNAUTHORIZED, "You do not have permission to add project expenses.");
+    }
+
+    // ✅ Validation Schema
+    const validationSchema = Joi.object({
+      project_id: Joi.string().required(),
+      purchase_request_details: Joi.string().required(),
+      cost_in_usd: Joi.number().required(),
+      need_to_bill_customer: Joi.boolean(),
+      billing_cycle: Joi.string().optional()
+      , is_recuring: Joi.boolean()
+
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    // ✅ Create New Project Expense
+    let data = new ProjectExpanses({
+      project_id: value?.project_id,
+      purchase_request_details: value?.purchase_request_details.replace(/\n/g, '<br>') || null,
+      cost_in_usd: value.cost_in_usd,
+      need_to_bill_customer: value.need_to_bill_customer,
+      createdBy: req.user._id,
+      updatedBy: req.user._id,
+      billing_cycle: value?.billing_cycle,
+      is_recuring: value?.is_recuring,
+      ...(await getRefModelFromLoginUser(req?.user)),
+
+    });
+
+    await data.save();
+    let emailDetails = await this.getReviewsDetailsForMail(data._id);
+    console.log(emailDetails, 'emailDetails');
+
+    await newProjectExpecesMail(emailDetails, req?.user)
+
+    return successResponse(res, statusCode.CREATED, messages.PROJECTEXPENSE_CREATED, data);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// const mongoose = require("mongoose");
+// const Joi = require("joi");
+// const ProjectExpenses = require("../models/ProjectExpenses"); // Adjust the path as needed
+// const { successResponse, errorResponse, catchBlockErrorResponse } = require("../utils/response");
+// const { getPagination, getAggregationPagination, getTotalCountQuery } = require("../utils/pagination");
+// const { checkUserIsSuperAdmin } = require("../utils/auth");
+
+// exports.getProjectExpenses = async (req, res) => {
+//     try {
+//         const validationSchema = Joi.object({
+//             limit: Joi.number().integer().min(0).default(10),
+//             pageNo: Joi.number().integer().min(1).default(1),
+//             search: Joi.string().allow("").optional(),
+//             sort: Joi.string().default("_id"),
+//             sortBy: Joi.string().default("desc"),
+//             _id: Joi.string().optional(),
+//             project_id: Joi.array().items(Joi.string()).optional(),
+//             technology: Joi.array().items(Joi.string()).optional(),
+//             manager_id: Joi.array().items(Joi.string()).optional(),
+//             acc_manager_id: Joi.array().items(Joi.string()).optional(),
+//             status: Joi.string().optional(),
+//             need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+//         });
+
+//         const { error, value } = validationSchema.validate(req.body);
+//         if (error) {
+//             return errorResponse(res, 400, error.details[0].message);
+//         }
+
+//         const pagination = getPagination({
+//             pageLimit: value.limit,
+//             pageNum: value.pageNo,
+//             sort: value.sort,
+//             sortBy: value.sortBy,
+//         });
+
+//         let orFilter = {};
+//         if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+//             orFilter = {
+//                 $or: [
+//                     { "manager._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                     { "acc_manager._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                     { "createdBy._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                 ],
+//             };
+//         }
+
+//         let matchQuery = {
+//             isDeleted: false,
+//             ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+//             ...(value.project_id?.length ? { "project._id": { $in: value.project_id.map(id => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value.technology?.length ? { "technology._id": { $in: value.technology.map(id => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value.manager_id?.length ? { "manager._id": { $in: value.manager_id.map(id => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value.acc_manager_id?.length ? { "acc_manager._id": { $in: value.acc_manager_id.map(id => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value.status ? { status: value.status } : {}),
+//             ...(value.need_to_bill_customer === "Yes" ? { need_to_bill_customer: true } :
+//                value.need_to_bill_customer === "No" ? { need_to_bill_customer: false } : {}),
+//         };
+
+//         if (value.search) {
+//             matchQuery["expense_details"] = { $regex: value.search, $options: "i" };
+//         }
+//         matchQuery = { ...matchQuery, ...orFilter };
+
+//         const mainQuery = [
+//             { $match: matchQuery },
+//             { $lookup: { from: "projects", localField: "project_id", foreignField: "_id", as: "project" } },
+//             { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+//             { $lookup: { from: "employees", localField: "manager_id", foreignField: "_id", as: "manager" } },
+//             { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+//             { $lookup: { from: "employees", localField: "acc_manager_id", foreignField: "_id", as: "acc_manager" } },
+//             { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+//             { 
+//                 $project: { 
+//                     _id: 1, 
+//                     project: 1, 
+//                     manager: 1, 
+//                     acc_manager: 1, 
+//                     status: 1, 
+//                     need_to_bill_customer: 1, 
+//                     expense_details: 1, 
+//                     createdAt: 1 
+//                 } 
+//             }
+//         ];
+
+//         const countQuery = getTotalCountQuery(mainQuery);
+//         const totalCountResult = await ProjectExpanses.aggregate(countQuery);
+//         const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+
+//         let listQuery = await getAggregationPagination(mainQuery, pagination);
+//         let data = await ProjectExpanses.aggregate(listQuery);
+
+//         return successResponse(res, 200, "Expenses list retrieved successfully", data, { total: totalCount });
+//     } catch (error) {
+//         return catchBlockErrorResponse(res, error.message);
+//     }
+// };
+
+
+// exports.getProjectExpenses = async (req, res) => {
+//     try {
+//       const validationSchema = Joi.object({
+//         limit: Joi.number().integer().min(0).default(10),
+//         pageNo: Joi.number().integer().min(1).default(1),
+//         search: Joi.string().allow("").optional(),
+//         sort: Joi.string().default("_id"),
+//         sortBy: Joi.string().default("desc"),
+//         _id: Joi.string().optional(),
+//         project_id: Joi.array().items(Joi.string()).optional(),
+//         technology: Joi.array().items(Joi.string()).optional(),
+//         manager_id: Joi.array().items(Joi.string()).optional(),
+//         acc_manager_id: Joi.array().items(Joi.string()).optional(),
+//         priority: Joi.string().optional(),
+//         status: Joi.string().optional(),
+//         need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+//       });
+
+//       const { error, value } = validationSchema.validate(req.body);
+//       if (error) {
+//         return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+//       }
+
+//       const pagination = getPagination({
+//         pageLimit: value.limit,
+//         pageNum: value.pageNo,
+//         sort: value.sort,
+//         sortBy: value.sortBy,
+//       });
+
+//       let orFilter = {};
+//       if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+//         orFilter = {
+//           $or: [
+//             { "manager._id": new mongoose.Types.ObjectId(req.user._id) },
+//             { "acc_manager._id": new mongoose.Types.ObjectId(req.user._id) },
+//             { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
+//             { "project.assignees": new mongoose.Types.ObjectId(req.user._id) },
+//           ],
+//         };
+//       }
+
+//       let matchQuery = {
+//         isDeleted: false,
+//         ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
+//         ...(value.priority && { priority: value.priority }),
+//         ...(value.status && { status: value.status }),
+
+//         ...(value.technology?.length && {
+//           "technology._id": { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) },
+//         }),
+
+//         ...(value.manager_id?.length && {
+//           "manager._id": { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+//         }),
+
+//         ...(value.acc_manager_id?.length && {
+//           "acc_manager._id": { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+//         }),
+
+//         ...(value.project_id?.length && {
+//           "project._id": { $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s)) },
+//         }),
+//       };
+
+//       // Handling `need_to_bill_customer` filter
+//       if (value.need_to_bill_customer === "Yes") {
+//         matchQuery.need_to_bill_customer = true;
+//       } else if (value.need_to_bill_customer === "No") {
+//         matchQuery.need_to_bill_customer = false;
+//       }
+
+//       if (value.search) {
+//         matchQuery = {
+//           ...matchQuery,
+//           ...searchDataArr(
+//             ["complaint", ...(value.isSearch ? [] : ["manager.full_name", "acc_manager.full_name", "project.title"])],
+//             value.search
+//           ),
+//         };
+//       }
+
+//       matchQuery = { ...matchQuery, ...orFilter };
+
+//       const mainQuery = [
+//         {
+//           $lookup: {
+//             from: "projects",
+//             let: { project_id: "$project_id" },
+//             pipeline: [
+//               { $match: { $expr: { $and: [{ $eq: ["$_id", "$$project_id"] }, { $eq: ["$isDeleted", false] }] } } },
+//             ],
+//             as: "project",
+//           },
+//         },
+//         { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+
+//         {
+//           $lookup: {
+//             from: "projecttechs",
+//             let: { technology: "$project.technology" },
+//             pipeline: [
+//               { $match: { $expr: { $and: [{ $in: ["$_id", "$$technology"] }, { $eq: ["$isDeleted", false] }] } } },
+//             ],
+//             as: "technology",
+//           },
+//         },
+
+//         {
+//           $lookup: {
+//             from: "employees",
+//             let: { manager: "$project.manager" },
+//             pipeline: [
+//               {
+//                 $match: {
+//                   $expr: {
+//                     $and: [
+//                       { $eq: ["$_id", "$$manager"] },
+//                       { $eq: ["$isDeleted", false] },
+//                       { $eq: ["$isSoftDeleted", false] },
+//                       { $eq: ["$isActivate", true] },
+//                     ],
+//                   },
+//                 },
+//               },
+//             ],
+//             as: "manager",
+//           },
+//         },
+//         { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+
+//         {
+//           $lookup: {
+//             from: "employees",
+//             let: { acc_manager: "$project.acc_manager" },
+//             pipeline: [
+//               {
+//                 $match: {
+//                   $expr: {
+//                     $and: [
+//                       { $eq: ["$_id", "$$acc_manager"] },
+//                       { $eq: ["$isDeleted", false] },
+//                       { $eq: ["$isSoftDeleted", false] },
+//                       { $eq: ["$isActivate", true] },
+//                     ],
+//                   },
+//                 },
+//               },
+//             ],
+//             as: "acc_manager",
+//           },
+//         },
+//         { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+
+//         ...(await getCreatedUpdatedDeletedByQuery()),
+//         { $match: matchQuery },
+//         {
+//           $project: {
+//             _id: 1,
+//             project: { _id: 1, title: 1, manager: 1, acc_manager: 1, technology: 1 },
+//             manager: { _id: 1, full_name: 1, emp_img: 1 },
+//             acc_manager: { _id: 1, full_name: 1, emp_img: 1 },
+//             technology: { _id: 1, project_tech: 1 },
+//             createdBy: { _id: 1, full_name: 1, emp_img: 1, client_img: 1 },
+//             project_id: 1,
+//             purchase_request_details:1,
+//             client_name: 1,
+//             need_to_bill_customer: 1,
+//             client_nda_sign: 1,
+//             updatedAt: 1,
+//             createdAt: 1,
+//             isDeleted: 1,
+//             cost_in_usd:1,
+//             status:1
+//           },
+//         },
+//       ];
+
+//       const countQuery = getTotalCountQuery(mainQuery);
+//       const totalCountResult = await ProjectExpanses.aggregate(countQuery);
+//       const totalCount = totalCountResult[0]?.count || 0;
+
+//       let listQuery = value.isSearch ? [...mainQuery, { $sort: pagination.sort }] : await getAggregationPagination(mainQuery, pagination);
+//       let data = await ProjectExpanses.aggregate(listQuery);
+
+//       const metaData = !value.isSearch
+//         ? {
+//             total: totalCount,
+//             limit: pagination.limit,
+//             pageNo: pagination.page,
+//             totalPages: pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+//             currentPage: pagination.page,
+//           }
+//         : {};
+
+//       return successResponse(res, statusCode.SUCCESS, messages.LISTING, value._id ? data[0] : data, !value._id && metaData);
+//     } catch (error) {
+//       console.log("🚀 ~ exports.getProjectExpenses ~ error:", error);
+//       return catchBlockErrorResponse(res, error.message);
+//     }
+//   };
+
+
+exports.getProjectExpenses = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      limit: Joi.number().integer().min(0).default(10),
+      pageNo: Joi.number().integer().min(1).default(1),
+      search: Joi.string().allow("").optional(),
+      sort: Joi.string().default("_id"),
+      sortBy: Joi.string().default("desc"),
+      _id: Joi.string().optional(),
+      project_id: Joi.array().items(Joi.string()).optional(),
+      technology: Joi.array().items(Joi.string()).optional(),
+      manager_id: Joi.array().items(Joi.string()).optional(),
+      acc_manager_id: Joi.array().items(Joi.string()).optional(),
+      priority: Joi.string().optional(),
+      status: Joi.string().optional(),
+      need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    const pagination = getPagination({
+      pageLimit: value.limit,
+      pageNum: value.pageNo,
+      sort: value.sort,
+      sortBy: value.sortBy,
+    });
+
+    const userId = req.user._id;
+    const accountantIds = process.env.ACCOUNTANT_ID;
+    // const userRole = req.user.pms_role_id.role_name
+    // ;  // Assuming role is stored in req.user.role
+
+    // // Check if the user exists in `pmsclients` and is an accountant
+    const isAccountant = await pmsClients.exists({ _id: userId, _id: { $in: accountantIds } });
+
+
+    // const hasFullAccess = ["Admin", "Super Admin"].includes(userRole) || accountantIds.includes(userId);
+
+
+    // const userId = req.user._id;
+    const userRole = req.user.pms_role_id?.role_name; // Ensure role_name exists
+    // const accountantIds = process.env.ACCOUNTANT_ID?.split(",") || []; // Ensure it's an array
+
+    const allowedRoles = ["Admin", "Super Admin"];
+    const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
+
+    const hasFullAccess = allowedRoles.includes(userRole) || accountantIds.includes(userId);
+    const hasLimitedAccess = restrictedRoles.includes(userRole);
+
+    let orFilter = {};
+
+    if (!isAccountant && !(await checkUserIsSuperAdmin(userId))) {
+      orFilter = {
+        $or: [
+          { "manager._id": new mongoose.Types.ObjectId(userId) },
+          { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
+          { "createdBy": new mongoose.Types.ObjectId(userId) },
+          { "project.assignees": new mongoose.Types.ObjectId(userId) },
+        ],
+      };
+    }
+
+    let matchQuery = {
+      isDeleted: false,
+      ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
+      ...(value.priority && { priority: value.priority }),
+      ...(value.status && { status: value.status }),
+      ...(value.technology?.length && {
+        "technology._id": { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) },
+      }),
+      ...(value.manager_id?.length && {
+        "manager._id": { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+      }),
+      ...(value.acc_manager_id?.length && {
+        "acc_manager._id": { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+      }),
+      ...(value.project_id?.length && {
+        "project._id": { $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s)) },
+      }),
+    };
+
+    // Handling `need_to_bill_customer` filter
+    if (value.need_to_bill_customer === "Yes") {
+      matchQuery.need_to_bill_customer = true;
+    } else if (value.need_to_bill_customer === "No") {
+      matchQuery.need_to_bill_customer = false;
+    }
+
+    if (value.search) {
+      matchQuery = {
+        ...matchQuery,
+        ...searchDataArr(
+          ["complaint", ...(value.isSearch ? [] : ["manager.full_name", "acc_manager.full_name", "project.title"])],
+          value.search
+        ),
+      };
+    }
+
+    // Apply filters based on role
+    if (!hasFullAccess) {
+      if (hasLimitedAccess) {
+        // TL and PC can only see their own created data
+        orFilter = {
+          $or: [
+            { "createdBy": new mongoose.Types.ObjectId(userId) },
+          ],
+        };
+      } else {
+        // Other users can see data related to them
+        orFilter = {
+          $or: [
+            { "manager._id": new mongoose.Types.ObjectId(userId) },
+            { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
+            { "createdBy": new mongoose.Types.ObjectId(userId) },
+            { "project.assignees": new mongoose.Types.ObjectId(userId) },
+          ],
+        };
+      }
+    }
+    matchQuery = { ...matchQuery, ...orFilter };
+
+    const mainQuery = [
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "projects",
+          let: { project_id: "$project_id" },
+          pipeline: [
+            { $match: { $expr: { $and: [{ $eq: ["$_id", "$$project_id"] }, { $eq: ["$isDeleted", false] }] } } },
+          ],
+          as: "project",
+        },
+      },
+      { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "projecttechs",
+          let: { technology: "$project.technology" },
+          pipeline: [
+            { $match: { $expr: { $and: [{ $in: ["$_id", "$$technology"] }, { $eq: ["$isDeleted", false] }] } } },
+          ],
+          as: "technology",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "employees",
+          let: { manager: "$project.manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "manager",
+        },
+      },
+      { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "employees",
+          let: { acc_manager: "$project.acc_manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$acc_manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "acc_manager",
+        },
+      },
+      { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+
+      ...(await getCreatedUpdatedDeletedByQuery()),
+      {
+        $project: {
+          _id: 1,
+          project: { _id: 1, title: 1, manager: 1, acc_manager: 1, technology: 1 },
+          manager: { _id: 1, full_name: 1, emp_img: 1 },
+          acc_manager: { _id: 1, full_name: 1, emp_img: 1 },
+          technology: { _id: 1, project_tech: 1 },
+          createdBy: { _id: 1, full_name: 1, emp_img: 1, client_img: 1 },
+          project_id: 1,
+          purchase_request_details: 1,
+          client_name: 1,
+          need_to_bill_customer: 1,
+          client_nda_sign: 1,
+          updatedAt: 1,
+          createdAt: 1,
+          isDeleted: 1,
+          cost_in_usd: 1,
+          status: 1,
+          projectexpences: 1,
+          details: 1,
+          billing_cycle: 1,
+          is_recuring: 1,
+          nature_Of_expense:1
+        },
+      },
+    ];
+
+    const countQuery = getTotalCountQuery(mainQuery);
+    const totalCountResult = await ProjectExpanses.aggregate(countQuery);
+    const totalCount = totalCountResult[0]?.count || 0;
+
+    let listQuery = value.isSearch
+      ? [...mainQuery, { $sort: pagination.sort }]
+      : await getAggregationPagination(mainQuery, pagination);
+    let data = await ProjectExpanses.aggregate(listQuery);
+
+    const metaData = !value.isSearch
+      ? {
+        total: totalCount,
+        limit: pagination.limit,
+        pageNo: pagination.page,
+        totalPages: pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+        currentPage: pagination.page,
+      }
+      : {};
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, value._id ? data[0] : data, !value._id && metaData);
+  } catch (error) {
+    console.log("🚀 ~ exports.getProjectExpenses ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+
+
+// exports.getProjectExpenses = async (req, res) => {
+//     try {
+//         const validationSchema = Joi.object({
+//             limit: Joi.number().integer().min(0).default(10),
+//             pageNo: Joi.number().integer().min(1).default(1),
+//             search: Joi.string().allow("").optional(),
+//             sort: Joi.string().default("_id"),
+//             sortBy: Joi.string().default("desc"),
+//             _id: Joi.string().optional(),
+//             project_id: Joi.array().optional(),
+//             technology: Joi.array().optional(),
+//             manager_id: Joi.array().optional(),
+//             acc_manager_id: Joi.array().optional(),
+//             status: Joi.string().optional(),
+//             need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+//         });
+
+//         const { error, value } = validationSchema.validate(req.body);
+//         if (error) {
+//             return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+//         }
+
+//         const pagination = getPagination({
+//             pageLimit: value?.limit,
+//             pageNum: value?.pageNo,
+//             sort: value?.sort,
+//             sortBy: value?.sortBy,
+//         });
+
+//         let orFilter = {};
+//         if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+//             orFilter = {
+//                 $or: [
+//                     { "manager._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                     { "acc_manager._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                     { "createdBy._id": new mongoose.Types.ObjectId(req?.user?._id) },
+//                 ],
+//             };
+//         }
+
+//         let matchQuery = {
+//             isDeleted: false,
+//             ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+//             ...(value?.project_id?.length ? { "project._id": { $in: value.project_id.map((id) => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value?.technology?.length ? { "technology._id": { $in: value.technology.map((id) => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value?.manager_id?.length ? { "manager._id": { $in: value.manager_id.map((id) => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value?.acc_manager_id?.length ? { "acc_manager._id": { $in: value.acc_manager_id.map((id) => new mongoose.Types.ObjectId(id)) } } : {}),
+//             ...(value?.status ? { status: value.status } : {}),
+//             ...(value?.need_to_bill_customer === "Yes" ? { need_to_bill_customer: true } :
+//                value?.need_to_bill_customer === "No" ? { need_to_bill_customer: false } : {}),
+//         };
+
+//         if (value?.search) {
+//             matchQuery["expense_details"] = { $regex: value.search, $options: "i" };
+//         }
+//         matchQuery = { ...matchQuery, ...orFilter };
+
+//         const mainQuery = [
+//             { $lookup: { from: "projects", localField: "project_id", foreignField: "_id", as: "project" } },
+//             { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+//             { $lookup: { from: "employees", localField: "manager_id", foreignField: "_id", as: "manager" } },
+//             { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+//             { $lookup: { from: "employees", localField: "acc_manager_id", foreignField: "_id", as: "acc_manager" } },
+//             { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+//             { $match: matchQuery },
+//             { $project: { _id: 1, project: 1, manager: 1, acc_manager: 1, status: 1, need_to_bill_customer: 1, expense_details: 1, createdAt: 1 } },
+//         ];
+
+//         const countQuery = getTotalCountQuery(mainQuery);
+//         const totalCountResult = await ProjectExpanses.aggregate(countQuery);
+//         const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+
+//         let listQuery = await getAggregationPagination(mainQuery, pagination);
+//         let data = await ProjectExpanses.aggregate(listQuery);
+
+//         return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, { total: totalCount });
+//     } catch (error) {
+//         return catchBlockErrorResponse(res, error.message);
+//     }
+// };
+
+
+
+
+// exports.getProjectExpenses = async (req, res) => {
+//     try {
+//         // Allowed roles & Static Accountant ID
+//         const staticAccountantId = process.env.ACCOUNTANT_ID?.split(",") || []; // Convert to array if stored as comma-separated string
+//         const userRole = req.user.pms_role_id.role_name;
+//         const userId = req.user._id.toString();
+//         const isAdmin = ["Admin", "Super Admin"].includes(userRole) || staticAccountantId.includes(userId);
+
+//         // Extracting params ID (for fetching single expense)
+//         const expenseId = req.body._id ? new mongoose.Types.ObjectId(req.body._id) : null;
+
+//         // Request Validation
+//         const validationSchema = Joi.object({
+//             limit: Joi.number().integer().min(0).default(10),
+//             pageNo: Joi.number().integer().min(1).default(1),
+//             search: Joi.string().allow("").optional(),
+//             sort: Joi.string().default("_id"),
+//             sortBy: Joi.string().valid("asc", "desc").default("desc"),
+//             project_id: Joi.array().optional(),
+//             status: Joi.string().valid("Pending", "Approved", "Rejected", "Paid").optional(),
+//             need_to_bill_customer: Joi.string().valid("yes", "no").optional(),
+//             _id: Joi.string().allow("").optional(),
+//                  technology: Joi.array().optional(),
+//                  manager_id: Joi.array().optional(),
+//                  acc_manager_id: Joi.array().optional(),
+
+//         });
+
+//         const { error, value } = validationSchema.validate(req.body);
+//         if (error) {
+//             return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+//         }
+
+//         // Pagination & Sorting
+//         const pagination = getPagination({
+//             pageLimit: value?.limit,
+//             pageNum: value?.pageNo,
+//             sort: value?.sort,
+//             sortBy: value?.sortBy,
+//         });
+
+//         // Role-Based Filtering
+//         let matchQuery = { isDeleted: false };
+
+//         // If a specific expense ID is provided, filter by that
+//         if (expenseId) {
+//             matchQuery["_id"] = expenseId;
+//         }
+
+//         // Only allow all data access for Admins, Super Admins, and Accountant (static ID)
+//         if (!isAdmin && !expenseId) {
+//             matchQuery["createdBy"] = new mongoose.Types.ObjectId(userId);
+//         }
+
+//         // Additional Filters
+//         if (value?.project_id?.length > 0) {
+//             matchQuery["project_id"] = { $in: value.project_id.map((id) => new mongoose.Types.ObjectId(id)) };
+//         }
+//         if (value?.status) {
+//             matchQuery["status"] = value.status;
+//         }
+//         if (value?.search) {
+//             matchQuery["purchase_request_details"] = { $regex: value.search, $options: "i" };
+//         }
+//         if (value?.need_to_bill_customer) {
+//             matchQuery["need_to_bill_customer"] = value.need_to_bill_customer === "yes";
+//         }
+
+//         // Aggregation Pipeline
+//         const mainQuery = [
+//             { $match: matchQuery },
+//             {
+//                 $lookup: {
+//                     from: "projects",
+//                     let: { project_id: "$project_id" },
+//                     pipeline: [
+//                         { $match: { $expr: { $eq: ["$_id", "$$project_id"] }, isDeleted: false } },
+//                         { $project: { _id: 1, title: 1 } }
+//                     ],
+//                     as: "project",
+//                 },
+//             },
+//             { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+//             {
+//                 $lookup: {
+//                     from: "employees",
+//                     let: { createdBy: "$createdBy" },
+//                     pipeline: [
+//                         { $match: { $expr: { $eq: ["$_id", "$$createdBy"] }, isDeleted: false } },
+//                         { $project: { _id: 1, full_name: 1, emp_img: 1 } }
+//                     ],
+//                     as: "createdBy",
+//                 },
+//             },
+//             { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
+//             {
+//                 $project: {
+//                     _id: 1,
+//                     project: { _id: 1, title: 1 },
+//                     purchase_request_details: 1,
+//                     cost_in_usd: 1,
+//                     need_to_bill_customer: 1,
+//                     status: 1,
+//                     createdBy: { _id: 1, full_name: 1, emp_img: 1 },
+//                     createdAt: 1,
+//                     updatedAt: 1,
+//                 },
+//             },
+//         ];
+
+//         // If fetching a single record, return it directly
+//         if (expenseId) {
+//             const expenseData = await ProjectExpanses.aggregate(mainQuery);
+//             if (!expenseData.length) {
+//                 return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
+//             }
+//             return successResponse(res, statusCode.SUCCESS, "Expense details", expenseData[0]);
+//         }
+
+//         // Get Total Count for Pagination
+//         const countQuery = getTotalCountQuery(mainQuery);
+//         const totalCountResult = await ProjectExpanses.aggregate(countQuery);
+//         const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+
+//         // Apply Pagination
+//         const listQuery = await getAggregationPagination(mainQuery, pagination);
+//         const data = await ProjectExpanses.aggregate(listQuery);
+
+//         // Pagination Metadata
+//         let metaData = {
+//             total: totalCount,
+//             limit: pagination.limit,
+//             pageNo: pagination.page,
+//             totalPages: pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+//             currentPage: pagination.page,
+//         };
+
+//         return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, metaData);
+//     } catch (error) {
+//         return catchBlockErrorResponse(res, error.message);
+//     }
+// };
+
+// exports.updateProjectExpense = async (req, res) => {
+
+// };
+
+
+// tt
+exports.updateProjectExpense = async (req, res) => {
+  try {
+    upload(req, res, async (err) => {
+      if (err) {
+        console.error("File upload error:", err);
+        return res.status(400).json({
+          status: "error",
+          message: err.message,
+        });
+      }
+
+      try {
+        const staticAccountantId = process.env.ACCOUNTANT_ID?.split(",") || [];
+        const userRole = req.user.pms_role_id.role_name;
+        const userId = req.user._id.toString();
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+          return errorResponse(res, statusCode.BAD_REQUEST, "Invalid expense ID");
+        }
+        const expenseId = new mongoose.Types.ObjectId(req.params.id);
+
+        // Fetch existing project expense
+        const existingExpense = await ProjectExpanses.findById(expenseId);
+        if (!existingExpense) {
+          return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
+        }
+
+        const isCreator = existingExpense.createdBy.toString() === userId;
+        const isAdmin = userRole === "Admin";
+        const isSuperAdmin = userRole === "Super Admin";
+        const isAccountant = staticAccountantId.includes(userId);
+
+        // Request Validation Schema
+        const validationSchema = Joi.object({
+          project_id: Joi.string().optional(),
+          purchase_request_details: Joi.string().optional(),
+          cost_in_usd: Joi.number().optional(),
+          need_to_bill_customer: Joi.boolean().optional(),
+          status: Joi.string().valid("Approved", "Rejected", "Paid", "Pending").optional(),
+          details: Joi.string().optional(),
+          nature_Of_expense: Joi.string().optional(),
+
+          billing_cycle: Joi.string().optional(),
+          is_recuring: Joi.boolean(),
+        });
+
+        const { error, value } = validationSchema.validate(req.body);
+        if (error) {
+          return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+        }
+
+        // Preserve existing file names
+        let fileNames = existingExpense.projectexpences || [];
+
+        // If new files are uploaded, extract only the file names
+        if (req.files && req.files.length > 0) {
+          const uploadedFileNames = req.files.map((file) => path.basename(file.path));
+          fileNames = [...fileNames, ...uploadedFileNames]; // Append new file names
+        }
+
+        // Role-based permission logic
+        let updateFields = {
+          updatedBy: userId,
+          billing_cycle: value?.billing_cycle,
+          is_recuring: value?.is_recuring
+          ,
+        };
+
+        if (isSuperAdmin) {
+          updateFields = { ...value, projectexpences: fileNames, updatedBy: userId, details: value.details };
+        } else if (isAdmin) {
+          if (value.status && ["Approved", "Rejected"].includes(value.status)) {
+            updateFields.status = value.status;
+          } else {
+            return errorResponse(res, statusCode.FORBIDDEN, "Admins can only update status to Approved or Rejected");
+          }
+        } else if (isAccountant) {
+          if (value.status === "Paid") {
+            updateFields.status = value.status;
+            updateFields.projectexpences = fileNames;
+            updateFields.details = value.details;
+            updateFields.nature_Of_expense = value.nature_Of_expense;
+
+            
+          } else {
+            return errorResponse(res, statusCode.FORBIDDEN, "Accountants can only update status to Paid");
+          }
+        } else if (isCreator) {
+          const { status, ...otherFields } = value;
+          updateFields = { ...otherFields, updatedBy: userId };
+          
+        } else {
+          return errorResponse(res, statusCode.FORBIDDEN, "You do not have permission to update this expense");
+        }
+
+        // Update the expense
+        const updatedExpense = await ProjectExpanses.findByIdAndUpdate(expenseId, updateFields, { new: true });
+
+        if (!updatedExpense) {
+          return errorResponse(res, statusCode.BAD_REQUEST, "Failed to update expense");
+        }
+
+        // Send Email Notification
+        if (value.status && ["Approved"].includes(value.status)) {
+          let emailDetails = await this.getReviewsDetailsForMail(updatedExpense._id);
+          await approveProjectExpecesMail(emailDetails, req.user)
+
+
+        }
+        if (value.status && ["Paid"].includes(value.status)) {
+          let emailDetails = await this.getReviewsDetailsForMail(updatedExpense._id);
+          await paidProjectExpecesMail(emailDetails, req.user)
+
+        }
+
+
+        return successResponse(res, statusCode.SUCCESS, messages.PROJECTEXPENSE_UPDATED, updatedExpense);
+      } catch (error) {
+        console.error("Error in updateProjectExpense:", error);
+        return catchBlockErrorResponse(res, error.message);
+      }
+    });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return catchBlockErrorResponse(res, "An unexpected error occurred");
+  }
+};
+
+
+
+
+
+// exports.updateProjectExpense = async (req, res) => {
+//     try {
+//         const staticAccountantId = process.env.ACCOUNTANT_ID;
+//         const userRole = req.user.pms_role_id.role_name;
+//         const userId = req.user._id.toString();
+
+//         // Fetch existing project expense
+//         const existingExpense = await ProjectExpanses.findById(req.params.id);
+//         if (!existingExpense) {
+//             return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
+//         }
+
+//         const isCreator = existingExpense.createdBy.toString() === userId;
+//         const isAdmin = userRole === "Admin";
+//         const isSuperAdmin = userRole === "Super Admin";
+//         const isAccountant = userId === staticAccountantId;
+
+//         // Request Validation Schema
+//         const validationSchema = Joi.object({
+//             project_id: Joi.string().optional(),
+//             purchase_request_details: Joi.string().optional(),
+//             cost_in_usd: Joi.number().optional(),
+//             need_to_bill_customer: Joi.boolean().optional(),
+//             status: Joi.string().valid("Approved", "Rejected", "Paid").optional(),
+//         });
+
+//         const { error, value } = validationSchema.validate(req.body);
+//         if (error) {
+//             return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+//         }
+
+//         // Role-based permission logic
+//         let updateFields = { updatedBy: userId };
+
+//         if (isSuperAdmin) {
+//             // Super Admin can update everything
+//             updateFields = { ...value, updatedBy: userId };
+//         } else if (isAdmin) {
+//             // Admin can update only status (Approved, Rejected)
+//             if (value.status && ["Approved", "Rejected"].includes(value.status)) {
+//                 updateFields.status = value.status;
+//             } else {
+//                 return errorResponse(res, statusCode.FORBIDDEN, "Admins can only update status to Approved or Rejected");
+//             }
+//         } else if (isAccountant) {
+//             // Accountant can update only status (Paid)
+//             if (value.status === "Paid") {
+//                 updateFields.status = value.status;
+//             } else {
+//                 return errorResponse(res, statusCode.FORBIDDEN, "Accountant can only update status to Paid");
+//             }
+//         } else if (isCreator) {
+//             // Creator can update all fields except status
+//             const { status, ...otherFields } = value;
+//             updateFields = { ...otherFields, updatedBy: userId };
+//             if (status) {
+//                 return errorResponse(res, statusCode.FORBIDDEN, "Creators cannot update status");
+//             }
+//         } else {
+//             return errorResponse(res, statusCode.FORBIDDEN, "You do not have permission to update this expense");
+//         }
+
+//         // Update the expense
+//         const updatedExpense = await ProjectExpanses.findByIdAndUpdate(req.params.id, updateFields, { new: true });
+
+//         if (!updatedExpense) {
+//             return errorResponse(res, statusCode.BAD_REQUEST, "Failed to update expense");
+//         }
+
+
+//         let emailDetails = await this.getReviewsDetailsForMail(data._id);
+//         // await newReviewsMail(emailDetails)
+
+//         // Send email if status is updated to Approved or Rejected
+//         // if (value.status && ["Approved", "Paid"].includes(value.status)) {
+//         //     // const emailSubject = `Project Expense ${value.status}`;
+//         //     // const emailBody = `Hello, your project expense request has been ${value.status}.`;
+//         //     // await sendEmail(existingExpense.createdBy.email, emailSubject, emailBody);
+//         // }
+
+//         return successResponse(res, statusCode.SUCCESS, "Project Expense updated successfully", updatedExpense);
+//     } catch (error) {
+//         return catchBlockErrorResponse(res, error.message);
+//     }
+// };
+
+
+
+exports.deleteProjectExpense = async (req, res) => {
+  try {
+    const staticAccountantId = process.env.ACCOUNTANT_ID;
+    const userRole = req.user.pms_role_id.role_name;
+    const userId = req.user._id.toString();
+
+    // Fetch existing project expense
+    const existingExpense = await ProjectExpanses.findById(req.params.id);
+    if (!existingExpense) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
+    }
+
+    const isCreator = existingExpense.createdBy.toString() === userId;
+    const isAllowedRole = ["Super Admin"].includes(userRole);
+    const isAccountant = userId === staticAccountantId;
+
+    // Only allow deletion if user is Admin, SuperAdmin, PC, TL, Creator, or Accountant
+    if (!isAllowedRole && !isCreator && !isAccountant) {
+      return errorResponse(res, statusCode.FORBIDDEN, messages.PROJECTEXPENSE_DELETED_DENIED);
+    }
+
+    // Soft delete: Set `isDeleted: true`
+    existingExpense.isDeleted = true;
+    existingExpense.updatedBy = userId;
+    await existingExpense.save();
+
+    return successResponse(res, statusCode.SUCCESS, messages.PROJECTEXPENSE_DELETED, existingExpense);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+exports.getReviewsDetailsForMail = async (reviewId) => {
+  try {
+    const mainQuery = [
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(reviewId),
+        },
+      },
+      {
+        $lookup: {
+          from: "projects",
+          let: { project_id: "$project_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "project",
+        },
+      },
+      {
+        $unwind: {
+          path: "$project",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "projecttechs",
+          let: { technology: "$project.technology" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$technology"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "technology",
+        },
+      },
+      {
+        $unwind: {
+          path: "$technology",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { manager: "$project.manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "manager",
+        },
+      },
+      {
+        $unwind: {
+          path: "$manager",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { acc_manager: "$project.acc_manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$acc_manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "acc_manager",
+        },
+      },
+      {
+        $unwind: {
+          path: "$acc_manager",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { manager: "$project.manager.reporting_manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "managers_rm",
+        },
+      },
+      {
+        $unwind: {
+          path: "$managers_rm",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { acc_manager: "$project.acc_manager.reporting_manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$acc_manager"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "acc_managers_rm",
+        },
+      },
+      {
+        $unwind: {
+          path: "$acc_managers_rm",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "employees",
+          let: { createdByRM: "$createdBy.reporting_manager" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$createdByRM"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "createdBy_rm",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdBy_rm",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      ...(await getCreatedUpdatedDeletedByQuery()),
+
+      {
+        $project: {
+          _id: 1,
+          project: {
+            _id: 1,
+            title: 1,
+            manager: 1,
+            acc_manager: 1,
+            technology: 1,
+          },
+          manager: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            email: 1,
+          },
+          managers_rm: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            email: 1,
+          },
+          acc_managers_rm: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            email: 1,
+          },
+          acc_manager: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            email: 1,
+          },
+          technology: {
+            _id: 1,
+            project_tech: 1,
+          },
+          createdBy: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            client_img: 1,
+            email: 1,
+          },
+          createdBy_rm: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            client_img: 1,
+            email: 1,
+          },
+          updatedBy: {
+            _id: 1,
+            full_name: 1,
+            emp_img: 1,
+            client_img: 1,
+            email: 1,
+          },
+          project_id: 1,
+          client_name: 1,
+          need_to_bill_customer: 1,
+          purchase_request_details: 1,
+          cost_in_usd: 1,
+          // feedback: 1,
+          // feedback_type: 1,
+          // client_nda_sign: 1,
+          updatedAt: 1,
+          createdAt: 1,
+          billing_cycle: 1, is_recuring: 1
+        },
+      },
+    ];
+
+    const data = await ProjectExpanses.aggregate(mainQuery);
+    return data[0];
+  } catch (error) {
+    console.log("🚀 ~ exports.getReviewsDetailsForMail= ~ error:", error)
+  }
+};
+
+
+
+
+exports.exportProjectExpenses = async (req, res) => {
+  try {
+    let result = [];
+    const validationSchema = Joi.object({
+
+      isExport: Joi.boolean().default(false),
+      exportFileType: Joi.string()
+        .optional()
+        .valid("csv", "xlsx")
+        .insensitive()
+        .default("csv"),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    const data = await ProjectExpanses.aggregate([
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: "projects", // Name of the Projects collection
+          localField: "project_id", // Field in ProjectExpenses
+          foreignField: "_id", // Field in Projects collection
+          as: "projectDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$projectDetails",
+          preserveNullAndEmptyArrays: true, // In case project is missing
+        },
+      },
+      {
+        $lookup: {
+          from: "employees", // Name of the Projects collection
+          localField: "createdBy", // Field in ProjectExpenses
+          foreignField: "_id", // Field in Projects collection
+          as: "createdDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdDetails",
+          preserveNullAndEmptyArrays: true, // In case project is missing
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$projectDetails.title", // Get project title
+          cost: "$cost_in_usd",
+          need_to_bill_customer: "$need_to_bill_customer",
+          'CreatedBy': "$createdDetails.full_name",
+          "createdAt": "$createdAt",
+          status: "$status",
+          billing_cycle: "$billing_cycle",
+          purchase_request_details: "$purchase_request_details",
+          details: "$details",
+          nature_Of_expense:'$nature_Of_expense'
+        },
+        
+      },
+      {
+        $sort: { createdAt: -1 } // Descending order
+      }
+    ]).exec();
+
+    // Loop through each item in the data
+    for (let i = 0; i < data.length; i++) {
+      let item = data[i];
+      // console.log(item?.billing_cycle,'billing_cycle');
+
+      // Map the rest of the fields
+      result.push({
+        "Project Name": item?.projectName,
+        "Cost in USD": `$ ${item.cost}`,
+        "Need To Bill Customer": item.need_to_bill_customer ? 'Yes' : 'No',
+        "Creator": item?.CreatedBy,
+        "Creation Date": moment(item.createdAt).format('DD, MMM, YYYY'),
+        "Status": item?.status,
+        "Blling Cycle": item?.billing_cycle ? item?.billing_cycle : '-',
+        "Purchase Request Details": item?.purchase_request_details ? item?.purchase_request_details.replace(/<br\s*\/?>/g, '\n') : '-'
+        , 'Details': item?.details,
+        'Nature Of Expense': item?.nature_Of_expense?item?.nature_Of_expense:'-'
+      });
+    }
+
+    const csvFields = [
+      "Project Name", "Cost in USD", "Need To Bill Customer", "Creator", "Creation Date", "Status", "Blling Cycle", "Purchase Request Details", "Details","Nature Of Expense"
+    ];
+
+    const exportFileTypeLower = _.toLower(value.exportFileType);
+    console.log(exportFileTypeLower, 'exportFileTypeLower');
+    console.log('Step 0');
+
+    if (exportFileTypeLower === "csv") {
+      console.log('Step 1');
+
+      result = await generateCSV(result, csvFields);
+    }
+    console.log('Step 2', result);
+
+    //  else if (exportFileTypeLower === "xlsx") {
+    //   result = await generateXLSX(csvData);
+    //   // const linkSource = "data:text/csv;base64," + base64;
+    // }
+
+    return res.status(200).json({
+      status: "success",
+      message: "Project Expenses exported successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.log("🚀 ~ exports.exportPMSClientData= ~ error:", error);
+  }
+};

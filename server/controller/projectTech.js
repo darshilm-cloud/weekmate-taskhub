@@ -1,0 +1,248 @@
+const Joi = require("joi");
+const {
+  errorResponse,
+  successResponse,
+  catchBlockErrorResponse,
+} = require("../helpers/response");
+const mongoose = require("mongoose");
+const ProjectTechnologies = mongoose.model("projecttechs");
+const Employees = mongoose.model("employees");
+const {
+  getPagination,
+  getTotalCountQuery,
+  searchDataArr,
+} = require("../helpers/queryHelper");
+const configs = require("../configs");
+const messages = require("../helpers/messages");
+const { statusCode } = require("../helpers/constant");
+
+// Check is exists..
+exports.projectTechExists = async (projectTech, id = null) => {
+  try {
+    let isExist = false;
+    // const data = await ProjectTechnologies.findOne({
+    //   // project_tech: projectTech?.trim()?.toLowerCase(),
+    //   project_tech: { $regex: new RegExp(`^${projectTech}$`, "i") },
+    //   isDeleted: false,
+    //   ...(id
+    //     ? {
+    //         _id: { $ne: id },
+    //       }
+    //     : {}),
+    // });
+    // console.log("🚀 ~ exports.projectTechExists= ~ data:", data);
+    // if (data) isExist = true;
+
+    const data = await ProjectTechnologies.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          ...(id
+            ? {
+                _id: { $ne: new mongoose.Types.ObjectId(id) },
+              }
+            : {}),
+        },
+      },
+      {
+        $addFields: {
+          projectTechLower: { $toLower: "$project_tech" }, // Add a temporary field with lowercase title
+        },
+      },
+      {
+        $match: {
+          projectTechLower: projectTech.trim().toLowerCase(), // Match the lowercase title
+        },
+      },
+    ]);
+    if (data.length > 0) isExist = true;
+
+    return isExist;
+  } catch (error) {
+    console.log("🚀 ~ exports.projectTechExists= ~ error:", error);
+  }
+};
+
+//Add Project Tech:
+exports.addProjectTech = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      project_tech: Joi.string().required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, 400, error.details[0].message);
+    }
+
+    if (await this.projectTechExists(value.project_tech)) {
+      return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
+    } else {
+      let ProjectTechData = new ProjectTechnologies({
+        project_tech: value.project_tech,
+        createdBy: req.user._id,
+        updatedBy: req.user._id,
+      });
+      await ProjectTechData.save();
+      return successResponse(
+        res,
+        200,
+        "Data save sucessfully!",
+        ProjectTechData
+      );
+    }
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+//Get Project Tech:
+exports.getProjectTech = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      limit: Joi.number().integer().min(0).default(10),
+      pageNo: Joi.number().integer().min(1).default(1),
+      search: Joi.string().allow("").optional(),
+      sort: Joi.string().default("_id"),
+      sortBy: Joi.string().default("desc"),
+      _id: Joi.string().optional(),
+      isDropdown: Joi.boolean().default(false),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, 400, error.details[0].message);
+    }
+
+    const pagination = getPagination({
+      pageLimit: value.limit,
+      pageNum: value.pageNo,
+      sort: value.sort,
+      sortBy: value.sortBy,
+    });
+
+    let matchQuery = {
+      isDeleted: false,
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+    };
+    if (value.search) {
+      matchQuery = {
+        ...matchQuery,
+        ...searchDataArr(["project_tech"], value.search),
+      };
+    }
+
+    const mainQuery = [{ $match: matchQuery }];
+    const totalCountQuery = getTotalCountQuery(mainQuery);
+    const totalCountResult = await ProjectTechnologies.aggregate(
+      totalCountQuery
+    );
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+
+    let projectTech = await ProjectTechnologies.find(matchQuery)
+      .limit(pagination.limit)
+      .skip(pagination.skip)
+      .sort(pagination.sort);
+
+    if (value.isDropdown) {
+      projectTech = await ProjectTechnologies.find(matchQuery).sort(
+        pagination.sort
+      );
+    }
+
+    const metaData = {
+      total: totalCount,
+      limit: pagination.limit,
+      pageNo: pagination.page,
+      totalPages:
+        pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+      currentPage: pagination.page,
+    };
+
+    return successResponse(
+      res,
+      200,
+      messages.LISTING,
+      value._id ? projectTech[0] : projectTech,
+      // !value._id && metaData
+      !value._id && !value.isDropdown && metaData
+    );
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+//Update Project Tech:
+exports.updateProjectTech = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      projectTechId: Joi.string().required(),
+      project_tech: Joi.string().required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, 400, error.details[0].message);
+    }
+
+    if (await this.projectTechExists(value.project_tech, req.params.id)) {
+      return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
+    } else {
+      const updatedProjectTech = await ProjectTechnologies.findByIdAndUpdate(
+        value.projectTechId,
+        {
+          project_tech: value.project_tech,
+          updatedBy: req.user._id, // assuming you have user id in req.user
+        },
+        { new: true }
+      );
+
+      if (!updatedProjectTech) {
+        return errorResponse(res, 404, "Project tech not found");
+      }
+
+      return successResponse(
+        res,
+        200,
+        "Data updated successfully!",
+        updatedProjectTech
+      );
+    }
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+//Soft Delete Project Tech:
+exports.deleteProjectTech = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      projectTechId: Joi.string().required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, 400, error.details[0].message);
+    }
+
+    const projectTech = await ProjectTechnologies.findByIdAndUpdate(
+      value.projectTechId,
+      {
+        isDeleted: true,
+        deletedBy: req.user._id,
+        deletedAt: configs.utcDefault(), // assuming you have user id in req.user
+      },
+      { new: true }
+    );
+
+    if (!projectTech) {
+      return errorResponse(res, 404, "Project Tech not found");
+    }
+
+    return successResponse(
+      res,
+      200,
+      "Project tech deleted successfully!",
+      projectTech
+    );
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};

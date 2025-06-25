@@ -1,31 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.env
-/settings/permission.json
-/settings/role.json
-
-
-# testing
-/coverage
-
-# production
-/build
-docker-compose.yml
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 # These are some examples of commonly ignored file patterns.
 # You should customize this list as applicable to your project.
 # Learn more about .gitignore:
@@ -34,6 +6,20 @@ yarn-error.log*
 # Node artifact files
 node_modules/
 dist/
+public/
+.env
+/env/.env.dev
+/env/.env.prod
+settings
+/settings
+/settings/permission.json
+Dockerfile
+
+
+yarn.lock
+package-lock.json
+/yarn.lock
+/package-lock.json
 
 # Compiled Java class files
 *.class

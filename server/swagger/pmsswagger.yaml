@@ -1,0 +1,1799 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: PMS API
+  contact: {}
+host: localhost:4848
+basePath: /v1
+securityDefinitions: {}
+schemes:
+- http
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /authentication/redirectToBack:
+    post:
+      summary: LOGIN
+      tags:
+      - AUTH
+      operationId: LOGIN
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/LOGINREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /project/type/get:
+    post:
+      summary: GET PROJECT TYPE
+      tags:
+      - PROJECT TYPE API
+      operationId: GETPROJECTTYPE
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETPROJECTTYPEREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/type/add:
+    post:
+      summary: ADD PROJECT TYPE
+      tags:
+      - PROJECT TYPE API
+      operationId: ADDPROJECTTYPE
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTTYPEREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/type/update:
+    post:
+      summary: UPDATE PROJECT TYPE
+      tags:
+      - PROJECT TYPE API
+      operationId: UPDATEPROJECTTYPE
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTTYPEREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /project/type/delete:
+    post:
+      summary: DELETE PROJECT TYPE
+      tags:
+      - PROJECT TYPE API
+      operationId: DELETEPROJECTTYPE
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/DELETEPROJECTTYPEREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /projectTech/addProjectTech:
+    post:
+      summary: ADD PROJECT TECH
+      tags:
+      - PROJECT TECH API
+      operationId: ADDPROJECTTECH
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTTECHREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projectTech/getProjectTech:
+    post:
+      summary: GET PROJECT TECH
+      tags:
+      - PROJECT TECH API
+      operationId: GETPROJECTTECH
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETPROJECTTECHREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projectTech/updateProjectTech:
+    post:
+      summary: UPDATE PROJECT TECH
+      tags:
+      - PROJECT TECH API
+      operationId: UPDATEPROJECTTECH
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTTECHREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /projectTech/deleteProjectTech:
+    post:
+      summary: DELETE PROJECT TECH
+      tags:
+      - PROJECT TECH API
+      operationId: DELETEPROJECTTECH
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/DELETEPROJECTTECHREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /projectWorkFlow/addProjectWorkFlow:
+    post:
+      summary: ADD PROJECT WORKFLOW
+      tags:
+      - WORK FLOW API
+      operationId: ADDPROJECTWORKFLOW
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTWORKFLOWREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projectWorkFlow/getProjectWorkFlow:
+    post:
+      summary: GET PROJECT WORKFLOW
+      tags:
+      - WORK FLOW API
+      operationId: GETPROJECTWORKFLOW
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETPROJECTWORKFLOWREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projectWorkFlow/updateProjectWorkFlow:
+    post:
+      summary: UPDATE PROJECT WORKFLOW
+      tags:
+      - WORK FLOW API
+      operationId: UPDATEPROJECTWORKFLOW
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTWORKFLOWREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /projectWorkFlow/deleteProjectWorkFlow:
+    post:
+      summary: DELETE PROJECT WORKFLOW
+      tags:
+      - WORK FLOW API
+      operationId: DELETEPROJECTWORKFLOW
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/DELETEPROJECTWORKFLOWREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /work-flow/status/add:
+    post:
+      summary: ADD WORKFLOW STATUS
+      tags:
+      - WORK FLOW STATUS API
+      operationId: ADDWORKFLOWSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDWORKFLOWSTATUSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /work-flow/status/get/65a60cfc4532da8bf17fb31d:
+    get:
+      summary: GET WORKFLOW STATUS
+      tags:
+      - WORK FLOW STATUS API
+      operationId: GETWORKFLOWSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: _id
+        in: query
+        required: true
+        type: string
+        description: ''
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /work-flow/status/update/65a13a8043df4aa9b0ea66f2:
+    put:
+      summary: UPDATE WORKFLOW STATUS
+      tags:
+      - WORK FLOW STATUS API
+      operationId: UPDATEWORKFLOWSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEWORKFLOWSTATUSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /work-flow/status/delete/65a13a8043df4aa9b0ea66f2:
+    delete:
+      summary: DELETE WORKFLOW STATUS
+      tags:
+      - WORK FLOW STATUS API
+      operationId: DELETEWORKFLOWSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/status/add:
+    post:
+      summary: ADD PROJECT STATUS
+      tags:
+      - PROJECT STATUS API
+      operationId: ADDPROJECTSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTSTATUSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/status/get:
+    get:
+      summary: GET PROJECT STATUS
+      tags:
+      - PROJECT STATUS API
+      operationId: GETPROJECTSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: _id
+        in: query
+        required: true
+        type: string
+        description: For details
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/status/update/65a614eb6a3ed9faabb61603:
+    put:
+      summary: UPDATE PROJECT STATUS
+      tags:
+      - PROJECT STATUS API
+      operationId: UPDATEPROJECTSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTSTATUSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /project/status/delete/65a614eb6a3ed9faabb61603:
+    delete:
+      summary: DELETE PROJECT STATUS
+      tags:
+      - PROJECT STATUS API
+      operationId: DELETEPROJECTSTATUS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/add:
+    post:
+      summary: ADD PROJECTS
+      tags:
+      - PROJECTS
+      operationId: ADDPROJECTS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/get:
+    get:
+      summary: GET PROJECTS
+      tags:
+      - PROJECTS
+      operationId: GETPROJECTS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/update/65a6503bc7824ee7b934a4e8:
+    put:
+      summary: UPDATE PROJECT
+      tags:
+      - PROJECTS
+      operationId: UPDATEPROJECT
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/delete/65a6503bc7824ee7b934a4e8:
+    delete:
+      summary: DELETE PROJECT
+      tags:
+      - PROJECTS
+      operationId: DELETEPROJECT
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/main-task/add:
+    post:
+      summary: ADD PROJECTS MAIN TASK
+      tags:
+      - PROJECTS MAIN TASK
+      operationId: ADDPROJECTSMAINTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTSMAINTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/main-task/get:
+    post:
+      summary: GET PROJECTS MAIN TASK
+      tags:
+      - PROJECTS MAIN TASK
+      operationId: GETPROJECTSMAINTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETPROJECTSMAINTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/main-task/update/65a6717130af72b6ff0b7548:
+    put:
+      summary: UPDATE PROJECT MAIN TASK
+      tags:
+      - PROJECTS MAIN TASK
+      operationId: UPDATEPROJECTMAINTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTMAINTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/main-task/delete/65a6717130af72b6ff0b7548:
+    delete:
+      summary: DELETE PROJECT MAIN TASK
+      tags:
+      - PROJECTS MAIN TASK
+      operationId: DELETEPROJECTMAINTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/labels/add:
+    post:
+      summary: ADD PROJECTS LABELS
+      tags:
+      - PROJECTS LABELS
+      operationId: ADDPROJECTSLABELS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTSLABELSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/labels/get:
+    get:
+      summary: GET PROJECTS LABELS
+      tags:
+      - PROJECTS LABELS
+      operationId: GETPROJECTSLABELS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/labels/update/65a74af26c7fde5ee880bb2d:
+    put:
+      summary: UPDATE PROJECT LABELS
+      tags:
+      - PROJECTS LABELS
+      operationId: UPDATEPROJECTLABELS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTLABELSREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/labels/delete/65a74a8f1ce77e067de21aae:
+    delete:
+      summary: DELETE PROJECT LABELS
+      tags:
+      - PROJECTS LABELS
+      operationId: DELETEPROJECTLABELS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/tasks/add:
+    post:
+      summary: ADD PROJECTS TASK
+      tags:
+      - PROJECTS TASK
+      operationId: ADDPROJECTSTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/ADDPROJECTSTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/tasks/get:
+    post:
+      summary: GET PROJECTS TASK
+      tags:
+      - PROJECTS TASK
+      operationId: GETPROJECTSTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETPROJECTSTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/tasks/update/65a75a8ed157574e6be3c6d0:
+    put:
+      summary: UPDATE PROJECT TASK
+      tags:
+      - PROJECTS TASK
+      operationId: UPDATEPROJECTTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/UPDATEPROJECTTASKREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /projects/tasks/delete/65a6717130af72b6ff0b7548:
+    delete:
+      summary: DELETE PROJECT TASK
+      tags:
+      - PROJECTS TASK
+      operationId: DELETEPROJECTTASK
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /employees/get:
+    post:
+      summary: GET EMPLOYEE LIST
+      tags:
+      - EMPLOYEES
+      operationId: GETEMPLOYEELIST
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      - name: Body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/GETEMPLOYEELISTREQUEST'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /employees/65802609dfe047a22623156f:
+    get:
+      summary: GET EMPLOYEE DETAILS
+      tags:
+      - EMPLOYEES
+      operationId: GETEMPLOYEEDETAILS
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /master/get/department:
+    get:
+      summary: GET DEPARTMENTS LIST
+      tags:
+      - MASTER APIS
+      operationId: GETDEPARTMENTSLIST
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /master/get/designation:
+    get:
+      summary: GET DESIGNATION LIST
+      tags:
+      - MASTER APIS
+      operationId: GETDESIGNATIONLIST
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        default: Bearer {token}
+        type: string
+      responses:
+        '200':
+          description: ''
+          headers: {}
+  /master/get/resources:
+    get:
+      summary: GET RESOURCS LIST
+      tags:
+      - MASTER APIS
+      operationId: GETRESOURCSLIST
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+  /master/get/projects:
+    get:
+      summary: GET PROJECT LIST
+      tags:
+      - MASTER APIS
+      operationId: GETPROJECTLIST
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: ''
+          headers: {}
+      security: []
+definitions:
+  LOGINREQUEST:
+    title: LOGINREQUEST
+    example:
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImludGlhbF9uYW1lIjoiTXIuIiwiYnJhbmNoIjoiSUZGQ08gT2ZmaWNlIiwic2FsYXJ5X2dyYWRlIjoiQSIsImV4cGVyaWVuY2VfZ3JhZGUiOiJBIiwic2hpZnQiOiJHZW5lcmFsIFNoaWZ0IiwibGVmdF9kYXRlIjoiMjAyMy0wMS0wOVQxMDozMTowNC4wMTlaIiwiZW1wX2xhc3Rfd29ya2luZ19kYXRlIjpudWxsLCJlbXBfdHlwZSI6IlRlbnVyZSIsImVtcF9zaWduIjoiZW1wX3NpZ24tMTY3NzU2NDk1NjExMy5qcGVnIiwicmVzaWduYXRpb25fZGF0ZSI6bnVsbCwicmVzaWduYXRpb25fYWNjZXB0ZWRfZGF0ZSI6IjIwMjMtMDEtMTBUMTA6MzE6MTguMzQ3WiIsIm90aGVyX3JlYXNvbiI6IiIsInJlYXNvbl90eXBlIjoiUmVzaWduYXRpb24iLCJyZWFzb24iOiJCZXR0ZXIgQ2FyZWVyIiwiZXhpdF9pbnRlcnZpZXciOiJOQSIsIm5vdGljZV9wZXJpb2QiOiJOQSIsImVtcF9pbWciOiJlbXBfaW1nLTE2ODE0NzEyNzE1NTAuanBlZyIsInBob25lX251bWJlciI6IiIsImlzRGVsZXRlZCI6ZmFsc2UsImlzU29mdERlbGV0ZWQiOmZhbHNlLCJpc0FjdGl2YXRlIjp0cnVlLCJpc0FkbWluIjpmYWxzZSwiaXNmZWVkYmFja2VtYWlsc2VudCI6ZmFsc2UsInJlZmVycmVkX2J5IjoiIiwiYXBwcmFpc2FsX2RhdGUiOiJPY3RvYmVyIiwiTkRBX2F0dGFjaG1lbnQiOiIiLCJjb25maXJtYXRpb25fZGF0ZSI6bnVsbCwiY29uZmlybWF0aW9uX2ZlZWRiYWNrIjoiIiwiX2lkIjoiNjNiNmNhODg3MGYyYjViMzAwMmNiNDRhIiwiYmlydGhkYXRlIjoiMTk4OS0xMC0wNFQwMDowMDowMC4wMDBaIiwiam9pbmluZ19kYXRlIjoiMjAxNC0wOS0yNVQwMDowMDowMC4wMDBaIiwib3JnX2lkIjp7Il9pZCI6IjYwZTY5MDA2Yzc4ZDQ4MmQ5MzQ3YTgzMCIsIm9yZ19uYW1lIjoiRWxzbmVyIFRlY2hub2xvZ2llcyBQdnQuIEx0ZC4ifSwiZW1wX2NvZGUiOiJFVC1BTUQtMDA1IiwiZGVzaWduYXRpb25faWQiOiI2M2IyNmJiZjkxMzA2NzYzMTQ1M2EyOWUiLCJkZXBhcnRtZW50X2lkIjoiNjU2OTdlNTVjY2ViYWQwMDMxYmQzNWI3IiwiZW1haWwiOiJ0YXJ1bkBtYWlsaW5hdG9yLmNvbSIsImxvZ2luX2FsaWFzIjoiZXQtYW1kLTAwNUBlbHNuZXIuY29tIiwicm9sZV9pZCI6eyJfaWQiOiI2MGU2OGE4NzVmNDA4NjIyMjJjNjRlY2IiLCJyb2xlX3R5cGUiOiJ1c2VyIn0sImVucm9sbG1lbnRfbm8iOiI1IiwiZmlyc3RfbmFtZSI6IlRhcnVuIiwibGFzdF9uYW1lIjoiQmFuc2FsIiwiZnVsbF9uYW1lIjoiTXIuIFRhcnVuIEJhbnNhbCIsImNyZWF0ZWRCeSI6IjYwZTY5NWUxMjBhNDEyMmZlMWI2NzAzZiIsInVwZGF0ZWRCeSI6IjYwZTY5NWUxMjBhNDEyMmZlMWI2NzAzZiIsImNyZWF0ZWRfQXQiOiIyMDIzLTAxLTA1VDEzOjAzOjA0LjAwMFoiLCJ1cGRhdGVkX0F0IjoiMjAyMy0wMS0wNVQxMzowMzowNC4wMDBaIiwiX192IjowLCJhZGRyZXNzIjp7ImFkZHJlc3MiOiJrNTA2IGFkYW5pIHByYXRoYW0gZmxhdHMgdHJhZ2hhZCByb2FkLCBiZWhpbmQgbmlybWEgdW5pdmVyc2l0eSwgYWhtZWJhYmFkLiAzODI0NzAiLCJkaXN0cmljdCI6IkFobWVkYWJhZCIsImNvdW50cnkiOiJJbmRpYSIsInN0YXRlIjoiR3VqYXJhdCIsImNpdHkiOiJBaG1lZGFiYWQiLCJwaW5fY29kZSI6MzgyNDcwfSwiYmFzaWNfc2FsYXJ5IjowLCJncm9zc19zYWxhcnkiOjAsInBlcnNvbmFsX2luZm9ybWF0aW9uIjp7InBlcnNvbmFsX3BudW0iOjk1Mzc3MDQ2NzgsIm5hdGlvbmFsaXR5IjoiSU5ESUFOIiwibW9iaWxlX251bWJlciI6OTUzNzcwNDY3OCwiZW1haWwiOm51bGx9LCJwcmVzZW50X2FkZHJlc3MiOnsiYWRkcmVzczIiOiJrNTA2IGFkYW5pIHByYXRoYW0gZmxhdHMgdHJhZ2hhZCByb2FkLCBiZWhpbmQgbmlybWEgdW5pdmVyc2l0eSwgYWhtZWJhYmFkLiAzODI0NzAiLCJkaXN0cmljdDIiOiJBaG1lZGFiYWQiLCJjb3VudHJ5MiI6IkluZGlhIiwic3RhdGUyIjoiR3VqYXJhdCIsImNpdHkiOiJBaG1lZGFiYWQiLCJwaW5fY29kZTIiOjM4MjQ3MH0sInJlcG9ydGluZ19tYW5hZ2VyIjoiNjNiNmNhODY3MGYyYjViMzAwMmNiNDMzIiwicGxhaW5fcGFzc3dvcmQiOiJldC1hbWQtMDA1QDEyMyIsInJlc2V0Q29kZSI6bnVsbCwiYnVkZHkiOiI2M2I2Y2E4NzcwZjJiNWIzMDAyY2I0M2UiLCJlbXBsb3ltZW50X2RldGFpbHMiOnsiYnVzaW5lc3NfdW5pdCI6IjY1NmRkN2EzNjA3MDQyMDAzMWM4MWE1MyIsInRvdGFsX2V4cGVyaWVuY2VfYmVmb3JlX2Vsc25lciI6IjIuMDUiLCJidXNpbmVzc19oZWFkIjoiNjNiNmNhODY3MGYyYjViMzAwMmNiNDMzIn0sImZ1bmN0aW9uX3JvbGVfaWQiOiI2NTZlYWJiYzY3OWE2NGZkMmIxZGZhNzQiLCJzdWJkZXBhcnRtZW50X2lkIjoiNjU2ZWFhNDE2NzlhNjRmZDJiMWRmYTYyIiwicHJldkVtcEV4cGVyaWFuY2UiOltdfSwiaWF0IjoxNzA0ODY5NDI3LCJleHAiOjE3MDU0NzQyMjcsImlzcyI6IjYzYjZjYTg4NzBmMmI1YjMwMDJjYjQ0YSJ9.18vm_2qSkU7qQoR8XY8zzRc8bJggMPcXm4F0BIerc9M
+    type: object
+    properties:
+      token:
+        type: string
+    required:
+    - token
+  GETPROJECTTYPEREQUEST:
+    title: GETPROJECTTYPEREQUEST
+    example:
+      limit: 5
+      pageNo: 1
+      search: ''
+      sort: _id
+      sortBy: desc
+      _id: 65a641bdffdfd5abe0ff94f5
+    type: object
+    properties:
+      limit:
+        type: integer
+        format: int32
+      pageNo:
+        type: integer
+        format: int32
+      search:
+        type: string
+      sort:
+        type: string
+      sortBy:
+        type: string
+      _id:
+        type: string
+    required:
+    - limit
+    - pageNo
+    - search
+    - sort
+    - sortBy
+    - _id
+  ADDPROJECTTYPEREQUEST:
+    title: ADDPROJECTTYPEREQUEST
+    example:
+      project_type: bbbbb
+    type: object
+    properties:
+      project_type:
+        type: string
+    required:
+    - project_type
+  UPDATEPROJECTTYPEREQUEST:
+    title: UPDATEPROJECTTYPEREQUEST
+    example:
+      projectTypeId: 6583d40a13c7b8f2cec1453f
+      project_type: FIRST 1
+    type: object
+    properties:
+      projectTypeId:
+        type: string
+      project_type:
+        type: string
+    required:
+    - projectTypeId
+    - project_type
+  DELETEPROJECTTYPEREQUEST:
+    title: DELETEPROJECTTYPEREQUEST
+    example:
+      projectTypeId: 6582b9d3a1559f24ba030d2f
+    type: object
+    properties:
+      projectTypeId:
+        type: string
+    required:
+    - projectTypeId
+  ADDPROJECTTECHREQUEST:
+    title: ADDPROJECTTECHREQUEST
+    example:
+      project_tech: Sopify
+    type: object
+    properties:
+      project_tech:
+        type: string
+    required:
+    - project_tech
+  GETPROJECTTECHREQUEST:
+    title: GETPROJECTTECHREQUEST
+    example:
+      limit: 5
+      pageNo: 1
+      search: ''
+      sort: _id
+      sortBy: desc
+      _id: 65a64242ffdfd5abe0ff94ff
+    type: object
+    properties:
+      limit:
+        type: integer
+        format: int32
+      pageNo:
+        type: integer
+        format: int32
+      search:
+        type: string
+      sort:
+        type: string
+      sortBy:
+        type: string
+      _id:
+        type: string
+    required:
+    - limit
+    - pageNo
+    - search
+    - sort
+    - sortBy
+    - _id
+  UPDATEPROJECTTECHREQUEST:
+    title: UPDATEPROJECTTECHREQUEST
+    example:
+      projectTechId: 65851c15f7be1bb1f85ad9d6
+      project_tech: Shopify
+    type: object
+    properties:
+      projectTechId:
+        type: string
+      project_tech:
+        type: string
+    required:
+    - projectTechId
+    - project_tech
+  DELETEPROJECTTECHREQUEST:
+    title: DELETEPROJECTTECHREQUEST
+    example:
+      projectTechId: 65851c00f7be1bb1f85ad9d0
+    type: object
+    properties:
+      projectTechId:
+        type: string
+    required:
+    - projectTechId
+  ADDPROJECTWORKFLOWREQUEST:
+    title: ADDPROJECTWORKFLOWREQUEST
+    example:
+      project_workflow: For new projects1
+      status: active
+    type: object
+    properties:
+      project_workflow:
+        type: string
+      status:
+        type: string
+    required:
+    - project_workflow
+    - status
+  GETPROJECTWORKFLOWREQUEST:
+    title: GETPROJECTWORKFLOWREQUEST
+    example:
+      isDropdown: false
+      _id: 65a6427affdfd5abe0ff9507
+    type: object
+    properties:
+      isDropdown:
+        type: boolean
+      _id:
+        type: string
+    required:
+    - isDropdown
+    - _id
+  UPDATEPROJECTWORKFLOWREQUEST:
+    title: UPDATEPROJECTWORKFLOWREQUEST
+    example:
+      projectWorkFlowId: 658a5c85263ca1b42b80e85b
+      project_workflow: First1
+    type: object
+    properties:
+      projectWorkFlowId:
+        type: string
+      project_workflow:
+        type: string
+    required:
+    - projectWorkFlowId
+    - project_workflow
+  DELETEPROJECTWORKFLOWREQUEST:
+    title: DELETEPROJECTWORKFLOWREQUEST
+    example:
+      projectWorkFlowId: 658a5c85263ca1b42b80e85b
+    type: object
+    properties:
+      projectWorkFlowId:
+        type: string
+    required:
+    - projectWorkFlowId
+  ADDWORKFLOWSTATUSREQUEST:
+    title: ADDWORKFLOWSTATUSREQUEST
+    example:
+      workflow_id: 65a60cfc4532da8bf17fb31d
+      title: To Do
+      color: '#464573'
+    type: object
+    properties:
+      workflow_id:
+        type: string
+      title:
+        type: string
+      color:
+        type: string
+    required:
+    - workflow_id
+    - title
+    - color
+  UPDATEWORKFLOWSTATUSREQUEST:
+    title: UPDATEWORKFLOWSTATUSREQUEST
+    example:
+      workflow_id: 659ba1aa3a670d747eb8dc08
+      title: Todo
+      color: '#4645734'
+    type: object
+    properties:
+      workflow_id:
+        type: string
+      title:
+        type: string
+      color:
+        type: string
+    required:
+    - workflow_id
+    - title
+    - color
+  ADDPROJECTSTATUSREQUEST:
+    title: ADDPROJECTSTATUSREQUEST
+    example:
+      title: Closed1
+    type: object
+    properties:
+      title:
+        type: string
+    required:
+    - title
+  UPDATEPROJECTSTATUSREQUEST:
+    title: UPDATEPROJECTSTATUSREQUEST
+    example:
+      title: Closed
+    type: object
+    properties:
+      title:
+        type: string
+    required:
+    - title
+  ADDPROJECTSREQUEST:
+    title: ADDPROJECTSREQUEST
+    example:
+      title: project 2
+      color: '#4757845'
+      descriptions: efuheu jfue
+      technology: 65a64242ffdfd5abe0ff94ff
+      project_type: 65a641bdffdfd5abe0ff94f5
+      project_status: 65a6282acb239d4ea7512542
+      manager: 63b6ca8870f2b5b3002cb44a
+      assignees:
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      estimatedHours: 33:00
+    type: object
+    properties:
+      title:
+        type: string
+      color:
+        type: string
+      descriptions:
+        type: string
+      technology:
+        type: string
+      project_type:
+        type: string
+      project_status:
+        type: string
+      manager:
+        type: string
+      assignees:
+        type: array
+        items:
+          type: string
+      estimatedHours:
+        type: string
+    required:
+    - title
+    - color
+    - descriptions
+    - technology
+    - project_type
+    - project_status
+    - manager
+    - assignees
+    - estimatedHours
+  UPDATEPROJECTREQUEST:
+    title: UPDATEPROJECTREQUEST
+    example:
+      title: project --1
+      color: '#4757845'
+      descriptions: efuheu jfue
+      technology: 65a64242ffdfd5abe0ff94ff
+      project_type: 65a641bdffdfd5abe0ff94f5
+      project_status: 65a6282acb239d4ea7512542
+      manager: 63b6ca8870f2b5b3002cb44a
+      assignees:
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      estimatedHours: 33:00
+    type: object
+    properties:
+      title:
+        type: string
+      color:
+        type: string
+      descriptions:
+        type: string
+      technology:
+        type: string
+      project_type:
+        type: string
+      project_status:
+        type: string
+      manager:
+        type: string
+      assignees:
+        type: array
+        items:
+          type: string
+      estimatedHours:
+        type: string
+    required:
+    - title
+    - color
+    - descriptions
+    - technology
+    - project_type
+    - project_status
+    - manager
+    - assignees
+    - estimatedHours
+  ADDPROJECTSMAINTASKREQUEST:
+    title: ADDPROJECTSMAINTASKREQUEST
+    example:
+      title: project MAIN TASK 4
+      project_id: 65a64ca8b0846433ee2792e2
+      workflow_id: 65a60cfc4532da8bf17fb31d
+      task_status: 65a60d154532da8bf17fb321
+      subscribers:
+      - 63b6ca8870f2b5b3002cb44a
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      status: active
+      isPrivateList: false
+      isDisplayInGantt: false
+    type: object
+    properties:
+      title:
+        type: string
+      project_id:
+        type: string
+      workflow_id:
+        type: string
+      task_status:
+        type: string
+      subscribers:
+        type: array
+        items:
+          type: string
+      status:
+        type: string
+      isPrivateList:
+        type: boolean
+      isDisplayInGantt:
+        type: boolean
+    required:
+    - title
+    - project_id
+    - workflow_id
+    - task_status
+    - subscribers
+    - status
+    - isPrivateList
+    - isDisplayInGantt
+  GETPROJECTSMAINTASKREQUEST:
+    title: GETPROJECTSMAINTASKREQUEST
+    example:
+      limit: 5
+      pageNo: 1
+      search: ''
+      sort: _id
+      sortBy: desc
+      project_id: 65a64ca8b0846433ee2792e2
+      _id: 65a6716430af72b6ff0b7544
+    type: object
+    properties:
+      limit:
+        type: integer
+        format: int32
+      pageNo:
+        type: integer
+        format: int32
+      search:
+        type: string
+      sort:
+        type: string
+      sortBy:
+        type: string
+      project_id:
+        type: string
+      _id:
+        type: string
+    required:
+    - limit
+    - pageNo
+    - search
+    - sort
+    - sortBy
+    - project_id
+    - _id
+  UPDATEPROJECTMAINTASKREQUEST:
+    title: UPDATEPROJECTMAINTASKREQUEST
+    example:
+      title: project MAIN TASK-11
+      project_id: 65a64ca8b0846433ee2792e2
+      workflow_id: 65a60cfc4532da8bf17fb31d
+      task_status: 65a67ef433190171429ab557
+      subscribers:
+      - 63b6ca8870f2b5b3002cb44a
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      status: active
+      isPrivateList: false
+      isDisplayInGantt: false
+    type: object
+    properties:
+      title:
+        type: string
+      project_id:
+        type: string
+      workflow_id:
+        type: string
+      task_status:
+        type: string
+      subscribers:
+        type: array
+        items:
+          type: string
+      status:
+        type: string
+      isPrivateList:
+        type: boolean
+      isDisplayInGantt:
+        type: boolean
+    required:
+    - title
+    - project_id
+    - workflow_id
+    - task_status
+    - subscribers
+    - status
+    - isPrivateList
+    - isDisplayInGantt
+  ADDPROJECTSLABELSREQUEST:
+    title: ADDPROJECTSLABELSREQUEST
+    example:
+      title: Low2
+      color: '#847848'
+      project_id: 65a6503bc7824ee7b934a4e8
+    type: object
+    properties:
+      title:
+        type: string
+      color:
+        type: string
+      project_id:
+        type: string
+    required:
+    - title
+    - color
+    - project_id
+  UPDATEPROJECTLABELSREQUEST:
+    title: UPDATEPROJECTLABELSREQUEST
+    example:
+      title: Low
+      color: '#847848'
+      project_id: 65a64ca8b0846433ee2792e2
+    type: object
+    properties:
+      title:
+        type: string
+      color:
+        type: string
+      project_id:
+        type: string
+    required:
+    - title
+    - color
+    - project_id
+  ADDPROJECTSTASKREQUEST:
+    title: ADDPROJECTSTASKREQUEST
+    example:
+      title: task 2
+      project_id: 65a64ca8b0846433ee2792e2
+      main_task_id: 65a6790bdb800b77207c80d8
+      status: active
+      descriptions: ''
+      task_labels: []
+      start_date: 2024-01-11
+      due_date: 2024-01-19
+      assignees:
+      - 63b6ca8870f2b5b3002cb44a
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      task_status: 65a60d154532da8bf17fb321
+      estimated_hours: '11'
+      estimated_minutes: '44'
+      attachments: []
+      task_progress: '0'
+    type: object
+    properties:
+      title:
+        type: string
+      project_id:
+        type: string
+      main_task_id:
+        type: string
+      status:
+        type: string
+      descriptions:
+        type: string
+      task_labels:
+        type: array
+        items:
+          type: string
+      start_date:
+        type: string
+      due_date:
+        type: string
+      assignees:
+        type: array
+        items:
+          type: string
+      task_status:
+        type: string
+      estimated_hours:
+        type: string
+      estimated_minutes:
+        type: string
+      attachments:
+        type: array
+        items:
+          type: string
+      task_progress:
+        type: string
+    required:
+    - title
+    - project_id
+    - main_task_id
+    - status
+    - descriptions
+    - task_labels
+    - start_date
+    - due_date
+    - assignees
+    - task_status
+    - estimated_hours
+    - estimated_minutes
+    - attachments
+    - task_progress
+  GETPROJECTSTASKREQUEST:
+    title: GETPROJECTSTASKREQUEST
+    example:
+      limit: 5
+      pageNo: 1
+      search: ''
+      sort: _id
+      sortBy: desc
+      project_id: 65a64ca8b0846433ee2792e2
+      main_task_id: 65a6790bdb800b77207c80d8
+      status: active
+      workFlowStatus:
+      - all
+      assignees: all
+      labels:
+      - all
+      due_date: 2024-01-20
+    type: object
+    properties:
+      limit:
+        type: integer
+        format: int32
+      pageNo:
+        type: integer
+        format: int32
+      search:
+        type: string
+      sort:
+        type: string
+      sortBy:
+        type: string
+      project_id:
+        type: string
+      main_task_id:
+        type: string
+      status:
+        type: string
+      workFlowStatus:
+        type: array
+        items:
+          type: string
+      assignees:
+        type: string
+      labels:
+        type: array
+        items:
+          type: string
+      due_date:
+        type: string
+    required:
+    - limit
+    - pageNo
+    - search
+    - sort
+    - sortBy
+    - project_id
+    - main_task_id
+    - status
+    - workFlowStatus
+    - assignees
+    - labels
+    - due_date
+  UPDATEPROJECTTASKREQUEST:
+    title: UPDATEPROJECTTASKREQUEST
+    example:
+      title: task 2
+      project_id: 65a64ca8b0846433ee2792e2
+      main_task_id: 65a6790bdb800b77207c80d8
+      status: active
+      descriptions: ''
+      task_labels:
+      - 65a74af26c7fde5ee880bb2d
+      start_date: 2024-01-11
+      due_date: 2024-01-19
+      assignees:
+      - 63b6ca8870f2b5b3002cb44a
+      - 652e24972dc3390031df08aa
+      - 650d245eebbc99af845f53f9
+      task_status: 65a60d154532da8bf17fb321
+      estimated_hours: '11'
+      estimated_minutes: '44'
+      attachments: []
+      task_progress: '0'
+    type: object
+    properties:
+      title:
+        type: string
+      project_id:
+        type: string
+      main_task_id:
+        type: string
+      status:
+        type: string
+      descriptions:
+        type: string
+      task_labels:
+        type: array
+        items:
+          type: string
+      start_date:
+        type: string
+      due_date:
+        type: string
+      assignees:
+        type: array
+        items:
+          type: string
+      task_status:
+        type: string
+      estimated_hours:
+        type: string
+      estimated_minutes:
+        type: string
+      attachments:
+        type: array
+        items:
+          type: string
+      task_progress:
+        type: string
+    required:
+    - title
+    - project_id
+    - main_task_id
+    - status
+    - descriptions
+    - task_labels
+    - start_date
+    - due_date
+    - assignees
+    - task_status
+    - estimated_hours
+    - estimated_minutes
+    - attachments
+    - task_progress
+  GETEMPLOYEELISTREQUEST:
+    title: GETEMPLOYEELISTREQUEST
+    example:
+      limit: 5
+      pageNo: 1
+      search: ''
+      sort: first_name
+      sortBy: desc
+      isExport: false
+      exportFileType: csv
+    type: object
+    properties:
+      limit:
+        type: integer
+        format: int32
+      pageNo:
+        type: integer
+        format: int32
+      search:
+        type: string
+      sort:
+        type: string
+      sortBy:
+        type: string
+      isExport:
+        type: boolean
+      exportFileType:
+        type: string
+    required:
+    - limit
+    - pageNo
+    - search
+    - sort
+    - sortBy
+    - isExport
+    - exportFileType
+tags:
+- name: AUTH
+- name: PROJECT TYPE API
+- name: PROJECT TECH API
+- name: WORK FLOW API
+- name: WORK FLOW STATUS API
+- name: PROJECT STATUS API
+- name: PROJECTS
+- name: PROJECTS MAIN TASK
+- name: PROJECTS LABELS
+- name: PROJECTS TASK
+- name: EMPLOYEES
+- name: MASTER APIS
