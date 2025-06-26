@@ -3,7 +3,7 @@ import { Form, Menu, Popover, Layout } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import { useDispatch } from "react-redux";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, DashboardOutlined, SettingOutlined } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./SidebarContent.css";
@@ -13,6 +13,7 @@ import ProjectListModal from "../../components/Modal/ProjectListModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import Taskhub from "../../assets/images/taskhubicon.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
+import AdminIcon from "../../assets/icons/AdminIcon"
 
 const { Sider } = Layout;
 
@@ -145,24 +146,44 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const item = useMemo(
     () => [
+      // {
+      //   key: "Search Project",
+      //   icon: <SearchOutlined />,
+      //   label: "Search",
+      //   onClick: () => showModal(),
+      // },
+      
       {
-        key: "Search Project",
-        icon: <SearchOutlined />,
-        label: "Search",
-        onClick: () => showModal(),
-      },
-      !getRoles(["Client"]) &&{
-        key: "Dashboard",
-        icon: <i className="fi fi-rs-house-chimney"></i>,
-        label: "Me",
-        onClick: () => handleMenuClick("Dashboard", "/dashboard"),
+        key: "Admin_Dashboard",
+        icon: <DashboardOutlined />,
+        label: "Dashboard",
+        onClick: () => handleMenuClick("Admin_Dashboard", "/admin/dashboard")
       },
       {
-        key: "Admin Dashboard",
-        icon: <i className="fi fi-rr-dashboard"></i>,
-        label: "Projects",
-        onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
+        key: "Companies_Registration",
+        icon: <AdminIcon />,
+        label: "Companies registration",
+        onClick: () => handleMenuClick("Companies_Registration", "/admin/company-registartion")
       },
+      {
+        key: "Admin_Settings",
+        icon: <SettingOutlined />,
+        label: "Settings",
+        onClick: () => handleMenuClick("Admin_Settings", "/admin/settings")
+      },
+
+      // !getRoles(["Client"]) &&{
+      //   key: "Dashboard",
+      //   icon: <i className="fi fi-rs-house-chimney"></i>,
+      //   label: "Me",
+      //   onClick: () => handleMenuClick("Dashboard", "/dashboard"),
+      // },
+      // {
+      //   key: "Admin Dashboard",
+      //   icon: <i className="fi fi-rr-dashboard"></i>,
+      //   label: "Projects",
+      //   onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
+      // },
       getRoles(["Super Admin"]) && {
         key: "Users",
         icon: <i className="fi fi-rr-users-alt"></i>,

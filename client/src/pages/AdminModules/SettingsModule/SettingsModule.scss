@@ -1,0 +1,986 @@
+// SMTPConfig.scss - Modern Attractive Responsive Styles
+
+// ============================================================================
+// VARIABLES & DESIGN TOKENS
+// ============================================================================
+
+// Modern Color Palette
+$primary-gradient: linear-gradient(135deg, #09568b 0%, #2d9ded 100%);
+;
+$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+$glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
+
+// Brand Colors with Gradients
+$gmail-gradient: #2890da;
+$outlook-gradient: #2890da;
+$yahoo-gradient: #2890da;
+
+// Neutral Colors
+$bg-primary: #0f0f23;
+$bg-secondary: #16213e;
+$bg-tertiary: #1a1d3a;
+$text-primary: #ffffff;
+$text-secondary: #b4b8c5;
+$text-muted: #6c7293;
+
+// Spacing System
+$spacing: (
+  xs: 0.25rem,
+  // 4px
+  sm: 0.5rem,
+  // 8px  
+  md: 1rem,
+  // 16px
+  lg: 1.5rem,
+  // 24px
+  xl: 2rem,
+  // 32px
+  xxl: 3rem,
+  // 48px
+  xxxl: 4rem // 64px
+);
+
+// Border Radius System
+$radius: (
+  sm: 0.375rem,
+  // 6px
+  md: 0.5rem,
+  // 8px
+  lg: 0.75rem,
+  // 12px
+  xl: 1rem,
+  // 16px
+  xxl: 1.5rem,
+  // 24px
+  full: 50%
+);
+
+// Shadow System
+$shadows: (
+  sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
+  md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  glow: 0 0 20px rgba(102, 126, 234, 0.3),
+  neon: 0 0 30px rgba(102, 126, 234, 0.5)
+);
+
+// Breakpoints
+$breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);
+
+// ============================================================================
+// MIXINS & UTILITIES
+// ============================================================================
+
+@function spacing($key) {
+  @return map-get($spacing, $key);
+}
+
+@function radius($key) {
+  @return map-get($radius, $key);
+}
+
+@function shadow($key) {
+  @return map-get($shadows, $key);
+}
+
+@mixin respond-above($breakpoint) {
+  @media (min-width: map-get($breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+@mixin respond-below($breakpoint) {
+  @media (max-width: #{map-get($breakpoints, $breakpoint) - 1px}) {
+    @content;
+  }
+}
+
+@mixin glass-morphism($opacity: 0.25) {
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, $opacity) 0%,
+      rgba(255, 255, 255, $opacity * 0.2) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@mixin neo-morphism($inset: false) {
+  @if $inset {
+    box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.3),
+      inset -8px -8px 16px rgba(255, 255, 255, 0.1);
+  }
+
+  @else {
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.3),
+      -8px -8px 16px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@mixin gradient-text($gradient) {
+  background: $gradient;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@mixin floating-animation($duration: 3s) {
+  animation: floating $duration ease-in-out infinite;
+}
+
+@mixin pulse-glow($color: rgba(102, 126, 234, 0.5)) {
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+
+  @keyframes pulse-glow {
+    from {
+      box-shadow: 0 0 20px $color;
+    }
+
+    to {
+      box-shadow: 0 0 30px $color, 0 0 40px $color;
+    }
+  }
+}
+
+// ============================================================================
+// MAIN COMPONENT STYLES
+// ============================================================================
+
+.smtp-config {
+
+
+
+  // ========================================================================
+  // HEADER SECTION
+  // ========================================================================
+
+  .header-section {
+    text-align: center;
+    margin-bottom: spacing(xl);
+    position: relative;
+
+    .main-title {
+      @include gradient-text($primary-gradient);
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 800;
+      margin-bottom: spacing(md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: spacing(md);
+      letter-spacing: -0.02em;
+
+      .title-icon {
+        background: $primary-gradient;
+        border-radius: radius(lg);
+        padding: spacing(sm);
+        color: #ffff;
+        font-size: 0.7em;
+
+      }
+
+      @include respond-below(md) {
+        flex-direction: column;
+        gap: spacing(md);
+      }
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-chat);
+      font-weight: 400;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  }
+
+  // ========================================================================
+  // MAIN CARD CONTAINER
+  // ========================================================================
+
+  .main-card {
+    max-width: 1400px;
+    margin: 0 auto;
+    border-radius: radius(xxl);
+    @include glass-morphism(0.1);
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: $primary-gradient;
+    }
+
+    .ant-card-body {
+      padding: 0;
+      background: transparent;
+    }
+
+    // Tab Navigation Styling
+    .main-tabs {
+      .ant-tabs-nav {
+        background: var(--ant-modal-header);
+        backdrop-filter: blur(20px);
+        margin: 0;
+        padding: spacing(md) spacing(xl) 0;
+        border: none;
+        position: relative;
+
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg,
+              transparent 0%,
+              rgba(102, 126, 234, 0.3) 50%,
+              transparent 100%);
+        }
+
+        @include respond-below(md) {
+          padding: spacing(lg) spacing(lg) 0;
+        }
+
+        .ant-tabs-tab {
+          padding: spacing(md) spacing(lg);
+          margin: 0 spacing(sm);
+          border-radius: radius(lg) radius(lg) 0 0;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          background: #fff;
+          color: var(--text-chat);
+
+          .ant-space {
+            column-gap: 5px;
+          }
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent);
+            transition: left 0.6s;
+          }
+
+          &:hover::before {
+            left: 100%;
+          }
+
+          @include respond-below(md) {
+            padding: spacing(md) spacing(lg);
+            margin: 0 spacing(xs);
+          }
+
+          &.ant-tabs-tab-active {
+            background: $primary-gradient;
+            transform: translateY(-2px);
+
+            .tab-label,
+            .tab-icon {
+              color: #ffff;
+            }
+
+            .ant-badge {
+              .ant-badge-dot {
+                background: rgba(255, 255, 255, 0.8);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+              }
+            }
+          }
+
+          .tab-icon {
+            font-size: 1.3em;
+            margin-right: spacing(sm);
+            transition: transform 0.3s ease;
+          }
+
+          .tab-label {
+            font-weight: 600;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            color: $text-secondary;
+            transition: color 0.3s ease;
+            color: var(--text-chat);
+          }
+
+          &:hover {
+            .tab-icon {
+              transform: scale(1.1);
+            }
+          }
+        }
+      }
+
+      .ant-tabs-content-holder {
+        background: #fff;
+
+        .smtp-content {
+          padding: spacing(sm);
+        }
+      }
+
+      .ant-tabs-tabpane {
+        .file-content {
+          padding: spacing(md);
+        }
+
+        @include respond-below(md) {
+          // padding: spacing(xl);
+        }
+      }
+    }
+
+    .ant-tabs {
+      .ant-tabs-ink-bar {
+        background: #2670a6;
+      }
+    }
+  }
+
+  // ========================================================================
+  // LOADING STATE
+  // ========================================================================
+
+  .loading-card {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+    border-radius: radius(xxl);
+    @include glass-morphism(0.15);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+
+    .loading-content {
+      padding: spacing(xxxl);
+
+      .ant-spin {
+        margin-bottom: spacing(xl);
+
+        .ant-spin-dot {
+          i {
+            background: $primary-gradient;
+            border-radius: radius(full);
+          }
+        }
+      }
+
+      .loading-title {
+        @include gradient-text($primary-gradient);
+        margin-bottom: spacing(md);
+        font-weight: 700;
+      }
+
+      .ant-typography {
+        color: $text-secondary;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// SMTP CONFIGURATION TAB
+// ============================================================================
+
+.smtp-config {
+  .smtp-content {
+
+    // Quick Setup Section
+    .quick-setup-card {
+      padding: spacing((xl));
+      border-radius: radius(xl);
+      @include glass-morphism(0.1);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+      .ant-card-body {
+        padding: spacing(xxxl);
+        background: transparent;
+
+        @include respond-below(md) {
+          padding: spacing(xl);
+        }
+      }
+
+      .quick-setup-content {
+        .quick-setup-title {
+          @include gradient-text($success-gradient);
+          margin-bottom: spacing(md);
+          display: flex;
+          align-items: center;
+          gap: spacing(md);
+          font-weight: 700;
+          font-size: 1.5rem;
+
+          .section-icon {
+            background: $success-gradient;
+            border-radius: radius(lg);
+            padding: spacing(sm);
+            color: #ffff;
+            font-size: 0.8em;
+          }
+        }
+
+        .quick-setup-description {
+          color: var(--text-chat);
+          margin-bottom: spacing(md);
+          display: block;
+          font-size: 1.1rem;
+          line-height: 1.6;
+        }
+
+        .provider-buttons {
+          .provider-btn {
+            border-radius: radius(sm);
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 10px 30px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgb(0 39 66);
+            background: #fff;
+            color: var(--text-chat);
+
+            &:hover::before {
+              left: 100%;
+            }
+
+
+            &.gmail {
+
+              &.selected,
+              &:hover {
+                background: $gmail-gradient;
+                border: 1px solid $outlook-gradient;
+                color: #ffff;
+
+              }
+            }
+
+            &.outlook {
+
+              &.selected,
+              &:hover {
+                background: $outlook-gradient;
+                border: 1px solid $outlook-gradient;
+                color: #ffff;
+
+              }
+            }
+
+            &.yahoo {
+
+              &.selected,
+              &:hover {
+                background: $yahoo-gradient;
+                color: #ffff;
+                border: 1px solid $outlook-gradient;
+              }
+            }
+
+            @include respond-below(md) {
+              width: 100%;
+              margin-bottom: spacing(md);
+            }
+          }
+        }
+      }
+    }
+
+    // Configuration Status Alert
+    .config-alert {
+      margin-bottom: spacing(xl);
+      border-radius: radius(xl);
+      @include glass-morphism(0.1);
+      border: 2px solid #b7eb8f;
+      position: relative;
+      overflow: hidden;
+
+      .ant-alert-icon {
+        font-size: 1.5em;
+        color: #4bc08e;
+      }
+
+      .ant-alert-message {
+        color: var(--text-chat);
+        font-weight: 600;
+      }
+
+      .ant-alert-description {
+        color: $text-secondary;
+
+        .ant-typography {
+          color: var(--text-chat);
+
+          strong {
+            color: var(--text-chat);
+          }
+        }
+      }
+
+      .security-tag {
+        margin-left: spacing(sm);
+        border-radius: radius(md);
+        font-weight: 600;
+      }
+    }
+
+    // Error Alert
+    .error-alert {
+      margin-bottom: spacing(xl);
+      border-radius: radius(xl);
+      @include glass-morphism(0.1);
+      border: 2px solid rgba(245, 87, 108, 0.3);
+      position: relative;
+
+
+      .ant-alert-icon {
+        color: #f5576c;
+      }
+
+      .ant-alert-message {
+        color: var(--text-chat);
+        font-weight: 600;
+      }
+
+      .ant-alert-description {
+        color: #f5576c;
+      }
+    }
+
+    // SMTP Configuration Form
+    .smtp-form {
+      background: #eee;
+      backdrop-filter: blur(20px);
+      padding: spacing(xl);
+      border-radius: radius(xxl);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+.ant-input-outlined{
+  height: 40px;
+}
+      @include respond-below(md) {
+        padding: spacing(xl);
+      }
+
+      .ant-form-item-label {
+        label {
+          font-weight: 600;
+          color: var(--text-chat);
+          font-size: 1rem;
+          display: flex;
+          align-items: center;
+          gap: spacing(sm);
+
+          .anticon {
+            color: var(--text-chat);
+            font-size: 1.1em;
+          }
+        }
+      }
+
+      // .form-input,
+      // .form-select {
+      //   border-radius: radius(lg);
+      //   border: 2px solid rgba(255, 255, 255, 0.1);
+      //   background: rgba(255, 255, 255, 0.05);
+      //   backdrop-filter: blur(10px);
+      //   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      //   color: $text-primary;
+      //   font-size: 1rem;
+      //   height: 48px;
+
+      //   &::placeholder {
+      //     color: $text-muted;
+      //   }
+
+      //   &:hover {
+      //     border-color: rgba(102, 126, 234, 0.4);
+      //     background: rgba(255, 255, 255, 0.08);
+      //   }
+
+      //   &:focus,
+      //   &.ant-select-focused {
+      //     border-color: rgba(102, 126, 234, 0.6);
+      //     background: rgba(255, 255, 255, 0.1);
+      //     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      //   }
+      // }
+
+      .ant-select-dropdown {
+        border-radius: radius(lg);
+        background: rgba(22, 33, 62, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: shadow(xl);
+
+        .ant-select-item {
+          padding: spacing(md) spacing(lg);
+          border-radius: radius(md);
+          margin: spacing(xs);
+          color: $text-secondary;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: $text-primary;
+          }
+
+          &.ant-select-item-option-selected {
+            background: $primary-gradient;
+            color: #ffff;
+          }
+
+          .ssl-icon {
+            color: #4bc08e;
+          }
+
+          .tls-icon {
+            color: #4facfe;
+          }
+
+          .warning-icon {
+            color: #fcb69f;
+          }
+        }
+      }
+
+      .ant-input-password {
+        .ant-input {
+          background: transparent;
+          border: none;
+          color: var(--text-chat);
+        }
+
+        .ant-input-suffix {
+          .anticon {
+            color: $text-muted;
+          }
+        }
+      }
+
+      .info-icon {
+        color: $text-muted;
+        cursor: help;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: rgba(102, 126, 234, 0.8);
+        }
+      }
+
+      .submit-section {
+        margin-top: spacing(xl);
+        margin-bottom: 0;
+      }
+
+      .submit-btn {
+        height: 56px;
+        border-radius: radius(xl);
+        font-size: 1.1rem;
+        font-weight: 700;
+        background: $primary-gradient;
+        border: none;
+        color: #ffff;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg,
+              transparent,
+              rgba(255, 255, 255, 0.2),
+              transparent);
+          transition: left 0.6s;
+        }
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+
+          &::before {
+            left: 100%;
+          }
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+
+        &.ant-btn-loading {
+          transform: none;
+          box-shadow: shadow(md);
+        }
+      }
+    }
+
+    // Help Guide Section
+    .help-guide {
+      border-radius: radius(xxl);
+      @include glass-morphism(0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: $warning-gradient;
+        border-radius: radius(xxl) radius(xxl) 0 0;
+      }
+
+      .ant-card-body {
+        padding: spacing(xxxl);
+        background: transparent;
+
+        @include respond-below(md) {
+          padding: spacing(xl);
+        }
+      }
+
+      .guide-title {
+        @include gradient-text($warning-gradient);
+        margin-bottom: spacing(xl);
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .provider-info {
+        padding: spacing(xl);
+        border-radius: radius(xl);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: 4px;
+          transition: width 0.3s ease;
+        }
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: shadow(lg);
+          background: rgba(255, 255, 255, 0.08);
+
+          &::before {
+            width: 8px;
+          }
+        }
+
+        &.gmail::before {
+          background: $gmail-gradient;
+        }
+
+        &.outlook::before {
+          background: $outlook-gradient;
+        }
+
+        &.yahoo::before {
+          background: $yahoo-gradient;
+        }
+
+        .provider-name {
+          display: block;
+          font-size: 1.25rem;
+          color: $text-primary;
+          margin-bottom: spacing(md);
+          font-weight: 700;
+        }
+
+        .provider-details {
+          font-size: 0.95rem;
+          color: $text-secondary;
+          line-height: 1.8;
+
+          div {
+            margin-bottom: spacing(xs);
+            display: flex;
+            align-items: center;
+            gap: spacing(sm);
+          }
+
+          .app-password-note {
+            color: #fcb69f;
+            font-weight: 600;
+            margin-top: spacing(md);
+            padding: spacing(sm);
+            background: rgba(252, 182, 159, 0.1);
+            border-radius: radius(md);
+            border-left: 3px solid #fcb69f;
+          }
+        }
+      }
+    }
+  }
+
+  .ant-btn-primary {
+    max-width: fit-content;
+  }
+}
+
+// ============================================================================
+// FILE UPLOAD TAB
+// ============================================================================
+
+.smtp-config {
+  .file-content {
+    .file-header {
+      text-align: center;
+      padding-top: spacing(xl);
+      margin-bottom: spacing(xl);
+
+      .file-title {
+        @include gradient-text($primary-gradient);
+        margin-bottom: spacing(sm);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+
+      .file-description {
+        color: var(--text-chat);
+        font-size: 1.125rem;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+    }
+
+    .file-form-card {
+      background: rgba(22, 33, 62, 0.4);
+      backdrop-filter: blur(20px);
+      border-radius: radius(xxl);
+      padding: 0 spacing(md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: spacing(xl);
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+
+      .ant-card-body {
+        padding: spacing(xxxl);
+        background: transparent;
+
+        @include respond-below(md) {
+          padding: spacing(xl);
+        }
+      }
+
+      .file-form {
+        .ant-form-item-label {
+          label {
+            font-weight: 700;
+            color: var(--text-chat);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: spacing(sm);
+
+            .anticon {
+              color: rgba(79, 172, 254, 0.8);
+              font-size: 1.2em;
+            }
+          }
+        }
+
+        .file-input {
+          border-radius: radius(sm);
+          border: 1px solid #eee;
+          max-width: fit-content;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          color: var(--text-chat);
+          font-size: 1rem;
+          height: 52px;
+
+          .ant-input {
+
+            &[disabled] {
+              background: rgba(255, 255, 255, 0.02);
+              border-color: rgba(255, 255, 255, 0.05);
+
+              cursor: not-allowed;
+            }
+
+          }
+
+          &::placeholder {
+            color: $text-muted;
+          }
+
+          &:hover:not([disabled]) {
+            color: var(--text-chat);
+
+          }
+
+          &:focus {
+            border-color: #eee;
+            background: #fff;
+
+          }
+
+          &[disabled] {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.05);
+            color: #eee;
+            cursor: not-allowed;
+          }
+
+          .ant-input-suffix {
+            color: $text-muted;
+            font-weight: 600;
+          }
+        }
+
+        .file-actions {
+          display: flex;
+        }
+      }
+    }
+  }
+}
+
+.smtp-config .ant-form-vertical .ant-row {
+  flex-direction: row;
+}

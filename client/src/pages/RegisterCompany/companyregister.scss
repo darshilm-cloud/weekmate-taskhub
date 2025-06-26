@@ -508,3 +508,11 @@ max-width: 90%;
   outline: 2px solid #2a5298;
   outline-offset: 2px;
 }
+
+.step-card .ant-form-vertical .ant-row {
+  flex-direction: row;
+}
+
+.step-card .ant-card-head-title {
+  padding: 0;
+}

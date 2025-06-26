@@ -288,13 +288,17 @@ function App() {
           locale={currentAppLocale.locale}
           messages={currentAppLocale.messages}
         >
-          {loader ? (
+          {/* {loader ? (
             <div className="gx-loader-view">
               <CircularProgress />
             </div>
-          ) : null}
+          ) : null} */}
           {showMessage ? message.error(alertMessage.toString()) : null}
           <Switch>
+          <AuthRoute
+              path={`${match.url}signin/:verificationToken`}
+              component={SignIn}
+            />
             <AuthRoute
               path={`${match.url}signin`}
               authUser={authUser}

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { Button, Input, message, Form, Row, Col, Divider, Spin } from "antd";
+import { Button, Input, message, Form, Row, Col } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useHistory, useLocation } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../service/index";
 import {
   userRole,
@@ -13,82 +13,49 @@ import setCookie from "../hooks/setCookie";
 import "./signinstyle.css";
 import { getRoles } from "../util/hasPermission";
 import TaskHub from "../assets/images/taskhubicon.svg";
+import { Modal, Typography } from "antd";
 
 function SignIn() {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const token = queryParams.get("token");
+  const { Title, Text } = Typography;
+  const history = useHistory();
+  const dispatch = useDispatch();
+  const { verificationToken } = useParams();
+
+  const login_logo = localStorage.getItem("loginLogo");
+  const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
 
   useEffect(() => {
-    if (token) {
-      loginWithHRMS(token);
+    if (verificationToken) {
+      tokenVerfication(verificationToken);
     }
-  }, []);
+  }, [verificationToken]);
 
-  const dispatch = useDispatch();
-  const history = useHistory();
-  const { loader, alertMessage, showMessage } = useSelector(({ auth }) => auth);
-  const Logo = localStorage.getItem("LogoURL");
-  const title = localStorage.getItem("title");
-  const login_logo = localStorage.getItem("loginLogo");
-
-  const handleSSO = () => {
-    const originalUrl = `${process.env.REACT_APP_REDIRECT_URI}`;
-    const encodedUrl = encodeURIComponent(originalUrl);
-    window.open(
-      `${process.env.REACT_APP_HRMS_URI}?redirect_uri=${encodedUrl}`,
-      "_self"
-    );
-  };
-
-  const onFinishFailed = (errorInfo) => {
-    console.log("Failed:", errorInfo);
-  };
-
-  const loginWithHRMS = async (token) => {
+  const tokenVerfication = async (token) => {
     try {
-      const reqBody = {
-        token: token,
-      };
-
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.loginWithHRMSRedirect,
-        body: reqBody,
+        api_url: Service.verifyRegistration,
+        body: {
+          token,
+        },
       });
-      if (response?.data?.data && response?.data?.status == 1) {
-        const userData = response?.data?.data;
-
-        //cookie
-        setCookie(
-          "user_permission",
-          JSON.stringify(response.data.permissions),
-          { expires: 365 }
-        );
-        setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
-        //localstorage
-        localStorage.setItem("user_data", JSON.stringify(userData.user));
-        localStorage.setItem("accessToken", userData.auth_token);
-
-        getRoles(["Client"])
-          ? (window.location.href = "/project-list")
-          : (window.location.href = "/dashboard");
-        dispatch(userSignInSuccess(userData));
-        dispatch(userpermission(response.data.permissions));
-        dispatch(userRole(response.data.pms_role_id));
+      console.log(response, "response");
+      if (response.data.status == 1) {
+        showVerificationModal(response.data.message, true);
       } else {
-        const msg =
-          response.data?.statusCode == 401
-            ? "Token is Expired."
-            : response?.data?.message;
-        message.error(msg);
+        showVerificationModal(response.data.message, false);
       }
     } catch (error) {
       console.log(error);
     }
   };
 
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
+  };
+
   const [form] = Form.useForm();
+
   const loginFn = async (values) => {
     try {
       const reqBody = {
@@ -111,7 +78,7 @@ function SignIn() {
         const userData = response?.data?.data;
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));
-        localStorage.setItem("accessToken", userData.auth_token);
+        localStorage.setItem("accessToken", userData.authToken);
 
         //cookie
         setCookie(
@@ -135,9 +102,38 @@ function SignIn() {
       console.log("🚀 ~ loginFn ~ error:", error);
     }
   };
-  if (token) {
-    return;
-  }
+
+  const showVerificationModal = (message, verfyed) => {
+    Modal.success({
+      title: (
+        <Title level={4} style={{ marginBottom: 0 }}>
+          {verfyed ? "Verified" : "Not Verified"}
+        </Title>
+      ),
+      content: (
+        <div style={{ marginTop: 8 }}>
+          <Text>
+            Your email has {verfyed ? "" : "not"} been successfully verified.
+          </Text>
+          <br />
+          <Text type="secondary">{message} </Text>
+        </div>
+      ),
+      okText: (
+        <>
+          <Button type="primary" block size="large" className="ant-btn-primary">
+            Ok
+          </Button>
+        </>
+      ),
+      centered: true,
+    });
+  };
+
+  // if (token) {
+  //   return;
+  // }
+
   return (
     <div className="gx-app-login-wrap account-login">
       <div className="gx-app-login-container">
@@ -245,7 +241,7 @@ function SignIn() {
                     htmlType="button"
                     className="gx-mb-0"
                     onClick={() => {
-                      handleSSO();
+                      history.push(`/register-company`);
                     }}
                     block
                   >

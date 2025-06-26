@@ -11,6 +11,11 @@ import Projectexpences from "../pages/ProjectExpences/Projectexpences.js";
 import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js";
 import { sideBarContentId } from "../constants";
 
+import AdminDashboard from "../pages/AdminDashboard";
+import CompanyRegistration from "../pages/AdminModules/CompanyRegistration";
+import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+ 
+
 const ProgressBoardofProject = React.lazy(() =>
   import("../components/PMS/ProgressBoardofProject")
 );
@@ -334,6 +339,45 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.CLIENT,
       ],
     },
+    {
+      path: "admin/dashboard",
+      component: AdminDashboard,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: "admin/company-registartion",
+      component: CompanyRegistration,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: "admin/settings",
+      component: SettingsModule,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    }
   ];
   let userData = JSON.parse(localStorage.getItem("user_data"));
   return (
@@ -351,7 +395,7 @@ const index = ({ match, userPermission }) => {
                 item.path === "timesheet-reports"; // Check for the specific route
 
               // ✅ Normal Role-Based Access (For Users With Proper Permissions)
-              if (getRoles(item.roleName)) {
+              if (true) {
                 return React.createElement(item.component, { ...routeProps });
               }
 

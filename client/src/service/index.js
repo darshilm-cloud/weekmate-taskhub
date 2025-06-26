@@ -6,10 +6,10 @@ const { REACT_APP_API_URL } = process.env;
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
-  static API_URL =
-    process.env.NODE_ENV === "production"
-      ? process.env.REACT_APP_API_URL + "/v1"
-      : `${this.Server_Base_URL}/v1`;
+  static API_URL = "http://localhost:8489/v1/"
+    // process.env.NODE_ENV === "production"
+    //   ? process.env.REACT_APP_API_URL + "/v1"
+    //   : `${this.Server_Base_URL}/v1`;
 
   static API_Call_Counter = 0;
   static incre_API_Call_Counter = () => this.API_Call_Counter++;
@@ -61,7 +61,8 @@ export default class Service {
   };
 
   //Auth Module
-  static login = "/admin/login";
+  // static login = "/admin/login";
+  static login = "auth/userLogin"
   static userById = "/admin/userById";
   // static empById = "/emp/getempbyid";
   static editAdmin = "/admin/editadminuserprofile";
@@ -69,7 +70,7 @@ export default class Service {
   static forgotPassword = "/authentication/client/forgotPassword";
   static resetPassword = "/authentication/client/resetPassword";
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
-  static login = "/authentication/login";
+  // static login = "/authentication/login";
 
   //icon & logo
   // static editLogo_Icon = "/adminsettings/editAdminSetting";
@@ -436,6 +437,12 @@ export default class Service {
   // consumer feedback form
   static consumerResolutionForm = "/taskhub/complaint/resolution/feedback/add"
   static getconsumerResolutionData = "/taskhub/complaint/resolution/feedback/get"
+
+  //Saas flow API's
+  static registerAdminAndCompany = "CompanyReg/registerAdminAndCompany"
+  static verifyRegistration = 'CompanyReg/verify-registration'
+  static getDashboardData = "superAdmin/getDashboardData"
+
   static async makeAPICall({
     props,
     methodName,
