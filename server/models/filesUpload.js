@@ -23,6 +23,10 @@ const FileUploadSchema = new mongoose.Schema({
     ref: "projects",
     default: null,
   },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "companies"
+  },
   folder_id: {
     type: Schema.Types.ObjectId,
     ref: "filefolders",
