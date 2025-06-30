@@ -443,6 +443,23 @@ export default class Service {
   static verifyRegistration = 'CompanyReg/verify-registration'
   static getDashboardData = "superAdmin/getDashboardData"
 
+  static getCompanyList = 'CompanyManage/getCompanyList'
+  static addCompany = 'CompanyManage/addCompany'
+  static editCompany = 'CompanyManage/editCompany'
+  static deleteCompany = 'CompanyManage/deleteCompany'
+
+  static getUsersList = 'adminManage/getUsersList'
+  static addUser = 'adminManage/addUser'
+  static editUser = 'adminManage/editUser'
+  static deleteUser = 'adminManage/deleteUser'
+  static importUsers = "adminManage/admin/users/upload-csv"
+
+  static smtpConfig = 'smtpConfig/verifyAndSaveSMTP'
+  static smtpGetConfig = 'smtpConfig/getSmtpConfig'
+
+  //file size limit
+  static fileSizeUpload = "/CompanyManage/file-upload-size"
+
   static async makeAPICall({
     props,
     methodName,

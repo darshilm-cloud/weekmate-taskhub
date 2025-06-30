@@ -14,6 +14,7 @@ import { sideBarContentId } from "../constants";
 import AdminDashboard from "../pages/AdminDashboard";
 import CompanyRegistration from "../pages/AdminModules/CompanyRegistration";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
  
 
 const ProgressBoardofProject = React.lazy(() =>
@@ -368,6 +369,19 @@ const index = ({ match, userPermission }) => {
     {
       path: "admin/settings",
       component: SettingsModule,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: "admin/company-employee",
+      component: CompanyEmployee,
       roleName: [
         config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
