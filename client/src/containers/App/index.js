@@ -192,17 +192,20 @@ function App() {
   });
 
   const setLayoutType = (layoutType) => {
-    if (layoutType === LAYOUT_TYPE_FULL) {
+    if (layoutType === LAYOUT_TYPE_FULL) { 
       document.body.classList.remove("boxed-layout");
       document.body.classList.remove("framed-layout");
       document.body.classList.add("full-layout");
+      document.body.classList.add("admin-user");
     } else if (layoutType === LAYOUT_TYPE_BOXED) {
       document.body.classList.remove("full-layout");
+      document.body.classList.add("admin-user");
       document.body.classList.remove("framed-layout");
       document.body.classList.add("boxed-layout");
     } else if (layoutType === LAYOUT_TYPE_FRAMED) {
       document.body.classList.remove("boxed-layout");
       document.body.classList.remove("full-layout");
+      document.body.classList.add("admin-user");
       document.body.classList.add("framed-layout");
     }
   };

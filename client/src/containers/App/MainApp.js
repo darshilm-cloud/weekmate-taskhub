@@ -82,7 +82,7 @@ function MainApp() {
 
   return (
     <>
-      <Layout className="gx-app-layout">
+      <Layout className="gx-app-layout admin ">
         <Sidebar />
         <Layout>
           { getNavStyles(navStyle) }

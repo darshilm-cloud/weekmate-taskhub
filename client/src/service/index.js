@@ -6,7 +6,7 @@ const { REACT_APP_API_URL } = process.env;
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
-  static API_URL = "http://localhost:8489/v1/"
+  static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
     // process.env.NODE_ENV === "production"
     //   ? process.env.REACT_APP_API_URL + "/v1"
     //   : `${this.Server_Base_URL}/v1`;

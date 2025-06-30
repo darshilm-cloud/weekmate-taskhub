@@ -36711,6 +36711,7 @@ h6,
 
 .top-header.ant-layout-header {
   background-image: linear-gradient(-303deg, rgb(0, 39, 66), rgb(39, 114, 168) 56%, rgb(4, 49, 82));
+  margin-bottom: 0;
 }
 
 @media screen and (max-width: 991px) {

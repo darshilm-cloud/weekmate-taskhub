@@ -100,7 +100,7 @@ $breakpoints: (
 }
 
 @mixin respond-below($breakpoint) {
-  @media (max-width: #{map-get($breakpoints, $breakpoint) - 1px}) {
+  @media (max-width: map-get($breakpoints, $breakpoint) - 1px) {
     @content;
   }
 }
@@ -269,6 +269,9 @@ $breakpoints: (
 
           .ant-space {
             column-gap: 5px;
+            .ant-badge{
+              margin: 0;
+            }
           }
 
           &::before {
@@ -463,6 +466,11 @@ $breakpoints: (
             border: 1px solid rgb(0 39 66);
             background: #fff;
             color: var(--text-chat);
+
+            span {
+              display: block;
+              line-height: 1;
+            }
 
             &:hover::before {
               left: 100%;
@@ -981,6 +989,8 @@ $breakpoints: (
   }
 }
 
-.smtp-config .ant-form-vertical .ant-row {
-  flex-direction: row;
+.ant-form-vertical {
+   .ant-row {
+      flex-flow: row wrap;
+  }
 }
