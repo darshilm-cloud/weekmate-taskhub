@@ -4772,6 +4772,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 .admin-user .ant-layout.admin .ant-layout-content {
   background-color: #f5f8fa;
+  padding: 10px;
 }
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
   background-color: #0000;
@@ -4782,7 +4783,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   padding: 0;
 }
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body {
-  padding: 0 !important;
+  padding: 20px 24px !important;
 }
 .admin-user
   .ant-layout.admin
@@ -4910,7 +4911,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   .global-search
   .ant-input-search-button:hover {
   background-color: #fff;
-  border-color: #c2c3c5;
+  border-color: #c2c3c5 !important;
   color: #3f4350;
 }
 .admin-user
@@ -4919,7 +4920,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   .ant-pagination
   .ant-pagination-item-active {
   background: #fff;
-  border-color: #c2c3c5;
+  border-color: #c2c3c5 !important;
 }
 .admin-user
   .ant-layout.admin
@@ -4948,6 +4949,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   a {
   background: #fff;
   color: #3f4350;
+  border-color:#c2c3c5;
 }
 .admin-user
   .ant-layout.admin
