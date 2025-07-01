@@ -164,7 +164,7 @@ const CompanyRegistration = () => {
       });
 
       if (response.data.status === 1) {
-        showVerificationModal(response?.message);
+        showVerificationModal(response.data.message);
       } else {
         showErrorMessage(response.data.message || "Registration failed");
       }

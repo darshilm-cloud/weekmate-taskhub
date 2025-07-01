@@ -52,6 +52,7 @@ let reviews = require("./reviews");
 let consumer_feedback_form = require("./consumer_feedback_form");
 
 let CompanyModel = require("./CompanyModel");
+let SMTP = require("./Smtp");
 
 module.exports = {
   projectType,
@@ -105,5 +106,6 @@ module.exports = {
   complaints_comments,
   reviews,
   consumer_feedback_form,
-  CompanyModel
+  CompanyModel,
+  SMTP
 };

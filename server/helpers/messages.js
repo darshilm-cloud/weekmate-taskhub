@@ -157,4 +157,11 @@ module.exports = {
   REVIEW_CREATED: "Review added successfully",
   REVIEW_UPDATED: "Review updated successfully",
   REVIEW_DELETED: "Review deleted successfully",
+
+  COMPANY_NAME_EXIST: "Company with this name already exists",
+  COMPANY_EMAIL_EXIST: "Company with this email already exists",
+  COMPANY_CREATED: "Company created successfully",
+
+  SMTP_NOT_FOUND:'SMTP configuration not found',
+  SMTP_FOUND:"SMTP configuration retrieved successfully",
 };

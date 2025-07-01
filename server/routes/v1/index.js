@@ -46,7 +46,8 @@ const complaints_comments = require("./complaints_comments");
 const reviews = require("./reviews");
 const projectexpanses = require("./projectexpanses");
 const companyReg = require("./companyReg");
-
+const companyManage = require("./companyManage");
+const smtpConfig = require("./smtpConfig")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
 
@@ -94,6 +95,8 @@ Router.use('/taskhub/complaints/comments',complaints_comments);
 Router.use('/taskhub/reviews',reviews);
 Router.use('/taskhub/projectexpanses',projectexpanses);
 Router.use('/CompanyReg',companyReg)
+Router.use('/CompanyManage',companyManage)
+Router.use('/smtpConfig',smtpConfig)
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 
