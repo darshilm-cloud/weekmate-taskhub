@@ -291,11 +291,6 @@ function App() {
           locale={currentAppLocale.locale}
           messages={currentAppLocale.messages}
         >
-          {/* {loader ? (
-            <div className="gx-loader-view">
-              <CircularProgress />
-            </div>
-          ) : null} */}
           {showMessage ? message.error(alertMessage.toString()) : null}
           <Switch>
           <AuthRoute

@@ -1,5 +1,16 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Steps, Button, Input, Form, Row, Col, message, Card, Modal, Typography } from "antd";
+import {
+  Steps,
+  Button,
+  Input,
+  Form,
+  Row,
+  Col,
+  message,
+  Card,
+  Modal,
+  Typography,
+} from "antd";
 import {
   UserOutlined,
   MailOutlined,
@@ -19,8 +30,8 @@ const AUTO_COMPLETE = "off";
 
 // Validation rules - memoized to prevent recreation
 const VALIDATION_RULES = {
-  fullName: [{ required: true, message: "Please input full name!" }],
-  userName: [{ required: true, message: "Please input username!" }],
+  firstName: [{ required: true, message: "Please input first name!" }],
+  lastName: [{ required: true, message: "Please input last name!" }],
   position: [], // Made optional - no required rule
   email: [
     { required: true, message: "Please input email!" },
@@ -32,15 +43,15 @@ const VALIDATION_RULES = {
     {
       validator: (_, value) => {
         if (value && /\s/.test(value)) {
-          return Promise.reject(new Error("Password should not contain spaces"));
+          return Promise.reject(
+            new Error("Password should not contain spaces")
+          );
         }
         return Promise.resolve();
       },
     },
   ],
-  confirmPassword: [
-    { required: true, message: "Please confirm password!" },
-  ],
+  confirmPassword: [{ required: true, message: "Please confirm password!" }],
   companyName: [{ required: true, message: "Please input company name!" }],
   companyEmail: [
     { required: true, message: "Please input company email!" },
@@ -85,7 +96,7 @@ const CompanyRegistration = () => {
   const handleAdminNext = useCallback(async () => {
     try {
       const adminData = await adminForm.validateFields();
-      
+
       // Store validated admin data (excluding confirmPassword)
       const { confirmPassword, ...adminDetailsToStore } = adminData;
       setValidatedAdminData(adminDetailsToStore);
@@ -98,16 +109,17 @@ const CompanyRegistration = () => {
   // Step 2: Company Details Handler
   const handleCompanySubmit = useCallback(async () => {
     if (isSubmitting) return; // Prevent double submission
-    
+
     try {
       setIsSubmitting(true);
-      
+
       // Get current form values for debugging
       const currentFormValues = companyForm.getFieldsValue();
-      
+
       // Check if form has data
-      const hasFormData = currentFormValues && 
-        Object.keys(currentFormValues).some(key => currentFormValues[key]);
+      const hasFormData =
+        currentFormValues &&
+        Object.keys(currentFormValues).some((key) => currentFormValues[key]);
 
       if (!hasFormData) {
         showErrorMessage("Please fill in the company details");
@@ -120,7 +132,9 @@ const CompanyRegistration = () => {
 
       // Check admin data availability
       if (!validatedAdminData) {
-        showErrorMessage("Admin data is missing. Please go back and complete the first step.");
+        showErrorMessage(
+          "Admin data is missing. Please go back and complete the first step."
+        );
         setCurrentStep(0);
         return;
       }
@@ -128,16 +142,18 @@ const CompanyRegistration = () => {
       // Prepare optimized payload
       const payload = {
         adminDetails: {
-          fullName: validatedAdminData.fullName,
-          userName: validatedAdminData.userName,
+          firstName: validatedAdminData.firstName,
+          lastName: validatedAdminData.lastName,
           email: validatedAdminData.email,
           password: validatedAdminData.password,
-          ...(validatedAdminData.position && { position: validatedAdminData.position }), // Only include if provided
+          ...(validatedAdminData.position && {
+            position: validatedAdminData.position,
+          }), // Only include if provided
         },
         companyDetails: {
           companyName: companyData.companyName || currentFormValues.companyName,
-          companyEmail: companyData.companyEmail || currentFormValues.companyEmail,
-          domain: `dummy-${Math.random()}`
+          companyEmail:
+            companyData.companyEmail || currentFormValues.companyEmail,
         },
       };
 
@@ -153,12 +169,20 @@ const CompanyRegistration = () => {
         showErrorMessage(response.data.message || "Registration failed");
       }
     } catch (error) {
-      const errorMessage = error?.response?.data?.message || "Registration failed. Please try again.";
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Registration failed. Please try again.";
       showErrorMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
-  }, [companyForm, validatedAdminData, isSubmitting, showErrorMessage, showVerificationModal]);
+  }, [
+    companyForm,
+    validatedAdminData,
+    isSubmitting,
+    showErrorMessage,
+    showVerificationModal,
+  ]);
 
   // Navigation handler
   const goBack = useCallback(() => {
@@ -181,191 +205,195 @@ const CompanyRegistration = () => {
     []
   );
 
-  // Memoized form components to prevent unnecessary re-renders 
-  const AdminForm = useMemo(() => (
-    <Card title="Sign Up" className="step-card">
-      <Form
-        form={adminForm}
-        layout={FORM_LAYOUT}
-        autoComplete={AUTO_COMPLETE}
-        initialValues={validatedAdminData}
-      >
-        <Row gutter={24}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Full Name"
-              name="fullName"
-              rules={VALIDATION_RULES.fullName}
-            >
-              <Input prefix={<UserOutlined />} placeholder="Full Name" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Username"
-              name="userName"
-              rules={VALIDATION_RULES.userName}
-            >
-              <Input prefix={<UserOutlined />} placeholder="Username" />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={24}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Position (Optional)"
-              name="position"
-              rules={VALIDATION_RULES.position}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="Position (e.g., CTO)"
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={VALIDATION_RULES.email}
-            >
-              <Input prefix={<MailOutlined />} placeholder="Email" />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={24}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Password"
-              name="password"
-              rules={VALIDATION_RULES.password}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Password"
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Confirm Password"
-              name="confirmPassword"
-              dependencies={["password"]}
-              rules={[
-                ...VALIDATION_RULES.confirmPassword,
-                confirmPasswordValidator,
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Confirm Password"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
-  ), [adminForm, validatedAdminData, confirmPasswordValidator]);
+  // Memoized form components to prevent unnecessary re-renders
+  const AdminForm = useMemo(
+    () => (
+      <Card title="Sign Up" className="step-card">
+        <Form
+          form={adminForm}
+          layout={FORM_LAYOUT}
+          autoComplete={AUTO_COMPLETE}
+          initialValues={validatedAdminData}
+        >
+          <Row gutter={24}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="First Name"
+                name="firstName"
+                rules={VALIDATION_RULES.firstName}
+              >
+                <Input prefix={<UserOutlined />} placeholder="First Name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Last Name"
+                name="lastName"
+                rules={VALIDATION_RULES.lastName}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Last Name" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Position (Optional)"
+                name="position"
+                rules={VALIDATION_RULES.position}
+              >
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="Position (e.g., CTO)"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={VALIDATION_RULES.email}
+              >
+                <Input prefix={<MailOutlined />} placeholder="Email" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={VALIDATION_RULES.password}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Password"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Confirm Password"
+                name="confirmPassword"
+                dependencies={["password"]}
+                rules={[
+                  ...VALIDATION_RULES.confirmPassword,
+                  confirmPasswordValidator,
+                ]}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Confirm Password"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
+    ),
+    [adminForm, validatedAdminData, confirmPasswordValidator]
+  );
 
-  const CompanyForm = useMemo(() => (
-    <Card title="Company Information" className="step-card">
-      <Form
-        key="company-form"
-        form={companyForm}
-        layout={FORM_LAYOUT}
-        autoComplete={AUTO_COMPLETE}
-        preserve={false}
-        initialValues={validatedCompanyData}
-      >
-        <Row gutter={24}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Company Name"
-              name="companyName"
-              rules={VALIDATION_RULES.companyName}
-            >
-              <Input
-                prefix={<BankOutlined />}
-                placeholder="Company Name"
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Company Email"
-              name="companyEmail"
-              rules={VALIDATION_RULES.companyEmail}
-            >
-              <Input
-                prefix={<MailOutlined />}
-                placeholder="Company Email"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
-  ), [companyForm, validatedCompanyData]);
+  const CompanyForm = useMemo(
+    () => (
+      <Card title="Company Information" className="step-card">
+        <Form
+          key="company-form"
+          form={companyForm}
+          layout={FORM_LAYOUT}
+          autoComplete={AUTO_COMPLETE}
+          preserve={false}
+          initialValues={validatedCompanyData}
+        >
+          <Row gutter={24}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Company Name"
+                name="companyName"
+                rules={VALIDATION_RULES.companyName}
+              >
+                <Input prefix={<BankOutlined />} placeholder="Company Name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Company Email"
+                name="companyEmail"
+                rules={VALIDATION_RULES.companyEmail}
+              >
+                <Input prefix={<MailOutlined />} placeholder="Company Email" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
+    ),
+    [companyForm, validatedCompanyData]
+  );
 
   // Memoized steps configuration
-  const steps = useMemo(() => [
-    {
-      title: "Admin Details",
-      content: AdminForm,
-    },
-    {
-      title: "Company Details", 
-      content: CompanyForm,
-    },
-  ], [AdminForm, CompanyForm]);
+  const steps = useMemo(
+    () => [
+      {
+        title: "Admin Details",
+        content: AdminForm,
+      },
+      {
+        title: "Company Details",
+        content: CompanyForm,
+      },
+    ],
+    [AdminForm, CompanyForm]
+  );
 
   // Memoized action buttons
-  const ActionButtons = useMemo(() => (
-    <div className="steps-action">
-      <Row justify="center" gutter={[24]}>
-        <Col className="steps-action-left">
-          <Button
-            block
-            size="large"
-            onClick={goBack}
-            className="action-button"
-            disabled={isSubmitting}
-          >
-            {currentStep === 0 ? "BACK TO LOGIN" : "PREVIOUS"}
-          </Button>
-        </Col>
-        <Col className="steps-action-right">
-          {currentStep === 0 && (
+  const ActionButtons = useMemo(
+    () => (
+      <div className="steps-action">
+        <Row justify="center" gutter={[24]}>
+          <Col className="steps-action-left">
             <Button
-              type="primary"
               block
               size="large"
-              onClick={handleAdminNext}
-              className="action-button primary-button"
+              onClick={goBack}
+              className="action-button"
               disabled={isSubmitting}
             >
-              NEXT
+              {currentStep === 0 ? "BACK TO LOGIN" : "PREVIOUS"}
             </Button>
-          )}
-          {currentStep === 1 && (
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={handleCompanySubmit}
-              className="action-button primary-button"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              REGISTER COMPANY
-            </Button>
-          )}
-        </Col>
-      </Row>
-    </div>
-  ), [currentStep, goBack, handleAdminNext, handleCompanySubmit, isSubmitting]);
-
-  // showVerificationModal("test message");
+          </Col>
+          <Col className="steps-action-right">
+            {currentStep === 0 && (
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={handleAdminNext}
+                className="action-button primary-button"
+                disabled={isSubmitting}
+              >
+                NEXT
+              </Button>
+            )}
+            {currentStep === 1 && (
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={handleCompanySubmit}
+                className="action-button primary-button"
+                loading={isSubmitting}
+                disabled={isSubmitting}
+              >
+                REGISTER COMPANY
+              </Button>
+            )}
+          </Col>
+        </Row>
+      </div>
+    ),
+    [currentStep, goBack, handleAdminNext, handleCompanySubmit, isSubmitting]
+  );
 
   return (
     <div className="registration-wrapper">
@@ -414,9 +442,7 @@ const CompanyRegistration = () => {
 
           <Row justify="center" className="content-row">
             <Col xs={24}>
-              <div className="steps-content">
-                {steps[currentStep].content}
-              </div>
+              <div className="steps-content">{steps[currentStep].content}</div>
             </Col>
           </Row>
 

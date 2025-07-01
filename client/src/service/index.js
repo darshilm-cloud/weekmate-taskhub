@@ -3,13 +3,15 @@ import { message } from "antd";
 import getCookie from "../hooks/getCookie";
 import removeCookie from "../hooks/removeCookie";
 const { REACT_APP_API_URL } = process.env;
+
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
-  static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
-    // process.env.NODE_ENV === "production"
-    //   ? process.env.REACT_APP_API_URL + "/v1"
-    //   : `${this.Server_Base_URL}/v1`;
+  // static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
+  static API_URL = 
+    process.env.NODE_ENV === "production"
+      ? process.env.REACT_APP_API_URL + "/v1"
+      : `${this.Server_Base_URL}/v1`;
 
   static API_Call_Counter = 0;
   static incre_API_Call_Counter = () => this.API_Call_Counter++;
@@ -439,23 +441,24 @@ export default class Service {
   static getconsumerResolutionData = "/taskhub/complaint/resolution/feedback/get"
 
   //Saas flow API's
-  static registerAdminAndCompany = "CompanyReg/registerAdminAndCompany"
-  static verifyRegistration = 'CompanyReg/verify-registration'
-  static getDashboardData = "superAdmin/getDashboardData"
+  static registerAdminAndCompany = "/CompanyReg/registerAdminAndCompany"
+  static verifyRegistration = '/CompanyReg/verify-registration'
+  
+  static getDashboardData = "/superAdmin/getDashboardData"
 
-  static getCompanyList = 'CompanyManage/getCompanyList'
-  static addCompany = 'CompanyManage/addCompany'
-  static editCompany = 'CompanyManage/editCompany'
-  static deleteCompany = 'CompanyManage/deleteCompany'
+  static getCompanyList = '/CompanyManage/getCompanyList'
+  static addCompany = '/CompanyManage/addCompany'
+  static editCompany = '/CompanyManage/editCompany'
+  static deleteCompany = '/CompanyManage/deleteCompany'
 
-  static getUsersList = 'adminManage/getUsersList'
-  static addUser = 'adminManage/addUser'
-  static editUser = 'adminManage/editUser'
-  static deleteUser = 'adminManage/deleteUser'
-  static importUsers = "adminManage/admin/users/upload-csv"
+  static getUsersList = '/adminManage/getUsersList'
+  static addUser = '/adminManage/addUser'
+  static editUser = '/adminManage/editUser'
+  static deleteUser = '/adminManage/deleteUser'
+  static importUsers = "/adminManage/admin/users/upload-csv"
 
-  static smtpConfig = 'smtpConfig/verifyAndSaveSMTP'
-  static smtpGetConfig = 'smtpConfig/getSmtpConfig'
+  static smtpConfig = '/smtpConfig/verifyAndSaveSMTP'
+  static smtpGetConfig = '/smtpConfig/getSmtpConfig'
 
   //file size limit
   static fileSizeUpload = "/CompanyManage/file-upload-size"

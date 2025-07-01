@@ -130,10 +130,7 @@ function SignIn() {
     });
   };
 
-  // if (token) {
-  //   return;
-  // }
-
+  
   return (
     <div className="gx-app-login-wrap account-login">
       <div className="gx-app-login-container">

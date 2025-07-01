@@ -51,6 +51,8 @@ let complaints_comments = require("./complaints_comments");
 let reviews = require("./reviews");
 let consumer_feedback_form = require("./consumer_feedback_form");
 
+let CompanyModel = require("./CompanyModel");
+
 module.exports = {
   projectType,
   projectTech,
@@ -102,5 +104,6 @@ module.exports = {
   complaints_status,
   complaints_comments,
   reviews,
-  consumer_feedback_form
+  consumer_feedback_form,
+  CompanyModel
 };
