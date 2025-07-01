@@ -25,9 +25,28 @@ const {
 } = require("./controller/authentication");
 const { checkIsPMSClient } = require("./controller/PMSRoles");
 const { PRE_AUTH_ROUTES, API_KEY_VALIDATIONS } = require("./helpers/constant");
+const mongoose= require("mongoose");
 global.chalk = require("chalk");
 global.moment = require("moment");
 var app = express();
+
+global.newObjectId = (id) => {
+  if (!id) return null; // Handle null, undefined, empty string
+  try {
+    return mongoose.Types.ObjectId.createFromHexString(id);
+  } catch (error) {
+    return null; // Return null for invalid hex strings
+  }
+};
+global.validObjectId = (id) => {
+  if (!id) return null; // Handle null, undefined, empty string
+  try {
+    if (mongoose.Types.ObjectId.isValid(id)) return true;
+    return false;
+  } catch (error) {
+    return null; // Return null for invalid id
+  }
+};
 
 // Limit request body size
 app.use(bodyParser.json({ limit: "100mb" }));
