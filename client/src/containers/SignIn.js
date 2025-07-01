@@ -78,7 +78,7 @@ function SignIn() {
         const userData = response?.data?.data;
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));
-        localStorage.setItem("accessToken", userData.authToken);
+        localStorage.setItem("accessToken", userData.auth_token);
 
         //cookie
         setCookie(
