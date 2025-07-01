@@ -63,8 +63,6 @@ export default class Service {
   };
 
   //Auth Module
-  // static login = "/admin/login";
-  static login = "auth/userLogin"
   static userById = "/admin/userById";
   // static empById = "/emp/getempbyid";
   static editAdmin = "/admin/editadminuserprofile";
@@ -72,7 +70,7 @@ export default class Service {
   static forgotPassword = "/authentication/client/forgotPassword";
   static resetPassword = "/authentication/client/resetPassword";
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
-  // static login = "/authentication/login";
+  static login = "/authentication/login";
 
   //icon & logo
   // static editLogo_Icon = "/adminsettings/editAdminSetting";

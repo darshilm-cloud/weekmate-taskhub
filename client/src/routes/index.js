@@ -409,7 +409,7 @@ const index = ({ match, userPermission }) => {
                 item.path === "timesheet-reports"; // Check for the specific route
 
               // ✅ Normal Role-Based Access (For Users With Proper Permissions)
-              if (true) {
+              if (getRoles(item.roleName)) {
                 return React.createElement(item.component, { ...routeProps });
               }
 

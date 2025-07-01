@@ -30,8 +30,8 @@ const AUTO_COMPLETE = "off";
 
 // Validation rules - memoized to prevent recreation
 const VALIDATION_RULES = {
-  firstName: [{ required: true, message: "Please input first name!" }],
-  lastName: [{ required: true, message: "Please input last name!" }],
+  first_name: [{ required: true, message: "Please input first name!" }],
+  last_name: [{ required: true, message: "Please input last name!" }],
   position: [], // Made optional - no required rule
   email: [
     { required: true, message: "Please input email!" },
@@ -142,13 +142,10 @@ const CompanyRegistration = () => {
       // Prepare optimized payload
       const payload = {
         adminDetails: {
-          firstName: validatedAdminData.firstName,
-          lastName: validatedAdminData.lastName,
+          first_name: validatedAdminData.first_name,
+          last_name: validatedAdminData.last_name,
           email: validatedAdminData.email,
-          password: validatedAdminData.password,
-          ...(validatedAdminData.position && {
-            position: validatedAdminData.position,
-          }), // Only include if provided
+          password: validatedAdminData.password
         },
         companyDetails: {
           companyName: companyData.companyName || currentFormValues.companyName,
@@ -219,8 +216,8 @@ const CompanyRegistration = () => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="First Name"
-                name="firstName"
-                rules={VALIDATION_RULES.firstName}
+                name="first_name"
+                rules={VALIDATION_RULES.first_name}
               >
                 <Input prefix={<UserOutlined />} placeholder="First Name" />
               </Form.Item>
@@ -228,8 +225,8 @@ const CompanyRegistration = () => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Last Name"
-                name="lastName"
-                rules={VALIDATION_RULES.lastName}
+                name="last_name"
+                rules={VALIDATION_RULES.last_name}
               >
                 <Input prefix={<UserOutlined />} placeholder="Last Name" />
               </Form.Item>
