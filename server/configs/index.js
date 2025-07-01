@@ -19,6 +19,29 @@ class Configs {
         const swaggerSpec = swaggerJsdoc(options);
         return swaggerSpec;
     }
+
+    /**
+   * Validate data against a schema and format error messages
+   * @param {Object} schema - Joi schema
+   * @param {Object} data - Data to validate
+   * @returns {Object} { error, value }
+   */
+  validateFormatter(schema, data) {
+    const options = {
+      abortEarly: false, // Return all errors, not just the first
+      allowUnknown: true // Allow unknown fields in the request
+    };
+
+    const { error, value } = schema.validate(data, options);
+    if (error) {
+      // Remove double quotes from error messages and convert to uppercase
+      error.details.forEach((detail) => {
+        detail.message = detail.message.replace(/\"/g, ""); // Format message
+      });
+    }
+    return { error, value };
+  }
+
 }
 
 module.exports = new Configs();

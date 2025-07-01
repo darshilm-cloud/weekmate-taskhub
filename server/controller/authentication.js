@@ -20,6 +20,8 @@ const {
   forgetPasswordContent,
   resetPasswordContent,
 } = require("../template/clientPasswordMails");
+const { getLoginSchema } = require("../validation");
+const { validateFormatter } = require("../configs");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -88,12 +90,11 @@ exports.getUserPermissions = async (userId) => {
 // Login API
 exports.login = async (req, res, next) => {
   try {
-    const validationSchema = Joi.object({
-      email: Joi.string().required(),
-      password: Joi.string().required(),
-    });
 
-    const { error, value } = validationSchema.validate(req.body);
+    const { error, value } = validateFormatter(
+      getLoginSchema(),
+      req.body
+    );
     if (error) {
       return errorResponse(
         res,
@@ -202,16 +203,9 @@ exports.dataForJWT = async (userData) => {
       last_name: userData.last_name,
       email: userData.email,
       phone_number: userData.phone_number,
+      companyId:userData.companyId,
       ...(userData.full_name ? { full_name: userData.full_name } : {}),
-      ...(userData.role_id ? { role_id: userData.role_id } : {}),
-      ...(userData.org_id ? { org_id: userData.org_id } : {}),
       ...(userData.emp_img ? { emp_img: userData.emp_img } : {}),
-      ...(userData?.emp_type ? { emp_type: userData.emp_type } : {}),
-      ...(userData?.emp_code ? { emp_code: userData.emp_code } : {}),
-      ...(userData?.login_alias ? { login_alias: userData.login_alias } : {}),
-      ...(userData?.reporting_manager
-        ? { reporting_manager: userData.reporting_manager }
-        : {}),
       ...(userData.pms_role_id ? { pms_role_id: userData.pms_role_id } : {}),
     };
   } catch (error) {
@@ -443,7 +437,7 @@ exports.checkUserIsAdmin = async (userId) => {
       loginUser &&
       loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
-      isAdmin = true;
+    isAdmin = true;
     console.log("🚀 ~ exports.checkUserIsAdmin= ~ isAdmin:", isAdmin);
 
     return isAdmin;

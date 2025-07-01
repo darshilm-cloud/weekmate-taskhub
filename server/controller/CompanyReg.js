@@ -9,47 +9,9 @@ const CONFIG_JSON = require("../settings/config.json");
 const CompanyRegistrationMail = require("../models/CompanyRegistrationMail");
 const nodemailer = require("nodemailer");
 const Joi = require("joi");
+const { getRegistrationSchema } = require("../validation");
+const { validateFormatter } = require("../configs");
 
-const validateFormatter = (schema, data) => {
-  const options = {
-    abortEarly: false, // Return all errors, not just the first
-    allowUnknown: true, // Allow unknown fields in the req
-  };
-
-  const { error, value } = schema.validate(data, options);
-  if (error) {
-    // Remove double quotes from error messages and convert to uppercase
-    error.details.forEach((detail) => {
-      detail.message = detail.message.replace(/\"/g, ""); // Format message
-    });
-  }
-  return { error, value };
-};
-
-const getRegistrationSchema = () => {
-  return Joi.object({
-    adminDetails: Joi.object({
-      first_name: Joi.string().required().label("First name is required"),
-      last_name: Joi.string().required().label("Last name is required"),
-      email: Joi.string().email().trim().required().messages({
-        "string.empty": "Email is required",
-        "string.email": "Invalid email format",
-      }),
-      password: Joi.string().trim().min(8).required().messages({
-        "string.empty": "Password is required",
-        "string.min": "Password must be at least 8 characters long",
-      })
-    }).required(),
-
-    companyDetails: Joi.object({
-      companyName: Joi.string().required().label("Company name is required"),
-      companyEmail: Joi.string().email().required().messages({
-        "string.empty": "Email is required",
-        "string.email": "Invalid email format",
-      })
-    }).required(),
-  });
-};
 
 // Register a company details API
 exports.registerAdminAndCompany = async (req, res) => {

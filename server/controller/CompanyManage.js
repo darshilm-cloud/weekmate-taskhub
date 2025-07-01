@@ -6,85 +6,55 @@ const {
   LISTING,
   DELETED,
   COMPANY_NAME_EXIST,
-  COMPANY_EMAIL_EXIST,
+  COMPANY_EMAIL_EXIST
 } = require("../helpers/messages");
 const {
   successResponse,
   errorResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const { CompanyModel, employeeSchema } = require("../models");
 const { searchDataArr } = require("../helpers/queryHelper");
 const CONFIG_JSON = require("../settings/config.json");
 const Joi = require("joi");
-const { createJWTToken } = require("../helpers/JWTToken"); 
+const { createJWTToken } = require("../helpers/JWTToken");
+const { validateFormatter } = require("../configs");
+const { getAddCompanySchema, fileUploadSizeSchema } = require("../validation");
 
 // Get Company list API
-const getCompanyById = async (reply, ID) => {
+const getCompanyById = async (res, ID) => {
   ID = validObjectId(ID) ? ID : newObjectId(ID);
   const companyData = await CompanyModel.findOne({
     _id: ID,
     isDeleted: false
   });
   if (!companyData) {
-    return errorResponse(reply, statusCode.NOT_FOUND, NOT_FOUND);
+    return errorResponse(res, statusCode.NOT_FOUND, NOT_FOUND);
   }
   return companyData;
 };
 
-const validateFormatter = (schema, data) => {
-  const options = {
-    abortEarly: false, // Return all errors, not just the first
-    allowUnknown: true, // Allow unknown fields in the request
-  };
-
-  const { error, value } = schema.validate(data, options);
-  if (error) {
-    // Remove double quotes from error messages and convert to uppercase
-    error.details.forEach((detail) => {
-      detail.message = detail.message.replace(/\"/g, ""); // Format message
-    });
-  }
-  return { error, value };
-};
-
-const getAddCompanySchema = () => {
-  return Joi.object({
-    companyEmail: this.emailValidator("Company email is required"),
-    companyName: Joi.string().required(),
-    domain: Joi.string().required(),
-  });
-};
-
-const fileUploadSizeSchema = () => {
-  return Joi.object({
-    fileUploadSize: Joi.number().min(1).max(80).required().messages({
-      "number.base": "File upload size must be a number.",
-      "number.min": "File upload size must be at least 1 MB.",
-      "number.max": "File upload size must be at most 80 MB.",
-      "any.required": "File upload size is required.",
-    }),
-  });
-};
-
-exports.getCompanyList = async (request, reply) => {
+// Get company list API
+exports.getCompanyList = async (req, res) => {
   try {
     // Get user's data from JWT decode
     const {
-      payload: { _id: decodedUserId, roleId, roleName, companyId } = {},
-    } = request.user || {};
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId
+    } = req.user || {};
+    console.log("🚀 ~ exports.getCompanyList= ~ req.user:", req.user, roleName);
 
     // Only allow SuperAdmin and admin to get company
     if (roleName == CONFIG_JSON.PMS_ROLES.USER) {
-      return errorResponse(reply, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
     }
 
     let companyIdByUser;
     if (companyId == "" || companyId == undefined) {
-      companyIdByUser = await employeeSchema.findById(
-        { _id: decodedUserId },
-        { password: 0 }
-      ).lean();
+      companyIdByUser = await employeeSchema
+        .findOne({ _id: decodedUserId }, { password: 0 })
+        .lean();
     }
 
     const {
@@ -92,8 +62,8 @@ exports.getCompanyList = async (request, reply) => {
       limit = 30,
       search = "",
       sort = "desc",
-      sortBy = "createdAt",
-    } = request.body;
+      sortBy = "createdAt"
+    } = req.body;
 
     // Super admin gets all companies list & Admin gets own company list
     let matchQuery;
@@ -103,14 +73,14 @@ exports.getCompanyList = async (request, reply) => {
         ...(roleName === CONFIG_JSON.PMS_ROLES.ADMIN
           ? { _id: companyIdByUser?.companyId }
           : {}),
-        isDeleted: false,
+        isDeleted: false
       };
     } else {
       matchQuery = {
         ...(roleName === CONFIG_JSON.PMS_ROLES.ADMIN
           ? { _id: newObjectId(companyId) }
           : {}),
-        isDeleted: false,
+        isDeleted: false
       };
     }
 
@@ -128,7 +98,7 @@ exports.getCompanyList = async (request, reply) => {
       { $match: matchQuery },
       {
         $lookup: {
-          from: "users",
+          from: "employees",
           let: { companyId: "$_id" },
           pipeline: [
             {
@@ -136,33 +106,33 @@ exports.getCompanyList = async (request, reply) => {
                 $expr: {
                   $and: [
                     { $eq: ["$companyId", "$$companyId"] },
-                    { $ne: ["$isDeleted", true] }, // exclude isDeleted: true
-                  ],
-                },
-              },
-            },
+                    { $ne: ["$isDeleted", true] } // exclude isDeleted: true
+                  ]
+                }
+              }
+            }
           ],
-          as: "employees",
-        },
+          as: "employees"
+        }
       },
       {
         $addFields: {
-          employeeCount: { $size: "$employees" },
-        },
+          employeeCount: { $size: "$employees" }
+        }
       },
       {
         $project: {
-          employees: 0, // exclude employee array
-        },
+          employees: 0 // exclude employee array
+        }
       },
       { $sort: { [sortBy]: sort == "desc" ? -1 : 1 } },
       { $skip: (page - 1) * limit },
-      { $limit: limit },
+      { $limit: limit }
     ];
 
     const [companyData, totalCount] = await Promise.all([
       CompanyModel.aggregate(mainQuery),
-      CompanyModel.countDocuments(matchQuery),
+      CompanyModel.countDocuments(matchQuery)
     ]);
 
     const metaData = {
@@ -170,10 +140,10 @@ exports.getCompanyList = async (request, reply) => {
       limit: limit,
       pageNo: page,
       totalPages: limit > 0 ? Math.ceil(totalCount / limit) : 1,
-      currentPage: page,
+      currentPage: page
     };
     return successResponse(
-      reply,
+      res,
       statusCode.SUCCESS,
       LISTING,
       companyData,
@@ -181,34 +151,29 @@ exports.getCompanyList = async (request, reply) => {
     );
   } catch (error) {
     console.log("🚀 ~ exports.getCompany=async ~ error:", error);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: error.message,
-    });
+    return catchBlockErrorResponse(res, error.message);
   }
 };
 
 // Add Company API
-exports.addCompany = async (request, reply) => {
+exports.addCompany = async (req, res) => {
   try {
-    // Get user's data from JWT decode
     const {
-      payload: { _id: decodedUserId, roleId, roleName, companyId } = {},
-    } = request.user || {};
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId
+    } = req.user || {};
 
     // Only allow SuperAdmin and admin to add company
     if (roleName == CONFIG_JSON.PMS_ROLES.USER) {
-      return errorResponse(reply, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
     }
 
-    const { error, value } = validateFormatter(
-      getAddCompanySchema(),
-      request.body
-    );
+    const { error, value } = validateFormatter(getAddCompanySchema(), req.body);
 
     if (error) {
       return errorResponse(
-        reply,
+        res,
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
@@ -217,7 +182,7 @@ exports.addCompany = async (request, reply) => {
     const { companyEmail, companyName, logo, favicon } = value;
     console.log(logo, favicon, "ogo,favicon");
     const existingCompany = await CompanyModel.findOne({
-      $or: [{ companyEmail }, { companyName }],
+      $or: [{ companyEmail }, { companyName }]
     });
 
     if (existingCompany) {
@@ -228,14 +193,14 @@ exports.addCompany = async (request, reply) => {
         duplicateField = COMPANY_NAME_EXIST;
       }
 
-      return errorResponse(reply, statusCode.BAD_REQUEST, duplicateField);
+      return errorResponse(res, statusCode.BAD_REQUEST, duplicateField);
     }
 
     let companyObject = {
       companyEmail,
       companyName,
       companyLogoUrl: logo,
-      companyFavIcoUrl: favicon,
+      companyFavIcoUrl: favicon
     };
 
     // Save company
@@ -244,18 +209,18 @@ exports.addCompany = async (request, reply) => {
     // Update user's company association
     let companyIdByUser = await employeeSchema.findOneAndUpdate(
       {
-        _id: decodedUserId,
+        _id: decodedUserId
       },
       {
         $set: {
-          companyId: saveCompany._id,
-        },
+          companyId: saveCompany._id
+        }
       }
     );
 
     let resetTokenPayload;
     let resetToken;
-    
+
     if (!companyId) {
       resetTokenPayload = {
         _id: companyIdByUser?._id,
@@ -282,7 +247,7 @@ exports.addCompany = async (request, reply) => {
         companyLogoUrl: saveCompany?.companyLogoUrl,
         companyFavIcoUrl: saveCompany?.companyFavIcoUrl,
         deffaultchannels: saveCompany?.deffaultchannels,
-        fileUploadSize: saveCompany?.fileUploadSize,
+        fileUploadSize: saveCompany?.fileUploadSize
       };
 
       resetToken = createJWTToken(resetTokenPayload);
@@ -299,14 +264,14 @@ exports.addCompany = async (request, reply) => {
     console.log(resetToken, "resetTokenTest");
 
     if (saveCompany) {
-      return successResponse(reply, statusCode.SUCCESS, COMPANY_CREATED, {
+      return successResponse(res, statusCode.SUCCESS, COMPANY_CREATED, {
         saveCompany,
         resetToken,
         companyId: saveCompany?._id,
-        fileUploadSize: saveCompany?.fileUploadSize,
+        fileUploadSize: saveCompany?.fileUploadSize
       });
     } else {
-      return errorResponse(reply, statusCode.SERVER_ERROR, SERVER_ERROR);
+      return errorResponse(res, statusCode.SERVER_ERROR, SERVER_ERROR);
     }
   } catch (error) {
     console.error("🚀 ~ exports.addCompany ~ error:", error);
@@ -323,38 +288,35 @@ exports.addCompany = async (request, reply) => {
         message = `Duplicate entry detected: ${JSON.stringify(error.keyValue)}`;
       }
 
-      return errorResponse(reply, statusCode.BAD_REQUEST, message);
+      return errorResponse(res, statusCode.BAD_REQUEST, message);
     }
 
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: error.message,
-    });
+    return catchBlockErrorResponse(res, error.message);
   }
 };
 
 // Edit Company API
-exports.editCompany = async (request, reply) => {
+exports.editCompany = async (req, res) => {
   try {
     // Decode user from token
-    const { payload: { _id: decodedUserId, roleId, roleName } = {} } =
-      request.user || {};
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
 
     // Only allow SuperAdmin and Admin to edit company
     if (roleName === CONFIG_JSON.PMS_ROLES.USER) {
-      return errorResponse(reply, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
     }
 
-    const { companyId } = request.params;
+    const { companyId } = req.params;
 
     // Validate input
-    const { error, value } = validateFormatter(
-      getAddCompanySchema(),
-      request.body
-    ); // same schema as addCompany
+    const { error, value } = validateFormatter(getAddCompanySchema(), req.body); // same schema as addCompany
     if (error) {
       return errorResponse(
-        reply,
+        res,
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
@@ -363,10 +325,7 @@ exports.editCompany = async (request, reply) => {
     const { companyEmail, companyName, logo, favicon } = value;
     const existingCompany = await CompanyModel.findOne({
       _id: { $ne: companyId },
-      $or: [
-        { companyEmail: companyEmail },
-        { companyName: companyName },
-      ],
+      $or: [{ companyEmail: companyEmail }, { companyName: companyName }]
     });
 
     if (existingCompany) {
@@ -378,13 +337,13 @@ exports.editCompany = async (request, reply) => {
         duplicateField = COMPANY_NAME_EXIST;
       }
 
-      return errorResponse(reply, statusCode.BAD_REQUEST, duplicateField);
+      return errorResponse(res, statusCode.BAD_REQUEST, duplicateField);
     }
-    
+
     // Fetch old company data to compare
     const oldCompany = await CompanyModel.findById(companyId);
     if (!oldCompany) {
-      return errorResponse(reply, statusCode.NOT_FOUND, "Company not found");
+      return errorResponse(res, statusCode.NOT_FOUND, "Company not found");
     }
 
     // Build update object
@@ -392,7 +351,7 @@ exports.editCompany = async (request, reply) => {
       companyEmail,
       companyName,
       companyLogoUrl: logo,
-      companyFavIcoUrl: favicon,
+      companyFavIcoUrl: favicon
     };
 
     // Update company
@@ -403,37 +362,34 @@ exports.editCompany = async (request, reply) => {
     );
 
     return successResponse(
-      reply,
+      res,
       statusCode.SUCCESS,
       "Company updated successfully",
       {
-        updatedCompany,
+        updatedCompany
       }
     );
   } catch (error) {
     console.log("🚀 ~ exports.editCompany= ~ error:", error);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: error.message,
-    });
+    return catchBlockErrorResponse(res, error.message);
   }
 };
 
 // Delete Company API
-exports.deleteCompany = async (request, reply) => {
+exports.deleteCompany = async (req, res) => {
   try {
     // Get user's data from JWT decode
     const { payload: { _id: decodedUserId, roleId, roleName } = {} } =
-      request.user || {};
+      req.user || {};
 
     // Only allow SuperAdmin and admin to delete company
     if (roleName == CONFIG_JSON.PMS_ROLES.USER) {
-      return errorResponse(reply, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
     }
 
-    const { companyId } = request.params;
+    const { companyId } = req.params;
 
-    let getCompanyData = await getCompanyById(reply, companyId);
+    let getCompanyData = await getCompanyById(res, companyId);
 
     // Check if getCompanyData is an error response or null
     if (!getCompanyData) {
@@ -445,35 +401,33 @@ exports.deleteCompany = async (request, reply) => {
 
     await getCompanyData.save();
 
-    return successResponse(reply, statusCode.SUCCESS, DELETED);
+    return successResponse(res, statusCode.SUCCESS, DELETED);
   } catch (error) {
     console.log("🚀 ~ exports.deleteCompany ~ error:", error);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: error.message,
-    });
+    return catchBlockErrorResponse(res, error.message);
   }
 };
 
-exports.updateCompanyFileUploadSize = async (request, reply) => {
+exports.updateCompanyFileUploadSize = async (req, res) => {
   try {
-    const { payload: { roleName, companyId } = {} } = request.user || {};
+    const { payload: { roleName, companyId } = {} } = req.user || {};
 
     if (
-      ![CONFIG_JSON.PMS_ROLES.SUPER_ADMIN, CONFIG_JSON.PMS_ROLES.ADMIN].includes(
-        roleName
-      )
+      ![
+        CONFIG_JSON.PMS_ROLES.SUPER_ADMIN,
+        CONFIG_JSON.PMS_ROLES.ADMIN
+      ].includes(roleName)
     ) {
-      return errorResponse(reply, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
     }
 
     const { error, value } = validateFormatter(
       fileUploadSizeSchema(),
-      request.body
+      req.body
     );
     if (error) {
       return errorResponse(
-        reply,
+        res,
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
@@ -489,22 +443,19 @@ exports.updateCompanyFileUploadSize = async (request, reply) => {
     );
 
     if (!updatedCompany) {
-      return errorResponse(reply, statusCode.NOT_FOUND, "Company not found");
+      return errorResponse(res, statusCode.NOT_FOUND, "Company not found");
     }
 
     return successResponse(
-      reply,
+      res,
       statusCode.SUCCESS,
       "File upload size updated successfully",
       {
-        updatedCompany,
+        updatedCompany
       }
     );
   } catch (error) {
     console.error("🚀 ~ updateCompanyFileUploadSize ~ error:", error);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: error.message,
-    });
+    return catchBlockErrorResponse(res, error.message);
   }
 };
