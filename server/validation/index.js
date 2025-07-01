@@ -112,7 +112,6 @@ class Validator {
     return Joi.object({
       companyEmail: this.emailValidator("Company email is required"),
       companyName: Joi.string().required(),
-      domain: Joi.string().required(),
     });
   };
   
