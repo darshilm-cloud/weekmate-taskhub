@@ -66,8 +66,7 @@ exports.authenticationGetData = async (req, res) => {
 
 exports.getUserPermissions = async (userId) => {
   try {
-    const isClient = await checkIsPMSClient(userId);
-    const loginUser = await this.getDataForLoginUser(isClient, { _id: userId });
+    const loginUser = await this.getDataForLoginUser({_id: userId});
     let permission = [];
 
     if (loginUser && loginUser?.pms_role_id) {
@@ -86,6 +85,7 @@ exports.getUserPermissions = async (userId) => {
   }
 };
 
+// Login API
 exports.login = async (req, res, next) => {
   try {
     const validationSchema = Joi.object({
@@ -102,15 +102,8 @@ exports.login = async (req, res, next) => {
       );
     }
 
-    let isClient = true;
-    if (value.email.includes("etamd") || value.email.includes("et-amd")) {
-      isClient = false;
-    } else {
-      isClient = await checkIsPMSClient(null, value.email);
-    }
-    console.log("🚀 ~ exports.login= ~ isClient:", isClient);
 
-    const loginUser = await this.getDataForLoginUser(isClient, value);
+    const loginUser = await this.getDataForLoginUser(value);
 
     if (!loginUser) {
       return errorResponse(
@@ -162,7 +155,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.getDataForLoginUser = async (isClient = true, reqBody) => {
+exports.getDataForLoginUser = async (reqBody) => {
   try {
     let userData = null;
     let obj = {
@@ -172,25 +165,15 @@ exports.getDataForLoginUser = async (isClient = true, reqBody) => {
         ? { _id: new mongoose.Types.ObjectId(reqBody?._id) }
         : {}),
     };
-    if (!isClient) {
       userData = await Employees.findOne({
         ...obj,
         ...(reqBody.email
-          ? { $or: [{ login_alias: reqBody.email }, { email: reqBody.email }] }
-          : {}),
+          ? { email: reqBody.email }
+          : {})
       })
-        .populate("role_id", "role_type")
         .populate("pms_role_id", "role_name")
         .exec();
-    } else {
-      userData = await PMSClients.findOne({
-        ...obj,
-        ...(reqBody.email ? { email: reqBody.email } : {}),
-      })
-        .populate("role_id", "role_type")
-        .populate("pms_role_id", "role_name")
-        .exec();
-    }
+    
     return userData;
   } catch (error) {
     console.log("🚀 ~ exports.getDataForLoginUser=async ~ error:", error);
@@ -452,8 +435,7 @@ exports.resetPassword = async (req, res) => {
 exports.checkUserIsAdmin = async (userId) => {
   try {
     let isAdmin = false;
-    const isClient = await checkIsPMSClient(userId);
-    const loginUser = await this.getDataForLoginUser(isClient, {
+    const loginUser = await this.getDataForLoginUser({
       _id: userId,
     });
 
@@ -473,8 +455,7 @@ exports.checkUserIsAdmin = async (userId) => {
 exports.checkUserIsSuperAdmin = async (userId) => {
   try {
     let isSuperAdmin = false;
-    const isClient = await checkIsPMSClient(userId);
-    const loginUser = await this.getDataForLoginUser(isClient, {
+    const loginUser = await this.getDataForLoginUser({
       _id: userId,
     });
 

@@ -13,7 +13,7 @@ const Joi = require("joi");
 const validateFormatter = (schema, data) => {
   const options = {
     abortEarly: false, // Return all errors, not just the first
-    allowUnknown: true, // Allow unknown fields in the request
+    allowUnknown: true, // Allow unknown fields in the req
   };
 
   const { error, value } = schema.validate(data, options);
@@ -29,8 +29,8 @@ const validateFormatter = (schema, data) => {
 const getRegistrationSchema = () => {
   return Joi.object({
     adminDetails: Joi.object({
-      firstName: Joi.string().required().label("First name is required"),
-      lastName: Joi.string().required().label("Last name is required"),
+      first_name: Joi.string().required().label("First name is required"),
+      last_name: Joi.string().required().label("Last name is required"),
       email: Joi.string().email().trim().required().messages({
         "string.empty": "Email is required",
         "string.email": "Invalid email format",
@@ -38,8 +38,7 @@ const getRegistrationSchema = () => {
       password: Joi.string().trim().min(8).required().messages({
         "string.empty": "Password is required",
         "string.min": "Password must be at least 8 characters long",
-      }),
-      position: Joi.string().allow("").optional(),
+      })
     }).required(),
 
     companyDetails: Joi.object({
@@ -52,22 +51,23 @@ const getRegistrationSchema = () => {
   });
 };
 
-exports.registerAdminAndCompany = async (request, reply) => {
+// Register a company details API
+exports.registerAdminAndCompany = async (req, res) => {
   try {
     const { error, value } = validateFormatter(
       getRegistrationSchema(),
-      request.body
+      req.body
     );
     if (error) {
       return errorResponse(
-        reply,
+        res,
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
     }
 
     const {
-      adminDetails: { firstName, lastName, email, password, position },
+      adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyEmail },
     } = value;
 
@@ -75,7 +75,7 @@ exports.registerAdminAndCompany = async (request, reply) => {
     const existingUser = await employeeSchema.findOne({ email });
     if (existingUser) {
       return errorResponse(
-        reply,
+        res,
         statusCode.CONFLICT,
         "Admin email already exists."
       );
@@ -86,7 +86,7 @@ exports.registerAdminAndCompany = async (request, reply) => {
     const existingCompanyName = await CompanyModel.findOne({ companyName });
     if (existingCompanyName) {
       return errorResponse(
-        reply,
+        res,
         statusCode.CONFLICT,
         "Company name already exists."
       );
@@ -96,7 +96,7 @@ exports.registerAdminAndCompany = async (request, reply) => {
     const existingCompanyEmail = await CompanyModel.findOne({ companyEmail });
     if (existingCompanyEmail) {
       return errorResponse(
-        reply,
+        res,
         statusCode.CONFLICT,
         "Company email already exists."
       );
@@ -109,7 +109,7 @@ exports.registerAdminAndCompany = async (request, reply) => {
     });
     if (existingTempEmail) {
       return successResponse(
-        reply,
+        res,
         statusCode.SUCCESS,
         "Please check your email. We have already sent a verification link to complete your registration.",
         {
@@ -125,7 +125,7 @@ exports.registerAdminAndCompany = async (request, reply) => {
 
     // 💾 Store temporary registration data
     const tempRegistration = await new CompanyRegistrationMail({
-      adminDetails: { firstName, lastName, email, password, position },
+      adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyEmail },
       verificationToken,
     }).save();
@@ -139,12 +139,12 @@ exports.registerAdminAndCompany = async (request, reply) => {
       subject: "Verify Your Company Registration",
       verificationLink,
       companyName,
-      fullName: `${firstName} ${lastName}`
+      fullName: `${first_name} ${last_name}`
     });
 
     // ✅ Success response
     return successResponse(
-      reply,
+      res,
       statusCode.SUCCESS,
       "Registration initiated successfully. Please check your email to verify and complete the registration.",
       {
@@ -154,19 +154,20 @@ exports.registerAdminAndCompany = async (request, reply) => {
     );
   } catch (err) {
     console.log(err.message, "err.message", err);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: err.message,
-    });
+    return catchBlockErrorResponse(
+      res,
+      err.message,
+    );
   }
 };
 
-exports.verifyAndCompleteRegistration = async (request, reply) => {
+// Verify the company details API
+exports.verifyAndCompleteRegistration = async (req, res) => {
   try {
-    const { token } = request.body;
+    const { token } = req.body;
 
     if (!token) {
-      return errorResponse(reply, statusCode.BAD_REQUEST, "Verification token is required.");
+      return errorResponse(res, statusCode.BAD_REQUEST, "Verification token is required.");
     }
 
     // 🔍 Find the temporary registration
@@ -175,12 +176,12 @@ exports.verifyAndCompleteRegistration = async (request, reply) => {
     });
 
     if (!tempRegistration) {
-      return errorResponse(reply, statusCode.BAD_REQUEST, 
+      return errorResponse(res, statusCode.BAD_REQUEST, 
         "Email is already verified or token expired");
     }
 
     const {
-      adminDetails: { firstName, lastName, email, password, position },
+      adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyEmail }
     } = tempRegistration;
 
@@ -188,7 +189,7 @@ exports.verifyAndCompleteRegistration = async (request, reply) => {
     const existingUser = await employeeSchema.findOne({ email });
     if (existingUser) {
       await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
-      return errorResponse(reply, statusCode.CONFLICT, "Admin email already exists.");
+      return errorResponse(res, statusCode.CONFLICT, "Admin email already exists.");
     }
 
     const existingCompany = await CompanyModel.findOne({
@@ -197,7 +198,7 @@ exports.verifyAndCompleteRegistration = async (request, reply) => {
 
     if (existingCompany) {
       await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
-      return errorResponse(reply, statusCode.CONFLICT, "Company name already exists.");
+      return errorResponse(res, statusCode.CONFLICT, "Company name already exists.");
     }
 
     // ✅ Create company
@@ -207,18 +208,18 @@ exports.verifyAndCompleteRegistration = async (request, reply) => {
     }).save();
 
     // 🔍 Find admin role
-    const role = await PMSRoles.findOne({ roleName: CONFIG_JSON.ROLES.ADMIN });
+    const role = await PMSRoles.findOne({ role_name: CONFIG_JSON.PMS_ROLES.ADMIN });
 
     // ✅ Create admin user
     const newUser = await new employeeSchema({
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email,
       password,
-      position,
       companyId: company._id,
-      roleId: role._id,
-      isActive: true
+      pms_role_id: role._id,
+      isActive: true,
+      isAdmin:true
     }).save();
 
     // 🔄 Aggregate enriched user details
@@ -270,16 +271,16 @@ exports.verifyAndCompleteRegistration = async (request, reply) => {
 
     
     // ✅ Success response
-    return successResponse(reply, statusCode.SUCCESS, "Registration completed successfully", {
+    return successResponse(res, statusCode.SUCCESS, "Registration completed successfully", {
       user: enrichedUser
     });
 
   } catch (err) {
     console.log(err.message, 'err.message', err);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: err.message
-    });
+    return catchBlockErrorResponse(
+      res,
+      err.message
+    );
   }
 };
 

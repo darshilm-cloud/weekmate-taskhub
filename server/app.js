@@ -103,8 +103,7 @@ app.use((req, res, next) => {
       // Get login user permissions..
       resBody.permissions = await getUserPermissions(req.user._id);
       // Get login user pms role
-      const isClient = await checkIsPMSClient(req.user._id);
-      const loginUser = await getDataForLoginUser(isClient, {
+      const loginUser = await getDataForLoginUser({
         _id: req.user._id,
       });
       resBody.pms_role_id = (loginUser && loginUser.pms_role_id?._id) || "";
