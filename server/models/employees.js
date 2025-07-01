@@ -5,17 +5,13 @@ const crypto = require("crypto");
 
 const employeeSchema = new Schema({
   companyId: { type: Schema.Types.ObjectId, ref: "companies" },
-  designation_id: { type: Schema.Types.ObjectId, ref: "empdesignations" },
-  reporting_manager: { type: Schema.Types.ObjectId, ref: "employees" },
   first_name: { type: String },
   last_name: { type: String },
   emp_img: { type: String, default: "" },
   email: { type: String },
   phone_number: { type: String, default: "" },
-  department_id: { type: Schema.Types.ObjectId, ref: "empdepartments" },
-  subdepartment_id: { type: Schema.Types.ObjectId, ref: "subdepartments" },
+  department_id: { type: Schema.Types.ObjectId, ref: "empdepartments", default:null },
   password: { type: String },
-  role_id: { type: Schema.Types.ObjectId, ref: "roles", required: true },
   pms_role_id: { type: Schema.Types.ObjectId, ref: "pms_roles", default: null },
   createdBy: { type: Schema.Types.ObjectId, ref: "employees" },
   updatedBy: { type: Schema.Types.ObjectId, ref: "employees" },
