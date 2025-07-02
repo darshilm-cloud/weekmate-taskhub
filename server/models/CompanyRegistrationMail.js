@@ -3,11 +3,10 @@ const mongoose = require('mongoose');
 
 const CompanyRegistrationMailSchema = new mongoose.Schema({
   adminDetails: {
-    fullName: String,
-    userName: String,
+    first_name: String,
+    last_name: String,
     email: String,
-    password: String,
-    position: String
+    password: String
   },
   companyDetails: {
     companyName: String,
