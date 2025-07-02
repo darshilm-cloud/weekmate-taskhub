@@ -33,6 +33,10 @@ const CompanySchema = new mongoose.Schema(
     maxUsers: {
       type: Number,
       default: 200
+    },
+    fileUploadSize: {
+      type: Number,
+      default: 1 * 1024 // 10 MB, stored in KB
     }
   },
   {
@@ -44,6 +48,5 @@ CompanySchema.index({ companyName: 1 });
 CompanySchema.index({ companyEmail: 1 });
 CompanySchema.index({ isActive: 1 });
 CompanySchema.index({ isDeleted: 1 });
-
 
 module.exports = mongoose.model("companies", CompanySchema);
