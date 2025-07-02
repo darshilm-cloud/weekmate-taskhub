@@ -24,8 +24,10 @@ import {
 } from "@ant-design/icons";
 import exampleCSV from "../../../src/sampleCSV.csv";
 import Service from "../../service";
+import { useHistory } from "react-router-dom";
 
 const CompanyEmployee = () => {
+  const history = useHistory();
   const [form] = Form.useForm();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,6 @@ const CompanyEmployee = () => {
   // Extract company ID from localStorage safely
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const companyId = userData?.companyId;
-  const navigate = {};
   const inputRef = useRef(null);
 
   const fetchEmployees = async (page = 1, limit = 20, search = "") => {
@@ -75,78 +76,12 @@ const CompanyEmployee = () => {
     }
   };
 
-  const handleFileChange2 = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.importUsers,
-        body: formData,
-        options: {
-          "content-type": "multipart/form-data",
-        },
-      });
-
-      if (response.status == 200) {
-        fetchEmployees();
-      }else{
-
-      }
-    } catch (err) {
-      if (err.response && err.response.data.data instanceof Blob) {
-        const contentType = err.response.headers?.["content-type"] || "";
-        const disposition = err.response.headers?.["content-disposition"] || "";
-        let filename = "invalid_users.csv";
-
-        if (disposition && disposition.includes("filename=")) {
-          filename = disposition.split("filename=")[1].replace(/["']/g, "");
-        }
-
-        if (contentType.includes("text/csv")) {
-          const blob = new Blob([err.response.data.data], {
-            type: "text/csv;charset=utf-8;",
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", filename);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          message.warning("Upload completed with errors. CSV downloaded.");
-          fetchEmployees();
-          return;
-        }
-
-        // fallback: try parsing JSON error
-        try {
-          const text = await err.response.data.data.text();
-          const json = JSON.parse(text);
-          message.error(json?.message || "Upload failed.");
-        } catch {
-          message.error("Upload failed with unknown format.");
-        }
-      } else {
-        message.error("Upload failed. Please try again.");
-      }
-    }
-
-    e.target.value = "";
-  };
-
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
   
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("attachment", file);
   
     try {
       const response = await Service.makeAPICall({
@@ -252,10 +187,13 @@ const CompanyEmployee = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-
       const payload = {
-        ...values,
+        firstName: values.first_name,
+        lastName: values.last_name,
         companyId,
+        isActivate: values.isActivate,
+        email: values.email,
+        password: values.password
       };
 
       if (editData) {
@@ -306,56 +244,22 @@ const CompanyEmployee = () => {
 
   const columns = [
     {
-      title: "Full Name",
-      dataIndex: "fullName",
+      title: "First Name",
+      dataIndex: "first_name"
     },
     {
-      title: "Username",
-      dataIndex: "userName",
+      title: "Last Name",
+      dataIndex: "last_name"
     },
     {
       title: "Email",
       dataIndex: "email",
     },
     {
-      title: "Position",
-      dataIndex: "position",
-      render: (position) =>
-        position ? (
-          <button
-            style={{
-              // backgroundColor: '#28a745', // Bootstrap green
-              border: "none",
-              borderRadius: "4px",
-              padding: "4px 10px",
-              // color: '#fff',
-              cursor: "default",
-              fontWeight: "500",
-            }}
-          >
-            {position}
-          </button>
-        ) : (
-          <button
-            style={{
-              // backgroundColor: '#28a745', // Bootstrap green
-              border: "none",
-              borderRadius: "4px",
-              padding: "4px 10px",
-              // color: '#fff',
-              cursor: "default",
-              fontWeight: "500",
-            }}
-          >
-            N/A
-          </button>
-        ),
-    },
-    {
-      title: "Left",
-      dataIndex: "isLeft",
-      render: (isLeft) =>
-        isLeft ? (
+      title: "Active",
+      dataIndex: "isActivate",
+      render: (isActivate) =>
+      isActivate ? (
           <button
             style={{
               backgroundColor: "#28a745", // Bootstrap green
@@ -367,7 +271,7 @@ const CompanyEmployee = () => {
               fontWeight: "500",
             }}
           >
-            Left Company
+            Deactive
           </button>
         ) : (
           <button
@@ -381,7 +285,7 @@ const CompanyEmployee = () => {
               fontWeight: "500",
             }}
           >
-            N/A
+            Active
           </button>
         ),
     },
@@ -405,7 +309,7 @@ const CompanyEmployee = () => {
             />
           </Tooltip>
           <Popconfirm
-            title={`Are you sure you want to delete ${record?.fullName}?`}
+            title={`Are you sure you want to delete ${record?.first_name} ${record?.last_name}?`}
             onConfirm={() => handleDelete(record._id)}
             okText="Yes"
             cancelText="No"
@@ -425,7 +329,7 @@ const CompanyEmployee = () => {
         <div className="heading-wrapper">
           <Button
             type="primary"
-            onClick={() => navigate("/admin/company-registartion")}
+            onClick={() => history.push("/admin/company-registartion")}
           >
             Back
           </Button>
@@ -527,23 +431,23 @@ const CompanyEmployee = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="fullName"
-            label="Full Name"
+            name="first_name"
+            label="First Name"
             rules={[{ required: true }]}
           >
             <Input
-              placeholder="Enter full name"
+              placeholder="Enter first name"
               disabled={modalMode === "view"}
             />
           </Form.Item>
 
           <Form.Item
-            name="userName"
-            label="Username"
+            name="last_name"
+            label="Last Name"
             rules={[{ required: true }]}
           >
             <Input
-              placeholder="Enter username"
+              placeholder="Enter last name"
               disabled={modalMode === "view"}
             />
           </Form.Item>
@@ -554,13 +458,6 @@ const CompanyEmployee = () => {
             rules={[{ required: true, type: "email" }]}
           >
             <Input placeholder="Enter email" disabled={modalMode === "view"} />
-          </Form.Item>
-
-          <Form.Item name="position" label="Position">
-            <Input
-              placeholder="Enter position"
-              disabled={modalMode === "view"}
-            />
           </Form.Item>
 
           {!editData && modalMode !== "view" && (
@@ -592,7 +489,7 @@ const CompanyEmployee = () => {
             <Row gutter={24}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  name="isActive"
+                  name="isActivate"
                   label="Is Active"
                   rules={[{ required: true }]}
                 >
@@ -603,18 +500,7 @@ const CompanyEmployee = () => {
                 </Form.Item>
               </Col>
 
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  name="isLeft"
-                  label="Has Left Company"
-                  rules={[{ required: true }]}
-                >
-                  <Radio.Group disabled={modalMode === "view"}>
-                    <Radio value={true}>Yes</Radio>
-                    <Radio value={false}>No</Radio>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
+              
             </Row>
           )}
         </Form>

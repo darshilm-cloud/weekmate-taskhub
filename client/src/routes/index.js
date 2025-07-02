@@ -15,6 +15,7 @@ import AdminDashboard from "../pages/AdminDashboard";
 import CompanyRegistration from "../pages/AdminModules/CompanyRegistration";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
 import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
+import Administrator from "../pages/AdminModules/Administrator";
  
 
 const ProgressBoardofProject = React.lazy(() =>
@@ -390,6 +391,13 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: "admin/Administrator",
+      component: Administrator,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
       ],
     }
   ];

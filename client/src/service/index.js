@@ -443,6 +443,11 @@ export default class Service {
   static verifyRegistration = '/CompanyReg/verify-registration'
   
   static getDashboardData = "/superAdmin/getDashboardData"
+  static addAdmin = '/superAdmin/addAdmin'
+  static getAdminList = '/superAdmin/getAdminList'
+  static getAdminList = '/superAdmin/getAdminList'
+  static deleteAdmin = '/superAdmin/deleteAdmin'
+  static editAdminList = '/superAdmin/editAdmin'
 
   static getCompanyList = '/CompanyManage/getCompanyList'
   static addCompany = '/CompanyManage/addCompany'

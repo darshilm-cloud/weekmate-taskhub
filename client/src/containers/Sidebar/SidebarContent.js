@@ -146,18 +146,23 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const item = useMemo(
     () => [
-      // {
-      //   key: "Search Project",
-      //   icon: <SearchOutlined />,
-      //   label: "Search",
-      //   onClick: () => showModal(),
-      // },
-      
+      {
+        key: "Search Project",
+        icon: <SearchOutlined />,
+        label: "Search",
+        onClick: () => showModal(),
+      },
       {
         key: "Admin_Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
         onClick: () => handleMenuClick("Admin_Dashboard", "/admin/dashboard")
+      },
+      getRoles(["Super Admin"]) &&  {
+        key: "Admin_Administrator",
+        icon: <AdminIcon />,
+        label: "Admins",
+        onClick: () => handleMenuClick("Admin_Administrator", "/admin/Administrator")
       },
       {
         key: "Companies_Registration",

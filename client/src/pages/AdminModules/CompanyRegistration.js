@@ -158,8 +158,6 @@ const CompanyRegistration = () => {
         form.setFieldsValue({
           companyName: record.companyName,
           companyEmail: record.companyEmail || record.email,
-          domain: record.domain,
-          slug: record.slug,
           ownerName: record.ownerName,
           logo: `${process.env.REACT_APP_API_URL}${record.companyLogoUrl}`,
           favicon: `${process.env.REACT_APP_API_URL}${record.companyLogoUrl}`,
@@ -220,8 +218,6 @@ const CompanyRegistration = () => {
       const payload = {
         companyName: values.companyName,
         companyEmail: values.companyEmail,
-        domain: values.domain,
-        slug: values.slug,
         logo: docFldLogo,
         favicon: docFldFavicon,
         ownerName: values.ownerName,
@@ -261,7 +257,6 @@ const CompanyRegistration = () => {
           companyName: updatedCompany?.companyName,
           companyEmail: updatedCompany?.companyEmail,
           companyLogoUrl: updatedCompany?.companyLogoUrl,
-          domain: updatedCompany?.domain,
           companyFavIcoUrl: updatedCompany?.companyFavIcoUrl,
           lastActiveChat: lastActiveChat,
           channelId: lastActiveChat?.id,
@@ -409,13 +404,8 @@ const CompanyRegistration = () => {
         render: (text, record) => text || record.email,
       },
       {
-        title: "Company Slug",
-        dataIndex: "domain",
-        sorter: true,
-      },
-      {
         title: "Total Employees",
-        render: (_, record) => record.maxUsers || 0,
+        render: (_, record) => record.employeeCount || 0,
       },
       {
         title: "Created At",
@@ -441,7 +431,7 @@ const CompanyRegistration = () => {
                 onClick={() => showAddEditModal("edit", record)}
               />
             </Tooltip>
-            <Popconfirm
+            {/* <Popconfirm
               title={`Are you sure you want to delete ${record?.companyName}?`}
               onConfirm={() => handleDelete(record._id)}
               okText="Yes"
@@ -455,7 +445,7 @@ const CompanyRegistration = () => {
                   loading={loading}
                 />
               </Tooltip>
-            </Popconfirm>
+            </Popconfirm> */}
           </Space>
         ),
       },
@@ -470,31 +460,7 @@ const CompanyRegistration = () => {
       companyEmail: [
         { required: true, message: "Please enter company email" },
         { type: "email", message: "Invalid email format" },
-      ],
-      domain: [
-        { required: true, message: "Please enter company slug" },
-        {
-          pattern: /^[a-zA-Z0-9]+$/,
-          message:
-            "Use only letters and numbers. Spaces and special characters are not allowed.",
-        },
-        {
-          max: 25,
-          message: "Slug must be at most 25 characters long.",
-        },
-        {
-          validator: (_, value) => {
-            if (value && /^[0-9]+$/.test(value)) {
-              return Promise.reject(
-                new Error(
-                  "Slug cannot be numbers only. Include at least one letter."
-                )
-              );
-            }
-            return Promise.resolve();
-          },
-        },
-      ],
+      ]
     }),
     []
   );
@@ -622,7 +588,7 @@ const CompanyRegistration = () => {
             />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             name="domain"
             label="Company Slug"
             rules={formRules.domain}
@@ -631,7 +597,7 @@ const CompanyRegistration = () => {
               placeholder="Enter company slug"
               disabled={modalData.mode === "view"}
             />
-          </Form.Item>
+          </Form.Item> */}
 
           <Row gutter={24}>
             <Col xs={24} sm={12}>

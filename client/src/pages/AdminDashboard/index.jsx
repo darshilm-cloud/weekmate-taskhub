@@ -3,10 +3,13 @@ import { Card, Spin, Row, Col } from "antd";
 import Service from "../../service";
 import AdminPeople from "../../assets/icons/AdminPeople";
 import EmployeeIcon from "../../assets/icons/EmployeeIcon";
-// import { useNavigate } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 const AdminDashboard = () => {
-  const navigate = {};
+  const history = useHistory();
+  const userData = JSON.parse(localStorage.getItem("user_data"));
+  const roleName = userData.pms_role_id.role_name;
+
   const [loading, setLoading] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     totalAdmin: 0,
@@ -36,13 +39,17 @@ const AdminDashboard = () => {
   }, []);
 
   const dashboardCards = [
-    {
-      title: "Total Admin",
-      value: dashboardData.totalAdmin,
-      icon: <AdminPeople />,
-      iconBgColor: "rgba(82, 196, 26, 0.1)",
-      navigateTo: "/admin/Administrator",
-    },
+    ...(roleName === "Super Admin"
+      ? [
+          {
+            title: "Total Admin",
+            value: dashboardData.totalAdmin,
+            icon: <AdminPeople />,
+            iconBgColor: "rgba(82, 196, 26, 0.1)",
+            navigateTo: "/admin/Administrator",
+          },
+        ]
+      : []),
     {
       title: "Total Employee",
       value: dashboardData.totalEmployee,
@@ -50,6 +57,7 @@ const AdminDashboard = () => {
       iconBgColor: "rgba(24, 144, 255, 0.1)",
     },
   ];
+  
   return (
     <div
       style={{
@@ -76,7 +84,7 @@ const AdminDashboard = () => {
                 bodyStyle={{
                   padding: "20px 24px",
                 }}
-                onClick={() => card.navigateTo && navigate(card.navigateTo)}
+                onClick={() => card.navigateTo && history.push(card.navigateTo)}
               >
                 <div
                   style={{
