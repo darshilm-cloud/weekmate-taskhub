@@ -32,6 +32,8 @@ exports.registerAdminAndCompany = async (req, res) => {
       adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyEmail },
     } = value;
+    console.log("🚀 ~ exports.registerAdminAndCompany= ~ value:", value,first_name)
+    
 
     // 🔍 Check if admin email already exists in main database
     const existingUser = await employeeSchema.findOne({ email });
@@ -180,8 +182,8 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       password,
       companyId: company._id,
       pms_role_id: role._id,
-      isActive: true,
-      isAdmin:true
+      isActivate: true,
+      isAdmin : true
     }).save();
 
     // 🔄 Aggregate enriched user details
@@ -208,12 +210,12 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       {
         $project: {
           _id: 1,
-          lastName: 1,
-          firstName: 1,
+          last_name: 1,
+          first_name: 1,
           email: 1,
           status: 1,
-          isActive: 1,
-          lastActiveTime: 1,
+          isActivate: 1,
+          isAdmin:1,
           createdAt: 1,
           updatedAt: 1,
           position: 1,
