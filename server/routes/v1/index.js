@@ -48,6 +48,7 @@ const projectexpanses = require("./projectexpanses");
 const companyReg = require("./companyReg");
 const companyManage = require("./companyManage");
 const smtpConfig = require("./smtpConfig")
+const AdminManage = require("./AdminManage")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
 
@@ -97,6 +98,7 @@ Router.use('/taskhub/projectexpanses',projectexpanses);
 Router.use('/CompanyReg',companyReg)
 Router.use('/CompanyManage',companyManage)
 Router.use('/smtpConfig',smtpConfig)
+Router.use('/adminManage',AdminManage)
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 

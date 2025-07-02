@@ -99,31 +99,50 @@ class Validator {
     return Joi.object({
       email: this.emailValidator("Email is required"),
       password: this.passwordValidator("Password is required"),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      companyId: Joi.string().required("Company ID is required"),
+    });
+  };
+
+   /**
+   * Get the schema for user edit validation
+   * @returns {Object} Joi schema object
+   */
+   getEditUserSchema = () => {
+    return Joi.object({
+      email: this.emailValidator("Email is required"),
       companyId: Joi.string().required(),
-      fullName: Joi.string().required(),
-      userName: Joi.string().trim().required().replace(/\s+/g, "_"),
-      position: Joi.string().optional().allow(""),
-      deviceId: Joi.string().optional(), // For mobile device identification
-      fcmToken: Joi.string().optional() // FCM token for push notifications
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      isActivate: Joi.boolean().required()
     });
   };
 
   getAddCompanySchema = () => {
     return Joi.object({
       companyEmail: this.emailValidator("Company email is required"),
-      companyName: Joi.string().required(),
-      domain: Joi.string().required(),
+      companyName: Joi.string().required()
     });
   };
-  
+
   fileUploadSizeSchema = () => {
     return Joi.object({
       fileUploadSize: Joi.number().min(1).max(80).required().messages({
         "number.base": "File upload size must be a number.",
         "number.min": "File upload size must be at least 1 MB.",
         "number.max": "File upload size must be at most 80 MB.",
-        "any.required": "File upload size is required.",
-      }),
+        "any.required": "File upload size is required."
+      })
+    });
+  };
+
+  getAddUserSchemaCSV = () => {
+    return Joi.object({
+      Email: this.emailValidator("Email is required"),
+      Password: this.passwordValidator("Password is required"),
+      "First Name": Joi.string().trim().required(),
+      "Last Name": Joi.string().trim().required().replace(/\s+/g, "_")
     });
   };
 }

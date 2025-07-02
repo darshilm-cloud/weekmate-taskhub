@@ -378,10 +378,12 @@ exports.editCompany = async (req, res) => {
 // Delete Company API
 exports.deleteCompany = async (req, res) => {
   try {
-    // Get user's data from JWT decode
-    const { payload: { _id: decodedUserId, roleId, roleName } = {} } =
-      req.user || {};
-
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+    
     // Only allow SuperAdmin and admin to delete company
     if (roleName == CONFIG_JSON.PMS_ROLES.USER) {
       return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
@@ -408,9 +410,14 @@ exports.deleteCompany = async (req, res) => {
   }
 };
 
+// Company file upload size API
 exports.updateCompanyFileUploadSize = async (req, res) => {
   try {
-    const { payload: { roleName, companyId } = {} } = req.user || {};
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
 
     if (
       ![
