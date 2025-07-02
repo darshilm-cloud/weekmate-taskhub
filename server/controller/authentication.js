@@ -188,12 +188,14 @@ exports.dataForJWT = async (userData) => {
         _id: new mongoose.Types.ObjectId(userData._id),
       })
         .populate("pms_role_id", "role_name")
+        .populate("companyId","companyName companyEmail companyLogoUrl companyFavIcoUrl")
         .exec();
     } else {
       userData = await Employees.findOne({
         _id: new mongoose.Types.ObjectId(userData._id),
       })
         .populate("pms_role_id", "role_name")
+        .populate("companyId","companyName companyEmail companyLogoUrl companyFavIcoUrl")
         .exec();
     }
 
