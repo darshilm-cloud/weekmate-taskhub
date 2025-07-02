@@ -420,7 +420,7 @@ const CompanyEmployee = () => {
   ];
 
   return (
-    <div style={{overflow:"auto"}}>
+    <div>
       <Card>
         <div className="heading-wrapper">
           <Button

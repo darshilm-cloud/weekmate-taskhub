@@ -226,7 +226,7 @@ const SMTPConfig = () => {
   }
 
   return (
-    <div className="smtp-config" style={{ overflow: "auto" }}>
+    <div className="smtp-config">
       <div className="header-section">
         <Title level={2} className="main-title">
           <SettingOutlined className="title-icon" />
