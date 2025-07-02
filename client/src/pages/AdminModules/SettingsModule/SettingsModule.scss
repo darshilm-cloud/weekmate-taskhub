@@ -226,7 +226,7 @@ $breakpoints: (
     }
 
     .ant-card-body {
-      padding: 0;
+      padding: 0 !important;
       background: transparent;
     }
 
@@ -261,7 +261,7 @@ $breakpoints: (
           padding: spacing(md) spacing(lg);
           margin: 0 spacing(sm);
           border-radius: radius(lg) radius(lg) 0 0;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          // transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
           background: #fff;
@@ -269,9 +269,6 @@ $breakpoints: (
 
           .ant-space {
             column-gap: 5px;
-            .ant-badge{
-              margin: 0;
-            }
           }
 
           &::before {
@@ -324,7 +321,7 @@ $breakpoints: (
             font-weight: 600;
             font-size: clamp(0.875rem, 2vw, 1rem);
             color: $text-secondary;
-            transition: color 0.3s ease;
+            // transition: color 0.3s ease;
             color: var(--text-chat);
           }
 
@@ -410,7 +407,7 @@ $breakpoints: (
 
     // Quick Setup Section
     .quick-setup-card {
-      padding: spacing((xl));
+      padding: spacing((lg));
       border-radius: radius(xl);
       @include glass-morphism(0.1);
       border: 1px solid rgba(102, 126, 234, 0.2);
@@ -421,7 +418,7 @@ $breakpoints: (
       .ant-card-body {
         padding: spacing(xxxl);
         background: transparent;
-
+overflow: hidden;
         @include respond-below(md) {
           padding: spacing(xl);
         }
@@ -467,18 +464,13 @@ $breakpoints: (
             background: #fff;
             color: var(--text-chat);
 
-            span {
-              display: block;
-              line-height: 1;
-            }
-
             &:hover::before {
               left: 100%;
             }
 
 
             &.gmail {
-
+line-height: normal;
               &.selected,
               &:hover {
                 background: $gmail-gradient;
@@ -587,9 +579,7 @@ $breakpoints: (
       border-radius: radius(xxl);
       border: 1px solid rgba(255, 255, 255, 0.1);
       position: relative;
-.ant-input-outlined{
-  height: 40px;
-}
+
       @include respond-below(md) {
         padding: spacing(xl);
       }
@@ -986,11 +976,5 @@ $breakpoints: (
         }
       }
     }
-  }
-}
-
-.ant-form-vertical {
-   .ant-row {
-      flex-flow: row wrap;
   }
 }

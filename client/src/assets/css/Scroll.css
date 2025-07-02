@@ -12,7 +12,10 @@
     height: calc(100vh - 63px);
     overflow: hidden;
 }
-
+.admin-user .ant-layout>.gx-layout-content {
+     overflow-y:auto;
+     display: block;
+}
 .ant-card-body {
     max-height: 100%;
     overflow: auto;

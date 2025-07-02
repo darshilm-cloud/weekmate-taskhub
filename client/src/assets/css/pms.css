@@ -4271,6 +4271,9 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-dropdown .logout-button button:hover {
   color: #dc3545;
 }
+.admin-user .ant-form-vertical .ant-row{
+    flex-direction: row;
+}
 .admin-user .ant-layout .ant-layout-content .ant-card .ant-btn-primary {
   background: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
   color: #fff;
@@ -4288,6 +4291,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     gap: 8px;
     align-items: center;
     justify-content: center;
+    margin-bottom: 0;
 }
 .admin-user .ant-layout .ant-layout-content .ant-card .ant-btn-primary:before {
   background: #fff;
@@ -4378,6 +4382,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   border: 1px solid #ffcfcf;
   border-radius: 3px;
   color: #dc2626;
+  line-height: normal;
 }
 .admin-user .ant-btn.ant-upload-list-item-action .anticon svg {
   color: #dc2626;
@@ -4782,9 +4787,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
   border: none;
   padding: 0;
 }
-.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body {
-  padding: 20px 24px !important;
-}
+
 .admin-user
   .ant-layout.admin
   .ant-layout-content
@@ -5042,6 +5045,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-modal-content .ant-modal-header .ant-modal-title {
   color: var(--text-white);
   font-weight: 600;
+  background-color: transparent;
 }
 .admin-user .ant-modal-content .ant-modal-close {
   color: #939393;
