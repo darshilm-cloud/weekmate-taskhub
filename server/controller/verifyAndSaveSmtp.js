@@ -4,21 +4,31 @@ const {
 } = require("../models");
 const { catchBlockErrorResponse, successResponse, errorResponse } = require('../helpers/response');
 const { statusCode } = require('../helpers/constant');
-const { SMTP_NOT_FOUND, SMTP_FOUND } = require('../helpers/messages');
+const { LISTING } = require('../helpers/messages');
+const { getSMTPConfigSchema } = require('../validation');
+const { validateFormatter } = require('../configs');
 
 // Configure SMTP
-exports.configureSmtp = async (request, reply) => {
+exports.configureSmtp = async (req, res) => {
   try {
-    const { companyId } = request.user?.payload || {};
-    const { smtpHost, smtpPort, smtpEmail, smtpPassword, smtpSecure, fromName } = request.body;
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId
+    } = req.user || {};
 
-    // Basic validation
-    if (!smtpHost || !smtpPort || !smtpEmail || !smtpPassword || smtpSecure === undefined || !fromName) {
-      return reply.code(400).send({
-        success: false,
-        message: 'All fields are required'
-      });
+    const { error, value } = validateFormatter(getSMTPConfigSchema(), req.body);
+
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
     }
+
+     const { smtpHost, smtpPort, smtpEmail, smtpPassword, smtpSecure, fromName } = value;
+
 
     const parsedPort = parseInt(smtpPort);
     const isSecure = parsedPort === 465 ? true : smtpSecure;
@@ -35,14 +45,6 @@ exports.configureSmtp = async (request, reply) => {
 
     // Verify connection
     await transporter.verify();
-
-    // Send a test email
-    // await transporter.sendMail({
-    //   from: `"${fromName}" <${smtpEmail}>`,
-    //   to: smtpEmail,
-    //   subject: 'SMTP Test Successful',
-    //   text: `SMTP configuration verified successfully at ${new Date().toLocaleString()}`
-    // });
 
     transporter.close();
 
@@ -78,11 +80,7 @@ exports.configureSmtp = async (request, reply) => {
       });
     }
 
-    return reply.code(200).send({
-      success: true,
-      message: 'SMTP configured successfully! Test email sent.',
-      data: smtpConfig
-    });
+    return successResponse(res, statusCode.SUCCESS, 'SMTP configured successfully! Test email sent.', smtpConfig);
 
   } catch (error) {
     console.error('SMTP Error:', error);
@@ -96,33 +94,35 @@ exports.configureSmtp = async (request, reply) => {
       message = 'Connection timeout. Check port, host, or firewall settings.';
     }
 
-    return reply.code(400).send({
-      success: false,
-      message
-    });
+    return errorResponse(res, statusCode.BAD_REQUEST,message)
   }
 };
 
-exports.getSmtpConfig = async (request, reply) => {
+// Get SMTP config API
+exports.getSmtpConfig = async (req, res) => {
   try {
-    const companyId = request.user?.payload?.companyId;
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId
+    } = req.user || {};
 
     if (!companyId) {
-      return errorResponse(reply, statusCode.BAD_REQUEST, COMPANY_NOT_FOUND);
+      return errorResponse(res, statusCode.BAD_REQUEST, "Company not found");
     }
 
     const smtpConfig = await SMTP.findOne({ companyId: newObjectId(companyId) }).lean();
 
     if (!smtpConfig) {
-      return errorResponse(reply, statusCode.NOT_FOUND, SMTP_NOT_FOUND);
+      return errorResponse(res, statusCode.NOT_FOUND, "SMTP not found");
     }
 
-    return successResponse(reply, statusCode.SUCCESS, SMTP_FOUND, smtpConfig);
+    return successResponse(res, statusCode.SUCCESS, LISTING, smtpConfig);
   } catch (err) {
     console.error("Error fetching SMTP config:", err.message);
-    return catchBlockErrorResponse({
-      reply,
-      fullMessage: err.message
-    });
+    return catchBlockErrorResponse(
+      res,
+      err.message
+    );
   }
 };
