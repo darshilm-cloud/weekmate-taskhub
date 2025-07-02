@@ -145,6 +145,28 @@ class Validator {
       "Last Name": Joi.string().trim().required().replace(/\s+/g, "_")
     });
   };
+
+   /**
+   * Get the schema for admin add validation
+   * @returns {Object} Joi schema object
+   */
+   getAddAdminSchema = () => {
+    return Joi.object({
+      email: this.emailValidator("Email is required"),
+      password: this.passwordValidator("Password is required"),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required()
+    });
+  };
+
+  getEditAdminSchema = () => {
+    return Joi.object({
+      email: this.emailValidator("Email is required"),
+      password: Joi.string().optional(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required()
+    });
+  };
 }
 
 module.exports = new Validator();
