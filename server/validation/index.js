@@ -167,6 +167,17 @@ class Validator {
       lastName: Joi.string().required()
     });
   };
+
+  getSMTPConfigSchema = () => {
+    return Joi.object({
+      smtpHost: Joi.string().required(),
+      smtpPort: Joi.number().required(),
+      smtpEmail: Joi.string().required(),
+      smtpPassword: Joi.string().required(),
+      smtpSecure: Joi.boolean().required(),
+      fromName: Joi.string().required(),
+    });
+  };
 }
 
 module.exports = new Validator();
