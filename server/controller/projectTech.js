@@ -66,6 +66,13 @@ exports.projectTechExists = async (projectTech, id = null) => {
 //Add Project Tech:
 exports.addProjectTech = async (req, res) => {
   try {
+     // Decode user from token
+     const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+    
     const validationSchema = Joi.object({
       project_tech: Joi.string().required(),
     });

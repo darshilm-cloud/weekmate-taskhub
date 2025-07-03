@@ -3,6 +3,7 @@ const { utcDefault } = require("../configs");
 const Schema = mongoose.Schema;
 
 const ProjectStatusSchema = new mongoose.Schema({
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   title: {
     // Active , close , on hold
     type: String,
