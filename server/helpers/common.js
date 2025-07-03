@@ -441,7 +441,7 @@ class CommonHelpers {
     isDelete = false
   ) {
     try {
-      const objectId = "67c81990506e8203272e6267";
+      // const objectId = "67c81990506e8203272e6267";
 
       // let refModel =
       //   loginUser &&
@@ -451,10 +451,8 @@ class CommonHelpers {
 
       // refModel = loginUser?._id == objectId ? "pmsclients" : refModel;
       let refModel =
-        loginUser &&
-          loginUser?._id?.toString() == objectId
-          ? "pmsclients"
-          : loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
+        loginUser
+         && loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
             ? "pmsclients"
             : "employees";
 
