@@ -191,13 +191,13 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       { $match: { _id: newUser._id } },
       {
         $lookup: {
-          from: "roles",
-          localField: "roleId",
+          from: "pms_roles",
+          localField: "pms_role_id",
           foreignField: "_id",
-          as: "roles"
+          as: "pms_role"
         }
       },
-      { $unwind: "$roles" },
+      { $unwind: "$pms_role" },
       {
         $lookup: {
           from: "companies",
@@ -219,8 +219,8 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           position: 1,
-          roleId: "$roles._id",
-          roleName: "$roles.roleName",
+          roleId: "$pms_role._id",
+          roleName: "$pms_role.role_name",
           companyId: "$companyDetails._id",
           companyName: "$companyDetails.companyName",
           companyEmail: "$companyDetails.companyEmail",
