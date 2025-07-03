@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectTechnologies = mongoose.model("projecttechs");
@@ -10,50 +10,39 @@ const Employees = mongoose.model("employees");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 const configs = require("../configs");
 const messages = require("../helpers/messages");
 const { statusCode } = require("../helpers/constant");
 
 // Check is exists..
-exports.projectTechExists = async (projectTech, id = null) => {
+exports.projectTechExists = async (projectTech, id = null,companyId) => {
   try {
     let isExist = false;
-    // const data = await ProjectTechnologies.findOne({
-    //   // project_tech: projectTech?.trim()?.toLowerCase(),
-    //   project_tech: { $regex: new RegExp(`^${projectTech}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // console.log("🚀 ~ exports.projectTechExists= ~ data:", data);
-    // if (data) isExist = true;
-
+  
     const data = await ProjectTechnologies.aggregate([
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          projectTechLower: { $toLower: "$project_tech" }, // Add a temporary field with lowercase title
-        },
+          projectTechLower: { $toLower: "$project_tech" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          projectTechLower: projectTech.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          projectTechLower: projectTech.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -66,28 +55,29 @@ exports.projectTechExists = async (projectTech, id = null) => {
 //Add Project Tech:
 exports.addProjectTech = async (req, res) => {
   try {
-     // Decode user from token
-     const {
+    // Decode user from token
+    const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
-    
+
     const validationSchema = Joi.object({
-      project_tech: Joi.string().required(),
+      project_tech: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(res, 400, error.details[0].message);
     }
 
-    if (await this.projectTechExists(value.project_tech)) {
+    if (await this.projectTechExists(value.project_tech,null,decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let ProjectTechData = new ProjectTechnologies({
+        companyId: newObjectId(decodedCompanyId),
         project_tech: value.project_tech,
-        createdBy: req.user._id,
-        updatedBy: req.user._id,
+        createdBy: decodedUserId,
+        updatedBy: decodedUserId
       });
       await ProjectTechData.save();
       return successResponse(
@@ -105,6 +95,13 @@ exports.addProjectTech = async (req, res) => {
 //Get Project Tech:
 exports.getProjectTech = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -112,7 +109,7 @@ exports.getProjectTech = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      isDropdown: Joi.boolean().default(false),
+      isDropdown: Joi.boolean().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -124,17 +121,18 @@ exports.getProjectTech = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
       isDeleted: false,
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      companyId: newObjectId(decodedCompanyId),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["project_tech"], value.search),
+        ...searchDataArr(["project_tech"], value.search)
       };
     }
 
@@ -162,7 +160,7 @@ exports.getProjectTech = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -181,23 +179,30 @@ exports.getProjectTech = async (req, res) => {
 //Update Project Tech:
 exports.updateProjectTech = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       projectTechId: Joi.string().required(),
-      project_tech: Joi.string().required(),
+      project_tech: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(res, 400, error.details[0].message);
     }
 
-    if (await this.projectTechExists(value.project_tech, req.params.id)) {
+    if (await this.projectTechExists(value.project_tech, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const updatedProjectTech = await ProjectTechnologies.findByIdAndUpdate(
         value.projectTechId,
         {
           project_tech: value.project_tech,
-          updatedBy: req.user._id, // assuming you have user id in req.user
+          updatedBy: decodedUserId // assuming you have user id in req.user
         },
         { new: true }
       );
@@ -221,8 +226,15 @@ exports.updateProjectTech = async (req, res) => {
 //Soft Delete Project Tech:
 exports.deleteProjectTech = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      projectTechId: Joi.string().required(),
+      projectTechId: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -233,8 +245,8 @@ exports.deleteProjectTech = async (req, res) => {
       value.projectTechId,
       {
         isDeleted: true,
-        deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(), // assuming you have user id in req.user
+        deletedBy: decodedUserId,
+        deletedAt: configs.utcDefault() // assuming you have user id in req.user
       },
       { new: true }
     );

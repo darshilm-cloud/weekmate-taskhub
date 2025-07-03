@@ -178,6 +178,7 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     const newUser = await new employeeSchema({
       first_name,
       last_name,
+      full_name:`${first_name} ${last_name}`,
       email,
       password,
       companyId: company._id,

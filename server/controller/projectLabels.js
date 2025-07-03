@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectLabels = mongoose.model("tasklabels");
@@ -14,46 +14,36 @@ const {
   getAggregationPagination,
   getTotalCountQuery,
   getPagination,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 
 // Check is exists..
-exports.projectLabelsExists = async (title, id = null) => {
+exports.projectLabelsExists = async (title, id = null, companyId = null) => {
   try {
     let isExist = false;
-    // const data = await ProjectLabels.findOne({
-    //   // title: title?.trim()?.toLowerCase(),
-    //   title: { $regex: new RegExp(`^${title}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await ProjectLabels.aggregate([
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -66,10 +56,17 @@ exports.projectLabelsExists = async (title, id = null) => {
 //Add Project Labels :
 exports.addProjectLabels = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().required(),
-      project_id: Joi.string().optional(),
+      project_id: Joi.string().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -79,15 +76,16 @@ exports.addProjectLabels = async (req, res) => {
         error.details[0].message
       );
     }
-    if (await this.projectLabelsExists(value.title)) {
+    if (await this.projectLabelsExists(value.title, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new ProjectLabels({
+        companyId: newObjectId(decodedCompanyId),
         title: value.title,
         color: value.color,
         project_id: value.project_id || null,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       await data.save();
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
@@ -100,6 +98,13 @@ exports.addProjectLabels = async (req, res) => {
 //Get Project Labels :
 exports.getProjectLabels = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -107,7 +112,7 @@ exports.getProjectLabels = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      isDropdown: Joi.boolean().optional().default(false),
+      isDropdown: Joi.boolean().optional().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -123,29 +128,30 @@ exports.getProjectLabels = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     // project wise labels and common for all the project..
     let matchQuery = {
       isDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
       ...(req.body._id // For details
         ? { _id: new mongoose.Types.ObjectId(req.body._id) }
         : {}),
       $or: [
         req.body?.project_id
           ? {
-              project_id: new mongoose.Types.ObjectId(req.body?.project_id), // project wise...
+              project_id: new mongoose.Types.ObjectId(req.body?.project_id) // project wise...
             }
           : {},
-        { project_id: { $eq: null } }, // Common for all
-      ],
+        { project_id: { $eq: null } } // Common for all
+      ]
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -156,8 +162,8 @@ exports.getProjectLabels = async (req, res) => {
     } else {
       const query = [
         {
-          $match: matchQuery,
-        },
+          $match: matchQuery
+        }
       ];
       const totalCountQuery = getTotalCountQuery(query);
       const totalCountResult = await ProjectLabels.aggregate(totalCountQuery);
@@ -173,7 +179,7 @@ exports.getProjectLabels = async (req, res) => {
         pageNo: pagination.page,
         totalPages:
           pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page,
+        currentPage: pagination.page
       };
     }
 
@@ -192,10 +198,17 @@ exports.getProjectLabels = async (req, res) => {
 //Update Project Labels :
 exports.updateProjectLabels = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().required(),
-      project_id: Joi.string().optional(),
+      project_id: Joi.string().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -206,7 +219,13 @@ exports.updateProjectLabels = async (req, res) => {
       );
     }
 
-    if (await this.projectLabelsExists(value.title, req.params.id)) {
+    if (
+      await this.projectLabelsExists(
+        value.title,
+        req.params.id,
+        decodedCompanyId
+      )
+    ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const data = await ProjectLabels.findByIdAndUpdate(
@@ -215,7 +234,7 @@ exports.updateProjectLabels = async (req, res) => {
           title: value.title,
           color: value.color,
           project_id: value.project_id || null,
-          updatedBy: req.user._id,
+          updatedBy: req.user._id
         },
         { new: true }
       );
@@ -239,7 +258,7 @@ exports.deleteProjectLabels = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );

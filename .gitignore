@@ -9,6 +9,9 @@
 /settings/role.json
 
 
+client/src/settings
+server/settings
+
 # testing
 /coverage
 
