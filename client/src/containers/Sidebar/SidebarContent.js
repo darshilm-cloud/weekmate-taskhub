@@ -158,7 +158,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Dashboard",
         onClick: () => handleMenuClick("Admin_Dashboard", "/admin/dashboard")
       },
-      getRoles(["Super Admin"]) &&  {
+      getRoles(["Admin"]) &&  {
         key: "Admin_Administrator",
         icon: <AdminIcon />,
         label: "Admins",
@@ -188,19 +188,19 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Projects",
         onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
       },
-      getRoles(["Super Admin"]) && {
+      getRoles(["Admin", "Admin"]) && {
         key: "Users",
         icon: <i className="fi fi-rr-users-alt"></i>,
         label: "Users",
         onClick: () => handleMenuClick("Users", "/project-users"),
       },
-      getRoles(["Super Admin"]) && {
+      getRoles(["Admin", "Admin"]) && {
         key: "Permission",
         icon: <i className="fi fi-rr-lock"></i>,
         label: "Permissions",
         onClick: () => handleMenuClick("Permission", "/permission-access"),
       },
-      (getRoles(["Super Admin", "Admin"]) ||
+      (getRoles(["Admin", "Admin"]) ||
         userData._id == sideBarContentId) && {
         key: "Analytics",
         icon: <i className="fi fi-rs-newspaper"></i>,
@@ -223,13 +223,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           },
         ],
       },
-      getRoles(["Super Admin", "PC", "TL", "Admin", "AM", "User"]) && {
+      getRoles(["Admin", "PC", "TL", "Admin", "AM", "User"]) && {
         key: "Hours",
         icon: <i className="fa-solid fa-clock"></i>,
         label: "Hours",
         onClick: () => handleMenuClick("Hours", "/billable-hours"),
       },
-      getRoles(["Super Admin", "PC", "TL", "Admin", "AM"]) && {
+      getRoles(["Admin", "PC", "TL", "Admin", "AM"]) && {
         key: "FeedBack",
         label: "Feedback",
         icon: <i className="fa-solid fa-comments"></i>,
@@ -248,7 +248,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           },
         ],
       },
-      (getRoles(["Super Admin", "PC", "TL", "Admin"]) ||
+      (getRoles(["Admin", "PC", "TL", "Admin"]) ||
         userData._id == sideBarContentId2) && {
         key: "Projectexpences",
         icon: <i className="fi fi-rr-receipt"></i>,

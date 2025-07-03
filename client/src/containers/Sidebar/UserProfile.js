@@ -721,7 +721,7 @@ function UserProfile() {
 
   const admin = [
     {
-      label: getRoles(["Admin", "Super Admin"]) && (
+      label: getRoles(["Admin", "Admin"]) && (
         <Link to="/workflows">
           <span className="setting-menu">
             {" "}
@@ -867,7 +867,7 @@ function UserProfile() {
             {!getRoles(["Client"]) && (
               <Dropdown
                 menu={{
-                  items: getRoles(["Admin", "Super Admin"]) ? admin : user,
+                  items: getRoles(["Admin", "Admin"]) ? admin : user,
                 }}
                 trigger={["click"]}
               >
@@ -1491,7 +1491,7 @@ function UserProfile() {
                               "PC",
                               "TL",
                               "Admin",
-                              "Super Admin",
+                              "Admin",
                               "AM",
                             ]) && (
                               <Form.Item
@@ -1526,7 +1526,7 @@ function UserProfile() {
                     </Form>
                   </div>
                 </TabPane>
-                {getRoles(["Super Admin"]) && (
+                {getRoles(["Admin"]) && (
                   <TabPane key="2" tab="API details">
                     <Form form={apiDetailSetting} onFinish={handleResetApi}>
                       <div className="overview-modal-wrapper">
@@ -1584,7 +1584,7 @@ function UserProfile() {
                     </Form>
                   </TabPane>
                 )}
-                {getRoles(["Super Admin"]) && (
+                {getRoles(["Admin"]) && (
                   <TabPane key="3" tab="General Setting">
                     <Form form={generalSetting} onFinish={handlegeneralSetting}>
                       <div className="overview-modal-wrapper">

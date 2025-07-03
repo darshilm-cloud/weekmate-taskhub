@@ -975,7 +975,7 @@ const SuperAdminBillableHours = () => {
 
   // get billable hours for PC
   const getBillableoursOfPC = async () => {
-    let empRole = tempEmployeeRole == "my_emp" || !getRoles(["Super Admin"]);
+    let empRole = tempEmployeeRole == "my_emp" || !getRoles(["Admin"]);
     const reqBody = {
       month: selectedMonth ? selectedMonth : currentMonth,
       year: selectedYear ? selectedYear : currentYear,
@@ -1085,7 +1085,7 @@ const SuperAdminBillableHours = () => {
             </div>
           </div>
           <div className="status-content">
-            {getRoles(["Super Admin"]) && (
+            {getRoles(["Admin"]) && (
               <div style={{ cursor: "pointer" }}>
                 <h6>Search Employee by Role</h6>
                 <Popover
@@ -1158,7 +1158,7 @@ const SuperAdminBillableHours = () => {
               </div>
             )}
 
-            {getRoles(["Super Admin"]) && (
+            {getRoles(["Admin"]) && (
               <div
                 className="search-department-billable-hours"
                 style={{ cursor: "pointer" }}
@@ -1422,7 +1422,7 @@ const SuperAdminBillableHours = () => {
         <Table
           className="time-block-table"
           columns={
-            getRoles(["Super Admin"])
+            getRoles(["Admin"])
               ? columns
               : getRoles(["User"])
               ? USERColumns
@@ -1455,7 +1455,7 @@ const SuperAdminBillableHours = () => {
         <div className="modal-body loggedtimedetails-wrapper">
           <Table
             columns={
-              getRoles(["Super Admin"])
+              getRoles(["Admin"])
                 ? loggedTimeColumns
                 : pcLoggedTimeColumns
             }

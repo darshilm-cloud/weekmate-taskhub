@@ -20,9 +20,9 @@ const FEEDBACK_TYPES = [
 ];
 
 const PAGINATION_OPTIONS = ["10", "20", "30"];
-const ADMIN_ROLES = ["Admin", "PC", "Super Admin", "AM"];
-const ACCESS_ROLES = ["Super Admin", "PC", "TL", "AM"];
-const SUPER_ADMIN_ROLES = ["Super Admin"];
+const ADMIN_ROLES = ["Admin", "PC", "Admin", "AM"];
+const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
+const SUPER_ADMIN_ROLES = ["Admin"];
 
 // Memoized components for better performance
 const FilterPopover = memo(({ 

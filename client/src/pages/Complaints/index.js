@@ -62,7 +62,7 @@ const index = () => {
     deleteComplaints,
   } = ComplaintsFormController();
 
-  const userHasAccess = getRoles(["Super Admin", "PC", "TL", "AM"]);
+  const userHasAccess = getRoles(["Admin", "PC", "TL", "AM"]);
 
   const showTotal = (total) => `Total Records Count is ${total}`;
 
@@ -166,7 +166,7 @@ const index = () => {
               <div className="heading-main">
                 <h2>Complaints</h2>
               </div>
-              {getRoles(["Super Admin", "PC", "AM", "TL"]) && (
+              {getRoles(["Admin", "PC", "AM", "TL"]) && (
                 <Link to="/add/complaintsform">
                   <Button
                     icon={<PlusOutlined />}
@@ -262,7 +262,7 @@ const index = () => {
                   {selectedProject.length == 0 ? "All" : "Selected"}
                 </Popover>
               </div>
-              {getRoles(["Super Admin"]) && (
+              {getRoles(["Admin"]) && (
                 <>
                   <div style={{ cursor: "pointer" }}>
                     <h6>Technology:</h6>

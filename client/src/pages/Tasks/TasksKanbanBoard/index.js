@@ -469,7 +469,7 @@ const TaskList = ({
                                         }
                                         icon={<PlusOutlined />}
                                         disabled={
-                                          !getRoles(["Admin", "Super Admin"]) ||
+                                          !getRoles(["Admin", "Admin"]) ||
                                           boardData.workflowStatus.title ===
                                             "Done"
                                         }

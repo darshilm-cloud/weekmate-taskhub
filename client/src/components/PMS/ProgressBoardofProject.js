@@ -719,7 +719,7 @@ function ProgressBoardofProject() {
                         </Popconfirm>
                       </Menu.Item>
                     )}
-                    {getRoles(["Super Admin", "Admin"]) && (
+                    {getRoles(["Admin", "Admin"]) && (
                       <Menu.Item
                         onClick={() => {
                           setPopOver(false);

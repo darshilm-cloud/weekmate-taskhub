@@ -88,13 +88,13 @@ const ProjectExpensesForm = () => {
   const isAccountant = useMemo(
     () =>
       STATIC_ACCOUNTANT_ID.includes(userRole?._id) &&
-      !(userRole?.pms_role_id?.role_name === "Super Admin"),
+      !(userRole?.pms_role_id?.role_name === "Admin"),
     [userRole]
   );
 
   const canEditStatus = useMemo(
     () =>
-      userRole?.pms_role_id?.role_name === "Super Admin" ||
+      userRole?.pms_role_id?.role_name === "Admin" ||
       STATIC_ACCOUNTANT_ID.includes(userRole?._id) ||
       userRole?.pms_role_id?.role_name === "Admin",
     [userRole]
@@ -396,14 +396,14 @@ const ProjectExpensesForm = () => {
 
   const renderStatusOptions = () => {
     if (STATIC_ACCOUNTANT_ID.includes(userRole?._id)) {
-      return userRole?.pms_role_id?.role_name === "Super Admin" ? (
+      return userRole?.pms_role_id?.role_name === "Admin" ? (
         <Option value="Paid">Paid</Option>
       ) : null;
     }
 
     return (
       <>
-        {userRole?.pms_role_id?.role_name === "Super Admin" && (
+        {userRole?.pms_role_id?.role_name === "Admin" && (
           <>
             <Option value="Approved">Approved</Option>
             <Option value="Rejected">Rejected</Option>

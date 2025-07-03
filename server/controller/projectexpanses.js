@@ -55,7 +55,7 @@ const upload = multer({
 exports.addProjectExpense = async (req, res) => {
   try {
     // ✅ Access Control: Allowed Roles & Static Employee ID
-    const allowedRoles = ["PC", "TL", "Admin", "Super Admin"];
+    const allowedRoles = ["PC", "TL", "Admin", "Admin"];
     const staticEmployeeId = process.env.ACCOUNTANT_ID
       ;
 
@@ -447,14 +447,14 @@ exports.getProjectExpenses = async (req, res) => {
     const isAccountant = await pmsClients.exists({ _id: userId, _id: { $in: accountantIds } });
 
 
-    // const hasFullAccess = ["Admin", "Super Admin"].includes(userRole) || accountantIds.includes(userId);
+    // const hasFullAccess = ["Admin", "Admin"].includes(userRole) || accountantIds.includes(userId);
 
 
     // const userId = req.user._id;
     const userRole = req.user.pms_role_id?.role_name; // Ensure role_name exists
     // const accountantIds = process.env.ACCOUNTANT_ID?.split(",") || []; // Ensure it's an array
 
-    const allowedRoles = ["Admin", "Super Admin"];
+    const allowedRoles = ["Admin", "Admin"];
     const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
 
     const hasFullAccess = allowedRoles.includes(userRole) || accountantIds.includes(userId);
@@ -749,7 +749,7 @@ exports.getProjectExpenses = async (req, res) => {
 //         const staticAccountantId = process.env.ACCOUNTANT_ID?.split(",") || []; // Convert to array if stored as comma-separated string
 //         const userRole = req.user.pms_role_id.role_name;
 //         const userId = req.user._id.toString();
-//         const isAdmin = ["Admin", "Super Admin"].includes(userRole) || staticAccountantId.includes(userId);
+//         const isAdmin = ["Admin", "Admin"].includes(userRole) || staticAccountantId.includes(userId);
 
 //         // Extracting params ID (for fetching single expense)
 //         const expenseId = req.body._id ? new mongoose.Types.ObjectId(req.body._id) : null;
@@ -921,7 +921,7 @@ exports.updateProjectExpense = async (req, res) => {
 
         const isCreator = existingExpense.createdBy.toString() === userId;
         const isAdmin = userRole === "Admin";
-        const isSuperAdmin = userRole === "Super Admin";
+        const isSuperAdmin = userRole === "Admin";
         const isAccountant = staticAccountantId.includes(userId);
 
         // Request Validation Schema
@@ -1038,7 +1038,7 @@ exports.updateProjectExpense = async (req, res) => {
 
 //         const isCreator = existingExpense.createdBy.toString() === userId;
 //         const isAdmin = userRole === "Admin";
-//         const isSuperAdmin = userRole === "Super Admin";
+//         const isSuperAdmin = userRole === "Admin";
 //         const isAccountant = userId === staticAccountantId;
 
 //         // Request Validation Schema
@@ -1125,7 +1125,7 @@ exports.deleteProjectExpense = async (req, res) => {
     }
 
     const isCreator = existingExpense.createdBy.toString() === userId;
-    const isAllowedRole = ["Super Admin"].includes(userRole);
+    const isAllowedRole = ["Admin"].includes(userRole);
     const isAccountant = userId === staticAccountantId;
 
     // Only allow deletion if user is Admin, SuperAdmin, PC, TL, Creator, or Accountant
