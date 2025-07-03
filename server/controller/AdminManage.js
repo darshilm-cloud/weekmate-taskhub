@@ -187,6 +187,7 @@ exports.addUser = async (req, res) => {
       email,
       first_name: firstName,
       last_name: lastName,
+      full_name:`${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
       companyId: newObjectId(companyId)
@@ -294,6 +295,7 @@ exports.addUsersByCsv = async (req, res) => {
           email: item.Email,
           first_name: item["First Name"],
           last_name: item["Last Name"],
+          full_name:`${item["First Name"]} ${item["Last Name"]}`,
           password: item.Password, // Optional: await bcrypt.hash(item.Password, 10)
           pms_role_id: roleData._id,
           companyId: companyId

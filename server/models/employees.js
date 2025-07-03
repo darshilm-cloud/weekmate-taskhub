@@ -7,6 +7,7 @@ const employeeSchema = new Schema({
   companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   first_name: { type: String },
   last_name: { type: String },
+  full_name: { type: String },
   emp_img: { type: String, default: "" },
   email: { type: String },
   phone_number: { type: String, default: "" },

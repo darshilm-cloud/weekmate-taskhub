@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectStatus = mongoose.model("projectstatus");
@@ -10,49 +10,43 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
 
 // Check is exists..
-exports.projectStatusExists = async (projectStatus, id = null) => {
+exports.projectStatusExists = async (
+  projectStatus,
+  id = null,
+  companyId = null
+) => {
   try {
     let isExist = false;
-    // const data = await ProjectStatus.findOne({
-    //   // title: projectStatus?.trim()?.toLowerCase(),
-    //   title: { $regex: new RegExp(`^${projectStatus}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await ProjectStatus.aggregate([
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          projectStatusLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          projectStatusLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          projectStatusLower: projectStatus.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          projectStatusLower: projectStatus.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -65,8 +59,15 @@ exports.projectStatusExists = async (projectStatus, id = null) => {
 //Add Project status :
 exports.addProjectStatus = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      title: Joi.string().required(),
+      title: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -77,13 +78,14 @@ exports.addProjectStatus = async (req, res) => {
       );
     }
 
-    if (await this.projectStatusExists(value.title)) {
+    if (await this.projectStatusExists(value.title,null,decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new ProjectStatus({
+        companyId: newObjectId(decodedCompanyId),
         title: value.title,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       await data.save();
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
@@ -96,6 +98,13 @@ exports.addProjectStatus = async (req, res) => {
 //Get Project status :
 exports.getProjectStatus = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -103,7 +112,7 @@ exports.getProjectStatus = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      isDropdown: Joi.boolean().optional().default(false),
+      isDropdown: Joi.boolean().optional().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -119,20 +128,21 @@ exports.getProjectStatus = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
       isDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
       ...(req.body._id // For details
         ? { _id: new mongoose.Types.ObjectId(req.body._id) }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -143,8 +153,8 @@ exports.getProjectStatus = async (req, res) => {
     } else {
       const query = [
         {
-          $match: matchQuery,
-        },
+          $match: matchQuery
+        }
       ];
       const totalCountQuery = getTotalCountQuery(query);
       const totalCountResult = await ProjectStatus.aggregate(totalCountQuery);
@@ -160,7 +170,7 @@ exports.getProjectStatus = async (req, res) => {
         pageNo: pagination.page,
         totalPages:
           pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page,
+        currentPage: pagination.page
       };
     }
 
@@ -179,8 +189,15 @@ exports.getProjectStatus = async (req, res) => {
 //Update Project status :
 exports.updateProjectStatus = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      title: Joi.string().required(),
+      title: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -191,14 +208,14 @@ exports.updateProjectStatus = async (req, res) => {
       );
     }
 
-    if (await this.projectStatusExists(value.title, req.params.id)) {
+    if (await this.projectStatusExists(value.title, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const data = await ProjectStatus.findByIdAndUpdate(
         req.params.id,
         {
           title: value.title,
-          updatedBy: req.user._id,
+          updatedBy: req.user._id
         },
         { new: true }
       );
@@ -222,7 +239,7 @@ exports.deleteProjectStatus = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );

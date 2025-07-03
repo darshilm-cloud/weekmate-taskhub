@@ -1,65 +1,51 @@
-const Joi = require('joi');
-const { errorResponse, successResponse, catchBlockErrorResponse } = require('../helpers/response');
-const mongoose = require('mongoose');
-const ProjectType = mongoose.model('projecttypes');
+const Joi = require("joi");
+const {
+  errorResponse,
+  successResponse,
+  catchBlockErrorResponse
+} = require("../helpers/response");
+const mongoose = require("mongoose");
+const ProjectType = mongoose.model("projecttypes");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 const configs = require("../configs");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 
 // Check is exists..
-exports.projectTypeExists = async (projectType, id = null) => {
-  console.log("🚀 ~ exports.projectTypeExists= ~ id:", id)
+exports.projectTypeExists = async (
+  projectType,
+  id = null,
+  companyId = null
+) => {
   try {
     let isExist = false;
-    // console.log({
-    //   project_type: { $regex: new RegExp(`^${projectType}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: new mongoose.Types.ObjectId(id) },
-    //       }
-    //     : {}),
-    // });
-
-    // const data = await ProjectType.findOne({
-    //   // project_type: projectType?.trim()?.toLowerCase(),
-    //   project_type: { $regex: new RegExp(`^${projectType}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: new mongoose.Types.ObjectId(id) },
-    //       }
-    //     : {}),
-    // });
-    // console.log("🚀 ~ exports.projectTypeExists= ~ data:", data)
-    // if (data) isExist = true;
 
     const data = await ProjectType.aggregate([
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          project_typeLower: { $toLower: "$project_type" }, // Add a temporary field with lowercase title
-        },
+          project_typeLower: { $toLower: "$project_type" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          project_typeLower: projectType.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          project_typeLower: projectType.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -72,21 +58,31 @@ exports.projectTypeExists = async (projectType, id = null) => {
 //Add Project Types:
 exports.addProjectTypes = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      project_type: Joi.string().required(),
+      project_type: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(res, 400, error.details[0].message);
     }
 
-    if (await this.projectTypeExists(value.project_type)) {
+    if (
+      await this.projectTypeExists(value.project_type, null, decodedCompanyId)
+    ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let ProjectTypeData = new ProjectType({
+        companyId: newObjectId(decodedCompanyId),
         project_type: value.project_type,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       await ProjectTypeData.save();
       return successResponse(
@@ -104,6 +100,13 @@ exports.addProjectTypes = async (req, res) => {
 //Get Project Types:
 exports.getProjectTypes = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -111,7 +114,7 @@ exports.getProjectTypes = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      isDropdown: Joi.boolean().default(false),
+      isDropdown: Joi.boolean().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -123,17 +126,18 @@ exports.getProjectTypes = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
       isDeleted: false,
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      companyId: newObjectId(decodedCompanyId),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["project_type"], value.search),
+        ...searchDataArr(["project_type"], value.search)
       };
     }
 
@@ -157,7 +161,7 @@ exports.getProjectTypes = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -175,23 +179,36 @@ exports.getProjectTypes = async (req, res) => {
 //Update Project Types:
 exports.updateProjectType = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       projectTypeId: Joi.string().required(),
-      project_type: Joi.string().required(),
+      project_type: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(res, 400, error.details[0].message);
     }
 
-    if (await this.projectTypeExists(value.project_type, value.projectTypeId)) {
+    if (
+      await this.projectTypeExists(
+        value.project_type,
+        value.projectTypeId,
+        decodedCompanyId
+      )
+    ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const updatedProjectType = await ProjectType.findByIdAndUpdate(
         value.projectTypeId,
         {
           project_type: value.project_type,
-          updatedBy: req.user._id, // assuming you have user id in req.user
+          updatedBy: req.user._id // assuming you have user id in req.user
         },
         { new: true }
       );
@@ -216,7 +233,7 @@ exports.updateProjectType = async (req, res) => {
 exports.deleteProjectType = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      projectTypeId: Joi.string().required(),
+      projectTypeId: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -228,7 +245,7 @@ exports.deleteProjectType = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(), // assuming you have user id in req.user
+        deletedAt: configs.utcDefault() // assuming you have user id in req.user
       },
       { new: true }
     );
@@ -250,8 +267,15 @@ exports.deleteProjectType = async (req, res) => {
 
 exports.getProjectTypeSlug = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const projectTypeSlug = await ProjectType.find({
-      isDeleted: false,
+      isDeleted: false
     })
       .sort({ _id: -1 })
       .select("_id slug");

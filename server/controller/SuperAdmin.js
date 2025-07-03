@@ -211,6 +211,7 @@ exports.addAdmin = async (req, res) => {
       email,
       first_name: firstName,
       last_name: lastName,
+      full_name:`${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
       isActivate: true,

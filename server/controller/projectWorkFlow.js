@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectWorkFlow = mongoose.model("projectworkflows");
@@ -15,16 +15,24 @@ const {
   getAggregationPagination,
   getTotalCountQuery,
   getPagination,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 
 //Add Project Work Flow:
 exports.addProjectWorkFlow = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_workflow: Joi.string().required(),
-      status: Joi.string().optional().default("active"),
+      status: Joi.string().optional().default("active")
     });
+
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(
@@ -33,12 +41,13 @@ exports.addProjectWorkFlow = async (req, res) => {
         error.details[0].message
       );
     }
-    if (!(await this.projectWorkFlowExists(value.project_workflow))) {
+    if (!(await this.projectWorkFlowExists(value.project_workflow,null,decodedCompanyId))) {
       let ProjectWorkFlowData = new ProjectWorkFlow({
+        companyId: newObjectId(decodedCompanyId),
         project_workflow: value.project_workflow,
         status: value.status,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       const newData = await ProjectWorkFlowData.save();
 
@@ -52,7 +61,7 @@ exports.addProjectWorkFlow = async (req, res) => {
           isDefault: true,
           sequence: 1,
           createdBy: req.user._id,
-          updatedBy: req.user._id,
+          updatedBy: req.user._id
         },
         {
           workflow_id: newData._id,
@@ -61,8 +70,8 @@ exports.addProjectWorkFlow = async (req, res) => {
           sequence: 2,
           isDefault: true,
           createdBy: req.user._id,
-          updatedBy: req.user._id,
-        },
+          updatedBy: req.user._id
+        }
       ]);
 
       return successResponse(
@@ -87,6 +96,13 @@ exports.addProjectWorkFlow = async (req, res) => {
 //Get Project Work Flow:
 exports.getProjectWorkFlow = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -94,7 +110,7 @@ exports.getProjectWorkFlow = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       isDropdown: Joi.boolean().optional().default(false),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -110,24 +126,25 @@ exports.getProjectWorkFlow = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
       isDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
       ...(value.isDropdown ? { status: "active" } : {}),
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["project_workflow"], value.search),
+        ...searchDataArr(["project_workflow"], value.search)
       };
     }
 
     const query = [
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $lookup: {
@@ -139,20 +156,20 @@ exports.getProjectWorkFlow = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$workflow_id", "$$workFlowId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
             {
               $sort: {
-                sequence: 1,
-              },
-            },
+                sequence: 1
+              }
+            }
           ],
-          as: "workflow_status",
-        },
-      },
+          as: "workflow_status"
+        }
+      }
     ];
 
     const totalCountQuery = getTotalCountQuery(query);
@@ -165,10 +182,10 @@ exports.getProjectWorkFlow = async (req, res) => {
         {
           $sort: {
             isDefault: -1,
-            _id: 1,
-          },
-        },
-      ],
+            _id: 1
+          }
+        }
+      ]
     ]);
 
     if (value.isDropdown) {
@@ -177,9 +194,9 @@ exports.getProjectWorkFlow = async (req, res) => {
         {
           $sort: {
             isDefault: -1,
-            _id: 1,
-          },
-        },
+            _id: 1
+          }
+        }
       ]);
     }
 
@@ -189,7 +206,7 @@ exports.getProjectWorkFlow = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -206,42 +223,32 @@ exports.getProjectWorkFlow = async (req, res) => {
 };
 
 // Check is exists..
-exports.projectWorkFlowExists = async (title, id = null) => {
+exports.projectWorkFlowExists = async (title, id = null, companyId = null) => {
   try {
     let isExist = false;
-    // const data = await ProjectWorkFlow.findOne({
-    //   // project_workflow: title?.trim()?.toLowerCase(),
-    //   project_workflow: { $regex: new RegExp(`^${title}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await ProjectWorkFlow.aggregate([
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          project_workflowLower: { $toLower: "$project_workflow" }, // Add a temporary field with lowercase title
-        },
+          project_workflowLower: { $toLower: "$project_workflow" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          project_workflowLower: title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          project_workflowLower: title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -254,9 +261,16 @@ exports.projectWorkFlowExists = async (title, id = null) => {
 //Update Project Work Flow:
 exports.updateProjectWorkFlow = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       projectWorkFlowId: Joi.string().required(),
-      project_workflow: Joi.string().required(),
+      project_workflow: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -270,7 +284,8 @@ exports.updateProjectWorkFlow = async (req, res) => {
     if (
       !(await this.projectWorkFlowExists(
         value.project_workflow,
-        value.projectWorkFlowId
+        value.projectWorkFlowId,
+        decodedCompanyId
       ))
     ) {
       const updatedProjectWorkFlowData =
@@ -278,7 +293,7 @@ exports.updateProjectWorkFlow = async (req, res) => {
           value.projectWorkFlowId,
           {
             project_workflow: value.project_workflow,
-            updatedBy: req.user._id,
+            updatedBy: req.user._id
           },
           { new: true }
         );
@@ -310,7 +325,7 @@ exports.updateProjectWorkFlow = async (req, res) => {
 exports.deleteProjectWorkFlow = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      projectWorkFlowId: Joi.string().required(),
+      projectWorkFlowId: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -324,7 +339,7 @@ exports.deleteProjectWorkFlow = async (req, res) => {
     // Get project with associated with workflow..
     const getProject = await Project.findOne({
       isDeleted: false,
-      workFlow: new mongoose.Types.ObjectId(value.projectWorkFlowId),
+      workFlow: new mongoose.Types.ObjectId(value.projectWorkFlowId)
     });
 
     if (getProject) {
@@ -340,7 +355,7 @@ exports.deleteProjectWorkFlow = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );
@@ -352,12 +367,12 @@ exports.deleteProjectWorkFlow = async (req, res) => {
     await ProjectWorkFlowStatus.updateMany(
       {
         isDeleted: false,
-        workflow_id: new mongoose.Types.ObjectId(value.projectWorkFlowId),
+        workflow_id: new mongoose.Types.ObjectId(value.projectWorkFlowId)
       },
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       }
     );
     return successResponse(
