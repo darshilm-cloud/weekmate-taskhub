@@ -158,7 +158,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Dashboard",
         onClick: () => handleMenuClick("Admin_Dashboard", "/admin/dashboard")
       },
-      getRoles(["Admin"]) &&  {
+      getRoles(["Super Admin"]) &&  {
         key: "Admin_Administrator",
         icon: <AdminIcon />,
         label: "Admins",
@@ -188,19 +188,19 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Projects",
         onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
       },
-      getRoles(["Admin", "Admin"]) && {
+      getRoles(["Admin"]) && {
         key: "Users",
         icon: <i className="fi fi-rr-users-alt"></i>,
         label: "Users",
         onClick: () => handleMenuClick("Users", "/project-users"),
       },
-      getRoles(["Admin", "Admin"]) && {
+      getRoles(["Admin"]) && {
         key: "Permission",
         icon: <i className="fi fi-rr-lock"></i>,
         label: "Permissions",
         onClick: () => handleMenuClick("Permission", "/permission-access"),
       },
-      (getRoles(["Admin", "Admin"]) ||
+      (getRoles(["Admin"]) ||
         userData._id == sideBarContentId) && {
         key: "Analytics",
         icon: <i className="fi fi-rs-newspaper"></i>,

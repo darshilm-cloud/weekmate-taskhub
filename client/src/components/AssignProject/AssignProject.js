@@ -1021,7 +1021,7 @@ function AssignProject() {
           </div>
 
           <div className="status-content">
-            {getRoles(["Admin", "Admin"]) && (
+            {getRoles(["Admin"]) && (
               <>
                 <div style={{ cursor: "pointer" }}>
                   <h6>Account Manager:</h6>

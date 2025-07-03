@@ -55,7 +55,7 @@ const upload = multer({
 exports.addProjectExpense = async (req, res) => {
   try {
     // ✅ Access Control: Allowed Roles & Static Employee ID
-    const allowedRoles = ["PC", "TL", "Admin", "Admin"];
+    const allowedRoles = ["PC", "TL", "Admin"];
     const staticEmployeeId = process.env.ACCOUNTANT_ID
       ;
 
@@ -447,14 +447,14 @@ exports.getProjectExpenses = async (req, res) => {
     const isAccountant = await pmsClients.exists({ _id: userId, _id: { $in: accountantIds } });
 
 
-    // const hasFullAccess = ["Admin", "Admin"].includes(userRole) || accountantIds.includes(userId);
+    // const hasFullAccess = ["Admin"].includes(userRole) || accountantIds.includes(userId);
 
 
     // const userId = req.user._id;
     const userRole = req.user.pms_role_id?.role_name; // Ensure role_name exists
     // const accountantIds = process.env.ACCOUNTANT_ID?.split(",") || []; // Ensure it's an array
 
-    const allowedRoles = ["Admin", "Admin"];
+    const allowedRoles = ["Admin"];
     const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
 
     const hasFullAccess = allowedRoles.includes(userRole) || accountantIds.includes(userId);
@@ -749,7 +749,7 @@ exports.getProjectExpenses = async (req, res) => {
 //         const staticAccountantId = process.env.ACCOUNTANT_ID?.split(",") || []; // Convert to array if stored as comma-separated string
 //         const userRole = req.user.pms_role_id.role_name;
 //         const userId = req.user._id.toString();
-//         const isAdmin = ["Admin", "Admin"].includes(userRole) || staticAccountantId.includes(userId);
+//         const isAdmin = ["Admin"].includes(userRole) || staticAccountantId.includes(userId);
 
 //         // Extracting params ID (for fetching single expense)
 //         const expenseId = req.body._id ? new mongoose.Types.ObjectId(req.body._id) : null;

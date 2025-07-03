@@ -721,7 +721,7 @@ function UserProfile() {
 
   const admin = [
     {
-      label: getRoles(["Admin", "Admin"]) && (
+      label: getRoles(["Admin"]) && (
         <Link to="/workflows">
           <span className="setting-menu">
             {" "}
@@ -867,7 +867,7 @@ function UserProfile() {
             {!getRoles(["Client"]) && (
               <Dropdown
                 menu={{
-                  items: getRoles(["Admin", "Admin"]) ? admin : user,
+                  items: getRoles(["Admin"]) ? admin : user,
                 }}
                 trigger={["click"]}
               >

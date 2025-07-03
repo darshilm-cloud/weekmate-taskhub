@@ -849,7 +849,7 @@ function ProjectArchieved() {
               </Popover>
             </div>
 
-            {getRoles(["Admin", "Admin"]) && (
+            {getRoles(["Admin"]) && (
               <div style={{ cursor: "pointer" }}>
                 <h6>Manager:</h6>
                 <Popover

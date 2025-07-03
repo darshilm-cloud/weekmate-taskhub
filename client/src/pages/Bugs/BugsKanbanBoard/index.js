@@ -371,7 +371,7 @@ const BugList = ({
                                   }
                                   icon={<PlusOutlined />}
                                   disabled={
-                                    !getRoles(["Admin", "Admin"]) ||
+                                    !getRoles(["Admin"]) ||
                                     boardData?.title == "Closed"
                                   }
                                 />
