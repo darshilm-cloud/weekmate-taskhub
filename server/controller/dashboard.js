@@ -10,7 +10,7 @@ const ProjectTasks = mongoose.model("projecttasks");
 const ProjectTimeLogged = mongoose.model("projecttaskhourlogs");
 const TotalTaskhoursLogged = mongoose.model("projecttotaltaskhourlogs");
 const ProjectBugs = mongoose.model("projecttaskbugs");
-const Holiday = mongoose.model("holidays");
+// const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const { checkUserIsSuperAdmin } = require("./authentication");
@@ -853,7 +853,7 @@ exports.getMyBugs = async (req, res) => {
   }
 };
 
-// to get total hours tracked of all employees
+
 // exports.getEmpTrackedHoursforDashboard = async (req, res) => {
 //   try {
 //     const validationSchema = Joi.object({
@@ -923,14 +923,14 @@ exports.getMyBugs = async (req, res) => {
 //       if (isHoliday && !isWeekend) {
 //         holidaysOnWorkingDays++;
 //         if (currentDay.isBefore(todayDate, 'day')) {
-//            holidaysOnWorkingDaysTillToday += 1;
+//           holidaysOnWorkingDaysTillToday += 1;
 //         }
 //       }
 //     }
 
 //     // Subtract holidays that fall on weekdays from the total working days
 //     totalWorkingDays -= holidaysOnWorkingDays;
-//     WorkingDaysTillToday -=holidaysOnWorkingDaysTillToday;
+//     WorkingDaysTillToday -= holidaysOnWorkingDaysTillToday;
 
 //     // console.log("----", totalWorkingDays);
 
@@ -948,10 +948,22 @@ exports.getMyBugs = async (req, res) => {
 //     const totalWorkingHours = totalWorkingDays * 8.5;
 //     const totalWorkingMinutes = totalWorkingHours * 60;
 
-//     const WorkingHoursTillToday = WorkingDaysTillToday * 8.5;
+//     // const WorkingHoursTillToday = WorkingDaysTillToday * 8.5;
 
 //     // Extract working and logged hours
+//     const employeeLoggedHoursData = await getTotalLoggedHoursForMonthByEmployee(
+//       value.month,
+//       value.year,
+//       req?.user?._id,
+//       true
+//     );
+//     const empTotalTimeData = employeeLoggedHoursData?.length
+//     ? employeeLoggedHoursData[0]
+//     : { total_hours_as_working_days_ofemp: 0, total_minutes_as_working_days_ofemp: 0 };
 
+//     // console.log("🚀 ~ exports.getEmpTrackedHoursforDashboard= ~ empTotalTimeData.total_hours_as_working_days_ofemp:", empTotalTimeData.total_hours_as_working_days_ofemp)
+//     const WorkingHoursTillToday = (empTotalTimeData.total_hours_as_working_days_ofemp);
+//     // console.log("🚀 ~ exports.getEmpTrackedHoursforDashboard= ~ WorkingHoursTillToday:", WorkingHoursTillToday)
 //     // Extract logged hours and convert to minutes
 //     const loggedTime = data2[0]?.total_time.split(":"); // Split logged time by ':'
 //     const loggedHours = loggedTime?.length > 0 ? parseInt(loggedTime[0], 10) : 0;
@@ -964,14 +976,13 @@ exports.getMyBugs = async (req, res) => {
 
 //     let behindHours = false;
 //     let totalBehindHoursTillToday = 0;
-//     if(parseInt(WorkingHoursTillToday) > parseInt(loggedHours))
-//     {
+//     if (parseInt(WorkingHoursTillToday) > parseInt(loggedHours)) {
 //       behindHours = true;
 //       totalBehindHoursTillToday = parseInt(WorkingHoursTillToday) - parseInt(loggedHours);
 //     }
 
 //     const masterData = {
-//       totalWorkingHours: totalWorkingHours,
+//       totalWorkingHours: WorkingHoursTillToday,
 //       behindHours:behindHours,
 //       totalBehindHoursTillToday:totalBehindHoursTillToday,
 //       data2: data2[0],
@@ -992,154 +1003,3 @@ exports.getMyBugs = async (req, res) => {
 //     return catchBlockErrorResponse(res, error.message);
 //   }
 // };
-
-
-exports.getEmpTrackedHoursforDashboard = async (req, res) => {
-  try {
-    const validationSchema = Joi.object({
-      month: Joi.string().required(),
-      year: Joi.string().required(),
-    });
-
-    const { error, value } = validationSchema.validate(req.body);
-    if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
-    }
-
-    let holiday_data = await Holiday.aggregate([
-      {
-        $match: {
-          isDeleted: false,
-          $or: [{ isOptional: { $exists: false } }, { isOptional: false }],
-          $expr: {
-            $and: [
-              { $eq: [{ $month: "$holiday_date" }, parseInt(value.month)] },
-              { $eq: [{ $year: "$holiday_date" }, parseInt(value.year)] },
-            ],
-          },
-        },
-      },
-    ]);
-
-    // Get the total number of days in the month
-    const totalDaysInMonth = moment(
-      `${value.year}-${value.month}`,
-      "YYYY-MM"
-    ).daysInMonth();
-
-    let totalWorkingDays = 0;
-    let holidaysOnWorkingDays = 0;
-
-    let WorkingDaysTillToday = 0;
-    let holidaysOnWorkingDaysTillToday = 0;
-
-    let todayDate = moment();
-
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-      const currentDay = moment(
-        `${value.year}-${value.month}-${day}`,
-        "YYYY-MM-DD"
-      );
-
-      // Check if it's a weekend (Saturday = 6, Sunday = 0)
-      const isWeekend = currentDay.day() === 0 || currentDay.day() === 6;
-      if (!isWeekend) {
-        totalWorkingDays++; // Increment working days if not a weekend
-        // console.log("totalWorkingDays",totalWorkingDays)
-
-        if (currentDay.isBefore(todayDate, 'day')) {
-          WorkingDaysTillToday += 1;
-        }
-      }
-
-      // Check if the current day is a holiday and also a weekday
-      const isHoliday = holiday_data.some((holiday) =>
-        moment(holiday.holiday_date).isSame(currentDay, "day")
-      );
-      if (isHoliday && !isWeekend) {
-        holidaysOnWorkingDays++;
-        if (currentDay.isBefore(todayDate, 'day')) {
-          holidaysOnWorkingDaysTillToday += 1;
-        }
-      }
-    }
-
-    // Subtract holidays that fall on weekdays from the total working days
-    totalWorkingDays -= holidaysOnWorkingDays;
-    WorkingDaysTillToday -= holidaysOnWorkingDaysTillToday;
-
-    // console.log("----", totalWorkingDays);
-
-    const data2 = await TotalTaskhoursLogged.aggregate([
-      {
-        $match: {
-          isDeleted: false,
-          employee_id: new mongoose.Types.ObjectId(req?.user?._id),
-          month: value?.month,
-          year: value?.year,
-        },
-      },
-    ]);
-
-    const totalWorkingHours = totalWorkingDays * 8.5;
-    const totalWorkingMinutes = totalWorkingHours * 60;
-
-    // const WorkingHoursTillToday = WorkingDaysTillToday * 8.5;
-
-    // Extract working and logged hours
-    const employeeLoggedHoursData = await getTotalLoggedHoursForMonthByEmployee(
-      value.month,
-      value.year,
-      req?.user?._id,
-      true
-    );
-    const empTotalTimeData = employeeLoggedHoursData?.length
-    ? employeeLoggedHoursData[0]
-    : { total_hours_as_working_days_ofemp: 0, total_minutes_as_working_days_ofemp: 0 };
-
-    // console.log("🚀 ~ exports.getEmpTrackedHoursforDashboard= ~ empTotalTimeData.total_hours_as_working_days_ofemp:", empTotalTimeData.total_hours_as_working_days_ofemp)
-    const WorkingHoursTillToday = (empTotalTimeData.total_hours_as_working_days_ofemp);
-    // console.log("🚀 ~ exports.getEmpTrackedHoursforDashboard= ~ WorkingHoursTillToday:", WorkingHoursTillToday)
-    // Extract logged hours and convert to minutes
-    const loggedTime = data2[0]?.total_time.split(":"); // Split logged time by ':'
-    const loggedHours = loggedTime?.length > 0 ? parseInt(loggedTime[0], 10) : 0;
-    const loggedMinutes =
-      loggedTime?.length > 0 ? parseInt(loggedTime[1], 10) : 0;
-    const totalLoggedMinutes = loggedHours * 60 + loggedMinutes;
-
-    // Calculate percentage
-    const loggedPercentage = (totalLoggedMinutes / totalWorkingMinutes) * 100;
-
-    let behindHours = false;
-    let totalBehindHoursTillToday = 0;
-    if (parseInt(WorkingHoursTillToday) > parseInt(loggedHours)) {
-      behindHours = true;
-      totalBehindHoursTillToday = parseInt(WorkingHoursTillToday) - parseInt(loggedHours);
-    }
-
-    const masterData = {
-      totalWorkingHours: WorkingHoursTillToday,
-      behindHours:behindHours,
-      totalBehindHoursTillToday:totalBehindHoursTillToday,
-      data2: data2[0],
-      loggedPercentage: loggedPercentage.toFixed(2) + "%", // Add percentage as part of response
-    };
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      masterData,
-      {}
-    );
-  } catch (error) {
-    console.log(
-      "🚀 ~ exports.grandTotalforTrackedandApprovedHours= ~ error:",
-      error
-    );
-    return catchBlockErrorResponse(res, error.message);
-  }
-};
