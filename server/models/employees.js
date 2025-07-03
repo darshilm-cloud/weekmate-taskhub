@@ -22,7 +22,7 @@ const employeeSchema = new Schema({
   deletedAt: { type: Date, default: null },
   isSoftDeleted: { type: Boolean, default: false },
   isActivate: { type: Boolean, default: true },
-  isAdmin: { type: Boolean, default: false },  
+  isAdmin: { type: Boolean, default: false }
 });
 
 employeeSchema.pre("save", function (next) {
@@ -50,5 +50,9 @@ employeeSchema.methods.comparePassword = function (candidatePassword, cb) {
     .digest("hex");
   cb(null, encryptedInputPassword === this.password);
 };
+
+employeeSchema.index({ email: 1 });
+employeeSchema.index({ _id: 1, isActivate: 1, isDeleted: 1 });
+employeeSchema.index({ companyId: 1, isActivate: 1, isDeleted: 1 });
 
 module.exports = mongoose.model("employees", employeeSchema);

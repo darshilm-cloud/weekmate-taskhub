@@ -25,6 +25,13 @@ const { checkUserIsSuperAdmin } = require("./authentication");
 
 exports.getTrashProjects = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -167,6 +174,13 @@ exports.getTrashProjects = async (req, res) => {
 
 exports.getTrashDiscussion = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -305,6 +319,13 @@ exports.getTrashDiscussion = async (req, res) => {
 
 exports.getTrashTasks = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -480,6 +501,13 @@ exports.getTrashTasks = async (req, res) => {
 
 exports.getTrashBugs = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -655,6 +683,13 @@ exports.getTrashBugs = async (req, res) => {
 
 exports.getTrashNotes = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -795,6 +830,13 @@ exports.getTrashNotes = async (req, res) => {
 
 exports.getTrashLoggedHours = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -975,6 +1017,13 @@ exports.getTrashLoggedHours = async (req, res) => {
 
 exports.deleteData = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_ids: Joi.array().optional().default([]),
       discussion_ids: Joi.array().optional().default([]),
@@ -1055,6 +1104,13 @@ exports.deleteData = async (req, res) => {
 
 exports.restoreData = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+    
     const validationSchema = Joi.object({
       project_ids: Joi.array().optional().default([]),
       discussion_ids: Joi.array().optional().default([]),
