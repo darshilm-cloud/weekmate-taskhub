@@ -152,7 +152,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Search",
         onClick: () => showModal(),
       },
-      {
+      getRoles(["Admin"]) && {
         key: "Admin_Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
@@ -164,31 +164,30 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Admins",
         onClick: () => handleMenuClick("Admin_Administrator", "/admin/Administrator")
       },
-      {
+      getRoles(["Admin"]) && {
         key: "Companies_Registration",
         icon: <AdminIcon />,
         label: "Companies registration",
         onClick: () => handleMenuClick("Companies_Registration", "/admin/company-registartion")
       },
-      {
+      getRoles(["Admin"]) &&{
         key: "Admin_Settings",
         icon: <SettingOutlined />,
         label: "Settings",
         onClick: () => handleMenuClick("Admin_Settings", "/admin/settings")
       },
-
-      // !getRoles(["Client"]) &&{
-      //   key: "Dashboard",
-      //   icon: <i className="fi fi-rs-house-chimney"></i>,
-      //   label: "Me",
-      //   onClick: () => handleMenuClick("Dashboard", "/dashboard"),
-      // },
-      // {
-      //   key: "Admin Dashboard",
-      //   icon: <i className="fi fi-rr-dashboard"></i>,
-      //   label: "Projects",
-      //   onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
-      // },
+      !getRoles(["Client"]) &&{
+        key: "Dashboard",
+        icon: <i className="fi fi-rs-house-chimney"></i>,
+        label: "Me",
+        onClick: () => handleMenuClick("Dashboard", "/dashboard"),
+      },
+      {
+        key: "Admin Dashboard",
+        icon: <i className="fi fi-rr-dashboard"></i>,
+        label: "Projects",
+        onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
+      },
       getRoles(["Super Admin"]) && {
         key: "Users",
         icon: <i className="fi fi-rr-users-alt"></i>,
