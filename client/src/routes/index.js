@@ -76,33 +76,32 @@ const index = ({ match, userPermission }) => {
     {
       path: "manage-project-type",
       component: ManageProjectType,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-technologies",
       component: ProjectTechnologies,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "workflows-tasks/:id",
       component: WorkflowTasksUpdate,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "workflows",
       component: Workflows,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "resources",
       component: Resource,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-archieved",
       component: ProjectArchieved,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -115,33 +114,32 @@ const index = ({ match, userPermission }) => {
     {
       path: "roles-permission/:id",
       component: ResourcePermission,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-users",
       component: EmployeeMasterList,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-users/client",
       component: EmployeeListTabClient,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-labels",
       component: ProjectLabels,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "my-library",
       component: Library,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project-list",
       component: AssignProject,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -154,7 +152,6 @@ const index = ({ match, userPermission }) => {
       path: "project-list/edit/:editProjectId",
       component: AssignProject,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
@@ -164,13 +161,12 @@ const index = ({ match, userPermission }) => {
     {
       path: "trash",
       component: TrashIndex,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "project/app/:projectId",
       component: ProgressBoardofProject,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -182,13 +178,12 @@ const index = ({ match, userPermission }) => {
     {
       path: "project-status",
       component: ProjectStatus,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "my-log-time",
       component: MylogtimeWidget,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -200,23 +195,22 @@ const index = ({ match, userPermission }) => {
     {
       path: "project-runnig-reports",
       component: ProjectsRunningReports,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "timesheet-reports",
       component: TimeSheetReports,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "permission-access",
       component: PermissionModule,
-      roleName: [config.PMS_ROLES.SUPER_ADMIN, config.PMS_ROLES.ADMIN],
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: "dashboard",
       component: DashboardModule,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.PC,
@@ -229,11 +223,10 @@ const index = ({ match, userPermission }) => {
       path: "billable-hours",
       component: BillableHoursAdmin,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
-        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
       ],
     },
@@ -241,7 +234,7 @@ const index = ({ match, userPermission }) => {
       path: "complaints",
       component: ComplaintsModule,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -251,7 +244,7 @@ const index = ({ match, userPermission }) => {
       path: "add/complaintsform",
       component: ComplaintsForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -261,7 +254,7 @@ const index = ({ match, userPermission }) => {
       path: "edit/complaintsForm/:complaint_id",
       component: ComplaintsForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -271,7 +264,7 @@ const index = ({ match, userPermission }) => {
       path: "positive-review",
       component: PositiveReview,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -281,7 +274,7 @@ const index = ({ match, userPermission }) => {
       path: "add/positiveReviewForm",
       component: PositiveReviewForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -291,7 +284,7 @@ const index = ({ match, userPermission }) => {
       path: "edit/positiveReviewForm/:review_id",
       component: PositiveReviewForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -301,7 +294,7 @@ const index = ({ match, userPermission }) => {
       path: "add/complaintForm-action-details/:id",
       component: ComplaintDetailForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
+        config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
@@ -311,9 +304,8 @@ const index = ({ match, userPermission }) => {
       path: "projectexpense",
       component: Projectexpences,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
-        config.PMS_ROLES.PC,
         config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
         config.PMS_ROLES.TL,
         config.PMS_ROLES.CLIENT,
       ],
@@ -323,9 +315,8 @@ const index = ({ match, userPermission }) => {
       path: "add/projectexpenseform",
       component: ProjectexpencesForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
-        config.PMS_ROLES.PC,
         config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
         config.PMS_ROLES.TL,
         config.PMS_ROLES.CLIENT,
       ],
@@ -334,9 +325,8 @@ const index = ({ match, userPermission }) => {
       path: "edit/projectexpenseform/:review_id",
       component: ProjectexpencesForm,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
-        config.PMS_ROLES.PC,
         config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
         config.PMS_ROLES.TL,
         config.PMS_ROLES.CLIENT,
       ],
@@ -345,7 +335,6 @@ const index = ({ match, userPermission }) => {
       path: "admin/dashboard",
       component: AdminDashboard,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -358,7 +347,6 @@ const index = ({ match, userPermission }) => {
       path: "admin/company-registartion",
       component: CompanyRegistration,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -371,7 +359,6 @@ const index = ({ match, userPermission }) => {
       path: "admin/settings",
       component: SettingsModule,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
@@ -384,7 +371,6 @@ const index = ({ match, userPermission }) => {
       path: "admin/company-employee",
       component: CompanyEmployee,
       roleName: [
-        config.PMS_ROLES.SUPER_ADMIN,
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
