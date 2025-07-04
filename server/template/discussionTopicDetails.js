@@ -3,8 +3,7 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.MailForTopicComments = async (data) => {
+exports.MailForTopicComments = async (data, companyId) => {
   try {
     let commentsIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-comments.png`;
 
@@ -262,14 +261,14 @@ exports.MailForTopicComments = async (data) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] You have been mentioned in a topic comment - ${data?.project?.projectId}`,
-      html,
+      html
     };
 
     // console.log("=========================", data);
     data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
     // to get mailSettings of taggedUsers..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data?.taggedUsers },
+      createdBy: { $in: data?.taggedUsers }
     });
     // to get mailSettings of taggedUsers as of discussion_tagged setting being true..
     let mailSettingsData = mailSettings.filter((ele) => ele.discussion_tagged);
@@ -300,11 +299,11 @@ exports.MailForTopicComments = async (data) => {
 
     if (mailIds.length > 0) {
       // to send mail to taggedUsers whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of taggedUsers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {

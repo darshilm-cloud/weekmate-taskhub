@@ -1,70 +1,7 @@
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 
-// If send manager wise mail ... as of not not in use
-exports.projectDeadlineMissedMail1 = async (data) => {
-  try {
-    let html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Projects Overdue</title>
-      </head>
-      <body>
-      Hello <b>${getUserName(data?.manager)},</b>
-     <br>
-    <p>Unfortunately, we need to notify you that there are projects under your supervision that have missed their deadlines:</p>
-          <ul>
-            ${
-              data.projects?.length > 0
-                ? data.projects
-                    .map(
-                      (project) => `
-                        <li>
-                            <strong>Project :</strong> 
-                            <a href="${
-                              process.env.REACT_URL +
-                              "project/app/" +
-                              project?._id
-                            }" target="_blank">${project?.title}
-                              </a>
-                            <br>
-                            - Type: ${project.project_type.project_type}<br>
-                            - Technology: ${project.technology.project_tech}<br>
-                            - Deadline: ${moment(project.end_date).format(
-                              "DD MMM YYYY"
-                            )}
-                        </li>
-                      `
-                    )
-                    .join("<br>")
-                : ""
-            }
-          </ul>
-          <p>Please take immediate action to address these missed deadlines.</p>
-          <p>Thank you.</p>
-      </body>
-      </html>
-      `;
-
-    // let mailIds = [data?.manager?.email, data?.manager_of_manager?.email];
-    let mailIds = [data?.manager?.email];
-
-    const mailData = {
-      subject: `Projects Overdue`,
-      html,
-    };
-
-    await emailSenderForPMS(mailIds, mailData, []);
-    return;
-  } catch (error) {
-    console.log("🚀 ~ exports.projectDeadlineMissedMail= ~ error:", error);
-  }
-};
-
 // single project wise mail
-exports.projectDeadlineMissedMail = async (data) => {
+exports.projectDeadlineMissedMail = async (data, companyId) => {
   try {
     let html = `
       <!DOCTYPE html>
@@ -108,17 +45,17 @@ exports.projectDeadlineMissedMail = async (data) => {
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Project Deadline - ${data?.projectId}`,
-      html,
+      html
     };
 
-    await emailSenderForPMS(mailIds, mailData, []);
+    await emailSenderForPMS(companyId, mailIds, mailData, []);
     return;
   } catch (error) {
     console.log("🚀 ~ exports.projectDeadlineMissedMail= ~ error:", error);
   }
 };
 
-exports.taskDeadlineMissedMail = async (data) => {
+exports.taskDeadlineMissedMail = async (data, companyId) => {
   try {
     let html = `
         <!DOCTYPE html>
@@ -174,10 +111,10 @@ exports.taskDeadlineMissedMail = async (data) => {
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Tasks Deadline - ${data?.projectId}`,
-      html,
+      html
     };
 
-    await emailSenderForPMS(mailIds, mailData, []);
+    await emailSenderForPMS(companyId, mailIds, mailData, []);
     return;
   } catch (error) {
     console.log("🚀 ~ exports.projectDeadlineMissedMail= ~ error:", error);

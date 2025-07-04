@@ -4,7 +4,7 @@ const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 
-exports.topicSubscriberMail = async (data) => {
+exports.topicSubscriberMail = async (data,companyId) => {
   try {
     let topicIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-topic.png`;
 
@@ -257,25 +257,25 @@ exports.topicSubscriberMail = async (data) => {
       (ele) => ele != data?.manager?.email
     );
 
-    await emailSenderForPMS([...clientsmailIds], mailData, []);
+    await emailSenderForPMS(companyId,[...clientsmailIds], mailData, []);
     // For Subscribers:
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
       // and not to manager whose setting is off/false
-      await emailSenderForPMS([...mailIds], mailData, []);
+      await emailSenderForPMS(companyId,[...mailIds], mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData,companyId);
     }
 
     // For Managers:
     if (mailSettingsDataMgr.discussion_subscribed) {
       // to send mail to manager and subscribers whose settings allow to send mail
-      await emailSenderForPMS([data?.manager?.email], mailData, []);
+      await emailSenderForPMS(companyId,[data?.manager?.email], mailData, []);
     } else if (mailSettingsDataMgr.quarterlyMail) {
       // to add the mailid of manager and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours([data?.manager?.email], mailData);
+      await mailsToQuarterHours([data?.manager?.email], mailData,companyId);
     }
     return;
   } catch (error) {

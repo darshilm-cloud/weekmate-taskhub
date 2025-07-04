@@ -190,14 +190,11 @@ exports.exportEmpData = async (query, exportFileType) => {
       // Map the rest of the fields
       result.push({
         Name: item.full_name,
-        Role: item?.pms_role?.role_name || "-",
+        Role: item?.pms_role?.role_name || "-"
       });
     }
 
-    const csvFields = [
-      "Name",
-      "Role"
-    ];
+    const csvFields = ["Name", "Role"];
 
     const exportFileTypeLower = _.toLower(exportFileType);
 
@@ -293,12 +290,12 @@ exports.getEmployeesForDropdown = async (req, res) => {
     } = req.user || {};
 
     let data = await Employees.find({
-      isDeleted: false,
       companyId: newObjectId(decodedCompanyId),
+      isDeleted: false,
       isSoftDeleted: false,
       isActivate: true
     })
-      .select("_id full_name emp_img")
+      .select("_id full_name first_name last_name emp_img")
       .sort({ full_name: 1 });
 
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
@@ -320,129 +317,56 @@ exports.getReportingManagerForDropdown = async (req, res) => {
     // TL, PC AND MANAGER..
     let query = [
       {
-        $facet: {
-          pc_tl: [
-            {
-              $lookup: {
-                from: "pms_roles",
-                let: { roleId: "$pms_role_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$roleId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "role"
-              }
-            },
-            {
-              $unwind: {
-                path: "$role",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $match: {
-                isDeleted: false,
-                isSoftDeleted: false,
-                isActivate: true,
-                "role.role_name": {
-                  $in: [
-                    config.PMS_ROLES.PC,
-                    config.PMS_ROLES.TL,
-                    config.PMS_ROLES.ADMIN
-                  ]
-                }
-              }
-            },
-            {
-              $project: {
-                _id: 1,
-                manager_name: "$full_name",
-                emp_img: "$emp_img"
-              }
-            }
-          ],
-          manager: [
-            {
-              $match: {
-                isDeleted: false,
-                isSoftDeleted: false,
-                isActivate: true
-              }
-            },
-            {
-              $group: {
-                _id: "$reporting_manager"
-              }
-            },
-            {
-              $lookup: {
-                from: "employees",
-                localField: "_id",
-                foreignField: "_id",
-                as: "managerDetails"
-              }
-            },
-            {
-              $unwind: {
-                path: "$managerDetails",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $project: {
-                _id: 1,
-                manager_name: "$managerDetails.full_name",
-                emp_img: "$managerDetails.emp_img"
-              }
-            }
-          ]
+        $match: {
+          companyId: newObjectId(decodedCompanyId),
+          isDeleted: false,
+          isSoftDeleted: false,
+          isActivate: true
         }
       },
       {
-        $project: {
-          managers: {
-            $setUnion: ["$pc_tl", "$manager"]
+        $lookup: {
+          from: "pms_roles",
+          localField: "pms_role_id",
+          foreignField: "_id",
+          as: "role"
+        }
+      },
+      {
+        $unwind: {
+          path: "$role",
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $match: {
+          "role.isDeleted": false,
+          "role.role_name": {
+            $in: [config.PMS_ROLES.PC, config.PMS_ROLES.TL]
           }
         }
       },
       {
-        $unwind: "$managers"
+        $project: {
+          _id: 1,
+          manager_name: "$full_name",
+          emp_img: "$emp_img"
+        }
       },
       {
         $sort: {
-          "managers.manager_name": 1 // Sort by manager_name in ascending order
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          sortedArray: {
-            $push: "$managers"
-          }
-        }
-      },
-      {
-        $project: {
-          _id: 0, // Exclude _id field
-          managers: "$sortedArray" // Rename sortedArray to managers
+          manager_name: 1
         }
       }
     ];
+
     let data = await Employees.aggregate(query);
 
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.LISTING,
-      data[0]?.managers || [],
+      data || [],
       {}
     );
   } catch (error) {

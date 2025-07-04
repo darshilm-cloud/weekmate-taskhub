@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const TaskHoursLogs = mongoose.model("projecttaskhourlogs");
@@ -12,7 +12,7 @@ const Employees = mongoose.model("employees");
 const {
   getPagination,
   getTotalCountQuery,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -20,22 +20,24 @@ const configs = require("../configs");
 const moment = require("moment");
 const {
   taskHoursLoggedMail,
-  subTaskHoursLoggedMail,
+  subTaskHoursLoggedMail
 } = require("../template/hoursLogged");
 const csvTemplate = require("../template/timesheetCSV");
 const {
   getCreatedUpdatedDeletedByQuery,
   getRefModelFromLoginUser,
-  getProjectDefaultSettingQuery,
-  getExcpetionalProjectsForNomailRegardstoLoggedHours,
+  getProjectDefaultSettingQuery
 } = require("../helpers/common");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
 const { sheet } = require("../template/timesheetReportsCSV");
 const {
-  sheet1,
+  sheet1
 } = require("../template/timesheetReportsCSVMyLoggedTimeDetails");
 const {
-  sheet2,
+  sheet2
 } = require("../template/timesheetReportsCSVMyLoggedTimeDetailsProject");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 const configRoles = require("../settings/config.json");
@@ -75,6 +77,13 @@ const { getCache, storeCache } = require("../middleware/cacheStore");
 //Add task hours :
 exports.addTaskHoursLogs = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       task_id: Joi.string().optional().default(null),
@@ -86,7 +95,7 @@ exports.addTaskHoursLogs = async (req, res) => {
       logged_minutes: Joi.string().optional().allow(""),
       logged_date: Joi.string().required(),
       isManuallyAdded: Joi.boolean().optional().default(true),
-      logged_status: Joi.string().optional().allow("Void"),
+      logged_status: Joi.string().optional().allow("Void")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -118,7 +127,7 @@ exports.addTaskHoursLogs = async (req, res) => {
       logged_status: value.logged_status || "Void",
       createdBy: req.user._id,
       updatedBy: req.user._id,
-      ...(await getRefModelFromLoginUser(req.user)),
+      ...(await getRefModelFromLoginUser(req.user))
     });
     await data.save();
 
@@ -149,7 +158,7 @@ exports.addTaskHoursLogs = async (req, res) => {
     let existingLog = await ProjectTotalTaskHourLogs.findOne({
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
-      year: year,
+      year: year
     });
 
     let newTotalTime = calculateNewTotalTime(
@@ -163,10 +172,10 @@ exports.addTaskHoursLogs = async (req, res) => {
         {
           employee_id: req.user._id,
           month: month,
-          year: year,
+          year: year
         },
         {
-          $set: { updatedBy: req.user._id, total_time: newTotalTime },
+          $set: { updatedBy: req.user._id, total_time: newTotalTime }
         },
         { new: true }
       );
@@ -179,7 +188,7 @@ exports.addTaskHoursLogs = async (req, res) => {
         total_time: newTotalTime,
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req.user)),
+        ...(await getRefModelFromLoginUser(req.user))
       });
       await newLog.save();
     }
@@ -188,16 +197,15 @@ exports.addTaskHoursLogs = async (req, res) => {
     const loggedData = await this.getLoggedHoursData(data._id);
 
     // This change is made for Project named ~> "SO1001/IH/TimeTrackNRG" where manager has no need to get the mails for hours being logged..
-    let project_ids =
-      await getExcpetionalProjectsForNomailRegardstoLoggedHours();
+    let project_ids = [];
     let project_id = loggedData[0]?.project?._id.toString();
 
     if (!project_ids.includes(project_id)) {
       if (!value.subtask_id) {
-        await taskHoursLoggedMail(loggedData[0]);
+        await taskHoursLoggedMail(loggedData[0], decodedCompanyId);
       } else {
         // TODO : need to check design
-        await subTaskHoursLoggedMail(loggedData[0]);
+        await subTaskHoursLoggedMail(loggedData[0], decodedCompanyId);
       }
     } else {
       console.log(
@@ -233,7 +241,7 @@ exports.getTaskHoursLogs = async (req, res) => {
       pageNo: Joi.number().integer().min(1).default(1),
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
       // _id: Joi.string().allow("").optional(),
       // task_id: Joi.string().allow("").optional(),
       // subtask_id: Joi.string().optional().default(null),
@@ -252,12 +260,12 @@ exports.getTaskHoursLogs = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
     let matchQuery = {
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value.project_id),
+      project_id: new mongoose.Types.ObjectId(value.project_id)
       // main_task_id: new mongoose.Types.ObjectId(value.main_task_id),
       // task_id: new mongoose.Types.ObjectId(value.task_id),
       // ...(value?.subtask_id
@@ -279,9 +287,9 @@ exports.getTaskHoursLogs = async (req, res) => {
           logged_hours: 1,
           logged_minutes: 1,
           isManuallyAdded: 1,
-          logged_status: 1,
-        },
-      },
+          logged_status: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -291,7 +299,7 @@ exports.getTaskHoursLogs = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await TaskHoursLogs.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     const metaData = {
@@ -300,7 +308,7 @@ exports.getTaskHoursLogs = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -337,7 +345,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
       endDate: Joi.string().allow("").optional(),
       groupBy: Joi.string().allow("").optional(),
       orderBy: Joi.string().allow("").optional(),
-      users: Joi.array().optional(),
+      users: Joi.array().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -364,7 +372,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
     if (value.logged_status == "all") {
       value.logged_status = "";
@@ -384,28 +392,28 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
 
       ...(value?.logged_status
         ? {
-          logged_status: value.logged_status,
-        }
+            logged_status: value.logged_status
+          }
         : {}),
 
       ...(value?.subtask_id
         ? {
-          subtask_id: new mongoose.Types.ObjectId(value.subtask_id),
-        }
-        : { subtask_id: { $eq: null } }),
+            subtask_id: new mongoose.Types.ObjectId(value.subtask_id)
+          }
+        : { subtask_id: { $eq: null } })
     };
     if (value.month && value.year) {
       matchQuery.logged_date = {
         $eq: [moment(TaskHoursLogs.logged_date).format("YYYY"), value.year],
-        $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month],
+        $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month]
       };
     }
     if (value?.users && value?.users.length > 0) {
       matchQuery = {
         ...matchQuery,
         "createdBy._id": {
-          $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele)),
-        },
+          $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
+        }
       };
     }
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
@@ -414,19 +422,16 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         $expr: {
           $or: [
             {
-              $eq: [
-                "$createdBy._id",
-                new mongoose.Types.ObjectId(req.user._id),
-              ],
-            },
+              $eq: ["$createdBy._id", new mongoose.Types.ObjectId(req.user._id)]
+            }
             // {
             //   $in: [
             //     new mongoose.Types.ObjectId(req.user._id),
             //     "$projectDetails.pms_clients",
             //   ],
             // },
-          ],
-        },
+          ]
+        }
       };
     }
     const mainQuery = [
@@ -442,20 +447,20 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -470,23 +475,23 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -499,20 +504,20 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -525,14 +530,14 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
       // {
       //   $unwind: {
@@ -551,20 +556,20 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       { $match: matchQuery },
@@ -580,8 +585,8 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
             $dateToString: {
               format: "%d-%m-%Y",
               date: "$logged_date",
-              timezone: "UTC",
-            },
+              timezone: "UTC"
+            }
           },
           time: {
             $concat: [
@@ -593,15 +598,15 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                   $concat: [
                     {
                       $toString: {
-                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""],
-                      },
+                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""]
+                      }
                     },
-                    { $toString: "$logged_minutes" },
-                  ],
-                },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
               },
-              "m",
-            ],
+              "m"
+            ]
           },
           descriptions: 1,
           project: "$projectDetails.title",
@@ -616,9 +621,9 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
           bug_id: { $ifNull: ["$bugs._id", ""] },
           bug: { $ifNull: ["$bugs.title", ""] },
           timesheet: "$timesheet.title",
-          logged_status: 1,
-        },
-      },
+          logged_status: 1
+        }
+      }
     ];
 
     // if (value.groupBy === "person") {
@@ -666,22 +671,22 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
     if (value.dateRange === "last_2_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(16, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(8, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_month") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(31, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "Custom") {
       matchQuery.logged_date = {
         $gte: moment(value.startDate).startOf("day").toDate(),
-        $lte: moment(value.endDate).endOf("day").toDate(),
+        $lte: moment(value.endDate).endOf("day").toDate()
       };
     }
     const countQuery = getTotalCountQuery(mainQuery);
@@ -743,7 +748,7 @@ exports.updateTaskHoursLogs = async (req, res) => {
       logged_minutes: Joi.string().optional(),
       logged_date: Joi.string().required(),
       // isManuallyAdded: Joi.boolean().optional().default(true),
-      logged_status: Joi.string().optional().allow("Void"),
+      logged_status: Joi.string().optional().allow("Void")
     });
     const { error, value } = validationSchema.validate(req.body);
     let oldTaskHours = await TaskHoursLogs.findById(req.params.id);
@@ -777,7 +782,7 @@ exports.updateTaskHoursLogs = async (req, res) => {
         // isManuallyAdded: value.isManuallyAdded,
         logged_status: value.logged_status || "Void",
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req.user, true)),
+        ...(await getRefModelFromLoginUser(req.user, true))
       },
       { new: true }
     );
@@ -793,7 +798,7 @@ exports.updateTaskHoursLogs = async (req, res) => {
     let existingLog = await ProjectTotalTaskHourLogs.findOne({
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
-      year: year,
+      year: year
     });
     console.log(existingLog.total_time, "total_time");
     function timeToMinutes(timeStr) {
@@ -812,8 +817,9 @@ exports.updateTaskHoursLogs = async (req, res) => {
       let remainingMinutes = minutes % 60;
 
       // Format hours and minutes to "HH:MM" and handle negative case
-      return `${isNegative ? "-" : ""}${hours}:${remainingMinutes < 10 ? "0" : ""
-        }${remainingMinutes}`;
+      return `${isNegative ? "-" : ""}${hours}:${
+        remainingMinutes < 10 ? "0" : ""
+      }${remainingMinutes}`;
     }
     let oldTimeInMinutes = timeToMinutes(oldHours);
     let newTimeInMinutes = timeToMinutes(current_hours);
@@ -827,10 +833,10 @@ exports.updateTaskHoursLogs = async (req, res) => {
       {
         employee_id: new mongoose.Types.ObjectId(req.user._id),
         month: month,
-        year: year,
+        year: year
       },
       {
-        $set: { updatedBy: req.user._id, total_time: updatedTime },
+        $set: { updatedBy: req.user._id, total_time: updatedTime }
       },
       { new: true }
     );
@@ -854,7 +860,7 @@ exports.deleteTaskHoursLogs = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req.user, false, true)),
+        ...(await getRefModelFromLoginUser(req.user, false, true))
       },
       { new: true }
     );
@@ -870,14 +876,14 @@ exports.deleteTaskHoursLogs = async (req, res) => {
 
     // Get the corresponding month and year for the log
     let loggedDate = moment.utc(taskLogToDelete.logged_date).format();
-    let month = moment.utc(loggedDate).format('MM');
-    let year = moment.utc(loggedDate).format('YYYY');
+    let month = moment.utc(loggedDate).format("MM");
+    let year = moment.utc(loggedDate).format("YYYY");
 
     // Find the corresponding entry in ProjectTotalTaskHourLogs
     let existingLog = await ProjectTotalTaskHourLogs.findOne({
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
-      year: year,
+      year: year
     });
 
     // If the entry exists, calculate the new total time after deduction
@@ -893,16 +899,15 @@ exports.deleteTaskHoursLogs = async (req, res) => {
         {
           employee_id: new mongoose.Types.ObjectId(req.user._id),
           month: month,
-          year: year,
+          year: year
         },
         {
-          $set: { updatedBy: req.user._id, total_time: newTotalTime },
+          $set: { updatedBy: req.user._id, total_time: newTotalTime }
         },
         { new: true }
       );
-    }
-    else {
-      console.log("Total time entry not found")
+    } else {
+      console.log("Total time entry not found");
     }
 
     // Function to calculate new total time after deduction
@@ -948,7 +953,7 @@ exports.deleteTaskHoursLogs = async (req, res) => {
 exports.deleteTaskHoursLogsMultiple = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      ids: Joi.array().optional(),
+      ids: Joi.array().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -966,8 +971,8 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
             isDeleted: true,
             deletedBy: req.user._id,
             deletedAt: configs.utcDefault(),
-            ...(await getRefModelFromLoginUser(req.user, false, true)),
-          },
+            ...(await getRefModelFromLoginUser(req.user, false, true))
+          }
         },
         { new: true }
       );
@@ -993,7 +998,7 @@ exports.getTaskTotalHours = async (req, res) => {
   try {
     // const projectId = req.params.id;
     const validationSchema = Joi.object({
-      timesheet_id: Joi.string().required(),
+      timesheet_id: Joi.string().required()
       // project_id: Joi.string().required(),
     });
 
@@ -1020,7 +1025,7 @@ exports.getTaskTotalHours = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      timesheet_id: new mongoose.Types.ObjectId(value.timesheet_id),
+      timesheet_id: new mongoose.Types.ObjectId(value.timesheet_id)
     };
 
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
@@ -1029,16 +1034,16 @@ exports.getTaskTotalHours = async (req, res) => {
         $expr: {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
-                "$project.pms_clients",
-              ],
-            },
-          ],
-        },
+                "$project.pms_clients"
+              ]
+            }
+          ]
+        }
       };
     }
     const mainQuery = [
@@ -1052,20 +1057,20 @@ exports.getTaskTotalHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       { $match: matchQuery },
       {
@@ -1076,28 +1081,28 @@ exports.getTaskTotalHours = async (req, res) => {
                 $cond: {
                   if: { $eq: [{ $type: "$logged_hours" }, "string"] },
                   then: { $multiply: [{ $toInt: "$logged_hours" }, 60] },
-                  else: { $multiply: ["$logged_hours", 60] },
-                },
+                  else: { $multiply: ["$logged_hours", 60] }
+                }
               },
-              { $toInt: "$logged_minutes" },
-            ],
-          },
-        },
+              { $toInt: "$logged_minutes" }
+            ]
+          }
+        }
       },
       {
         $group: {
           _id: null,
-          total_minutes: { $sum: "$total_minutes" },
-        },
+          total_minutes: { $sum: "$total_minutes" }
+        }
       },
       {
         $project: {
           _id: 0,
           total_hours: {
-            $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1],
+            $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1]
           },
-          total_minutes: { $mod: ["$total_minutes", 60] },
-        },
+          total_minutes: { $mod: ["$total_minutes", 60] }
+        }
       },
       {
         $project: {
@@ -1111,14 +1116,14 @@ exports.getTaskTotalHours = async (req, res) => {
                 $cond: {
                   if: { $lt: ["$total_minutes", 10] },
                   then: { $concat: ["0", { $toString: "$total_minutes" }] },
-                  else: { $toString: "$total_minutes" },
-                },
+                  else: { $toString: "$total_minutes" }
+                }
               },
-              "m",
-            ],
-          },
-        },
-      },
+              "m"
+            ]
+          }
+        }
+      }
     ];
 
     let data = await TaskHoursLogs.aggregate(mainQuery);
@@ -1150,20 +1155,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1178,20 +1183,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1204,20 +1209,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1230,20 +1235,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$subtask_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subtask",
-        },
+          as: "subtask"
+        }
       },
       {
         $unwind: {
           path: "$subtask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1256,20 +1261,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "main_task",
-        },
+          as: "main_task"
+        }
       },
       {
         $unwind: {
           path: "$main_task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1282,20 +1287,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1308,20 +1313,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1334,20 +1339,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_status",
-        },
+          as: "task_status"
+        }
       },
       {
         $unwind: {
           path: "$task_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1360,20 +1365,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$sub_task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "sub_task_status",
-        },
+          as: "sub_task_status"
+        }
       },
       {
         $unwind: {
           path: "$sub_task_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1385,20 +1390,20 @@ exports.getLoggedHoursData = async (loggedId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$task_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
       {
         $match: {
           _id: new mongoose.Types.ObjectId(loggedId),
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
         $addFields: {
@@ -1414,22 +1419,22 @@ exports.getLoggedHoursData = async (loggedId) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.logged_hours", // Convert string to double
+                            $toDouble: "$$this.logged_hours" // Convert string to double
                           },
-                          60,
-                        ], // Convert hours to minutes
+                          60
+                        ] // Convert hours to minutes
                       },
                       {
-                        $toDouble: "$$this.logged_minutes", // Convert string to double
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
+                        $toDouble: "$$this.logged_minutes" // Convert string to double
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           },
-          employee: "$createdBy",
-        },
+          employee: "$createdBy"
+        }
       },
       {
         $project: {
@@ -1440,11 +1445,11 @@ exports.getLoggedHoursData = async (loggedId) => {
           totalLoggedTime: 1,
           total_logged_hours: {
             $floor: {
-              $divide: ["$totalLoggedTime", 60],
-            },
+              $divide: ["$totalLoggedTime", 60]
+            }
           },
           total_logged_minutes: {
-            $mod: ["$totalLoggedTime", 60],
+            $mod: ["$totalLoggedTime", 60]
           },
           isManuallyAdded: 1,
           logged_status: 1,
@@ -1455,7 +1460,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           project: {
             _id: 1,
@@ -1463,7 +1468,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             projectId: 1,
             color: 1,
             descriptions: 1,
-            estimatedHours: 1,
+            estimatedHours: 1
           },
           manager: {
             _id: 1,
@@ -1471,7 +1476,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             first_name: 1,
             last_name: 1,
             email: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           createdBy: {
             _id: 1,
@@ -1479,12 +1484,12 @@ exports.getLoggedHoursData = async (loggedId) => {
             first_name: 1,
             last_name: 1,
             email: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           main_task: {
             _id: 1,
             title: 1,
-            status: 1,
+            status: 1
           },
           task: {
             _id: 1,
@@ -1495,7 +1500,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             due_date: 1,
             estimated_hours: 1,
             estimated_minutes: 1,
-            task_progress: 1,
+            task_progress: 1
           },
           subtask: {
             _id: 1,
@@ -1505,7 +1510,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             due_date: 1,
             estimated_hours: 1,
             estimated_minutes: 1,
-            task_progress: 1,
+            task_progress: 1
           },
           bugs: {
             _id: 1,
@@ -1516,7 +1521,7 @@ exports.getLoggedHoursData = async (loggedId) => {
             due_date: 1,
             estimated_hours: 1,
             estimated_minutes: 1,
-            progress: 1,
+            progress: 1
           },
           // timesheet: {
           //   _id: 1,
@@ -1524,14 +1529,14 @@ exports.getLoggedHoursData = async (loggedId) => {
           // },
           task_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           sub_task_status: {
             _id: 1,
-            title: 1,
-          },
-        },
-      },
+            title: 1
+          }
+        }
+      }
     ];
 
     const data = await TaskHoursLogs.aggregate(mainQuery);
@@ -1563,7 +1568,7 @@ exports.exportTimesheetCSV = async (req, res) => {
       endDate: Joi.string().allow("").optional(),
       groupBy: Joi.string().allow("").optional(),
       orderBy: Joi.string().allow("").optional(),
-      ids: Joi.array().optional(),
+      ids: Joi.array().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1590,7 +1595,7 @@ exports.exportTimesheetCSV = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     if (value.logged_status == "all") {
@@ -1603,23 +1608,23 @@ exports.exportTimesheetCSV = async (req, res) => {
       timesheet_id: new mongoose.Types.ObjectId(value.timesheet_id),
       ...(value?.logged_status
         ? {
-          logged_status: value.logged_status,
-        }
+            logged_status: value.logged_status
+          }
         : {}),
 
       ...(value?.subtask_id
         ? {
-          subtask_id: new mongoose.Types.ObjectId(value.subtask_id),
-        }
+            subtask_id: new mongoose.Types.ObjectId(value.subtask_id)
+          }
         : { subtask_id: { $eq: null } }),
 
       ...(value.ids && value?.ids?.length > 0
         ? {
-          _id: {
-            $in: value?.ids.map((id) => new mongoose.Types.ObjectId(id)),
-          },
-        }
-        : {}),
+            _id: {
+              $in: value?.ids.map((id) => new mongoose.Types.ObjectId(id))
+            }
+          }
+        : {})
     };
 
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
@@ -1628,11 +1633,8 @@ exports.exportTimesheetCSV = async (req, res) => {
         $expr: {
           $or: [
             {
-              $eq: [
-                "$createdBy._id",
-                new mongoose.Types.ObjectId(req.user._id),
-              ],
-            },
+              $eq: ["$createdBy._id", new mongoose.Types.ObjectId(req.user._id)]
+            }
             // {
             //   $in: [
             //     new mongoose.Types.ObjectId(req.user._id),
@@ -1645,15 +1647,15 @@ exports.exportTimesheetCSV = async (req, res) => {
             //     "$projectDetails.pms_clients",
             //   ],
             // },
-          ],
-        },
+          ]
+        }
       };
     }
 
     if (value.month && value.year) {
       matchQuery.logged_date = {
         $eq: [moment(TaskHoursLogs.logged_date).format("YYYY"), value.year],
-        $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month],
+        $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month]
       };
     }
     const mainQuery = [
@@ -1669,20 +1671,20 @@ exports.exportTimesheetCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1695,20 +1697,20 @@ exports.exportTimesheetCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1721,20 +1723,20 @@ exports.exportTimesheetCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bugId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1747,14 +1749,14 @@ exports.exportTimesheetCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
       // {
       //   $unwind: {
@@ -1773,20 +1775,20 @@ exports.exportTimesheetCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       { $match: matchQuery },
       {
@@ -1799,8 +1801,8 @@ exports.exportTimesheetCSV = async (req, res) => {
             $dateToString: {
               format: "%d-%m-%Y",
               date: "$logged_date",
-              timezone: "UTC",
-            },
+              timezone: "UTC"
+            }
           },
           time: {
             $concat: [
@@ -1812,12 +1814,12 @@ exports.exportTimesheetCSV = async (req, res) => {
                   $cond: [
                     { $lt: ["$logged_minutes", 10] },
                     { $concat: ["0", { $toString: "$logged_minutes" }] },
-                    { $toString: "$logged_minutes" },
-                  ],
-                },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
               },
-              "m",
-            ],
+              "m"
+            ]
           },
           descriptions: 1,
           project: "$projectDetails.title",
@@ -1830,9 +1832,9 @@ exports.exportTimesheetCSV = async (req, res) => {
           timesheet: "$timesheet.title",
           bugId: { $ifNull: ["$bugs.bugId", ""] },
           bug: { $ifNull: ["$bugs.title", ""] },
-          logged_status: 1,
-        },
-      },
+          logged_status: 1
+        }
+      }
     ];
 
     const currentDate = moment();
@@ -1840,22 +1842,22 @@ exports.exportTimesheetCSV = async (req, res) => {
     if (value.dateRange === "last_2_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(16, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(8, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_month") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(31, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "Custom") {
       matchQuery.logged_date = {
         $gte: moment(value.startDate).startOf("day").toDate(),
-        $lte: moment(value.endDate).endOf("day").toDate(),
+        $lte: moment(value.endDate).endOf("day").toDate()
       };
     }
     const countQuery = getTotalCountQuery(mainQuery);
@@ -1865,7 +1867,7 @@ exports.exportTimesheetCSV = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await TaskHoursLogs.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     if (value.orderBy) {
@@ -1889,7 +1891,7 @@ exports.exportTimesheetCSV = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
     if (data.length == 0) {
       return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
@@ -1928,7 +1930,7 @@ exports.getTimesheetsReports = async (req, res) => {
       users: Joi.array().optional(), // employees or assignes to project
       isExport: Joi.boolean().required(),
       startDate: Joi.date().optional().allow(""),
-      endDate: Joi.date().optional().allow(""),
+      endDate: Joi.date().optional().allow("")
     });
 
     const { value, error } = validationSchema.validate(req.body);
@@ -1939,58 +1941,58 @@ exports.getTimesheetsReports = async (req, res) => {
         error.details[0].message
       );
     }
-     const cacheKey = generateCacheKey(value);
-    
-        const cached = getCache(cacheKey);
-        if (cached) {
-          const { data, metadata } = cached;
-          return successResponse(
-            res,
-            statusCode.SUCCESS,
-            messages.LISTING,
-            data,
-            metadata
-          );
-        }
+    const cacheKey = generateCacheKey(value);
+
+    const cached = getCache(cacheKey);
+    if (cached) {
+      const { data, metadata } = cached;
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        messages.LISTING,
+        data,
+        metadata
+      );
+    }
 
     const pagination = getPagination({
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
     let matchQuery = {
-      isDeleted: false,
+      isDeleted: false
     };
 
     if (value.projects && value.projects.length > 0) {
       matchQuery.project_id = {
-        $in: value?.projects.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.projects.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value.users && value.users.length > 0) {
       matchQuery.employee_id = {
-        $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value.departments && value.departments.length > 0) {
       matchQuery["dept._id"] = {
-        $in: value?.departments.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.departments.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value.technologies && value.technologies.length > 0) {
       matchQuery["tech._id"] = {
-        $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value.types && value.types.length > 0) {
       matchQuery["type._id"] = {
-        $in: value?.types.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.types.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value.managers && value.managers.length > 0) {
       matchQuery["mgr._id"] = {
-        $in: value?.managers.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.managers.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     // if (value?.startDate && value?.endDate) {
@@ -2001,20 +2003,28 @@ exports.getTimesheetsReports = async (req, res) => {
     // }
 
     let orFilter = [
-      !((await checkUserIsSuperAdmin(req?.user?._id)) || req?.user?._id == "660a38c0768eaa003f5727c8")
+      !(
+        (await checkUserIsSuperAdmin(req?.user?._id)) ||
+        req?.user?._id == "660a38c0768eaa003f5727c8"
+      )
         ? {
-          $or: [
-            { "managers._id": new mongoose.Types.ObjectId(req.user._id) },
-            { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-          ],
-        }
-        : {},
+            $or: [
+              { "managers._id": new mongoose.Types.ObjectId(req.user._id) },
+              { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+            ]
+          }
+        : {}
     ];
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
-    console.log("🚀 ~ exports.getTimesheetsReports= ~ matchQuery:", req?.user?._id, req?.user?._id == "660a38c0768eaa003f5727c8", JSON.stringify(orFilter))
+    console.log(
+      "🚀 ~ exports.getTimesheetsReports= ~ matchQuery:",
+      req?.user?._id,
+      req?.user?._id == "660a38c0768eaa003f5727c8",
+      JSON.stringify(orFilter)
+    );
 
     let mainQuery = [
       {
@@ -2022,9 +2032,9 @@ exports.getTimesheetsReports = async (req, res) => {
           isDeleted: false,
           logged_date: {
             $gte: moment(value.startDate).startOf("day").toDate(),
-            $lte: moment(value.endDate).endOf("day").toDate(),
-          },
-        },
+            $lte: moment(value.endDate).endOf("day").toDate()
+          }
+        }
       },
       {
         $lookup: {
@@ -2036,14 +2046,14 @@ exports.getTimesheetsReports = async (req, res) => {
                 from: "projectstatuses",
                 localField: "project_status",
                 foreignField: "_id",
-                as: "project_status",
-              },
+                as: "project_status"
+              }
             },
             {
               $unwind: {
                 path: "$project_status",
-                preserveNullAndEmptyArrays: false,
-              },
+                preserveNullAndEmptyArrays: false
+              }
             },
             {
               $match: {
@@ -2054,22 +2064,22 @@ exports.getTimesheetsReports = async (req, res) => {
                     {
                       $eq: [
                         "$project_status.title",
-                        DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
+                        DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $lookup: {
@@ -2083,14 +2093,14 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$_id", "$$employee_id"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "employee",
-        },
+          as: "employee"
+        }
       },
       {
         $lookup: {
@@ -2102,14 +2112,14 @@ exports.getTimesheetsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tech",
-        },
+          as: "tech"
+        }
       },
       {
         $lookup: {
@@ -2121,14 +2131,14 @@ exports.getTimesheetsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projecttypes"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "type",
-        },
+          as: "type"
+        }
       },
       {
         $lookup: {
@@ -2142,14 +2152,14 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$_id", "$$employee_id"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mgr",
-        },
+          as: "mgr"
+        }
       },
       {
         $lookup: {
@@ -2161,34 +2171,34 @@ exports.getTimesheetsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$department_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "dept",
-        },
+          as: "dept"
+        }
       },
       {
         $unwind: {
           path: "$dept",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       // ...(await getProjectDefaultSettingQuery("project._id")),
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $project: {
           _id: 1,
           employee_id: 1,
           user_code: {
-            $ifNull: [{ $first: "$employee.emp_code" }, ""],
+            $ifNull: [{ $first: "$employee.emp_code" }, ""]
           },
           user: {
-            $ifNull: [{ $first: "$employee.full_name" }, ""],
+            $ifNull: [{ $first: "$employee.full_name" }, ""]
           },
           project_id: 1,
           project: "$project.title",
@@ -2201,34 +2211,35 @@ exports.getTimesheetsReports = async (req, res) => {
             $concat: [
               { $toString: "$logged_hours" },
               ":",
-              { $toString: "$logged_minutes" },
-            ],
+              { $toString: "$logged_minutes" }
+            ]
           },
           employeeDepartment: "$dept.sub_department_name",
           // ...(await getProjectDefaultSettingQuery("project._id", true)),
           projectManager: {
-            $ifNull: [{ $first: "$mgr.full_name" }, ""],
+            $ifNull: [{ $first: "$mgr.full_name" }, ""]
           },
           projectTechnology: {
             $map: {
               input: "$tech",
               as: "t",
-              in: "$$t.project_tech",
-            },
+              in: "$$t.project_tech"
+            }
           },
           projectType: {
-            $ifNull: [{ $first: "$type.project_type" }, ""],
-          },
-        },
-      },
+            $ifNull: [{ $first: "$type.project_type" }, ""]
+          }
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
     let listQuery = getAggregationPagination(mainQuery, pagination);
-    const [dataTotal, totalCountResult, data] = await Promise.all(
-      [TaskHoursLogs.aggregate(mainQuery),
+    const [dataTotal, totalCountResult, data] = await Promise.all([
+      TaskHoursLogs.aggregate(mainQuery),
       TaskHoursLogs.aggregate(countQuery),
-      TaskHoursLogs.aggregate(listQuery)])
+      TaskHoursLogs.aggregate(listQuery)
+    ]);
     // const dataTotal = await TaskHoursLogs.aggregate(mainQuery);
     // const totalCountResult = await TaskHoursLogs.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
@@ -2238,7 +2249,7 @@ exports.getTimesheetsReports = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
     // const data = await TaskHoursLogs.aggregate(listQuery);
     if (value?.isExport) {
@@ -2257,7 +2268,7 @@ exports.getTimesheetsReports = async (req, res) => {
         acc[user] = {
           user,
           user: curr.user,
-          totalLoggedHours: 0,
+          totalLoggedHours: 0
         };
       }
       acc[user].totalLoggedHours += totalLoggedHours;
@@ -2282,7 +2293,7 @@ exports.getTimesheetsReports = async (req, res) => {
         acc[employeeDepartment] = {
           employeeDepartment,
           employeeDepartment: curr.employeeDepartment,
-          totalLoggedHours: 0,
+          totalLoggedHours: 0
         };
       }
       acc[employeeDepartment].totalLoggedHours += totalLoggedHours;
@@ -2307,7 +2318,7 @@ exports.getTimesheetsReports = async (req, res) => {
         acc[projectType] = {
           projectType,
           projectType: curr.projectType,
-          totalLoggedHours: 0,
+          totalLoggedHours: 0
         };
       }
       acc[projectType].totalLoggedHours += totalLoggedHours;
@@ -2332,7 +2343,7 @@ exports.getTimesheetsReports = async (req, res) => {
         acc[projectManager] = {
           projectManager,
           projectManager: curr.projectManager,
-          totalLoggedHours: 0,
+          totalLoggedHours: 0
         };
       }
       acc[projectManager].totalLoggedHours += totalLoggedHours;
@@ -2362,11 +2373,10 @@ exports.getTimesheetsReports = async (req, res) => {
       ),
       user: Object.values(userTotalHours)
         .sort((a, b) => b.totalLoggedHours - a.totalLoggedHours)
-        .slice(0, 9),
+        .slice(0, 9)
     };
 
-        storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
-    
+    storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
 
     return successResponse(
       res,
@@ -2402,7 +2412,7 @@ exports.getHoursData = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       startDate: Joi.string().allow("").optional(),
-      endDate: Joi.string().allow("").optional(),
+      endDate: Joi.string().allow("").optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2415,7 +2425,7 @@ exports.getHoursData = async (req, res) => {
     }
 
     let matchQuery = {
-      isDeleted: false,
+      isDeleted: false
     };
 
     const mainQuery = [
@@ -2431,20 +2441,20 @@ exports.getHoursData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2459,23 +2469,23 @@ exports.getHoursData = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2488,20 +2498,20 @@ exports.getHoursData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2514,14 +2524,14 @@ exports.getHoursData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
       // {
       //   $unwind: {
@@ -2540,20 +2550,20 @@ exports.getHoursData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       { $match: matchQuery },
@@ -2570,8 +2580,8 @@ exports.getHoursData = async (req, res) => {
             $dateToString: {
               format: "%Y-%m-%d",
               date: "$logged_date",
-              timezone: "UTC",
-            },
+              timezone: "UTC"
+            }
           },
           time: {
             $concat: [
@@ -2583,15 +2593,15 @@ exports.getHoursData = async (req, res) => {
                   $concat: [
                     {
                       $toString: {
-                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""],
-                      },
+                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""]
+                      }
                     },
-                    { $toString: "$logged_minutes" },
-                  ],
-                },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
               },
-              "m",
-            ],
+              "m"
+            ]
           },
           descriptions: 1,
           project: "$projectDetails.title",
@@ -2602,14 +2612,14 @@ exports.getHoursData = async (req, res) => {
           task: "$tasks.title",
           bug: { $ifNull: ["$bugs.title", ""] },
           timesheet: "$timesheet.title",
-          logged_status: 1,
-        },
-      },
+          logged_status: 1
+        }
+      }
     ];
 
     matchQuery.logged_date = {
       $gte: moment(value.startDate).startOf("day").toDate(),
-      $lte: moment(value.endDate).endOf("day").toDate(),
+      $lte: moment(value.endDate).endOf("day").toDate()
     };
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
@@ -2632,7 +2642,7 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
       // sortBy: Joi.string().default("desc"),
       orderBy: Joi.string().optional().allow("").default("desc"),
       project_id: Joi.string().required(),
-      task_id: Joi.string().required(),
+      task_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2647,7 +2657,7 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
-      task_id: new mongoose.Types.ObjectId(value.task_id),
+      task_id: new mongoose.Types.ObjectId(value.task_id)
     };
     // const pagination = getPagination({
     //   pageLimit: value.limit,
@@ -2669,20 +2679,20 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2697,23 +2707,23 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -2726,20 +2736,20 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -2752,14 +2762,14 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
 
       {
@@ -2772,20 +2782,20 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $project: {
@@ -2796,8 +2806,8 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
             $dateToString: {
               format: "%d-%m-%Y",
               date: "$logged_date",
-              timezone: "UTC",
-            },
+              timezone: "UTC"
+            }
           },
           logged_hours: 1,
           logged_minutes: 1,
@@ -2805,19 +2815,19 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
           descriptions: 1,
           projectDetails: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           main_taskList: { $first: "$maintasksDetails.title" },
           task: "$tasks.title",
           bug: { $ifNull: ["$bugs.title", ""] },
           timesheet: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           project_id: 1,
-          timesheet_id: 1,
-        },
-      },
+          timesheet_id: 1
+        }
+      }
     ];
 
     // const countQuery = getTotalCountQuery(mainQuery);
@@ -2873,7 +2883,7 @@ exports.getMyLoggedHours = async (req, res) => {
       start_date: Joi.date().optional().default(""),
       end_date: Joi.date().optional().default(""),
       orderBy: Joi.string().allow("").optional(),
-      isExport: Joi.boolean().optional().allow(""),
+      isExport: Joi.boolean().optional().allow("")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2892,8 +2902,8 @@ exports.getMyLoggedHours = async (req, res) => {
     orFilter = {
       $or: [
         { employee_id: new mongoose.Types.ObjectId(req.user._id) },
-        { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-      ],
+        { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+      ]
     };
     // }
 
@@ -2901,35 +2911,35 @@ exports.getMyLoggedHours = async (req, res) => {
       isDeleted: false,
       ...(value.project_id.length > 0
         ? {
-          project_id: {
-            $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)),
-          },
-        }
+            project_id: {
+              $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p))
+            }
+          }
         : {}),
 
       ...(value.start_date !== "" && value.end_date == ""
         ? {
-          logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-          },
-        }
+            logged_date: {
+              $gte: moment(value.start_date).startOf("day").toDate()
+            }
+          }
         : {}),
       ...(value.start_date == "" && value.end_date !== ""
         ? {
-          logged_date: {
-            $lte: moment(value.end_date).startOf("day").toDate(),
-          },
-        }
+            logged_date: {
+              $lte: moment(value.end_date).startOf("day").toDate()
+            }
+          }
         : {}),
 
       ...(value.start_date !== "" && value.end_date !== ""
         ? {
-          logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
-          },
-        }
-        : {}),
+            logged_date: {
+              $gte: moment(value.start_date).startOf("day").toDate(),
+              $lte: moment(value.end_date).startOf("day").toDate()
+            }
+          }
+        : {})
     };
 
     const currentDate = moment();
@@ -2937,28 +2947,28 @@ exports.getMyLoggedHours = async (req, res) => {
     if (value.dateRange === "last_2_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(16, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(8, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_month") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(31, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "Custom") {
       matchQuery.logged_date = {
         $gte: moment(value.start_date).startOf("day").toDate(),
-        $lte: moment(value.end_date).endOf("day").toDate(),
+        $lte: moment(value.end_date).endOf("day").toDate()
       };
     }
 
     matchQuery = {
       ...matchQuery,
-      ...orFilter,
+      ...orFilter
     };
 
     const mainQuery = [
@@ -2973,20 +2983,20 @@ exports.getMyLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -3001,23 +3011,23 @@ exports.getMyLoggedHours = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -3030,20 +3040,20 @@ exports.getMyLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -3056,14 +3066,14 @@ exports.getMyLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
 
       {
@@ -3076,20 +3086,20 @@ exports.getMyLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       { $match: matchQuery },
@@ -3102,7 +3112,7 @@ exports.getMyLoggedHours = async (req, res) => {
           logged_date: 1,
           projectDetails: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           main_taskList: { $first: "$maintasksDetails.title" },
           task: "$tasks.title",
@@ -3117,39 +3127,39 @@ exports.getMyLoggedHours = async (req, res) => {
                   $concat: [
                     {
                       $toString: {
-                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""],
-                      },
+                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""]
+                      }
                     },
-                    { $toString: "$logged_minutes" },
-                  ],
-                },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
               },
-              "m",
-            ],
+              "m"
+            ]
           },
           createdBy: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           timesheet: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           project_id: 1,
-          timesheet_id: 1,
-        },
+          timesheet_id: 1
+        }
       },
 
       {
         $group: {
           _id: {
-            project: "$project_id",
+            project: "$project_id"
           },
           data: { $push: "$$ROOT" },
           totalHours: { $sum: { $toInt: "$logged_hours" } }, // Convert logged_hours to integer and sum
-          totalMinutes: { $sum: { $toInt: "$logged_minutes" } }, // Convert logged_minutes to integer and sum
-        },
+          totalMinutes: { $sum: { $toInt: "$logged_minutes" } } // Convert logged_minutes to integer and sum
+        }
       },
       {
         $lookup: {
@@ -3161,20 +3171,20 @@ exports.getMyLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -3185,32 +3195,32 @@ exports.getMyLoggedHours = async (req, res) => {
                 $cond: {
                   if: { $eq: [{ $type: "$totalHours" }, "string"] },
                   then: { $multiply: [{ $toInt: "$totalHours" }, 60] },
-                  else: { $multiply: ["$totalHours", 60] },
-                },
+                  else: { $multiply: ["$totalHours", 60] }
+                }
               },
-              { $toInt: "$totalMinutes" },
-            ],
-          },
-        },
+              { $toInt: "$totalMinutes" }
+            ]
+          }
+        }
       },
       {
         $project: {
           _id: 0,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           logged_date: 1,
           timesheet: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           logged_data: "$data",
           total_hours: {
-            $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1],
+            $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1]
           },
-          total_minutes: { $mod: ["$total_minutes", 60] },
-        },
+          total_minutes: { $mod: ["$total_minutes", 60] }
+        }
       },
 
       {
@@ -3218,8 +3228,8 @@ exports.getMyLoggedHours = async (req, res) => {
           _id: null,
           projects: { $push: "$$ROOT" },
           grandTotalHours: { $sum: "$total_hours" },
-          grandTotalMinutes: { $sum: "$total_minutes" },
-        },
+          grandTotalMinutes: { $sum: "$total_minutes" }
+        }
       },
       {
         $addFields: {
@@ -3229,24 +3239,24 @@ exports.getMyLoggedHours = async (req, res) => {
                 $cond: {
                   if: { $eq: [{ $type: "$grandTotalHours" }, "string"] },
                   then: { $multiply: [{ $toInt: "$grandTotalHours" }, 60] },
-                  else: { $multiply: ["$grandTotalHours", 60] },
-                },
+                  else: { $multiply: ["$grandTotalHours", 60] }
+                }
               },
-              { $toInt: "$grandTotalMinutes" },
-            ],
-          },
-        },
+              { $toInt: "$grandTotalMinutes" }
+            ]
+          }
+        }
       },
       {
         $project: {
           _id: 0,
           projects: 1,
           grandTotalHours: {
-            $divide: [{ $floor: { $divide: ["$grandTotalMinutes", 60] } }, 1],
+            $divide: [{ $floor: { $divide: ["$grandTotalMinutes", 60] } }, 1]
           },
-          grandTotalMinutes: { $mod: ["$grandTotalMinutes", 60] },
-        },
-      },
+          grandTotalMinutes: { $mod: ["$grandTotalMinutes", 60] }
+        }
+      }
     ];
 
     let data = await TaskHoursLogs.aggregate(mainQuery);
@@ -3310,13 +3320,13 @@ exports.getMyLoggedHours = async (req, res) => {
           (date) => ({
             logged_date: date, //moment(date).format("DD-MM-YYYY"),
             createdBy: project.logged_data[0].createdBy,
-            data: groupedLoggedData[date],
+            data: groupedLoggedData[date]
           })
         );
 
         return {
           ...project,
-          logged_data: transformedLoggedData,
+          logged_data: transformedLoggedData
         };
       });
     }
@@ -3382,7 +3392,7 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
       start_date: Joi.date().optional().default(""),
       end_date: Joi.date().optional().default(""),
       orderBy: Joi.string().allow("").optional(),
-      isExport: Joi.boolean().optional().allow(""),
+      isExport: Joi.boolean().optional().allow("")
     });
     const { error, value } = validationSchema.validate(req.body);
     // console.log("🚀 ~ exports.getMyLoggedHoursbyDate= ~ value:", value)
@@ -3402,8 +3412,8 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
     orFilter = {
       $or: [
         { employee_id: new mongoose.Types.ObjectId(req.user._id) },
-        { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-      ],
+        { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+      ]
     };
     // }
 
@@ -3411,33 +3421,33 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
       isDeleted: false,
       ...(value.project_id.length > 0
         ? {
-          project_id: {
-            $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)),
-          },
-        }
+            project_id: {
+              $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p))
+            }
+          }
         : {}),
       ...(value.start_date !== "" && value.end_date == ""
         ? {
-          logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-          },
-        }
+            logged_date: {
+              $gte: moment(value.start_date).startOf("day").toDate()
+            }
+          }
         : {}),
       ...(value.start_date == "" && value.end_date !== ""
         ? {
-          logged_date: {
-            $lte: moment(value.end_date).startOf("day").toDate(),
-          },
-        }
+            logged_date: {
+              $lte: moment(value.end_date).startOf("day").toDate()
+            }
+          }
         : {}),
       ...(value.start_date !== "" && value.end_date !== ""
         ? {
-          logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
-          },
-        }
-        : {}),
+            logged_date: {
+              $gte: moment(value.start_date).startOf("day").toDate(),
+              $lte: moment(value.end_date).startOf("day").toDate()
+            }
+          }
+        : {})
     };
 
     const currentDate = moment();
@@ -3445,27 +3455,27 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
     if (value.dateRange === "last_2_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(16, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_week") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(8, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_month") {
       matchQuery.logged_date = {
         $gte: startDt.subtract(31, "days").toDate(),
-        $lte: currentDate.toDate(),
+        $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "Custom") {
       matchQuery.logged_date = {
         $gte: moment(value.start_date).startOf("day").toDate(),
-        $lte: moment(value.end_date).endOf("day").toDate(),
+        $lte: moment(value.end_date).endOf("day").toDate()
       };
     }
     matchQuery = {
       ...matchQuery,
-      ...orFilter,
+      ...orFilter
     };
 
     const mainQuery = [
@@ -3480,20 +3490,20 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -3508,23 +3518,23 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -3537,20 +3547,20 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -3563,14 +3573,14 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
 
       {
@@ -3583,23 +3593,23 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "timesheet",
-        },
+          as: "timesheet"
+        }
       },
       {
         $unwind: {
           path: "$timesheet",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $project: {
@@ -3610,7 +3620,7 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
           logged_date: 1,
           projectDetails: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           main_taskList: { $first: "$maintasksDetails.title" },
           task: "$tasks.title",
@@ -3625,29 +3635,29 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                   $concat: [
                     {
                       $toString: {
-                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""],
-                      },
+                        $cond: [{ $lt: ["$logged_minutes", 10] }, "0", ""]
+                      }
                     },
-                    { $toString: "$logged_minutes" },
-                  ],
-                },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
               },
-              "m",
-            ],
+              "m"
+            ]
           },
           createdBy: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           timesheet: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           project_id: 1,
-          timesheet_id: 1,
-        },
-      },
+          timesheet_id: 1
+        }
+      }
     ];
 
     let data = await TaskHoursLogs.aggregate(mainQuery);
@@ -3683,14 +3693,14 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
             items: [],
             totalTime: {
               hours: 0,
-              minutes: 0,
-            },
+              minutes: 0
+            }
           };
         }
         // acc[date].items.push(item);
         acc[date].items.push({
           ...item,
-          logged_date: moment(item.logged_date).format("DD-MM-YYYY"), // Update the format here
+          logged_date: moment(item.logged_date).format("DD-MM-YYYY") // Update the format here
         });
         acc[date].totalTime.hours += parseInt(item.logged_hours);
         acc[date].totalTime.minutes += parseInt(item.logged_minutes);
@@ -3749,7 +3759,7 @@ exports.getEmployeesHours = async (req, res) => {
       dept_ids: Joi.array().optional(),
       isTotals: Joi.boolean().optional(),
       productivity_status: Joi.string().optional().allow(""),
-      my_emps: Joi.boolean().required(),
+      my_emps: Joi.boolean().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -3765,28 +3775,28 @@ exports.getEmployeesHours = async (req, res) => {
     let matchQuery = {
       isDeleted: false,
       isActivate: true,
-      isSoftDeleted: false,
+      isSoftDeleted: false
     };
 
-    if (value?.my_emps && value?.my_emps != undefined && req?.user?.pms_role_id?.role_name != configRoles.PMS_ROLES.USER) {
+    if (
+      value?.my_emps &&
+      value?.my_emps != undefined &&
+      req?.user?.pms_role_id?.role_name != configRoles.PMS_ROLES.USER
+    ) {
       // 1. Fetch all employees reporting to the logged-in user (req.user._id)
       const reportingEmployees = await Employees.find(
         {
           reporting_manager: new mongoose.Types.ObjectId(req.user._id),
           isActivate: true,
           isDeleted: false,
-          isSoftDeleted: false,
+          isSoftDeleted: false
         },
         { _id: 1 }
       );
 
       // 2. If no employees report to the user, return empty response
       if (!reportingEmployees?.length) {
-        return errorResponse(
-          res,
-          statusCode.NOT_FOUND,
-          messages.NOT_FOUND
-        );
+        return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
       }
 
       // Get the list of employee IDs reporting to the user
@@ -3795,17 +3805,17 @@ exports.getEmployeesHours = async (req, res) => {
 
       // 3. Modify the match query to filter based on the reporting employees
       matchQuery = {
-        _id: { $in: employeeIds },
+        _id: { $in: employeeIds }
       };
       if (value?.dept_ids?.length > 0) {
         matchQuery["subdepartment_id"] = {
-          $in: value?.dept_ids.map((e) => new mongoose.Types.ObjectId(e)),
+          $in: value?.dept_ids.map((e) => new mongoose.Types.ObjectId(e))
         };
       }
     } else {
       if (value?.dept_ids?.length > 0) {
         matchQuery["subdepartment_id"] = {
-          $in: value?.dept_ids.map((e) => new mongoose.Types.ObjectId(e)),
+          $in: value?.dept_ids.map((e) => new mongoose.Types.ObjectId(e))
         };
       }
     }
@@ -3814,8 +3824,8 @@ exports.getEmployeesHours = async (req, res) => {
       matchQuery = {
         ...matchQuery,
         _id: {
-          $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele)),
-        },
+          $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
+        }
       };
     }
 
@@ -3831,19 +3841,19 @@ exports.getEmployeesHours = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: [{ $eq: ["$_id", "$$subdept_id"] }],
-                },
-              },
-            },
+                  $and: [{ $eq: ["$_id", "$$subdept_id"] }]
+                }
+              }
+            }
           ],
-          as: "subdept",
-        },
+          as: "subdept"
+        }
       },
       {
         $unwind: {
           path: "$subdept",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -3853,19 +3863,19 @@ exports.getEmployeesHours = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: [{ $eq: ["$_id", "$$dept_id"] }],
-                },
-              },
-            },
+                  $and: [{ $eq: ["$_id", "$$dept_id"] }]
+                }
+              }
+            }
           ],
-          as: "dept",
-        },
+          as: "dept"
+        }
       },
       {
         $unwind: {
           path: "$dept",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -3879,20 +3889,20 @@ exports.getEmployeesHours = async (req, res) => {
                     { $eq: ["$_id", "$$empid"] },
                     { $eq: ["$isActivate", true] },
                     { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isSoftDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "rm",
-        },
+          as: "rm"
+        }
       },
       {
         $unwind: {
           path: "$rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -3905,20 +3915,20 @@ exports.getEmployeesHours = async (req, res) => {
                   $and: [
                     { $eq: ["$employee_id", "$$empid"] },
                     { $eq: ["$month", value?.month || "10"] },
-                    { $eq: ["$year", value?.year || "2024"] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$year", value?.year || "2024"] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "totalhrs",
-        },
+          as: "totalhrs"
+        }
       },
       {
         $unwind: {
           path: "$totalhrs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -3932,20 +3942,20 @@ exports.getEmployeesHours = async (req, res) => {
                   $and: [
                     { $eq: ["$employee_id", "$$empid"] },
                     { $eq: ["$month", value?.month || "10"] },
-                    { $eq: ["$year", value?.year || "2024"] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$year", value?.year || "2024"] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "approvedHours",
-        },
+          as: "approvedHours"
+        }
       },
       {
         $unwind: {
           path: "$approvedHours",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $group: {
@@ -3962,11 +3972,11 @@ exports.getEmployeesHours = async (req, res) => {
           rm: { $first: "$rm.full_name" },
           rm_img: { $first: "$rm.emp_img" },
           total_experience_before_elsner: {
-            $first: "$employment_details.total_experience_before_elsner",
+            $first: "$employment_details.total_experience_before_elsner"
           },
           joining_date: { $first: "$joining_date" },
-          deptName: { $first: "$dept.department_name" },
-        },
+          deptName: { $first: "$dept.department_name" }
+        }
       },
       // emp exp level...
       {
@@ -3974,7 +3984,7 @@ exports.getEmployeesHours = async (req, res) => {
           total_experience: {
             $add: [
               {
-                $ifNull: [{ $toDouble: "$total_experience_before_elsner" }, 0],
+                $ifNull: [{ $toDouble: "$total_experience_before_elsner" }, 0]
               },
               {
                 $round: [
@@ -3984,18 +3994,18 @@ exports.getEmployeesHours = async (req, res) => {
                         $dateDiff: {
                           startDate: "$joining_date",
                           endDate: "$$NOW",
-                          unit: "month",
-                        },
+                          unit: "month"
+                        }
                       },
-                      12,
-                    ],
+                      12
+                    ]
                   },
-                  1,
-                ],
-              },
-            ],
-          },
-        },
+                  1
+                ]
+              }
+            ]
+          }
+        }
       },
       {
         $addFields: {
@@ -4004,35 +4014,35 @@ exports.getEmployeesHours = async (req, res) => {
               branches: [
                 {
                   case: { $lt: ["$total_experience", 1] },
-                  then: "Fresher",
+                  then: "Fresher"
                 },
                 {
                   case: {
                     $and: [
                       { $gte: ["$total_experience", 1] },
-                      { $lt: ["$total_experience", 3] },
-                    ],
+                      { $lt: ["$total_experience", 3] }
+                    ]
                   },
-                  then: "Junior",
+                  then: "Junior"
                 },
                 {
                   case: {
                     $and: [
                       { $gte: ["$total_experience", 3] },
-                      { $lt: ["$total_experience", 5] },
-                    ],
+                      { $lt: ["$total_experience", 5] }
+                    ]
                   },
-                  then: "Mid",
+                  then: "Mid"
                 },
                 {
                   case: { $gte: ["$total_experience", 5] },
-                  then: "Senior",
-                },
+                  then: "Senior"
+                }
               ],
-              default: "Unknown",
-            },
-          },
-        },
+              default: "Unknown"
+            }
+          }
+        }
       },
       {
         $lookup: {
@@ -4046,14 +4056,14 @@ exports.getEmployeesHours = async (req, res) => {
                     { $eq: ["$reporting_manager", "$$empID"] },
                     { $eq: ["$isActivate", true] },
                     { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isSoftDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "reportingManagers",
-        },
+          as: "reportingManagers"
+        }
       },
       {
         $addFields: {
@@ -4061,10 +4071,10 @@ exports.getEmployeesHours = async (req, res) => {
             $cond: {
               if: { $gt: [{ $size: "$reportingManagers" }, 0] },
               then: "TL",
-              else: "$empExpLevel",
-            },
-          },
-        },
+              else: "$empExpLevel"
+            }
+          }
+        }
       },
       //
       {
@@ -4077,7 +4087,7 @@ exports.getEmployeesHours = async (req, res) => {
             totalhrs: "$totalhrs",
             total_hours: { $arrayElemAt: [{ $split: ["$totalhrs", ":"] }, 0] },
             total_minutes: {
-              $arrayElemAt: [{ $split: ["$totalhrs", ":"] }, 1],
+              $arrayElemAt: [{ $split: ["$totalhrs", ":"] }, 1]
             },
             approved_hours: "$approved_hours",
             approved_minutes: "$approved_minutes",
@@ -4094,22 +4104,19 @@ exports.getEmployeesHours = async (req, res) => {
                       $dateDiff: {
                         startDate: "$joining_date",
                         endDate: "$$NOW",
-                        unit: "month",
-                      },
+                        unit: "month"
+                      }
                     },
-                    12,
-                  ],
+                    12
+                  ]
                 },
-                1, // Round to 1 decimal place for the fractional years (e.g., 2.5, 1.2, etc.)
-              ],
+                1 // Round to 1 decimal place for the fractional years (e.g., 2.5, 1.2, etc.)
+              ]
             },
             total_experience: {
               $add: [
                 {
-                  $ifNull: [
-                    { $toDouble: "$total_experience_before_elsner" },
-                    0,
-                  ],
+                  $ifNull: [{ $toDouble: "$total_experience_before_elsner" }, 0]
                 }, // Handle nulls and convert to number
                 {
                   $round: [
@@ -4119,29 +4126,29 @@ exports.getEmployeesHours = async (req, res) => {
                           $dateDiff: {
                             startDate: "$joining_date",
                             endDate: "$$NOW",
-                            unit: "month",
-                          },
+                            unit: "month"
+                          }
                         },
-                        12,
-                      ],
+                        12
+                      ]
                     },
-                    1, // Round to 1 decimal place
-                  ],
-                },
-              ],
+                    1 // Round to 1 decimal place
+                  ]
+                }
+              ]
             },
-            emp_exp_level: "$empExpLevel",
+            emp_exp_level: "$empExpLevel"
           },
           // project: "$projectName",
           department: "$deptName",
           subdepartment: "$subdeptName",
           // logs: "$logs",
-          name: 1,
-        },
+          name: 1
+        }
       },
       {
-        $sort: { name: 1 },
-      },
+        $sort: { name: 1 }
+      }
     ];
     // let data = await Employees.aggregate(mainQuery);
     let data, metaData, listQuery;
@@ -4150,7 +4157,7 @@ exports.getEmployeesHours = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
     const countQuery = getTotalCountQuery(mainQuery);
     const totalCountResult = await Employees.aggregate(countQuery);
@@ -4165,7 +4172,7 @@ exports.getEmployeesHours = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     for (let i = 0; i < data.length; i++) {
@@ -4201,9 +4208,7 @@ exports.getEmployeesHours = async (req, res) => {
         empID
       );
 
-      let totalWorkingTimeInMinutes,
-        approvedTimeInMinutes,
-        overallProductivity;
+      let totalWorkingTimeInMinutes, approvedTimeInMinutes, overallProductivity;
       let productivityStatus = "";
       // to check if we have the proper data then and then only to calcluate the productivity, for the query optimization due to load..
       if (
@@ -4215,22 +4220,26 @@ exports.getEmployeesHours = async (req, res) => {
       ) {
         // Get total working time in minutes
         totalWorkingTimeInMinutes =
-          (parseInt(totalWorkingTime[0].total_hours_as_working_days_ofemp) * 60) +
+          parseInt(totalWorkingTime[0].total_hours_as_working_days_ofemp) * 60 +
           parseInt(totalWorkingTime[0].total_minutes_as_working_days_ofemp);
         // console.log(data[i]?.employee.name)
         // console.log("🚀 ~ exports.getEmployeesHours= ~ totalWorkingTimeInMinutes:", totalWorkingTimeInMinutes)
-        expectedHours = (totalWorkingTimeInMinutes / 60) * (expected_productivity / 100);
+        expectedHours =
+          (totalWorkingTimeInMinutes / 60) * (expected_productivity / 100);
         // console.log("🚀 ~ exports.getEmployeesHours= ~ expectedHours:", expectedHours)
 
         // Calculate approved time (convert to minutes)
         approvedTimeInMinutes =
-          (parseInt(data[i].employee.approved_hours) * 60) +
+          parseInt(data[i].employee.approved_hours) * 60 +
           parseInt(data[i].employee.approved_minutes);
 
         // console.log("🚀 ~ exports.getEmployeesHours= ~ approvedTimeInMinutes:", approvedTimeInMinutes)
 
         // Calculate Overall Productivity
-        overallProductivity = (((approvedTimeInMinutes / 60) * (expected_productivity / 100)) / expectedHours) * 100;
+        overallProductivity =
+          (((approvedTimeInMinutes / 60) * (expected_productivity / 100)) /
+            expectedHours) *
+          100;
         // console.log("🚀 ~ exports.getEmployeesHours= ~ overallProductivity:", overallProductivity)
 
         // Set productivity status for freshers based on overall productivity
@@ -4292,14 +4301,14 @@ exports.getEmployeesHours = async (req, res) => {
           totalWorkingTime: totalWorkingTime[0],
           productivity: {
             expectedHours: expectedHours,
-            overallProductivity: overallProductivity?.toFixed(2), // Overall productivity
+            overallProductivity: overallProductivity?.toFixed(2) // Overall productivity
           },
-          productivity_status: productivityStatus,
+          productivity_status: productivityStatus
         };
       } else {
         data[i].employee = {
           ...data[i].employee,
-          totalWorkingTime: totalWorkingTime[0],
+          totalWorkingTime: totalWorkingTime[0]
         };
       }
     }
@@ -4320,23 +4329,23 @@ exports.getEmployeesHours = async (req, res) => {
 
     const grandTotal = data2
       ? data2.reduce(
-        (accumulator, currentEmployee) => {
-          const totalHours =
-            currentEmployee.employee.total_hours != null
-              ? parseInt(currentEmployee.employee.total_hours, 10)
-              : 0;
-          const totalMinutes =
-            currentEmployee.employee.total_minutes != null
-              ? parseInt(currentEmployee.employee.total_minutes, 10)
-              : 0;
+          (accumulator, currentEmployee) => {
+            const totalHours =
+              currentEmployee.employee.total_hours != null
+                ? parseInt(currentEmployee.employee.total_hours, 10)
+                : 0;
+            const totalMinutes =
+              currentEmployee.employee.total_minutes != null
+                ? parseInt(currentEmployee.employee.total_minutes, 10)
+                : 0;
 
-          accumulator.hours += totalHours;
-          accumulator.minutes += totalMinutes;
+            accumulator.hours += totalHours;
+            accumulator.minutes += totalMinutes;
 
-          return accumulator;
-        },
-        { hours: 0, minutes: 0 }
-      )
+            return accumulator;
+          },
+          { hours: 0, minutes: 0 }
+        )
       : { hours: 0, minutes: 0 };
 
     // Adjust hours and minutes if minutes >= 60
@@ -4348,23 +4357,23 @@ exports.getEmployeesHours = async (req, res) => {
     // Calculate the grand total approved hours and minutes
     const grandApprovedTotal = data2
       ? data2.reduce(
-        (accumulator, currentEmployee) => {
-          const approvedHours =
-            currentEmployee.employee.approved_hours != null
-              ? parseInt(currentEmployee.employee.approved_hours, 10)
-              : 0;
-          const approvedMinutes =
-            currentEmployee.employee.approved_minutes != null
-              ? parseInt(currentEmployee.employee.approved_minutes, 10)
-              : 0;
+          (accumulator, currentEmployee) => {
+            const approvedHours =
+              currentEmployee.employee.approved_hours != null
+                ? parseInt(currentEmployee.employee.approved_hours, 10)
+                : 0;
+            const approvedMinutes =
+              currentEmployee.employee.approved_minutes != null
+                ? parseInt(currentEmployee.employee.approved_minutes, 10)
+                : 0;
 
-          accumulator.hours += approvedHours;
-          accumulator.minutes += approvedMinutes;
+            accumulator.hours += approvedHours;
+            accumulator.minutes += approvedMinutes;
 
-          return accumulator;
-        },
-        { hours: 0, minutes: 0 }
-      )
+            return accumulator;
+          },
+          { hours: 0, minutes: 0 }
+        )
       : { hours: 0, minutes: 0 };
 
     // Adjust hours and minutes if minutes >= 60
@@ -4394,7 +4403,7 @@ exports.getHoursDetails = async (req, res) => {
     const validationSchema = Joi.object({
       emp_id: Joi.string().required(),
       month: Joi.string().required(),
-      year: Joi.string().required(),
+      year: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -4414,8 +4423,8 @@ exports.getHoursDetails = async (req, res) => {
         $gte: moment(`${value.year}-${value.month}-01`)
           .startOf("month")
           .toDate(),
-        $lte: moment(`${value.year}-${value.month}-01`).endOf("month").toDate(),
-      },
+        $lte: moment(`${value.year}-${value.month}-01`).endOf("month").toDate()
+      }
     };
 
     const mainQuery = [
@@ -4431,20 +4440,20 @@ exports.getHoursDetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -4458,23 +4467,23 @@ exports.getHoursDetails = async (req, res) => {
                     {
                       $or: [
                         { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] },
-                      ],
+                        { $eq: ["$_id", "$$bug_task_id"] }
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $unwind: {
           path: "$tasks",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -4486,20 +4495,20 @@ exports.getHoursDetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -4511,20 +4520,20 @@ exports.getHoursDetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintasksDetails",
-        },
+          as: "maintasksDetails"
+        }
       },
       {
         $unwind: {
           path: "$maintasksDetails",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -4536,8 +4545,8 @@ exports.getHoursDetails = async (req, res) => {
                 $dateToString: {
                   format: "%d-%m-%Y",
                   date: "$logged_date",
-                  timezone: "UTC",
-                },
+                  timezone: "UTC"
+                }
               },
               task: "$tasks.title",
               main_task: "$maintasksDetails.title",
@@ -4548,21 +4557,21 @@ exports.getHoursDetails = async (req, res) => {
               descriptions: "$descriptions",
               employee: {
                 name: "$createdBy.full_name",
-                img: "$createdBy.emp_img",
-              },
-            },
-          },
-        },
+                img: "$createdBy.emp_img"
+              }
+            }
+          }
+        }
       },
       {
         $project: {
           _id: 0,
-          logs: "$logs",
-        },
+          logs: "$logs"
+        }
       },
       {
-        $sort: { name: 1 },
-      },
+        $sort: { name: 1 }
+      }
     ];
 
     let data = await TaskHoursLogs.aggregate(mainQuery);
@@ -4599,11 +4608,16 @@ exports.getTotalTime = (hours, minutes, days) => {
   }
   return {
     total_hours: totalExpectedHours,
-    total_minutes: totalExpectedMinutes,
+    total_minutes: totalExpectedMinutes
   };
 };
 // to get total working days and hours according to that.
-exports.getTotalLoggedHoursForMonthByEmployee = async (month, year, empId, dashboardHours = false) => {
+exports.getTotalLoggedHoursForMonthByEmployee = async (
+  month,
+  year,
+  empId,
+  dashboardHours = false
+) => {
   try {
     let startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
     let endDate1 = moment(`${year}-${month}-01`).endOf("month").toDate();
@@ -4623,16 +4637,24 @@ exports.getTotalLoggedHoursForMonthByEmployee = async (month, year, empId, dashb
       employee_id: new mongoose.Types.ObjectId(empId),
       $or: [
         { workedTime: { $ne: "" } },
-        { record_type: { $in: ["Working Day", "First-Half", "Second-Half", "Flexy-Leave"] }, }
+        {
+          record_type: {
+            $in: ["Working Day", "First-Half", "Second-Half", "Flexy-Leave"]
+          }
+        }
       ],
       created_At: {
         $gte: startDate,
-        $lte: endDate,
-      },
+        $lte: endDate
+      }
     });
     let workingday_sum = 0;
     empWorkingDayData.map((e) => {
-      if ((e.record_type == "Working Day" || e.record_type == "Flexy-Leave") || e?.workedTime != "") {
+      if (
+        e.record_type == "Working Day" ||
+        e.record_type == "Flexy-Leave" ||
+        e?.workedTime != ""
+      ) {
         workingday_sum++;
       }
     });
@@ -4656,7 +4678,7 @@ exports.getTotalLoggedHoursForMonthByEmployee = async (month, year, empId, dashb
     employees_total_time_data_as_working_days.push({
       employee_id: empId,
       total_hours_as_working_days_ofemp: final_total_hours_of_emp,
-      total_minutes_as_working_days_ofemp: final_total_minutes_of_emp,
+      total_minutes_as_working_days_ofemp: final_total_minutes_of_emp
     });
     // *********************** SECOND - Half complete, fetching the employee's working days and half days data and the total time for that employee **********
 
@@ -4674,7 +4696,7 @@ exports.getTaskHoursLogsfortotal = async (req, res) => {
         $match: {
           isActivate: true,
           isDeleted: false,
-          isSoftDeleted: false,
+          isSoftDeleted: false
           // pms_applicable: true
         }
       },
@@ -4730,14 +4752,21 @@ exports.getTaskHoursLogsfortotal = async (req, res) => {
 
       if (hoursLogged.length > 0) {
         const logData = hoursLogged[0];
-        console.log("🚀 ~ exports.getTaskHoursLogsfortotal= ~ emp:", emp.full_name)
-        console.log("🚀 ~ exports.getTaskHoursLogsfortotal= ~ logData:", logData)
+        console.log(
+          "🚀 ~ exports.getTaskHoursLogsfortotal= ~ emp:",
+          emp.full_name
+        );
+        console.log(
+          "🚀 ~ exports.getTaskHoursLogsfortotal= ~ logData:",
+          logData
+        );
         const month = "10"; // October
         const year = "2024";
 
-        const newTotalTime = `${String(logData.total_hours).padStart(2, "0")}:${String(
-          logData.total_minutes
-        ).padStart(2, "0")}`;
+        const newTotalTime = `${String(logData.total_hours).padStart(
+          2,
+          "0"
+        )}:${String(logData.total_minutes).padStart(2, "0")}`;
 
         // Create new entry in total task hour logs table
         await ProjectTotalTaskHourLogs.updateOne(
@@ -4758,20 +4787,15 @@ exports.getTaskHoursLogsfortotal = async (req, res) => {
           { upsert: true }
         );
 
-        console.log(`Employee: ${emp.full_name} | Total Hours: ${newTotalTime}`);
+        console.log(
+          `Employee: ${emp.full_name} | Total Hours: ${newTotalTime}`
+        );
       }
     }
 
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      [],
-      {}
-    );
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, [], {});
   } catch (error) {
     console.error("🚀 ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
-

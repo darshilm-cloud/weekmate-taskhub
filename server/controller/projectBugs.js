@@ -4,7 +4,7 @@ const moment = require("moment");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectBugs = mongoose.model("projecttaskbugs");
@@ -18,7 +18,7 @@ const PMSClients = mongoose.model("pmsclients");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -29,11 +29,14 @@ const {
   getArrayChanges,
   getRefModelFromLoginUser,
   getCreatedUpdatedDeletedByQuery,
-  getClientQuery,
+  getClientQuery
 } = require("../helpers/common");
 const { filesManageInDB } = require("./fileUploads");
 const { mailForBugAssignees, getProjectBugsData } = require("./sendEmail");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 const { sheet } = require("../template/exportRepeatedBugsCSV");
@@ -41,7 +44,7 @@ const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
     type: "buffer",
-    cellDates: true, // otherwise for csv 2021-04-12T12:00:00Z is converted to 44298.22928240741
+    cellDates: true // otherwise for csv 2021-04-12T12:00:00Z is converted to 44298.22928240741
   });
 
   const sheetNameList = wb.SheetNames;
@@ -65,7 +68,6 @@ const jsonDataFromFile = (fileObj) => {
 
 // Check is exists..
 exports.projectBugExists = async (reqData, id = null) => {
-  
   try {
     let isExist = false;
     // const data = await ProjectBugs.findOne({
@@ -89,26 +91,26 @@ exports.projectBugExists = async (reqData, id = null) => {
         $match: {
           $or: [
             { project_id: new mongoose.Types.ObjectId(reqData?.project_id) },
-            { task_id: new mongoose.Types.ObjectId(reqData?.task_id) },
+            { task_id: new mongoose.Types.ObjectId(reqData?.task_id) }
           ],
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: reqData?.title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -121,6 +123,13 @@ exports.projectBugExists = async (reqData, id = null) => {
 //Add Project bugs :
 exports.addProjectsBugs = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -139,7 +148,7 @@ exports.addProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional().default(false),
+      isRepeated: Joi.boolean().optional().default(false)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -165,7 +174,7 @@ exports.addProjectsBugs = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let statusData = await ProjectBugsWorkFlowStatus.findOne({
-        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO
       }).select("_id");
 
       // data type of bug_labels changed array to string .. need to manage here cause of this use in other module
@@ -198,14 +207,14 @@ exports.addProjectsBugs = async (req, res) => {
             {
               bug_status: value?.bug_status,
               updatedBy: req.user._id,
-              updatedAt: configs.utcDefault(),
-            },
-          ],
+              updatedAt: configs.utcDefault()
+            }
+          ]
         }),
 
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       const newData = await data.save();
 
@@ -233,13 +242,13 @@ exports.addProjectsBugs = async (req, res) => {
         updated_key: "createdAt",
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       await newHistory.save();
 
       // send mail to assignee..
       if (value.assignees && value.assignees.length > 0) {
-        await mailForBugAssignees(newData._id);
+        await mailForBugAssignees(newData._id, [], decodedCompanyId);
       }
       return successResponse(
         res,
@@ -272,7 +281,7 @@ exports.getProjectsBugs = async (req, res) => {
       assignees: Joi.string().optional().default("all"), // all | un_assigned | _id
       labels: Joi.array().optional().default("all"), // [ all | un_assigned | _id]
       start_date: Joi.string().optional(),
-      due_date: Joi.string().optional(),
+      due_date: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -288,7 +297,7 @@ exports.getProjectsBugs = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
@@ -310,15 +319,15 @@ exports.getProjectsBugs = async (req, res) => {
             bug_status: {
               $in: value.bugWorkFlowStatus.map(
                 (v) => new mongoose.Types.ObjectId(v)
-              ),
-            },
+              )
+            }
           }
         : {}),
       ...(value?.assignees && !value.assignees.includes("all")
         ? value.assignees.includes("un_assigned")
           ? { assignees: { $eq: [] } }
           : {
-              assignees: value?.assignees,
+              assignees: value?.assignees
             }
         : {}),
 
@@ -327,8 +336,8 @@ exports.getProjectsBugs = async (req, res) => {
           ? { bug_labels: { $size: 0 } }
           : {
               bug_labels: {
-                $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v)),
-              },
+                $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v))
+              }
             }
         : {}),
 
@@ -336,30 +345,30 @@ exports.getProjectsBugs = async (req, res) => {
         ? value?.start_date && !value?.due_date
           ? {
               start_date: {
-                $gte: moment(value?.start_date).startOf("day").toDate(),
-              },
+                $gte: moment(value?.start_date).startOf("day").toDate()
+              }
             }
           : !value?.start_date && value?.due_date
           ? {
               due_date: {
-                $lte: moment(value?.due_date).startOf("day").toDate(),
-              },
+                $lte: moment(value?.due_date).startOf("day").toDate()
+              }
             }
           : {
               start_date: {
-                $gte: moment(value?.start_date).startOf("day").toDate(),
+                $gte: moment(value?.start_date).startOf("day").toDate()
               },
               due_date: {
-                $lte: moment(value?.due_date).startOf("day").toDate(),
-              },
+                $lte: moment(value?.due_date).startOf("day").toDate()
+              }
             }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -374,20 +383,20 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -399,20 +408,20 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$subTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "sub_task",
-        },
+          as: "sub_task"
+        }
       },
       {
         $unwind: {
           path: "$sub_task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -427,8 +436,8 @@ exports.getProjectsBugs = async (req, res) => {
                     {
                       $eq: [
                         "$project_id",
-                        new mongoose.Types.ObjectId(value.project_id),
-                      ],
+                        new mongoose.Types.ObjectId(value.project_id)
+                      ]
                     },
                     // {
                     //   $eq: [
@@ -436,10 +445,10 @@ exports.getProjectsBugs = async (req, res) => {
                     //     new mongoose.Types.ObjectId(value.main_task_id),
                     //   ],
                     // },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
 
             {
@@ -452,20 +461,20 @@ exports.getProjectsBugs = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$timesheet_id"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "timesheet",
-              },
+                as: "timesheet"
+              }
             },
             {
               $unwind: {
                 path: "$timesheet",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             ...(await getCreatedUpdatedDeletedByQuery()),
             {
@@ -482,18 +491,18 @@ exports.getProjectsBugs = async (req, res) => {
                   _id: 1,
                   full_name: 1,
                   emp_img: 1,
-                  client_img: 1,
+                  client_img: 1
                 },
                 createdAt: 1,
                 timesheet: {
                   _id: 1,
-                  title: 1,
-                },
-              },
-            },
+                  title: 1
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
 
       {
@@ -506,20 +515,20 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -532,20 +541,20 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status",
-        },
+          as: "bug_status"
+        }
       },
       {
         $unwind: {
           path: "$bug_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -558,14 +567,14 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$bug_status_history"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status_history",
-        },
+          as: "bug_status_history"
+        }
       },
 
       {
@@ -578,14 +587,14 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$bugs_id", "$$bugs_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
 
       {
@@ -598,14 +607,14 @@ exports.getProjectsBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$bug_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_labels",
-        },
+          as: "bug_labels"
+        }
       },
 
       {
@@ -620,14 +629,14 @@ exports.getProjectsBugs = async (req, res) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       { $match: matchQuery },
       {
@@ -644,21 +653,21 @@ exports.getProjectsBugs = async (req, res) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.logged_hours", // Convert string to double
+                            $toDouble: "$$this.logged_hours" // Convert string to double
                           },
-                          60,
-                        ], // Convert hours to minutes
+                          60
+                        ] // Convert hours to minutes
                       },
                       {
-                        $toDouble: "$$this.logged_minutes", // Convert string to double
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
+                        $toDouble: "$$this.logged_minutes" // Convert string to double
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       {
         $project: {
@@ -680,9 +689,9 @@ exports.getProjectsBugs = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
-                },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
+                }
               },
               ":",
               {
@@ -693,19 +702,19 @@ exports.getProjectsBugs = async (req, res) => {
                         $cond: [
                           { $lt: [{ $mod: ["$totalLoggedTime", 60] }, 10] },
                           "0",
-                          "",
-                        ],
-                      },
+                          ""
+                        ]
+                      }
                     },
                     {
                       $toString: {
-                        $mod: ["$totalLoggedTime", 60],
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
+                        $mod: ["$totalLoggedTime", 60]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           },
           title: 1,
           project: 1,
@@ -724,16 +733,16 @@ exports.getProjectsBugs = async (req, res) => {
                 _id: "$$attachment._id",
                 name: "$$attachment.name",
                 file_type: "$$attachment.file_type",
-                path: "$$attachment.path",
-              },
-            },
+                path: "$$attachment.path"
+              }
+            }
           },
           progress: 1,
           task: 1,
           sub_task: 1,
           bug_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           taskLabels: 1,
           isRepeated: 1,
@@ -744,23 +753,23 @@ exports.getProjectsBugs = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
                 _id: "$$assigneeId._id",
                 emp_img: "$$assigneeId.emp_img",
-                name: "$$assigneeId.full_name",
-              },
-            },
-          },
-        },
-      },
+                name: "$$assigneeId.full_name"
+              }
+            }
+          }
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -770,7 +779,7 @@ exports.getProjectsBugs = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await ProjectBugs.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     const metaData = {
@@ -779,7 +788,7 @@ exports.getProjectsBugs = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -797,6 +806,13 @@ exports.getProjectsBugs = async (req, res) => {
 //Update Project bugs :
 exports.updateProjectsBugs = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       updated_key: Joi.array().min(1).required(),
       title: Joi.string().required(),
@@ -816,7 +832,7 @@ exports.updateProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional(),
+      isRepeated: Joi.boolean().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -843,7 +859,7 @@ exports.updateProjectsBugs = async (req, res) => {
         getData,
         {
           ...value,
-          bug_id: req.params.id,
+          bug_id: req.params.id
         }
       );
 
@@ -851,7 +867,7 @@ exports.updateProjectsBugs = async (req, res) => {
         req.params.id,
         { ...updateObj, isRepeated: value.isRepeated },
         {
-          new: true,
+          new: true
         }
       );
 
@@ -872,7 +888,11 @@ exports.updateProjectsBugs = async (req, res) => {
       );
 
       if (assigneesData.added && assigneesData.added.length > 0) {
-        await mailForBugAssignees(req.params.id, assigneesData.added);
+        await mailForBugAssignees(
+          req.params.id,
+          assigneesData.added,
+          decodedCompanyId
+        );
       }
       return successResponse(
         res,
@@ -890,7 +910,7 @@ exports.updateProjectsBugs = async (req, res) => {
 exports.updateProjectsBugStatus = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      status: Joi.string().required(),
+      status: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -907,7 +927,7 @@ exports.updateProjectsBugStatus = async (req, res) => {
         status: value.status,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -936,7 +956,7 @@ exports.deleteProjectsBugs = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -954,8 +974,15 @@ exports.deleteProjectsBugs = async (req, res) => {
 // update workflow...
 exports.updateProjectsBugWorkflow = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      bug_status: Joi.string().required(),
+      bug_status: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -972,7 +999,7 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     let common = {
       updatedBy: loginUserId,
       updatedAt: configs.utcDefault(),
-      ...(await getRefModelFromLoginUser(req?.user, true)),
+      ...(await getRefModelFromLoginUser(req?.user, true))
     };
     let updateObj = {}; // For task prop
     let historyUpdateObj = {}; // For history
@@ -984,7 +1011,7 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
       createdBy: loginUserId,
       createdAt: configs.utcDefault(),
       ...(await getRefModelFromLoginUser(req?.user)),
-      ...common,
+      ...common
     };
 
     if (value?.bug_status) {
@@ -1018,18 +1045,18 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
                   ...getData?.bug_status_history,
                   {
                     bug_status: null,
-                    ...common,
-                  },
-                ],
+                    ...common
+                  }
+                ]
               }
             : !getData?.bug_status?._id && value?.bug_status
             ? {
                 bug_status_history: [
                   {
                     bug_status: value?.bug_status,
-                    ...common,
-                  },
-                ],
+                    ...common
+                  }
+                ]
               }
             : getData?.bug_status?._id &&
               value?.bug_status &&
@@ -1040,18 +1067,18 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
                   ...getData?.bug_status_history,
                   {
                     bug_status: value?.bug_status,
-                    ...common,
-                  },
-                ],
+                    ...common
+                  }
+                ]
               }
-            : getData?.bug_status_history),
+            : getData?.bug_status_history)
         };
 
         historyUpdateObj = {
           ...historyUpdateObj,
           updated_key: "bug_status",
           pervious_value: previousBugStatusTitle,
-          new_value: newBugStatusTitle,
+          new_value: newBugStatusTitle
         };
         // save update history..
         const newHistory = new ProjectTaskUpdateHistory(historyUpdateObj);
@@ -1060,7 +1087,7 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     }
 
     const data = await ProjectBugs.findByIdAndUpdate(req.params.id, updateObj, {
-      new: true,
+      new: true
     });
 
     if (!data) {
@@ -1070,10 +1097,13 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     // after update ...
     const updatedData = await getProjectBugsData(req.params.id);
 
-    await bugWorkflowStatusUpdateMail({
-      oldData: getData,
-      newData: updatedData,
-    });
+    await bugWorkflowStatusUpdateMail(
+      {
+        oldData: getData,
+        newData: updatedData
+      },
+      decodedCompanyId
+    );
 
     return successResponse(
       res,
@@ -1098,7 +1128,7 @@ exports.projectBugsDetailedData = async (req, res) => {
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       bug_labels: Joi.array().optional().default(["all"]),
-      assignees: Joi.array().optional().default(["all"]),
+      assignees: Joi.array().optional().default(["all"])
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1118,13 +1148,13 @@ exports.projectBugsDetailedData = async (req, res) => {
       value.project_id,
       req.user._id
     );
-    
+
     let bugQuery = [
       { $eq: ["$bug_status", "$$statusId"] },
       {
-        $eq: ["$project_id", new mongoose.Types.ObjectId(value.project_id)],
+        $eq: ["$project_id", new mongoose.Types.ObjectId(value.project_id)]
       },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
 
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
@@ -1133,41 +1163,41 @@ exports.projectBugsDetailedData = async (req, res) => {
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"],
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
             },
             {
               $eq: [
                 // "$task.createdBy",
                 { $ifNull: ["$task.createdBy", null] },
-                new mongoose.Types.ObjectId(req.user._id),
-              ],
+                new mongoose.Types.ObjectId(req.user._id)
+              ]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
                 // "$task.assignees",
-                { $ifNull: ["$task.assignees", []] },
-              ],
+                { $ifNull: ["$task.assignees", []] }
+              ]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
                 // "$task.pms_clients",
-                { $ifNull: ["$task.pms_clients", []] },
-              ],
+                { $ifNull: ["$task.pms_clients", []] }
+              ]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
                 // "$task.pms_clients",
-                { $ifNull: ["$project.pms_clients", []] },
-              ],
-            },
-          ],
-        },
+                { $ifNull: ["$project.pms_clients", []] }
+              ]
+            }
+          ]
+        }
       ];
     }
 
@@ -1175,7 +1205,7 @@ exports.projectBugsDetailedData = async (req, res) => {
     if (value.task_id && value.task_id !== "")
       bugQuery = [
         ...bugQuery,
-        { $eq: ["$task_id", new mongoose.Types.ObjectId(value.task_id)] },
+        { $eq: ["$task_id", new mongoose.Types.ObjectId(value.task_id)] }
       ];
 
     if (value.status && value.status !== "")
@@ -1184,7 +1214,7 @@ exports.projectBugsDetailedData = async (req, res) => {
     if (value.bug_status && value.bug_status !== "")
       bugQuery = [
         ...bugQuery,
-        { $eq: ["$bug_status", new mongoose.Types.ObjectId(value.bug_status)] },
+        { $eq: ["$bug_status", new mongoose.Types.ObjectId(value.bug_status)] }
       ];
 
     if (value.start_date && value.start_date !== "")
@@ -1193,17 +1223,17 @@ exports.projectBugsDetailedData = async (req, res) => {
         {
           $gte: [
             "$start_date",
-            moment(value.start_date).startOf("day").toDate(),
-          ],
-        },
+            moment(value.start_date).startOf("day").toDate()
+          ]
+        }
       ];
 
     if (value.due_date && value.due_date !== "")
       bugQuery = [
         ...bugQuery,
         {
-          $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()],
-        },
+          $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()]
+        }
       ];
 
     if (
@@ -1213,8 +1243,8 @@ exports.projectBugsDetailedData = async (req, res) => {
       bugQuery = [
         ...bugQuery,
         {
-          $in: ["$bug_status", value.bug_work_flow_status],
-        },
+          $in: ["$bug_status", value.bug_work_flow_status]
+        }
       ];
     }
 
@@ -1223,8 +1253,8 @@ exports.projectBugsDetailedData = async (req, res) => {
         bugQuery = [
           ...bugQuery,
           {
-            $eq: ["$assignees", []],
-          },
+            $eq: ["$assignees", []]
+          }
         ];
       } else {
         // bugQuery = [
@@ -1241,9 +1271,9 @@ exports.projectBugsDetailedData = async (req, res) => {
           {
             $setEquals: [
               "$assignees",
-              value.assignees.map((l) => new mongoose.Types.ObjectId(l)),
-            ],
-          },
+              value.assignees.map((l) => new mongoose.Types.ObjectId(l))
+            ]
+          }
         ];
       }
     }
@@ -1253,8 +1283,8 @@ exports.projectBugsDetailedData = async (req, res) => {
         bugQuery = [
           ...bugQuery,
           {
-            $eq: ["$bug_labels", []],
-          },
+            $eq: ["$bug_labels", []]
+          }
         ];
       } else {
         bugQuery = [
@@ -1262,9 +1292,9 @@ exports.projectBugsDetailedData = async (req, res) => {
           {
             $in: [
               "$bug_labels",
-              value.bug_labels.map((l) => new mongoose.Types.ObjectId(l)),
-            ],
-          },
+              value.bug_labels.map((l) => new mongoose.Types.ObjectId(l))
+            ]
+          }
         ];
       }
     }
@@ -1272,8 +1302,8 @@ exports.projectBugsDetailedData = async (req, res) => {
     const mainQuery = [
       {
         $match: {
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
         $lookup: {
@@ -1290,20 +1320,20 @@ exports.projectBugsDetailedData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$projectId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "project",
-              },
+                as: "project"
+              }
             },
             {
               $unwind: {
                 path: "$project",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             {
               $lookup: {
@@ -1315,27 +1345,27 @@ exports.projectBugsDetailedData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$task_id"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "task",
-              },
+                as: "task"
+              }
             },
             {
               $unwind: {
                 path: "$task",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             {
               $match: {
                 $expr: {
-                  $and: bugQuery,
-                },
-              },
+                  $and: bugQuery
+                }
+              }
             },
             {
               $lookup: {
@@ -1349,21 +1379,21 @@ exports.projectBugsDetailedData = async (req, res) => {
                           { $in: ["$_id", "$$assigneeIds"] },
                           { $eq: ["$isDeleted", false] },
                           { $eq: ["$isSoftDeleted", false] },
-                          { $eq: ["$isActivate", true] },
-                        ],
-                      },
-                    },
+                          { $eq: ["$isActivate", true] }
+                        ]
+                      }
+                    }
                   },
                   {
                     $project: {
                       _id: 1,
                       full_name: 1,
-                      emp_img: 1,
-                    },
-                  },
+                      emp_img: 1
+                    }
+                  }
                 ],
-                as: "assignees",
-              },
+                as: "assignees"
+              }
             },
 
             {
@@ -1376,21 +1406,21 @@ exports.projectBugsDetailedData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $in: ["$_id", "$$labelId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
                   },
                   {
                     $project: {
                       _id: 1,
                       title: 1,
-                      color: 1,
-                    },
-                  },
+                      color: 1
+                    }
+                  }
                 ],
-                as: "bug_labels",
-              },
+                as: "bug_labels"
+              }
             },
 
             {
@@ -1406,17 +1436,17 @@ exports.projectBugsDetailedData = async (req, res) => {
                           {
                             $eq: [
                               "$project_id",
-                              new mongoose.Types.ObjectId(value.project_id),
-                            ],
+                              new mongoose.Types.ObjectId(value.project_id)
+                            ]
                           },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "bug_hours",
-              },
+                as: "bug_hours"
+              }
             },
             {
               $addFields: {
@@ -1432,21 +1462,21 @@ exports.projectBugsDetailedData = async (req, res) => {
                             {
                               $multiply: [
                                 {
-                                  $toDouble: "$$this.logged_hours", // Convert string to double
+                                  $toDouble: "$$this.logged_hours" // Convert string to double
                                 },
-                                60,
-                              ], // Convert hours to minutes
+                                60
+                              ] // Convert hours to minutes
                             },
                             {
-                              $toDouble: "$$this.logged_minutes", // Convert string to double
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
+                              $toDouble: "$$this.logged_minutes" // Convert string to double
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
             },
             {
               $lookup: {
@@ -1458,14 +1488,14 @@ exports.projectBugsDetailedData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$bug_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "comments",
-              },
+                as: "comments"
+              }
             },
             {
               $lookup: {
@@ -1477,14 +1507,14 @@ exports.projectBugsDetailedData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "bug_status_details",
-              },
+                as: "bug_status_details"
+              }
             },
             {
               $project: {
@@ -1506,7 +1536,7 @@ exports.projectBugsDetailedData = async (req, res) => {
                 bug_status_details: {
                   _id: 1,
                   title: 1,
-                  color: 1,
+                  color: 1
                 },
                 bug_labels: 1,
                 comments: { $size: "$comments" },
@@ -1514,25 +1544,25 @@ exports.projectBugsDetailedData = async (req, res) => {
                 task: {
                   _id: 1,
                   title: 1,
-                  taskId: 1,
+                  taskId: 1
                 },
                 total_logged_hours: {
                   // only hours
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
                 },
                 total_logged_minutes: {
-                  $mod: ["$totalLoggedTime", 60],
-                },
-              },
+                  $mod: ["$totalLoggedTime", 60]
+                }
+              }
             },
             {
-              $sort: { _id: -1 },
-            },
+              $sort: { _id: -1 }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $project: {
@@ -1541,15 +1571,15 @@ exports.projectBugsDetailedData = async (req, res) => {
           color: 1,
           bugs: 1,
           total_bugs: {
-            $size: "$bugs",
-          },
-        },
+            $size: "$bugs"
+          }
+        }
       },
       {
         $sort: {
-          sequence: 1,
-        },
-      },
+          sequence: 1
+        }
+      }
     ];
 
     const data = await ProjectBugsWorkFlowStatus.aggregate(mainQuery);
@@ -1567,7 +1597,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
     let common = {
       updatedBy: loginUserId,
       updatedAt: configs.utcDefault(),
-      ...(await getRefModelFromLoginUser(loginUser, true)),
+      ...(await getRefModelFromLoginUser(loginUser, true))
     };
     let updateObj = {}; // For task prop
 
@@ -1587,7 +1617,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
         createdBy: loginUserId,
         createdAt: configs.utcDefault(),
         ...(await getRefModelFromLoginUser(loginUser)),
-        ...common,
+        ...common
       };
 
       for (let i = 0; i < reqBody?.updated_key?.length; i++) {
@@ -1605,7 +1635,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.title,
-                  new_value: reqBody?.title,
+                  new_value: reqBody?.title
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1621,7 +1651,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.status,
-                  new_value: reqBody?.status,
+                  new_value: reqBody?.status
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1637,7 +1667,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.descriptions,
-                  new_value: reqBody?.descriptions,
+                  new_value: reqBody?.descriptions
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1663,7 +1693,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                 ) {
                   const previousTaskLabels = await ProjectBugLabels.find({
                     _id: { $in: perviousData?.bug_labels },
-                    isDeleted: false,
+                    isDeleted: false
                   });
                   previousTaskLabelsTitle = previousTaskLabels
                     .map((p) => p.title)
@@ -1673,7 +1703,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                 if (reqBody?.bug_labels && reqBody?.bug_labels.length > 0) {
                   const newTaskLabels = await ProjectBugLabels.find({
                     _id: { $in: reqBody?.bug_labels },
-                    isDeleted: false,
+                    isDeleted: false
                   });
                   newTaskLabelsTitle = newTaskLabels
                     .map((p) => p.title)
@@ -1684,7 +1714,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: previousTaskLabelsTitle,
-                  new_value: newTaskLabelsTitle,
+                  new_value: newTaskLabelsTitle
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1705,7 +1735,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.start_date,
-                  new_value: reqBody?.start_date,
+                  new_value: reqBody?.start_date
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1726,7 +1756,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.due_date,
-                  new_value: reqBody?.due_date,
+                  new_value: reqBody?.due_date
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1756,10 +1786,10 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: perviousData?.assignees?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   previous_assignee = previousAssignee
@@ -1772,10 +1802,10 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: reqBody?.assignees?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   new_assignee = newAssignee.map((n) => n.full_name).join(",");
@@ -1794,7 +1824,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: updateKey,
                   pervious_value: previous_assignee,
-                  new_value: new_assignee,
+                  new_value: new_assignee
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1825,10 +1855,10 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: perviousData?.pms_clients?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   previous_clients = previousAssignee
@@ -1841,10 +1871,10 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: reqBody?.pms_clients?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   new_clients = newAssignee.map((n) => n.full_name).join(",");
@@ -1863,7 +1893,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: updateKey,
                   pervious_value: previous_clients,
-                  new_value: new_clients,
+                  new_value: new_clients
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1880,7 +1910,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.estimated_hours,
-                  new_value: reqBody?.estimated_hours,
+                  new_value: reqBody?.estimated_hours
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1898,7 +1928,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.estimated_minutes,
-                  new_value: reqBody?.estimated_minutes,
+                  new_value: reqBody?.estimated_minutes
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1914,7 +1944,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.task_progress,
-                  new_value: reqBody?.task_progress,
+                  new_value: reqBody?.task_progress
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1979,9 +2009,9 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                             ...(await getRefModelFromLoginUser(
                               loginUserId,
                               true
-                            )),
-                          },
-                        ],
+                            ))
+                          }
+                        ]
                       }
                     : !perviousData?.bug_status && reqBody?.bug_status
                     ? {
@@ -1993,9 +2023,9 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                             ...(await getRefModelFromLoginUser(
                               loginUserId,
                               true
-                            )),
-                          },
-                        ],
+                            ))
+                          }
+                        ]
                       }
                     : perviousData?.bug_status &&
                       reqBody?.bug_status &&
@@ -2011,17 +2041,17 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                             ...(await getRefModelFromLoginUser(
                               loginUserId,
                               true
-                            )),
-                          },
-                        ],
+                            ))
+                          }
+                        ]
                       }
-                    : perviousData?.bug_status_history),
+                    : perviousData?.bug_status_history)
                 };
                 historyUpdateObj = {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: previousBugStatusTitle,
-                  new_value: newBugStatusTitle,
+                  new_value: newBugStatusTitle
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -2057,7 +2087,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: previousTaskTitle,
-                  new_value: newTaskTitle,
+                  new_value: newTaskTitle
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -2072,7 +2102,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
 
     return {
       updateObj,
-      historyUpdateArr,
+      historyUpdateArr
     };
   } catch (error) {
     console.log("🚀 ~ exports.getDataForBugUpdate= ~ error:", error);
@@ -2084,7 +2114,7 @@ exports.getHistory = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       _id: Joi.string().optional(),
-      bug_id: Joi.string().required(),
+      bug_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2101,9 +2131,9 @@ exports.getHistory = async (req, res) => {
       bug_id: new mongoose.Types.ObjectId(value.bug_id),
       ...(value?._id
         ? {
-            _id: new mongoose.Types.ObjectId(value._id),
+            _id: new mongoose.Types.ObjectId(value._id)
           }
-        : {}),
+        : {})
     };
 
     const mainQuery = [
@@ -2121,7 +2151,7 @@ exports.getHistory = async (req, res) => {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           createdAt: 1,
           updatedAt: 1,
@@ -2129,10 +2159,10 @@ exports.getHistory = async (req, res) => {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
-          },
-        },
-      },
+            client_img: 1
+          }
+        }
+      }
     ];
 
     let data = await ProjectTaskUpdateHistory.aggregate(mainQuery);
@@ -2492,7 +2522,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
     let matchQuery = {
       isDeleted: false,
       isRepeated: true,
-      project_id: new mongoose.Types.ObjectId(projectId),
+      project_id: new mongoose.Types.ObjectId(projectId)
     };
     const mainQuery = [
       {
@@ -2505,20 +2535,20 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -2530,20 +2560,20 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$subTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "sub_task",
-        },
+          as: "sub_task"
+        }
       },
       {
         $unwind: {
           path: "$sub_task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -2558,8 +2588,8 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                     {
                       $eq: [
                         "$project_id",
-                        new mongoose.Types.ObjectId(projectId),
-                      ],
+                        new mongoose.Types.ObjectId(projectId)
+                      ]
                     },
                     // {
                     //   $eq: [
@@ -2567,10 +2597,10 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                     //     new mongoose.Types.ObjectId(value.main_task_id),
                     //   ],
                     // },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
 
             {
@@ -2583,20 +2613,20 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$timesheet_id"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "timesheet",
-              },
+                as: "timesheet"
+              }
             },
             {
               $unwind: {
                 path: "$timesheet",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             ...(await getCreatedUpdatedDeletedByQuery()),
             {
@@ -2613,18 +2643,18 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                   _id: 1,
                   full_name: 1,
                   emp_img: 1,
-                  client_img: 1,
+                  client_img: 1
                 },
                 createdAt: 1,
                 timesheet: {
                   _id: 1,
-                  title: 1,
-                },
-              },
-            },
+                  title: 1
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
 
       {
@@ -2637,20 +2667,20 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2663,20 +2693,20 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status",
-        },
+          as: "bug_status"
+        }
       },
       {
         $unwind: {
           path: "$bug_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2689,14 +2719,14 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$bug_status_history"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status_history",
-        },
+          as: "bug_status_history"
+        }
       },
 
       {
@@ -2709,14 +2739,14 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$bugs_id", "$$bugs_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
 
       {
@@ -2729,14 +2759,14 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$bug_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_labels",
-        },
+          as: "bug_labels"
+        }
       },
 
       {
@@ -2751,14 +2781,14 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       { $match: matchQuery },
       {
@@ -2775,21 +2805,21 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.logged_hours", // Convert string to double
+                            $toDouble: "$$this.logged_hours" // Convert string to double
                           },
-                          60,
-                        ], // Convert hours to minutes
+                          60
+                        ] // Convert hours to minutes
                       },
                       {
-                        $toDouble: "$$this.logged_minutes", // Convert string to double
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
+                        $toDouble: "$$this.logged_minutes" // Convert string to double
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       {
         $project: {
@@ -2811,9 +2841,9 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
-                },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
+                }
               },
               ":",
               {
@@ -2824,19 +2854,19 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                         $cond: [
                           { $lt: [{ $mod: ["$totalLoggedTime", 60] }, 10] },
                           "0",
-                          "",
-                        ],
-                      },
+                          ""
+                        ]
+                      }
                     },
                     {
                       $toString: {
-                        $mod: ["$totalLoggedTime", 60],
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
+                        $mod: ["$totalLoggedTime", 60]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           },
           title: 1,
           project: "$project.title",
@@ -2856,23 +2886,23 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
                 _id: "$$assigneeId._id",
                 emp_img: "$$assigneeId.emp_img",
-                name: "$$assigneeId.full_name",
-              },
-            },
-          },
-        },
-      },
+                name: "$$assigneeId.full_name"
+              }
+            }
+          }
+        }
+      }
     ];
 
     let data = await ProjectBugs.aggregate(mainQuery);
@@ -2890,13 +2920,13 @@ exports.importBugsData = async (req, res) => {
       if (!req.files || !req.files.attachment) {
         return res.json({
           message: messages.IMPORT_FILE_NOT_FOUND,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       if (req.files.attachment.length !== 1) {
         return res.json({
           message: messages.SINGLE_FILE,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       const fileObj = req.files.attachment[0];
@@ -2909,7 +2939,7 @@ exports.importBugsData = async (req, res) => {
       if (!["xlsx", "xls", "csv"].includes(fileExt.toLowerCase())) {
         return res.json({
           message: messages.FILE_EXT,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       const dataPayload = jsonDataFromFile(fileObj);
@@ -2936,7 +2966,7 @@ exports.importBugsData = async (req, res) => {
         Issue: Joi.string().optional().allow(""),
         "Assignees Email": Joi.string().optional(),
         "Task Name": Joi.string().optional().allow(""),
-        "Created By Email": Joi.string().optional(),
+        "Created By Email": Joi.string().optional()
       });
       const payloadSchema = Joi.array().items(bugSchema).min(1).required();
       const { error, value } = payloadSchema.validate(dataPayload.parse);
@@ -2952,7 +2982,7 @@ exports.importBugsData = async (req, res) => {
 
       const bugStatus = await ProjectBugsWorkFlowStatus.findOne({
         title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
-        isDeleted: false,
+        isDeleted: false
       });
 
       for (const item of value) {
@@ -2969,7 +2999,7 @@ exports.importBugsData = async (req, res) => {
         const createdbyEmp = await Employees.find({
           email: createdByMail,
           isActivate: true,
-          isDeleted: false,
+          isDeleted: false
         }).select("_id emp_code full_name");
         if (createdbyEmp && createdbyEmp.length <= 0) {
           resp.push([{ record: item }, { error: "Created By User not found" }]);
@@ -2978,17 +3008,17 @@ exports.importBugsData = async (req, res) => {
         const bugExists = await ProjectBugs.find({
           title: item["Issue"],
           isDeleted: false,
-          project_id: req.body?.project_id,
+          project_id: req.body?.project_id
         });
         const isTask = await ProjectTasks.findOne({
           title: item["Task Name"],
           project_id: req.body?.project_id,
-          isDeleted: false,
+          isDeleted: false
         });
         if (bugExists.length > 0) {
           resp.push([
             { record: item },
-            { error: "Issue for this project already exists" },
+            { error: "Issue for this project already exists" }
           ]);
           continue;
         }
@@ -2999,7 +3029,7 @@ exports.importBugsData = async (req, res) => {
           employees = await Employees.find({
             email: { $in: assignees },
             isActivate: true,
-            isDeleted: false,
+            isDeleted: false
           }).select("_id emp_code full_name");
         }
 
@@ -3021,13 +3051,13 @@ exports.importBugsData = async (req, res) => {
                 bug_status: bugStatus?._id,
                 updatedBy: createdbyEmp[0]?._id,
                 updatedAt: configs.utcDefault(),
-                ...(await getRefModelFromLoginUser(req?.user, true)),
-              },
+                ...(await getRefModelFromLoginUser(req?.user, true))
+              }
             ],
             isImported: true,
             createdBy: createdbyEmp[0]?._id,
             updatedBy: createdbyEmp[0]?._id,
-            ...(await getRefModelFromLoginUser(createdbyEmp[0]?._id)),
+            ...(await getRefModelFromLoginUser(createdbyEmp[0]?._id))
           });
 
           data.push(await bugs.save());
@@ -3040,7 +3070,7 @@ exports.importBugsData = async (req, res) => {
         "Task Name",
         "Assignees Email",
         "Created By Email",
-        "Response Errors",
+        "Response Errors"
       ];
 
       // Generate CSV data
@@ -3056,7 +3086,7 @@ exports.importBugsData = async (req, res) => {
         "Created By Email": item[0].record["Created By Email"]
           ? item[0].record["Created By Email"]
           : "-",
-        "Response Errors": item[1].error,
+        "Response Errors": item[1].error
       }));
 
       let CSVData = [csvFields, ...csvData.map((ele) => Object.values(ele))];

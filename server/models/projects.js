@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { commonSchema } = require("../helpers/common");
 
 const ProjectSchema = new mongoose.Schema({
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   title: {
     type: String,
     required: true,
@@ -20,12 +21,6 @@ const ProjectSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  // technology: {
-  //   type: Schema.Types.ObjectId,
-  //   ref: "projecttechs",
-  //   default: null,
-  //   required: true,
-  // },
   technology: {
     type: [{ type: Schema.Types.ObjectId, ref: "projecttechs" }],
     default: [],

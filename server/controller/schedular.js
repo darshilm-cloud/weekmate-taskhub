@@ -48,12 +48,6 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
           as: "technology",
         },
       },
-      // {
-      //   $unwind: {
-      //     path: "$technology",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
       {
         $lookup: {
           from: "projecttypes",
@@ -106,15 +100,6 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
       },
 
       { $match: matchQuery },
-
-      //   {
-      //     $group: {
-      //       _id: "$manager",
-      //       projects: {
-      //         $push: "$$ROOT",
-      //       },
-      //     },
-      //   },
       {
         $lookup: {
           from: "employees",

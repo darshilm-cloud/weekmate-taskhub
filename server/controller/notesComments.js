@@ -19,6 +19,13 @@ const {
 
 exports.addComment = async (req, res, next) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+    
     const validationSchema = Joi.object({
       comment: Joi.allow("").optional().default(""),
       note_id: Joi.any(),
@@ -75,7 +82,7 @@ exports.addComment = async (req, res, next) => {
       );
     }
     // Mail for new comments add in task..
-    await sendmailNoteComments(newData._id);
+    await sendmailNoteComments(newData._id,decodedCompanyId);
 
     return successResponse(res, statusCode.CREATED, messages.CREATED, data);
   } catch (error) {

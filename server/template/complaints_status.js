@@ -1,4 +1,4 @@
-const { emailSenderForPMS, getPCandAMunderCEOIDtoexcludeCEOformail } = require("../helpers/common");
+const { emailSenderForPMS } = require("../helpers/common");
 
 
 class CompalaintStatusMail {
@@ -82,12 +82,7 @@ class CompalaintStatusMail {
                 // data?.managers_rm?.email,
                 // data?.acc_managers_rm?.email
             ];
-            if (data?.managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.managers_rm?.email);
-            }
-            if (data?.acc_managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.acc_managers_rm?.email);
-            }
+           
             if (!(["open", "in_progress"].includes(data?.status))) {
                 cc.push(process.env.DIRECTOR_EMAIL);
                 if (data?.complaints?.escalation_level === "level2") {
@@ -107,7 +102,7 @@ class CompalaintStatusMail {
         }
     };
 
-    newComplaintStatusResolutionFeedbackMailToClient = async (data) => {
+    newComplaintStatusResolutionFeedbackMailToClient = async (data, companyId) => {
         try {
             let html = `
                 <div style="font-family: Arial, sans-serif; color: #333;">
@@ -137,12 +132,8 @@ class CompalaintStatusMail {
                 subject: `Resolution Feedback for complaint of project - ${data?.project?.title}.`,
                 html,
             };
-
-            let cc = [];
-            if (['6627428b2cd9adde1a7ef5f8', '6641eb0b333ffa11fc45430f'].includes(data.technology._id.toString())) {
-                cc.push(process.env.SHLOK_EMAIL)
-              }
-            await emailSenderForPMS(data?.complaints?.client_email, mailData, cc);
+           
+            await emailSenderForPMS(companyId,data?.complaints?.client_email, mailData);
 
             return;
         } catch (error) {

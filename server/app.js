@@ -1,16 +1,16 @@
+var path = require("path");
+const dotenv = require("dotenv");
+const envFile =
+process.env.NODE_ENV === "development" ? ".env.dev" : ".env.prod";
+dotenv.config({ path: path.resolve(__dirname, `./env/${envFile}`) });
 require("./models"); // This should import your model
 var createError = require("http-errors");
 var express = require("express");
 const { engine } = require("express-handlebars");
-var path = require("path");
 var cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 var logger = require("morgan");
 var cors = require("cors");
-const dotenv = require("dotenv");
-const envFile =
-  process.env.NODE_ENV === "development" ? ".env.dev" : ".env.prod";
-dotenv.config({ path: path.resolve(__dirname, `./env/${envFile}`) });
 const { initModels, connect } = require("./helpers/database");
 const v1 = require("./routes/v1");
 const Configs = require("./configs");

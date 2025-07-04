@@ -25,6 +25,13 @@ const { checkUserIsSuperAdmin } = require("./authentication");
 //Add Review
 exports.addReview = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       client_name: Joi.string().required(),
@@ -54,7 +61,7 @@ exports.addReview = async (req, res) => {
     await data.save();
 
     let emailDetails = await this.getReviewsDetailsForMail(data._id);
-    await newReviewsMail(emailDetails)
+    await newReviewsMail(emailDetails, decodedCompanyId)
 
     return successResponse(
       res,

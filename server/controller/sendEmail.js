@@ -13,7 +13,7 @@ const Employees = mongoose.model("employees");
 const PMSClient = mongoose.model("pmsclients");
 const {
   mainTaskSubscriberMail,
-  deleteMainTaskSubscriberMail,
+  deleteMainTaskSubscriberMail
 } = require("../template/mainTask");
 const { assigneesMail } = require("../template/tasks");
 const { MailForTaskNewComments } = require("../template/comments");
@@ -26,19 +26,20 @@ const { MailForTopicComments } = require("../template/discussionTopicDetails");
 const { bugAssigneesMail } = require("../template/projectBugs");
 const {
   getCreatedUpdatedDeletedByQuery,
-  getClientQuery,
+  getClientQuery
 } = require("../helpers/common");
 
 // Add new list
 exports.subscribersMail = async (
   id,
   newAddedSubscriber = [],
-  newAddedClients = []
+  newAddedClients = [],
+  companyId
 ) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -51,20 +52,20 @@ exports.subscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -78,20 +79,20 @@ exports.subscribersMail = async (
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -103,14 +104,14 @@ exports.subscribersMail = async (
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$subscriberIds"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -125,20 +126,20 @@ exports.subscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$workflowId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workFlow",
-        },
+          as: "workFlow"
+        }
       },
       {
         $unwind: {
           path: "$workFlow",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -150,20 +151,20 @@ exports.subscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskStatus"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workFlowStatus",
-        },
+          as: "workFlowStatus"
+        }
       },
       {
         $unwind: {
           path: "$workFlowStatus",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       { $match: matchQuery },
       {
@@ -173,11 +174,11 @@ exports.subscribersMail = async (
           status: 1,
           workFlow: {
             _id: 1,
-            project_workflow: 1,
+            project_workflow: 1
           },
           workFlowStatus: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           manager: {
             _id: "$manager._id",
@@ -185,7 +186,7 @@ exports.subscribersMail = async (
             first_name: "$manager.first_name",
             last_name: "$manager.last_name",
             email: "$manager.email",
-            emp_img: "$manager.emp_img",
+            emp_img: "$manager.emp_img"
           },
           isPrivateList: 1,
           project: "$project",
@@ -196,7 +197,7 @@ exports.subscribersMail = async (
             last_name: "$createdBy.last_name",
             email: "$createdBy.email",
             emp_img: "$createdBy.emp_img",
-            client_img: "$createdBy.client_img",
+            client_img: "$createdBy.client_img"
           },
           updatedBy: {
             _id: "$updatedBy._id",
@@ -205,7 +206,7 @@ exports.subscribersMail = async (
             last_name: "$updatedBy.last_name",
             email: "$updatedBy.email",
             emp_img: "$updatedBy.emp_img",
-            client_img: "$updatedBy.client_img",
+            client_img: "$updatedBy.client_img"
           },
           subscribers: {
             $map: {
@@ -214,12 +215,12 @@ exports.subscribersMail = async (
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
@@ -234,29 +235,29 @@ exports.subscribersMail = async (
                             "$$subscriberId._id",
                             newAddedSubscriber.map(
                               (n) => new mongoose.Types.ObjectId(n)
-                            ),
-                          ],
+                            )
+                          ]
                         }
-                      : {}),
+                      : {})
                   },
                   then: {
                     _id: "$$subscriberId._id",
                     name: "$$subscriberId.full_name",
                     email: "$$subscriberId.email",
-                    emp_img: "$$subscriberId.emp_img",
+                    emp_img: "$$subscriberId.emp_img"
                   },
-                  else: null, // Or any other value you prefer for non-matching IDs
-                },
-              },
-            },
+                  else: null // Or any other value you prefer for non-matching IDs
+                }
+              }
+            }
           },
-          ...(await getClientQuery(true, newAddedClients)),
-        },
-      },
+          ...(await getClientQuery(true, newAddedClients))
+        }
+      }
     ];
 
     const data = await ProjectMainTasks.aggregate(mainQuery);
-    await mainTaskSubscriberMail(data[0]);
+    await mainTaskSubscriberMail(data[0], companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.subscribersMail= ~ e:", e);
@@ -265,13 +266,13 @@ exports.subscribersMail = async (
 };
 
 // Add new task
-exports.sendmailToAssignees = async (id, newAddedAssignees = []) => {
+exports.sendmailToAssignees = async (id, newAddedAssignees = [], companyId) => {
   try {
     const data = await this.taskData(id, newAddedAssignees); // await ProjectTasks.aggregate(mainQuery);
-    await assigneesMail(data, newAddedAssignees);
+    await assigneesMail(data, newAddedAssignees, companyId);
     return;
   } catch (e) {
-    console.log("🚀 ~ exports.sendmailToAssignees= ~ e:", e);
+    console.log("🚀 ~ exports.sendmailToAssignees= ~ e:", e)
     return e;
   }
 };
@@ -280,7 +281,7 @@ exports.taskData = async (id, newAddedAssignees = []) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -293,20 +294,20 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$main_task_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       {
         $unwind: {
           path: "$mainTask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -319,20 +320,20 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -349,20 +350,20 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -375,20 +376,20 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_status",
-        },
+          as: "task_status"
+        }
       },
       {
         $unwind: {
           path: "$task_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -401,14 +402,14 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$task_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "taskLabels",
-        },
+          as: "taskLabels"
+        }
       },
 
       {
@@ -423,14 +424,14 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
 
       ...(await getClientQuery()),
@@ -445,14 +446,14 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 $expr: {
                   $and: [
                     { $eq: ["$task_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
       { $match: matchQuery },
       {
@@ -470,7 +471,7 @@ exports.taskData = async (id, newAddedAssignees = []) => {
             first_name: 1,
             last_name: 1,
             email: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           start_date: 1,
           due_date: 1,
@@ -479,7 +480,7 @@ exports.taskData = async (id, newAddedAssignees = []) => {
           estimated_minutes: 1,
           task_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           task_status_history: 1,
           createdBy: {
@@ -489,7 +490,7 @@ exports.taskData = async (id, newAddedAssignees = []) => {
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           updatedBy: {
             _id: 1,
@@ -498,12 +499,12 @@ exports.taskData = async (id, newAddedAssignees = []) => {
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           mainTask: {
             _id: 1,
             title: 1,
-            isPrivateList: 1,
+            isPrivateList: 1
           },
           taskLabels: 1,
           assignees: {
@@ -513,12 +514,12 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
@@ -527,7 +528,7 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 first_name: "$$assigneeId.first_name",
                 last_name: "$$assigneeId.last_name",
                 email: "$$assigneeId.email",
-                emp_img: "$$assigneeId.emp_img",
+                emp_img: "$$assigneeId.emp_img"
                 // $cond: {
                 //   if: {
                 //     ...(newAddedAssignees.length > 0
@@ -549,13 +550,13 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 //   },
                 //   else: null, // Or any other value you prefer for non-matching IDs
                 // },
-              },
-            },
+              }
+            }
           },
           ...(await getClientQuery(true)),
-          attachments: 1,
-        },
-      },
+          attachments: 1
+        }
+      }
     ];
     const data = await ProjectTasks.aggregate(mainQuery);
     return data[0];
@@ -566,11 +567,11 @@ exports.taskData = async (id, newAddedAssignees = []) => {
 };
 
 // Add task comments
-exports.sendmailForNewComments = async (id) => {
+exports.sendmailForNewComments = async (id, companyId) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -583,20 +584,20 @@ exports.sendmailForNewComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -609,20 +610,20 @@ exports.sendmailForNewComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       {
         $unwind: {
           path: "$mainTask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -635,20 +636,20 @@ exports.sendmailForNewComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -663,20 +664,20 @@ exports.sendmailForNewComments = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       // {
@@ -706,37 +707,37 @@ exports.sendmailForNewComments = async (id) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       {
         $addFields: {
-          pms_clients: "$mainTask.pms_clients",
-        },
+          pms_clients: "$mainTask.pms_clients"
+        }
       },
       ...(await getClientQuery()),
       {
         $addFields: {
-          ...(await getClientQuery(true)),
-        },
+          ...(await getClientQuery(true))
+        }
       },
-      { $match: matchQuery },
+      { $match: matchQuery }
     ];
     const data = await CommentsModel.aggregate(mainQuery);
 
     if (data[0]?.taggedUsers && data[0].taggedUsers.length > 0) {
       const taggedEmp = await Employees.find({
-        _id: { $in: data[0].taggedUsers },
+        _id: { $in: data[0].taggedUsers }
       }).lean();
 
       const taggedClient = await PMSClient.find({
-        _id: { $in: data[0].taggedUsers },
+        _id: { $in: data[0].taggedUsers }
       }).lean();
 
       data[0].taggedUsers = [...taggedEmp, ...taggedClient];
@@ -744,20 +745,20 @@ exports.sendmailForNewComments = async (id) => {
       data[0].taggedUsers = [];
     }
 
-    await MailForTaskNewComments(data[0]);
+    await MailForTaskNewComments(data[0], companyId);
     return;
   } catch (e) {
-    console.log("🚀 ~ exports.sendmailToAssignees= ~ e:", e);
+    console.log("🚀 ~ exports.sendmailForNewComments= ~ e:", e)
     return e;
   }
 };
 
 // Add bug comments
-exports.sendmailForNewBugComments = async (id) => {
+exports.sendmailForNewBugComments = async (id, companyId) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -770,20 +771,20 @@ exports.sendmailForNewBugComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bugId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug",
-        },
+          as: "bug"
+        }
       },
       {
         $unwind: {
           path: "$bug",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -796,20 +797,20 @@ exports.sendmailForNewBugComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -822,20 +823,20 @@ exports.sendmailForNewBugComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -850,34 +851,34 @@ exports.sendmailForNewBugComments = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "employees",
           localField: "createdBy",
           foreignField: "_id",
-          as: "createdBy",
-        },
+          as: "createdBy"
+        }
       },
       {
         $unwind: {
           path: "$createdBy",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -892,53 +893,31 @@ exports.sendmailForNewBugComments = async (id) => {
                     { $in: ["$_id", "$$bugsIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
-
-      // {
-      //   $lookup: {
-      //     from: "employees",
-      //     let: { taggedUsersId: "$taggedUsers" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $eq: ["$_id", "$$taggedUsersId"] },
-      //               { $eq: ["$isDeleted", false] },
-      //               { $eq: ["$isSoftDeleted", false] },
-      //               { $eq: ["$isActivate", true] },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "taggedUsers",
-      //   },
-      // },
-      { $match: matchQuery },
+      { $match: matchQuery }
     ];
     const data = await BugsCommentsModel.aggregate(mainQuery);
 
     const taggedEmp = await Employees.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     const taggedClient = await PMSClient.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     data[0].taggedUsers = [...taggedEmp, ...taggedClient];
 
-    await MailForBugNewComments(data[0]);
+    await MailForBugNewComments(data[0], companyId);
     return;
   } catch (e) {
-    console.log("🚀 ~ exports.sendmailToAssignees= ~ e:", e);
+    console.log("🚀 ~ exports.sendmailForNewBugComments= ~ e:", e)
     return e;
   }
 };
@@ -946,12 +925,13 @@ exports.sendmailForNewBugComments = async (id) => {
 exports.noteSubscribersMail = async (
   id,
   newAddedSubscriber = [],
-  newAddedClients = []
+  newAddedClients = [],
+  companyId
 ) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -964,20 +944,20 @@ exports.noteSubscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -992,20 +972,20 @@ exports.noteSubscribersMail = async (
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1020,14 +1000,14 @@ exports.noteSubscribersMail = async (
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -1042,20 +1022,20 @@ exports.noteSubscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$notebookId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "notebook",
-        },
+          as: "notebook"
+        }
       },
       {
         $unwind: {
           path: "$notebook",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       { $match: matchQuery },
       {
@@ -1065,7 +1045,7 @@ exports.noteSubscribersMail = async (
           title: 1,
           notebook: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           manager: {
             _id: "$manager._id",
@@ -1073,7 +1053,7 @@ exports.noteSubscribersMail = async (
             first_name: "$manager.first_name",
             last_name: "$manager.last_name",
             email: "$manager.email",
-            emp_img: "$manager.emp_img",
+            emp_img: "$manager.emp_img"
           },
           isPrivate: 1,
           project: "$project",
@@ -1084,7 +1064,7 @@ exports.noteSubscribersMail = async (
             last_name: "$createdBy.last_name",
             email: "$createdBy.email",
             emp_img: "$createdBy.emp_img",
-            client_img: "$createdBy.client_img",
+            client_img: "$createdBy.client_img"
           },
           subscribers: {
             $map: {
@@ -1093,12 +1073,12 @@ exports.noteSubscribersMail = async (
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
@@ -1113,10 +1093,10 @@ exports.noteSubscribersMail = async (
                             "$$subscriberId._id",
                             newAddedSubscriber.map(
                               (n) => new mongoose.Types.ObjectId(n)
-                            ),
-                          ],
+                            )
+                          ]
                         }
-                      : { $eq: ["$$subscriberId.isDeleted", false] }),
+                      : { $eq: ["$$subscriberId.isDeleted", false] })
                   },
                   then: {
                     _id: "$$subscriberId._id",
@@ -1124,19 +1104,19 @@ exports.noteSubscribersMail = async (
                     first_name: "$subscriberId.first_name",
                     last_name: "$subscriberId.last_name",
                     email: "$$subscriberId.email",
-                    emp_img: "$$subscriberId.emp_img",
+                    emp_img: "$$subscriberId.emp_img"
                   },
-                  else: null, // Or any other value you prefer for non-matching IDs
-                },
-              },
-            },
+                  else: null // Or any other value you prefer for non-matching IDs
+                }
+              }
+            }
           },
-          ...(await getClientQuery(true, newAddedClients)),
-        },
-      },
+          ...(await getClientQuery(true, newAddedClients))
+        }
+      }
     ];
     const data = await NoteModel.aggregate(mainQuery);
-    await noteSubscriberMail(data[0]);
+    await noteSubscriberMail(data[0], companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.noteSubscribersMail= ~ e:", e);
@@ -1145,11 +1125,11 @@ exports.noteSubscribersMail = async (
 };
 
 // Add task comments
-exports.sendmailNoteComments = async (id) => {
+exports.sendmailNoteComments = async (id, companyId) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -1162,20 +1142,20 @@ exports.sendmailNoteComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$noteId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "note",
-        },
+          as: "note"
+        }
       },
       {
         $unwind: {
           path: "$note",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1188,20 +1168,20 @@ exports.sendmailNoteComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$notebookId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "notebook",
-        },
+          as: "notebook"
+        }
       },
       {
         $unwind: {
           path: "$notebook",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1214,20 +1194,20 @@ exports.sendmailNoteComments = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1242,34 +1222,34 @@ exports.sendmailNoteComments = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "employees",
           localField: "createdBy",
           foreignField: "_id",
-          as: "createdBy",
-        },
+          as: "createdBy"
+        }
       },
       {
         $unwind: {
           path: "$createdBy",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1284,14 +1264,14 @@ exports.sendmailNoteComments = async (id) => {
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
 
       // {
@@ -1315,19 +1295,19 @@ exports.sendmailNoteComments = async (id) => {
       //     as: "taggedUsers",
       //   },
       // },
-      { $match: matchQuery },
+      { $match: matchQuery }
     ];
     const data = await NoteCommentsModel.aggregate(mainQuery);
 
     const taggedEmp = await Employees.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     const taggedClient = await PMSClient.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     data[0].taggedUsers = [...taggedEmp, ...taggedClient];
 
-    await mailForNoteComments(data[0]);
+    await mailForNoteComments(data[0], companyId);
     return;
   } catch (e) {
     console.log("🚀 ~ exports.sendmailNoteComments= ~ e:", e);
@@ -1336,10 +1316,10 @@ exports.sendmailNoteComments = async (id) => {
 };
 
 // Delete main task...
-exports.deleteMainTaskManagerMail = async (id) => {
+exports.deleteMainTaskManagerMail = async (id, companyId) => {
   try {
     let matchQuery = {
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -1352,20 +1332,20 @@ exports.deleteMainTaskManagerMail = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1380,20 +1360,20 @@ exports.deleteMainTaskManagerMail = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
       { $match: matchQuery },
@@ -1407,7 +1387,7 @@ exports.deleteMainTaskManagerMail = async (id) => {
             first_name: "$manager.first_name",
             last_name: "$manager.last_name",
             email: "$manager.email",
-            emp_img: "$manager.emp_img",
+            emp_img: "$manager.emp_img"
           },
           isPrivate: 1,
           project: "$project",
@@ -1418,13 +1398,13 @@ exports.deleteMainTaskManagerMail = async (id) => {
             last_name: "$deletedBy.last_name",
             email: "$deletedBy.email",
             emp_img: "$deletedBy.emp_img",
-            client_img: "$deletedBy.client_img",
-          },
-        },
-      },
+            client_img: "$deletedBy.client_img"
+          }
+        }
+      }
     ];
     const data = await ProjectMainTasks.aggregate(mainQuery);
-    await deleteMainTaskSubscriberMail(data[0]);
+    await deleteMainTaskSubscriberMail(data[0], companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.noteSubscribersMail= ~ e:", e);
@@ -1436,12 +1416,13 @@ exports.deleteMainTaskManagerMail = async (id) => {
 exports.subscribersMailForNewFileUploaded = async (
   fileIds,
   updatedSub = [],
-  newAddedClients = []
+  newAddedClients = [],
+  companyId
 ) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: { $in: fileIds },
+      _id: { $in: fileIds }
     };
     const mainQuery = [
       {
@@ -1454,20 +1435,20 @@ exports.subscribersMailForNewFileUploaded = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1481,20 +1462,20 @@ exports.subscribersMailForNewFileUploaded = async (
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1506,20 +1487,20 @@ exports.subscribersMailForNewFileUploaded = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$folder_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "folder",
-        },
+          as: "folder"
+        }
       },
       {
         $unwind: {
           path: "$folder",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1531,14 +1512,14 @@ exports.subscribersMailForNewFileUploaded = async (
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$subscriberIds"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -1551,7 +1532,7 @@ exports.subscribersMailForNewFileUploaded = async (
           name: 1,
           folder: {
             _id: 1,
-            name: 1,
+            name: 1
           },
           manager: {
             _id: "$manager._id",
@@ -1559,13 +1540,13 @@ exports.subscribersMailForNewFileUploaded = async (
             first_name: "$manager.first_name",
             last_name: "$manager.last_name",
             email: "$manager.email",
-            emp_img: "$manager.emp_img",
+            emp_img: "$manager.emp_img"
           },
           project: {
             _id: 1,
             title: 1,
             projectId: 1,
-            color: 1,
+            color: 1
           },
           createdBy: {
             _id: "$createdBy._id",
@@ -1573,7 +1554,7 @@ exports.subscribersMailForNewFileUploaded = async (
             first_name: "$createdBy.first_name",
             last_name: "$createdBy.last_name",
             email: "$createdBy.email",
-            emp_img: "$createdBy.emp_img",
+            emp_img: "$createdBy.emp_img"
           },
           updatedBy: {
             _id: "$updatedBy._id",
@@ -1581,7 +1562,7 @@ exports.subscribersMailForNewFileUploaded = async (
             first_name: "$updatedBy.first_name",
             last_name: "$updatedBy.last_name",
             email: "$updatedBy.email",
-            emp_img: "$updatedBy.emp_img",
+            emp_img: "$updatedBy.emp_img"
           },
           subscribers: {
             $map: {
@@ -1590,12 +1571,12 @@ exports.subscribersMailForNewFileUploaded = async (
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
@@ -1604,12 +1585,12 @@ exports.subscribersMailForNewFileUploaded = async (
                 first_name: "$subscriberId.first_name",
                 last_name: "$subscriberId.last_name",
                 email: "$$subscriberId.email",
-                emp_img: "$$subscriberId.emp_img",
-              },
-            },
+                emp_img: "$$subscriberId.emp_img"
+              }
+            }
           },
-          ...(await getClientQuery(true, newAddedClients)),
-        },
+          ...(await getClientQuery(true, newAddedClients))
+        }
       },
       {
         $group: {
@@ -1624,15 +1605,15 @@ exports.subscribersMailForNewFileUploaded = async (
           attachments: {
             $push: {
               path: "$path",
-              name: "$name",
-            },
-          },
-        },
-      },
+              name: "$name"
+            }
+          }
+        }
+      }
     ];
 
     const data = await FileUploads.aggregate(mainQuery);
-    await newFileUploadSubscriberMail(data[0] || {}, updatedSub);
+    await newFileUploadSubscriberMail(data[0] || {}, updatedSub, companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.subscribersMail= ~ e:", e);
@@ -1644,12 +1625,13 @@ exports.subscribersMailForNewFileUploaded = async (
 exports.discussionsTopicSubscribersMail = async (
   id,
   newAddedSubscriber = [],
-  newAddedClients = []
+  newAddedClients = [],
+  companyId
 ) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -1662,20 +1644,20 @@ exports.discussionsTopicSubscribersMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1690,20 +1672,20 @@ exports.discussionsTopicSubscribersMail = async (
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1718,14 +1700,14 @@ exports.discussionsTopicSubscribersMail = async (
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -1740,7 +1722,7 @@ exports.discussionsTopicSubscribersMail = async (
             email: "$manager.email",
             emp_img: "$manager.emp_img",
             first_name: "$manager.first_name",
-            last_name: "$manager.last_name",
+            last_name: "$manager.last_name"
           },
           isPrivate: 1,
           project: "$project",
@@ -1750,7 +1732,7 @@ exports.discussionsTopicSubscribersMail = async (
             first_name: "$createdBy.first_name",
             last_name: "$createdBy.last_name",
             email: "$createdBy.email",
-            emp_img: "$createdBy.emp_img",
+            emp_img: "$createdBy.emp_img"
           },
           subscribers: {
             $map: {
@@ -1759,12 +1741,12 @@ exports.discussionsTopicSubscribersMail = async (
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
@@ -1779,10 +1761,10 @@ exports.discussionsTopicSubscribersMail = async (
                             "$$subscriberId._id",
                             newAddedSubscriber.map(
                               (n) => new mongoose.Types.ObjectId(n)
-                            ),
-                          ],
+                            )
+                          ]
                         }
-                      : { $eq: ["$$subscriberId.isDeleted", false] }),
+                      : { $eq: ["$$subscriberId.isDeleted", false] })
                   },
                   then: {
                     _id: "$$subscriberId._id",
@@ -1790,21 +1772,21 @@ exports.discussionsTopicSubscribersMail = async (
                     last_name: "$$subscriberId.last_name",
                     name: "$$subscriberId.full_name",
                     email: "$$subscriberId.email",
-                    emp_img: "$$subscriberId.emp_img",
+                    emp_img: "$$subscriberId.emp_img"
                   },
-                  else: null, // Or any other value you prefer for non-matching IDs
-                },
-              },
-            },
+                  else: null // Or any other value you prefer for non-matching IDs
+                }
+              }
+            }
           },
-          ...(await getClientQuery(true, newAddedClients)),
-        },
-      },
+          ...(await getClientQuery(true, newAddedClients))
+        }
+      }
     ];
 
     const data = await DiscussionsTopics.aggregate(mainQuery);
 
-    await topicSubscriberMail(data[0]);
+    await topicSubscriberMail(data[0], companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.discussionsTopicSubscribersMail= ~ e:", e);
@@ -1813,11 +1795,11 @@ exports.discussionsTopicSubscribersMail = async (
 };
 
 // Tagged users in topic details...
-exports.sendmailForNewCommentsInTopic = async (id) => {
+exports.sendmailForNewCommentsInTopic = async (id, companyId) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -1830,20 +1812,20 @@ exports.sendmailForNewCommentsInTopic = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$topicId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "topic",
-        },
+          as: "topic"
+        }
       },
       {
         $unwind: {
           path: "$topic",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1856,20 +1838,20 @@ exports.sendmailForNewCommentsInTopic = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1884,20 +1866,20 @@ exports.sendmailForNewCommentsInTopic = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       // {
@@ -1922,31 +1904,31 @@ exports.sendmailForNewCommentsInTopic = async (id) => {
       //   },
       // },
 
-      { $match: matchQuery },
+      { $match: matchQuery }
     ];
     const data = await DiscussionsTopicDetails.aggregate(mainQuery);
 
     const taggedEmp = await Employees.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     const taggedClient = await PMSClient.find({
-      _id: { $in: data[0].taggedUsers },
+      _id: { $in: data[0].taggedUsers }
     }).lean();
     data[0].taggedUsers = [...taggedEmp, ...taggedClient];
 
-    await MailForTopicComments(data[0]);
+    await MailForTopicComments(data[0], companyId);
     return;
   } catch (e) {
-    console.log("🚀 ~ exports.sendmailToAssignees= ~ e:", e);
+    console.log("🚀 ~ exports.sendmailForNewCommentsInTopic= ~ e:", e)
     return e;
   }
 };
 
 // bugs mail...
-exports.mailForBugAssignees = async (id, newAddedAssignees = []) => {
+exports.mailForBugAssignees = async (id, newAddedAssignees = [], companyId) => {
   try {
     const data = await this.getProjectBugsData(id);
-    await bugAssigneesMail(data, newAddedAssignees);
+    await bugAssigneesMail(data, newAddedAssignees, companyId);
     return data;
   } catch (e) {
     console.log("🚀 ~ exports.mailForBugAssignees= ~ e:", e);
@@ -1959,7 +1941,7 @@ exports.getProjectBugsData = async (id) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(id),
+      _id: new mongoose.Types.ObjectId(id)
     };
     const mainQuery = [
       {
@@ -1972,20 +1954,20 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1998,20 +1980,20 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$sub_task_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subTask",
-        },
+          as: "subTask"
+        }
       },
       {
         $unwind: {
           path: "$subTask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2024,20 +2006,20 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       ...(await getCreatedUpdatedDeletedByQuery("updatedBy")),
@@ -2053,20 +2035,20 @@ exports.getProjectBugsData = async (id) => {
                     { $eq: ["$_id", "$$managerId"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2079,20 +2061,20 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status",
-        },
+          as: "bug_status"
+        }
       },
       {
         $unwind: {
           path: "$bug_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -2105,14 +2087,14 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$bug_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugLabels",
-        },
+          as: "bugLabels"
+        }
       },
 
       {
@@ -2127,14 +2109,14 @@ exports.getProjectBugsData = async (id) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       ...(await getClientQuery()),
       {
@@ -2147,14 +2129,14 @@ exports.getProjectBugsData = async (id) => {
                 $expr: {
                   $and: [
                     { $eq: ["$bugs_id", "$$bugId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
       { $match: matchQuery },
       {
@@ -2172,7 +2154,7 @@ exports.getProjectBugsData = async (id) => {
             first_name: 1,
             last_name: 1,
             email: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           start_date: 1,
           due_date: 1,
@@ -2181,7 +2163,7 @@ exports.getProjectBugsData = async (id) => {
           estimated_minutes: 1,
           bug_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           bug_status_history: 1,
           createdBy: {
@@ -2191,7 +2173,7 @@ exports.getProjectBugsData = async (id) => {
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           updatedBy: {
             _id: 1,
@@ -2200,15 +2182,15 @@ exports.getProjectBugsData = async (id) => {
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           task: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           subTask: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           bugLabels: 1,
           assignees: {
@@ -2218,12 +2200,12 @@ exports.getProjectBugsData = async (id) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
@@ -2232,14 +2214,14 @@ exports.getProjectBugsData = async (id) => {
                 first_name: "$$assigneeId.first_name",
                 last_name: "$$assigneeId.last_name",
                 email: "$$assigneeId.email",
-                emp_img: "$$assigneeId.emp_img",
-              },
-            },
+                emp_img: "$$assigneeId.emp_img"
+              }
+            }
           },
           ...(await getClientQuery(true)),
-          attachments: 1,
-        },
-      },
+          attachments: 1
+        }
+      }
     ];
     const data = await ProjectTaskBugs.aggregate(mainQuery);
     return data[0];

@@ -1,10 +1,9 @@
-const { emailSenderForPMS, getPCandAMunderCEOIDtoexcludeCEOformail } = require("../helpers/common");
+const { emailSenderForPMS } = require("../helpers/common");
 
 class FeedBacksMail {
-    newFeedbackMail = async (data) => {
-        console.log("🚀 ~ FeedBacksMail ~ newFeedbackMail= ~ data:", data)
-        try {
-            let html = `
+  newFeedbackMail = async (data, companyId) => {
+    try {
+      let html = `
             <div style="font-family: Arial, sans-serif; color: #333;">
                 <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; width:70%;">
                     <p style="margin-top: 0; ">Dear Team,</p>
@@ -61,35 +60,21 @@ class FeedBacksMail {
             </div>
         `;
 
+      const mailData = {
+        subject: `Resolution Feedback recevied for complaint by ${data?.client_name} for project, ${data?.project?.title}`,
+        html
+      };
 
-            const mailData = {
-                subject: `Resolution Feedback recevied for complaint by ${data?.client_name} for project, ${data?.project?.title}`,
-                html,
-            };
+      let cc = [process.env.DIRECTOR_EMAIL, data?.acc_manager?.email];
 
-            let cc = [
-                process.env.DIRECTOR_EMAIL,
-                data?.acc_manager?.email,
-                // data?.managers_rm?.email,
-                // data?.acc_managers_rm?.email,
-            ];
-            if (data?.managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.managers_rm?.email);
-            }
-            if (data?.acc_managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.acc_managers_rm?.email);
-            }
-            if (data?.complaint?.escalation_level == "level2") {
-                cc.push(process.env.CEO_EMAIL);
-            }
-
-
-            await emailSenderForPMS(data?.manager?.email, mailData, cc);
-        } catch (error) {
-            console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
-        }
-    };
-
+      if (data?.complaint?.escalation_level == "level2") {
+        cc.push(process.env.CEO_EMAIL);
+    }
+      await emailSenderForPMS(companyId, data?.manager?.email, mailData, cc);
+    } catch (error) {
+      console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
+    }
+  };
 }
 
 module.exports = new FeedBacksMail();

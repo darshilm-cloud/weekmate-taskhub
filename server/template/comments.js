@@ -1,10 +1,9 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName, getExcpetionalProjects } = require("../helpers/common");
+const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.MailForTaskNewComments = async (data) => {
+exports.MailForTaskNewComments = async (data, companyId) => {
   try {
     let commentsIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-comments.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -81,26 +80,29 @@ exports.MailForTaskNewComments = async (data) => {
                   <tbody>
                     <tr>
                       <td>
-                        <span style=" background-color: ${data?.project?.color
-      }; width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin-right: 10px; "></span>
-                        <span style=" font-size: 22px; color: #000000; line-height: 130%; font-weight: 500; ">${data?.project?.title
-      }</span>
+                        <span style=" background-color: ${
+                          data?.project?.color
+                        }; width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin-right: 10px; "></span>
+                        <span style=" font-size: 22px; color: #000000; line-height: 130%; font-weight: 500; ">${
+                          data?.project?.title
+                        }</span>
                       </td>
                     </tr>
                     <tr>
                       <td valign="top" style="padding: 15px 0 0 0">
                         <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
-                          <img src=${data.manager && data.manager.emp_img !== ""
-        ? process.env.HRMS_IMG_SERVER_URL +
-        data.manager.emp_img
-        : process.env.UPLOADS_URL +
-        "defaultProfile/default-profile.png"
-      } alt="" width="30" height="30" style="border-radius: 50%; margin-right: 10px">
+                          <img src=${
+                            data.manager && data.manager.emp_img !== ""
+                              ? process.env.HRMS_IMG_SERVER_URL +
+                                data.manager.emp_img
+                              : process.env.UPLOADS_URL +
+                                "defaultProfile/default-profile.png"
+                          } alt="" width="30" height="30" style="border-radius: 50%; margin-right: 10px">
                         </div>
                         <div style=" display: inline-block; max-width: 450px; vertical-align: top; margin-right: 7px; line-height: 100%; font-size: 14px; ">
                           <div style=" white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 140px; ">${getUserName(
-        data?.manager
-      )}</div>
+                            data?.manager
+                          )}</div>
                           <i style=" display: block; color: rgba(0, 0, 0, 0.5); font-size: 13px; ">Manager</i>
                         </div>
                       </td>
@@ -118,10 +120,11 @@ exports.MailForTaskNewComments = async (data) => {
                         <b>List:</b>
                       </td>
                       <td valign="middle" align="left" width="100%" style="font-size: 14px">
-                      ${data?.mainTask?.isPrivateList
-        ? `<img src='${privateIcon}' alt="private Icon" style="margin-right: 5px; vertical-align: middle" />`
-        : ""
-      }
+                      ${
+                        data?.mainTask?.isPrivateList
+                          ? `<img src='${privateIcon}' alt="private Icon" style="margin-right: 5px; vertical-align: middle" />`
+                          : ""
+                      }
                        ${data.mainTask?.title}
                       </td>
                     </tr>
@@ -151,20 +154,21 @@ exports.MailForTaskNewComments = async (data) => {
                             border-radius: 50%;
                             overflow: hidden;
                           ">
-                          <img src=${data?.createdBy &&
-        data?.createdBy?.emp_img &&
-        data.createdBy.emp_img !== ""
-        ? process.env.HRMS_IMG_SERVER_URL +
-        data.createdBy.emp_img
-        : process.env.UPLOADS_URL +
-        "defaultProfile/default-profile.png"
-      } width="30" height="30" style="border-radius: 50%; margin-right: 10px" />
+                          <img src=${
+                            data?.createdBy &&
+                            data?.createdBy?.emp_img &&
+                            data.createdBy.emp_img !== ""
+                              ? process.env.HRMS_IMG_SERVER_URL +
+                                data.createdBy.emp_img
+                              : process.env.UPLOADS_URL +
+                                "defaultProfile/default-profile.png"
+                          } width="30" height="30" style="border-radius: 50%; margin-right: 10px" />
                         </div>
                       </td>
                       <td valign="meddile" style="color: #333; font-weight: 200; font-size: 16px">
                         <b>${getUserName(
-        data?.createdBy
-      )}</b> has <b>added a comment</b> to the task:
+                          data?.createdBy
+                        )}</b> has <b>added a comment</b> to the task:
                       </td>
                     </tr>
                   </tbody>
@@ -213,11 +217,12 @@ exports.MailForTaskNewComments = async (data) => {
                     <tr>
                       <td width="55" valign="top" align="left"></td>
                       <td valign="middle">
-                      <a href="${process.env.REACT_URL +
-      "project/app/" +
-      data?.project?._id +
-      `?tab=Tasks&listID=${data?.mainTask?._id}&taskID=${data?.task._id}`
-      }" style="
+                      <a href="${
+                        process.env.REACT_URL +
+                        "project/app/" +
+                        data?.project?._id +
+                        `?tab=Tasks&listID=${data?.mainTask?._id}&taskID=${data?.task._id}`
+                      }" style="
                           color: #fff;
                           display: inline-block;
                           font-size: 17px;
@@ -245,9 +250,10 @@ exports.MailForTaskNewComments = async (data) => {
                 <b>This email was sent to you because:</b>
                 <br />
                 <b>${getUserName(
-        data?.createdBy
-      )}</b> has <b>added a comment</b> to the task: <b>${data?.task?.title
-      } <i>(${data?.task?.taskId})</i>
+                  data?.createdBy
+                )}</b> has <b>added a comment</b> to the task: <b>${
+      data?.task?.title
+    } <i>(${data?.task?.taskId})</i>
                 </b>
                 <br />
               </td>
@@ -263,142 +269,67 @@ exports.MailForTaskNewComments = async (data) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] A comment has been added to a task - ${data?.project?.projectId}`,
-      html,
+      html
     };
-    let project_id = data?.task?.project_id.toString();
-    let project_ids = await getExcpetionalProjects();
-    // This change is made as for Project named Smart Dental Care , we don't need to notify all .. and for other projects we need to notify all (case :- when nobody is mentioned.. )
-    if (!(project_ids.includes(project_id))) {
-      data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
-      data.assignees = data.assignees.filter((s) => s !== null);
-      data.pms_clients = data.pms_clients.filter((s) => s !== null);
 
-      // to get mailSettings of manager and taggedUsers..
-      const mailSettings = await MailSettings.find({
-        $or: [
-          { createdBy: data?.project?.manager },
-          { createdBy: { $in: data?.taggedUsers.map((ele) => ele._id) } },
-          { createdBy: { $in: data?.assignees.map((ele) => ele._id) } },
-          { createdBy: { $in: data?.pms_clients.map((ele) => ele._id) } },
-        ],
-      });
+    data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
+    data.assignees = data.assignees.filter((s) => s !== null);
+    data.pms_clients = data.pms_clients.filter((s) => s !== null);
 
-      // to get mailSettings of taggedUsers and manager as of task_tagged_comments setting being true..
-      let mailSettingsData = mailSettings.filter(
-        (ele) => ele.task_tagged_comments
-      );
+    // to get mailSettings of manager and taggedUsers..
+    const mailSettings = await MailSettings.find({
+      $or: [
+        { createdBy: data?.project?.manager },
+        { createdBy: { $in: data?.taggedUsers.map((ele) => ele._id) } },
+        { createdBy: { $in: data?.assignees.map((ele) => ele._id) } },
+        { createdBy: { $in: data?.pms_clients.map((ele) => ele._id) } }
+      ]
+    });
 
-      // to get mailSettings of taggedUsers and manager as of sending mail after 4 hours setting.
-      let querymailSettingsData = mailSettings.filter((ele) => ele.quarterlyMail);
-      // console.log(
-      //   "🚀 ~ exports.MailForTaskNewComments= ~ querymailSettingsData:",
-      //   querymailSettingsData
-      // );
+    // to get mailSettings of taggedUsers and manager as of task_tagged_comments setting being true..
+    let mailSettingsData = mailSettings.filter(
+      (ele) => ele.task_tagged_comments
+    );
 
-      let mails = [
-        ...data.assignees.map((a) => a),
-        ...data.pms_clients.map((a) => a),
-        ...data.taggedUsers.map((t) => t),
-        data?.manager,
-      ];
+    // to get mailSettings of taggedUsers and manager as of sending mail after 4 hours setting.
+    let querymailSettingsData = mailSettings.filter((ele) => ele.quarterlyMail);
 
-      // to get that taggedUsers and manager mailids whose mail setting for task_tagged_comments is true
-      let uniqueMails = new Set(
-        mails
-          .filter((s) =>
-            mailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
-          )
-          .map((mail) => mail.email)
-      );
-      //to get that taggedUsers and manager mailids whose mail setting for quarterlyMail is true
-      let quarterlyuniqueMails = new Set(
-        mails
-          .filter((s) =>
-            querymailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
-          )
-          .map((mail) => mail.email)
-      );
+    let mails = [
+      ...data.assignees.map((a) => a),
+      ...data.pms_clients.map((a) => a),
+      ...data.taggedUsers.map((t) => t),
+      data?.manager
+    ];
 
-      let mailIds = [...uniqueMails].filter((m) => m !== data?.createdBy?.email);
-      let quarterlymailIds = [...quarterlyuniqueMails].filter(
-        (m) => m !== data?.createdBy?.email
-      );
+    // to get that taggedUsers and manager mailids whose mail setting for task_tagged_comments is true
+    let uniqueMails = new Set(
+      mails
+        .filter((s) =>
+          mailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
+        )
+        .map((mail) => mail.email)
+    );
+    //to get that taggedUsers and manager mailids whose mail setting for quarterlyMail is true
+    let quarterlyuniqueMails = new Set(
+      mails
+        .filter((s) =>
+          querymailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
+        )
+        .map((mail) => mail.email)
+    );
 
-      if (mailIds.length > 0) {
-        // to send mail to all whose settings allow to send mail
-        await emailSenderForPMS(mailIds, mailData, []);
-      }
-      if (quarterlymailIds.length > 0) {
-        // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-        await mailsToQuarterHours(quarterlymailIds, mailData);
-      }
+    let mailIds = [...uniqueMails].filter((m) => m !== data?.createdBy?.email);
+    let quarterlymailIds = [...quarterlyuniqueMails].filter(
+      (m) => m !== data?.createdBy?.email
+    );
+
+    if (mailIds.length > 0) {
+      // to send mail to all whose settings allow to send mail
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
-    else{
-
-      data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
-      // data.assignees = data.assignees.filter((s) => s !== null);
-      // data.pms_clients = data.pms_clients.filter((s) => s !== null);
-
-      // to get mailSettings of manager and taggedUsers..
-      const mailSettings = await MailSettings.find({
-        $or: [
-          { createdBy: data?.project?.manager },
-          { createdBy: { $in: data?.taggedUsers.map((ele) => ele._id) } },
-          // { createdBy: { $in: data?.assignees.map((ele) => ele._id) } },
-          // { createdBy: { $in: data?.pms_clients.map((ele) => ele._id) } },
-        ],
-      });
-
-      // to get mailSettings of taggedUsers and manager as of task_tagged_comments setting being true..
-      let mailSettingsData = mailSettings.filter(
-        (ele) => ele.task_tagged_comments
-      );
-
-      // to get mailSettings of taggedUsers and manager as of sending mail after 4 hours setting.
-      let querymailSettingsData = mailSettings.filter((ele) => ele.quarterlyMail);
-      // console.log(
-      //   "🚀 ~ exports.MailForTaskNewComments= ~ querymailSettingsData:",
-      //   querymailSettingsData
-      // );
-
-      let mails = [
-        // ...data.assignees.map((a) => a),
-        // ...data.pms_clients.map((a) => a),
-        ...data.taggedUsers.map((t) => t),
-        data?.manager,
-      ];
-
-      // to get that taggedUsers and manager mailids whose mail setting for task_tagged_comments is true
-      let uniqueMails = new Set(
-        mails
-          .filter((s) =>
-            mailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
-          )
-          .map((mail) => mail.email)
-      );
-      //to get that taggedUsers and manager mailids whose mail setting for quarterlyMail is true
-      let quarterlyuniqueMails = new Set(
-        mails
-          .filter((s) =>
-            querymailSettingsData?.some((mail) => mail.createdBy.equals(s._id))
-          )
-          .map((mail) => mail.email)
-      );
-
-      let mailIds = [...uniqueMails].filter((m) => m !== data?.createdBy?.email);
-      let quarterlymailIds = [...quarterlyuniqueMails].filter(
-        (m) => m !== data?.createdBy?.email
-      );
-
-      if (mailIds.length > 0) {
-        // to send mail to all whose settings allow to send mail
-        await emailSenderForPMS(mailIds, mailData, []);
-      }
-      if (quarterlymailIds.length > 0) {
-        // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-        await mailsToQuarterHours(quarterlymailIds, mailData);
-      }
-    
+    if (quarterlymailIds.length > 0) {
+      // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {

@@ -1,8 +1,8 @@
-const { emailSenderForPMS, getPCandAMunderCEOIDtoexcludeCEOformail } = require("../helpers/common");
+const { emailSenderForPMS } = require("../helpers/common");
 
 
 class CompalaintComplaintsMail {
-    newComplaintCommentsMail = async (data) => {
+    newComplaintCommentsMail = async (data,companyId) => {
         try {
             let attachmentLine = data?.attachments && data?.attachments?.length > 0 ? `
             <tr>
@@ -57,22 +57,7 @@ class CompalaintComplaintsMail {
 
             let cc = [data?.manager?.email, data?.acc_manager?.email,];
 
-            if (data?.managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.managers_rm?.email);
-            }
-            if (data?.acc_managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.acc_managers_rm?.email);
-            }
-            if (['6627428b2cd9adde1a7ef5f8', '6641eb0b333ffa11fc45430f'].includes(data.technology._id.toString())) {
-                cc.push(process.env.SHLOK_EMAIL)
-              }
-            // if (!(["open", "in_progress"].includes(data?.status))) {
-            //     cc.push(process.env.DIRECTOR_EMAIL);
-            //     if (data?.complaints?.escalation_level === "level2") {
-            //         cc.push(process.env.CEO_EMAIL);
-            //     }
-            // }
-            await emailSenderForPMS(data?.createdBy?.email, mailData, cc);
+            await emailSenderForPMS(companyId,data?.createdBy?.email, mailData, cc);
 
             return;
         } catch (error) {

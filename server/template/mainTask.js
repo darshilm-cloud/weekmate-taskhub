@@ -3,8 +3,7 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.mainTaskSubscriberMail = async (data) => {
+exports.mainTaskSubscriberMail = async (data, companyId) => {
   try {
     let html = `
       <!DOCTYPE html>
@@ -223,14 +222,14 @@ exports.mainTaskSubscriberMail = async (data) => {
       `;
     const mailData = {
       subject: `[${data?.project?.title}] You have been subscribed to a tasklist`,
-      html,
+      html
     };
 
     data.subscribers = data.subscribers.filter((s) => s !== null);
 
     // to get mailSettings of subscribers..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data?.subscribers?.map((ele) => ele._id) },
+      createdBy: { $in: data?.subscribers?.map((ele) => ele._id) }
     });
 
     // to get mailSettings of subscribers as of maintask_subscribed setting being true..
@@ -266,14 +265,14 @@ exports.mainTaskSubscriberMail = async (data) => {
       )
       .map((subscriber) => subscriber.email);
 
-    await emailSenderForPMS(clientsmailIds, mailData, []);
+    await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (error) {
@@ -281,7 +280,7 @@ exports.mainTaskSubscriberMail = async (data) => {
   }
 };
 
-exports.deleteMainTaskSubscriberMail = async (data) => {
+exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
   try {
     let html = `
       <!DOCTYPE html>
@@ -488,21 +487,21 @@ exports.deleteMainTaskSubscriberMail = async (data) => {
       `;
     const mailData = {
       subject: `Alert! [${data?.project?.title}] A tasklist has been deleted`,
-      html,
+      html
     };
 
     // data?.manager?._id != null
     // to get mailSettings of subscribers..
     const mailSettings = await MailSettings.findOne({
-      createdBy: data?.manager?._id,
+      createdBy: data?.manager?._id
     });
 
     if (mailSettings.maintask_subscribed) {
       // to send mail to manager whose settings allow to send mail
-      await emailSenderForPMS(data?.manager?.email, mailData, []);
+      await emailSenderForPMS(companyId, data?.manager?.email, mailData, []);
     } else if (mailSettings.quarterlyMail) {
       // to add the mailids and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours([data?.manager?.email], mailData);
+      await mailsToQuarterHours([data?.manager?.email], mailData, companyId);
     }
 
     return;

@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const FileFolders = mongoose.model("filefolders");
@@ -17,9 +17,12 @@ const {
   getArrayChanges,
   getRefModelFromLoginUser,
   getCreatedUpdatedDeletedByQuery,
-  getClientQuery,
+  getClientQuery
 } = require("../helpers/common");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 
 //Add file folders :
@@ -28,7 +31,7 @@ exports.addFileFolders = async (req, res) => {
     const validationSchema = Joi.object({
       name: Joi.string().required(),
       project_id: Joi.string().required(),
-      isBookmark: Joi.boolean().optional().default(false),
+      isBookmark: Joi.boolean().optional().default(false)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -44,7 +47,7 @@ exports.addFileFolders = async (req, res) => {
         project_id: value.project_id,
         isBookmark: value.isBookmark,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       const newData = await data.save();
 
@@ -75,7 +78,7 @@ exports.getFileFolders = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       search: Joi.string().allow("").optional(),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -90,18 +93,18 @@ exports.getFileFolders = async (req, res) => {
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value?.project_id),
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["name"], value.search),
+        ...searchDataArr(["name"], value.search)
       };
     }
 
     let fileQuery = [
       { $eq: ["$folder_id", "$$folder_id"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
 
     const isAdmin = await checkUserIsAdmin(req.user._id);
@@ -114,19 +117,19 @@ exports.getFileFolders = async (req, res) => {
       value.project_id,
       req.user._id
     );
-    
+
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
       fileQuery = [
         ...fileQuery,
         {
-          $or: await this.conditionForFileAccess(req?.user?._id),
-        },
+          $or: await this.conditionForFileAccess(req?.user?._id)
+        }
       ];
     }
 
     let query = [
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $lookup: {
@@ -137,26 +140,31 @@ exports.getFileFolders = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: fileQuery,
-                },
-              },
+                  $and: fileQuery
+                }
+              }
             },
             {
-              $sort: { [value?.sort]: value?.sortBy == "asc" ? 1 : -1 },
-            },
+              $sort: { [value?.sort]: value?.sortBy == "asc" ? 1 : -1 }
+            }
           ],
-          as: "files",
-        },
+          as: "files"
+        }
       },
       {
-        $sort: { _id: 1 },
-      },
+        $sort: { _id: 1 }
+      }
     ];
 
     const data = await FileFolders.aggregate(query);
 
     data.filter((ele) => {
-      if (ele.createdBy == req.user?._id || isManager || isSuperAdmin || isAccManager) {
+      if (
+        ele.createdBy == req.user?._id ||
+        isManager ||
+        isSuperAdmin ||
+        isAccManager
+      ) {
         ele.isDeletable = true;
         ele.isEditable = true;
       } else {
@@ -165,7 +173,12 @@ exports.getFileFolders = async (req, res) => {
       }
 
       ele.files.filter((file) => {
-        if (file.createdBy == req.user?._id || isManager || isSuperAdmin || isAccManager) {
+        if (
+          file.createdBy == req.user?._id ||
+          isManager ||
+          isSuperAdmin ||
+          isAccManager
+        ) {
           file.isDeletable = true;
           file.isEditable = true;
         } else {
@@ -211,21 +224,21 @@ exports.isFileFolderExists = async (value, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$name" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$name" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: value?.name.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: value?.name.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -240,7 +253,7 @@ exports.updateFileFolders = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       name: Joi.string().required(),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -256,7 +269,7 @@ exports.updateFileFolders = async (req, res) => {
         req.params.id,
         {
           name: value.name,
-          updatedBy: req.user._id,
+          updatedBy: req.user._id
         },
         { new: true }
       );
@@ -292,7 +305,7 @@ exports.deleteFileFolders = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );
@@ -305,12 +318,12 @@ exports.deleteFileFolders = async (req, res) => {
     await FileFolders.findOneAndUpdate(
       {
         isDeleted: false,
-        folder_id: new mongoose.Types.ObjectId(req.params.id),
+        folder_id: new mongoose.Types.ObjectId(req.params.id)
       },
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );
@@ -330,7 +343,7 @@ exports.deleteFileFolders = async (req, res) => {
 exports.updateFileFoldersBookmark = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isBookmark: Joi.boolean().required(),
+      isBookmark: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -345,7 +358,7 @@ exports.updateFileFoldersBookmark = async (req, res) => {
       req.params.id,
       {
         isBookmark: value.isBookmark,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       },
       { new: true }
     );
@@ -373,7 +386,7 @@ exports.getProjectAllFiles = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       search: Joi.string().allow("").optional(),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -396,7 +409,7 @@ exports.getProjectAllFiles = async (req, res) => {
       value.project_id,
       req.user._id
     );
-    
+
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
@@ -409,37 +422,37 @@ exports.getProjectAllFiles = async (req, res) => {
                     {
                       $eq: [
                         "$createdBy",
-                        new mongoose.Types.ObjectId(req.user._id),
-                      ],
+                        new mongoose.Types.ObjectId(req.user._id)
+                      ]
                     },
                     {
                       $in: [
                         new mongoose.Types.ObjectId(req.user._id),
-                        "$subscribers",
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
+                        "$subscribers"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["name", "file_type", "path"], value.search),
+        ...searchDataArr(["name", "file_type", "path"], value.search)
       };
     }
 
     let query = [
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
-        $sort: { [value?.sort]: value?.sortBy == "asc" ? 1 : -1 },
-      },
+        $sort: { [value?.sort]: value?.sortBy == "asc" ? 1 : -1 }
+      }
     ];
 
     let data = await FileUploads.aggregate(query);
@@ -455,12 +468,12 @@ exports.getFileDetails = async (req, res) => {
   try {
     let matchQuery = {
       isDeleted: false,
-      _id: new mongoose.Types.ObjectId(req.params.fileId),
+      _id: new mongoose.Types.ObjectId(req.params.fileId)
     };
 
     let query = [
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $lookup: {
@@ -472,20 +485,20 @@ exports.getFileDetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$folder_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "folder",
-        },
+          as: "folder"
+        }
       },
       {
         $unwind: {
           path: "$folder",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       ...(await getCreatedUpdatedDeletedByQuery("updatedBy")),
@@ -501,14 +514,14 @@ exports.getFileDetails = async (req, res) => {
                     { $in: ["$_id", "$$subscribers"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       {
@@ -528,19 +541,19 @@ exports.getFileDetails = async (req, res) => {
           updatedAt: 1,
           folder: {
             _id: 1,
-            name: 1,
+            name: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           updatedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           subscribers: {
             $map: {
@@ -549,24 +562,24 @@ exports.getFileDetails = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
                 _id: "$$subscriberId._id",
                 full_name: "$$subscriberId.full_name",
-                emp_img: "$$subscriberId.emp_img",
-              },
-            },
+                emp_img: "$$subscriberId.emp_img"
+              }
+            }
           },
-          ...(await getClientQuery(true)),
-        },
-      },
+          ...(await getClientQuery(true))
+        }
+      }
     ];
 
     let data = await FileUploads.aggregate(query);
@@ -579,12 +592,19 @@ exports.getFileDetails = async (req, res) => {
 
 exports.projectFilesUploads = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       folder_id: Joi.string().required(),
       attachments: Joi.array().min(1),
       subscribers: Joi.array().default([]),
-      pms_clients: Joi.array().optional().default([]),
+      pms_clients: Joi.array().optional().default([])
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -612,14 +632,14 @@ exports.projectFilesUploads = async (req, res) => {
         createdBy: req.user._id,
         createdAt: configs.utcDefault(),
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       };
       // if new file upload..
       const newFile = new FileUploads(obj);
       await newFile.save();
       savedItemIds = [
         ...savedItemIds,
-        new mongoose.Types.ObjectId(newFile._id),
+        new mongoose.Types.ObjectId(newFile._id)
       ];
     }
 
@@ -628,7 +648,12 @@ exports.projectFilesUploads = async (req, res) => {
       (value?.subscribers && value?.subscribers?.length > 0) ||
       (value?.pms_clients && value?.pms_clients?.length > 0)
     ) {
-      await subscribersMailForNewFileUploaded(savedItemIds);
+      await subscribersMailForNewFileUploaded(
+        savedItemIds,
+        [],
+        [],
+        decodedCompanyId
+      );
     }
 
     return successResponse(res, 200, messages.FILE_CREATED, savedItemIds, []);
@@ -642,7 +667,7 @@ exports.projectFileRename = async (req, res) => {
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       file_id: Joi.string().required(),
-      name: Joi.string().required(),
+      name: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -659,7 +684,7 @@ exports.projectFileRename = async (req, res) => {
         name: value.name,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       }
     );
 
@@ -677,11 +702,18 @@ exports.projectFileRename = async (req, res) => {
 
 exports.projectFileUpdateSubscribers = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       file_id: Joi.string().required(),
       subscribers: Joi.array().optional(),
-      pms_clients: Joi.array().optional(),
+      pms_clients: Joi.array().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -702,17 +734,17 @@ exports.projectFileUpdateSubscribers = async (req, res) => {
           subscribers:
             value.subscribers.length > 0
               ? value.subscribers.map((s) => new mongoose.Types.ObjectId(s))
-              : value.subscribers,
+              : value.subscribers
         }),
         ...(value?.pms_clients && {
           pms_clients:
             value.pms_clients.length > 0
               ? value.pms_clients.map((s) => new mongoose.Types.ObjectId(s))
-              : value.pms_clients,
+              : value.pms_clients
         }),
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       }
     );
 
@@ -731,7 +763,8 @@ exports.projectFileUpdateSubscribers = async (req, res) => {
       await subscribersMailForNewFileUploaded(
         [new mongoose.Types.ObjectId(value.file_id)],
         subscribersData.added.map((s) => s.toString()),
-        clientsData.added.map((c) => c.toString())
+        clientsData.added.map((c) => c.toString()),
+        decodedCompanyId
       );
     }
     return successResponse(
@@ -755,7 +788,7 @@ exports.projectFileDelete = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       }
     );
 
@@ -779,20 +812,20 @@ exports.queryForFileAccess = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -804,20 +837,20 @@ exports.queryForFileAccess = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$comments_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "comments",
-        },
+          as: "comments"
+        }
       },
       {
         $unwind: {
           path: "$comments",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -829,26 +862,26 @@ exports.queryForFileAccess = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$discussion_topic_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "discussion_topic",
-        },
+          as: "discussion_topic"
+        }
       },
       {
         $unwind: {
           path: "$discussion_topic",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "discussionstopicsdetails",
           let: {
-            discussion_topic_details_id: "$discussion_topic_details_id",
+            discussion_topic_details_id: "$discussion_topic_details_id"
           },
           pipeline: [
             {
@@ -856,20 +889,20 @@ exports.queryForFileAccess = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$discussion_topic_details_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "discussion_topic_details",
-        },
+          as: "discussion_topic_details"
+        }
       },
       {
         $unwind: {
           path: "$discussion_topic_details",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -881,21 +914,21 @@ exports.queryForFileAccess = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bugs_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bugs",
-        },
+          as: "bugs"
+        }
       },
       {
         $unwind: {
           path: "$bugs",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+          preserveNullAndEmptyArrays: true
+        }
+      }
     ];
   } catch (error) {
     console.log("🚀 ~ exports.queryForFileAccess= ~ error:", error);
@@ -952,7 +985,7 @@ exports.conditionForFileAccess = async (loginUserId) => {
         null,
         null,
         "bugs.assignees"
-      )),
+      ))
     ];
   } catch (error) {
     console.log("🚀 ~ exports.conditionForFileAccess= ~ error:---", error);
@@ -971,8 +1004,8 @@ exports.fileAccessCondition = async (
     let data = [
       // For file
       {
-        $eq: [`$${createdBy}`, new mongoose.Types.ObjectId(loginUserId)],
-      },
+        $eq: [`$${createdBy}`, new mongoose.Types.ObjectId(loginUserId)]
+      }
     ];
     if (subscribers) {
       data = [
@@ -985,15 +1018,15 @@ exports.fileAccessCondition = async (
                 if: {
                   $and: [
                     { $isArray: `$${subscribers}` },
-                    { $ne: [`$${subscribers}`, []] },
-                  ],
+                    { $ne: [`$${subscribers}`, []] }
+                  ]
                 },
                 then: `$${subscribers}`,
-                else: [],
-              },
-            },
-          ],
-        },
+                else: []
+              }
+            }
+          ]
+        }
       ];
     }
     if (pms_clients) {
@@ -1007,15 +1040,15 @@ exports.fileAccessCondition = async (
                 if: {
                   $and: [
                     { $isArray: `$${pms_clients}` },
-                    { $ne: [`$${pms_clients}`, []] },
-                  ],
+                    { $ne: [`$${pms_clients}`, []] }
+                  ]
                 },
                 then: `$${pms_clients}`,
-                else: [],
-              },
-            },
-          ],
-        },
+                else: []
+              }
+            }
+          ]
+        }
       ];
     }
     if (assignees) {
@@ -1029,15 +1062,15 @@ exports.fileAccessCondition = async (
                 if: {
                   $and: [
                     { $isArray: `$${assignees}` },
-                    { $ne: [`$${assignees}`, []] },
-                  ],
+                    { $ne: [`$${assignees}`, []] }
+                  ]
                 },
                 then: `$${assignees}`,
-                else: [],
-              },
-            },
-          ],
-        },
+                else: []
+              }
+            }
+          ]
+        }
       ];
     }
     if (taggedUsers) {
@@ -1051,15 +1084,15 @@ exports.fileAccessCondition = async (
                 if: {
                   $and: [
                     { $isArray: `$${taggedUsers}` },
-                    { $ne: [`$${taggedUsers}`, []] },
-                  ],
+                    { $ne: [`$${taggedUsers}`, []] }
+                  ]
                 },
                 then: `$${taggedUsers}`,
-                else: [],
-              },
-            },
-          ],
-        },
+                else: []
+              }
+            }
+          ]
+        }
       ];
     }
     return data;

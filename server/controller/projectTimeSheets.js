@@ -22,19 +22,6 @@ const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 exports.projectTimeSheetExists = async (reqData, id = null) => {
   try {
     let isExist = false;
-    // const data = await ProjectTimeSheets.findOne({
-    //   isDeleted: false,
-    //   // title: reqData?.title?.trim()?.toLowerCase(),
-    //   title: { $regex: new RegExp(`^${reqData?.title}$`, "i") },
-    //   project_id: new mongoose.Types.ObjectId(reqData.project_id),
-    //   // main_task_id: new mongoose.Types.ObjectId(reqData.main_task_id),
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await ProjectTimeSheets.aggregate([
       {

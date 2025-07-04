@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ConsumerFeedBackForm = mongoose.model("consumer_feedback_forms");
@@ -10,18 +10,25 @@ const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const {
   getRefModelFromLoginUser,
-  getCreatedUpdatedDeletedByQuery,
+  getCreatedUpdatedDeletedByQuery
 } = require("../helpers/common");
 const { newFeedbackMail } = require("../template/consumer_feedback_mail");
 
 //Add ConsumerFeedBack
 exports.addConsumerFeedBack = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       complaint_id: Joi.required().required(),
       satisfaction: Joi.number().required(),
       rate_reviews: Joi.number().required(),
-      additional_comments: Joi.string().optional().allow(""),
+      additional_comments: Joi.string().optional().allow("")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -32,7 +39,9 @@ exports.addConsumerFeedBack = async (req, res) => {
         error.details[0].message
       );
     }
-    let feedbackData = await ConsumerFeedBackForm.find({ complaint_id: new mongoose.Types.ObjectId(value?.complaint_id) });
+    let feedbackData = await ConsumerFeedBackForm.find({
+      complaint_id: new mongoose.Types.ObjectId(value?.complaint_id)
+    });
     if (feedbackData && feedbackData.length > 0) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
@@ -41,12 +50,12 @@ exports.addConsumerFeedBack = async (req, res) => {
         satisfaction: value?.satisfaction || null,
         rate_reviews: value?.rate_reviews || null,
         additional_comments: value?.additional_comments || false,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       await data.save();
 
       let emailDetails = await this.getFeedbacksDetailsForMail(data._id);
-      await newFeedbackMail(emailDetails)
+      await newFeedbackMail(emailDetails, decodedCompanyId);
 
       return successResponse(
         res,
@@ -56,7 +65,7 @@ exports.addConsumerFeedBack = async (req, res) => {
       );
     }
   } catch (error) {
-    console.log("🚀 ~ exports.addConsumerFeedBack= ~ error:", error)
+    console.log("🚀 ~ exports.addConsumerFeedBack= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
@@ -67,8 +76,8 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
     const mainQuery = [
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(feedbackId),
-        },
+          _id: new mongoose.Types.ObjectId(feedbackId)
+        }
       },
       {
         $lookup: {
@@ -80,20 +89,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$complaint_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "complaint",
-        },
+          as: "complaint"
+        }
       },
       {
         $unwind: {
           path: "$complaint",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -105,20 +114,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -130,20 +139,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
       {
         $unwind: {
           path: "$technology",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -157,20 +166,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -184,20 +193,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       {
         $unwind: {
           path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -211,20 +220,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "managers_rm",
-        },
+          as: "managers_rm"
+        }
       },
       {
         $unwind: {
           path: "$managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -238,20 +247,20 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_managers_rm",
-        },
+          as: "acc_managers_rm"
+        }
       },
       {
         $unwind: {
           path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
@@ -262,42 +271,42 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
             title: 1,
             manager: 1,
             acc_manager: 1,
-            technology: 1,
+            technology: 1
           },
           manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           acc_managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           acc_manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           technology: {
             _id: 1,
-            project_tech: 1,
+            project_tech: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
             client_img: 1,
-            email: 1,
+            email: 1
           },
           complaint: {
             client_name: 1,
@@ -305,21 +314,21 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
             complaint: 1,
             priority: 1,
             escalation_level: 1,
-            status: 1,
+            status: 1
           },
           satisfaction: 1,
           rate_reviews: 1,
           additional_comments: 1,
           updatedAt: 1,
-          createdAt: 1,
-        },
-      },
+          createdAt: 1
+        }
+      }
     ];
 
     const data = await ConsumerFeedBackForm.aggregate(mainQuery);
     return data[0];
   } catch (error) {
-    console.log("🚀 ~ exports.getReviewsDetailsForMail= ~ error:", error)
+    console.log("🚀 ~ exports.getReviewsDetailsForMail= ~ error:", error);
   }
 };
 
@@ -327,7 +336,7 @@ exports.getFeedbacksDetailsForMail = async (feedbackId) => {
 exports.getConsumerFeedBack = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      complaint_id: Joi.string().required(),
+      complaint_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -338,17 +347,13 @@ exports.getConsumerFeedBack = async (req, res) => {
         error.details[0].message
       );
     }
-    let data = await ConsumerFeedBackForm.find({ complaint_id: new mongoose.Types.ObjectId(value?.complaint_id) });
-    console.log("🚀 ~ exports.getConsumerFeedBack= ~ data:", data)
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      data
-    );
-
+    let data = await ConsumerFeedBackForm.find({
+      complaint_id: new mongoose.Types.ObjectId(value?.complaint_id)
+    });
+    console.log("🚀 ~ exports.getConsumerFeedBack= ~ data:", data);
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
-    console.log("🚀 ~ exports.addConsumerFeedBack= ~ error:", error)
+    console.log("🚀 ~ exports.addConsumerFeedBack= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };

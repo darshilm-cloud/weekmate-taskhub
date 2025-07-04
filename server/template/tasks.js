@@ -4,8 +4,7 @@ const moment = require("moment");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.assigneesMail = async (data, newAddedAssignees = []) => {
+exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
   try {
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -412,14 +411,14 @@ exports.assigneesMail = async (data, newAddedAssignees = []) => {
       `;
     const mailData = {
       subject: `[${data?.project?.title}] You have been assigned a task - ${data?.project?.projectId}`,
-      html,
+      html
     };
     //  to get that if Manager is creating task then he shall not recive mail...
 
     if (data.createdBy?.email !== data.manager?.email) {
       // to get mailSettings of  project manager(PC)..
       const mailSettingsManager = await MailSettings.findOne({
-        createdBy: data?.manager?._id,
+        createdBy: data?.manager?._id
       });
 
       // to get mailSettings of project manager(PC) as of task_assigned setting being true..
@@ -429,11 +428,11 @@ exports.assigneesMail = async (data, newAddedAssignees = []) => {
       let quarterlymailsDataManager = mailSettingsManager?.quarterlyMail;
       if (mailSettingsDataManager) {
         // to send mail to Project Manager (PC) whose task_assigned settings allow to send mail
-        await emailSenderForPMS(data?.manager?.email, mailData, []);
+        await emailSenderForPMS(companyId, data?.manager?.email, mailData, []);
       }
       if (quarterlymailsDataManager) {
         // to add the mailid of PC(project manager) and maildata to db for sending such mails after every 4 hours
-        await mailsToQuarterHours(data?.manager?.email, mailData);
+        await mailsToQuarterHours(data?.manager?.email, mailData, companyId);
       }
     }
 
@@ -441,7 +440,7 @@ exports.assigneesMail = async (data, newAddedAssignees = []) => {
 
     // to get mailSettings of assignees..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data?.assignees?.map((ele) => ele._id) },
+      createdBy: { $in: data?.assignees?.map((ele) => ele._id) }
     });
 
     // to get mailSettings of assignees as of task_assigned setting being true..
@@ -502,11 +501,11 @@ exports.assigneesMail = async (data, newAddedAssignees = []) => {
 
     if (mailIds.length > 0) {
       // to send mail to assignees whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of assignees and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {
@@ -514,7 +513,7 @@ exports.assigneesMail = async (data, newAddedAssignees = []) => {
   }
 };
 
-exports.taskStatusUpdateMail = async (data) => {
+exports.taskStatusUpdateMail = async (data, companyId) => {
   try {
     let stageIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-stage.png`;
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
@@ -796,19 +795,19 @@ exports.taskStatusUpdateMail = async (data) => {
     `;
     const mailData = {
       subject: `[${data?.oldData?.project?.title}] The stage of a task has been changed - ${data?.oldData?.project?.projectId}`,
-      html,
+      html
     };
 
     data.oldData.assignees = data.oldData.assignees.filter((s) => s !== null);
 
     // to get mailSettings of assignees..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data?.oldData?.assignees?.map((ele) => ele._id) },
+      createdBy: { $in: data?.oldData?.assignees?.map((ele) => ele._id) }
     });
 
     // to get mailSettings of mgr..
     const mailSettingsDataManager = await MailSettings.findOne({
-      createdBy: data?.oldData?.manager?._id,
+      createdBy: data?.oldData?.manager?._id
     });
 
     // to get mailSettings of assignees as of task_assigned setting being true..
@@ -834,36 +833,26 @@ exports.taskStatusUpdateMail = async (data) => {
     );
 
     let mailIds = [...uniqueMails];
-    console.log("🚀 ~ exports.taskStatusUpdateMail= ~ mailIds:", mailIds);
+
     let quarterlymailIds = [...quarterlyuniqueMails];
-    console.log(
-      "🚀 ~ exports.taskStatusUpdateMail= ~ quarterlymailIds:",
-      quarterlymailIds
-    );
+    
 
     if (mailIds?.length > 0) {
       // to send mail to all whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds?.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     if (mailSettingsDataManager?.task_assigned) {
-      await emailSenderForPMS(data?.manager?.email, mailData, []);
+      await emailSenderForPMS(companyId, data?.manager?.email, mailData, []);
     }
     if (mailSettingsDataManager?.quarterlyMail) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(data?.manager?.email, mailData);
+      await mailsToQuarterHours(data?.manager?.email, mailData, companyId);
     }
 
-    // const mailIds = [
-    //   ...new Set([
-    //     ...data?.oldData?.assignees?.map((a) => a.email),
-
-    //   ]),
-    // ];
-    // await emailSenderForPMS(mailIds, mailData, []);
     return;
   } catch (e) {
     console.log("🚀 ~ exports.taskStatusUpdateMail= ~ e:", e);

@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const DiscussionsTopics = mongoose.model("discussionstopics");
@@ -16,10 +16,13 @@ const {
   getArrayChanges,
   getCreatedUpdatedDeletedByQuery,
   getClientQuery,
-  getRefModelFromLoginUser,
+  getRefModelFromLoginUser
 } = require("../helpers/common");
 const { discussionsTopicSubscribersMail } = require("./sendEmail");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 
 // Check is exists..
@@ -46,21 +49,21 @@ exports.projectDiscussionTopicExists = async (reqData, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: reqData?.title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -73,6 +76,13 @@ exports.projectDiscussionTopicExists = async (reqData, id = null) => {
 //Add Discussions Topic :
 exports.addDiscussionsTopics = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -84,7 +94,7 @@ exports.addDiscussionsTopics = async (req, res) => {
       isPrivate: Joi.boolean().optional().default(false),
       isBookMark: Joi.boolean().optional().default(false),
       attachments: Joi.any().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -122,7 +132,7 @@ exports.addDiscussionsTopics = async (req, res) => {
         isBookMark: value.isBookMark,
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       const newData = await data.save();
 
@@ -135,7 +145,7 @@ exports.addDiscussionsTopics = async (req, res) => {
         taggedUsers: [],
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       await topicsDetails.save();
 
@@ -159,7 +169,12 @@ exports.addDiscussionsTopics = async (req, res) => {
         (value?.subscribers && value?.subscribers.length > 0) ||
         (value?.pms_clients && value?.pms_clients.length > 0)
       ) {
-        await discussionsTopicSubscribersMail(newData._id, []);
+        await discussionsTopicSubscribersMail(
+          newData._id,
+          [],
+          [],
+          decodedCompanyId
+        );
       }
 
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
@@ -177,7 +192,7 @@ exports.getDiscussionsTopics = async (req, res) => {
       // sort: Joi.string().default("_id"),
       // sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -193,7 +208,7 @@ exports.getDiscussionsTopics = async (req, res) => {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
       // For details
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
 
     const isAdmin = await checkUserIsAdmin(req?.user?._id);
@@ -212,39 +227,36 @@ exports.getDiscussionsTopics = async (req, res) => {
         $expr: {
           $or: [
             {
-              $eq: ["$isPrivate", false],
+              $eq: ["$isPrivate", false]
             },
             {
               $or: [
                 {
-                  $eq: [
-                    "$createdBy",
-                    new mongoose.Types.ObjectId(req.user._id),
-                  ],
+                  $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
                 },
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$subscribers",
-                  ],
+                    "$subscribers"
+                  ]
                 },
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$pms_clients",
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+                    "$pms_clients"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       };
     }
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -255,14 +267,14 @@ exports.getDiscussionsTopics = async (req, res) => {
           from: "projects",
           localField: "project_id",
           foreignField: "_id",
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -274,14 +286,14 @@ exports.getDiscussionsTopics = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$discussion_topic_id", "$$discussion_topic_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
       {
         $lookup: {
@@ -295,14 +307,14 @@ exports.getDiscussionsTopics = async (req, res) => {
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
@@ -311,8 +323,8 @@ exports.getDiscussionsTopics = async (req, res) => {
         $sort: {
           isPinToTop: -1,
           isPrivate: -1,
-          _id: -1,
-        },
+          _id: -1
+        }
       },
       {
         $project: {
@@ -326,13 +338,13 @@ exports.getDiscussionsTopics = async (req, res) => {
           createdAt: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           attachments: {
             $map: {
@@ -342,9 +354,9 @@ exports.getDiscussionsTopics = async (req, res) => {
                 _id: "$$attachment._id",
                 name: "$$attachment.name",
                 file_type: "$$attachment.file_type",
-                path: "$$attachment.path",
-              },
-            },
+                path: "$$attachment.path"
+              }
+            }
           },
           subscribers: {
             $map: {
@@ -353,30 +365,35 @@ exports.getDiscussionsTopics = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscribersId",
               in: {
                 _id: "$$subscribersId._id",
                 emp_img: "$$subscribersId.emp_img",
-                name: "$$subscribersId.full_name",
-              },
-            },
+                name: "$$subscribersId.full_name"
+              }
+            }
           },
-          ...(await getClientQuery(true)),
-        },
-      },
+          ...(await getClientQuery(true))
+        }
+      }
     ];
 
     const data = await DiscussionsTopics.aggregate(mainQuery);
 
     data.filter((ele) => {
-      if (ele?.createdBy?._id == req.user?._id || isManager || isSuperAdmin || isAccManager) {
+      if (
+        ele?.createdBy?._id == req.user?._id ||
+        isManager ||
+        isSuperAdmin ||
+        isAccManager
+      ) {
         ele.isDeletable = true;
         ele.isEditable = true;
       } else {
@@ -401,6 +418,13 @@ exports.getDiscussionsTopics = async (req, res) => {
 //Update Discussions Topic :
 exports.updateDiscussionsTopics = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -412,7 +436,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
       isPrivate: Joi.boolean().optional().default(false),
       isBookMark: Joi.boolean().optional().default(false),
       attachments: Joi.any().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -453,7 +477,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
           isPrivate: value.isPrivate,
           isBookMark: value.isBookMark,
           updatedBy: req.user._id,
-          ...(await getRefModelFromLoginUser(req?.user, true)),
+          ...(await getRefModelFromLoginUser(req?.user, true))
         },
         { new: true }
       );
@@ -489,7 +513,8 @@ exports.updateDiscussionsTopics = async (req, res) => {
         await discussionsTopicSubscribersMail(
           req.params.id,
           subscriberData.added,
-          clientsData.added
+          clientsData.added,
+          decodedCompanyId
         );
       }
 
@@ -504,7 +529,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
 exports.updateDiscussionsTopicPinToTop = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isPinToTop: Joi.boolean().required(),
+      isPinToTop: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -521,7 +546,7 @@ exports.updateDiscussionsTopicPinToTop = async (req, res) => {
         isPinToTop: value.isPinToTop,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -545,7 +570,7 @@ exports.deleteDiscussionsTopics = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -557,13 +582,13 @@ exports.deleteDiscussionsTopics = async (req, res) => {
     await DiscussionsTopicsDetails.updateMany(
       {
         topic_id: new mongoose.Types.ObjectId(req.params.id),
-        isDeleted: false,
+        isDeleted: false
       },
       {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );

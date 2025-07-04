@@ -1,9 +1,9 @@
-const { emailSenderForPMS, getPCandAMunderCEOIDtoexcludeCEOformail } = require("../helpers/common");
+const { emailSenderForPMS } = require("../helpers/common");
 
 class ReminderMail {
-    newReminderMailforStatusUpdate = async (data) => {
-        try {
-            let html = `
+  newReminderMailforStatusUpdate = async (data, companyId) => {
+    try {
+      let html = `
            <div style="font-family: Arial, sans-serif; color: #333;">
                 <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; width: 70%;">
                     <p style="margin-top: 0;">Dear ${data?.manager?.full_name},</p>
@@ -28,29 +28,27 @@ class ReminderMail {
 
         `;
 
+      const mailData = {
+        subject: `New Complaint received by ${data?.client_name} - ${
+          data?.technology?.project_tech
+        } - ${
+          data?.priority.charAt(0).toUpperCase() +
+          data?.priority.slice(1).toLowerCase()
+        }.`,
+        html
+      };
 
-            const mailData = {
-                subject: `New Complaint received by ${data?.client_name} - ${data?.technology?.project_tech} - ${data?.priority.charAt(0).toUpperCase() + data?.priority.slice(1).toLowerCase()}.`,
-                html,
-            };
+      let cc = [
+        data?.acc_manager?.email
+        // data?.managers_rm?.email,
+        // data?.acc_managers_rm?.email,
+      ];
 
-            let cc = [
-                data?.acc_manager?.email,
-                // data?.managers_rm?.email,
-                // data?.acc_managers_rm?.email,
-            ];
-            if (data?.managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.managers_rm?.email);
-            }
-            if (data?.acc_managers_rm?.email != await getPCandAMunderCEOIDtoexcludeCEOformail()) {
-                cc.push(data?.acc_managers_rm?.email);
-            }
-
-            await emailSenderForPMS(data?.manager?.email, mailData, cc);
-        } catch (error) {
-            console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
-        }
-    };
+      await emailSenderForPMS(companyId, data?.manager?.email, mailData, cc);
+    } catch (error) {
+      console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
+    }
+  };
 }
 
 module.exports = new ReminderMail();

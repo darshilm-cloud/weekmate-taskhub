@@ -19,6 +19,13 @@ const {
 
 exports.addComment = async (req, res, next) => {
   try {
+    // Decode user from token
+        const {
+          _id: decodedUserId,
+          pms_role_id: { _id: roleId, role_name: roleName } = {},
+          companyId: decodedCompanyId
+        } = req.user || {};
+
     const validationSchema = Joi.object({
       comment: Joi.string().optional().allow(""),
       bug_id: Joi.string().required(),
@@ -80,7 +87,7 @@ exports.addComment = async (req, res, next) => {
       );
     }
     // Mail for new comments add in bug..
-    await sendmailForNewBugComments(newData._id);
+    await sendmailForNewBugComments(newData._id, decodedCompanyId);
 
     return successResponse(res, statusCode.CREATED, messages.CREATED, data);
   } catch (error) {

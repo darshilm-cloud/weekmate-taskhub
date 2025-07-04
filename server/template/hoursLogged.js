@@ -5,9 +5,8 @@ const moment = require("moment");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
 class TaskHoursLogged {
-  taskHoursLoggedMail = async (data) => {
+  taskHoursLoggedMail = async (data, companyId) => {
     try {
       let html = ``;
 
@@ -445,19 +444,19 @@ class TaskHoursLogged {
       let htmlData = ejs.render(html, { data });
       let emailBody = {
         subject: subjectData,
-        html: htmlData,
+        html: htmlData
       };
       const mailSettingsData = await MailSettings.findOne({
-        createdBy: data?.manager?._id,
+        createdBy: data?.manager?._id
       });
 
       if (mailSettingsData.logged_hours) {
         // to send mail whose setting allows ..
-        await emailSenderForPMS(data?.manager?.email, emailBody, []);
+        await emailSenderForPMS(companyId, data?.manager?.email, emailBody, []);
       }
       if (mailSettingsData.quarterlyMail) {
         // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-        await mailsToQuarterHours(data?.manager?.email, emailBody);
+        await mailsToQuarterHours(data?.manager?.email, emailBody, companyId);
       }
       return;
     } catch (error) {
@@ -465,7 +464,7 @@ class TaskHoursLogged {
     }
   };
 
-  subTaskHoursLoggedMail = async (data) => {
+  subTaskHoursLoggedMail = async (data, companyId) => {
     try {
       let html = ``;
 
@@ -790,9 +789,9 @@ class TaskHoursLogged {
       let htmlData = ejs.render(html, { data });
       let emailBody = {
         subject: subjectData,
-        html: htmlData,
+        html: htmlData
       };
-      await emailSenderForPMS(data?.manager.email, emailBody, []);
+      await emailSenderForPMS(companyId, data?.manager.email, emailBody, []);
       return;
     } catch (error) {
       console.log("🚀 ~ TaskHoursLogged ~ hoursLoggedMail= ~ error:", error);
