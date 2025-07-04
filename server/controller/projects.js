@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const Project = mongoose.model("projects");
@@ -18,7 +18,7 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -26,7 +26,7 @@ const configs = require("../configs");
 const {
   newProjectManagerMail,
   newProjectAssigneesMail,
-  mailForUpdateProjectInfo,
+  mailForUpdateProjectInfo
 } = require("../template/project");
 const {
   getArrayChanges,
@@ -34,13 +34,13 @@ const {
   getCreatedUpdatedDeletedByQuery,
   getClientQuery,
   generateRandomId,
-  getProjectDefaultSettingQuery,
+  getProjectDefaultSettingQuery
 } = require("../helpers/common");
 const { projectStatusExists } = require("./projectStatus");
 const ProjectStatus = mongoose.model("projectstatus");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager,
+  checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
 const { sheet } = require("../template/projectsReportsCSV");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
@@ -53,17 +53,6 @@ const { generateCacheKey } = require("../middleware/CryptoKey");
 exports.projectExists = async (title, id = null) => {
   try {
     let isExist = false;
-    // const data = await Project.findOne({
-    //   // title: title?.trim()?.toLowerCase(),
-    //   title: { $regex: new RegExp(`^${title}$`, "i") },
-    //   isDeleted: false,
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await Project.aggregate([
       {
@@ -71,22 +60,21 @@ exports.projectExists = async (title, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
-                // _id: { $ne: id },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -105,7 +93,7 @@ exports.addProjectDefaultData = async (addedProject, loginUserId) => {
       isDefault: true,
       project_id: addedProject._id,
       createdBy: loginUserId,
-      updatedBy: loginUserId,
+      updatedBy: loginUserId
     });
     projectFolder.save();
 
@@ -115,7 +103,7 @@ exports.addProjectDefaultData = async (addedProject, loginUserId) => {
       isDefault: true,
       project_id: addedProject._id,
       createdBy: loginUserId,
-      updatedBy: loginUserId,
+      updatedBy: loginUserId
     });
     timeSheet.save();
 
@@ -137,14 +125,14 @@ exports.updateProjectDefaultData = async (
       let where = {
         project_id: new mongoose.Types.ObjectId(addedProject._id),
         isDefault: true,
-        isDeleted: false,
+        isDeleted: false
       };
       // update default project folder..
       await fileFolders.findOneAndUpdate(
         where,
         {
           name: reqBody.title,
-          updatedBy: loginUserId,
+          updatedBy: loginUserId
         },
         { new: true }
       );
@@ -154,7 +142,7 @@ exports.updateProjectDefaultData = async (
         where,
         {
           title: `${addedProject.title} - Timesheet`,
-          updatedBy: loginUserId,
+          updatedBy: loginUserId
         },
         { new: true }
       );
@@ -166,7 +154,7 @@ exports.updateProjectDefaultData = async (
       // 1st : get project tasks..
       const tasks = await ProjectTasks.find({
         project_id: new mongoose.Types.ObjectId(addedProject._id),
-        isDeleted: false,
+        isDeleted: false
       });
 
       if (tasks && tasks.length > 0) {
@@ -175,14 +163,14 @@ exports.updateProjectDefaultData = async (
           workflow_id: new mongoose.Types.ObjectId(reqBody?.workFlow),
           isDefault: true,
           isDeleted: false,
-          title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+          title: DEFAULT_DATA.WORKFLOW_STATUS.TODO
         });
 
         // Update task workflow..
         await ProjectTasks.updateMany(
           {
             isDeleted: false,
-            project_id: new mongoose.Types.ObjectId(addedProject._id),
+            project_id: new mongoose.Types.ObjectId(addedProject._id)
           },
           {
             $set: {
@@ -191,10 +179,10 @@ exports.updateProjectDefaultData = async (
                 {
                   task_status: new mongoose.Types.ObjectId(workFlowStatus._id),
                   updatedBy: loginUserId,
-                  updatedAt: configs.utcDefault(),
-                },
-              ],
-            },
+                  updatedAt: configs.utcDefault()
+                }
+              ]
+            }
           }
         );
       }
@@ -208,6 +196,13 @@ exports.updateProjectDefaultData = async (
 //Add Project :
 exports.addProjects = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().optional().allow(""),
@@ -223,7 +218,7 @@ exports.addProjects = async (req, res) => {
       start_date: Joi.date().optional().default(null),
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional().default(false),
-      acc_manager: Joi.string().optional().allow(""),
+      acc_manager: Joi.string().optional().allow("")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -271,7 +266,7 @@ exports.addProjects = async (req, res) => {
         acc_manager:
           value?.acc_manager && value?.acc_manager != ""
             ? value?.acc_manager
-            : null,
+            : null
       });
       await data.save();
 
@@ -310,7 +305,12 @@ exports.addProjects = async (req, res) => {
 //Get Project :
 exports.getProjects = async (req, res) => {
   try {
-    // const cacheKey = req.headers["cachekey"];
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
 
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
@@ -330,7 +330,7 @@ exports.getProjects = async (req, res) => {
       project_type: Joi.array().optional().default([]),
       isArchived: Joi.boolean().optional().default(false),
       isSearch: Joi.boolean().default(false),
-      isBillable: Joi.boolean().optional(),
+      isBillable: Joi.boolean().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -347,7 +347,7 @@ exports.getProjects = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Manage projects default tabs .. . .
@@ -362,9 +362,9 @@ exports.getProjects = async (req, res) => {
               $or: [
                 { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
                 {
-                  "pms_clients._id": new mongoose.Types.ObjectId(req.user._id),
-                },
-              ],
+                  "pms_clients._id": new mongoose.Types.ObjectId(req.user._id)
+                }
+              ]
             }
           : { "manager._id": new mongoose.Types.ObjectId(req.user._id) }
         : !(await checkUserIsSuperAdmin(req?.user?._id))
@@ -374,11 +374,13 @@ exports.getProjects = async (req, res) => {
               { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
               { "manager._id": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "acc_manager._id": new mongoose.Types.ObjectId(req.user._id) },
-            ],
+              { "acc_manager._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
+
+
 
     let matchQuery = {
       isDeleted: false, // value?.isArchived,
@@ -388,16 +390,16 @@ exports.getProjects = async (req, res) => {
         : // For active and archive
         !value?.isArchived
         ? {
-            "project_status.title": {
-              // $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
-              $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-            },
+            // "project_status.title": {
+            //   // $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
+            //   $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+            // }
           }
         : {
             "project_status.title": {
               // $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
-              $ne: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-            },
+              $ne: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+            }
           }),
       // filters..
       ...(value?.color ? { color: value?.color } : {}),
@@ -406,42 +408,40 @@ exports.getProjects = async (req, res) => {
             "project_status._id": {
               $in: value.project_status.map(
                 (s) => new mongoose.Types.ObjectId(s)
-              ),
-            },
+              )
+            }
           }
         : {}),
 
       ...(value?.category?.length > 0
         ? {
             "project_type._id": {
-              $in: value.category.map((s) => new mongoose.Types.ObjectId(s)),
-            },
+              $in: value.category.map((s) => new mongoose.Types.ObjectId(s))
+            }
           }
         : {}),
 
       ...(value?.technology?.length > 0
         ? {
             "technology._id": {
-              $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)),
-            },
+              $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
+            }
           }
         : {}),
 
       ...(value?.project_type?.length > 0
         ? {
             "project_type._id": {
-              $in: value.project_type.map(
-                (s) => new mongoose.Types.ObjectId(s)
-              ),
-            },
+              $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s))
+            }
           }
         : {}),
 
       ...(value?.manager_id?.length > 0
         ? {
             "manager._id": {
-              $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)),
-            },
+              $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
+            }
           }
         : {}),
       ...(value?.acc_manager_id?.length > 0
@@ -449,19 +449,19 @@ exports.getProjects = async (req, res) => {
             "acc_manager._id": {
               $in: value.acc_manager_id.map(
                 (s) => new mongoose.Types.ObjectId(s)
-              ),
-            },
+              )
+            }
           }
         : {}),
       ...(value?.assignee_id?.length > 0
         ? {
             "assignees._id": {
-              $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)),
-            },
+              $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s))
+            }
           }
         : {}),
 
-      ...("isBillable" in value && { isBillable: value?.isBillable }),
+      ...("isBillable" in value && { isBillable: value?.isBillable })
     };
 
     if (value?.search) {
@@ -470,17 +470,20 @@ exports.getProjects = async (req, res) => {
         searchDataArr(
           ["title", ...(!value.isSearch ? ["manager.full_name"] : [])],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
+
+    console.log("🚀 ~ exports.getProjects= ~ orFilter:", JSON.stringify(matchQuery, null, 2));
+
 
     const mainQuery = [
       {
-        $match: { isDeleted: false }, // value?.isArchived,
+        $match: { isDeleted: false } // value?.isArchived,
       },
       {
         $lookup: {
@@ -492,21 +495,15 @@ exports.getProjects = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
-      // {
-      //   $unwind: {
-      //     path: "$technology",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
       {
         $lookup: {
           from: "projecttypes",
@@ -517,20 +514,20 @@ exports.getProjects = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_type"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_type",
-        },
+          as: "project_type"
+        }
       },
       {
         $unwind: {
           path: "$project_type",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -542,20 +539,20 @@ exports.getProjects = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_status",
-        },
+          as: "project_status"
+        }
       },
       {
         $unwind: {
           path: "$project_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -569,20 +566,20 @@ exports.getProjects = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -596,20 +593,20 @@ exports.getProjects = async (req, res) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       {
         $unwind: {
           path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
 
@@ -625,14 +622,14 @@ exports.getProjects = async (req, res) => {
                     { $in: ["$_id", "$$assignees"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       ...(await getClientQuery()),
       {
@@ -645,20 +642,20 @@ exports.getProjects = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$workFlow"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workFlow",
-        },
+          as: "workFlow"
+        }
       },
       {
         $unwind: {
           path: "$workFlow",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getProjectDefaultSettingQuery()),
       { $match: matchQuery },
@@ -681,27 +678,27 @@ exports.getProjects = async (req, res) => {
           // },
           project_type: {
             _id: 1,
-            project_type: 1,
+            project_type: 1
           },
           project_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           manager: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           acc_manager: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           assignees: {
             $map: {
@@ -710,31 +707,31 @@ exports.getProjects = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
                 _id: "$$assigneeId._id",
                 name: "$$assigneeId.full_name",
-                emp_img: "$$assigneeId.emp_img",
-              },
-            },
+                emp_img: "$$assigneeId.emp_img"
+              }
+            }
           },
           ...(await getClientQuery(true)),
           workFlow: {
             _id: 1,
-            project_workflow: 1,
+            project_workflow: 1
           },
           updatedAt: 1,
           createdAt: 1,
-          ...(await getProjectDefaultSettingQuery("_id", true)),
-        },
-      },
+          ...(await getProjectDefaultSettingQuery("_id", true))
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -747,15 +744,15 @@ exports.getProjects = async (req, res) => {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
     // let data = await Project.aggregate(listQuery);
-    
-    const [totalCountResult,data,_]= await Promise.all([
-      Project.aggregate(countQuery),
-      Project.aggregate(listQuery), 
-      // Need to check project status..(we need Active and Archived status default)
-      this.checkDefaultProjectAndBugStatus(req.user._id),
-    ])
 
-        const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    const [totalCountResult, data, _] = await Promise.all([
+      Project.aggregate(countQuery),
+      Project.aggregate(listQuery),
+      // Need to check project status..(we need Active and Archived status default)
+      this.checkDefaultProjectAndBugStatus(req.user._id)
+    ]);
+
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     let metaData = {};
     if (!value?.isSearch) {
@@ -765,7 +762,7 @@ exports.getProjects = async (req, res) => {
         pageNo: pagination.page,
         totalPages:
           pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page,
+        currentPage: pagination.page
       };
     }
 
@@ -808,7 +805,7 @@ exports.updateProjects = async (req, res) => {
       start_date: Joi.date().optional().default(null),
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional(),
-      acc_manager: Joi.string().optional().default(null),
+      acc_manager: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -858,7 +855,7 @@ exports.updateProjects = async (req, res) => {
           end_date: value?.end_date,
           updatedBy: req.user._id,
           ...(await getRefModelFromLoginUser(req?.user, true)),
-          acc_manager: value?.acc_manager || null,
+          acc_manager: value?.acc_manager || null
         },
         { new: true }
       );
@@ -880,7 +877,7 @@ exports.updateProjects = async (req, res) => {
 
         await mailForUpdateProjectInfo({
           oldData: projectData,
-          newData: updatedData,
+          newData: updatedData
         });
       }
 
@@ -930,7 +927,7 @@ exports.archivedToActiveProject = async (req, res) => {
     // get project active status...
     const data = await ProjectStatus.findOne({
       title: { $regex: new RegExp(`^${projectStatus}$`, "i") },
-      isDeleted: false,
+      isDeleted: false
     });
     if (data) {
       const project = await Project.findByIdAndUpdate(
@@ -939,7 +936,7 @@ exports.archivedToActiveProject = async (req, res) => {
           project_status: new mongoose.Types.ObjectId(data._id),
           updatedAt: configs.utcDefault(),
           updatedBy: req.user._id,
-          ...(await getRefModelFromLoginUser(req?.user, true)),
+          ...(await getRefModelFromLoginUser(req?.user, true))
         },
         { new: true }
       );
@@ -977,14 +974,14 @@ exports.getProjectDetailsForMail = async (
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
       // {
       //   $unwind: {
@@ -1002,20 +999,20 @@ exports.getProjectDetailsForMail = async (
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_status",
-        },
+          as: "project_status"
+        }
       },
       {
         $unwind: {
           path: "$project_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1029,20 +1026,20 @@ exports.getProjectDetailsForMail = async (
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       ...(await getClientQuery()),
@@ -1058,20 +1055,20 @@ exports.getProjectDetailsForMail = async (
                     { $in: ["$_id", "$$assignees"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       {
         $match: {
           isDeleted: false,
-          _id: new mongoose.Types.ObjectId(projectId),
-        },
+          _id: new mongoose.Types.ObjectId(projectId)
+        }
       },
       {
         $project: {
@@ -1091,7 +1088,7 @@ exports.getProjectDetailsForMail = async (
           // },
           project_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           manager: {
             _id: 1,
@@ -1100,7 +1097,7 @@ exports.getProjectDetailsForMail = async (
             last_name: 1,
             email: 1,
             emp_img: 1,
-            first_name: 1,
+            first_name: 1
           },
           createdBy: {
             _id: 1,
@@ -1109,7 +1106,7 @@ exports.getProjectDetailsForMail = async (
             last_name: 1,
             email: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           assignees: {
             $map: {
@@ -1118,12 +1115,12 @@ exports.getProjectDetailsForMail = async (
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
@@ -1139,10 +1136,10 @@ exports.getProjectDetailsForMail = async (
                             "$$assigneeId._id",
                             newAddedAssignees.map(
                               (n) => new mongoose.Types.ObjectId(n)
-                            ),
-                          ],
+                            )
+                          ]
                         }
-                      : {}),
+                      : {})
                   },
                   then: {
                     _id: "$$assigneeId._id",
@@ -1150,16 +1147,16 @@ exports.getProjectDetailsForMail = async (
                     first_name: "$$assigneeId.first_name",
                     last_name: "$$assigneeId.last_name",
                     email: "$$assigneeId.email",
-                    emp_img: "$$assigneeId.emp_img",
+                    emp_img: "$$assigneeId.emp_img"
                   },
-                  else: null, // Or any other value you prefer for non-matching IDs
-                },
-              },
-            },
+                  else: null // Or any other value you prefer for non-matching IDs
+                }
+              }
+            }
           },
-          ...(await getClientQuery(true, newAddedClients)),
-        },
-      },
+          ...(await getClientQuery(true, newAddedClients))
+        }
+      }
     ];
 
     const data = await Project.aggregate(mainQuery);
@@ -1178,7 +1175,7 @@ exports.deleteProjects = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -1203,7 +1200,7 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
   try {
     const common = {
       createdBy: loginUserId,
-      updatedBy: loginUserId,
+      updatedBy: loginUserId
     };
     // Check if bugs workflow status added or not (is a default for all project) ...
     const status = await BugsWorkflowStatus.find({ isDeleted: false });
@@ -1214,32 +1211,32 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
           title: BUG_STATUS.TODO,
           color: "#89CFF0",
           sequence: 1,
-          ...common,
+          ...common
         },
         {
           title: BUG_STATUS.IN_PROGRESS,
           color: "#89CFF0",
           sequence: 2,
-          ...common,
+          ...common
         },
         {
           title: BUG_STATUS.TO_BE_TESTED,
           color: "#89CFF0",
           sequence: 3,
-          ...common,
+          ...common
         },
         {
           title: BUG_STATUS.ON_HOLD,
           color: "#89CFF0",
           sequence: 4,
-          ...common,
+          ...common
         },
         {
           title: BUG_STATUS.DONE,
           color: "#89CFF0",
           sequence: 5,
-          ...common,
-        },
+          ...common
+        }
       ]);
     }
     // Project status..
@@ -1250,7 +1247,7 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
       if (!(await projectStatusExists(element))) {
         const newData = new ProjectStatus({
           title: element,
-          ...common,
+          ...common
         });
         await newData.save();
       }
@@ -1262,7 +1259,7 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
       const newData = new ProjectWorkFlow({
         project_workflow: standardWorkflow,
         isDefault: true,
-        ...common,
+        ...common
       });
       await newData.save();
 
@@ -1275,7 +1272,7 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
           title: WORKFLOW_STATUS.TODO,
           isDefault: true,
           sequence: 1,
-          ...common,
+          ...common
         },
         {
           workflow_id: newData._id,
@@ -1283,8 +1280,8 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
           title: WORKFLOW_STATUS.DONE,
           sequence: 2,
           isDefault: true,
-          ...common,
-        },
+          ...common
+        }
       ]);
     }
   } catch (error) {
@@ -1311,7 +1308,7 @@ exports.getProjectOverviewData = async (req, res) => {
 
     let commonQuery = [
       { $eq: ["$project_id", "$$projectId"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
     let taskQuery = commonQuery;
     let loggedHrQuery = commonQuery;
@@ -1322,42 +1319,39 @@ exports.getProjectOverviewData = async (req, res) => {
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
+            },
+            {
+              $and: [
+                {
+                  $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
+                },
+                {
+                  $in: [
+                    new mongoose.Types.ObjectId(req.user._id),
+                    "$mainTask.subscribers"
+                  ]
+                }
+              ]
             },
             {
               $and: [
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$assignees",
-                  ],
+                    "$pms_clients"
+                  ]
                 },
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$mainTask.subscribers",
-                  ],
-                },
-              ],
-            },
-            {
-              $and: [
-                {
-                  $in: [
-                    new mongoose.Types.ObjectId(req.user._id),
-                    "$pms_clients",
-                  ],
-                },
-                {
-                  $in: [
-                    new mongoose.Types.ObjectId(req.user._id),
-                    "$mainTask.pms_clients",
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+                    "$mainTask.pms_clients"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       ];
 
       loggedHrQuery = [
@@ -1365,21 +1359,21 @@ exports.getProjectOverviewData = async (req, res) => {
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$$pms_clients"],
-            },
-          ],
-        },
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$$pms_clients"]
+            }
+          ]
+        }
       ];
     }
     const query = [
       {
         $match: {
           _id: new mongoose.Types.ObjectId(req.params.id),
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
         $lookup: {
@@ -1391,20 +1385,20 @@ exports.getProjectOverviewData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_status",
-        },
+          as: "project_status"
+        }
       },
       {
         $unwind: {
           path: "$project_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1416,34 +1410,34 @@ exports.getProjectOverviewData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_type"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_type",
-        },
+          as: "project_type"
+        }
       },
       {
         $unwind: {
           path: "$project_type",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $addFields: {
           total_assignees: {
             $add: [
               {
-                $size: "$assignees",
+                $size: "$assignees"
               },
               {
-                $size: "$pms_clients",
-              },
-            ],
-          },
-        },
+                $size: "$pms_clients"
+              }
+            ]
+          }
+        }
       },
       {
         $lookup: {
@@ -1457,20 +1451,20 @@ exports.getProjectOverviewData = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1484,20 +1478,20 @@ exports.getProjectOverviewData = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       {
         $unwind: {
           path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
@@ -1512,14 +1506,14 @@ exports.getProjectOverviewData = async (req, res) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
 
       //tech
@@ -1541,18 +1535,18 @@ exports.getProjectOverviewData = async (req, res) => {
                           $map: {
                             input: "$$technologyIds",
                             as: "id",
-                            in: { $toObjectId: "$$id" },
-                          },
-                        },
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
+                            in: { $toObjectId: "$$id" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technologyDetails",
-        },
+          as: "technologyDetails"
+        }
       },
 
       // {
@@ -1743,24 +1737,24 @@ exports.getProjectOverviewData = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: loggedHrQuery,
-                },
-              },
+                  $and: loggedHrQuery
+                }
+              }
             },
             {
               $group: {
                 _id: "$logged_status",
                 totalHours: {
                   $sum: {
-                    $toInt: "$logged_hours",
-                  },
+                    $toInt: "$logged_hours"
+                  }
                 },
                 totalMinutes: {
                   $sum: {
-                    $toInt: "$logged_minutes",
-                  },
-                },
-              },
+                    $toInt: "$logged_minutes"
+                  }
+                }
+              }
             },
             {
               $addFields: {
@@ -1769,17 +1763,17 @@ exports.getProjectOverviewData = async (req, res) => {
                     {
                       $multiply: [
                         {
-                          $toDouble: "$totalHours",
+                          $toDouble: "$totalHours"
                         },
-                        60,
-                      ],
+                        60
+                      ]
                     },
                     {
-                      $toDouble: "$totalMinutes",
-                    },
-                  ],
-                },
-              },
+                      $toDouble: "$totalMinutes"
+                    }
+                  ]
+                }
+              }
             },
             {
               $facet: {
@@ -1790,21 +1784,21 @@ exports.getProjectOverviewData = async (req, res) => {
                       logged_status: "$_id",
                       total_logged_hours: {
                         $floor: {
-                          $divide: ["$time_in_mins", 60],
-                        },
+                          $divide: ["$time_in_mins", 60]
+                        }
                       },
                       total_logged_minutes: {
-                        $mod: ["$time_in_mins", 60],
-                      },
-                    },
-                  },
+                        $mod: ["$time_in_mins", 60]
+                      }
+                    }
+                  }
                 ],
                 missingStatus: [
                   {
                     $group: {
                       _id: null,
-                      status: { $addToSet: "$_id" },
-                    },
+                      status: { $addToSet: "$_id" }
+                    }
                   },
                   {
                     $project: {
@@ -1812,33 +1806,33 @@ exports.getProjectOverviewData = async (req, res) => {
                       logged_status: {
                         $setDifference: [
                           ["Billed", "Billable", "Non-billable", "Void"],
-                          "$status",
-                        ],
+                          "$status"
+                        ]
                       },
                       total_logged_hours: { $literal: 0 },
-                      total_logged_minutes: { $literal: 0 },
-                    },
+                      total_logged_minutes: { $literal: 0 }
+                    }
                   },
-                  { $unwind: "$logged_status" },
-                ],
-              },
+                  { $unwind: "$logged_status" }
+                ]
+              }
             },
             {
               $project: {
                 task_hours: {
-                  $concatArrays: ["$existingData", "$missingStatus"],
-                },
-              },
-            },
+                  $concatArrays: ["$existingData", "$missingStatus"]
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
       {
         $unwind: {
           path: "$task_hours",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $addFields: {
@@ -1854,21 +1848,21 @@ exports.getProjectOverviewData = async (req, res) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.total_logged_hours",
+                            $toDouble: "$$this.total_logged_hours"
                           },
-                          60,
-                        ],
+                          60
+                        ]
                       },
                       {
-                        $toDouble: "$$this.total_logged_minutes",
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
+                        $toDouble: "$$this.total_logged_minutes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       ...(await getClientQuery()),
       {
@@ -1880,11 +1874,11 @@ exports.getProjectOverviewData = async (req, res) => {
           descriptions: 1,
           project_type: {
             _id: 1,
-            title: "$project_type.project_type",
+            title: "$project_type.project_type"
           },
           project_status: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           estimatedHours: 1,
           start_date: 1,
@@ -1892,18 +1886,18 @@ exports.getProjectOverviewData = async (req, res) => {
           manager: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           acc_manager: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           assignees: {
             $map: {
@@ -1912,20 +1906,20 @@ exports.getProjectOverviewData = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
                 _id: "$$assigneeId._id",
                 name: "$$assigneeId.full_name",
-                emp_img: "$$assigneeId.emp_img",
-              },
-            },
+                emp_img: "$$assigneeId.emp_img"
+              }
+            }
           },
           ...(await getClientQuery(true)),
 
@@ -1945,20 +1939,20 @@ exports.getProjectOverviewData = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
-                },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
+                }
               },
               ":",
               {
                 $toString: {
-                  $mod: ["$totalLoggedTime", 60],
-                },
-              },
-            ],
-          },
-        },
-      },
+                  $mod: ["$totalLoggedTime", 60]
+                }
+              }
+            ]
+          }
+        }
+      }
     ];
 
     const data = await Project.aggregate(query);
@@ -1985,7 +1979,7 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
 
   let commonQuery = [
     { $eq: ["$project_id", new mongoose.Types.ObjectId(projectId)] },
-    { $eq: ["$isDeleted", false] },
+    { $eq: ["$isDeleted", false] }
   ];
 
   let taskQuery = commonQuery;
@@ -1998,14 +1992,14 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
           { $eq: ["$createdBy", new mongoose.Types.ObjectId(userId)] },
           { $in: [new mongoose.Types.ObjectId(userId), "$assignees"] },
           {
-            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.subscribers"],
+            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.subscribers"]
           },
           { $in: [new mongoose.Types.ObjectId(userId), "$pms_clients"] },
           {
-            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.pms_clients"],
-          },
-        ],
-      },
+            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.pms_clients"]
+          }
+        ]
+      }
     ];
   }
 
@@ -2025,14 +2019,14 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       { $unwind: "$mainTask" },
       {
@@ -2045,28 +2039,28 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_status",
-        },
+          as: "task_status"
+        }
       },
       { $unwind: "$task_status" },
       {
         $match: {
           $expr: {
-            $and: taskQuery,
-          },
-        },
+            $and: taskQuery
+          }
+        }
       },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          tasks: { $push: "$$ROOT" },
-        },
+          tasks: { $push: "$$ROOT" }
+        }
       },
       { $sort: { _id: 1 } },
       { $skip: page * pageSize },
@@ -2085,14 +2079,14 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
                 cond: {
                   $eq: [
                     "$$task.task_status.title",
-                    DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-                  ],
-                },
-              },
-            },
-          },
-        },
-      },
+                    DEFAULT_DATA.WORKFLOW_STATUS.DONE
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     ]).allowDiskUse(true);
 
     tasksSummary = tasksSummary.concat(tasksBatch);
@@ -2113,7 +2107,7 @@ exports.getProjectsReports = async (req, res) => {
       technologies: Joi.array().optional(),
       types: Joi.array().optional(),
       managers: Joi.array().optional(),
-      isExport: Joi.boolean().required(),
+      isExport: Joi.boolean().required()
     });
 
     const { value, error } = validationSchema.validate(req.body);
@@ -2143,29 +2137,29 @@ exports.getProjectsReports = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
     let matchQuery = {
-      isDeleted: false,
+      isDeleted: false
     };
     if (value?.technologies && value?.technologies.length > 0) {
       matchQuery.technology = {
-        $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value?.types && value?.types.length > 0) {
       matchQuery.project_type = {
-        $in: value?.types.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.types.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     if (value?.managers && value?.managers.length > 0) {
       matchQuery.manager = {
-        $in: value?.managers.map((ele) => new mongoose.Types.ObjectId(ele)),
+        $in: value?.managers.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
     let commonQuery = [
       { $eq: ["$project_id", "$$projectId"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
     let loggedHrQuery = commonQuery;
 
@@ -2177,14 +2171,14 @@ exports.getProjectsReports = async (req, res) => {
         ? {
             $or: [
               { "managers._id": new mongoose.Types.ObjectId(req.user._id) },
-              { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-            ],
+              { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
     let mainQuery = [
       {
@@ -2197,14 +2191,14 @@ exports.getProjectsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tech",
-        },
+          as: "tech"
+        }
       },
       {
         $lookup: {
@@ -2216,20 +2210,20 @@ exports.getProjectsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_type"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "type",
-        },
+          as: "type"
+        }
       },
       {
         $unwind: {
           path: "$type",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -2241,20 +2235,20 @@ exports.getProjectsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "status",
-        },
+          as: "status"
+        }
       },
       {
         $unwind: {
           path: "$status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -2268,20 +2262,20 @@ exports.getProjectsReports = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "managers",
-        },
+          as: "managers"
+        }
       },
       {
         $unwind: {
           path: "$managers",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -2291,24 +2285,24 @@ exports.getProjectsReports = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: loggedHrQuery,
-                },
-              },
+                  $and: loggedHrQuery
+                }
+              }
             },
             {
               $group: {
                 _id: "$logged_status",
                 totalHours: {
                   $sum: {
-                    $toInt: "$logged_hours",
-                  },
+                    $toInt: "$logged_hours"
+                  }
                 },
                 totalMinutes: {
                   $sum: {
-                    $toInt: "$logged_minutes",
-                  },
-                },
-              },
+                    $toInt: "$logged_minutes"
+                  }
+                }
+              }
             },
             {
               $addFields: {
@@ -2317,17 +2311,17 @@ exports.getProjectsReports = async (req, res) => {
                     {
                       $multiply: [
                         {
-                          $toDouble: "$totalHours",
+                          $toDouble: "$totalHours"
                         },
-                        60,
-                      ],
+                        60
+                      ]
                     },
                     {
-                      $toDouble: "$totalMinutes",
-                    },
-                  ],
-                },
-              },
+                      $toDouble: "$totalMinutes"
+                    }
+                  ]
+                }
+              }
             },
             {
               $facet: {
@@ -2338,21 +2332,21 @@ exports.getProjectsReports = async (req, res) => {
                       logged_status: "$_id",
                       total_logged_hours: {
                         $floor: {
-                          $divide: ["$time_in_mins", 60],
-                        },
+                          $divide: ["$time_in_mins", 60]
+                        }
                       },
                       total_logged_minutes: {
-                        $mod: ["$time_in_mins", 60],
-                      },
-                    },
-                  },
+                        $mod: ["$time_in_mins", 60]
+                      }
+                    }
+                  }
                 ],
                 missingStatus: [
                   {
                     $group: {
                       _id: null,
-                      status: { $addToSet: "$_id" },
-                    },
+                      status: { $addToSet: "$_id" }
+                    }
                   },
                   {
                     $project: {
@@ -2360,33 +2354,33 @@ exports.getProjectsReports = async (req, res) => {
                       logged_status: {
                         $setDifference: [
                           ["Billed", "Billable", "Non-billable", "Void"],
-                          "$status",
-                        ],
+                          "$status"
+                        ]
                       },
                       total_logged_hours: { $literal: 0 },
-                      total_logged_minutes: { $literal: 0 },
-                    },
+                      total_logged_minutes: { $literal: 0 }
+                    }
                   },
-                  { $unwind: "$logged_status" },
-                ],
-              },
+                  { $unwind: "$logged_status" }
+                ]
+              }
             },
             {
               $project: {
                 task_hours: {
-                  $concatArrays: ["$existingData", "$missingStatus"],
-                },
-              },
-            },
+                  $concatArrays: ["$existingData", "$missingStatus"]
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
       {
         $unwind: {
           path: "$task_hours",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getProjectDefaultSettingQuery("_id")),
       {
@@ -2403,27 +2397,27 @@ exports.getProjectsReports = async (req, res) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.total_logged_hours",
+                            $toDouble: "$$this.total_logged_hours"
                           },
-                          60,
-                        ],
+                          60
+                        ]
                       },
                       {
-                        $toDouble: "$$this.total_logged_minutes",
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
+                        $toDouble: "$$this.total_logged_minutes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       {
         $match: {
           ...matchQuery,
-          "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-        },
+          "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+        }
       },
       {
         $project: {
@@ -2436,8 +2430,8 @@ exports.getProjectsReports = async (req, res) => {
             $map: {
               input: "$tech",
               as: "t",
-              in: "$$t.project_tech",
-            },
+              in: "$$t.project_tech"
+            }
           },
           // technologyName: "$tech.project_tech",
           project_type: 1,
@@ -2456,20 +2450,20 @@ exports.getProjectsReports = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
-                },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
+                }
               },
               ":",
               {
                 $toString: {
-                  $mod: ["$totalLoggedTime", 60],
-                },
-              },
-            ],
-          },
-        },
-      },
+                  $mod: ["$totalLoggedTime", 60]
+                }
+              }
+            ]
+          }
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -2483,12 +2477,12 @@ exports.getProjectsReports = async (req, res) => {
         ...(value?.technologies && value?.technologies.length > 0
           ? {
               _id: {
-                $in: value?.technologies,
-              },
+                $in: value?.technologies
+              }
             }
           : {}),
-        isDeleted: false,
-      }),
+        isDeleted: false
+      })
     ]);
 
     // const dataTotal = await Project.aggregate(mainQuery);
@@ -2500,7 +2494,7 @@ exports.getProjectsReports = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
     // const data = await Project.aggregate(listQuery);
     if (value?.isExport) {
@@ -2514,7 +2508,7 @@ exports.getProjectsReports = async (req, res) => {
         acc[managerName] = {
           managerName,
           managerName: curr.managerName,
-          totalProjects: 0,
+          totalProjects: 0
         };
       }
       acc[managerName].totalProjects += 1;
@@ -2552,7 +2546,7 @@ exports.getProjectsReports = async (req, res) => {
               if (!acc[techName]) {
                 acc[techName] = {
                   technologyName: techName,
-                  totalProjects: 0,
+                  totalProjects: 0
                 };
               }
               acc[techName].totalProjects += 1;
@@ -2561,7 +2555,7 @@ exports.getProjectsReports = async (req, res) => {
             if (!acc[techName]) {
               acc[techName] = {
                 technologyName: techName,
-                totalProjects: 0,
+                totalProjects: 0
               };
             }
             acc[techName].totalProjects += 1;
@@ -2589,7 +2583,7 @@ exports.getProjectsReports = async (req, res) => {
         acc[project_typeName] = {
           project_typeName,
           project_typeName: curr.project_typeName,
-          totalProjects: 0,
+          totalProjects: 0
         };
       }
       acc[project_typeName].totalProjects += 1;
@@ -2624,7 +2618,7 @@ exports.getProjectsReports = async (req, res) => {
       ),
       types: Object.values(typesTotalProjects).sort(
         (a, b) => b.totalProjects - a.totalProjects
-      ),
+      )
     };
 
     storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
@@ -2869,7 +2863,7 @@ exports.updateProjectStarred = async (req, res) => {
   try {
     const project_id = req?.params?.id;
     const validationSchema = Joi.object({
-      isStarred: Joi.boolean().required(),
+      isStarred: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -2881,7 +2875,7 @@ exports.updateProjectStarred = async (req, res) => {
     }
     const StarProjects = await ProjectStar.findOne({
       project_id: new mongoose.Types.ObjectId(project_id),
-      createdBy: new mongoose.Types.ObjectId(req?.user?._id),
+      createdBy: new mongoose.Types.ObjectId(req?.user?._id)
     });
     let project = null;
     if (StarProjects?._id) {
@@ -2890,8 +2884,8 @@ exports.updateProjectStarred = async (req, res) => {
         {
           $set: {
             isStarred: value?.isStarred,
-            ...(await getRefModelFromLoginUser(req?.user, true)),
-          },
+            ...(await getRefModelFromLoginUser(req?.user, true))
+          }
         }
       );
       if (project == null) {
@@ -2904,7 +2898,7 @@ exports.updateProjectStarred = async (req, res) => {
         project_id: project_id ? project_id : null,
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       await project.save();
       if (project == null) {
@@ -2925,7 +2919,7 @@ exports.updateProjectsManagePeople = async (req, res) => {
       manager: Joi.string().optional().default(null),
       acc_manager: Joi.string().optional().default(null),
       assignees: Joi.array().default([]),
-      pms_clients: Joi.array().default([]),
+      pms_clients: Joi.array().default([])
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -2959,7 +2953,7 @@ exports.updateProjectsManagePeople = async (req, res) => {
           [],
 
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -2981,7 +2975,7 @@ exports.updateProjectsManagePeople = async (req, res) => {
       ) {
         await mailForUpdateProjectInfo({
           oldData: projectData,
-          newData: updatedData,
+          newData: updatedData
         });
       }
     }
@@ -3037,8 +3031,8 @@ exports.addProjectRandomId = async (data) => {
             { _id: element._id },
             {
               $set: {
-                projectId: generateRandomId(),
-              },
+                projectId: generateRandomId()
+              }
             }
           );
         }

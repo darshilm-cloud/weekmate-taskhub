@@ -456,9 +456,6 @@ class CommonHelpers {
             ? "pmsclients"
             : "employees";
 
-      // console.log("refModel:", refModel, loginUser, "tt");
-      console.log("refModel:", refModel, loginUser, 'tt', loginUser?.toString() == objectId.toString(),
-        loginUser?._id, objectId, loginUser)
       return {
         ...(!isUpdate && !isDelete
           ? {

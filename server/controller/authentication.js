@@ -205,7 +205,7 @@ exports.dataForJWT = async (userData) => {
       last_name: userData.last_name,
       email: userData.email,
       phone_number: userData.phone_number,
-      companyId:userData.companyId._id,
+      companyId:userData?.companyId?._id,
       companyDetails:userData.companyId,
       ...(userData.full_name ? { full_name: userData.full_name } : {}),
       ...(userData.emp_img ? { emp_img: userData.emp_img } : {}),

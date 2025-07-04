@@ -20,12 +20,6 @@ const ProjectSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  // technology: {
-  //   type: Schema.Types.ObjectId,
-  //   ref: "projecttechs",
-  //   default: null,
-  //   required: true,
-  // },
   technology: {
     type: [{ type: Schema.Types.ObjectId, ref: "projecttechs" }],
     default: [],

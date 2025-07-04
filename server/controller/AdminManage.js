@@ -371,6 +371,7 @@ exports.editUser = async (req, res) => {
     if (email !== undefined) updateFields.email = email;
     if (firstName !== undefined) updateFields.first_name = firstName;
     if (lastName !== undefined) updateFields.last_name = lastName;
+    if(firstName !== undefined && lastName !== undefined) updateFields.full_name = `${firstName} ${lastName}`
     if (companyId !== undefined) updateFields.companyId = companyId;
     if (isActivate !== undefined) updateFields.isActivate = isActivate;
 
