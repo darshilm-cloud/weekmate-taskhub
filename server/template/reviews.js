@@ -1,13 +1,9 @@
 const { emailSenderForPMS } = require("../helpers/common");
 
 class ReviewsMail {
-    newReviewsMail = async (data) => {
-        try {
-// console.log(data,'dataMail',process.env.CEO_EMAIL,
-//   process.env.DIRECTOR_EMAIL,
-//   data?.manager?.email);
-
-            let html = `
+  newReviewsMail = async (data, companyId) => {
+    try {
+      let html = `
             <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
   <div style="background-color: #03497a; color: #fff; padding: 20px; text-align: center;">
     <h1 style="margin: 0; font-size: 24px;">🎉 Congratulations, Team! 🎉</h1>
@@ -50,31 +46,24 @@ class ReviewsMail {
 </div>
         `;
 
+      const mailData = {
+        subject: ` New Positive Feedback by ${data?.client_name} - ${data?.technology?.project_tech}`,
+        html
+      };
 
-            const mailData = {
-                subject: ` New Positive Feedback by ${data?.client_name} - ${data?.technology?.project_tech}`,
-                html,
-            };
-
-            let cc = [
-                process.env.CEO_EMAIL,
-                process.env.DIRECTOR_EMAIL,
-                data?.manager?.email,
-                data?.acc_manager?.email,
-                data?.managers_rm?.email,
-                data?.acc_managers_rm?.email,
-          ];
-          if (['6627428b2cd9adde1a7ef5f8', '6641eb0b333ffa11fc45430f'].includes(data.technology._id.toString())) {
-            cc.push(process.env.SHLOK_EMAIL)
-          }
-
-
-          
-            await emailSenderForPMS(data?.createdBy?.email, mailData, cc);
-        } catch (error) {
-            console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
-        }
-    };
+      let cc = [
+        process.env.CEO_EMAIL,
+        process.env.DIRECTOR_EMAIL,
+        data?.manager?.email,
+        data?.acc_manager?.email,
+        data?.managers_rm?.email,
+        data?.acc_managers_rm?.email
+      ];
+      await emailSenderForPMS(companyId, data?.createdBy?.email, mailData, cc);
+    } catch (error) {
+      console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
+    }
+  };
 }
 
 module.exports = new ReviewsMail();

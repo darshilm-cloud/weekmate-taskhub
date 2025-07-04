@@ -10,52 +10,30 @@ const { Parser } = require("json2csv");
 const json2xls = require("json2xls");
 const { utcDefault } = require("../configs");
 const config = require("../settings/config.json");
+// const SMTP = mongoose.model("smtp_configs")
+// const { SMTP } = require("../models");
 
-let extArr = [
-  `.txt`,
-  `.xlsx`,
-  `.csv`,
-  `.xls`,
-  `.pdf`,
-  `.doc`,
-  `.docx`,
-  `.png`,
-  `.jpg`,
-  `.jpeg`,
-  `.json`,
-  `.mp4`,
-  `.zip`,
-  `.rar`,
-];
-
-let transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  // host: 'smtppro.zoho.com',
-  // port: 587,
-  // requireTLS: true,
-  // requireTLS: false,
-  // secure: true,
-  // secure: false,
-  tls: {
-    rejectUnauthorized: false,
-  },
+// Global default transporter (used when companyId is not passed)
+let defaultTransporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: process.env.SMTP_SECURE === "true", // convert string to boolean
   pool: true,
-  auth: {
-    user: "hrms@elsner.com",
-    pass: "bztjjhyvdarogdex",
+  tls: {
+    rejectUnauthorized: false
   },
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
 });
 
-transporter.verify(function (error, success) {
+// Optional: verify on startup
+defaultTransporter.verify(function (error, success) {
   if (error) {
-    console.log(chalk.red(error));
+    console.log(chalk.red("SMTP Error:", error));
   } else {
-    console.log();
-    console.log(
-      chalk.green("Server is verified to send"),
-      chalk.yellow("E-Mail")
-    );
+    console.log(chalk.green("✅ Default SMTP verified to send email"));
   }
 });
 
@@ -141,46 +119,94 @@ class CommonHelpers {
               .trim() + `_${Date.now()}`
           ).replace(/\s+/g, "_") + path.extname(file.originalname)
         );
-      },
+      }
     }),
-    limits: { fileSize: MULTER.MAX_FILE_SIZE },
-    // fileFilter: function (req, file, cb) {
-    //   if (!extArr.includes(path.extname(file.originalname))) {
-    //     cb(new Error("File not allowed"));
-    //   } else {
-    //     cb(null, true);
-    //   }
-    // },
+    limits: { fileSize: MULTER.MAX_FILE_SIZE }
   });
 
+  // Async mail sending function
   emailSenderForPMS = async (
+    companyId = null,
     to,
     content,
     cc = null,
-    from = `"Elsner TaskHub" hrms@elsner.com`
+    from = null // Will override based on SMTP config
   ) => {
-    let contacts = {
-      to: Array.isArray(to) ? to.join(", ") : to,
-      from,
-    };
+    try {
+      let transporter;
+      let dynamicFrom = from;
+      const contacts = {
+        to: Array.isArray(to) ? to.join(", ") : to
+      };
 
-    if (cc) {
-      contacts.cc = Array.isArray(cc) ? cc.join(", ") : cc;
-    }
-
-    let email = Object.assign({}, content, contacts);
-
-    return await transporter.sendMail(email, (err, message) => {
-      if (err) {
-        console.log(
-          "🚀 ~ CommonHelpers ~ emailSenderForPMS.sendMail ~ err:",
-          err
-        );
-      } else {
-        console.log("sucsses mail",message);
-        return;
+      if (cc) {
+        contacts.cc = Array.isArray(cc) ? cc.join(", ") : cc;
       }
+
+      if (companyId) {
+        console.log("📧 Using company SMTP for:", companyId);
+
+        const SMTP = mongoose.model("smtp_configs");
+        const getSMTP = await SMTP.findOne({
+          companyId: newObjectId(companyId)
+        });
+
+        if (!getSMTP) {
+          throw new Error("SMTP configuration not found for the company");
+        }
+
+        // Create a dynamic transporter
+        transporter = nodemailer.createTransport({
+          host: getSMTP.smtpHost,
+          port: getSMTP.smtpPort,
+          secure: getSMTP.smtpSecure === true, // should be boolean
+          pool: true,
+          tls: {
+            rejectUnauthorized: false
+          },
+          auth: {
+            user: getSMTP.smtpEmail,
+            pass: getSMTP.smtpPassword
+          }
+        });
+
+        const fromName = getSMTP.fromName || "Company Support";
+        dynamicFrom = `${fromName} <${getSMTP.smtpEmail}>`;
+      } else {
+        // Use default transporter and default FROM
+        transporter = defaultTransporter;
+        dynamicFrom =
+          from ||
+          `${process.env.FROM_NAME || "Support"} <${process.env.FROM_EMAIL}>`;
+      }
+
+      const email = {
+        ...content,
+        ...contacts,
+        from: dynamicFrom
+      };
+
+      const result = await transporter.sendMail(email);
+
+      console.log("✅ Email sent:", result.messageId);
+      return result;
+    } catch (err) {
+      console.error("❌ Email send failed:", err.message);
+      throw err;
+    }
+  };
+
+  getCompanyData = async (companyId) => {
+    const company = mongoose.model("companies");
+    const companyDetails = await company.findOne({
+      _id: newObjectId(companyId)
     });
+
+    if (companyDetails) {
+      return companyDetails;
+    } else {
+      return null;
+    }
   };
 
   arraysAreEqual(arr1, arr2) {
@@ -212,7 +238,7 @@ class CommonHelpers {
 
     return {
       added: addedValues || [],
-      removed: removedValues || [],
+      removed: removedValues || []
     };
   }
 
@@ -270,76 +296,76 @@ class CommonHelpers {
         // Create..
         createdBy: isRefPath
           ? {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "createdByModel",
-          }
+              type: mongoose.Schema.Types.ObjectId,
+              refPath: "createdByModel"
+            }
           : {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "employees",
-            required: true,
-          },
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "employees",
+              required: true
+            },
         ...(isRefPath
           ? {
-            createdByModel: {
-              type: String,
-              enum: ["employees", "pmsclients"],
-              required: true,
-            },
-          }
+              createdByModel: {
+                type: String,
+                enum: ["employees", "pmsclients"],
+                required: true
+              }
+            }
           : {}),
         createdAt: {
           type: Date,
           default: utcDefault,
-          ...(addExpiry && { expires: "10d", index: true }),
+          ...(addExpiry && { expires: "10d", index: true })
         },
 
         // Update...
         updatedBy: isRefPath
           ? {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "updatedByModel",
-            required: true,
-          }
+              type: mongoose.Schema.Types.ObjectId,
+              refPath: "updatedByModel",
+              required: true
+            }
           : {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "employees",
-            required: true,
-          },
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "employees",
+              required: true
+            },
         ...(isRefPath
           ? {
-            updatedByModel: {
-              type: String,
-              enum: ["employees", "pmsclients"],
-              required: true,
-            },
-          }
+              updatedByModel: {
+                type: String,
+                enum: ["employees", "pmsclients"],
+                required: true
+              }
+            }
           : {}),
         updatedAt: { type: Date, default: utcDefault },
 
         // Delete..
         deletedBy: isRefPath
           ? {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "deletedByModel",
-            default: null,
-          }
+              type: mongoose.Schema.Types.ObjectId,
+              refPath: "deletedByModel",
+              default: null
+            }
           : {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "employees",
-            default: null,
-          },
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "employees",
+              default: null
+            },
         ...(isRefPath
           ? {
-            deletedByModel: {
-              type: String,
-              enum: ["employees", "pmsclients"],
-              default: null,
-            },
-          }
+              deletedByModel: {
+                type: String,
+                enum: ["employees", "pmsclients"],
+                default: null
+              }
+            }
           : {}),
         deletedAt: { type: Date, default: null },
 
-        isDeleted: { type: Boolean, default: false },
+        isDeleted: { type: Boolean, default: false }
       };
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ commonSchema ~ error:", error);
@@ -352,82 +378,82 @@ class CommonHelpers {
         // sender...
         sender_id: isRefPath
           ? {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: "senderModel",
-            required: true,
-          }
+              type: mongoose.Schema.Types.ObjectId,
+              refPath: "senderModel",
+              required: true
+            }
           : {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "employees",
-            required: true,
-          },
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "employees",
+              required: true
+            },
         ...(isRefPath
           ? {
-            senderModel: {
-              type: String,
-              enum: ["employees", "pmsclients"],
-              required: true,
-            },
-          }
+              senderModel: {
+                type: String,
+                enum: ["employees", "pmsclients"],
+                required: true
+              }
+            }
           : {}),
 
         // receiver..
         receiver_ids: isRefPath
           ? [
-            {
-              type: mongoose.Schema.Types.ObjectId,
-              required: true,
-              refPath: "receiverModels",
-            },
-          ]
+              {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true,
+                refPath: "receiverModels"
+              }
+            ]
           : [
-            {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "employees",
-              default: [],
-            },
-          ],
+              {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "employees",
+                default: []
+              }
+            ],
         ...(isRefPath
           ? {
-            receiverModels: {
-              type: [String],
-              enum: ["employees", "pmsclients"],
-              required: true,
-            },
-          }
+              receiverModels: {
+                type: [String],
+                enum: ["employees", "pmsclients"],
+                required: true
+              }
+            }
           : {}),
 
         // Read history...
         read_history: isRefPath
           ? {
-            type: [
-              {
-                receiver_id: {
-                  type: mongoose.Schema.Types.ObjectId,
-                  refPath: "readByModel",
-                },
-                updatedAt: { type: Date },
-                readByModel: {
-                  type: String,
-                  enum: ["employees", "pmsclients"],
-                  required: true,
-                },
-              },
-            ],
-            default: [],
-          }
+              type: [
+                {
+                  receiver_id: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    refPath: "readByModel"
+                  },
+                  updatedAt: { type: Date },
+                  readByModel: {
+                    type: String,
+                    enum: ["employees", "pmsclients"],
+                    required: true
+                  }
+                }
+              ],
+              default: []
+            }
           : {
-            type: [
-              {
-                receiver_id: {
-                  type: mongoose.Schema.Types.ObjectId,
-                  ref: "employees",
-                },
-                updatedAt: { type: Date },
-              },
-            ],
-            default: [],
-          },
+              type: [
+                {
+                  receiver_id: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "employees"
+                  },
+                  updatedAt: { type: Date }
+                }
+              ],
+              default: []
+            }
       };
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ commonSchema ~ error:", error);
@@ -451,20 +477,20 @@ class CommonHelpers {
 
       // refModel = loginUser?._id == objectId ? "pmsclients" : refModel;
       let refModel =
-        loginUser
-         && loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
-            ? "pmsclients"
-            : "employees";
+        loginUser &&
+        loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
+          ? "pmsclients"
+          : "employees";
 
       return {
         ...(!isUpdate && !isDelete
           ? {
-            createdByModel: refModel,
-            updatedByModel: refModel,
-          }
+              createdByModel: refModel,
+              updatedByModel: refModel
+            }
           : isUpdate && !isDelete
-            ? { updatedByModel: refModel }
-            : { deletedByModel: refModel }),
+          ? { updatedByModel: refModel }
+          : { deletedByModel: refModel })
       };
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ getUpdatedByQuery ~ error:", error);
@@ -480,14 +506,14 @@ class CommonHelpers {
         fieldName == "createdBy"
           ? "$createdByModel"
           : fieldName == "updatedBy"
-            ? "$updatedByModel"
-            : "$deletedByModel";
+          ? "$updatedByModel"
+          : "$deletedByModel";
 
       const obj = { [fieldName]: `$${fieldName}` };
       const matchVar = `$$${fieldName}`;
       const empVar = `${fieldName}Emp`;
       const clientVar = `${fieldName}Client`;
-      console.log("=====", refModel)
+      console.log("=====", refModel);
       return [
         {
           $lookup: {
@@ -498,17 +524,17 @@ class CommonHelpers {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: [matchKey, matchVar] },
+                      { $eq: [matchKey, matchVar] }
                       // { $eq: ["$isDeleted", false] },
                       // { $eq: ["$isSoftDeleted", false] },
                       // { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                    ]
+                  }
+                }
+              }
             ],
-            as: empVar,
-          },
+            as: empVar
+          }
         },
         {
           $lookup: {
@@ -519,17 +545,17 @@ class CommonHelpers {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: [matchKey, matchVar] },
+                      { $eq: [matchKey, matchVar] }
                       // { $eq: ["$isDeleted", false] },
                       // { $eq: ["$isSoftDeleted", false] },
                       // { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                    ]
+                  }
+                }
+              }
             ],
-            as: clientVar,
-          },
+            as: clientVar
+          }
         },
         {
           $addFields: {
@@ -537,11 +563,11 @@ class CommonHelpers {
               $cond: {
                 if: { $eq: [refModel, "employees"] },
                 then: { $arrayElemAt: [`$${empVar}`, 0] },
-                else: { $arrayElemAt: [`$${clientVar}`, 0] },
-              },
-            },
-          },
-        },
+                else: { $arrayElemAt: [`$${clientVar}`, 0] }
+              }
+            }
+          }
+        }
       ];
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ getCreatedByQuery ~ error:", error);
@@ -561,13 +587,13 @@ class CommonHelpers {
                   if: {
                     $and: [
                       { $isArray: "$pms_clients" },
-                      { $ne: ["$pms_clients", []] },
-                    ],
+                      { $ne: ["$pms_clients", []] }
+                    ]
                   },
                   then: "$pms_clients",
-                  else: [],
-                },
-              },
+                  else: []
+                }
+              }
             },
             pipeline: [
               {
@@ -577,15 +603,15 @@ class CommonHelpers {
                       { $in: ["$_id", "$$clientIds"] },
                       { $eq: ["$isDeleted", false] },
                       { $eq: ["$isSoftDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "pms_clients",
-          },
-        },
+            as: "pms_clients"
+          }
+        }
       ];
 
       if (isProjection) {
@@ -599,12 +625,12 @@ class CommonHelpers {
                       if: {
                         $and: [
                           { $isArray: "$pms_clients" },
-                          { $ne: ["$pms_clients", []] },
-                        ],
+                          { $ne: ["$pms_clients", []] }
+                        ]
                       },
                       then: "$pms_clients",
-                      else: [],
-                    },
+                      else: []
+                    }
                   },
                   as: "clientId",
                   in: {
@@ -612,14 +638,14 @@ class CommonHelpers {
                       if: {
                         ...(filterClientIds.length > 0
                           ? {
-                            $in: [
-                              "$$clientId._id",
-                              filterClientIds.map(
-                                (n) => new mongoose.Types.ObjectId(n)
-                              ),
-                            ],
-                          }
-                          : {}),
+                              $in: [
+                                "$$clientId._id",
+                                filterClientIds.map(
+                                  (n) => new mongoose.Types.ObjectId(n)
+                                )
+                              ]
+                            }
+                          : {})
                       },
                       then: {
                         _id: "$$clientId._id",
@@ -632,12 +658,12 @@ class CommonHelpers {
                           $concat: [
                             "$$clientId.first_name",
                             "_",
-                            "$$clientId.last_name",
-                          ],
-                        },
+                            "$$clientId.last_name"
+                          ]
+                        }
                       },
-                      else: null, // Or any other value you prefer for non-matching IDs
-                    },
+                      else: null // Or any other value you prefer for non-matching IDs
+                    }
                     // _id: "$$clientId._id",
                     // full_name: "$$clientId.full_name",
                     // first_name: "$$clientId.first_name",
@@ -651,13 +677,13 @@ class CommonHelpers {
                     //     "$$clientId.last_name",
                     //   ],
                     // },
-                  },
-                },
+                  }
+                }
               },
               as: "client",
-              cond: { $ne: ["$$client", null] },
-            },
-          },
+              cond: { $ne: ["$$client", null] }
+            }
+          }
         };
       }
       return query;
@@ -683,10 +709,10 @@ class CommonHelpers {
                       $and: [
                         { $eq: ["$project_id", "$$projectId"] },
                         { $eq: ["$isDeleted", false] },
-                        { $eq: ["$isDefault", true] },
-                      ],
-                    },
-                  },
+                        { $eq: ["$isDefault", true] }
+                      ]
+                    }
+                  }
                 },
                 {
                   $lookup: {
@@ -698,38 +724,38 @@ class CommonHelpers {
                           $expr: {
                             $and: [
                               { $eq: ["$_id", "$$tab_id"] },
-                              { $eq: ["$isDeleted", false] },
-                            ],
-                          },
-                        },
-                      },
+                              { $eq: ["$isDeleted", false] }
+                            ]
+                          }
+                        }
+                      }
                     ],
-                    as: "tab",
-                  },
+                    as: "tab"
+                  }
                 },
                 {
                   $unwind: {
                     path: "$tab",
-                    preserveNullAndEmptyArrays: true,
-                  },
-                },
+                    preserveNullAndEmptyArrays: true
+                  }
+                }
               ],
-              as: "projectDefaultTab",
-            },
+              as: "projectDefaultTab"
+            }
           },
           {
             $unwind: {
               path: "$projectDefaultTab",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
+              preserveNullAndEmptyArrays: true
+            }
+          }
         ];
       } else {
         query = {
           defaultTab: {
             _id: "$projectDefaultTab.tab._id",
-            name: "$projectDefaultTab.tab.name",
-          },
+            name: "$projectDefaultTab.tab.name"
+          }
         };
       }
 
@@ -748,27 +774,6 @@ class CommonHelpers {
       console.log("🚀 ~ SocketCommonFn ~ error:", error);
     }
   };
-
-  async getExcpetionalProjects() {
-    let project_ids = ["665473f638bcaa161261cf31"]; // This array is made for id of project named ~> "Smart Dental Care"
-    // where the task comments notfications is not applicable as there are lots of clients.
-    return project_ids
-  }
-
-  async getExcpetionalProjectsForNomailRegardstoLoggedHours() {
-    let project_ids = ["666bd1cc9b47ea98ae8b92b7"];// This array is made for id of project named ~> "SO1001/IH/TimeTrackNRG"
-    //where to make this project's manager to not to receive email 
-    //for hours being logged, no changes to mailsettings as mailsettings says that quarterly mails shall be sent that is
-    //after every 4 hours so can't overwrite keys to be true as logged_hours remain false.. so statically made changes in code here.
-    return project_ids
-  }
-
-  async getPCandAMunderCEOIDtoexcludeCEOformail() {
-    let emp_email = "harshal@mailinator.com"//"harshal@elsner.in"; // To not to send mail to ceo for all PC and AM's manager being ceo.
-    // for complaints we send mail to pc and am's manager too 
-    // so, to check that if their manager is ceo then to exclude them as mail to ceo will be sent if escalation level 2..
-    return emp_email
-  }
 }
 
 module.exports = new CommonHelpers();

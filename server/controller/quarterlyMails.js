@@ -2,19 +2,20 @@ const mongoose = require("mongoose");
 const QuarterlyMails = mongoose.model("quarterlyhourmails");
 
 // (mailIds, mailData)
-exports.mailsToQuarterHours = async (mailIds, mailData) => {
+exports.mailsToQuarterHours = async (mailIds, mailData, companyId) => {
   try {
     let data = new QuarterlyMails({
+      companyId: newObjectId(companyId),
       mailids: mailIds,
       maildata: mailData,
-      isSent: false,
+      isSent: false
     });
 
     await data.save();
 
     return data;
   } catch (error) {
-    console.log("🚀 ~ exports.mailsToQuarterHours= ~ error:", error)    
+    console.log("🚀 ~ exports.mailsToQuarterHours= ~ error:", error);
     return false;
   }
 };
@@ -23,19 +24,19 @@ exports.updateSentMails = async (id) => {
   try {
     let data = await QuarterlyMails.updateOne(
       {
-        _id: new mongoose.Types.ObjectId(id),
+        _id: new mongoose.Types.ObjectId(id)
       },
       {
         $set: {
-          isSent: true,
-        },
+          isSent: true
+        }
       },
       { new: true }
     );
 
     return data;
   } catch (error) {
-    console.log("🚀 ~ exports.updateSentMails= ~ error:", error)    
+    console.log("🚀 ~ exports.updateSentMails= ~ error:", error);
     return false;
   }
 };
@@ -48,23 +49,23 @@ exports.getQuarterlyMails = async () => {
         $match: {
           isSent: false,
           createdAt: {
-            $gte: fourHoursAgo,
-          },
-        },
+            $gte: fourHoursAgo
+          }
+        }
       },
       {
         $project: {
           mailids: 1,
           maildata: 1,
-          isSent: 1,
-        },
-      },
+          isSent: 1
+        }
+      }
     ];
     const data = await QuarterlyMails.aggregate(mainQuery);
-    
+
     return data;
   } catch (error) {
-    console.log("🚀 ~ exports.getQuarterlyMails= ~ error:", error)    
+    console.log("🚀 ~ exports.getQuarterlyMails= ~ error:", error);
     return false;
   }
 };

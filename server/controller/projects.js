@@ -50,7 +50,7 @@ const { getCache, storeCache } = require("../middleware/cacheStore");
 const { generateCacheKey } = require("../middleware/CryptoKey");
 
 // Check is exists..
-exports.projectExists = async (title, id = null) => {
+exports.projectExists = async (title, id = null, companyId) => {
   try {
     let isExist = false;
 
@@ -58,6 +58,7 @@ exports.projectExists = async (title, id = null) => {
       {
         $match: {
           isDeleted: false,
+          companyId: newObjectId(companyId),
           ...(id
             ? {
                 _id: { $ne: new mongoose.Types.ObjectId(id) }
@@ -229,10 +230,11 @@ exports.addProjects = async (req, res) => {
         error.details[0].message
       );
     }
-    if (await this.projectExists(value?.title)) {
+    if (await this.projectExists(value?.title, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new Project({
+        companyId: newObjectId(decodedCompanyId),
         title: value?.title,
         color: value?.color || "",
         descriptions: value?.descriptions || "",
@@ -278,7 +280,7 @@ exports.addProjects = async (req, res) => {
 
       // mail to manger..
       if (addedData.manager) {
-        await newProjectManagerMail(addedData);
+        await newProjectManagerMail(addedData, decodedCompanyId);
       }
 
       // mail to assignees and client..
@@ -286,7 +288,7 @@ exports.addProjects = async (req, res) => {
         addedData?.assignees?.length > 0 ||
         addedData?.pms_clients?.length > 0
       ) {
-        await newProjectAssigneesMail(addedData);
+        await newProjectAssigneesMail(addedData, decodedCompanyId);
       }
 
       return successResponse(
@@ -380,10 +382,9 @@ exports.getProjects = async (req, res) => {
         : {}
     ];
 
-
-
     let matchQuery = {
       isDeleted: false, // value?.isArchived,
+      companyId: newObjectId(decodedCompanyId),
       // For details
       ...(value?._id
         ? { _id: new mongoose.Types.ObjectId(value?._id) }
@@ -478,8 +479,10 @@ exports.getProjects = async (req, res) => {
       $and: orFilter
     };
 
-    console.log("🚀 ~ exports.getProjects= ~ orFilter:", JSON.stringify(matchQuery, null, 2));
-
+    console.log(
+      "🚀 ~ exports.getProjects= ~ orFilter:",
+      JSON.stringify(matchQuery, null, 2)
+    );
 
     const mainQuery = [
       {
@@ -790,6 +793,13 @@ exports.getProjects = async (req, res) => {
 //Update Project :
 exports.updateProjects = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().optional().allow(""),
       color: Joi.string().optional().allow(""),
@@ -816,7 +826,9 @@ exports.updateProjects = async (req, res) => {
       );
     }
 
-    if (await this.projectExists(value?.title, req.params.id)) {
+    if (
+      await this.projectExists(value?.title, req.params.id, decodedCompanyId)
+    ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const projectData = await Project.findById(req.params.id)
@@ -875,10 +887,13 @@ exports.updateProjects = async (req, res) => {
           .populate("updatedBy")
           .populate("assignees");
 
-        await mailForUpdateProjectInfo({
-          oldData: projectData,
-          newData: updatedData
-        });
+        await mailForUpdateProjectInfo(
+          {
+            oldData: projectData,
+            newData: updatedData
+          },
+          decodedCompanyId
+        );
       }
 
       // update project default data..
@@ -906,7 +921,7 @@ exports.updateProjects = async (req, res) => {
           clientData.added
         );
 
-        await newProjectAssigneesMail(updatedData);
+        await newProjectAssigneesMail(updatedData, decodedCompanyId);
       }
       return successResponse(
         res,
@@ -2915,6 +2930,13 @@ exports.updateProjectStarred = async (req, res) => {
 //Update Project Manage People :
 exports.updateProjectsManagePeople = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       manager: Joi.string().optional().default(null),
       acc_manager: Joi.string().optional().default(null),
@@ -2973,10 +2995,13 @@ exports.updateProjectsManagePeople = async (req, res) => {
       if (
         projectData.manager._id.toString() != updatedData.manager._id.toString()
       ) {
-        await mailForUpdateProjectInfo({
-          oldData: projectData,
-          newData: updatedData
-        });
+        await mailForUpdateProjectInfo(
+          {
+            oldData: projectData,
+            newData: updatedData
+          },
+          decodedCompanyId
+        );
       }
     }
 
@@ -3005,7 +3030,7 @@ exports.updateProjectsManagePeople = async (req, res) => {
         clientData.added
       );
 
-      await newProjectAssigneesMail(updatedData);
+      await newProjectAssigneesMail(updatedData, decodedCompanyId);
     }
     return successResponse(
       res,

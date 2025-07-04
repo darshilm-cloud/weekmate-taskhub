@@ -77,6 +77,13 @@ exports.projectNoteExists = async (reqData, id = null) => {
 //Add Project Notes :
 exports.addNotes = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().allow("").optional(),
@@ -117,7 +124,7 @@ exports.addNotes = async (req, res) => {
         (value?.subscribers && value?.subscribers.length > 0) ||
         (value?.pms_clients && value?.pms_clients.length > 0)
       ) {
-        await noteSubscribersMail(data._id);
+        await noteSubscribersMail(data._id,[],[],decodedCompanyId);
       }
       return successResponse(
         res,
@@ -424,6 +431,13 @@ exports.getNotes = async (req, res) => {
 //Update Project Notes :
 exports.updateNotes = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       notebook_id: Joi.string().optional().default(null),
       title: Joi.string().optional(),
@@ -485,7 +499,8 @@ exports.updateNotes = async (req, res) => {
         await noteSubscribersMail(
           req.params.id,
           subscribersData.added,
-          clientsData.added
+          clientsData.added,
+          decodedCompanyId
         );
       }
       return successResponse(

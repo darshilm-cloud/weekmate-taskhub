@@ -20,6 +20,13 @@ const { newComplaintCommentsMail } = require("../template/complaints_comments");
 //Add Complaint
 exports.addComplaintComments = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       complaint_id: Joi.string().required(),
       comment: Joi.string().required(),
@@ -44,7 +51,6 @@ exports.addComplaintComments = async (req, res) => {
     });
     await data.save();
 
-    console.log("🚀 ~ exports.addComplaintComments= ~ value?.attachments:", value?.attachments)
     if (value?.attachments && value.attachments.length > 0) {
       await filesManageInDB(
         value.attachments,
@@ -62,7 +68,7 @@ exports.addComplaintComments = async (req, res) => {
       );
     }
     let emailDetails = await this.getComplaintCommentsDetailsForMail(data._id);
-    await newComplaintCommentsMail(emailDetails)
+    await newComplaintCommentsMail(emailDetails, decodedCompanyId)
 
     return successResponse(
       res,

@@ -4,8 +4,7 @@ const moment = require("moment");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.bugAssigneesMail = async (data, newAddedAssignees = []) => {
+exports.bugAssigneesMail = async (data, newAddedAssignees = [], companyId) => {
   try {
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -442,14 +441,14 @@ exports.bugAssigneesMail = async (data, newAddedAssignees = []) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] You have been assigned a bug - ${data?.project?.projectId}`,
-      html,
+      html
     };
 
     data.assignees = data.assignees.filter((s) => s !== null);
 
     // to get mailSettings of assignees..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data?.assignees?.map((ele) => ele._id) },
+      createdBy: { $in: data?.assignees?.map((ele) => ele._id) }
     });
 
     // to get mailSettings of assignees as of task_assigned setting being true..
@@ -504,11 +503,11 @@ exports.bugAssigneesMail = async (data, newAddedAssignees = []) => {
 
     if (mailIds.length > 0) {
       // / to send mail to assignees whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of assignees and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {
@@ -516,7 +515,7 @@ exports.bugAssigneesMail = async (data, newAddedAssignees = []) => {
   }
 };
 
-exports.bugWorkflowStatusUpdateMail = async (data) => {
+exports.bugWorkflowStatusUpdateMail = async (data,companyId) => {
   try {
     let stageIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-stage.png`;
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
@@ -802,16 +801,16 @@ exports.bugWorkflowStatusUpdateMail = async (data) => {
     `;
     const mailData = {
       subject: `[${data?.oldData?.project?.title}] The stage of a bug has been changed - ${data?.oldData?.project?.projectId}`,
-      html,
+      html
     };
 
     const mailIds = [
       ...new Set([
         ...data?.oldData?.assignees?.map((a) => a.email),
-        data?.oldData?.manager?.email,
-      ]),
+        data?.oldData?.manager?.email
+      ])
     ];
-    await emailSenderForPMS(mailIds, mailData, []);
+    await emailSenderForPMS(companyId, mailIds, mailData, []);
     return;
   } catch (e) {
     console.log("🚀 ~ exports.bugWorkflowStatusUpdateMail= ~ e:", e);

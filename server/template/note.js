@@ -3,8 +3,7 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.noteSubscriberMail = async (data) => {
+exports.noteSubscriberMail = async (data, companyId) => {
   try {
     let noteIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-note.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -216,15 +215,14 @@ exports.noteSubscriberMail = async (data) => {
       `;
     const mailData = {
       subject: `[${data?.project?.title}] You have been subscribed to a note - ${data?.project?.projectId}`,
-      html,
+      html
     };
 
-    
     data.subscribers = data.subscribers.filter((s) => s !== null);
 
     // to get mailSettings of subscribers..
     const mailSettings = await MailSettings.find({
-      $or: [{ createdBy: { $in: data?.subscribers?.map((ele) => ele._id) } }],
+      $or: [{ createdBy: { $in: data?.subscribers?.map((ele) => ele._id) } }]
     });
 
     // to get mailSettings of subscribers as of note_assigned setting being true..
@@ -243,13 +241,10 @@ exports.noteSubscriberMail = async (data) => {
       .map((subscriber) => subscriber.email);
 
     let clientsmailIds = data?.pms_clients
-      .filter(
-        (s) =>
-          s !== null
-      )
+      .filter((s) => s !== null)
       .map((subscriber) => subscriber.email);
 
-    await emailSenderForPMS(clientsmailIds, mailData, []);
+    await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
     //to get that subscribers mailids whose mail setting for quarterlyMail is true
     let quarterlymailIds = data?.subscribers
       .filter(
@@ -261,11 +256,11 @@ exports.noteSubscriberMail = async (data) => {
 
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (error) {

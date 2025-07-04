@@ -3,8 +3,7 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.mailForNoteComments = async (data) => {
+exports.mailForNoteComments = async (data, companyId) => {
   try {
     let commentsIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-comments.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -262,18 +261,17 @@ exports.mailForNoteComments = async (data) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] A comment has been added to a note - ${data?.project?.projectId}`,
-      html,
+      html
     };
     // data.project.manager = data.project.manager !== null;
     data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
-
 
     // to get mailSettings of manager, subscribers and taggedUsers..
     const mailSettings = await MailSettings.find({
       $or: [
         { createdBy: data?.project?.manager },
-        { createdBy: { $in: data.taggedUsers.map((ele) => ele._id) } },
-      ],
+        { createdBy: { $in: data.taggedUsers.map((ele) => ele._id) } }
+      ]
     });
 
     // to get mailSettings of taggedUsers and manager as of note_tagged_comments setting being true..
@@ -308,11 +306,11 @@ exports.mailForNoteComments = async (data) => {
 
     if (mailIds.length > 0) {
       // to send mail to all whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {

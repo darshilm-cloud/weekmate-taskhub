@@ -5,7 +5,7 @@ const moment = require("moment");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectTasks = mongoose.model("projecttasks");
@@ -22,7 +22,7 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -33,18 +33,21 @@ const {
   getArrayChanges,
   getCreatedUpdatedDeletedByQuery,
   getRefModelFromLoginUser,
-  getClientQuery,
+  getClientQuery
 } = require("../helpers/common");
 const { filesManageInDB } = require("./fileUploads");
 const { sendmailToAssignees, taskData } = require("./sendEmail");
 const { taskStatusUpdateMail } = require("../template/tasks");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
     type: "buffer",
-    cellDates: true, // otherwise for csv 2021-04-12T12:00:00Z is converted to 44298.22928240741
+    cellDates: true // otherwise for csv 2021-04-12T12:00:00Z is converted to 44298.22928240741
   });
 
   const sheetNameList = wb.SheetNames;
@@ -78,9 +81,9 @@ exports.projectTaskExists = async (reqData, id = null) => {
       main_task_id: new mongoose.Types.ObjectId(reqData.main_task_id),
       ...(id
         ? {
-            _id: { $ne: id },
+            _id: { $ne: id }
           }
-        : {}),
+        : {})
     });
     console.log("🚀 ~ exports.projectTaskExists= ~ data:", data);
     if (data) isExist = true;
@@ -93,6 +96,13 @@ exports.projectTaskExists = async (reqData, id = null) => {
 //Add Project task :
 exports.addProjectsTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -109,7 +119,7 @@ exports.addProjectsTask = async (req, res) => {
       attachments: Joi.any().optional(),
       folder_id: Joi.any().optional(),
       task_progress: Joi.string().optional().default("0"),
-      task_status: Joi.string().optional(),
+      task_status: Joi.string().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -163,14 +173,14 @@ exports.addProjectsTask = async (req, res) => {
           {
             task_status: value?.task_status,
             updatedBy: req.user._id,
-            updatedAt: configs.utcDefault(),
-          },
-        ],
+            updatedAt: configs.utcDefault()
+          }
+        ]
       }),
 
       createdBy: req.user._id,
       updatedBy: req.user._id,
-      ...(await getRefModelFromLoginUser(req?.user)),
+      ...(await getRefModelFromLoginUser(req?.user))
     });
     const newData = await data.save();
 
@@ -193,15 +203,15 @@ exports.addProjectsTask = async (req, res) => {
       updated_key: "createdAt",
       createdBy: req.user._id,
       updatedBy: req.user._id,
-      ...(await getRefModelFromLoginUser(req?.user)),
+      ...(await getRefModelFromLoginUser(req?.user))
     });
     await newHistory.save();
 
     // send mail to assignee..
     // if (value.assignees && value.assignees.length > 0) {
-      await sendmailToAssignees(newData._id);
+    await sendmailToAssignees(newData._id, [], decodedCompanyId);
     // }
-      // console.log("🚀 ~ exports.addProjectsTask= ~ newData:", newData)
+    // console.log("🚀 ~ exports.addProjectsTask= ~ newData:", newData)
     return successResponse(
       res,
       statusCode.CREATED,
@@ -233,7 +243,7 @@ exports.getProjectsTask = async (req, res) => {
       labels: Joi.array().optional().default("all"), // [ all | un_assigned | _id]
       start_date: Joi.string().optional(),
       due_date: Joi.string().optional(),
-      isDropdown: Joi.boolean().optional().default(false),
+      isDropdown: Joi.boolean().optional().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -249,7 +259,7 @@ exports.getProjectsTask = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
@@ -266,15 +276,15 @@ exports.getProjectsTask = async (req, res) => {
             task_status: {
               $in: value.workFlowStatus.map(
                 (v) => new mongoose.Types.ObjectId(v)
-              ),
-            },
+              )
+            }
           }
         : {}),
       ...(value?.assignees && !value.assignees.includes("all")
         ? value.assignees.includes("un_assigned")
           ? { assignees: { $eq: [] } }
           : {
-              assignees: value?.assignees,
+              assignees: value?.assignees
             }
         : {}),
 
@@ -283,8 +293,8 @@ exports.getProjectsTask = async (req, res) => {
           ? { task_labels: { $size: 0 } }
           : {
               task_labels: {
-                $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v)),
-              },
+                $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v))
+              }
             }
         : {}),
 
@@ -292,30 +302,30 @@ exports.getProjectsTask = async (req, res) => {
         ? value?.start_date && !value?.due_date
           ? {
               start_date: {
-                $gte: moment(value?.start_date).startOf("day").toDate(),
-              },
+                $gte: moment(value?.start_date).startOf("day").toDate()
+              }
             }
           : !value?.start_date && value?.due_date
           ? {
               due_date: {
-                $lte: moment(value?.due_date).startOf("day").toDate(),
-              },
+                $lte: moment(value?.due_date).startOf("day").toDate()
+              }
             }
           : {
               start_date: {
-                $gte: moment(value?.start_date).startOf("day").toDate(),
+                $gte: moment(value?.start_date).startOf("day").toDate()
               },
               due_date: {
-                $lte: moment(value?.due_date).startOf("day").toDate(),
-              },
+                $lte: moment(value?.due_date).startOf("day").toDate()
+              }
             }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -330,20 +340,20 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       {
         $unwind: {
           path: "$mainTask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -358,8 +368,8 @@ exports.getProjectsTask = async (req, res) => {
                     {
                       $eq: [
                         "$project_id",
-                        new mongoose.Types.ObjectId(value.project_id),
-                      ],
+                        new mongoose.Types.ObjectId(value.project_id)
+                      ]
                     },
                     // {
                     //   $eq: [
@@ -367,10 +377,10 @@ exports.getProjectsTask = async (req, res) => {
                     //     new mongoose.Types.ObjectId(value.main_task_id),
                     //   ],
                     // },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
 
             {
@@ -383,20 +393,20 @@ exports.getProjectsTask = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$timesheet_id"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "timesheet",
-              },
+                as: "timesheet"
+              }
             },
             {
               $unwind: {
                 path: "$timesheet",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             ...(await getCreatedUpdatedDeletedByQuery()),
             {
@@ -413,18 +423,18 @@ exports.getProjectsTask = async (req, res) => {
                   _id: 1,
                   full_name: 1,
                   emp_img: 1,
-                  client_img: 1,
+                  client_img: 1
                 },
                 createdAt: 1,
                 timesheet: {
                   _id: 1,
-                  title: 1,
-                },
-              },
-            },
+                  title: 1
+                }
+              }
+            }
           ],
-          as: "task_hours",
-        },
+          as: "task_hours"
+        }
       },
 
       {
@@ -437,20 +447,20 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -463,20 +473,20 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_status",
-        },
+          as: "task_status"
+        }
       },
       {
         $unwind: {
           path: "$task_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -489,14 +499,14 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$task_status_history"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workFlowStatus",
-        },
+          as: "workFlowStatus"
+        }
       },
 
       {
@@ -509,14 +519,14 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$task_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
 
       {
@@ -529,14 +539,14 @@ exports.getProjectsTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$task_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "taskLabels",
-        },
+          as: "taskLabels"
+        }
       },
 
       {
@@ -551,14 +561,14 @@ exports.getProjectsTask = async (req, res) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
 
       ...(await getClientQuery()),
@@ -575,19 +585,19 @@ exports.getProjectsTask = async (req, res) => {
                     {
                       $eq: [
                         "$project_id",
-                        new mongoose.Types.ObjectId(value.project_id),
-                      ],
+                        new mongoose.Types.ObjectId(value.project_id)
+                      ]
                     },
                     {
                       $eq: [
                         "$main_task_id",
-                        new mongoose.Types.ObjectId(value.main_task_id),
-                      ],
+                        new mongoose.Types.ObjectId(value.main_task_id)
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
             ...(await getCreatedUpdatedDeletedByQuery()),
             {
@@ -604,14 +614,14 @@ exports.getProjectsTask = async (req, res) => {
                   _id: 1,
                   full_name: 1,
                   emp_img: 1,
-                  client_img: 1,
+                  client_img: 1
                 },
-                createdAt: 1,
-              },
-            },
+                createdAt: 1
+              }
+            }
           ],
-          as: "task_update_history",
-        },
+          as: "task_update_history"
+        }
       },
       { $match: matchQuery },
       {
@@ -628,21 +638,21 @@ exports.getProjectsTask = async (req, res) => {
                       {
                         $multiply: [
                           {
-                            $toDouble: "$$this.logged_hours", // Convert string to double
+                            $toDouble: "$$this.logged_hours" // Convert string to double
                           },
-                          60,
-                        ], // Convert hours to minutes
+                          60
+                        ] // Convert hours to minutes
                       },
                       {
-                        $toDouble: "$$this.logged_minutes", // Convert string to double
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
+                        $toDouble: "$$this.logged_minutes" // Convert string to double
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
       {
         $project: {
@@ -663,9 +673,9 @@ exports.getProjectsTask = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
-                },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
+                }
               },
               ":",
               {
@@ -676,19 +686,19 @@ exports.getProjectsTask = async (req, res) => {
                         $cond: [
                           { $lt: [{ $mod: ["$totalLoggedTime", 60] }, 10] },
                           "0",
-                          "",
-                        ],
-                      },
+                          ""
+                        ]
+                      }
                     },
                     {
                       $toString: {
-                        $mod: ["$totalLoggedTime", 60],
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
+                        $mod: ["$totalLoggedTime", 60]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           },
           title: 1,
           project: 1,
@@ -707,9 +717,9 @@ exports.getProjectsTask = async (req, res) => {
                 _id: "$$attachment._id",
                 name: "$$attachment.name",
                 file_type: "$$attachment.file_type",
-                path: "$$attachment.path",
-              },
-            },
+                path: "$$attachment.path"
+              }
+            }
           },
           task_progress: 1,
           // task_status_history: {
@@ -755,7 +765,7 @@ exports.getProjectsTask = async (req, res) => {
           task_status: {
             _id: 1,
             title: 1,
-            color: 1,
+            color: 1
           },
           taskLabels: 1,
           assignees: {
@@ -765,12 +775,12 @@ exports.getProjectsTask = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
@@ -783,16 +793,16 @@ exports.getProjectsTask = async (req, res) => {
                   $concat: [
                     "$$assigneeId.first_name",
                     "_",
-                    "$$assigneeId.last_name",
-                  ],
-                },
-              },
-            },
+                    "$$assigneeId.last_name"
+                  ]
+                }
+              }
+            }
           },
           ...(await getClientQuery(true)),
-          task_update_history: 1,
-        },
-      },
+          task_update_history: 1
+        }
+      }
     ];
 
     if (value?.isDropdown) {
@@ -809,14 +819,14 @@ exports.getProjectsTask = async (req, res) => {
                       { $in: ["$_id", "$$assigneesIds"] },
                       { $eq: ["$isDeleted", false] },
                       { $eq: ["$isSoftDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "assignees",
-          },
+            as: "assignees"
+          }
         },
         ...(await getClientQuery()),
         { $match: matchQuery },
@@ -832,12 +842,12 @@ exports.getProjectsTask = async (req, res) => {
                     if: {
                       $and: [
                         { $isArray: "$assignees" },
-                        { $ne: ["$assignees", []] },
-                      ],
+                        { $ne: ["$assignees", []] }
+                      ]
                     },
                     then: "$assignees",
-                    else: [],
-                  },
+                    else: []
+                  }
                 },
                 as: "assigneeId",
                 in: {
@@ -850,15 +860,15 @@ exports.getProjectsTask = async (req, res) => {
                     $concat: [
                       "$$assigneeId.first_name",
                       "_",
-                      "$$assigneeId.last_name",
-                    ],
-                  },
-                },
-              },
+                      "$$assigneeId.last_name"
+                    ]
+                  }
+                }
+              }
             },
-            ...(await getClientQuery(true)),
-          },
-        },
+            ...(await getClientQuery(true))
+          }
+        }
       ];
       let data = await ProjectTasks.aggregate(mainQuery);
       return successResponse(
@@ -875,7 +885,7 @@ exports.getProjectsTask = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await ProjectTasks.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     const metaData = {
@@ -884,7 +894,7 @@ exports.getProjectsTask = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -902,6 +912,13 @@ exports.getProjectsTask = async (req, res) => {
 //Update Project task :  .. not in use
 exports.updateProjectsTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -917,7 +934,7 @@ exports.updateProjectsTask = async (req, res) => {
       attachments: Joi.array().optional(),
       task_progress: Joi.string().optional().default("0"),
       task_status: Joi.string().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -931,101 +948,105 @@ exports.updateProjectsTask = async (req, res) => {
     // if (await this.projectTaskExists(value, req.params.id)) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     // } else {
-      // data type of task_labels changed array to string .. need to manage here cause of this use in other module
-      let task_labels = [];
-      if (value?.task_labels && value?.task_labels == "")
-        task_labels = [new mongoose.Types.ObjectId(value.task_labels)];
+    // data type of task_labels changed array to string .. need to manage here cause of this use in other module
+    let task_labels = [];
+    if (value?.task_labels && value?.task_labels == "")
+      task_labels = [new mongoose.Types.ObjectId(value.task_labels)];
 
-      value.task_labels = task_labels;
-      const getData = await ProjectTasks.findById(req.params.id);
+    value.task_labels = task_labels;
+    const getData = await ProjectTasks.findById(req.params.id);
 
-      const data = await ProjectTasks.findByIdAndUpdate(
+    const data = await ProjectTasks.findByIdAndUpdate(
+      req.params.id,
+      {
+        title: value.title,
+        project_id: value.project_id,
+        main_task_id: value.main_task_id || null,
+        task_status: value.task_status || null,
+        assignees: value.assignees || [],
+        status: value.status,
+        descriptions: value.descriptions || "",
+        task_labels: value.task_labels || [],
+        start_date: value.start_date || null,
+        due_date: value.due_date || null,
+        start_date: value.start_date || null,
+        estimated_hours: value.estimated_hours,
+        estimated_minutes: value.estimated_minutes,
+        attachments: value.attachments || [],
+        task_progress: value.task_progress,
+        ...(getData.task_status && !value.task_status
+          ? {
+              task_status_history: [
+                ...getData.task_status_history,
+                {
+                  task_status: null,
+                  updatedBy: req.user._id,
+                  updatedAt: configs.utcDefault()
+                }
+              ]
+            }
+          : !getData.task_status && value.task_status
+          ? {
+              task_status_history: [
+                {
+                  task_status: value.task_status,
+                  updatedBy: req.user._id,
+                  updatedAt: configs.utcDefault()
+                }
+              ]
+            }
+          : getData.task_status &&
+            value.task_status &&
+            getData.task_status.toString() !== value.task_status.toString()
+          ? {
+              task_status_history: [
+                ...getData.task_status_history,
+                {
+                  task_status: value.task_status,
+                  updatedBy: req.user._id,
+                  updatedAt: configs.utcDefault()
+                }
+              ]
+            }
+          : getData.task_status_history),
+        updatedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!data) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
+    // save  files,..
+    if (value?.attachments) {
+      await filesManageInDB(
+        value.attachments,
+        req.user,
+        value.project_id,
+        value.folder_id,
+        req.params.id
+      );
+    }
+
+    // For send mail for new added subscribers..
+    const assigneesData = getArrayChanges(
+      getData.assignees.map((a) => a.toString()),
+      value.assignees
+    );
+
+    if (assigneesData.added && assigneesData.added.length > 0) {
+      await sendmailToAssignees(
         req.params.id,
-        {
-          title: value.title,
-          project_id: value.project_id,
-          main_task_id: value.main_task_id || null,
-          task_status: value.task_status || null,
-          assignees: value.assignees || [],
-          status: value.status,
-          descriptions: value.descriptions || "",
-          task_labels: value.task_labels || [],
-          start_date: value.start_date || null,
-          due_date: value.due_date || null,
-          start_date: value.start_date || null,
-          estimated_hours: value.estimated_hours,
-          estimated_minutes: value.estimated_minutes,
-          attachments: value.attachments || [],
-          task_progress: value.task_progress,
-          ...(getData.task_status && !value.task_status
-            ? {
-                task_status_history: [
-                  ...getData.task_status_history,
-                  {
-                    task_status: null,
-                    updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
-              }
-            : !getData.task_status && value.task_status
-            ? {
-                task_status_history: [
-                  {
-                    task_status: value.task_status,
-                    updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
-              }
-            : getData.task_status &&
-              value.task_status &&
-              getData.task_status.toString() !== value.task_status.toString()
-            ? {
-                task_status_history: [
-                  ...getData.task_status_history,
-                  {
-                    task_status: value.task_status,
-                    updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
-              }
-            : getData.task_status_history),
-          updatedBy: req.user._id,
-        },
-        { new: true }
+        assigneesData.added,
+        decodedCompanyId
       );
-
-      if (!data) {
-        return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
-      }
-      // save  files,..
-      if (value?.attachments) {
-        await filesManageInDB(
-          value.attachments,
-          req.user,
-          value.project_id,
-          value.folder_id,
-          req.params.id
-        );
-      }
-
-      // For send mail for new added subscribers..
-      const assigneesData = getArrayChanges(
-        getData.assignees.map((a) => a.toString()),
-        value.assignees
-      );
-
-      if (assigneesData.added && assigneesData.added.length > 0) {
-        await sendmailToAssignees(req.params.id, assigneesData.added);
-      }
-      return successResponse(
-        res,
-        statusCode.SUCCESS,
-        messages.TASK_UPDATED,
-        data
-      );
+    }
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.TASK_UPDATED,
+      data
+    );
     // }
   } catch (error) {
     console.log("🚀 ~ exports.updateProjectsTask= ~ error:", error);
@@ -1037,7 +1058,7 @@ exports.updateProjectsTask = async (req, res) => {
 exports.updateProjectsTaskStatus = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      status: Joi.string().required(),
+      status: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1054,7 +1075,7 @@ exports.updateProjectsTaskStatus = async (req, res) => {
         status: value.status,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -1079,7 +1100,7 @@ exports.updateMultipleTaskStatus = async (req, res) => {
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       task_status: Joi.string().required(),
-      task_ids: Joi.array().required(),
+      task_ids: Joi.array().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1094,14 +1115,14 @@ exports.updateMultipleTaskStatus = async (req, res) => {
       {
         project_id: new mongoose.Types.ObjectId(value.project_id),
         _id: {
-          $in: value.task_ids.map((i) => new mongoose.Types.ObjectId(i)),
-        },
+          $in: value.task_ids.map((i) => new mongoose.Types.ObjectId(i))
+        }
       },
       {
         task_status: new mongoose.Types.ObjectId(value.task_status),
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -1130,7 +1151,7 @@ exports.deleteProjectsTask = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -1154,7 +1175,7 @@ exports.deleteMultipleTask = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       project_id: Joi.string.required(),
-      task_ids: Joi.array().required(),
+      task_ids: Joi.array().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1169,14 +1190,14 @@ exports.deleteMultipleTask = async (req, res) => {
       {
         project_id: new mongoose.Types.ObjectId(value.project_id),
         _id: {
-          $in: value.task_ids.map((t) => new mongoose.Types.ObjectId(t)),
-        },
+          $in: value.task_ids.map((t) => new mongoose.Types.ObjectId(t))
+        }
       },
       {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -1194,8 +1215,15 @@ exports.deleteMultipleTask = async (req, res) => {
 // update workflow...
 exports.updateProjectsTaskWorkflow = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      task_status: Joi.string().required(),
+      task_status: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1212,7 +1240,7 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     let common = {
       updatedBy: loginUserId,
       updatedAt: configs.utcDefault(),
-      ...(await getRefModelFromLoginUser(req?.user, true)),
+      ...(await getRefModelFromLoginUser(req?.user, true))
     };
     let updateObj = {}; // For task prop
     let historyUpdateObj = {}; // For history
@@ -1225,7 +1253,7 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       createdBy: loginUserId,
       createdAt: configs.utcDefault(),
       ...(await getRefModelFromLoginUser(req?.user)),
-      ...common,
+      ...common
     };
 
     // manage update history..
@@ -1262,9 +1290,9 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                     task_status: null,
                     updatedBy: loginUserId,
                     updatedAt: configs.utcDefault(),
-                    ...(await getRefModelFromLoginUser(req?.user, true)),
-                  },
-                ],
+                    ...(await getRefModelFromLoginUser(req?.user, true))
+                  }
+                ]
               }
             : !getData?.task_status?._id && value?.task_status
             ? {
@@ -1273,9 +1301,9 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                     task_status: value?.task_status,
                     updatedBy: loginUserId,
                     updatedAt: configs.utcDefault(),
-                    ...(await getRefModelFromLoginUser(req?.user, true)),
-                  },
-                ],
+                    ...(await getRefModelFromLoginUser(req?.user, true))
+                  }
+                ]
               }
             : getData?.task_status?._id &&
               value?.task_status &&
@@ -1287,17 +1315,17 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                   {
                     task_status: value?.task_status,
                     updatedBy: loginUserId,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
+                    updatedAt: configs.utcDefault()
+                  }
+                ]
               }
-            : getData?.task_status_history),
+            : getData?.task_status_history)
         };
         historyUpdateObj = {
           ...historyUpdateObj,
           updated_key: "task_status",
           pervious_value: previousTaskStatusTitle,
-          new_value: newTaskStatusTitle,
+          new_value: newTaskStatusTitle
         };
 
         // save update history..
@@ -1319,10 +1347,13 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     // after update ...
     const updatedData = await taskData(req.params.id);
 
-    await taskStatusUpdateMail({
-      oldData: getData,
-      newData: updatedData,
-    });
+    await taskStatusUpdateMail(
+      {
+        oldData: getData,
+        newData: updatedData
+      },
+      decodedCompanyId
+    );
 
     return successResponse(
       res,
@@ -1338,6 +1369,13 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
 //Update Project task props:
 exports.updateProjectsTaskProps = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       // updated_key: Joi.string().required(),
       updated_key: Joi.array().min(1).required(),
@@ -1356,7 +1394,7 @@ exports.updateProjectsTaskProps = async (req, res) => {
       attachments: Joi.array().optional(),
       task_progress: Joi.string().optional().default("0"),
       task_status: Joi.string().optional(),
-      folder_id: Joi.string().optional(),
+      folder_id: Joi.string().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1373,58 +1411,62 @@ exports.updateProjectsTaskProps = async (req, res) => {
     // ) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     // } else {
-      // data type of task_labels changed array to string .. need to manage here cause of this use in other module
-      let task_labels = [];
-      if (value?.task_labels && value?.task_labels != "")
-        task_labels = [value.task_labels];
+    // data type of task_labels changed array to string .. need to manage here cause of this use in other module
+    let task_labels = [];
+    if (value?.task_labels && value?.task_labels != "")
+      task_labels = [value.task_labels];
 
-      value.task_labels = task_labels;
+    value.task_labels = task_labels;
 
-      const getData = await ProjectTasks.findById(req.params.id);
+    const getData = await ProjectTasks.findById(req.params.id);
 
-      // Get update obj...
-      const { updateObj, historyUpdateArr } = await this.getDataForUpdate(
-        req.user,
-        getData,
-        {
-          ...value,
-          task_id: req.params.id,
-        }
+    // Get update obj...
+    const { updateObj, historyUpdateArr } = await this.getDataForUpdate(
+      req.user,
+      getData,
+      {
+        ...value,
+        task_id: req.params.id
+      }
+    );
+
+    const data = await ProjectTasks.findByIdAndUpdate(
+      req.params.id,
+      updateObj,
+      {
+        new: true
+      }
+    );
+
+    if (historyUpdateArr && historyUpdateArr?.length) {
+      const newHistory = await ProjectTaskUpdateHistory.insertMany(
+        historyUpdateArr
       );
+    }
 
-      const data = await ProjectTasks.findByIdAndUpdate(
+    if (!data) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
+
+    // For send mail for new added subscribers..
+    const assigneesData = getArrayChanges(
+      getData.assignees.map((a) => a.toString()),
+      value.assignees
+    );
+
+    if (assigneesData.added && assigneesData.added.length > 0) {
+      await sendmailToAssignees(
         req.params.id,
-        updateObj,
-        {
-          new: true,
-        }
+        assigneesData.added,
+        decodedCompanyId
       );
-
-      if (historyUpdateArr && historyUpdateArr?.length) {
-        const newHistory = await ProjectTaskUpdateHistory.insertMany(
-          historyUpdateArr
-        );
-      }
-
-      if (!data) {
-        return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
-      }
-
-      // For send mail for new added subscribers..
-      const assigneesData = getArrayChanges(
-        getData.assignees.map((a) => a.toString()),
-        value.assignees
-      );
-
-      if (assigneesData.added && assigneesData.added.length > 0) {
-        await sendmailToAssignees(req.params.id, assigneesData.added);
-      }
-      return successResponse(
-        res,
-        statusCode.SUCCESS,
-        messages.TASK_UPDATED,
-        data
-      );
+    }
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.TASK_UPDATED,
+      data
+    );
     // }
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -1437,7 +1479,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
     let common = {
       updatedBy: loginUserId,
       updatedAt: configs.utcDefault(),
-      ...(await getRefModelFromLoginUser(loginUser, true)),
+      ...(await getRefModelFromLoginUser(loginUser, true))
     };
 
     let updateObj = {}; // For task prop
@@ -1464,7 +1506,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
         createdBy: loginUserId,
         createdAt: configs.utcDefault(),
         ...(await getRefModelFromLoginUser(loginUser)),
-        ...common,
+        ...common
       };
 
       for (let i = 0; i < reqBody?.updated_key?.length; i++) {
@@ -1482,7 +1524,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.title,
-                  new_value: reqBody?.title,
+                  new_value: reqBody?.title
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1498,7 +1540,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.status,
-                  new_value: reqBody?.status,
+                  new_value: reqBody?.status
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1514,7 +1556,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.descriptions,
-                  new_value: reqBody?.descriptions,
+                  new_value: reqBody?.descriptions
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1542,7 +1584,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                 ) {
                   const previousTaskLabels = await ProjectLabels.find({
                     _id: { $in: perviousData?.task_labels },
-                    isDeleted: false,
+                    isDeleted: false
                   });
                   previousTaskLabelsTitle = previousTaskLabels
                     .map((p) => p.title)
@@ -1552,7 +1594,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                 if (reqBody?.task_labels && reqBody?.task_labels.length > 0) {
                   const newTaskLabels = await ProjectLabels.find({
                     _id: { $in: reqBody?.task_labels },
-                    isDeleted: false,
+                    isDeleted: false
                   });
                   newTaskLabelsTitle = newTaskLabels
                     .map((p) => p.title)
@@ -1563,7 +1605,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: previousTaskLabelsTitle,
-                  new_value: newTaskLabelsTitle,
+                  new_value: newTaskLabelsTitle
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1591,7 +1633,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     ...historyUpdateObj,
                     updated_key: element,
                     pervious_value: perviousData?.start_date,
-                    new_value: reqBody?.start_date,
+                    new_value: reqBody?.start_date
                   };
                   historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
                 }
@@ -1617,7 +1659,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     ...historyUpdateObj,
                     updated_key: element,
                     pervious_value: perviousData?.due_date,
-                    new_value: reqBody?.due_date,
+                    new_value: reqBody?.due_date
                   };
                   historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
                 }
@@ -1648,10 +1690,10 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: perviousData?.assignees?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   previous_assignee = previousAssignee
@@ -1664,10 +1706,10 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: reqBody?.assignees?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   new_assignee = newAssignee.map((n) => n.full_name).join(",");
@@ -1726,7 +1768,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: updateKey,
                   pervious_value: previous_assignee,
-                  new_value: new_assignee,
+                  new_value: new_assignee
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1757,10 +1799,10 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: perviousData?.pms_clients?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   previous_clients = previousAssignee
@@ -1773,10 +1815,10 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     _id: {
                       $in: reqBody?.pms_clients?.map(
                         (a) => new mongoose.Types.ObjectId(a)
-                      ),
+                      )
                     },
                     isDeleted: false,
-                    isActivate: true,
+                    isActivate: true
                   });
 
                   new_clients = newAssignee.map((n) => n.full_name).join(",");
@@ -1795,7 +1837,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: updateKey,
                   pervious_value: previous_clients,
-                  new_value: new_clients,
+                  new_value: new_clients
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1812,7 +1854,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.estimated_hours,
-                  new_value: reqBody?.estimated_hours,
+                  new_value: reqBody?.estimated_hours
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1830,7 +1872,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.estimated_minutes,
-                  new_value: reqBody?.estimated_minutes,
+                  new_value: reqBody?.estimated_minutes
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1846,7 +1888,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: perviousData?.task_progress,
-                  new_value: reqBody?.task_progress,
+                  new_value: reqBody?.task_progress
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1902,9 +1944,9 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                           {
                             task_status: null,
                             updatedBy: loginUserId,
-                            updatedAt: configs.utcDefault(),
-                          },
-                        ],
+                            updatedAt: configs.utcDefault()
+                          }
+                        ]
                       }
                     : !perviousData?.task_status && reqBody?.task_status
                     ? {
@@ -1912,9 +1954,9 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                           {
                             task_status: reqBody?.task_status,
                             updatedBy: loginUserId,
-                            updatedAt: configs.utcDefault(),
-                          },
-                        ],
+                            updatedAt: configs.utcDefault()
+                          }
+                        ]
                       }
                     : perviousData?.task_status &&
                       reqBody?.task_status &&
@@ -1926,17 +1968,17 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                           {
                             task_status: reqBody?.task_status,
                             updatedBy: loginUserId,
-                            updatedAt: configs.utcDefault(),
-                          },
-                        ],
+                            updatedAt: configs.utcDefault()
+                          }
+                        ]
                       }
-                    : perviousData?.task_status_history),
+                    : perviousData?.task_status_history)
                 };
                 historyUpdateObj = {
                   ...historyUpdateObj,
                   updated_key: element,
                   pervious_value: previousTaskStatusTitle,
-                  new_value: newTaskStatusTitle,
+                  new_value: newTaskStatusTitle
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -1951,7 +1993,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
 
     return {
       updateObj,
-      historyUpdateArr,
+      historyUpdateArr
     };
   } catch (error) {
     console.log("🚀 ~getDataForUpdate error:", error);
@@ -1964,17 +2006,17 @@ exports.updateAttachments = async (loginUserId, reqBody) => {
       isDeleted: false,
       ...(reqBody?.project_id ? { project_id: reqBody?.project_id } : {}),
       ...(reqBody?.task_id ? { task_id: reqBody?.task_id } : {}),
-      ...(reqBody?.sub_task_id ? { sub_task_id: reqBody?.sub_task_id } : {}),
+      ...(reqBody?.sub_task_id ? { sub_task_id: reqBody?.sub_task_id } : {})
     };
     let common = {
       updatedBy: loginUserId,
-      updatedAt: configs.utcDefault(),
+      updatedAt: configs.utcDefault()
     };
     let updateObj = { ...common };
     let createObj = {
       createdBy: loginUserId,
       createdAt: configs.utcDefault(),
-      ...common,
+      ...common
     };
 
     if (reqBody && reqBody?.attachments) {
@@ -1985,8 +2027,8 @@ exports.updateAttachments = async (loginUserId, reqBody) => {
             ...updateObj,
             deletedBy: loginUserId,
             isDeleted: true,
-            deletedAt: configs.utcDefault(),
-          },
+            deletedAt: configs.utcDefault()
+          }
         });
       } else {
         for (let i = 0; i < reqBody?.attachments.length; i++) {
@@ -1999,27 +2041,27 @@ exports.updateAttachments = async (loginUserId, reqBody) => {
             ...(reqBody?.task_id ? { task_id: reqBody?.task_id } : {}),
             ...(reqBody?.sub_task_id
               ? { sub_task_id: reqBody?.sub_task_id }
-              : {}),
+              : {})
           };
           if (element?._id) {
             // Update file...
             await ProjectFileUploads.findOneAndUpdate(
               {
                 ...where,
-                _id: element._id,
+                _id: element._id
               },
               {
                 $set: {
                   ...obj,
-                  ...updateObj,
-                },
+                  ...updateObj
+                }
               }
             );
           } else {
             // create file...
             const newfile = new ProjectFileUploads({
               ...obj,
-              ...createObj,
+              ...createObj
             });
             await newfile.save();
             // return
@@ -2037,7 +2079,7 @@ exports.getHistory = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       _id: Joi.string().optional(),
-      task_id: Joi.string().required(),
+      task_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2054,9 +2096,9 @@ exports.getHistory = async (req, res) => {
       task_id: new mongoose.Types.ObjectId(value.task_id),
       ...(value?._id
         ? {
-            _id: new mongoose.Types.ObjectId(value._id),
+            _id: new mongoose.Types.ObjectId(value._id)
           }
-        : {}),
+        : {})
     };
 
     const mainQuery = [
@@ -2074,7 +2116,7 @@ exports.getHistory = async (req, res) => {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           createdAt: 1,
           updatedAt: 1,
@@ -2082,10 +2124,10 @@ exports.getHistory = async (req, res) => {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
-          },
-        },
-      },
+            client_img: 1
+          }
+        }
+      }
     ];
 
     let data = await ProjectTaskUpdateHistory.aggregate(mainQuery);
@@ -2116,15 +2158,15 @@ exports.getProjectsWiseTask = async (req, res) => {
       projectId,
       req.user._id
     );
-    
+
     let matchQuery = {
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(projectId),
+      project_id: new mongoose.Types.ObjectId(projectId)
     };
 
     let mainTaskQuery = [
       { $eq: ["$_id", "$$mainTaskId"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
     if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
       mainTaskQuery = [
@@ -2134,38 +2176,38 @@ exports.getProjectsWiseTask = async (req, res) => {
             {
               $eq: [
                 "$$taskCreatedBy",
-                new mongoose.Types.ObjectId(req.user._id),
-              ],
+                new mongoose.Types.ObjectId(req.user._id)
+              ]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
-                "$$taskAssignees",
-              ],
+                "$$taskAssignees"
+              ]
             },
             {
               $in: [
                 new mongoose.Types.ObjectId(req.user._id),
-                "$$taskPmsClients",
-              ],
+                "$$taskPmsClients"
+              ]
             },
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"],
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"],
-            },
-          ],
-        },
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+            }
+          ]
+        }
       ];
     }
 
     const query = [
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       // This test case for :: when task is assignee to emp but if emp not subscriber of main task
       {
@@ -2175,31 +2217,31 @@ exports.getProjectsWiseTask = async (req, res) => {
             mainTaskId: "$main_task_id",
             taskCreatedBy: "$createdBy",
             taskAssignees: "$assignees",
-            taskPmsClients: "$pms_clients",
+            taskPmsClients: "$pms_clients"
           },
           pipeline: [
             {
               $match: {
                 $expr: {
-                  $and: mainTaskQuery,
-                },
-              },
-            },
+                  $and: mainTaskQuery
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       {
         $unwind: {
           path: "$mainTask",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $sort: {
-          _id: -1,
-        },
-      },
+          _id: -1
+        }
+      }
     ];
     const data = await ProjectTasks.aggregate(query);
 
@@ -2214,7 +2256,7 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       task_id: Joi.string().required(),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2231,22 +2273,22 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
           from: "employees",
           localField: "createdBy",
           foreignField: "_id",
-          as: "reporter",
-        },
+          as: "reporter"
+        }
       },
       {
         $unwind: {
           path: "$reporter",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "employees",
           localField: "assignees",
           foreignField: "_id",
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
       {
         $lookup: {
@@ -2258,27 +2300,27 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$bug_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "bug_status",
-        },
+          as: "bug_status"
+        }
       },
       {
         $unwind: {
           path: "$bug_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $match: {
           isDeleted: false,
           task_id: new mongoose.Types.ObjectId(value?.task_id),
-          project_id: new mongoose.Types.ObjectId(value?.project_id),
-        },
+          project_id: new mongoose.Types.ObjectId(value?.project_id)
+        }
       },
       {
         $project: {
@@ -2292,19 +2334,19 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
             full_name: 1,
             first_name: 1,
             last_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           due_date: 1,
           createdAt: 1,
           task_id: 1,
-          project_id: 1,
-        },
+          project_id: 1
+        }
       },
       {
         $sort: {
-          createdAt: 1,
-        },
-      },
+          createdAt: 1
+        }
+      }
     ];
 
     const data = await projectBugs.aggregate(mainQuery);
@@ -2330,7 +2372,7 @@ exports.addProjectsTaskCopy = async (req, res) => {
       isCopyDates: Joi.boolean().required(),
       isCopyComments: Joi.boolean().required(),
       attachments: Joi.any().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -2355,139 +2397,139 @@ exports.addProjectsTaskCopy = async (req, res) => {
     // if (await this.projectTaskExists(value)) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     // } else {
-      let projectData;
-      if (
-        value?.project_id ||
-        value?.project_id != undefined ||
-        value?.project_id != null ||
-        value?.project_id != ""
-      ) {
-        projectData = await Projects.findOne({
-          _id: new mongoose.Types.ObjectId(value?.project_id),
-          isDeleted: false,
-        });
-      } else {
-        // if project id-> data not found
-        return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
-      }
+    let projectData;
+    if (
+      value?.project_id ||
+      value?.project_id != undefined ||
+      value?.project_id != null ||
+      value?.project_id != ""
+    ) {
+      projectData = await Projects.findOne({
+        _id: new mongoose.Types.ObjectId(value?.project_id),
+        isDeleted: false
+      });
+    } else {
+      // if project id-> data not found
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
 
-      let taskData;
-      // initially, to get the old task details to be copied:
-      if (
-        value?.task_id ||
-        value?.task_id != undefined ||
-        value?.task_id != null ||
-        value?.task_id != ""
-      ) {
-        taskData = await ProjectTasks.findOne({
-          _id: new mongoose.Types.ObjectId(value?.task_id),
-          isDeleted: false,
-        });
-      } else {
-        // if old task id-> data not found
-        return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
-      }
-      // to get all the comments of that particular task
-      const comments = await CommentsModel.find({
-        task_id: new mongoose.Types.ObjectId(value?.task_id),
-        isDeleted: false,
+    let taskData;
+    // initially, to get the old task details to be copied:
+    if (
+      value?.task_id ||
+      value?.task_id != undefined ||
+      value?.task_id != null ||
+      value?.task_id != ""
+    ) {
+      taskData = await ProjectTasks.findOne({
+        _id: new mongoose.Types.ObjectId(value?.task_id),
+        isDeleted: false
       });
-      // to get the id id of TO DO of that particular workflow
-      const workFlowStatus = await ProjectWorkFlowStatus.findOne({
-        workflow_id: new mongoose.Types.ObjectId(projectData?.workFlow),
-        isDefault: true,
-        isDeleted: false,
-        title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
-      });
-      let data = new ProjectTasks({
-        title: value?.title,
-        taskId: generateRandomId(),
-        project_id: value?.project_id,
-        main_task_id: value?.main_task_id,
-        task_status: value?.task_status
-          ? value?.task_status
-          : workFlowStatus?._id,
-        assignees: value?.isCopyAssignee
+    } else {
+      // if old task id-> data not found
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+    // to get all the comments of that particular task
+    const comments = await CommentsModel.find({
+      task_id: new mongoose.Types.ObjectId(value?.task_id),
+      isDeleted: false
+    });
+    // to get the id id of TO DO of that particular workflow
+    const workFlowStatus = await ProjectWorkFlowStatus.findOne({
+      workflow_id: new mongoose.Types.ObjectId(projectData?.workFlow),
+      isDefault: true,
+      isDeleted: false,
+      title: DEFAULT_DATA.WORKFLOW_STATUS.TODO
+    });
+    let data = new ProjectTasks({
+      title: value?.title,
+      taskId: generateRandomId(),
+      project_id: value?.project_id,
+      main_task_id: value?.main_task_id,
+      task_status: value?.task_status
+        ? value?.task_status
+        : workFlowStatus?._id,
+      assignees: value?.isCopyAssignee
+        ? taskData?.assignees
           ? taskData?.assignees
-            ? taskData?.assignees
-            : []
-          : [],
-        pms_clients: value?.isCopyClients
+          : []
+        : [],
+      pms_clients: value?.isCopyClients
+        ? taskData?.pms_clients
           ? taskData?.pms_clients
-            ? taskData?.pms_clients
-            : []
-          : [],
-        start_date: value?.isCopyDates
+          : []
+        : [],
+      start_date: value?.isCopyDates
+        ? taskData?.start_date
           ? taskData?.start_date
-            ? taskData?.start_date
-            : null
-          : null,
-        due_date: value?.isCopyDates
+          : null
+        : null,
+      due_date: value?.isCopyDates
+        ? taskData?.due_date
           ? taskData?.due_date
-            ? taskData?.due_date
-            : null
-          : null,
-        ...(value?.task_status && {
-          task_status_history: [
-            {
-              task_status: value?.task_status
-                ? value?.task_status
-                : workFlowStatus?._id,
-              updatedBy: req.user._id,
-              updatedAt: configs.utcDefault(),
-            },
-          ],
-        }),
+          : null
+        : null,
+      ...(value?.task_status && {
+        task_status_history: [
+          {
+            task_status: value?.task_status
+              ? value?.task_status
+              : workFlowStatus?._id,
+            updatedBy: req.user._id,
+            updatedAt: configs.utcDefault()
+          }
+        ]
+      }),
 
-        createdBy: req.user._id,
-        updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+      createdBy: req.user._id,
+      updatedBy: req.user._id,
+      ...(await getRefModelFromLoginUser(req?.user))
+    });
+
+    const newData = await data.save();
+
+    if (value?.isCopyComments) {
+      // to add all old comments as to copy task
+      const newComments = comments.map((comment) => {
+        return {
+          ...comment.toObject(), // Convert Mongoose document to plain JavaScript object
+          _id: new mongoose.Types.ObjectId(),
+          task_id: newData._id
+        };
       });
 
-      const newData = await data.save();
+      // Save the new comments
+      await CommentsModel.insertMany(newComments);
+    }
+    // save  files,..
+    if (value?.attachments && value.attachments.length > 0) {
+      await filesManageInDB(
+        value.attachments,
+        req.user,
+        value.project_id,
+        value.folder_id,
+        newData._id
+      );
+    }
 
-      if (value?.isCopyComments) {
-        // to add all old comments as to copy task
-        const newComments = comments.map((comment) => {
-          return {
-            ...comment.toObject(), // Convert Mongoose document to plain JavaScript object
-            _id: new mongoose.Types.ObjectId(),
-            task_id: newData._id,
-          };
-        });
+    // Add a data in history..
+    let newHistory = new ProjectTaskUpdateHistory({
+      project_id: value.project_id,
+      main_task_id: value.main_task_id || null,
+      task_id: newData._id,
+      updated_key: "createdAt",
+      createdBy: req.user._id,
+      updatedBy: req.user._id,
+      ...(await getRefModelFromLoginUser(req?.user))
+    });
+    await newHistory.save();
 
-        // Save the new comments
-        await CommentsModel.insertMany(newComments);
-      }
-      // save  files,..
-      if (value?.attachments && value.attachments.length > 0) {
-        await filesManageInDB(
-          value.attachments,
-          req.user,
-          value.project_id,
-          value.folder_id,
-          newData._id
-        );
-      }
+    // send mail to assignee..
+    // if (value.assignees && value.assignees.length > 0) {
+    //   await sendmailToAssignees(newData._id);
+    // }
 
-      // Add a data in history..
-      let newHistory = new ProjectTaskUpdateHistory({
-        project_id: value.project_id,
-        main_task_id: value.main_task_id || null,
-        task_id: newData._id,
-        updated_key: "createdAt",
-        createdBy: req.user._id,
-        updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
-      });
-      await newHistory.save();
-
-      // send mail to assignee..
-      // if (value.assignees && value.assignees.length > 0) {
-      //   await sendmailToAssignees(newData._id);
-      // }
-
-      return successResponse(res, statusCode.CREATED, messages.COPIED, data);
+    return successResponse(res, statusCode.CREATED, messages.COPIED, data);
     // }
   } catch (error) {
     console.log("errorr:", error);
@@ -2501,13 +2543,13 @@ exports.importTasksData = async (req, res) => {
       if (!req.files || !req.files.attachment) {
         return res.json({
           message: messages.IMPORT_FILE_NOT_FOUND,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       if (req.files.attachment.length !== 1) {
         return res.json({
           message: messages.SINGLE_FILE,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       const fileObj = req.files.attachment[0];
@@ -2520,7 +2562,7 @@ exports.importTasksData = async (req, res) => {
       if (!["xlsx", "xls", "csv"].includes(fileExt.toLowerCase())) {
         return res.json({
           message: messages.FILE_EXT,
-          statusCode: statusCode.BAD_REQUEST,
+          statusCode: statusCode.BAD_REQUEST
         });
       }
       const dataPayload = jsonDataFromFile(fileObj);
@@ -2544,7 +2586,7 @@ exports.importTasksData = async (req, res) => {
         "Assignees Email",
         "Estimated Hours",
         "Estimated Minutes",
-        "Created By Email",
+        "Created By Email"
       ];
       const allColumnsExist = (cols, requiredColumns) => {
         return requiredColumns.every((column) => cols.includes(column));
@@ -2566,11 +2608,11 @@ exports.importTasksData = async (req, res) => {
         "Assignees Email": Joi.string().required(),
         "Estimated Hours": Joi.number().optional(),
         "Estimated Minutes": Joi.number().optional(),
-        "Created By Email": Joi.string().required(),
+        "Created By Email": Joi.string().required()
       });
       const payloadSchema = Joi.array().items(taskSchema).min(1).required();
       const { error, value } = payloadSchema.validate(dataPayload.parse, {
-        abortEarly: false,
+        abortEarly: false
       });
 
       let data = [];
@@ -2578,13 +2620,13 @@ exports.importTasksData = async (req, res) => {
 
       const projectData = await Projects.findOne({
         _id: new mongoose.Types.ObjectId(req.body?.project_id),
-        isDeleted: false,
+        isDeleted: false
       });
 
       const tasksStatus = await ProjectWorkFlowStatus.findOne({
         workflow_id: projectData?.workFlow,
         title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
-        isDeleted: false,
+        isDeleted: false
       });
       // for (const  [index, item]  of value) {
       for (let index = 0; index < value.length; index++) {
@@ -2632,7 +2674,7 @@ exports.importTasksData = async (req, res) => {
         if (item["Assignees Email"] == undefined) {
           resp.push([
             { record: item },
-            { error: "Assignees Email is required" },
+            { error: "Assignees Email is required" }
           ]);
           continue;
         }
@@ -2669,7 +2711,7 @@ exports.importTasksData = async (req, res) => {
         const createdbyEmp = await Employees.find({
           email: createdByMail,
           isActivate: true,
-          isDeleted: false,
+          isDeleted: false
         }).select("_id emp_code full_name");
         if (createdbyEmp && createdbyEmp.length <= 0) {
           resp.push([{ record: item }, { error: "Created By User not found" }]);
@@ -2680,13 +2722,13 @@ exports.importTasksData = async (req, res) => {
           title: item["Task"],
           project_id: new mongoose.Types.ObjectId(req.body?.project_id),
           main_task_id: new mongoose.Types.ObjectId(req.body?.main_task_id),
-          isDeleted: false,
+          isDeleted: false
         });
 
         if (isTask) {
           resp.push([
             { record: item },
-            { error: "Task already exists for this MainTask List" },
+            { error: "Task already exists for this MainTask List" }
           ]);
           continue;
         }
@@ -2698,7 +2740,7 @@ exports.importTasksData = async (req, res) => {
           employees = await Employees.find({
             email: { $in: assignees },
             isActivate: true,
-            isDeleted: false,
+            isDeleted: false
           }).select("_id emp_code full_name");
         }
 
@@ -2730,11 +2772,11 @@ exports.importTasksData = async (req, res) => {
                 {
                   task_status: value?.task_status,
                   updatedBy: req.user._id,
-                  updatedAt: configs.utcDefault(),
-                },
-              ],
+                  updatedAt: configs.utcDefault()
+                }
+              ]
             }),
-            ...(await getRefModelFromLoginUser(createdbyEmp[0]?._id)),
+            ...(await getRefModelFromLoginUser(createdbyEmp[0]?._id))
           });
 
           data.push(await tasks.save());
@@ -2751,7 +2793,7 @@ exports.importTasksData = async (req, res) => {
         "Estimated Minutes",
         "Created By Email",
         "Descriptions",
-        "Response Errors",
+        "Response Errors"
       ];
 
       // Generate CSV data
@@ -2779,7 +2821,7 @@ exports.importTasksData = async (req, res) => {
         Descriptions: item[0].record["Descriptions"]
           ? item[0].record["Descriptions"]
           : "-",
-        "Response Errors": item[1].error,
+        "Response Errors": item[1].error
       }));
 
       let CSVData = [csvFields, ...csvData.map((ele) => Object.values(ele))];
@@ -2816,7 +2858,7 @@ exports.getProjectsTaskOverview = async (req, res) => {
       project_id: Joi.string().required(),
       countFor: Joi.string().required(),
       row: Joi.string().optional(),
-      col: Joi.string().optional(),
+      col: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -2830,7 +2872,7 @@ exports.getProjectsTaskOverview = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value?.project_id),
+      project_id: new mongoose.Types.ObjectId(value?.project_id)
     };
     if (value?.countFor == "My") {
       if (value.countFor === "My") {
@@ -2839,13 +2881,13 @@ exports.getProjectsTaskOverview = async (req, res) => {
     }
     const projectData = await Projects.findOne({
       _id: new mongoose.Types.ObjectId(value?.project_id),
-      isDeleted: false,
+      isDeleted: false
     });
 
     const tasksStatus = await ProjectWorkFlowStatus.findOne({
       workflow_id: projectData?.workFlow,
       title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-      isDeleted: false,
+      isDeleted: false
     });
 
     const mainQuery = [
@@ -2864,22 +2906,22 @@ exports.getProjectsTaskOverview = async (req, res) => {
                     {
                       $ne: [
                         "$_id",
-                        new mongoose.Types.ObjectId(tasksStatus?._id),
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
+                        new mongoose.Types.ObjectId(tasksStatus?._id)
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task_status",
-        },
+          as: "task_status"
+        }
       },
       {
         $unwind: {
           path: "$task_status",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
 
       {
@@ -2892,14 +2934,14 @@ exports.getProjectsTaskOverview = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$task_labels"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "taskLabels",
-        },
+          as: "taskLabels"
+        }
       },
       {
         $lookup: {
@@ -2913,14 +2955,14 @@ exports.getProjectsTaskOverview = async (req, res) => {
                     { $in: ["$_id", "$$assigneesIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assignees",
-        },
+          as: "assignees"
+        }
       },
 
       {
@@ -2935,12 +2977,12 @@ exports.getProjectsTaskOverview = async (req, res) => {
           taskLabels: {
             _id: 1,
             title: 1,
-            color: 1,
+            color: 1
           },
           task_status: {
             _id: 1,
             title: 1,
-            color: 1,
+            color: 1
           },
           assignees: {
             $map: {
@@ -2949,12 +2991,12 @@ exports.getProjectsTaskOverview = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] },
-                    ],
+                      { $ne: ["$assignees", []] }
+                    ]
                   },
                   then: "$assignees",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "assigneeId",
               in: {
@@ -2962,9 +3004,9 @@ exports.getProjectsTaskOverview = async (req, res) => {
                 emp_img: "$$assigneeId.emp_img",
                 name: "$$assigneeId.full_name",
                 first_name: "$$assigneeId.first_name",
-                last_name: "$$assigneeId.last_name",
-              },
-            },
+                last_name: "$$assigneeId.last_name"
+              }
+            }
           },
           isOverdue: {
             $cond: {
@@ -2977,38 +3019,35 @@ exports.getProjectsTaskOverview = async (req, res) => {
                       {
                         $dateToString: {
                           format: "%Y-%m-%d",
-                          date: "$due_date",
-                        },
+                          date: "$due_date"
+                        }
                       },
-                      moment().format("YYYY-MM-DD"),
-                    ],
-                  },
-                ],
+                      moment().format("YYYY-MM-DD")
+                    ]
+                  }
+                ]
               },
               then: true,
-              else: false,
-            },
+              else: false
+            }
           },
           isToday: {
             $eq: [
               { $dateToString: { format: "%Y-%m-%d", date: "$due_date" } },
-              moment().format("YYYY-MM-DD"),
-            ],
+              moment().format("YYYY-MM-DD")
+            ]
           },
           isUpcoming: {
             $and: [
               { $gt: ["$due_date", new Date()] },
-              { $ne: ["$due_date", null] },
-            ],
+              { $ne: ["$due_date", null] }
+            ]
           },
           noDateSet: {
-            $and: [
-              { $eq: ["$start_date", null] },
-              { $eq: ["$due_date", null] },
-            ],
-          },
-        },
-      },
+            $and: [{ $eq: ["$start_date", null] }, { $eq: ["$due_date", null] }]
+          }
+        }
+      }
     ];
 
     let data = await ProjectTasks.aggregate(mainQuery);
@@ -3109,7 +3148,7 @@ exports.getProjectsTaskOverview = async (req, res) => {
       overDue: overDue.length,
       upComing: upComing.length,
       today: today.length,
-      noDate: noDate.length,
+      noDate: noDate.length
     };
 
     return successResponse(

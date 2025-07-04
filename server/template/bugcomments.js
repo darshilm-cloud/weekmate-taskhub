@@ -4,7 +4,7 @@ const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 
-exports.MailForBugNewComments = async (data) => {
+exports.MailForBugNewComments = async (data, companyId) => {
   try {
     let commentsIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-comments.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -323,13 +323,14 @@ exports.MailForBugNewComments = async (data) => {
     let mailIds = [...uniqueMails];
     let quarterlymailIds = [...quarterlyuniqueMails];
 
+    console.log("🚀 ~ exports.MailForBugNewComments= ~ mailIds?.length:", mailIds?.length)
     if (mailIds?.length > 0) {
       // to send mail to all whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId,mailIds, mailData, []);
     }
     if (quarterlymailIds?.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData, companyId);
     }
     return;
   } catch (e) {

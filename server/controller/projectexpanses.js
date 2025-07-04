@@ -1,6 +1,10 @@
 const Joi = require("joi");
 // const ProjectExpanses = require("../models/projectExpanses");
-const { errorResponse, successResponse, catchBlockErrorResponse } = require("../helpers/response");
+const {
+  errorResponse,
+  successResponse,
+  catchBlockErrorResponse
+} = require("../helpers/response");
 // const { statusCode, messages } = require("../helpers/constants");
 const { statusCode } = require("../helpers/constant");
 const mongoose = require("mongoose");
@@ -10,7 +14,7 @@ const ProjectExpanses = require("../models/projectexpanses");
 const {
   getRefModelFromLoginUser,
   getCreatedUpdatedDeletedByQuery,
-  generateCSV,
+  generateCSV
 } = require("../helpers/common");
 const { checkUserIsSuperAdmin } = require("./authentication");
 
@@ -18,7 +22,7 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const messages = require("../helpers/messages");
 const multer = require("multer");
@@ -26,9 +30,12 @@ const fs = require("fs");
 const configs = require("../configs");
 
 const path = require("path");
-const { newProjectExpecesMail, approveProjectExpecesMail, paidProjectExpecesMail } = require("../template/projectexpanss");
+const {
+  newProjectExpecesMail,
+  approveProjectExpecesMail,
+  paidProjectExpecesMail
+} = require("../template/projectexpanss");
 const pmsClients = require("../models/pmsClients");
-
 
 const uploadPath = "public/projectexpense";
 const storage = multer.diskStorage({
@@ -39,28 +46,38 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    console.log(file, 'fileT');
+    console.log(file, "fileT");
 
     cb(null, `${Date.now()}_${file.originalname}`);
-  },
+  }
 });
 
 const upload = multer({
-  storage,
+  storage
 }).array("projectexpences", 5); // Match frontend key "projectexpences"
-
-
-
 
 exports.addProjectExpense = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     // ✅ Access Control: Allowed Roles & Static Employee ID
     const allowedRoles = ["PC", "TL", "Admin"];
-    const staticEmployeeId = process.env.ACCOUNTANT_ID
-      ;
+    const staticEmployeeId = process.env.ACCOUNTANT_ID;
 
-    if (!allowedRoles.includes(req.user.pms_role_id.role_name) && req.user._id.toString() !== staticEmployeeId) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, "You do not have permission to add project expenses.");
+    if (
+      !allowedRoles.includes(roleName) &&
+      decodedUserId.toString() !== staticEmployeeId
+    ) {
+      return errorResponse(
+        res,
+        statusCode.UNAUTHORIZED,
+        "You do not have permission to add project expenses."
+      );
     }
 
     // ✅ Validation Schema
@@ -69,37 +86,45 @@ exports.addProjectExpense = async (req, res) => {
       purchase_request_details: Joi.string().required(),
       cost_in_usd: Joi.number().required(),
       need_to_bill_customer: Joi.boolean(),
-      billing_cycle: Joi.string().optional()
-      , is_recuring: Joi.boolean()
-
+      billing_cycle: Joi.string().optional(),
+      is_recuring: Joi.boolean()
     });
 
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
-      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
     }
 
     // ✅ Create New Project Expense
     let data = new ProjectExpanses({
       project_id: value?.project_id,
-      purchase_request_details: value?.purchase_request_details.replace(/\n/g, '<br>') || null,
+      purchase_request_details:
+        value?.purchase_request_details.replace(/\n/g, "<br>") || null,
       cost_in_usd: value.cost_in_usd,
       need_to_bill_customer: value.need_to_bill_customer,
       createdBy: req.user._id,
       updatedBy: req.user._id,
       billing_cycle: value?.billing_cycle,
       is_recuring: value?.is_recuring,
-      ...(await getRefModelFromLoginUser(req?.user)),
-
+      ...(await getRefModelFromLoginUser(req?.user))
     });
 
     await data.save();
     let emailDetails = await this.getReviewsDetailsForMail(data._id);
-    console.log(emailDetails, 'emailDetails');
+    console.log(emailDetails, "emailDetails");
 
-    await newProjectExpecesMail(emailDetails, req?.user)
+    await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
 
-    return successResponse(res, statusCode.CREATED, messages.PROJECTEXPENSE_CREATED, data);
+    return successResponse(
+      res,
+      statusCode.CREATED,
+      messages.PROJECTEXPENSE_CREATED,
+      data
+    );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
@@ -177,17 +202,17 @@ exports.addProjectExpense = async (req, res) => {
 //             { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
 //             { $lookup: { from: "employees", localField: "acc_manager_id", foreignField: "_id", as: "acc_manager" } },
 //             { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
-//             { 
-//                 $project: { 
-//                     _id: 1, 
-//                     project: 1, 
-//                     manager: 1, 
-//                     acc_manager: 1, 
-//                     status: 1, 
-//                     need_to_bill_customer: 1, 
-//                     expense_details: 1, 
-//                     createdAt: 1 
-//                 } 
+//             {
+//                 $project: {
+//                     _id: 1,
+//                     project: 1,
+//                     manager: 1,
+//                     acc_manager: 1,
+//                     status: 1,
+//                     need_to_bill_customer: 1,
+//                     expense_details: 1,
+//                     createdAt: 1
+//                 }
 //             }
 //         ];
 
@@ -203,7 +228,6 @@ exports.addProjectExpense = async (req, res) => {
 //         return catchBlockErrorResponse(res, error.message);
 //     }
 // };
-
 
 // exports.getProjectExpenses = async (req, res) => {
 //     try {
@@ -407,7 +431,6 @@ exports.addProjectExpense = async (req, res) => {
 //     }
 //   };
 
-
 exports.getProjectExpenses = async (req, res) => {
   try {
     const validationSchema = Joi.object({
@@ -423,19 +446,23 @@ exports.getProjectExpenses = async (req, res) => {
       acc_manager_id: Joi.array().items(Joi.string()).optional(),
       priority: Joi.string().optional(),
       status: Joi.string().optional(),
-      need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+      need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
-      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
     }
 
     const pagination = getPagination({
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     const userId = req.user._id;
@@ -444,11 +471,12 @@ exports.getProjectExpenses = async (req, res) => {
     // ;  // Assuming role is stored in req.user.role
 
     // // Check if the user exists in `pmsclients` and is an accountant
-    const isAccountant = await pmsClients.exists({ _id: userId, _id: { $in: accountantIds } });
-
+    const isAccountant = await pmsClients.exists({
+      _id: userId,
+      _id: { $in: accountantIds }
+    });
 
     // const hasFullAccess = ["Admin"].includes(userRole) || accountantIds.includes(userId);
-
 
     // const userId = req.user._id;
     const userRole = req.user.pms_role_id?.role_name; // Ensure role_name exists
@@ -457,7 +485,8 @@ exports.getProjectExpenses = async (req, res) => {
     const allowedRoles = ["Admin"];
     const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
 
-    const hasFullAccess = allowedRoles.includes(userRole) || accountantIds.includes(userId);
+    const hasFullAccess =
+      allowedRoles.includes(userRole) || accountantIds.includes(userId);
     const hasLimitedAccess = restrictedRoles.includes(userRole);
 
     let orFilter = {};
@@ -467,9 +496,9 @@ exports.getProjectExpenses = async (req, res) => {
         $or: [
           { "manager._id": new mongoose.Types.ObjectId(userId) },
           { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-          { "createdBy": new mongoose.Types.ObjectId(userId) },
-          { "project.assignees": new mongoose.Types.ObjectId(userId) },
-        ],
+          { createdBy: new mongoose.Types.ObjectId(userId) },
+          { "project.assignees": new mongoose.Types.ObjectId(userId) }
+        ]
       };
     }
 
@@ -479,17 +508,25 @@ exports.getProjectExpenses = async (req, res) => {
       ...(value.priority && { priority: value.priority }),
       ...(value.status && { status: value.status }),
       ...(value.technology?.length && {
-        "technology._id": { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) },
+        "technology._id": {
+          $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
+        }
       }),
       ...(value.manager_id?.length && {
-        "manager._id": { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+        "manager._id": {
+          $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
+        }
       }),
       ...(value.acc_manager_id?.length && {
-        "acc_manager._id": { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) },
+        "acc_manager._id": {
+          $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s))
+        }
       }),
       ...(value.project_id?.length && {
-        "project._id": { $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s)) },
-      }),
+        "project._id": {
+          $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s))
+        }
+      })
     };
 
     // Handling `need_to_bill_customer` filter
@@ -503,9 +540,14 @@ exports.getProjectExpenses = async (req, res) => {
       matchQuery = {
         ...matchQuery,
         ...searchDataArr(
-          ["complaint", ...(value.isSearch ? [] : ["manager.full_name", "acc_manager.full_name", "project.title"])],
+          [
+            "complaint",
+            ...(value.isSearch
+              ? []
+              : ["manager.full_name", "acc_manager.full_name", "project.title"])
+          ],
           value.search
-        ),
+        )
       };
     }
 
@@ -514,9 +556,7 @@ exports.getProjectExpenses = async (req, res) => {
       if (hasLimitedAccess) {
         // TL and PC can only see their own created data
         orFilter = {
-          $or: [
-            { "createdBy": new mongoose.Types.ObjectId(userId) },
-          ],
+          $or: [{ createdBy: new mongoose.Types.ObjectId(userId) }]
         };
       } else {
         // Other users can see data related to them
@@ -524,9 +564,9 @@ exports.getProjectExpenses = async (req, res) => {
           $or: [
             { "manager._id": new mongoose.Types.ObjectId(userId) },
             { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-            { "createdBy": new mongoose.Types.ObjectId(userId) },
-            { "project.assignees": new mongoose.Types.ObjectId(userId) },
-          ],
+            { createdBy: new mongoose.Types.ObjectId(userId) },
+            { "project.assignees": new mongoose.Types.ObjectId(userId) }
+          ]
         };
       }
     }
@@ -539,10 +579,19 @@ exports.getProjectExpenses = async (req, res) => {
           from: "projects",
           let: { project_id: "$project_id" },
           pipeline: [
-            { $match: { $expr: { $and: [{ $eq: ["$_id", "$$project_id"] }, { $eq: ["$isDeleted", false] }] } } },
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
 
@@ -551,10 +600,19 @@ exports.getProjectExpenses = async (req, res) => {
           from: "projecttechs",
           let: { technology: "$project.technology" },
           pipeline: [
-            { $match: { $expr: { $and: [{ $in: ["$_id", "$$technology"] }, { $eq: ["$isDeleted", false] }] } } },
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$technology"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
 
       {
@@ -569,14 +627,14 @@ exports.getProjectExpenses = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
 
@@ -592,14 +650,14 @@ exports.getProjectExpenses = async (req, res) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
 
@@ -607,7 +665,13 @@ exports.getProjectExpenses = async (req, res) => {
       {
         $project: {
           _id: 1,
-          project: { _id: 1, title: 1, manager: 1, acc_manager: 1, technology: 1 },
+          project: {
+            _id: 1,
+            title: 1,
+            manager: 1,
+            acc_manager: 1,
+            technology: 1
+          },
           manager: { _id: 1, full_name: 1, emp_img: 1 },
           acc_manager: { _id: 1, full_name: 1, emp_img: 1 },
           technology: { _id: 1, project_tech: 1 },
@@ -626,9 +690,9 @@ exports.getProjectExpenses = async (req, res) => {
           details: 1,
           billing_cycle: 1,
           is_recuring: 1,
-          nature_Of_expense:1
-        },
-      },
+          nature_Of_expense: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -642,22 +706,27 @@ exports.getProjectExpenses = async (req, res) => {
 
     const metaData = !value.isSearch
       ? {
-        total: totalCount,
-        limit: pagination.limit,
-        pageNo: pagination.page,
-        totalPages: pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page,
-      }
+          total: totalCount,
+          limit: pagination.limit,
+          pageNo: pagination.page,
+          totalPages:
+            pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+          currentPage: pagination.page
+        }
       : {};
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, value._id ? data[0] : data, !value._id && metaData);
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.LISTING,
+      value._id ? data[0] : data,
+      !value._id && metaData
+    );
   } catch (error) {
     console.log("🚀 ~ exports.getProjectExpenses ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
-
-
 
 // exports.getProjectExpenses = async (req, res) => {
 //     try {
@@ -739,9 +808,6 @@ exports.getProjectExpenses = async (req, res) => {
 //         return catchBlockErrorResponse(res, error.message);
 //     }
 // };
-
-
-
 
 // exports.getProjectExpenses = async (req, res) => {
 //     try {
@@ -890,7 +956,6 @@ exports.getProjectExpenses = async (req, res) => {
 
 // };
 
-
 // tt
 exports.updateProjectExpense = async (req, res) => {
   try {
@@ -899,17 +964,28 @@ exports.updateProjectExpense = async (req, res) => {
         console.error("File upload error:", err);
         return res.status(400).json({
           status: "error",
-          message: err.message,
+          message: err.message
         });
       }
 
       try {
+        // Decode user from token
+        const {
+          _id: decodedUserId,
+          pms_role_id: { _id: roleId, role_name: roleName } = {},
+          companyId: decodedCompanyId
+        } = req.user || {};
+
         const staticAccountantId = process.env.ACCOUNTANT_ID?.split(",") || [];
-        const userRole = req.user.pms_role_id.role_name;
-        const userId = req.user._id.toString();
+        const userRole = roleName;
+        const userId = decodedUserId.toString();
 
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-          return errorResponse(res, statusCode.BAD_REQUEST, "Invalid expense ID");
+          return errorResponse(
+            res,
+            statusCode.BAD_REQUEST,
+            "Invalid expense ID"
+          );
         }
         const expenseId = new mongoose.Types.ObjectId(req.params.id);
 
@@ -930,17 +1006,23 @@ exports.updateProjectExpense = async (req, res) => {
           purchase_request_details: Joi.string().optional(),
           cost_in_usd: Joi.number().optional(),
           need_to_bill_customer: Joi.boolean().optional(),
-          status: Joi.string().valid("Approved", "Rejected", "Paid", "Pending").optional(),
+          status: Joi.string()
+            .valid("Approved", "Rejected", "Paid", "Pending")
+            .optional(),
           details: Joi.string().optional(),
           nature_Of_expense: Joi.string().optional(),
 
           billing_cycle: Joi.string().optional(),
-          is_recuring: Joi.boolean(),
+          is_recuring: Joi.boolean()
         });
 
         const { error, value } = validationSchema.validate(req.body);
         if (error) {
-          return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+          return errorResponse(
+            res,
+            statusCode.BAD_REQUEST,
+            error.details[0].message
+          );
         }
 
         // Preserve existing file names
@@ -948,7 +1030,9 @@ exports.updateProjectExpense = async (req, res) => {
 
         // If new files are uploaded, extract only the file names
         if (req.files && req.files.length > 0) {
-          const uploadedFileNames = req.files.map((file) => path.basename(file.path));
+          const uploadedFileNames = req.files.map((file) =>
+            path.basename(file.path)
+          );
           fileNames = [...fileNames, ...uploadedFileNames]; // Append new file names
         }
 
@@ -957,16 +1041,24 @@ exports.updateProjectExpense = async (req, res) => {
           updatedBy: userId,
           billing_cycle: value?.billing_cycle,
           is_recuring: value?.is_recuring
-          ,
         };
 
         if (isSuperAdmin) {
-          updateFields = { ...value, projectexpences: fileNames, updatedBy: userId, details: value.details };
+          updateFields = {
+            ...value,
+            projectexpences: fileNames,
+            updatedBy: userId,
+            details: value.details
+          };
         } else if (isAdmin) {
           if (value.status && ["Approved", "Rejected"].includes(value.status)) {
             updateFields.status = value.status;
           } else {
-            return errorResponse(res, statusCode.FORBIDDEN, "Admins can only update status to Approved or Rejected");
+            return errorResponse(
+              res,
+              statusCode.FORBIDDEN,
+              "Admins can only update status to Approved or Rejected"
+            );
           }
         } else if (isAccountant) {
           if (value.status === "Paid") {
@@ -974,41 +1066,67 @@ exports.updateProjectExpense = async (req, res) => {
             updateFields.projectexpences = fileNames;
             updateFields.details = value.details;
             updateFields.nature_Of_expense = value.nature_Of_expense;
-
-            
           } else {
-            return errorResponse(res, statusCode.FORBIDDEN, "Accountants can only update status to Paid");
+            return errorResponse(
+              res,
+              statusCode.FORBIDDEN,
+              "Accountants can only update status to Paid"
+            );
           }
         } else if (isCreator) {
           const { status, ...otherFields } = value;
           updateFields = { ...otherFields, updatedBy: userId };
-          
         } else {
-          return errorResponse(res, statusCode.FORBIDDEN, "You do not have permission to update this expense");
+          return errorResponse(
+            res,
+            statusCode.FORBIDDEN,
+            "You do not have permission to update this expense"
+          );
         }
 
         // Update the expense
-        const updatedExpense = await ProjectExpanses.findByIdAndUpdate(expenseId, updateFields, { new: true });
+        const updatedExpense = await ProjectExpanses.findByIdAndUpdate(
+          expenseId,
+          updateFields,
+          { new: true }
+        );
 
         if (!updatedExpense) {
-          return errorResponse(res, statusCode.BAD_REQUEST, "Failed to update expense");
+          return errorResponse(
+            res,
+            statusCode.BAD_REQUEST,
+            "Failed to update expense"
+          );
         }
 
         // Send Email Notification
         if (value.status && ["Approved"].includes(value.status)) {
-          let emailDetails = await this.getReviewsDetailsForMail(updatedExpense._id);
-          await approveProjectExpecesMail(emailDetails, req.user)
-
-
+          let emailDetails = await this.getReviewsDetailsForMail(
+            updatedExpense._id
+          );
+          await approveProjectExpecesMail(
+            emailDetails,
+            req.user,
+            decodedCompanyId
+          );
         }
         if (value.status && ["Paid"].includes(value.status)) {
-          let emailDetails = await this.getReviewsDetailsForMail(updatedExpense._id);
-          await paidProjectExpecesMail(emailDetails, req.user)
-
+          let emailDetails = await this.getReviewsDetailsForMail(
+            updatedExpense._id
+          );
+          await paidProjectExpecesMail(
+            emailDetails,
+            req.user,
+            decodedCompanyId
+          );
         }
 
-
-        return successResponse(res, statusCode.SUCCESS, messages.PROJECTEXPENSE_UPDATED, updatedExpense);
+        return successResponse(
+          res,
+          statusCode.SUCCESS,
+          messages.PROJECTEXPENSE_UPDATED,
+          updatedExpense
+        );
       } catch (error) {
         console.error("Error in updateProjectExpense:", error);
         return catchBlockErrorResponse(res, error.message);
@@ -1019,98 +1137,6 @@ exports.updateProjectExpense = async (req, res) => {
     return catchBlockErrorResponse(res, "An unexpected error occurred");
   }
 };
-
-
-
-
-
-// exports.updateProjectExpense = async (req, res) => {
-//     try {
-//         const staticAccountantId = process.env.ACCOUNTANT_ID;
-//         const userRole = req.user.pms_role_id.role_name;
-//         const userId = req.user._id.toString();
-
-//         // Fetch existing project expense
-//         const existingExpense = await ProjectExpanses.findById(req.params.id);
-//         if (!existingExpense) {
-//             return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
-//         }
-
-//         const isCreator = existingExpense.createdBy.toString() === userId;
-//         const isAdmin = userRole === "Admin";
-//         const isSuperAdmin = userRole === "Admin";
-//         const isAccountant = userId === staticAccountantId;
-
-//         // Request Validation Schema
-//         const validationSchema = Joi.object({
-//             project_id: Joi.string().optional(),
-//             purchase_request_details: Joi.string().optional(),
-//             cost_in_usd: Joi.number().optional(),
-//             need_to_bill_customer: Joi.boolean().optional(),
-//             status: Joi.string().valid("Approved", "Rejected", "Paid").optional(),
-//         });
-
-//         const { error, value } = validationSchema.validate(req.body);
-//         if (error) {
-//             return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
-//         }
-
-//         // Role-based permission logic
-//         let updateFields = { updatedBy: userId };
-
-//         if (isSuperAdmin) {
-//             // Super Admin can update everything
-//             updateFields = { ...value, updatedBy: userId };
-//         } else if (isAdmin) {
-//             // Admin can update only status (Approved, Rejected)
-//             if (value.status && ["Approved", "Rejected"].includes(value.status)) {
-//                 updateFields.status = value.status;
-//             } else {
-//                 return errorResponse(res, statusCode.FORBIDDEN, "Admins can only update status to Approved or Rejected");
-//             }
-//         } else if (isAccountant) {
-//             // Accountant can update only status (Paid)
-//             if (value.status === "Paid") {
-//                 updateFields.status = value.status;
-//             } else {
-//                 return errorResponse(res, statusCode.FORBIDDEN, "Accountant can only update status to Paid");
-//             }
-//         } else if (isCreator) {
-//             // Creator can update all fields except status
-//             const { status, ...otherFields } = value;
-//             updateFields = { ...otherFields, updatedBy: userId };
-//             if (status) {
-//                 return errorResponse(res, statusCode.FORBIDDEN, "Creators cannot update status");
-//             }
-//         } else {
-//             return errorResponse(res, statusCode.FORBIDDEN, "You do not have permission to update this expense");
-//         }
-
-//         // Update the expense
-//         const updatedExpense = await ProjectExpanses.findByIdAndUpdate(req.params.id, updateFields, { new: true });
-
-//         if (!updatedExpense) {
-//             return errorResponse(res, statusCode.BAD_REQUEST, "Failed to update expense");
-//         }
-
-
-//         let emailDetails = await this.getReviewsDetailsForMail(data._id);
-//         // await newReviewsMail(emailDetails)
-
-//         // Send email if status is updated to Approved or Rejected
-//         // if (value.status && ["Approved", "Paid"].includes(value.status)) {
-//         //     // const emailSubject = `Project Expense ${value.status}`;
-//         //     // const emailBody = `Hello, your project expense request has been ${value.status}.`;
-//         //     // await sendEmail(existingExpense.createdBy.email, emailSubject, emailBody);
-//         // }
-
-//         return successResponse(res, statusCode.SUCCESS, "Project Expense updated successfully", updatedExpense);
-//     } catch (error) {
-//         return catchBlockErrorResponse(res, error.message);
-//     }
-// };
-
-
 
 exports.deleteProjectExpense = async (req, res) => {
   try {
@@ -1130,7 +1156,11 @@ exports.deleteProjectExpense = async (req, res) => {
 
     // Only allow deletion if user is Admin, SuperAdmin, PC, TL, Creator, or Accountant
     if (!isAllowedRole && !isCreator && !isAccountant) {
-      return errorResponse(res, statusCode.FORBIDDEN, messages.PROJECTEXPENSE_DELETED_DENIED);
+      return errorResponse(
+        res,
+        statusCode.FORBIDDEN,
+        messages.PROJECTEXPENSE_DELETED_DENIED
+      );
     }
 
     // Soft delete: Set `isDeleted: true`
@@ -1138,7 +1168,12 @@ exports.deleteProjectExpense = async (req, res) => {
     existingExpense.updatedBy = userId;
     await existingExpense.save();
 
-    return successResponse(res, statusCode.SUCCESS, messages.PROJECTEXPENSE_DELETED, existingExpense);
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.PROJECTEXPENSE_DELETED,
+      existingExpense
+    );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
@@ -1149,8 +1184,8 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
     const mainQuery = [
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(reviewId),
-        },
+          _id: new mongoose.Types.ObjectId(reviewId)
+        }
       },
       {
         $lookup: {
@@ -1162,20 +1197,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1187,20 +1222,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
       {
         $unwind: {
           path: "$technology",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1214,20 +1249,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1241,20 +1276,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       {
         $unwind: {
           path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1268,20 +1303,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "managers_rm",
-        },
+          as: "managers_rm"
+        }
       },
       {
         $unwind: {
           path: "$managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1295,20 +1330,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_managers_rm",
-        },
+          as: "acc_managers_rm"
+        }
       },
       {
         $unwind: {
           path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       {
@@ -1323,20 +1358,20 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                     { $eq: ["$_id", "$$createdByRM"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "createdBy_rm",
-        },
+          as: "createdBy_rm"
+        }
       },
       {
         $unwind: {
           path: "$createdBy_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
 
@@ -1348,56 +1383,56 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
             title: 1,
             manager: 1,
             acc_manager: 1,
-            technology: 1,
+            technology: 1
           },
           manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           acc_managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           acc_manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1,
+            email: 1
           },
           technology: {
             _id: 1,
-            project_tech: 1,
+            project_tech: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
             client_img: 1,
-            email: 1,
+            email: 1
           },
           createdBy_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
             client_img: 1,
-            email: 1,
+            email: 1
           },
           updatedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
             client_img: 1,
-            email: 1,
+            email: 1
           },
           project_id: 1,
           client_name: 1,
@@ -1409,32 +1444,29 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           // client_nda_sign: 1,
           updatedAt: 1,
           createdAt: 1,
-          billing_cycle: 1, is_recuring: 1
-        },
-      },
+          billing_cycle: 1,
+          is_recuring: 1
+        }
+      }
     ];
 
     const data = await ProjectExpanses.aggregate(mainQuery);
     return data[0];
   } catch (error) {
-    console.log("🚀 ~ exports.getReviewsDetailsForMail= ~ error:", error)
+    console.log("🚀 ~ exports.getReviewsDetailsForMail= ~ error:", error);
   }
 };
-
-
-
 
 exports.exportProjectExpenses = async (req, res) => {
   try {
     let result = [];
     const validationSchema = Joi.object({
-
       isExport: Joi.boolean().default(false),
       exportFileType: Joi.string()
         .optional()
         .valid("csv", "xlsx")
         .insensitive()
-        .default("csv"),
+        .default("csv")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1445,28 +1477,28 @@ exports.exportProjectExpenses = async (req, res) => {
           from: "projects", // Name of the Projects collection
           localField: "project_id", // Field in ProjectExpenses
           foreignField: "_id", // Field in Projects collection
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true, // In case project is missing
-        },
+          preserveNullAndEmptyArrays: true // In case project is missing
+        }
       },
       {
         $lookup: {
           from: "employees", // Name of the Projects collection
           localField: "createdBy", // Field in ProjectExpenses
           foreignField: "_id", // Field in Projects collection
-          as: "createdDetails",
-        },
+          as: "createdDetails"
+        }
       },
       {
         $unwind: {
           path: "$createdDetails",
-          preserveNullAndEmptyArrays: true, // In case project is missing
-        },
+          preserveNullAndEmptyArrays: true // In case project is missing
+        }
       },
       {
         $project: {
@@ -1474,15 +1506,14 @@ exports.exportProjectExpenses = async (req, res) => {
           projectName: "$projectDetails.title", // Get project title
           cost: "$cost_in_usd",
           need_to_bill_customer: "$need_to_bill_customer",
-          'CreatedBy': "$createdDetails.full_name",
-          "createdAt": "$createdAt",
+          CreatedBy: "$createdDetails.full_name",
+          createdAt: "$createdAt",
           status: "$status",
           billing_cycle: "$billing_cycle",
           purchase_request_details: "$purchase_request_details",
           details: "$details",
-          nature_Of_expense:'$nature_Of_expense'
-        },
-        
+          nature_Of_expense: "$nature_Of_expense"
+        }
       },
       {
         $sort: { createdAt: -1 } // Descending order
@@ -1498,31 +1529,44 @@ exports.exportProjectExpenses = async (req, res) => {
       result.push({
         "Project Name": item?.projectName,
         "Cost in USD": `$ ${item.cost}`,
-        "Need To Bill Customer": item.need_to_bill_customer ? 'Yes' : 'No',
-        "Creator": item?.CreatedBy,
-        "Creation Date": moment(item.createdAt).format('DD, MMM, YYYY'),
-        "Status": item?.status,
-        "Blling Cycle": item?.billing_cycle ? item?.billing_cycle : '-',
-        "Purchase Request Details": item?.purchase_request_details ? item?.purchase_request_details.replace(/<br\s*\/?>/g, '\n') : '-'
-        , 'Details': item?.details,
-        'Nature Of Expense': item?.nature_Of_expense?item?.nature_Of_expense:'-'
+        "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
+        Creator: item?.CreatedBy,
+        "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
+        Status: item?.status,
+        "Blling Cycle": item?.billing_cycle ? item?.billing_cycle : "-",
+        "Purchase Request Details": item?.purchase_request_details
+          ? item?.purchase_request_details.replace(/<br\s*\/?>/g, "\n")
+          : "-",
+        Details: item?.details,
+        "Nature Of Expense": item?.nature_Of_expense
+          ? item?.nature_Of_expense
+          : "-"
       });
     }
 
     const csvFields = [
-      "Project Name", "Cost in USD", "Need To Bill Customer", "Creator", "Creation Date", "Status", "Blling Cycle", "Purchase Request Details", "Details","Nature Of Expense"
+      "Project Name",
+      "Cost in USD",
+      "Need To Bill Customer",
+      "Creator",
+      "Creation Date",
+      "Status",
+      "Blling Cycle",
+      "Purchase Request Details",
+      "Details",
+      "Nature Of Expense"
     ];
 
     const exportFileTypeLower = _.toLower(value.exportFileType);
-    console.log(exportFileTypeLower, 'exportFileTypeLower');
-    console.log('Step 0');
+    console.log(exportFileTypeLower, "exportFileTypeLower");
+    console.log("Step 0");
 
     if (exportFileTypeLower === "csv") {
-      console.log('Step 1');
+      console.log("Step 1");
 
       result = await generateCSV(result, csvFields);
     }
-    console.log('Step 2', result);
+    console.log("Step 2", result);
 
     //  else if (exportFileTypeLower === "xlsx") {
     //   result = await generateXLSX(csvData);
@@ -1532,7 +1576,7 @@ exports.exportProjectExpenses = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Project Expenses exported successfully",
-      data: result,
+      data: result
     });
   } catch (error) {
     console.log("🚀 ~ exports.exportPMSClientData= ~ error:", error);

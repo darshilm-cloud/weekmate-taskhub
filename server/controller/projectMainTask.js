@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const WorkflowStatusModel = mongoose.model("workflowstatus");
@@ -13,7 +13,7 @@ const ProjectTaskComments = mongoose.model("Comments");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -21,13 +21,13 @@ const configs = require("../configs");
 const {
   subscribersMail,
   deleteMainTaskManagerMail,
-  sendmailToAssignees,
+  sendmailToAssignees
 } = require("./sendEmail");
 const {
   getArrayChanges,
   getRefModelFromLoginUser,
   getClientQuery,
-  generateRandomId,
+  generateRandomId
 } = require("../helpers/common");
 const { sheet } = require("../template/tasksCSV");
 const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
@@ -57,21 +57,21 @@ exports.projectMainTaskExists = async (title, project_id, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
     return isExist;
@@ -83,6 +83,13 @@ exports.projectMainTaskExists = async (title, project_id, id = null) => {
 //Add Project main task :
 exports.addProjectsMainTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -93,7 +100,7 @@ exports.addProjectsMainTask = async (req, res) => {
       subscriber_stages: Joi.array().optional().default([]),
       status: Joi.string().optional().default("active"),
       isPrivateList: Joi.boolean().optional().default(false),
-      isDisplayInGantt: Joi.boolean().optional().default(false),
+      isDisplayInGantt: Joi.boolean().optional().default(false)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -122,14 +129,14 @@ exports.addProjectsMainTask = async (req, res) => {
             {
               task_status: value?.task_status,
               updatedBy: req.user._id,
-              updatedAt: configs.utcDefault(),
-            },
-          ],
+              updatedAt: configs.utcDefault()
+            }
+          ]
         }),
 
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       let isPMSClient = await checkIsPMSClient(req.user._id);
       if (isPMSClient) {
@@ -142,7 +149,7 @@ exports.addProjectsMainTask = async (req, res) => {
         (value?.subscribers && value?.subscribers.length > 0) ||
         (value?.pms_clients && value?.pms_clients.length > 0)
       ) {
-        await subscribersMail(newdata._id);
+        await subscribersMail(newdata._id, [], [], decodedCompanyId);
       }
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
     }
@@ -161,7 +168,7 @@ exports.getProjectsMainTask = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -177,7 +184,7 @@ exports.getProjectsMainTask = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     // const isClient = await checkIsPMSClient(req.user._id);
@@ -192,20 +199,18 @@ exports.getProjectsMainTask = async (req, res) => {
     //   req.user._id
     // );
 
-    const [isClient,isAdmin,isSuperAdmin,isManager,isAccManager] = await Promise.all([
-      checkIsPMSClient(req.user._id),
-      checkUserIsAdmin(req.user._id),
-      checkUserIsSuperAdmin(req?.user?._id),
-      this.checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    ),
-    this.checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    )
-    ])
-    
+    const [isClient, isAdmin, isSuperAdmin, isManager, isAccManager] =
+      await Promise.all([
+        checkIsPMSClient(req.user._id),
+        checkUserIsAdmin(req.user._id),
+        checkUserIsSuperAdmin(req?.user?._id),
+        this.checkLoginUserIsProjectManager(value.project_id, req.user._id),
+        this.checkLoginUserIsProjectAccountManager(
+          value.project_id,
+          req.user._id
+        )
+      ]);
+
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
@@ -218,26 +223,22 @@ exports.getProjectsMainTask = async (req, res) => {
               {
                 $or: [
                   {
-                    "subscribers._id": new mongoose.Types.ObjectId(
-                      req.user._id
-                    ),
+                    "subscribers._id": new mongoose.Types.ObjectId(req.user._id)
                   },
                   {
-                    "pms_clients._id": new mongoose.Types.ObjectId(
-                      req.user._id
-                    ),
+                    "pms_clients._id": new mongoose.Types.ObjectId(req.user._id)
                   },
-                  { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-                ],
-              },
-            ],
+                  { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+                ]
+              }
+            ]
           }
-        : {}),
+        : {})
     };
 
     let task_query = [
       { $eq: ["$main_task_id", "$$mainTaskId"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
 
     if (!isManager && !isSuperAdmin && !isClient && !isAdmin && !isAccManager) {
@@ -246,65 +247,65 @@ exports.getProjectsMainTask = async (req, res) => {
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"],
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"],
-            },
-          ],
-        },
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+            }
+          ]
+        }
       ];
     }
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
     const doneStatus = await WorkflowStatusModel.find({
       title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-      isDeleted: false,
+      isDeleted: false
     }).exec();
 
     const mainQuery = [
-      {$match:{isDeleted: false}},
+      { $match: { isDeleted: false } },
       {
         $unwind: {
           path: "$subscriber_stages",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "employees",
           localField: "subscriber_stages.subscriber_id",
           foreignField: "_id",
-          as: "subscriber",
-        },
+          as: "subscriber"
+        }
       },
       {
         $unwind: {
           path: "$subscriber",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
           from: "workflowstatuses",
           localField: "subscriber_stages.stages",
           foreignField: "_id",
-          as: "stages",
-        },
+          as: "stages"
+        }
       },
       {
         $unwind: {
           path: "$stages",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $group: {
@@ -326,8 +327,8 @@ exports.getProjectsMainTask = async (req, res) => {
                   $and: [
                     { $ne: ["$subscribers", []] }, // Check if subscribers is not an empty array
                     { $ne: ["$subscriber_stages", []] },
-                    { $ne: ["$isDeleted", true] },
-                  ],
+                    { $ne: ["$isDeleted", true] }
+                  ]
                 },
                 then: {
                   $filter: {
@@ -336,23 +337,23 @@ exports.getProjectsMainTask = async (req, res) => {
                         subscriber: {
                           _id: "$subscriber._id",
                           name: "$subscriber.full_name",
-                          emp_img: "$subscriber.emp_img",
+                          emp_img: "$subscriber.emp_img"
                         },
                         stages: {
                           _id: "$stages._id",
-                          title: "$stages.title",
-                        },
-                      },
+                          title: "$stages.title"
+                        }
+                      }
                     ],
                     as: "result",
-                    cond: { $ne: ["$$result.subscriber._id", null] }, // Check if subscriber._id is not null
-                  },
+                    cond: { $ne: ["$$result.subscriber._id", null] } // Check if subscriber._id is not null
+                  }
                 },
-                else: "$$REMOVE",
-              },
-            },
-          },
-        },
+                else: "$$REMOVE"
+              }
+            }
+          }
+        }
       },
       {
         $project: {
@@ -371,10 +372,10 @@ exports.getProjectsMainTask = async (req, res) => {
             $reduce: {
               input: "$subscriber_stages",
               initialValue: [],
-              in: { $concatArrays: ["$$value", "$$this"] },
-            },
-          },
-        },
+              in: { $concatArrays: ["$$value", "$$this"] }
+            }
+          }
+        }
       },
       {
         $lookup: {
@@ -386,20 +387,20 @@ exports.getProjectsMainTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -411,20 +412,20 @@ exports.getProjectsMainTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$workflow_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workflows",
-        },
+          as: "workflows"
+        }
       },
       {
         $unwind: {
           path: "$workflows",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -434,9 +435,9 @@ exports.getProjectsMainTask = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: task_query,
-                },
-              },
+                  $and: task_query
+                }
+              }
             },
             {
               $lookup: {
@@ -448,24 +449,24 @@ exports.getProjectsMainTask = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$taskStatus"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "task_status",
-              },
+                as: "task_status"
+              }
             },
             {
               $unwind: {
                 path: "$task_status",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
+                preserveNullAndEmptyArrays: true
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       {
         $lookup: {
@@ -477,20 +478,20 @@ exports.getProjectsMainTask = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workFlowStatus",
-        },
+          as: "workFlowStatus"
+        }
       },
       {
         $unwind: {
           path: "$workFlowStatus",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       // its added for long list data load handle in perticular projects..[DEFAULT_DATA.RESTRICT_PROJECT_ID]
       {
@@ -498,7 +499,7 @@ exports.getProjectsMainTask = async (req, res) => {
           tasks: {
             $cond: {
               if: {
-                $in: ["$project.projectId", DEFAULT_DATA.RESTRICT_PROJECT_ID],
+                $in: ["$project.projectId", DEFAULT_DATA.RESTRICT_PROJECT_ID]
               },
               then: {
                 $filter: {
@@ -509,17 +510,17 @@ exports.getProjectsMainTask = async (req, res) => {
                       {
                         $ne: [
                           "$$task.task_status.title",
-                          DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-                        ],
-                      },
-                    ],
-                  },
-                },
+                          DEFAULT_DATA.WORKFLOW_STATUS.DONE
+                        ]
+                      }
+                    ]
+                  }
+                }
               },
-              else: "$tasks",
-            },
-          },
-        },
+              else: "$tasks"
+            }
+          }
+        }
       },
       {
         $lookup: {
@@ -533,14 +534,14 @@ exports.getProjectsMainTask = async (req, res) => {
                     { $in: ["$_id", "$$subscribers"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "subscribers",
-        },
+          as: "subscribers"
+        }
       },
       ...(await getClientQuery()),
       { $match: matchQuery },
@@ -561,10 +562,10 @@ exports.getProjectsMainTask = async (req, res) => {
                   "$$task.task_status",
                   doneStatus.map(
                     (done) => new mongoose.Types.ObjectId(done._id)
-                  ),
-                ],
-              },
-            },
+                  )
+                ]
+              }
+            }
           },
           totalDoneTasks: {
             $cond: {
@@ -574,10 +575,10 @@ exports.getProjectsMainTask = async (req, res) => {
                   {
                     $in: [
                       "$project.projectId",
-                      DEFAULT_DATA.RESTRICT_PROJECT_ID,
-                    ],
-                  },
-                ],
+                      DEFAULT_DATA.RESTRICT_PROJECT_ID
+                    ]
+                  }
+                ]
               },
               then: 0,
               else: {
@@ -592,32 +593,32 @@ exports.getProjectsMainTask = async (req, res) => {
                             "$$task.task_status._id",
                             doneStatus.map(
                               (done) => new mongoose.Types.ObjectId(done._id)
-                            ),
-                          ],
-                        },
-                      },
+                            )
+                          ]
+                        }
+                      }
                     },
                     as: "doneTask",
                     in: {
                       $cond: {
                         if: { $ne: ["$$doneTask", []] },
                         then: 1,
-                        else: 0,
-                      },
-                    },
-                  },
-                },
-              },
-            },
+                        else: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
 
           workflows: {
             _id: 1,
-            project_workflow: 1,
+            project_workflow: 1
           },
           workFlowStatus: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           project: 1,
           subscribers: {
@@ -627,32 +628,30 @@ exports.getProjectsMainTask = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$subscribers" },
-                      { $ne: ["$subscribers", []] },
-                    ],
+                      { $ne: ["$subscribers", []] }
+                    ]
                   },
                   then: "$subscribers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "subscriberId",
               in: {
                 _id: "$$subscriberId._id",
                 name: "$$subscriberId.full_name",
-                emp_img: "$$subscriberId.emp_img",
-              },
-            },
+                emp_img: "$$subscriberId.emp_img"
+              }
+            }
           },
           pms_clients: 1,
           ...(await getClientQuery(true)),
-          subscriber_stages: 1,
-        },
-      },
-
+          subscriber_stages: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
     // const totalCountResult = await ProjectMainTasks.aggregate(countQuery);
-   
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     // let data = await ProjectMainTasks.aggregate([
@@ -663,12 +662,12 @@ exports.getProjectsMainTask = async (req, res) => {
     const [totalCountResult, data] = await Promise.all([
       ProjectMainTasks.aggregate(countQuery),
       ProjectMainTasks.aggregate([
-      ...mainQuery,
-      { $sort: { isPrivateList: -1, ...pagination.sort } },
-    ])
-    ])
+        ...mainQuery,
+        { $sort: { isPrivateList: -1, ...pagination.sort } }
+      ])
+    ]);
 
-     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -676,7 +675,7 @@ exports.getProjectsMainTask = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -687,7 +686,7 @@ exports.getProjectsMainTask = async (req, res) => {
       !value._id && metaData
     );
   } catch (error) {
-    console.log("🚀 ~ exports.getProjectsMainTask= ~ error:", error)
+    console.log("🚀 ~ exports.getProjectsMainTask= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
@@ -695,6 +694,13 @@ exports.getProjectsMainTask = async (req, res) => {
 //Update Project main task :
 exports.updateProjectsMainTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
@@ -705,7 +711,7 @@ exports.updateProjectsMainTask = async (req, res) => {
       subscriber_stages: Joi.array().optional().default([]),
       status: Joi.string().optional().default("active"),
       isPrivateList: Joi.boolean().optional().default(false),
-      isDisplayInGantt: Joi.boolean().optional().default(false),
+      isDisplayInGantt: Joi.boolean().optional().default(false)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -743,9 +749,9 @@ exports.updateProjectsMainTask = async (req, res) => {
                   {
                     task_status: null,
                     updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
+                    updatedAt: configs.utcDefault()
+                  }
+                ]
               }
             : !getData.task_status && value.task_status
             ? {
@@ -753,9 +759,9 @@ exports.updateProjectsMainTask = async (req, res) => {
                   {
                     task_status: value.task_status,
                     updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
+                    updatedAt: configs.utcDefault()
+                  }
+                ]
               }
             : getData.task_status &&
               value.task_status &&
@@ -766,9 +772,9 @@ exports.updateProjectsMainTask = async (req, res) => {
                   {
                     task_status: value.task_status,
                     updatedBy: req.user._id,
-                    updatedAt: configs.utcDefault(),
-                  },
-                ],
+                    updatedAt: configs.utcDefault()
+                  }
+                ]
               }
             : getData.task_status_history),
           subscribers: value.subscribers || [],
@@ -778,7 +784,7 @@ exports.updateProjectsMainTask = async (req, res) => {
           isPrivateList: value.isPrivateList || false,
           isDisplayInGantt: value.isDisplayInGantt || false,
           updatedBy: req.user._id,
-          ...(await getRefModelFromLoginUser(req?.user, true)),
+          ...(await getRefModelFromLoginUser(req?.user, true))
         },
         { new: true }
       );
@@ -806,7 +812,8 @@ exports.updateProjectsMainTask = async (req, res) => {
         await subscribersMail(
           req.params.id,
           subscribersData.added,
-          clientsData.added
+          clientsData.added,
+          decodedCompanyId
         );
       }
 
@@ -820,13 +827,20 @@ exports.updateProjectsMainTask = async (req, res) => {
 //Soft Delete Project main task :
 exports.deleteProjectsMainTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const data = await ProjectMainTasks.findByIdAndUpdate(
       req.params.id,
       {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );
@@ -836,7 +850,7 @@ exports.deleteProjectsMainTask = async (req, res) => {
     }
 
     // Mail for manager..
-    await deleteMainTaskManagerMail(req.params.id);
+    await deleteMainTaskManagerMail(req.params.id, decodedCompanyId);
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -854,7 +868,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       task_labels: Joi.array().default([]),
-      assignees: Joi.array().default([]),
+      assignees: Joi.array().default([])
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -876,7 +890,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       value.project_id,
       req.user._id
     );
-    
+
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
@@ -886,8 +900,8 @@ exports.projectMainTaskDetailsData = async (req, res) => {
             "workflowStatus._id": {
               $in: value.work_flow_status.map(
                 (i) => new mongoose.Types.ObjectId(i)
-              ),
-            },
+              )
+            }
           }
         : {}),
       // For details
@@ -898,28 +912,28 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               {
                 $or: [
                   {
-                    subscribers: new mongoose.Types.ObjectId(req.user._id),
+                    subscribers: new mongoose.Types.ObjectId(req.user._id)
                   },
                   {
-                    pms_clients: new mongoose.Types.ObjectId(req.user._id),
+                    pms_clients: new mongoose.Types.ObjectId(req.user._id)
                   },
-                  { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-                ],
-              },
-            ],
+                  { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+                ]
+              }
+            ]
           }
-        : {}),
+        : {})
     };
 
     let taskQuery = [
       { $eq: ["$task_status", "$$statusId"] },
       {
-        $eq: ["$project_id", new mongoose.Types.ObjectId(value.project_id)],
+        $eq: ["$project_id", new mongoose.Types.ObjectId(value.project_id)]
       },
       {
-        $eq: ["$main_task_id", new mongoose.Types.ObjectId(value.main_task_id)],
+        $eq: ["$main_task_id", new mongoose.Types.ObjectId(value.main_task_id)]
       },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
 
     if (!isManager && !isSuperAdmin && !isClient && !isAdmin && !isAccManager) {
@@ -928,16 +942,16 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"],
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"],
-            },
-          ],
-        },
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+            }
+          ]
+        }
       ];
     }
 
@@ -951,17 +965,17 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         {
           $gte: [
             "$start_date",
-            moment(value.start_date).startOf("day").toDate(),
-          ],
-        },
+            moment(value.start_date).startOf("day").toDate()
+          ]
+        }
       ];
 
     if (value.due_date && value.due_date !== "")
       taskQuery = [
         ...taskQuery,
         {
-          $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()],
-        },
+          $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()]
+        }
       ];
 
     if (value.task_labels && value.task_labels.length > 0) {
@@ -973,13 +987,13 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               $size: {
                 $setIntersection: [
                   "$task_labels",
-                  value.task_labels.map((l) => new mongoose.Types.ObjectId(l)),
-                ],
-              },
+                  value.task_labels.map((l) => new mongoose.Types.ObjectId(l))
+                ]
+              }
             },
-            0,
-          ],
-        },
+            0
+          ]
+        }
       ];
     }
 
@@ -992,13 +1006,13 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               $size: {
                 $setIntersection: [
                   "$assignees",
-                  value.assignees.map((l) => new mongoose.Types.ObjectId(l)),
-                ],
-              },
+                  value.assignees.map((l) => new mongoose.Types.ObjectId(l))
+                ]
+              }
             },
-            0,
-          ],
-        },
+            0
+          ]
+        }
       ];
     }
 
@@ -1013,20 +1027,20 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -1038,23 +1052,23 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$workflow_id", "$$workflow_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "workflowStatus",
-        },
+          as: "workflowStatus"
+        }
       },
       {
         $unwind: {
           path: "$workflowStatus",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
-        $match: matchQuery,
+        $match: matchQuery
       },
       {
         $lookup: {
@@ -1064,9 +1078,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: taskQuery,
-                },
-              },
+                  $and: taskQuery
+                }
+              }
             },
             {
               $lookup: {
@@ -1080,21 +1094,21 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                           { $in: ["$_id", "$$assigneeIds"] },
                           { $eq: ["$isDeleted", false] },
                           { $eq: ["$isSoftDeleted", false] },
-                          { $eq: ["$isActivate", true] },
-                        ],
-                      },
-                    },
+                          { $eq: ["$isActivate", true] }
+                        ]
+                      }
+                    }
                   },
                   {
                     $project: {
                       _id: 1,
                       full_name: 1,
-                      emp_img: 1,
-                    },
-                  },
+                      emp_img: 1
+                    }
+                  }
                 ],
-                as: "assignees",
-              },
+                as: "assignees"
+              }
             },
             ...(await getClientQuery()),
             {
@@ -1107,21 +1121,21 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $in: ["$_id", "$$labelId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
                   },
                   {
                     $project: {
                       _id: 1,
                       title: 1,
-                      color: 1,
-                    },
-                  },
+                      color: 1
+                    }
+                  }
                 ],
-                as: "task_labels",
-              },
+                as: "task_labels"
+              }
             },
             {
               $lookup: {
@@ -1136,17 +1150,17 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                           {
                             $eq: [
                               "$project_id",
-                              new mongoose.Types.ObjectId(value.project_id),
-                            ],
+                              new mongoose.Types.ObjectId(value.project_id)
+                            ]
                           },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "task_hours",
-              },
+                as: "task_hours"
+              }
             },
             {
               $addFields: {
@@ -1162,22 +1176,22 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                             {
                               $multiply: [
                                 {
-                                  $toDouble: "$$this.logged_hours", // Convert string to double
+                                  $toDouble: "$$this.logged_hours" // Convert string to double
                                 },
-                                60,
-                              ], // Convert hours to minutes
+                                60
+                              ] // Convert hours to minutes
                             },
                             {
-                              $toDouble: "$$this.logged_minutes", // Convert string to double
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  },
+                              $toDouble: "$$this.logged_minutes" // Convert string to double
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 },
-                ...(await getClientQuery(true)),
-              },
+                ...(await getClientQuery(true))
+              }
             },
             {
               $lookup: {
@@ -1189,14 +1203,14 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                       $expr: {
                         $and: [
                           { $eq: ["$task_id", "$$taskId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "comments",
-              },
+                as: "comments"
+              }
             },
 
             {
@@ -1208,7 +1222,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 // assignees: 1,
                 // ...(await getClientQuery(true)),
                 assignees: {
-                  $concatArrays: ["$assignees", "$pms_clients"],
+                  $concatArrays: ["$assignees", "$pms_clients"]
                 },
                 estimated_hours: 1,
                 estimated_minutes: 1,
@@ -1223,12 +1237,12 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 total_logged_hours: {
                   // only hours
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60],
-                  },
+                    $divide: ["$totalLoggedTime", 60]
+                  }
                 },
                 total_logged_minutes: {
-                  $mod: ["$totalLoggedTime", 60],
-                },
+                  $mod: ["$totalLoggedTime", 60]
+                }
                 // totalLoggedTime: {
                 //   $concat: [
                 //     {
@@ -1246,11 +1260,11 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 //     "mins",
                 //   ],
                 // },
-              },
-            },
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       // its added for long list data load handle in perticular projects..[DEFAULT_DATA.RESTRICT_PROJECT_ID]
       {
@@ -1262,22 +1276,22 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                   {
                     $eq: [
                       "$workflowStatus.title",
-                      DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-                    ],
+                      DEFAULT_DATA.WORKFLOW_STATUS.DONE
+                    ]
                   },
                   {
                     $in: [
                       "$project.projectId",
-                      DEFAULT_DATA.RESTRICT_PROJECT_ID,
-                    ],
-                  },
-                ],
+                      DEFAULT_DATA.RESTRICT_PROJECT_ID
+                    ]
+                  }
+                ]
               },
               then: [],
-              else: "$tasks",
-            },
-          },
-        },
+              else: "$tasks"
+            }
+          }
+        }
       },
       {
         $project: {
@@ -1290,19 +1304,19 @@ exports.projectMainTaskDetailsData = async (req, res) => {
             _id: 1,
             title: 1,
             color: 1,
-            sequence: 1,
+            sequence: 1
           },
           tasks: 1,
           total_task: {
-            $size: "$tasks",
-          },
-        },
+            $size: "$tasks"
+          }
+        }
       },
       {
         $sort: {
-          "workflowStatus.sequence": 1,
-        },
-      },
+          "workflowStatus.sequence": 1
+        }
+      }
     ];
     const data = await ProjectMainTasks.aggregate(mainQuery);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
@@ -1315,7 +1329,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
 exports.updateProjectsMainTaskStatus = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      status: Joi.string().required(),
+      status: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1332,7 +1346,7 @@ exports.updateProjectsMainTaskStatus = async (req, res) => {
         status: value.status,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -1351,7 +1365,7 @@ exports.updateProjectsMainTaskStatus = async (req, res) => {
 exports.updateProjectsMainTaskBookmark = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isBookmark: Joi.boolean().required(),
+      isBookmark: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1368,7 +1382,7 @@ exports.updateProjectsMainTaskBookmark = async (req, res) => {
         isBookmark: value.isBookmark,
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -1394,8 +1408,8 @@ exports.checkLoginUserIsProjectManager = async (project_id, loginUserId) => {
       // manager: new mongoose.Types.ObjectId(loginUserId),
       $or: [
         { manager: new mongoose.Types.ObjectId(loginUserId) },
-        { createdBy: new mongoose.Types.ObjectId(loginUserId) },
-      ],
+        { createdBy: new mongoose.Types.ObjectId(loginUserId) }
+      ]
     });
 
     if (getProject) isManager = true;
@@ -1406,15 +1420,17 @@ exports.checkLoginUserIsProjectManager = async (project_id, loginUserId) => {
 };
 
 // check login user is account manager ...
-exports.checkLoginUserIsProjectAccountManager = async (project_id, loginUserId) => {
+exports.checkLoginUserIsProjectAccountManager = async (
+  project_id,
+  loginUserId
+) => {
   try {
     let isAccManager = false;
 
     const getProject = await Project.findOne({
       isDeleted: false,
       _id: new mongoose.Types.ObjectId(project_id),
-      acc_manager: new mongoose.Types.ObjectId(loginUserId),
-      
+      acc_manager: new mongoose.Types.ObjectId(loginUserId)
     });
 
     if (getProject) isAccManager = true;
@@ -1427,7 +1443,7 @@ exports.checkLoginUserIsProjectAccountManager = async (project_id, loginUserId) 
 exports.csvDataexport = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      csvData: Joi.array().default([]),
+      csvData: Joi.array().default([])
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1466,7 +1482,7 @@ exports.tasksByWorkflowStatus = async (data) => {
         clients: task.clients,
         labels: task.task_labels,
         startDate: task.start_date,
-        dueDate: moment(task.due_date).format("YYYY-MM-DD"),
+        dueDate: moment(task.due_date).format("YYYY-MM-DD")
       }));
 
       allTasks.push([{ title: workflowTitle, tasks }]);
@@ -1483,6 +1499,13 @@ exports.tasksByWorkflowStatus = async (data) => {
 
 exports.createACopyOfMainTask = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       main_task_id: Joi.string().required(),
@@ -1491,7 +1514,7 @@ exports.createACopyOfMainTask = async (req, res) => {
       is_clients_copy: Joi.boolean().required(),
       is_dates_copy: Joi.boolean().required(),
       is_task_stages_copy: Joi.boolean().required(),
-      is_comments_copy: Joi.boolean().required(),
+      is_comments_copy: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1512,7 +1535,7 @@ exports.createACopyOfMainTask = async (req, res) => {
           isDeleted: false,
           createdBy: req.user._id,
           updatedBy: req.user._id,
-          ...(await getRefModelFromLoginUser(req?.user)),
+          ...(await getRefModelFromLoginUser(req?.user))
         };
 
         const mainTask = mainTaskData[0];
@@ -1523,15 +1546,15 @@ exports.createACopyOfMainTask = async (req, res) => {
           ...(value.is_assignees_copy == true
             ? {
                 subscribers: mainTask.subscribers || [],
-                subscriber_stages: mainTask.subscriber_stages || [],
+                subscriber_stages: mainTask.subscriber_stages || []
               }
             : {}),
           ...(value.is_clients_copy == true
             ? {
-                pms_clients: mainTask.pms_clients || [],
+                pms_clients: mainTask.pms_clients || []
               }
             : {}),
-          ...commonObj,
+          ...commonObj
         });
         const copyList = await mainTaskObj.save();
 
@@ -1539,7 +1562,7 @@ exports.createACopyOfMainTask = async (req, res) => {
           (copyList?.subscribers && copyList?.subscribers.length > 0) ||
           (copyList?.pms_clients && copyList?.pms_clients.length > 0)
         ) {
-          await subscribersMail(copyList._id);
+          await subscribersMail(copyList._id, [], [], decodedCompanyId);
         }
 
         if (copyList && mainTask.tasks && mainTask.tasks.length > 0) {
@@ -1547,7 +1570,7 @@ exports.createACopyOfMainTask = async (req, res) => {
           const workFlowStatus = await WorkflowStatusModel.findOne({
             isDeleted: false,
             workflow_id: new mongoose.Types.ObjectId(mainTask.project.workFlow),
-            title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+            title: DEFAULT_DATA.WORKFLOW_STATUS.TODO
           });
 
           for (let i = 0; i < mainTask.tasks.length; i++) {
@@ -1559,18 +1582,18 @@ exports.createACopyOfMainTask = async (req, res) => {
               main_task_id: new mongoose.Types.ObjectId(copyList._id),
               ...(value.is_assignees_copy == true
                 ? {
-                    assignees: task.assignees || [],
+                    assignees: task.assignees || []
                   }
                 : {}),
               ...(value.is_clients_copy == true
                 ? {
-                    pms_clients: task.pms_clients || [],
+                    pms_clients: task.pms_clients || []
                   }
                 : {}),
               ...(value.is_dates_copy == true
                 ? {
                     start_date: task.start_date || null,
-                    due_date: task.due_date || null,
+                    due_date: task.due_date || null
                   }
                 : {}),
 
@@ -1582,10 +1605,10 @@ exports.createACopyOfMainTask = async (req, res) => {
                         {
                           task_status: task?.task_status,
                           updatedBy: req.user._id,
-                          updatedAt: configs.utcDefault(),
-                        },
-                      ],
-                    }),
+                          updatedAt: configs.utcDefault()
+                        }
+                      ]
+                    })
                   }
                 : {
                     task_status:
@@ -1595,12 +1618,12 @@ exports.createACopyOfMainTask = async (req, res) => {
                         {
                           task_status: workFlowStatus?._id,
                           updatedBy: req.user._id,
-                          updatedAt: configs.utcDefault(),
-                        },
-                      ],
-                    }),
+                          updatedAt: configs.utcDefault()
+                        }
+                      ]
+                    })
                   }),
-              ...commonObj,
+              ...commonObj
             });
             const copyTask = await taskObj.save();
 
@@ -1609,7 +1632,7 @@ exports.createACopyOfMainTask = async (req, res) => {
               (copyTask?.assignees && copyTask?.assignees.length > 0) ||
               (copyTask?.pms_clients && copyTask?.pms_clients.length > 0)
             ) {
-              await sendmailToAssignees(copyTask._id);
+              await sendmailToAssignees(copyTask._id, [], decodedCompanyId);
             }
 
             // Copy task comments
@@ -1619,7 +1642,7 @@ exports.createACopyOfMainTask = async (req, res) => {
                 delete comment._id;
                 let commentObj = new ProjectTaskComments({
                   ...comment,
-                  task_id: new mongoose.Types.ObjectId(copyTask._id),
+                  task_id: new mongoose.Types.ObjectId(copyTask._id)
                 });
                 await commentObj.save();
               }
@@ -1643,8 +1666,8 @@ exports.getDataForCopyMainTask = async (data) => {
         $match: {
           _id: new mongoose.Types.ObjectId(data.main_task_id),
           project_id: new mongoose.Types.ObjectId(data.project_id),
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
         $lookup: {
@@ -1656,20 +1679,20 @@ exports.getDataForCopyMainTask = async (data) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $lookup: {
@@ -1681,15 +1704,15 @@ exports.getDataForCopyMainTask = async (data) => {
                 $expr: {
                   $and: [
                     {
-                      $eq: ["$project_id", "$$projectId"],
+                      $eq: ["$project_id", "$$projectId"]
                     },
                     {
-                      $eq: ["$main_task_id", "$$mainTaskId"],
+                      $eq: ["$main_task_id", "$$mainTaskId"]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
             },
             {
               $lookup: {
@@ -1701,19 +1724,19 @@ exports.getDataForCopyMainTask = async (data) => {
                       $expr: {
                         $and: [
                           { $eq: ["$task_id", "$$taskId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "comments",
-              },
-            },
+                as: "comments"
+              }
+            }
           ],
-          as: "tasks",
-        },
-      },
+          as: "tasks"
+        }
+      }
     ];
     const mainTask = await ProjectMainTasks.aggregate(query);
 
@@ -1728,7 +1751,7 @@ exports.moveTasksInOtherList = async (req, res) => {
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       new_main_task_id: Joi.string().required(),
-      task_ids: Joi.array().required(),
+      task_ids: Joi.array().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1742,7 +1765,7 @@ exports.moveTasksInOtherList = async (req, res) => {
     const isExits = await ProjectMainTasks.findOne({
       _id: new mongoose.Types.ObjectId(value.new_main_task_id),
       project_id: new mongoose.Types.ObjectId(value.project_id),
-      isDeleted: false,
+      isDeleted: false
     });
 
     if (!isExits) {
@@ -1752,14 +1775,14 @@ exports.moveTasksInOtherList = async (req, res) => {
     const data = await ProjectTasks.updateMany(
       {
         _id: {
-          $in: value.task_ids.map((t) => new mongoose.Types.ObjectId(t)),
-        },
+          $in: value.task_ids.map((t) => new mongoose.Types.ObjectId(t))
+        }
       },
       {
         main_task_id: new mongoose.Types.ObjectId(value.new_main_task_id),
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );

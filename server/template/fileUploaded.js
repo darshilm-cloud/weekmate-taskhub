@@ -3,8 +3,11 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
-exports.newFileUploadSubscriberMail = async (data, updatedSub = []) => {
+exports.newFileUploadSubscriberMail = async (
+  data,
+  updatedSub = [],
+  companyId
+) => {
   try {
     let mediaIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-media.png`;
     let folderIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-folder.png`;
@@ -272,14 +275,14 @@ ${attachments
       `;
     const mailData = {
       subject: `[${data?.project?.title}] A file has been uploaded - ${data?.project?.projectId}`,
-      html,
+      html
     };
 
     data.subscribers = data.subscribers.filter((s) => s !== null);
-    
+
     // to get mailSettings of subscribers..
     const mailSettings = await MailSettings.find({
-      createdBy: { $in: data.subscribers },
+      createdBy: { $in: data.subscribers }
     });
     // to get mailSettings of subscribers as of file_subscribed setting being true..
     let mailSettingsData = mailSettings.filter((ele) => ele.file_subscribed);
@@ -309,7 +312,7 @@ ${attachments
       .filter((s) => s !== null)
       .map((subscriber) => subscriber.email);
 
-    await emailSenderForPMS(clientmailIds, mailData, []);
+    await emailSenderForPMS(companyId,clientmailIds, mailData, []);
     //to get that subscribers mailids whose mail setting for quarterlyMail is true
     let quarterlymailIds = subscribers
       .filter(
@@ -323,11 +326,11 @@ ${attachments
 
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId,mailIds, mailData, []);
     }
     if (quarterlymailIds.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours
-      await mailsToQuarterHours(quarterlymailIds, mailData);
+      await mailsToQuarterHours(quarterlymailIds, mailData,companyId);
     }
     return;
   } catch (error) {

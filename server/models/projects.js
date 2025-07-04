@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const { commonSchema } = require("../helpers/common");
 
 const ProjectSchema = new mongoose.Schema({
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   title: {
     type: String,
     required: true,

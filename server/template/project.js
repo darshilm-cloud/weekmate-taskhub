@@ -3,9 +3,8 @@ const MailSettings = mongoose.model("mailsettings");
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
-
 class ProjectMail {
-  newProjectManagerMail = async (data) => {
+  newProjectManagerMail = async (data, companyId) => {
     try {
       let html = `
         <!DOCTYPE html>
@@ -329,19 +328,19 @@ class ProjectMail {
         `;
       const mailData = {
         subject: `[${data.title}] You have been assigned as a project manager - ${data.projectId}`,
-        html,
+        html
       };
       // to get mailSettings of mgr..
       const mailSettingsDataManager = await MailSettings.findOne({
-        $or: [{ createdBy: data.manager }],
+        $or: [{ createdBy: data.manager }]
       });
 
       if (mailSettingsDataManager.project_assigned) {
         // to send mail to manager whose settings allow to send mail
-        await emailSenderForPMS(data?.manager?.email, mailData, []);
+        await emailSenderForPMS(companyId, data?.manager?.email, mailData, []);
       } else if (mailSettingsDataManager.quarterlyMail) {
         // to add the mailids and maildata to db for sending such mails after every 4 hours
-        await mailsToQuarterHours([data?.manager?.email], mailData);
+        await mailsToQuarterHours([data?.manager?.email], mailData, companyId);
       }
       return;
     } catch (error) {
@@ -349,7 +348,7 @@ class ProjectMail {
     }
   };
 
-  newProjectAssigneesMail = async (data) => {
+  newProjectAssigneesMail = async (data, companyId) => {
     try {
       let html = `
         <!DOCTYPE html>
@@ -677,11 +676,11 @@ class ProjectMail {
 
       const mailData = {
         subject: `[${data.title}] You have been assigned a project - ${data.projectId}`,
-        html,
+        html
       };
       // to get mailSettings of assignees..
       const mailSettingsDataAssignee = await MailSettings.find({
-        $or: [{ createdBy: { $in: data?.assignees?.map((ele) => ele?._id) } }],
+        $or: [{ createdBy: { $in: data?.assignees?.map((ele) => ele?._id) } }]
       });
       // to get mailSettings of assignees as of project_assigned setting being true..
       let mailSettingsData = mailSettingsDataAssignee?.filter(
@@ -712,12 +711,12 @@ class ProjectMail {
         ?.filter((a) => a._id != undefined)
         ?.map((a) => a?.email);
 
-      await emailSenderForPMS([...pmsClientsMails], mailData, []);
+      await emailSenderForPMS(companyId, [...pmsClientsMails], mailData, []);
       if (assigneeMail?.length > 0) {
-        await emailSenderForPMS([...assigneeMail], mailData, []);
+        await emailSenderForPMS(companyId, [...assigneeMail], mailData, []);
       }
       if (quarterlyassigneeMail?.length > 0) {
-        await mailsToQuarterHours(quarterlyassigneeMail, mailData);
+        await mailsToQuarterHours(quarterlyassigneeMail, mailData, companyId);
       }
       return;
     } catch (error) {
@@ -728,7 +727,7 @@ class ProjectMail {
     }
   };
 
-  mailForUpdateProjectInfo = async (data) => {
+  mailForUpdateProjectInfo = async (data, companyId) => {
     try {
       let html = `
       <!DOCTYPE html>
@@ -1037,18 +1036,18 @@ class ProjectMail {
       `;
       const mailData = {
         subject: `Alert! [${data?.oldData?.title}] Information of the project has been updated - ${data?.oldData?.projectId}`,
-        html,
+        html
       };
       const mailIds = [
         ...new Set([
           // ...data?.oldData?.assignees.map((a) => a.email),
           data?.oldData?.manager?.email,
           // ...data?.newData?.assignees.map((n) => n.email),
-          data?.newData?.manager?.email,
-        ]),
+          data?.newData?.manager?.email
+        ])
       ];
 
-      await emailSenderForPMS(mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
       return;
     } catch (error) {
       console.log(

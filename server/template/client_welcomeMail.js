@@ -3,7 +3,7 @@ const { emailSenderForPMS, getUserName } = require("../helpers/common");
 exports.pmswelcomeClientcontent = async (userData, name) => {
   try {
     const mailData = {
-      subject: "Welcome to Elsner TaskHub",
+      subject: `Welcome to TaskHub`,
       html: ` <img  width="180" src="${process.env.UPLOADS_URL}elsner_details/task_hub_logo.png" alt="Elsner Technologies Pvt Ltd."/>
             <p><strong>Hi ${getUserName(userData)}</strong>,<br>
             Welcome aboard! I've just added you to Elsner PMS. 

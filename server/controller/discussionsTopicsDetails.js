@@ -23,6 +23,13 @@ const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
 //Add Discussions Topic Details :
 exports.addDiscussionsTopicsDetails = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().optional().allow("").default(""),
       project_id: Joi.string().required(),
@@ -82,7 +89,7 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
 
     // send mail to subcribers..
     if (value?.taggedUsers && value?.taggedUsers.length > 0) {
-      await sendmailForNewCommentsInTopic(topicsDetails._id);
+      await sendmailForNewCommentsInTopic(topicsDetails._id,decodedCompanyId);
     }
 
     return successResponse(
@@ -267,6 +274,13 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
 //Update Discussions Topic Details :
 exports.updateDiscussionsTopicsDetails = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       title: Joi.string().optional().allow("").default(""),
       project_id: Joi.string().required(),
@@ -283,18 +297,6 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
         error.details[0].message
       );
     }
-
-    // if (
-    //   value?.attachments &&
-    //   value.attachments.length > 0 &&
-    //   !value.folder_id
-    // ) {
-    //   return errorResponse(
-    //     res,
-    //     statusCode.BAD_REQUEST,
-    //     messages.FOLDER_REQUIRED
-    //   );
-    // }
 
     const getData = await DiscussionsTopicsDetails.findById(req.params.id);
 
@@ -341,7 +343,7 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
     );
 
     if (newTaggedUsers.added && newTaggedUsers.added.length > 0) {
-      await sendmailForNewCommentsInTopic(req.params.id, newTaggedUsers.added);
+      await sendmailForNewCommentsInTopic(req.params.id, decodedCompanyId);
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
