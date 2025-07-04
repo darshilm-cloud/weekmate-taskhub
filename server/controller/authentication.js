@@ -105,7 +105,6 @@ exports.login = async (req, res, next) => {
 
 
     const loginUser = await this.getDataForLoginUser(value);
-
     if (!loginUser) {
       return errorResponse(
         res,
@@ -188,14 +187,14 @@ exports.dataForJWT = async (userData) => {
         _id: new mongoose.Types.ObjectId(userData._id),
       })
         .populate("pms_role_id", "role_name")
-        .populate("companyId","companyName companyEmail companyLogoUrl companyFavIcoUrl")
+        .populate("companyId")
         .exec();
     } else {
       userData = await Employees.findOne({
         _id: new mongoose.Types.ObjectId(userData._id),
       })
         .populate("pms_role_id", "role_name")
-        .populate("companyId","companyName companyEmail companyLogoUrl companyFavIcoUrl")
+        .populate("companyId")
         .exec();
     }
 

@@ -46,6 +46,8 @@ import { socketEvents } from "../../settings/socketEventName";
 import Unauthorised from "../../components/Unauthorised/Unauthorised";
 import Service from "../../service";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
+import { Helmet } from "react-helmet";
+
 
 function RestrictedRoute({
   component: Component,
@@ -151,6 +153,11 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
 }
 
 function App() {
+  const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+
+  const title = userData?.companyDetails?.companyName || "TaskHub";
+  const faviconPath = localStorage.getItem("companyFavIcoUrl");
+
   const dispatch = useDispatch();
   const { locale, themeType, navStyle, layoutType, themeColor } = useSelector(
     ({ settings }) => settings
@@ -285,6 +292,11 @@ function App() {
   const currentAppLocale = AppLocale[locale.locale];
 
   return (
+    <>
+      <Helmet>
+        <title>{title}</title>
+        <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
+      </Helmet>
     <SocketProvider user={authUser}>
       <ConfigProvider locale={currentAppLocale.antd}>
         <IntlProvider
@@ -333,6 +345,7 @@ function App() {
         </IntlProvider>
       </ConfigProvider>
     </SocketProvider>
+    </>
   );
 }
 

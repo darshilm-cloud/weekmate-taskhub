@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Card,
   Form,
@@ -11,10 +11,8 @@ import {
   message,
   Spin,
   Tabs,
-  InputNumber,
   Row,
   Col,
-  Divider,
   Tag,
   Tooltip,
   Badge,
@@ -32,7 +30,6 @@ import {
   LockOutlined,
 } from "@ant-design/icons";
 import Service from "../../../service";
-
 import "./SettingsModule.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -40,11 +37,11 @@ const { Option } = Select;
 const { Password } = Input;
 const { TabPane } = Tabs;
 
-// Quick setup providers with enhanced info
+// Quick setup providers
 const PROVIDERS = {
   gmail: {
     name: "Gmail",
-    host: "smtp.gmail.com",
+    host: "mail.weekmate.in",
     port: 465,
     secure: true,
     color: "gmail",
@@ -53,160 +50,188 @@ const PROVIDERS = {
 };
 
 const SMTPConfig = () => {
-  const [UserData, setUserdata] = useState(
-    JSON.parse(localStorage.getItem("userData")) || null
-  );
+  // Get user data once and memoize
+  const userData = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user_data")) || {};
+    } catch {
+      return {};
+    }
+  }, []);
 
   const [form] = Form.useForm();
   const [fileForm] = Form.useForm();
+
+  // State management
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [currentConfig, setCurrentConfig] = useState(null);
   const [error, setError] = useState(null);
-
-  const [fileLimit, setFileLimit] = useState(() => {
-    const size = Number(UserData?.fileUploadSize);
-    if (!size) return null;
-    return size > 80 ? (size / 1024).toFixed(0) : size.toFixed(0);
-  });
-
   const [fileLoading, setFileLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
+  // Calculate file limit once
+  const fileLimit = useMemo(() => {
+    const size = Number(userData?.companyDetails?.fileUploadSize);
+    if (!size) return null;
+    return size > 80 ? (size / 1024).toFixed(0) : size.toFixed(0);
+  }, [userData?.companyDetails?.fileUploadSize]);
+
   // Fetch existing config
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       setFetchLoading(true);
+      setError(null);
+
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
         api_url: Service.smtpGetConfig,
       });
 
-      if (response.data.statusCode == 200) {
-        setCurrentConfig(response.data.data);
+      if (response.data.statusCode === 200) {
+        const config = response.data.data;
+        setCurrentConfig(config);
+
+        // Set form values
         form.setFieldsValue({
-          smtpHost: response.data.data.smtpHost,
-          smtpPort: response.data.data.smtpPort.toString(),
-          smtpEmail: response.data.data.smtpEmail,
-          smtpSecure: response.data.data.smtpSecure,
-          fromName: response.data.data.fromName,
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort.toString(),
+          smtpEmail: config.smtpEmail,
+          smtpSecure: config.smtpSecure,
+          fromName: config.fromName,
         });
+      } else {
+        // Auto-select Gmail as default if no config exists
+        handleProviderSelect("gmail");
       }
     } catch (err) {
       console.error("Fetch error:", err);
+      setError("Failed to fetch configuration");
+      // Fallback to Gmail
       handleProviderSelect("gmail");
     } finally {
       setFetchLoading(false);
     }
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchConfig();
-  }, []);
+  }, [fetchConfig]);
 
   // Handle provider selection
-  const handleProviderSelect = (key) => {
-    const provider = PROVIDERS[key];
-    if (provider) {
-      setSelectedProvider(key);
-      form.setFieldsValue({
-        smtpHost: provider.host,
-        smtpPort: provider.port,
-        smtpSecure: provider.secure,
-      });
-      message.success(`${provider.name} settings applied`);
-    }
-  };
+  const handleProviderSelect = useCallback(
+    (key) => {
+      const provider = PROVIDERS[key];
+      if (provider) {
+        setSelectedProvider(key);
+        form.setFieldsValue({
+          smtpHost: provider.host,
+          smtpPort: provider.port.toString(),
+          smtpSecure: provider.secure,
+        });
+        message.success(`${provider.name} settings applied`);
+      }
+    },
+    [form]
+  );
 
   // Handle port change
-  const handlePortChange = (port) => {
-    if (port === 465) {
-      form.setFieldsValue({ smtpSecure: true });
-    } else if (port === 587) {
-      form.setFieldsValue({ smtpSecure: true });
-    }
-  };
-
-  // Handle form submit
-  const handleSubmit = async (values) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.smtpConfig,
-        body: {
-          smtpHost: values.smtpHost,
-          smtpPort: parseInt(values.smtpPort),
-          smtpEmail: values.smtpEmail,
-          smtpPassword: values.smtpPassword,
-          smtpSecure: values.smtpSecure,
-          fromName: values.fromName,
-        },
-      });
-
-      if (response.data.success) {
-        message.success(response.data.message);
-        setCurrentConfig(response.data.data);
-        fetchConfig();
-      } else {
-        setError(response.data.message);
+  const handlePortChange = useCallback(
+    (port) => {
+      const portNum = parseInt(port);
+      if (portNum === 465 || portNum === 587) {
+        form.setFieldsValue({ smtpSecure: true });
       }
-    } catch (err) {
-      setError(err.response?.data?.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [form]
+  );
 
-  const handleFileSubmit = async ({ maxFileLimit }) => {
+  // Handle SMTP form submit
+  const handleSubmit = useCallback(
+    async (values) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.smtpConfig,
+          body: {
+            smtpHost: values.smtpHost,
+            smtpPort: parseInt(values.smtpPort),
+            smtpEmail: values.smtpEmail,
+            smtpPassword: values.smtpPassword,
+            smtpSecure: values.smtpSecure,
+            fromName: values.fromName,
+          },
+        });
+
+        if (response.data.status == 1) {
+          message.success(response.data.message);
+          setCurrentConfig(response.data.data);
+          await fetchConfig();
+        } else {
+          setError(response.data.message || "Configuration failed");
+        }
+      } catch (err) {
+        const errorMsg =
+          err.response?.data?.message || "Failed to save configuration";
+        setError(errorMsg);
+        message.error(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchConfig]
+  );
+
+  // Handle file upload limit
+  const handleFileSubmit = useCallback(async ({ maxFileLimit }) => {
     setFileLoading(true);
     try {
       const res = await Service.makeAPICall({
         methodName: Service.putMethod,
-        api_url: Service.fileSizeUpload,
+        api_url: `${Service.editCompany}/${userData.companyDetails._id}`,
         body: { fileUploadSize: maxFileLimit },
       });
 
-      if (res.statusCode === 200) {
+      if (res.data.status === 1) {
         message.success(res.message);
 
-        const updatedCompany = res.data?.updatedCompany;
-        if (!updatedCompany) {
-          throw new Error("No updatedCompany in response");
-        }
+        // Update localStorage
+        const currentUserData =
+          JSON.parse(localStorage.getItem("user_data")) || {};
+        const newUserData = {
+          ...currentUserData,
+          companyDetails: {
+            ...currentUserData.currentUserData,
+            fileUploadSize: maxFileLimit,
+          },
+        };
+        localStorage.setItem("user_data", JSON.stringify(newUserData));
 
-        const fileSizeInMB = updatedCompany.fileUploadSize / 1024;
-        console.log("File size in MB:", fileSizeInMB);
-
-        const userData = JSON.parse(localStorage.getItem("userData")) || {};
-        const newUserData = { ...userData, fileUploadSize: fileSizeInMB };
-        localStorage.setItem("userData", JSON.stringify(newUserData));
-
-        setFileLimit(updatedCompany.fileUploadSize);
+        message.success("File size limit updated successfully");
       } else {
-        message.error("Unexpected status code: " + res.statusCode);
+        throw new Error("Unexpected status code: " + res.statusCode);
       }
     } catch (err) {
       console.error("File size update failed:", err);
-      message.error("Failed to update file size");
+      message.error("Failed to update file size limit");
     } finally {
       setFileLoading(false);
     }
-  };
+  }, []);
 
-  const handleFinish = (values) => {
-    handleFileSubmit(values);
-    setIsEditing(false);
-  };
-  // useEffect(()=>{
-  //   setUserdata(JSON.parse(localStorage.getItem("userData"))||null)
-  //   setFileLimit( UserData?.fileUploadSize ? (UserData.fileUploadSize / 1024).toFixed(0) : null)
-  // },[])
-  console.log(UserData?.fileUploadSize, "UserData?.fileUploadSize", fileLimit);
+  const handleFileFormFinish = useCallback(
+    (values) => {
+      handleFileSubmit(values);
+      setIsEditing(false);
+    },
+    [handleFileSubmit]
+  );
 
+  // Loading state
   if (fetchLoading) {
     return (
       <div className="smtp-config">
@@ -243,7 +268,7 @@ const SMTPConfig = () => {
             tab={
               <Space size="middle">
                 <Badge
-                  dot={currentConfig ? true : false}
+                  dot={!!currentConfig}
                   status={currentConfig ? "success" : "default"}
                 >
                   <MailOutlined className="tab-icon" />
@@ -358,12 +383,11 @@ const SMTPConfig = () => {
                       rules={[
                         { required: true, message: "SMTP host is required" },
                       ]}
-                      disabled={true}
                     >
                       <Input
                         placeholder="smtp.gmail.com"
                         className="form-input"
-                        disabled={true}
+                        disabled
                       />
                     </Form.Item>
                   </Col>
@@ -384,21 +408,21 @@ const SMTPConfig = () => {
                         placeholder="Select port"
                         onChange={handlePortChange}
                         className="form-select"
-                        disabled={true}
+                        disabled
                       >
-                        <Option value={465}>
+                        <Option value="465">
                           <Space>
                             <LockOutlined className="ssl-icon" />
                             465 (SSL - Gmail/Yahoo)
                           </Space>
                         </Option>
-                        <Option value={587}>
+                        <Option value="587">
                           <Space>
                             <SecurityScanOutlined className="tls-icon" />
                             587 (TLS - Outlook)
                           </Space>
                         </Option>
-                        <Option value={25}>
+                        <Option value="25">
                           <Space>
                             <span className="warning-icon">⚠️</span>
                             25 (Unsecured)
@@ -428,7 +452,7 @@ const SMTPConfig = () => {
                       <Select
                         placeholder="Select security protocol"
                         className="form-select"
-                        disabled={true}
+                        disabled
                       >
                         <Option value={true}>
                           <Space>
@@ -522,34 +546,6 @@ const SMTPConfig = () => {
                   </Button>
                 </Form.Item>
               </Form>
-
-              {/* Help Guide */}
-              {/* <Card className="help-guide">
-                <Title level={5} className="guide-title">
-                  💡 Configuration Guide
-                </Title>
-                <Row gutter={[16, 16]}>
-                  {Object.entries(PROVIDERS).map(([key, provider]) => (
-                    <Col xs={24} md={8} key={key}>
-                      <div className={`provider-info ${provider.color}`}>
-                        <Text strong className="provider-name">
-                          {provider.name}
-                        </Text>
-                        <div className="provider-details">
-                          <div>{provider.host}</div>
-                          <div>Port: {provider.port}</div>
-                          <div>{provider.secure ? 'SSL/TLS' : 'Insecure'}</div>
-                          {(key === 'gmail' || key === 'yahoo') && (
-                            <div className="app-password-note">
-                              * Requires App Password
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </Card> */}
             </div>
           </TabPane>
 
@@ -577,7 +573,7 @@ const SMTPConfig = () => {
                 <Form
                   form={fileForm}
                   layout="vertical"
-                  onFinish={handleFinish}
+                  onFinish={handleFileFormFinish}
                   initialValues={{ maxFileLimit: fileLimit }}
                   size="large"
                   className="file-form"

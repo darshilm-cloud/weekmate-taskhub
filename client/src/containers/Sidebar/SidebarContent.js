@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Form, Menu, Popover, Layout } from "antd";
+import { Form, Menu, Layout } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import { useDispatch } from "react-redux";
@@ -281,11 +281,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     [selectedKeys, openKeys, onOpenChange, item]
   );
 
+  const companyLogoPath = localStorage.getItem("companyLogoUrl");
+
   return (
     <>
       <div className="gx-sidebar-content sidebar-menu">
         <div className="Etask-hub-logo">
-          <img alt="logo" src={Taskhub} />{" "}
+          <img alt="logo" src={`${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` || Taskhub} />{" "}
         </div>
         <CustomScrollbars className="gx-layout-sider-scrollbar">
           <Sider

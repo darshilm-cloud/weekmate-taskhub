@@ -12,6 +12,7 @@ import { BrowserRouter } from "react-router-dom/cjs/react-router-dom.min";
 import './assets/css/custom-btns.css';
 
 function NextApp() {
+
   return <Provider store={ configureStore }>
     <ConnectedRouter history={ history }>
       <BrowserRouter>

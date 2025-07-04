@@ -12,10 +12,12 @@ const CompanySchema = new mongoose.Schema(
       unique: true
     },
     companyLogoUrl: {
-      type: String
+      type: String,
+      default:""
     },
     companyFavIcoUrl: {
-      type: String
+      type: String,
+      default:""
     },
     isActive: {
       type: Boolean,

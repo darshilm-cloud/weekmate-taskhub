@@ -271,7 +271,7 @@ const CompanyEmployee = () => {
               fontWeight: "500",
             }}
           >
-            Deactive
+            Active
           </button>
         ) : (
           <button
@@ -285,7 +285,7 @@ const CompanyEmployee = () => {
               fontWeight: "500",
             }}
           >
-            Active
+            Deactivated
           </button>
         ),
     },

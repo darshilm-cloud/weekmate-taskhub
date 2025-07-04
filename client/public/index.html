@@ -32,30 +32,30 @@
     -->
   <title>Welcome to Taskhub Portal </title>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const faviconUrl = localStorage.getItem('favIcon'); // Ensure this matches the key used in localStorage
-      const title = localStorage.getItem('title');
-      console.log(faviconUrl, 'faviconUrl');
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   const faviconUrl = localStorage.getItem('favIcon'); // Ensure this matches the key used in localStorage
+    //   const title = localStorage.getItem('title');
+    //   console.log(faviconUrl, 'faviconUrl');
 
-      if (faviconUrl) {
-        let faviconElement = document.getElementById('favicon');
+    //   if (faviconUrl) {
+    //     let faviconElement = document.getElementById('favicon');
 
-        if (!faviconElement) {
-          faviconElement = document.createElement('link');
-          faviconElement.id = 'favicon';
-          faviconElement.rel = 'icon';
-          document.head.appendChild(faviconElement);
-        }
+    //     if (!faviconElement) {
+    //       faviconElement = document.createElement('link');
+    //       faviconElement.id = 'favicon';
+    //       faviconElement.rel = 'icon';
+    //       document.head.appendChild(faviconElement);
+    //     }
 
-        faviconElement.href = `https://taskhub.elsner.com/public/${faviconUrl}`;
-        console.log();
+    //     faviconElement.href = `https://taskhub.elsner.com/public/${faviconUrl}`;
+    //     console.log();
 
-      }
+    //   }
 
-      if (title) {
-        document.title = title;
-      }
-    });
+    //   if (title) {
+    //     document.title = title;
+    //   }
+    // });
   </script>
 </head>
 
