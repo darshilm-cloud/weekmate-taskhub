@@ -275,7 +275,7 @@ const CompanyRegistration = () => {
         if (!editingCompany && resetToken && saveCompany) {
           setLocalStorageItem("authToken", resetToken);
         }
-
+        window.location.reload();
         await fetchCompanies();
         setIsModalVisible(false);
         setDocFldLogo(localStorage.getItem("companyLogoUrl") || null);
@@ -313,19 +313,18 @@ const CompanyRegistration = () => {
 
           const response = await Service.makeAPICall({
             methodName: Service.postMethod,
-            api_url: `upload/uploadFile?file_for=${fileType}`,
+            api_url: `${Service.fileUpload}?file_for=${fileType}`,
             body: formData,
             options: {
               "content-type": "multipart/form-data",
             },
           });
 
-          if (response?.data.statusCode === 200) {
-            const { originalUrl } = response.data;
+          if (response.data.status === 1) {
             message.success(response.data.message);
-            setDocFunction(response.data.data[0]?.originalUrl);
+            setDocFunction(response.data.data[0]?.file_path);
             form.setFieldsValue({
-              [fileType === "company_logo" ? "logo" : "favicon"]: originalUrl,
+              [fileType === "company_logo" ? "logo" : "favicon"]: response.data.data[0]?.file_path,
             });
             onSuccess(response.data.data, file);
           } else {
@@ -622,7 +621,7 @@ const CompanyRegistration = () => {
                 </Upload>
                 {docFldLogo && (
                   <img
-                    src={docFldLogo}
+                    src={`${process.env.REACT_APP_API_URL}/public/${docFldLogo}`}
                     alt="Logo"
                     style={{ marginTop: 8, width: 100, height: "auto" }}
                   />
@@ -651,7 +650,7 @@ const CompanyRegistration = () => {
                 </Upload>
                 {docFldFavicon && (
                   <img
-                    src={docFldFavicon}
+                    src={`${process.env.REACT_APP_API_URL}/public/${docFldFavicon}`}
                     alt="Favicon"
                     style={{ marginTop: 8, width: 32, height: 32 }}
                   />
