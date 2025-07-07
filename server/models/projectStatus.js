@@ -15,6 +15,7 @@ const ProjectStatusSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: utcDefault },
   deletedBy: { type: Schema.Types.ObjectId, ref: "employees" },
   isDeleted: { type: Boolean, default: false },
+  isDefault: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
 });
 

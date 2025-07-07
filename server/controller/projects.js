@@ -389,17 +389,17 @@ exports.getProjects = async (req, res) => {
       ...(value?._id
         ? { _id: new mongoose.Types.ObjectId(value?._id) }
         : // For active and archive
-        !value?.isArchived
+        value?.isArchived
         ? {
-            // "project_status.title": {
-            //   // $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
-            //   $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
-            // }
+            "project_status.title": {
+              // $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
+              $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+            }
           }
         : {
             "project_status.title": {
-              // $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
-              $ne: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+              $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+              // $ne: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
             }
           }),
       // filters..
@@ -938,11 +938,19 @@ exports.updateProjects = async (req, res) => {
 //Soft Delete Project :
 exports.archivedToActiveProject = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const projectStatus = DEFAULT_DATA.PROJECT_STATUS.ACTIVE;
     // get project active status...
     const data = await ProjectStatus.findOne({
       title: { $regex: new RegExp(`^${projectStatus}$`, "i") },
-      isDeleted: false
+      isDeleted: false,
+      companyId: newObjectId(decodedCompanyId)
     });
     if (data) {
       const project = await Project.findByIdAndUpdate(

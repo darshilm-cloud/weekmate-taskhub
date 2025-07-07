@@ -774,6 +774,27 @@ class CommonHelpers {
       console.log("🚀 ~ SocketCommonFn ~ error:", error);
     }
   };
+
+  async addDefaultProjectStatus(companyId, userId) {
+    const ProjectStatus = mongoose.model("projectstatus");
+
+    const defaultStatuses = [
+      { title: "Active" },
+      { title: "Closed" },
+      { title: "Archived" },
+      { title: "On Hold" }
+    ];
+
+    const statusesToInsert = defaultStatuses.map((status) => ({
+      companyId: newObjectId(companyId),
+      title: status.title,
+      isDefault: true,
+      createdBy: userId,
+      updatedBy: userId
+    }));
+
+    await ProjectStatus.insertMany(statusesToInsert);
+  }
 }
 
 module.exports = new CommonHelpers();
