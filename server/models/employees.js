@@ -18,6 +18,10 @@ const employeeSchema = new Schema({
   deletedBy: { type: Schema.Types.ObjectId, ref: "employees" },
   createdAt: { type: Date, default: configs.utcDefault },
   updatedAt: { type: Date, default: configs.utcDefault },
+  loginActivity: {
+    type: [Date],
+    default: []
+  },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   isSoftDeleted: { type: Boolean, default: false },
