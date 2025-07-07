@@ -39,7 +39,10 @@ const CompanySchema = new mongoose.Schema(
     fileUploadSize: {
       type: Number,
       default: 1 * 1024 // 10 MB, stored in KB
-    }
+    },
+    companyDomain: {
+      type: String
+    },
   },
   {
     timestamps: true

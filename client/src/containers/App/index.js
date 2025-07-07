@@ -306,7 +306,7 @@ function App() {
           {showMessage ? message.error(alertMessage.toString()) : null}
           <Switch>
           <AuthRoute
-              path={`${match.url}signin/:verificationToken`}
+              path={`${match.url}:companySlug/signin/:verificationToken`}
               component={SignIn}
             />
             <AuthRoute

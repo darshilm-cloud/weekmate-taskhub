@@ -8,7 +8,6 @@ const { CompanyModel, employeeSchema, PMSRoles } = require("../models");
 const CONFIG_JSON = require("../settings/config.json");
 const CompanyRegistrationMail = require("../models/CompanyRegistrationMail");
 const nodemailer = require("nodemailer");
-const Joi = require("joi");
 const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 
@@ -30,7 +29,7 @@ exports.registerAdminAndCompany = async (req, res) => {
 
     const {
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail },
+      companyDetails: { companyName, companyEmail, companyDomain },
     } = value;
     console.log("🚀 ~ exports.registerAdminAndCompany= ~ value:", value,first_name)
     
@@ -90,12 +89,12 @@ exports.registerAdminAndCompany = async (req, res) => {
     // 💾 Store temporary registration data
     const tempRegistration = await new CompanyRegistrationMail({
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail },
+      companyDetails: { companyName, companyEmail, companyDomain },
       verificationToken,
     }).save();
 
     // 📧 Send verification email
-    const verificationLink = `${process.env.HOST_ORIGIN_URL}/${verificationToken}`;
+    const verificationLink = `${process.env.HOST_ORIGIN_URL}/${companyDomain}/signin/${verificationToken}`;
 
     // Replace this with your email service
     await sendVerificationEmail({
@@ -103,7 +102,8 @@ exports.registerAdminAndCompany = async (req, res) => {
       subject: "Verify Your Company Registration",
       verificationLink,
       companyName,
-      fullName: `${first_name} ${last_name}`
+      fullName: `${first_name} ${last_name}`,
+      companyDomain
     });
 
     // ✅ Success response
@@ -146,7 +146,7 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
 
     const {
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail }
+      companyDetails: { companyName, companyEmail, companyDomain }
     } = tempRegistration;
 
     // Double-check if user/company was created while token was pending
@@ -168,7 +168,8 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     // ✅ Create company
     const company = await new CompanyModel({
       companyName,
-      companyEmail
+      companyEmail,
+      companyDomain
     }).save();
 
     // 🔍 Find admin role
@@ -255,7 +256,7 @@ async function sendVerificationEmail({
   subject,
   verificationLink,
   companyName,
-  fullName,
+  fullName
 }) {
   // Replace this with your email service (SendGrid, AWS SES, Nodemailer, etc.)
   const emailContent = `

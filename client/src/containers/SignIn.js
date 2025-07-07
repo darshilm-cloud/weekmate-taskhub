@@ -89,8 +89,10 @@ function SignIn() {
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
         getRoles(["Client"])
-          ? (window.location.href = "/project-list")
-          : (window.location.href = "/dashboard");
+          ? (window.location.href = "/project-list") :
+          getRoles(["Admin"]) ?
+           (window.location.href = "/admin/dashboard") :
+          (window.location.href = "/dashboard")
 
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
@@ -232,7 +234,7 @@ function SignIn() {
                   </Button>
                 </Form.Item>
 
-                <Form.Item>
+                {/* <Form.Item>
                   <Button
                     type="primary"
                     htmlType="button"
@@ -244,7 +246,7 @@ function SignIn() {
                   >
                     <IntlMessages id="app.userAuth.signUpForNewCompany" />
                   </Button>
-                </Form.Item>
+                </Form.Item> */}
 
                 <Form.Item>
                   <div style={{ textAlign: "center" }}>
