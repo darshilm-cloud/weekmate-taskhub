@@ -1,7 +1,7 @@
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const Joi = require("joi");
@@ -32,7 +32,7 @@ const configRoles = require("../settings/config.json");
 exports.getEmpDepartment = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      dept_id: Joi.string().optional().default(null),
+      dept_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
@@ -45,12 +45,12 @@ exports.getEmpDepartment = async (req, res) => {
     const data = await EmpDepartment.find({
       isDeleted: false,
       ...(value?.dept_id && {
-        _id: new mongoose.Types.ObjectId(value.dept_id),
-      }),
+        _id: new mongoose.Types.ObjectId(value.dept_id)
+      })
     })
       .select("_id department_name")
       .sort({
-        department_name: 1,
+        department_name: 1
       });
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
@@ -61,7 +61,7 @@ exports.getEmpDepartment = async (req, res) => {
 exports.getEmpSubDepartment = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      dept_id: Joi.string().optional().default(null),
+      dept_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
@@ -74,12 +74,12 @@ exports.getEmpSubDepartment = async (req, res) => {
     const data = await EmpSubDepartment.find({
       isDeleted: false,
       ...(value?.dept_id && {
-        _id: new mongoose.Types.ObjectId(value.dept_id),
-      }),
+        _id: new mongoose.Types.ObjectId(value.dept_id)
+      })
     })
       .select("_id sub_department_name")
       .sort({
-        sub_department_name: 1,
+        sub_department_name: 1
       });
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
@@ -90,7 +90,7 @@ exports.getEmpSubDepartment = async (req, res) => {
 exports.getEmpDesignations = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      design_id: Joi.string().optional().default(null),
+      design_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
@@ -103,12 +103,12 @@ exports.getEmpDesignations = async (req, res) => {
     const data = await EmpDesignation.find({
       isDeleted: false,
       ...(value?.design_id && {
-        _id: new mongoose.Types.ObjectId(value.design_id),
-      }),
+        _id: new mongoose.Types.ObjectId(value.design_id)
+      })
     })
       .select("_id designation_name")
       .sort({
-        designation_name: 1,
+        designation_name: 1
       });
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
@@ -121,7 +121,7 @@ exports.getResource = async (req, res) => {
     const data = await Resource.find({ isDeleted: false })
       .select("_id resource_name")
       .sort({
-        resource_name: 1,
+        resource_name: 1
       });
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
@@ -131,10 +131,20 @@ exports.getResource = async (req, res) => {
 
 exports.getProjects = async (req, res) => {
   try {
-    const data = await Project.find({ isDeleted: false })
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
+    const data = await Project.find({
+      isDeleted: false,
+      companyId: newObjectId(decodedCompanyId)
+    })
       .select("_id title")
       .sort({
-        resource_name: 1,
+        resource_name: 1
       });
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
@@ -149,8 +159,8 @@ exports.getSubscribers = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          _id: new mongoose.Types.ObjectId(projectId),
-        },
+          _id: new mongoose.Types.ObjectId(projectId)
+        }
       },
       {
         $lookup: {
@@ -162,14 +172,14 @@ exports.getSubscribers = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "managerDetails",
-        },
+          as: "managerDetails"
+        }
       },
       {
         $lookup: {
@@ -182,92 +192,15 @@ exports.getSubscribers = async (req, res) => {
                   $and: [
                     { $in: ["$_id", "$$assignees"] },
                     { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "assigneesDetails",
-        },
+          as: "assigneesDetails"
+        }
       },
-
-      // {
-      //   $lookup: {
-      //     from: "projectmaintasks",
-      //     let: { project_id: "$_id" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $eq: ["$project_id", "$$project_id"] },
-      //               { $eq: ["$isDeleted", false] },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "mainTasks",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "employees",
-      //     let: { subId: "$mainTasks.subscribers" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $in: ["$_id", "$$subId"] },
-      //               { $eq: ["$isDeleted", false] },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "mainTasksSubscribersDetails",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "projecttasks",
-      //     let: { mainTaskId: "$mainTasks._id" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $eq: ["$main_task_id", "$$mainTaskId"] },
-      //               { $eq: ["$isDeleted", false] },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "tasksAssignees",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "employees",
-      //     let: { taskAssigneeId: "$tasksAssignees.assignees" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $in: ["$_id", "$$taskAssigneeId"] },
-      //               { $eq: ["$isDeleted", false] },
-      //             ],
-      //           },
-      //         },
-      //       },
-      //     ],
-      //     as: "taskAssigneesDetails",
-      //   },
-      // },
       {
         $addFields: {
           managersAndAssignees: {
@@ -281,10 +214,10 @@ exports.getSubscribers = async (req, res) => {
                     emp_img: "$$manager.emp_img",
                     email: "$$manager.email",
                     full_name: "$$manager.full_name",
-                    first_name: "$$manager.first_name",
+                    first_name: "$$manager.first_name"
                     // type: "manager",
-                  },
-                },
+                  }
+                }
               },
               {
                 $map: {
@@ -295,11 +228,11 @@ exports.getSubscribers = async (req, res) => {
                     emp_img: "$$assignees.emp_img",
                     email: "$$assignees.email",
                     full_name: "$$assignees.full_name",
-                    first_name: "$$assignees.first_name",
+                    first_name: "$$assignees.first_name"
                     // type: "assignee",
-                  },
-                },
-              },
+                  }
+                }
+              }
 
               // {
               //   $map: {
@@ -329,16 +262,16 @@ exports.getSubscribers = async (req, res) => {
               //     },
               //   },
               // },
-            ],
-          },
-        },
+            ]
+          }
+        }
       },
       {
         $project: {
           _id: 0,
-          managersAndAssignees: 1,
-        },
-      },
+          managersAndAssignees: 1
+        }
+      }
     ];
 
     const data = await Project.aggregate(mainQuery);
@@ -366,7 +299,7 @@ exports.getTaggedUsersList = async (req, res) => {
       isNotes: Joi.boolean().optional(),
       noteId: Joi.string().optional(), // _id
       isLoggedhours: Joi.boolean().optional(),
-      loggedhoursId: Joi.string().optional(), // _id
+      loggedhoursId: Joi.string().optional() // _id
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -381,8 +314,8 @@ exports.getTaggedUsersList = async (req, res) => {
         {
           $match: {
             isDeleted: false,
-            _id: new mongoose.Types.ObjectId(value?.disucssionTopicid),
-          },
+            _id: new mongoose.Types.ObjectId(value?.disucssionTopicid)
+          }
         },
 
         {
@@ -395,20 +328,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "projectData",
-          },
+            as: "projectData"
+          }
         },
         {
           $unwind: {
             path: "$projectData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
 
         {
@@ -422,14 +355,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "managerDetails",
-          },
+            as: "managerDetails"
+          }
         },
 
         {
@@ -443,14 +376,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$subscriber"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "subscribersDetails",
-          },
+            as: "subscribersDetails"
+          }
         },
 
         {
@@ -464,14 +397,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$pms_client"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "clientDetails",
-          },
+            as: "clientDetails"
+          }
         },
 
         {
@@ -487,9 +420,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$manager.emp_img",
                       email: "$$manager.email",
                       full_name: "$$manager.full_name",
-                      first_name: "$$manager.first_name",
-                    },
-                  },
+                      first_name: "$$manager.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -500,9 +433,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$subscribers.emp_img",
                       email: "$$subscribers.email",
                       full_name: "$$subscribers.full_name",
-                      first_name: "$$subscribers.first_name",
-                    },
-                  },
+                      first_name: "$$subscribers.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -513,21 +446,21 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$clients.emp_img",
                       email: "$$clients.email",
                       full_name: "$$clients.full_name",
-                      first_name: "$$clients.first_name",
-                    },
-                  },
-                },
-              ],
-            },
-          },
+                      first_name: "$$clients.first_name"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         },
 
         {
           $project: {
             _id: 1,
-            users: 1,
-          },
-        },
+            users: 1
+          }
+        }
       ];
 
       const data = await Discussions.aggregate(mainQuery);
@@ -540,8 +473,8 @@ exports.getTaggedUsersList = async (req, res) => {
         {
           $match: {
             isDeleted: false,
-            _id: new mongoose.Types.ObjectId(value?.taskId),
-          },
+            _id: new mongoose.Types.ObjectId(value?.taskId)
+          }
         },
 
         {
@@ -554,20 +487,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "projectData",
-          },
+            as: "projectData"
+          }
         },
         {
           $unwind: {
             path: "$projectData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
 
         {
@@ -581,14 +514,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "managerDetails",
-          },
+            as: "managerDetails"
+          }
         },
 
         {
@@ -602,14 +535,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$assignees"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "assigneesDetails",
-          },
+            as: "assigneesDetails"
+          }
         },
 
         {
@@ -622,20 +555,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$mainTaskId"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "maintasksData",
-          },
+            as: "maintasksData"
+          }
         },
         {
           $unwind: {
             path: "$maintasksData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
 
         {
@@ -649,14 +582,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$subscriber"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "subscribersDetails",
-          },
+            as: "subscribersDetails"
+          }
         },
 
         {
@@ -670,14 +603,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$pms_client"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "clientDetails",
-          },
+            as: "clientDetails"
+          }
         },
 
         {
@@ -693,9 +626,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$manager.emp_img",
                       email: "$$manager.email",
                       full_name: "$$manager.full_name",
-                      first_name: "$$manager.first_name",
-                    },
-                  },
+                      first_name: "$$manager.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -706,9 +639,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$assignees.emp_img",
                       email: "$$assignees.email",
                       full_name: "$$assignees.full_name",
-                      first_name: "$$assignees.first_name",
-                    },
-                  },
+                      first_name: "$$assignees.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -719,9 +652,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$subscribers.emp_img",
                       email: "$$subscribers.email",
                       full_name: "$$subscribers.full_name",
-                      first_name: "$$subscribers.first_name",
-                    },
-                  },
+                      first_name: "$$subscribers.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -732,21 +665,21 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$clients.emp_img",
                       email: "$$clients.email",
                       full_name: "$$clients.full_name",
-                      first_name: "$$clients.first_name",
-                    },
-                  },
-                },
-              ],
-            },
-          },
+                      first_name: "$$clients.first_name"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         },
 
         {
           $project: {
             _id: 1,
-            users: 1,
-          },
-        },
+            users: 1
+          }
+        }
       ];
 
       const data = await Tasks.aggregate(mainQuery);
@@ -759,8 +692,8 @@ exports.getTaggedUsersList = async (req, res) => {
         {
           $match: {
             isDeleted: false,
-            _id: new mongoose.Types.ObjectId(value?.bugId),
-          },
+            _id: new mongoose.Types.ObjectId(value?.bugId)
+          }
         },
 
         {
@@ -773,20 +706,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "projectData",
-          },
+            as: "projectData"
+          }
         },
         {
           $unwind: {
             path: "$projectData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
 
         {
@@ -800,14 +733,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "managerDetails",
-          },
+            as: "managerDetails"
+          }
         },
 
         {
@@ -821,14 +754,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$assignees"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "assigneesDetails",
-          },
+            as: "assigneesDetails"
+          }
         },
 
         {
@@ -844,9 +777,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$manager.emp_img",
                       email: "$$manager.email",
                       full_name: "$$manager.full_name",
-                      first_name: "$$manager.first_name",
-                    },
-                  },
+                      first_name: "$$manager.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -857,21 +790,21 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$assignees.emp_img",
                       email: "$$assignees.email",
                       full_name: "$$assignees.full_name",
-                      first_name: "$$assignees.first_name",
-                    },
-                  },
-                },
-              ],
-            },
-          },
+                      first_name: "$$assignees.first_name"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         },
 
         {
           $project: {
             _id: 1,
-            users: 1,
-          },
-        },
+            users: 1
+          }
+        }
       ];
 
       const data = await ProjectTaskBugs.aggregate(mainQuery);
@@ -884,8 +817,8 @@ exports.getTaggedUsersList = async (req, res) => {
         {
           $match: {
             isDeleted: false,
-            _id: new mongoose.Types.ObjectId(value?.noteId),
-          },
+            _id: new mongoose.Types.ObjectId(value?.noteId)
+          }
         },
 
         {
@@ -898,20 +831,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "projectData",
-          },
+            as: "projectData"
+          }
         },
         {
           $unwind: {
             path: "$projectData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
 
         {
@@ -925,14 +858,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "managerDetails",
-          },
+            as: "managerDetails"
+          }
         },
 
         {
@@ -946,14 +879,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$subscriber"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "subscribersDetails",
-          },
+            as: "subscribersDetails"
+          }
         },
 
         {
@@ -967,14 +900,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$pms_client"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "clientDetails",
-          },
+            as: "clientDetails"
+          }
         },
 
         {
@@ -990,9 +923,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$manager.emp_img",
                       email: "$$manager.email",
                       full_name: "$$manager.full_name",
-                      first_name: "$$manager.first_name",
-                    },
-                  },
+                      first_name: "$$manager.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -1003,9 +936,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$subscribers.emp_img",
                       email: "$$subscribers.email",
                       full_name: "$$subscribers.full_name",
-                      first_name: "$$subscribers.first_name",
-                    },
-                  },
+                      first_name: "$$subscribers.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -1016,22 +949,22 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$clients.emp_img",
                       email: "$$clients.email",
                       full_name: "$$clients.full_name",
-                      first_name: "$$clients.first_name",
-                    },
-                  },
-                },
-              ],
-            },
-          },
+                      first_name: "$$clients.first_name"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         },
 
         {
           $project: {
             _id: 1,
             projectData: "$projectData",
-            users: 1,
-          },
-        },
+            users: 1
+          }
+        }
       ];
 
       const data = await Notes.aggregate(mainQuery);
@@ -1044,8 +977,8 @@ exports.getTaggedUsersList = async (req, res) => {
         {
           $match: {
             isDeleted: false,
-            _id: new mongoose.Types.ObjectId(value?.loggedhoursId),
-          },
+            _id: new mongoose.Types.ObjectId(value?.loggedhoursId)
+          }
         },
 
         {
@@ -1058,20 +991,20 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isDeleted", false] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "projectData",
-          },
+            as: "projectData"
+          }
         },
         {
           $unwind: {
             path: "$projectData",
-            preserveNullAndEmptyArrays: false,
-          },
+            preserveNullAndEmptyArrays: false
+          }
         },
         {
           $lookup: {
@@ -1084,14 +1017,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "managerDetails",
-          },
+            as: "managerDetails"
+          }
         },
         {
           $lookup: {
@@ -1104,14 +1037,14 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$employee"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                    ],
-                  },
-                },
-              },
+                      { $eq: ["$isActivate", true] }
+                    ]
+                  }
+                }
+              }
             ],
-            as: "employeeDetails",
-          },
+            as: "employeeDetails"
+          }
         },
         {
           $addFields: {
@@ -1126,9 +1059,9 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$manager.emp_img",
                       email: "$$manager.email",
                       full_name: "$$manager.full_name",
-                      first_name: "$$manager.first_name",
-                    },
-                  },
+                      first_name: "$$manager.first_name"
+                    }
+                  }
                 },
                 {
                   $map: {
@@ -1139,21 +1072,21 @@ exports.getTaggedUsersList = async (req, res) => {
                       emp_img: "$$employee.emp_img",
                       email: "$$employee.email",
                       full_name: "$$employee.full_name",
-                      first_name: "$$employee.first_name",
-                    },
-                  },
-                },
-              ],
-            },
-          },
+                      first_name: "$$employee.first_name"
+                    }
+                  }
+                }
+              ]
+            }
+          }
         },
 
         {
           $project: {
             _id: 1,
-            users: 1,
-          },
-        },
+            users: 1
+          }
+        }
       ];
 
       const data = await TasksHoursLogged.aggregate(mainQuery);
@@ -1302,8 +1235,15 @@ exports.getTaggedUsersList = async (req, res) => {
 
 exports.getEmployees = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      emp_id: Joi.string().optional().default(null),
+      emp_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
@@ -1316,26 +1256,27 @@ exports.getEmployees = async (req, res) => {
     const mainQuery = [
       {
         $match: {
+          companyId: newObjectId(decodedCompanyId),
           isDeleted: false,
           isSoftDeleted: false,
           isActivate: true,
           ...(value?.emp_id && {
-            _id: new mongoose.Types.ObjectId(value.emp_id),
-          }),
-        },
+            _id: new mongoose.Types.ObjectId(value.emp_id)
+          })
+        }
       },
       {
         $sort: {
-          first_name: 1,
-        },
+          first_name: 1
+        }
       },
       {
         $project: {
           _id: 1,
           full_name: 1,
-          emp_code: 1,
-        },
-      },
+          emp_code: 1
+        }
+      }
     ];
 
     const data = await Employee.aggregate(mainQuery);
@@ -1354,15 +1295,15 @@ exports.getTasks = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          project_id: new mongoose.Types.ObjectId(projectId),
-        },
+          project_id: new mongoose.Types.ObjectId(projectId)
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
-      },
+          title: 1
+        }
+      }
     ];
     const data = await Tasks.aggregate(mainQuery);
 
@@ -1380,23 +1321,23 @@ exports.getTimesheets = async (req, res) => {
       {
         $match: {
           project_id: new mongoose.Types.ObjectId(projectId),
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
         $lookup: {
           from: "projects",
           localField: "project_id",
           foreignField: "_id",
-          as: "projectDetails",
-        },
+          as: "projectDetails"
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
-      },
+          title: 1
+        }
+      }
     ];
     const data = await timeSheets.aggregate(mainQuery);
 
@@ -1412,19 +1353,19 @@ exports.getBugsWorkFlow = async (req, res) => {
     const mainQuery = [
       {
         $match: {
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
       {
-        $sort: { sequence: 1 },
+        $sort: { sequence: 1 }
       },
       {
         $project: {
           _id: 1,
           title: 1,
-          color: 1,
-        },
-      },
+          color: 1
+        }
+      }
     ];
     const data = await ProjectBugs.aggregate(mainQuery);
 
@@ -1440,7 +1381,7 @@ exports.getPMSClient = async (req, res) => {
     const validationSchema = Joi.object({
       client_id: Joi.string().optional().default(null),
       isDropdown: Joi.boolean().optional().default(false),
-      project_id: Joi.string().optional().default(null),
+      project_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.body);
 
@@ -1464,28 +1405,28 @@ exports.getPMSClient = async (req, res) => {
           isSoftDeleted: false,
           ...(value?.isDropdown == true ? { isActivate: true } : {}),
           ...(value?.client_id && {
-            _id: new mongoose.Types.ObjectId(value.client_id),
+            _id: new mongoose.Types.ObjectId(value.client_id)
           }),
           ...(value?.project_id && {
             _id: {
-              $in: projectClient,
-            },
-          }),
-        },
+              $in: projectClient
+            }
+          })
+        }
       },
       {
         $sort: {
-          first_name: 1,
-        },
+          first_name: 1
+        }
       },
       {
         $project: {
           _id: 1,
           full_name: 1,
           email: 1,
-          client_img: 1,
-        },
-      },
+          client_img: 1
+        }
+      }
     ];
 
     const data = await PMSClients.aggregate(mainQuery);
@@ -1503,20 +1444,20 @@ exports.getTaskWiseBugs = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          task_id: new mongoose.Types.ObjectId(req.params.taskId),
-        },
+          task_id: new mongoose.Types.ObjectId(req.params.taskId)
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
+          title: 1
+        }
       },
       {
         $sort: {
-          _id: -1,
-        },
-      },
+          _id: -1
+        }
+      }
     ];
     const data = await ProjectTaskBugs.aggregate(mainQuery);
 
@@ -1533,15 +1474,15 @@ exports.getmainTasksList = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          project_id: new mongoose.Types.ObjectId(req.params.id),
-        },
+          project_id: new mongoose.Types.ObjectId(req.params.id)
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
-      },
+          title: 1
+        }
+      }
     ];
     const data = await MainTasks.aggregate(mainQuery);
 
@@ -1558,15 +1499,15 @@ exports.getStages = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          workflow_id: new mongoose.Types.ObjectId(req.params.id),
-        },
+          workflow_id: new mongoose.Types.ObjectId(req.params.id)
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
-      },
+          title: 1
+        }
+      }
     ];
     const data = await workflowstatus.aggregate(mainQuery);
 
@@ -1592,34 +1533,34 @@ exports.getTasksAssigned = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "maintask",
-        },
+          as: "maintask"
+        }
       },
       {
         $unwind: {
           path: "$maintask",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $match: {
           isDeleted: false,
           project_id: new mongoose.Types.ObjectId(projectId),
-          assignees: new mongoose.Types.ObjectId(userId),
-        },
+          assignees: new mongoose.Types.ObjectId(userId)
+        }
       },
       {
         $project: {
           _id: 1,
-          title: 1,
-        },
-      },
+          title: 1
+        }
+      }
     ];
     const data = await Tasks.aggregate(mainQuery);
 
@@ -1630,9 +1571,9 @@ exports.getTasksAssigned = async (req, res) => {
   }
 };
 
+// [TO DO] : Change requires for SAAS
 exports.getEmployeeManagerWise = async (req, res) => {
   try {
-
     let matchQuery = {
       // isDeleted: false,
       // isActivate: true,
@@ -1644,7 +1585,7 @@ exports.getEmployeeManagerWise = async (req, res) => {
         reporting_manager: new mongoose.Types.ObjectId(req.user._id),
         isActivate: true,
         isDeleted: false,
-        isSoftDeleted: false,
+        isSoftDeleted: false
       },
       { _id: 1 }
     );
@@ -1652,11 +1593,7 @@ exports.getEmployeeManagerWise = async (req, res) => {
 
     // 2. If no employees report to the user, return empty response
     if (!reportingEmployees?.length) {
-      return errorResponse(
-        res,
-        statusCode.NOT_FOUND,
-        messages.NOT_FOUND
-      );
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
 
     // Get the list of employee IDs reporting to the user
@@ -1664,7 +1601,7 @@ exports.getEmployeeManagerWise = async (req, res) => {
 
     // 3. Modify the match query to filter based on the reporting employees
     matchQuery = {
-      "_id": { $in: employeeIds },
+      _id: { $in: employeeIds }
     };
 
     const mainQuery = [
@@ -1674,8 +1611,8 @@ exports.getEmployeeManagerWise = async (req, res) => {
           _id: 1,
           emp_img: 1,
           full_name: 1,
-          first_name: 1,
-        },
+          first_name: 1
+        }
       },
       // Add this $match stage to filter out documents with null values
       {
@@ -1683,13 +1620,13 @@ exports.getEmployeeManagerWise = async (req, res) => {
           $and: [
             { full_name: { $ne: null } }, // Filter out if full_name is null
             { first_name: { $ne: null } }, // Filter out if name is null
-            { emp_img: { $ne: null } }, // Filter out if emp_img is null
-          ],
-        },
+            { emp_img: { $ne: null } } // Filter out if emp_img is null
+          ]
+        }
       },
       {
-        $sort: { first_name: 1 },
-      },
+        $sort: { first_name: 1 }
+      }
     ];
 
     let data = await Employee.aggregate(mainQuery);
@@ -1709,11 +1646,17 @@ exports.getEmployeeManagerWise = async (req, res) => {
   }
 };
 
-
 exports.getAccMgrs = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
-      emp_id: Joi.string().optional().default(null),
+      emp_id: Joi.string().optional().default(null)
     });
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
@@ -1734,20 +1677,20 @@ exports.getAccMgrs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$pms_role_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "pmsroles",
-        },
+          as: "pmsroles"
+        }
       },
       {
         $unwind: {
           path: "$pmsroles",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $match: {
@@ -1755,24 +1698,25 @@ exports.getAccMgrs = async (req, res) => {
           isSoftDeleted: false,
           isActivate: true,
           "pmsroles.role_name": configRoles.PMS_ROLES.AM,
+          companyId: newObjectId(decodedCompanyId),
           ...(value?.emp_id && {
-            _id: new mongoose.Types.ObjectId(value.emp_id),
-          }),
-        },
+            _id: newObjectId(value.emp_id)
+          })
+        }
       },
       {
         $sort: {
-          first_name: 1,
-        },
+          first_name: 1
+        }
       },
       {
         $project: {
           _id: 1,
           full_name: 1,
-          emp_code: 1,
-          emp_img: 1,
-        },
-      },
+          email: 1,
+          emp_img: 1
+        }
+      }
     ];
 
     const data = await Employee.aggregate(mainQuery);
