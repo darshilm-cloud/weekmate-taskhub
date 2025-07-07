@@ -479,11 +479,6 @@ exports.getProjects = async (req, res) => {
       $and: orFilter
     };
 
-    console.log(
-      "🚀 ~ exports.getProjects= ~ orFilter:",
-      JSON.stringify(matchQuery, null, 2)
-    );
-
     const mainQuery = [
       {
         $match: { isDeleted: false } // value?.isArchived,

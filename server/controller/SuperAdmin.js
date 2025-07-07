@@ -125,6 +125,7 @@ exports.getAdminList = async (req, res) => {
           updatedAt: 1,
           first_name: 1,
           last_name: 1,
+          loginActivity: 1,
           companyId: { $ifNull: ["$companyDetails._id", ""] },
           companyName: { $ifNull: ["$companyDetails.companyName", ""] },
           companyEmail: { $ifNull: ["$companyDetails.companyEmail", ""] },
@@ -211,7 +212,7 @@ exports.addAdmin = async (req, res) => {
       email,
       first_name: firstName,
       last_name: lastName,
-      full_name:`${firstName} ${lastName}`,
+      full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
       isActivate: true,
@@ -397,7 +398,10 @@ exports.getDashboardData = async (req, res) => {
       role_name: "Admin",
       isDeleted: false
     });
-    console.log("🚀 ~ exports.getDashboardData= ~ adminRoleData:", adminRoleData)
+    console.log(
+      "🚀 ~ exports.getDashboardData= ~ adminRoleData:",
+      adminRoleData
+    );
 
     if (roleName === CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
       const [employeeCount, adminCount] = await Promise.all([
@@ -407,7 +411,7 @@ exports.getDashboardData = async (req, res) => {
         }),
         employeeSchema.countDocuments({
           ...commonFilter,
-          pms_role_id: adminRoleData._id,
+          pms_role_id: adminRoleData._id
         })
       ]);
 
@@ -424,7 +428,7 @@ exports.getDashboardData = async (req, res) => {
 
       totalEmployees = await employeeSchema.countDocuments({
         ...commonFilter,
-        companyId,
+        companyId
       });
     }
 

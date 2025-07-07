@@ -132,6 +132,18 @@ exports.login = async (req, res, next) => {
         );
       }
 
+      await Employees.findByIdAndUpdate(
+        loginUser._id,
+        {
+          $push: {
+            loginActivity: {
+              $each: [new Date()],
+              $slice: -5 // keep only last 5 entries
+            }
+          }
+        }
+      );
+
       const user = await module.exports.dataForJWT(loginUser);
       const auth_token = createJWTToken(
         user,

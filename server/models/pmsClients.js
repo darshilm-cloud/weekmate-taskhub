@@ -4,26 +4,16 @@ const configs = require("../configs");
 const crypto = require("crypto");
 
 const PMSClientsSchema = new Schema({
-  // intial_name: {
-  //   type: String,
-  //   enum: ["Mr.", "Ms.", "Mrs."],
-  //   default: "Mr.",
-  // },
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   first_name: { type: String, required: true },
   last_name: { type: String, required: true },
   full_name: { type: String, required: true },
   client_img: { type: String, default: "" },
   email: { type: String, required: true },
   phone_number: { type: String, default: "" },
-  //   country: { type: String },
-  //   state: { type: String },
-  //   city: { type: String },
-  //   district: { type: String },
-  //   pin_code: { type: Number },
   address: { type: Schema.Types.Mixed },
   password: { type: String, required: true },
   plain_password: { type: String, required: true },
-  role_id: { type: Schema.Types.ObjectId, ref: "roles", required: true },
   pms_role_id: {
     type: Schema.Types.ObjectId,
     ref: "pms_roles",
@@ -46,11 +36,6 @@ const PMSClientsSchema = new Schema({
     default: "General Shift",
   },
   gender: { type: String, default: "" },
-  // status: {
-  //   type: String,
-  //   enum: ["active", "inactive"],
-  //   default: "active",
-  // },
   createdBy: { type: Schema.Types.ObjectId, ref: "employees" },
   updatedBy: { type: Schema.Types.ObjectId, ref: "employees" },
   deletedBy: { type: Schema.Types.ObjectId, ref: "employees" },
