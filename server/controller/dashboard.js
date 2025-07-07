@@ -25,6 +25,14 @@ const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
 //Get Project :
 exports.getMyProjects = async (req, res) => {
   try {
+     // Decode user from token
+     const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
+
     const validationSchema = Joi.object({
       manager_id: Joi.string().optional(),
       project_status: Joi.array().optional().default([]),
@@ -61,6 +69,7 @@ exports.getMyProjects = async (req, res) => {
     await manageAllProjectTabSetting(req.user);
     let matchQuery = {
       isDeleted: false,
+      companyId:newObjectId(decodedCompanyId),
       // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
 

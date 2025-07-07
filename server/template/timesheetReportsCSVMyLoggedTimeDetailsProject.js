@@ -1,16 +1,11 @@
 const moment = require("moment");
 
 exports.sheet2 = (data) => {
-  // console.log("🚀 ~ data:", data)
   try {
     let htmlContent =
       '<table id="table-to-xls"><tr><th></th><th>Created By</th><th>Date</th><th>Project</th><th>Task List</th><th>Task</th><th>Description</th><th>Bug</th><th>Time</th></tr>';
 
     data.forEach((project) => {
-      // console.log("🚀 ~ Object.entries ~ date:", date)
-
-      // console.log("🚀 ~ Object.entries ~ entries:", entries, " \n\n\n\n-----------------", entries.items)
-
       htmlContent += ` <tr>
                               <td>${project.project.title}</td>
                             </tr>
