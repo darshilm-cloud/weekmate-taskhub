@@ -11,6 +11,7 @@ const nodemailer = require("nodemailer");
 const Joi = require("joi");
 const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
+const { addDefaultProjectStatus } = require("../helpers/common");
 
 
 // Register a company details API
@@ -230,6 +231,9 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     ]);
 
     const enrichedUser = userDetails[0];
+
+    // Add default project status for company
+    await addDefaultProjectStatus(company._id,newUser._id)
 
     // 🗑️ Clean up temporary registration
     await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
