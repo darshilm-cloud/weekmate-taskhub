@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const PMSClient = mongoose.model("pmsclients");
@@ -16,31 +16,36 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
-const { getClientQuery, getUserName } = require("../helpers/common");
+const {
+  getClientQuery,
+  getUserName,
+  getCompanyData
+} = require("../helpers/common");
 const _ = require("lodash");
 const { generateCSV, generateXLSX } = require("../helpers/common");
 const { pmswelcomeClientcontent } = require("../template/client_welcomeMail");
 const config = require("../settings/config.json");
 
 // Check is exists..
-exports.clientExists = async (reqData, id = null) => {
+exports.clientExists = async (reqData, id = null, companyId) => {
   try {
     let isExist = false;
     const data = await PMSClient.findOne({
       isDeleted: false,
       isSoftDeleted: false,
       isActivate: true,
+      companyId: newObjectId(companyId),
       email: { $regex: new RegExp(`^${reqData?.email}$`, "i") },
       ...(id
         ? {
-            _id: { $ne: id },
+            _id: { $ne: id }
           }
-        : {}),
+        : {})
     });
     if (data) isExist = true;
     return isExist;
@@ -56,10 +61,7 @@ exports.isEmpEmail = async (reqData) => {
       isDeleted: false,
       isSoftDeleted: false,
       isActivate: true,
-      $or: [
-        { email: { $regex: new RegExp(`^${reqData?.email}$`, "i") } },
-        { login_alias: { $regex: new RegExp(`^${reqData?.email}$`, "i") } },
-      ],
+      email: { $regex: new RegExp(`^${reqData?.email}$`, "i") }
     });
     if (data) isExist = true;
     return isExist;
@@ -71,6 +73,13 @@ exports.isEmpEmail = async (reqData) => {
 //Add clients :
 exports.addClients = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       first_name: Joi.string().required(),
       last_name: Joi.string().required(),
@@ -82,7 +91,7 @@ exports.addClients = async (req, res) => {
       extra_details: Joi.string().allow("").optional(),
       company_name: Joi.string().allow("").optional(),
       isActivate: Joi.boolean().optional().default(true),
-      password: Joi.string().required(),
+      password: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -93,7 +102,7 @@ exports.addClients = async (req, res) => {
       );
     }
 
-    if (await this.clientExists(value)) {
+    if (await this.clientExists(value, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else if (await this.isEmpEmail(value)) {
       return errorResponse(
@@ -102,41 +111,24 @@ exports.addClients = async (req, res) => {
         messages.ALREADY_EXISTS_IN_EMP_EMAIL
       );
     } else {
-      // Check client hrms role..
-      const clientRole = await Role.findOne({
-        isDeleted: false,
-        role_type: "pms_client",
-      });
-      if (clientRole)
-        value.role_id = new mongoose.Types.ObjectId(clientRole._id);
-      else {
-        const newClientRole = new Role({
-          role_name: "PMS Client",
-          role_type: "pms_client",
-          createdBy: req.user._id,
-          updatedBy: req.user._id,
-        });
-        newClientRole.save();
-        value.role_id = new mongoose.Types.ObjectId(newClientRole._id);
-      }
-
       // For pms role ...
       const role = await PMSRoles.findOne({
         role_name: config.PMS_ROLES.CLIENT,
-        isDeleted: false,
+        isDeleted: false
       });
       if (role) value.pms_role_id = new mongoose.Types.ObjectId(role._id);
       else {
         const newRole = new PMSRoles({
           role_name: config.PMS_ROLES.CLIENT,
           createdBy: req.user._id,
-          updatedBy: req.user._id,
+          updatedBy: req.user._id
         });
         newRole.save();
         value.pms_role_id = new mongoose.Types.ObjectId(newRole._id);
       }
 
       let data = new PMSClient({
+        companyId: newObjectId(decodedCompanyId),
         first_name: value.first_name,
         last_name: value.last_name,
         full_name: value.full_name,
@@ -149,10 +141,9 @@ exports.addClients = async (req, res) => {
         plain_password: value?.password,
         password: value?.password,
         isActivate: value.isActivate,
-        role_id: value.role_id,
         pms_role_id: value.pms_role_id,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
       await data.save();
 
@@ -174,13 +165,21 @@ exports.addClients = async (req, res) => {
         updatedBy: data?._id,
         isDeleted: false,
         createdByModel: "pmsclients",
-        updatedByModel: "pmsclients",
+        updatedByModel: "pmsclients"
       });
 
       await mailSettingsData.save();
 
+      let companyData = await getCompanyData(decodedCompanyId);
+      console.log("🚀 ~ exports.addClients= ~ companyData:", companyData)
+
       // Send welcome mail to client with their credentials and link to portal
-      await pmswelcomeClientcontent(data, getUserName(req?.user));
+      await pmswelcomeClientcontent(
+        data,
+        getUserName(req?.user),
+        decodedCompanyId,
+        companyData
+      );
 
       return successResponse(
         res,
@@ -199,6 +198,13 @@ exports.addClients = async (req, res) => {
 // Get clients list...
 exports.getClients = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -213,7 +219,7 @@ exports.getClients = async (req, res) => {
         .optional()
         .valid("csv", "xlsx")
         .insensitive()
-        .default("csv"),
+        .default("csv")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -229,17 +235,18 @@ exports.getClients = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
       isDeleted: false,
       isSoftDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
       ...(value.isActivate !== null && { isActivate: value.isActivate }),
       // for details
       ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
       // Apply filters..
-      ...(value.user_id && { _id: new mongoose.Types.ObjectId(value.user_id) }),
+      ...(value.user_id && { _id: new mongoose.Types.ObjectId(value.user_id) })
     };
 
     if (value.search) {
@@ -248,7 +255,7 @@ exports.getClients = async (req, res) => {
         ...searchDataArr(
           ["first_name", "last_name", "full_name", "email", "company_name"],
           value.search
-        ),
+        )
       };
     }
 
@@ -256,9 +263,9 @@ exports.getClients = async (req, res) => {
       { $match: matchQuery },
       {
         $project: {
-          password: 0,
-        },
-      },
+          password: 0
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -279,7 +286,7 @@ exports.getClients = async (req, res) => {
         pageNo: pagination.page,
         totalPages:
           pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page,
+        currentPage: pagination.page
       };
     }
     return successResponse(
@@ -300,7 +307,7 @@ exports.exportPMSClientData = async (query, exportFileType) => {
     let result = [];
     const data = await PMSClient.aggregate([
       ...query,
-      { $sort: { first_name: -1 } },
+      { $sort: { first_name: -1 } }
     ]).exec();
 
     // Loop through each item in the data
@@ -315,7 +322,7 @@ exports.exportPMSClientData = async (query, exportFileType) => {
         "Company Name": item.company_name,
         Status: item.isActivate == true ? "Active" : "Deactivate",
         "Extra Info": item.extra_details,
-        "Created Date": moment(item.createdAt).format("DD-MMM-YYYY"),
+        "Created Date": moment(item.createdAt).format("DD-MMM-YYYY")
       });
     }
 
@@ -326,7 +333,7 @@ exports.exportPMSClientData = async (query, exportFileType) => {
       "Company Name",
       "Status",
       "Extra Info",
-      "Created Date",
+      "Created Date"
     ];
 
     const exportFileTypeLower = _.toLower(exportFileType);
@@ -346,6 +353,13 @@ exports.exportPMSClientData = async (query, exportFileType) => {
 //Update client data :
 exports.updateClientData = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       first_name: Joi.string().required(),
       last_name: Joi.string().required(),
@@ -356,8 +370,7 @@ exports.updateClientData = async (req, res) => {
       address: Joi.object().optional().default({}),
       extra_details: Joi.string().allow("").optional(),
       company_name: Joi.string().allow("").optional(),
-      // password: Joi.string().required(),
-      isActivate: Joi.boolean().optional(),
+      isActivate: Joi.boolean().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -368,7 +381,7 @@ exports.updateClientData = async (req, res) => {
       );
     }
 
-    if (await this.clientExists(value, req.params.id)) {
+    if (await this.clientExists(value, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else if (await this.isEmpEmail(value)) {
       return errorResponse(
@@ -380,7 +393,7 @@ exports.updateClientData = async (req, res) => {
       if (value?.isActivate == false) {
         const projectData = await Project.findOne({
           isDeleted: false,
-          pms_clients: req.params.id,
+          pms_clients: req.params.id
         });
 
         if (projectData) {
@@ -406,7 +419,7 @@ exports.updateClientData = async (req, res) => {
           company_name: value.company_name,
           isActivate: value?.isActivate,
           updatedBy: req.user._id,
-          updatedAt: configs.utcDefault(),
+          updatedAt: configs.utcDefault()
         },
         { new: true }
       );
@@ -430,7 +443,7 @@ exports.updateClientData = async (req, res) => {
 exports.updateClientStatus = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isActivate: Joi.boolean().required(),
+      isActivate: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -444,7 +457,7 @@ exports.updateClientStatus = async (req, res) => {
     if (value?.isActivate == false) {
       const projectData = await Project.findOne({
         isDeleted: false,
-        pms_clients: req.params.id,
+        pms_clients: req.params.id
       });
 
       if (projectData) {
@@ -461,7 +474,7 @@ exports.updateClientStatus = async (req, res) => {
       {
         isActivate: value.isActivate,
         updatedBy: req.user._id,
-        updatedAt: configs.utcDefault(),
+        updatedAt: configs.utcDefault()
       },
       { new: true }
     );
@@ -487,9 +500,9 @@ exports.deleteClientData = async (req, res) => {
     // Check project associated with client ...
     const projectData = await Project.findOne({
       isDeleted: false,
-      pms_clients: req.params.id,
+      pms_clients: req.params.id
     });
-    "🚀 ~ exports.deleteClientData ~ projectData:", projectData;
+
     if (projectData) {
       return errorResponse(
         res,
@@ -503,7 +516,7 @@ exports.deleteClientData = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );
@@ -530,15 +543,15 @@ exports.getProjectsWiseAssignedClient = async (req, res) => {
       {
         $match: {
           isDeleted: false,
-          _id: new mongoose.Types.ObjectId(req.params.projectId),
-        },
+          _id: new mongoose.Types.ObjectId(req.params.projectId)
+        }
       },
       ...(await getClientQuery()),
       {
         $unwind: {
           path: "$pms_clients",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $project: {
@@ -546,14 +559,14 @@ exports.getProjectsWiseAssignedClient = async (req, res) => {
           full_name: "$pms_clients.full_name",
           first_name: "$pms_clients.first_name",
           last_name: "$pms_clients.last_name",
-          client_img: "$pms_clients.client_img",
-        },
+          client_img: "$pms_clients.client_img"
+        }
       },
       {
         $sort: {
-          first_name: 1,
-        },
-      },
+          first_name: 1
+        }
+      }
     ];
     const data = await Project.aggregate(query);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, []);
@@ -573,7 +586,7 @@ exports.updateClientPasswordWithMD5 = async () => {
       console.log("client ..  . .. . . . ", i, {
         _id,
         full_name,
-        plain_password,
+        plain_password
       });
 
       if (plain_password && plain_password !== "") {
@@ -586,8 +599,8 @@ exports.updateClientPasswordWithMD5 = async () => {
           { _id: _id },
           {
             $set: {
-              password: password,
-            },
+              password: password
+            }
           }
         );
       }
