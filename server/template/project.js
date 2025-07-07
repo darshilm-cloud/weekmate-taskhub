@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName } = require("../helpers/common");
+const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 class ProjectMail {
   newProjectManagerMail = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       let html = `
         <!DOCTYPE html>
 <html lang="en">
@@ -64,7 +66,7 @@ class ProjectMail {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>
@@ -350,6 +352,8 @@ class ProjectMail {
 
   newProjectAssigneesMail = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       let html = `
         <!DOCTYPE html>
 <html lang="en">
@@ -408,7 +412,7 @@ class ProjectMail {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>
@@ -729,6 +733,8 @@ class ProjectMail {
 
   mailForUpdateProjectInfo = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       let html = `
       <!DOCTYPE html>
 <html lang="en">
@@ -787,7 +793,7 @@ class ProjectMail {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>

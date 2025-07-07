@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName } = require("../helpers/common");
+const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 
 exports.MailForBugNewComments = async (data, companyId) => {
   try {
+    let companyData = await getCompanyData(companyId);
+
     let commentsIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-comments.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
 
@@ -67,7 +69,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>

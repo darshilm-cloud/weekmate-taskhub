@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
 const moment = require("moment");
-const { emailSenderForPMS, getUserName } = require("../helpers/common");
+const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
   try {
+    let companyData = await getCompanyData(companyId);
+
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
     let roundIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-round.png`;
@@ -69,7 +71,7 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>
@@ -515,6 +517,8 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
 
 exports.taskStatusUpdateMail = async (data, companyId) => {
   try {
+    let companyData = await getCompanyData(companyId);
+
     let stageIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-stage.png`;
     let arrowIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-arrow.png`;
     let privateIcon = `${process.env.UPLOADS_URL}/mailTemplatesImg/icon-private.png`;
@@ -578,7 +582,7 @@ exports.taskStatusUpdateMail = async (data, companyId) => {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
             </td>
           </tr>
         </tbody>

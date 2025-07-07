@@ -4,7 +4,7 @@ exports.sheet = (data) => {
     let content = `<table id="table-to-xls" style="display:none">
             <tr> 
                 <th> Company </th>
-                <th> Elsner Technologies Pvt Ltd </th>
+                <th> Taskhub </th>
             </tr>
             <tr>
             <th> Project </th> 

@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName } = require("../helpers/common");
+const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 exports.mainTaskSubscriberMail = async (data, companyId) => {
   try {
+    let companyData = await getCompanyData(companyId);
+
     let html = `
       <!DOCTYPE html>
 <html lang="en">
@@ -63,7 +65,7 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
                 font-size: 30px;
                 padding-bottom: 5px;
                 font-weight: 600;
-              "> Elsner Technologies Pvt Ltd </h1>
+              "> ${companyData?.companyName || "Taskhub"} </h1>
           </td>
         </tr>
       </tbody>
@@ -282,6 +284,8 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
 
 exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
   try {
+    let companyData = await getCompanyData(companyId);
+
     let html = `
       <!DOCTYPE html>
 <html lang="en">
@@ -340,7 +344,7 @@ exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
                 font-size: 30px;
                 padding-bottom: 5px;
                 font-weight: 600;
-              "> Elsner Technologies Pvt Ltd </h1>
+              "> ${companyData?.companyName || "Taskhub"} </h1>
           </td>
         </tr>
       </tbody>
