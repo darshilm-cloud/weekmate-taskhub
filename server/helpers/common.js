@@ -782,12 +782,13 @@ class CommonHelpers {
       { title: "Active" },
       { title: "Closed" },
       { title: "Archived" },
-      { title: "On Hold" },
+      { title: "On Hold" }
     ];
 
     const statusesToInsert = defaultStatuses.map((status) => ({
       companyId: newObjectId(companyId),
       title: status.title,
+      isDefault: true,
       createdBy: userId,
       updatedBy: userId
     }));
