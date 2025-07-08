@@ -27,6 +27,8 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 
 const CompanyEmployee = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const history = useHistory();
   const [form] = Form.useForm();
   const [employees, setEmployees] = useState([]);
@@ -329,7 +331,7 @@ const CompanyEmployee = () => {
         <div className="heading-wrapper">
           <Button
             type="primary"
-            onClick={() => history.push("/admin/company-registartion")}
+            onClick={() => history.push(`/${companySlug}/admin/company-registartion`)}
           >
             Back
           </Button>

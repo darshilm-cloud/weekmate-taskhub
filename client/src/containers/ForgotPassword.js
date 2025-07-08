@@ -3,8 +3,10 @@ import { Button, Input, message, Form } from "antd";
 import Service from "../service";
 import { Link } from "react-router-dom";
 import TaskHub from "../assets/images/taskhubicon.svg"
-function ForgetPassword() {
 
+function ForgetPassword() {
+  const companySlug = localStorage.getItem("companyDomain");
+  
   const handleSubmit = async values => {
     try {
       const response = await Service.makeAPICall({
@@ -83,7 +85,7 @@ function ForgetPassword() {
                     </Button>
                     <Link
                       type="button"
-                      to="/signin"
+                      to={companySlug ? `/${companySlug}/signin` : "/signin"}
                       className="ant ant-btn-back"
                     >
                       Back

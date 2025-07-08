@@ -21,6 +21,8 @@ import { useHistory, useParams } from "react-router-dom";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 
 const ComplaintsForm = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const { complaint_id } = useParams();
   const [form] = Form.useForm();
   const { Option } = Select;
@@ -131,7 +133,7 @@ const ComplaintsForm = () => {
         });
         if (response.data && response.data.data) {
           message.success(response.data.message);
-          history.push("/complaints");
+          history.push(`/${companySlug}/complaints`);
         }
       } else {
         const response = await Service.makeAPICall({
@@ -141,7 +143,7 @@ const ComplaintsForm = () => {
         });
         if (response.data && response.data.data) {
           message.success(response.data.message);
-          history.push("/complaints");
+          history.push(`/${companySlug}/complaints`);
         }
       }
     } catch (error) {

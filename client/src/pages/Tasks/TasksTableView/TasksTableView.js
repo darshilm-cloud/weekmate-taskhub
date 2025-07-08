@@ -54,6 +54,8 @@ const TasksTableView = ({
   getBoardTasks,
   updateTasks,
 }) => {
+  const companySlug = localStorage.getItem("companyDomain");
+  
   const {
     dragged,
     onDragLeave,
@@ -789,7 +791,7 @@ const TasksTableView = ({
                             <div className="table-left">
                               <div className="flex-table">
                                 <Link
-                                  to={`/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
+                                  to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
                                 >
                                   {value?.title}
                                 </Link>
@@ -1144,7 +1146,7 @@ const TasksTableView = ({
                             <div className="table-left">
                               <div className="flex-table">
                                 <Link
-                                  to={`/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
+                                  to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
                                 >
                                   {value?.title}
                                 </Link>

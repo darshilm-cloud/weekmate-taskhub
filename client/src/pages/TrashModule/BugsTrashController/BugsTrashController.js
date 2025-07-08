@@ -5,7 +5,10 @@ import MyAvatar from "../../../components/Avatar/MyAvatar";
 import moment from "moment";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
+
 const BugsTrashController = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const dispatch = useDispatch();
   const [pagination, setPagination] = useState({
     current: 1,
@@ -49,7 +52,7 @@ const BugsTrashController = () => {
         const ProjectId = record?.project?._id;
         const color = record?.color;
         return (
-          <Link to={`project/app/${ProjectId}?tab=Tasks`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>
           </div>

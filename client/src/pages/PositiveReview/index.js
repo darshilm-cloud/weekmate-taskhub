@@ -24,6 +24,8 @@ const ADMIN_ROLES = ["Admin", "PC", "Admin", "AM"];
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
 const SUPER_ADMIN_ROLES = ["Admin"];
 
+const companySlug = localStorage.getItem("companyDomain");
+
 // Memoized components for better performance
 const FilterPopover = memo(({ 
   title, 
@@ -165,7 +167,7 @@ const ActionButtons = memo(({
       onClick={() => onView(record._id)}
       style={{ cursor: "pointer" }}
     />
-    <Link to={`/edit/positiveReviewForm/${record._id}`}>
+    <Link to={`/${companySlug}/edit/positiveReviewForm/${record._id}`}>
       <EditOutlined style={{ color: "green" }} />
     </Link>
     <Popconfirm
@@ -415,7 +417,7 @@ const PositiveReview = () => {
               <h2>Positive Reviews</h2>
             </div>
             {canAddReview && (
-              <Link to="/add/positiveReviewForm">
+              <Link to={`/${companySlug}/add/positiveReviewForm`}>
                 <Button 
                   icon={<PlusOutlined />} 
                   type="primary" 

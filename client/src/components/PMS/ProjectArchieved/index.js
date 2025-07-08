@@ -36,6 +36,8 @@ import MyAvatar from "../../Avatar/MyAvatar";
 import { generateCacheKey } from "../../../util/generateCacheKey";
 
 function ProjectArchieved() {
+  const companySlug = localStorage.getItem("companyDomain");
+  
   const [form] = Form.useForm();
   const { TextArea } = Input;
   const { Option } = Select;
@@ -192,7 +194,7 @@ function ProjectArchieved() {
         const ProjectId = record?._id;
         const color = record?.color;
         return (
-          <Link to={`project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
             <div className="project_title_main_div">
               <span style={{ textTransform: "capitalize" }}>
                 {Title}

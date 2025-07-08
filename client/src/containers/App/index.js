@@ -55,6 +55,8 @@ function RestrictedRoute({
   authUser,
   ...rest
 }) {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const history = useHistory();
   const socket = useSocket();
   const { emitEvent, listenEvent, showBrowserNotification } = useSocketAction();
@@ -106,7 +108,7 @@ function RestrictedRoute({
     console.log(authUser, "authUser._idT");
     try {
       if (!authUser || !authUser._id) {
-        history.push("/signin");
+        history.push(companySlug ? `/${companySlug}/signin` : "/signin");
         return;
       }
     } catch (error) {
@@ -134,6 +136,7 @@ function RestrictedRoute({
 }
 
 function AuthRoute({ component: Component, location, authUser, ...rest }) {
+  const companySlug = localStorage.getItem("companyDomain");
   return (
     <Route
       {...rest}
@@ -143,7 +146,7 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
         ) : (
           <Redirect
             to={{
-              pathname: "/signin",
+              pathname: companySlug ? `/${companySlug}/signin` : "/signin",
             }}
           />
         )
@@ -234,19 +237,20 @@ function App() {
   };
 
   useEffect(() => {
+    const companySlug = localStorage.getItem("companyDomain");
     if (location.pathname === "/") {
       if (authUser === null) {
-        history.push("/signin");
-      } else if (initURL === "" || initURL === "/" || initURL === "/signin") {
-        history.push("/dashboard");
+        history.push(companySlug ? `/${companySlug}/signin` : "/signin");
+      } else if (initURL === "" || initURL === "/" || initURL === "/signin" || initURL === `/${companySlug}/signin`) {
+        history.push(`/${companySlug}/dashboard`);
       } else {
         history.push(initURL);
       }
     }
 
-    if (location.pathname == "/signin") {
+    if (location.pathname == "/signin" || location.pathname == `/${companySlug}/signin`) {
       if (authUser != null) {
-        history.push("/dashboard");
+        history.push(`/${companySlug}/dashboard`);
       }
     }
   }, [authUser, initURL, location, history]);
@@ -307,6 +311,12 @@ function App() {
           <Switch>
           <AuthRoute
               path={`${match.url}:companySlug/signin/:verificationToken`}
+              component={SignIn}
+            />
+              <AuthRoute
+              path={`${match.url}:companySlug/signin`}
+              authUser={authUser}
+              location={location}
               component={SignIn}
             />
             <AuthRoute

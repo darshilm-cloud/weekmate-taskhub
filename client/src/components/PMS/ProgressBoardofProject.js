@@ -46,6 +46,8 @@ import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
 
 function ProgressBoardofProject() {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const { emitEvent } = useSocketAction();
   const { projectId } = useParams();
   const history = useHistory();
@@ -219,7 +221,7 @@ function ProgressBoardofProject() {
   };
 
   const goToEditProjectPage = () => {
-    history.push(`/project-list/edit/${projectId}`);
+    history.push(`/${companySlug}/project-list/edit/${projectId}`);
   };
   const getProjectByID = async () => {
     try {
@@ -255,7 +257,7 @@ function ProgressBoardofProject() {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        history.push("/project-list");
+        history.push(`/${companySlug}/project-list`);
       } else {
         message.error(response.data.message);
       }
@@ -637,7 +639,7 @@ function ProgressBoardofProject() {
                     )}
                   </span>
                   <Link
-                    to={`/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
+                    to={`/${companySlug}//project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
                   >
                     <p
                       onClick={() => {

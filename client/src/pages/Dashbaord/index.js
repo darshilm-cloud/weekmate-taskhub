@@ -104,6 +104,8 @@ const index = () => {
     totalLoggedProgress,
   } = DashboardController();
 
+  const companySlug = localStorage.getItem("companyDomain");
+
   const hours = totalLoggedProgress?.data2?.total_time
     ? totalLoggedProgress?.data2?.total_time.split(":")[0]
     : "0";
@@ -784,7 +786,7 @@ const index = () => {
                         <div className="taskCheckBox d-flex">
                           <div className="tasktitle">
                             <Link
-                              to={ `/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}` }
+                              to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}` }
                             >
                               { item?.title.charAt(0).toUpperCase() +
                                 item?.title.slice(1) }
@@ -811,7 +813,7 @@ const index = () => {
                 <tr>
                   <th>
                     <Tooltip title="See your logged time data here!">
-                      <Link to="my-log-time">
+                      <Link to={`/${companySlug}/my-log-time`}>
                         <div className="folder-project-wrpper d-flex">
                           <a href="#">
                             <i class="fa-regular fa-clock"></i>
@@ -1038,7 +1040,7 @@ const index = () => {
                       <tr>
                         <td>
                           <Link
-                            to={ `/project/app/${item?.project?._id}?tab=Time` }
+                            to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Time` }
                           >
                             <span className="project-time-sheet-title">
                               { item.project.title }
@@ -1051,7 +1053,6 @@ const index = () => {
                         <tr
                           className="clickable-roww"
                           key={ i }
-                        // onClick={()=> {history.push('my-log-time')}}
                         >
                           <td className="task-description custom-border-right">
                             <div className="taskCheckBox d-flex">
@@ -1379,7 +1380,7 @@ const index = () => {
                         <div className="taskCheckBox d-flex">
                           <div className="tasktitle">
                             <Link
-                              to={ `/project/app/${item?.project?._id}?tab=Bugs&bugID=${item?._id}` }
+                              to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Bugs&bugID=${item?._id}` }
                             >
                               <span>
                                 { item?.title.charAt(0).toUpperCase() +

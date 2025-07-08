@@ -87,6 +87,8 @@ const Projectexpences = () => {
     deleteProjectExpences
   } = ProjectExpencesController();
 
+  const companySlug = localStorage.getItem("companyDomain");
+
   // Local state
   const [formDetail] = Form.useForm();
   const [viewData, setViewData] = useState({});
@@ -529,7 +531,7 @@ const Projectexpences = () => {
               onClick={() => handleViewExpense(text?._id)}
               style={{ cursor: "pointer" }}
             />
-            <Link to={`edit/projectexpenseform/${text._id}`}>
+            <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
               <EditOutlined style={{ color: "green" }} />
             </Link>
             <Popconfirm
@@ -559,7 +561,7 @@ const Projectexpences = () => {
               onClick={() => handleViewExpense(text?._id)}
               style={{ cursor: "pointer" }}
             />
-            <Link to={`edit/projectexpenseform/${text._id}`}>
+            <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
               <EditOutlined style={{ color: "green" }} />
             </Link>
           </div>
@@ -580,7 +582,7 @@ const Projectexpences = () => {
                 <h2>Project Expense</h2>
               </div>
               {userPermissions.canAddExpense && (
-                <Link to="/add/projectexpenseform">
+                <Link to={`/${companySlug}/add/projectexpenseform`}>
                   <Button type="primary" className="square-primary-btn">
                     Add Project Expense
                   </Button>

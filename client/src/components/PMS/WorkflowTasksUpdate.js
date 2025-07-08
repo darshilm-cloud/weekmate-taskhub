@@ -24,6 +24,8 @@ import "./workflowstyle.css";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
 function WorkflowTasksUpdate() {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const [addform] = Form.useForm();
   const [workflowName, setWorkflowName] = useState("");
   const [editid, setEditid] = useState("");
@@ -294,7 +296,7 @@ function WorkflowTasksUpdate() {
 
             <div className="profile-sub-head">
               <div className="head-box-inner">
-                <Link to="/workflows">
+                <Link to={`/${companySlug}/workflows`}>
                   <i
                     class="fi fi-rr-arrow-small-left"
                     style={{ fontSize: "30px", color: "#000" }}

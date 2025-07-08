@@ -6,7 +6,10 @@ import { useDispatch } from "react-redux";
 import moment from "moment";
 import { useHistory } from "react-router-dom";
 import { generateCacheKey } from "../../util/generateCacheKey";
+
 const DashboardController = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const [showFiltersProject, setShowFilterProject] = useState(false);
   const [statusList, setStatusList] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
@@ -655,10 +658,10 @@ const DashboardController = () => {
       if (response?.data?.data.length > 0) {
         const taskId = response.data.data[0]._id;
         if (taskId) {
-          history.push(`/project/app/${projectId}?tab=Tasks&listID=${taskId}`);
+          history.push(`/${companySlug}/project/app/${projectId}?tab=Tasks&listID=${taskId}`);
         }
       } else {
-        history.push(`/project/app/${projectId}?tab=Tasks`);
+        history.push(`/${companySlug}/project/app/${projectId}?tab=Tasks`);
       }
     } catch (error) {
       console.log(error);

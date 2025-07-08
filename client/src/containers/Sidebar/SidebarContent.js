@@ -18,8 +18,9 @@ import AdminIcon from "../../assets/icons/AdminIcon"
 const { Sider } = Layout;
 
 function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
+  const companySlug = localStorage.getItem("companyDomain");
 
-  const userData = JSON.parse(localStorage.getItem("user_data"))
+  const userData = JSON.parse(localStorage.getItem("user_data"));
 
   const dispatch = useDispatch();
   const history = useHistory();
@@ -156,49 +157,49 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         key: "Admin_Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
-        onClick: () => handleMenuClick("Admin_Dashboard", "/admin/dashboard")
+        onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
       },
       getRoles(["Super Admin"]) &&  {
         key: "Admin_Administrator",
         icon: <AdminIcon />,
         label: "Admins",
-        onClick: () => handleMenuClick("Admin_Administrator", "/admin/Administrator")
+        onClick: () => handleMenuClick("Admin_Administrator", `/admin/Administrator`)
       },
       getRoles(["Admin"]) && {
         key: "Companies_Registration",
         icon: <AdminIcon />,
         label: "Companies registration",
-        onClick: () => handleMenuClick("Companies_Registration", "/admin/company-registartion")
+        onClick: () => handleMenuClick("Companies_Registration", `/${companySlug}/admin/company-registartion`)
       },
       getRoles(["Admin"]) &&{
         key: "Admin_Settings",
         icon: <SettingOutlined />,
         label: "Settings",
-        onClick: () => handleMenuClick("Admin_Settings", "/admin/settings")
+        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
       },
       !getRoles(["Client"]) &&{
         key: "Dashboard",
         icon: <i className="fi fi-rs-house-chimney"></i>,
         label: "Me",
-        onClick: () => handleMenuClick("Dashboard", "/dashboard"),
+        onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
       {
         key: "Admin Dashboard",
         icon: <i className="fi fi-rr-dashboard"></i>,
         label: "Projects",
-        onClick: () => handleMenuClick("Admin Dashboard", "/project-list"),
+        onClick: () => handleMenuClick("Admin Dashboard", `/${companySlug}/project-list`),
       },
       getRoles(["Admin"]) && {
         key: "Users",
         icon: <i className="fi fi-rr-users-alt"></i>,
         label: "Users",
-        onClick: () => handleMenuClick("Users", "/project-users"),
+        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
       },
       getRoles(["Admin"]) && {
         key: "Permission",
         icon: <i className="fi fi-rr-lock"></i>,
         label: "Permissions",
-        onClick: () => handleMenuClick("Permission", "/permission-access"),
+        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
       },
       (getRoles(["Admin"]) ||
         userData._id == sideBarContentId) && {
@@ -212,22 +213,16 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             onClick: () =>
               handleMenuClick(
                 "Analytics-Projects- running",
-                "/project-runnig-reports"
+                `/${companySlug}/project-runnig-reports`
               ),
           },
           {
             key: "Analytics-Timesheet",
             label: "Timesheet",
             onClick: () =>
-              handleMenuClick("Analytics-Timesheet", "/timesheet-reports"),
+              handleMenuClick("Analytics-Timesheet", `/${companySlug}/timesheet-reports`),
           },
         ],
-      },
-      getRoles(["Admin", "PC", "TL", "Admin", "AM", "User"]) && {
-        key: "Hours",
-        icon: <i className="fa-solid fa-clock"></i>,
-        label: "Hours",
-        onClick: () => handleMenuClick("Hours", "/billable-hours"),
       },
       getRoles(["Admin", "PC", "TL", "Admin", "AM"]) && {
         key: "FeedBack",
@@ -238,13 +233,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             key: "FeedBack-Positive Reviews",
             label: "Positive Reviews",
             onClick: () =>
-              handleMenuClick("FeedBack-Positive Reviews", "/positive-review"),
+              handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
           },
           {
             key: "FeedBack-Complaints",
             label: "Complaints",
             onClick: () =>
-              handleMenuClick("FeedBack-Complaints", "/complaints"),
+              handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
           },
         ],
       },
@@ -253,7 +248,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         key: "Projectexpences",
         icon: <i className="fi fi-rr-receipt"></i>,
         label: "Project Expense",
-        onClick: () => handleMenuClick("Projectexpences", "/projectexpense"),
+        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
       },
     ],
     []
@@ -287,7 +282,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     <>
       <div className="gx-sidebar-content sidebar-menu">
         <div className="Etask-hub-logo">
-          <img alt="logo" src={`${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` || Taskhub} />{" "}
+          <img alt="logo" src={companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : Taskhub} />{" "}
         </div>
         <CustomScrollbars className="gx-layout-sider-scrollbar">
           <Sider

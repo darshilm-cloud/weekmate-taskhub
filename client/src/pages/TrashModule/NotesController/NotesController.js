@@ -7,6 +7,8 @@ import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 
 const NotesController = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const notesTrashColumns = [
     {
       title: "Project",
@@ -16,7 +18,7 @@ const NotesController = () => {
         const Title = record?.project?.title;
         const ProjectId = record?.project?._id;
         return (
-          <Link to={`project/app/${ProjectId}?tab=Tasks`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>
           </div>

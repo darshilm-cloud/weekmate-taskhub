@@ -61,7 +61,8 @@ const index = () => {
     status,
     deleteComplaints,
   } = ComplaintsFormController();
-
+  
+  const companySlug = localStorage.getItem("companyDomain");
   const userHasAccess = getRoles(["Admin", "PC", "TL", "AM"]);
 
   const showTotal = (total) => `Total Records Count is ${total}`;
@@ -126,10 +127,10 @@ const index = () => {
                 }}
               >
                 {" "}
-                <Link to={"/add/complaintForm-action-details/" + text._id}>
+                <Link to={`/${companySlug}/add/complaintForm-action-details/` + text._id}>
                   <EyeOutlined style={{ cursor: "pointer" }} />
                 </Link>
-                <Link to={"/edit/complaintsForm/" + text._id}>
+                <Link to={`/${companySlug}/edit/complaintsForm/` + text._id}>
                   <EditOutlined style={{ color: "green" }} />
                 </Link>
                 <Popconfirm
@@ -167,7 +168,7 @@ const index = () => {
                 <h2>Complaints</h2>
               </div>
               {getRoles(["Admin", "PC", "AM", "TL"]) && (
-                <Link to="/add/complaintsform">
+                <Link to={`/${companySlug}/add/complaintsform`}>
                   <Button
                     icon={<PlusOutlined />}
                     type="primary"

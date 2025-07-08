@@ -12,6 +12,7 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 
 const Overview = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   const {
     isModalOpenUser,
     handleCancelUser,
@@ -218,7 +219,7 @@ const Overview = () => {
         }
         return (
           <Link
-            to={`/project/app/${record?.project_id}?tab=Tasks&listID=${record?.main_task_id}&taskID=${record?._id}`}
+            to={`/${companySlug}/project/app/${record?.project_id}?tab=Tasks&listID=${record?.main_task_id}&taskID=${record?._id}`}
           >
             <div className="overdue_block">
               {formattedDate && (

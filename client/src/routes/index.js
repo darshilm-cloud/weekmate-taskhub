@@ -74,32 +74,32 @@ const BillableHoursAdmin = React.lazy(() =>
 const index = ({ match, userPermission }) => {
   const routeArray = [
     {
-      path: "manage-project-type",
+      path: ":companySlug/manage-project-type",
       component: ManageProjectType,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-technologies",
+      path: ":companySlug/:companySlug/project-technologies",
       component: ProjectTechnologies,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "workflows-tasks/:id",
+      path: ":companySlug/workflows-tasks/:id",
       component: WorkflowTasksUpdate,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "workflows",
+      path: ":companySlug/workflows",
       component: Workflows,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "resources",
+      path: ":companySlug/resources",
       component: Resource,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-archieved",
+      path: ":companySlug/project-archieved",
       component: ProjectArchieved,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -112,32 +112,32 @@ const index = ({ match, userPermission }) => {
     },
 
     {
-      path: "roles-permission/:id",
+      path: ":companySlug/roles-permission/:id",
       component: ResourcePermission,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-users",
+      path: ":companySlug/project-users",
       component: EmployeeMasterList,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-users/client",
+      path: ":companySlug/project-users/client",
       component: EmployeeListTabClient,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-labels",
+      path: ":companySlug/project-labels",
       component: ProjectLabels,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "my-library",
+      path: ":companySlug/my-library",
       component: Library,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project-list",
+      path: ":companySlug/project-list",
       component: AssignProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -149,7 +149,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "project-list/edit/:editProjectId",
+      path: ":companySlug/project-list/edit/:editProjectId",
       component: AssignProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -159,12 +159,12 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "trash",
+      path: ":companySlug/trash",
       component: TrashIndex,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "project/app/:projectId",
+      path: ":companySlug/project/app/:projectId",
       component: ProgressBoardofProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -176,12 +176,12 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "project-status",
+      path: ":companySlug/project-status",
       component: ProjectStatus,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "my-log-time",
+      path: ":companySlug/my-log-time",
       component: MylogtimeWidget,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -193,22 +193,22 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "project-runnig-reports",
+      path: ":companySlug/project-runnig-reports",
       component: ProjectsRunningReports,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "timesheet-reports",
+      path: ":companySlug/timesheet-reports",
       component: TimeSheetReports,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "permission-access",
+      path: ":companySlug/permission-access",
       component: PermissionModule,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: "dashboard",
+      path: ":companySlug/dashboard",
       component: DashboardModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -220,7 +220,7 @@ const index = ({ match, userPermission }) => {
     },
 
     {
-      path: "billable-hours",
+      path: ":companySlug/billable-hours",
       component: BillableHoursAdmin,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -231,7 +231,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "complaints",
+      path: ":companySlug/complaints",
       component: ComplaintsModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -241,7 +241,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "add/complaintsform",
+      path: ":companySlug/add/complaintsform",
       component: ComplaintsForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -251,7 +251,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "edit/complaintsForm/:complaint_id",
+      path: ":companySlug/edit/complaintsForm/:complaint_id",
       component: ComplaintsForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -261,7 +261,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "positive-review",
+      path: ":companySlug/positive-review",
       component: PositiveReview,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -271,7 +271,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "add/positiveReviewForm",
+      path: ":companySlug/add/positiveReviewForm",
       component: PositiveReviewForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -281,7 +281,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "edit/positiveReviewForm/:review_id",
+      path: ":companySlug/edit/positiveReviewForm/:review_id",
       component: PositiveReviewForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -291,7 +291,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "add/complaintForm-action-details/:id",
+      path: ":companySlug/add/complaintForm-action-details/:id",
       component: ComplaintDetailForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -301,7 +301,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "projectexpense",
+      path: ":companySlug/projectexpense",
       component: Projectexpences,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -312,7 +312,7 @@ const index = ({ match, userPermission }) => {
     },
 
     {
-      path: "add/projectexpenseform",
+      path: ":companySlug/add/projectexpenseform",
       component: ProjectexpencesForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -322,7 +322,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "edit/projectexpenseform/:review_id",
+      path: ":companySlug/edit/projectexpenseform/:review_id",
       component: ProjectexpencesForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -332,7 +332,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "admin/dashboard",
+      path: ":companySlug/admin/dashboard",
       component: AdminDashboard,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -344,7 +344,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "admin/company-registartion",
+      path: ":companySlug/admin/company-registartion",
       component: CompanyRegistration,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -356,7 +356,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "admin/settings",
+      path: ":companySlug/admin/settings",
       component: SettingsModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -368,7 +368,7 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: "admin/company-employee",
+      path: ":companySlug/admin/company-employee",
       component: CompanyEmployee,
       roleName: [
         config.PMS_ROLES.ADMIN,

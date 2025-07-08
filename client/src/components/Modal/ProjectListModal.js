@@ -15,6 +15,7 @@ const ProjectListModal = ({
   form,
   getProjectListing,
 }) => {
+  const companySlug = localStorage.getItem("companyDomain");
   const [isSearching, setIsSearching] = useState(true);
 
   const onSearch = useCallback(
@@ -99,7 +100,7 @@ const ProjectListModal = ({
                             className="project_title_main_div"
                           >
                             <Link
-                              to={`/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
+                              to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
                               onClick={() => {
                                 setIsModalOpen(false);
                                 form.resetFields();
@@ -148,7 +149,7 @@ const ProjectListModal = ({
                             className="project_title_main_div"
                           >
                             <Link
-                              to={`/project/app/${item._id}?tab=Tasks`}
+                              to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
                               onClick={() => {
                                 setIsSearching(true);
                                 addVisitedData(item._id);

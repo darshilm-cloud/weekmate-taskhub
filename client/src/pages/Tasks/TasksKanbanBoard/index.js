@@ -70,6 +70,7 @@ const TaskList = ({
   updateTasks,
   updateTaskDraftStatus,
 }) => {
+  const companySlug = localStorage.getItem("companyDomain");
   const {
     dragged,
     onDragLeave,
@@ -1747,7 +1748,7 @@ const TaskList = ({
                           <div className="table-left">
                             <div className="flex-table">
                               <Link
-                                to={`/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
+                                to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
                               >
                                 {value?.title}
                               </Link>
@@ -2087,7 +2088,7 @@ const TaskList = ({
                           <div className="table-left">
                             <div className="flex-table">
                               <Link
-                                to={`/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
+                                to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
                               >
                                 {value?.title}
                               </Link>

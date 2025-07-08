@@ -6,6 +6,7 @@ import PermissionModuleController from "./PermissionModuleController";
 import "./PermissionModule.css";
 
 const PermissionModule = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   const {
     roleListData,
     permissionListData,
@@ -53,7 +54,7 @@ const PermissionModule = () => {
         dataIndex: "action",
         key: "action",
         render: (text, record) => {
-          const url = `/permission-access?role_id=${record._id}`;
+          const url = `/${companySlug}/permission-access?role_id=${record._id}`;
 
           return (
             <Link to={url}>

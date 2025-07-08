@@ -17,6 +17,7 @@ const { Option } = Select;
 dayjs.extend(quarterOfYear);
 
 const TimeSheet = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   const {
     value, project, projectType, manager, department, setDepartment, user,
     onRangeChange, isPopoverVisible, setIsPopoverVisible, handleOpenThreeDotMenu,
@@ -349,7 +350,7 @@ const TimeSheet = () => {
           return match?.charAt(0) + group1?.toUpperCase();
         });
         return (
-          <Link to={`project/app/${ProjectId}?tab=Time`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>

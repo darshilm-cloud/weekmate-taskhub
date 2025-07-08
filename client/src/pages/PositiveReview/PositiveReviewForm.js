@@ -26,6 +26,7 @@ const FORM_LAYOUT = {
 };
 
 const PositiveReviewForm = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   // Hooks
   const { review_id } = useParams();
   const [form] = Form.useForm();
@@ -167,7 +168,7 @@ const PositiveReviewForm = () => {
 
       if (response?.data?.data && (response.data.statusCode === 201 || response.data.statusCode === 200)) {
         message.success(response.data.message || "Review saved successfully");
-        history.push("/positive-review");
+        history.push(`/${companySlug}/positive-review`);
       } else {
         message.error(response?.data?.message || "Failed to save review");
       }
@@ -189,7 +190,7 @@ const PositiveReviewForm = () => {
   }, [getProjectDetails]);
 
   const handleCancel = useCallback(() => {
-    history.push("/positive-review");
+    history.push(`/${companySlug}/positive-review`);
   }, [history]);
 
   // Effects

@@ -23,6 +23,8 @@ import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import "./settings.css";
 
 function Workflows() {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const dispatch = useDispatch();
   const searchRef = useRef();
   const [addform] = Form.useForm();
@@ -58,7 +60,7 @@ function Workflows() {
             <Input defaultValue={position} />
           </span>
         ) : (
-          <Link to={`/workflows-tasks/${record?._id}`}>
+          <Link to={`/${companySlug}/workflows-tasks/${record?._id}`}>
             <span style={{ textTransform: "capitalize" }}>{position}</span>
           </Link>
         );

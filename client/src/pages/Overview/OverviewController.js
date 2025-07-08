@@ -8,6 +8,8 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 
 const OverviewController = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const dispatch = useDispatch();
   const history = useHistory();
   const { projectId } = useParams();
@@ -117,7 +119,7 @@ const OverviewController = () => {
   };
 
   const goToEditProjectPage = () => {
-    history.push(`/project-list/edit/${projectId}`);
+    history.push(`/${companySlug}/project-list/edit/${projectId}`);
   };
 
   const getAllTasks = async () => {

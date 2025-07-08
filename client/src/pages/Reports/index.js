@@ -68,6 +68,7 @@ const ProjectsRunning = () => {
     sortOrder,
   } = ProjectsRunningController();
 
+  const companySlug = localStorage.getItem("companyDomain");
   const [chartKey, setChartKey] = useState(0);
 
   // Memoized utility functions
@@ -89,7 +90,7 @@ const ProjectsRunning = () => {
       render: (_, record) => {
         const formattedTitle = formatTitle(record?.title);
         return (
-          <Link to={`project/app/${record?._id}?tab=${record?.defaultTab?.name}`}>
+          <Link to={`/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>

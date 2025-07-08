@@ -7,6 +7,7 @@ import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 
 const DiscussionTrash = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   const dispatch = useDispatch();
 
   const [pagination, setPagination] = useState({
@@ -57,7 +58,7 @@ const DiscussionTrash = () => {
         const ProjectId = record?.project?._id;
         const color = record?.color;
         return (
-          <Link to={`project/app/${ProjectId}?tab=Tasks`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>
           </div>

@@ -4,6 +4,7 @@ import Service from "../service";
 import PropTypes from 'prop-types';
 import TaskHub from "../assets/images/taskhubicon.svg"
 function ResetPassword({ match, computedMatch, history }) {
+  const companySlug = localStorage.getItem("companyDomain"); 
   const Logo = localStorage.getItem("LogoURL");
 
   const handleSubmit = async values => {
@@ -26,7 +27,7 @@ function ResetPassword({ match, computedMatch, history }) {
 
       if (response?.data) {
         message.success(response?.data?.message);
-        history.push("/signin");
+        history.push(`/${companySlug}/signin`);
       } else {
         message.error(response?.data?.message);
       }

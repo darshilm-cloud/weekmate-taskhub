@@ -479,7 +479,6 @@ export default class Service {
     //request interceptor to add the auth token header to requests
     axios.interceptors.request.use(
       (config) => {
-        console.log("🚀 ~ Service ~ config:", config)
         const accessToken = localStorage.getItem("accessToken");
         if (accessToken) {
           config.headers = {
@@ -540,11 +539,9 @@ export default class Service {
                 "refreshToken",
                 response.data.authToken.refreshToken
               );
-              console.log("Access token refreshed!");
               const res = await axios(originalRequest);
               return res;
             } else {
-              console.log("Refresh Token Error", error);
               return Promise.reject(response);
             }
           } catch (e) {

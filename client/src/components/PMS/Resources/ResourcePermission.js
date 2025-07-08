@@ -9,6 +9,7 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import "./ResourcePermission.css";
 
 function ResourcePermission(props) {
+  const companySlug = localStorage.getItem("companyDomain");
   const dispatch = useDispatch();
 
   const [pagination, setPagination] = useState({
@@ -96,7 +97,7 @@ function ResourcePermission(props) {
       <Card
         title={
           <>
-            <Link to="/project-users">
+            <Link to={`/${companySlug}/project-users`}>
               <ArrowLeftOutlined style={{ color: "black" }} />
             </Link>
             &nbsp; Roles Permission

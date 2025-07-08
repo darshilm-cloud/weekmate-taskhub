@@ -53,6 +53,8 @@ const setLocalStorageItem = (key, value) => {
 };
 
 const CompanyRegistration = () => {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const history = useHistory();
   const [form] = Form.useForm();
 
@@ -420,7 +422,7 @@ const CompanyRegistration = () => {
               <Button
                 className="view-btn"
                 icon={<UserOutlined />}
-                onClick={() => history.push("/admin/company-employee")}
+                onClick={() => history.push(`/${companySlug}/admin/company-employee`)}
               />
             </Tooltip>
             <Tooltip title="Edit">

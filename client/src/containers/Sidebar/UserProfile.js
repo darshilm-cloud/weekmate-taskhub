@@ -46,6 +46,8 @@ import { notificationType } from "../../settings/notificationTypes";
 import { UserProfileBaseUrl } from "../../constants";
 
 function UserProfile() {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const { authUser } = useSelector(({ auth }) => auth);
   const history = useHistory();
   const [emailSetting] = Form.useForm();
@@ -290,7 +292,7 @@ function UserProfile() {
         return {
           title: "Assign project",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
 
@@ -298,7 +300,7 @@ function UserProfile() {
         return {
           title: "Assign new task list",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&listID=${main_task_id}`
           ),
@@ -308,7 +310,7 @@ function UserProfile() {
         return {
           title: "Assign task",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
@@ -318,7 +320,7 @@ function UserProfile() {
         return {
           title: "Mention in task comment",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
@@ -328,7 +330,7 @@ function UserProfile() {
         return {
           title: "Task Comment added",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
@@ -338,21 +340,21 @@ function UserProfile() {
         return {
           title: "Subscribe in discussion",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
       case "discussionTagged":
         return {
           title: "Mention in discussion",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
       case "bugsAssigned":
         return {
           title: "Assign bug",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
@@ -361,7 +363,7 @@ function UserProfile() {
         return {
           title: "Mention in bug",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
@@ -370,7 +372,7 @@ function UserProfile() {
         return {
           title: "Hours logged in task",
           url: history.push(
-            `/project/app/${id}?tab=${
+            `/${companySlug}/project/app/${id}?tab=${
               checkNotificationType(type).tab
             }&loggedID=${logged_hours_id}`
           ),
@@ -379,21 +381,21 @@ function UserProfile() {
         return {
           title: "Subscribe in note",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
       case "noteCommentsTagged":
         return {
           title: "Mention in note",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
       case "fileSubscribed":
         return {
           title: "Subscribed in files",
           url: history.push(
-            `/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
           ),
         };
       default:
@@ -722,7 +724,7 @@ function UserProfile() {
   const admin = [
     {
       label: getRoles(["Admin"]) && (
-        <Link to="/workflows">
+        <Link to={`/${companySlug}/workflows`}>
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-workflow-setting-alt"></i>
@@ -734,7 +736,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/project-technologies">
+        <Link to={`/${companySlug}/project-technologies`}>
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-microchip"></i>
@@ -746,7 +748,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/manage-project-type">
+        <Link to={`/${companySlug}/manage-project-type`}>
           <span className="setting-menu">
             <i className="fi fi-rs-workflow-alt"></i>
             Project Types
@@ -757,7 +759,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/project-status">
+        <Link to={`/${companySlug}/project-status`}>
           <span className="setting-menu">
             <FaRegFileArchive />
             Status
@@ -768,7 +770,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/project-labels">
+        <Link to={`/${companySlug}/project-labels`}>
           <span className="setting-menu">
             <FaRegFileArchive />
             Labels
@@ -779,7 +781,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/resources">
+        <Link to={`/${companySlug}/resources`}>
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-poll-h"></i>
@@ -792,7 +794,7 @@ function UserProfile() {
 
     {
       label: (
-        <Link to="/project-archieved">
+        <Link to={`/${companySlug}/project-archieved`}>
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-poll-h"></i>
@@ -804,7 +806,7 @@ function UserProfile() {
     },
     {
       label: (
-        <Link to="/trash">
+        <Link to={`/${companySlug}/trash`}>
           <span className="setting-menu">
             {" "}
             <i class="fa fa-trash-o"></i>
@@ -819,7 +821,7 @@ function UserProfile() {
   const user = [
     {
       label: (
-        <Link to="/project-archieved">
+        <Link to={`/${companySlug}/project-archieved`}>
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-poll-h"></i>

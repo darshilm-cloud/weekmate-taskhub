@@ -576,7 +576,6 @@ useEffect(() => {
       });
 
       if (response?.data && response?.data?.data && response?.data?.status) {
-        // props.history.push("/employee-master");
         //Send Notification to user for logged Hours into Task or bugs:
         await emitEvent(socketEvents.ADD_TASK_LOGGED_HOURS, response.data.data);
         message.success(response.data.message);

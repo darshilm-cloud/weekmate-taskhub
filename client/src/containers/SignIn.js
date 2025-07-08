@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Button, Input, message, Form, Row, Col } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useHistory, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Service from "../service/index";
 import {
   userRole,
@@ -17,9 +17,8 @@ import { Modal, Typography } from "antd";
 
 function SignIn() {
   const { Title, Text } = Typography;
-  const history = useHistory();
   const dispatch = useDispatch();
-  const { verificationToken } = useParams();
+  const { verificationToken, companySlug } = useParams();
 
   const login_logo = localStorage.getItem("loginLogo");
   const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
@@ -79,6 +78,7 @@ function SignIn() {
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
+        localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
 
         //cookie
         setCookie(
@@ -89,10 +89,10 @@ function SignIn() {
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
         getRoles(["Client"])
-          ? (window.location.href = "/project-list") :
+          ? (window.location.href = `/${companySlug}/project-list`) :
           getRoles(["Admin"]) ?
-           (window.location.href = "/admin/dashboard") :
-          (window.location.href = "/dashboard")
+           (window.location.href = `/${companySlug}/admin/dashboard`) :
+          (window.location.href = `/${companySlug}/dashboard`)
 
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
@@ -251,7 +251,7 @@ function SignIn() {
                 <Form.Item>
                   <div style={{ textAlign: "center" }}>
                     Forgot your Login details?
-                    <Link to="/forgot-password">
+                    <Link to={`/${companySlug}/forgot-password`}>
                       &nbsp;Get help logging in.
                     </Link>
                   </div>

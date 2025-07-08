@@ -57,6 +57,7 @@ const RADIO_OPTIONS = {
 };
 
 const ProjectExpensesForm = () => {
+  const companySlug = localStorage.getItem("companyDomain");
   // Hooks
   const [form] = Form.useForm();
   const dispatch = useDispatch();
@@ -302,7 +303,7 @@ const ProjectExpensesForm = () => {
 
           if (response?.data?.data) {
             message.success(response.data.message);
-            history.push("/projectexpense");
+            history.push(`/${companySlug}/projectexpense`);
           } else {
             message.error(response.data.message);
           }
@@ -330,7 +331,7 @@ const ProjectExpensesForm = () => {
 
           if (response?.data?.statusCode === 201) {
             message.success(response.data.message);
-            history.push("/projectexpense");
+            history.push(`/${companySlug}/projectexpense`);
           } else {
             message.error(response.data.message);
           }
@@ -346,7 +347,7 @@ const ProjectExpensesForm = () => {
   );
 
   const handleCancel = useCallback(() => {
-    history.push("/projectexpense");
+    history.push(`/${companySlug}/projectexpense`);
   }, [history]);
 
   // Effects

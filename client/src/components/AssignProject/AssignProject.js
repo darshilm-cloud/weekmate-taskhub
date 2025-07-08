@@ -44,6 +44,8 @@ import { removeTitle } from "../../util/nameFilter";
 import { generateCacheKey } from "../../util/generateCacheKey";
 
 function AssignProject() {
+  const companySlug = localStorage.getItem("companyDomain");
+
   const [form] = Form.useForm();
   const { editProjectId } = useParams();
   const { emitEvent } = useSocketAction();
@@ -147,7 +149,7 @@ function AssignProject() {
     setShowEditor(!showEditor);
     form.resetFields();
     if (editProjectId) {
-      history.push(`/project/app/${editProjectId}`);
+      history.push(`/${companySlug}/project/app/${editProjectId}`);
     }
   };
 
@@ -295,7 +297,7 @@ function AssignProject() {
         );
 
         return (
-          <Link to={`project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>
@@ -947,7 +949,7 @@ function AssignProject() {
         });
 
         if (editProjectId) {
-          history.push(`/project/app/${editProjectId}`);
+          history.push(`/${companySlug}/project/app/${editProjectId}`);
         }
       } else {
         message.error(response?.data?.message);
