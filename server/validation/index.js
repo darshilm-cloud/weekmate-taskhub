@@ -66,6 +66,7 @@ class Validator {
     return Joi.object({
       email: this.emailValidator("Email is required"),
       password: this.passwordValidator("Password is required"),
+      slug: Joi.string().optional(), // For mobile device identification
       deviceId: Joi.string().optional(), // For mobile device identification
       fcmToken: Joi.string().optional() // FCM token for push notifications
     });
