@@ -299,11 +299,9 @@ function Resource() {
     <>
       <Card className="employee-card">
         <div className="resources-container">
-          <div className="profile-sub-head">
-            <div className="heading-main">
+      
+            <div className="heading-wrapper">
               <h2>Resources</h2>
-            </div>
-            <div className="head-box-inner">
               <Button
                 className="addleave-btn"
                 onClick={showModal}
@@ -312,6 +310,8 @@ function Resource() {
               >
                 + Add
               </Button>
+            </div>
+            <div className="global-search">
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -320,7 +320,7 @@ function Resource() {
                 onKeyUp={resetSearchFilter}
               />
             </div>
-          </div>
+      
 
           <Modal
             open={isModalOpen}

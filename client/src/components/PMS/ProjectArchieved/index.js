@@ -775,21 +775,18 @@ function ProjectArchieved() {
   return (
     <div className="ant-project-task archived-main-wrapper ">
       <Card>
-        <div className="profile-sub-head">
-          <div className="head-box-inner">
-            <div className="heading-main">
-              <h2>Archived Projects</h2>
-            </div>
-            <Search
-              ref={ searchRef }
-              placeholder="Search..."
-              style={ { width: 200 } }
-              onSearch={ onSearch }
-              onKeyUp={ resetSearchFilter }
-            />
-          </div>
-
-          <div className="status-content">
+        <div className="heading-wrapper">
+          <h2>Archived Projects</h2>
+        </div>
+        <div className="global-search">
+          <Search
+            ref={ searchRef }
+            placeholder="Search..."
+            style={ { width: 200 } }
+            onSearch={ onSearch }
+            onKeyUp={ resetSearchFilter }
+          />
+          <div className="filter-btn-wrapper">
             <Popover
               trigger="click"
               visible={ popOver.status }
@@ -918,7 +915,6 @@ function ProjectArchieved() {
                 </Button>
               </Popover>
             ) }
-// Technology Filter
             <Popover
               trigger="click"
               visible={ popOver.technology }
@@ -986,7 +982,6 @@ function ProjectArchieved() {
               </Button>
             </Popover>
 
-// Project Type Filter
             <Popover
               trigger="click"
               visible={ popOver.type }
@@ -1045,7 +1040,6 @@ function ProjectArchieved() {
               </Button>
             </Popover>
 
-// Assignees Filter
             <Popover
               trigger="click"
               visible={ popOver.assignees }
@@ -1113,7 +1107,6 @@ function ProjectArchieved() {
               </Button>
             </Popover>
 
-// Sort By Filter (already follows the pattern)
             <Popover
               trigger="click"
               visible={ popOver.sortBy }
@@ -1172,6 +1165,9 @@ function ProjectArchieved() {
               </Button>
             </Popover>
           </div>
+        </div>
+
+        <div className="profile-sub-head">
 
           <Modal
             title="Filter"

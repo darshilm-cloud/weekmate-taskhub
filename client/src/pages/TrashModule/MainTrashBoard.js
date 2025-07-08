@@ -79,13 +79,13 @@ const MainTrashBoard = () => {
     {
       key: "Project",
       label: (
-        <Menu.Item onClick={() => handleLiClick("Project")}>Project</Menu.Item>
+        <Menu.Item onClick={ () => handleLiClick("Project") }>Project</Menu.Item>
       ),
     },
     {
       key: "Discussion",
       label: (
-        <Menu.Item onClick={() => handleLiClick("Discussion")}>
+        <Menu.Item onClick={ () => handleLiClick("Discussion") }>
           Discussion
         </Menu.Item>
       ),
@@ -93,24 +93,24 @@ const MainTrashBoard = () => {
     {
       key: "Tasks",
       label: (
-        <Menu.Item onClick={() => handleLiClick("Tasks")}>Tasks</Menu.Item>
+        <Menu.Item onClick={ () => handleLiClick("Tasks") }>Tasks</Menu.Item>
       ),
     },
     {
       key: "Bugs",
-      label: <Menu.Item onClick={() => handleLiClick("Bugs")}>Bugs</Menu.Item>,
+      label: <Menu.Item onClick={ () => handleLiClick("Bugs") }>Bugs</Menu.Item>,
     },
     {
       key: "Notes",
       label: (
-        <Menu.Item onClick={() => handleLiClick("Notes")}>Notes</Menu.Item>
+        <Menu.Item onClick={ () => handleLiClick("Notes") }>Notes</Menu.Item>
       ),
     },
 
     {
       key: "Time",
       label: "Time",
-      label: <Menu.Item onClick={() => handleLiClick("Time")}>Time</Menu.Item>,
+      label: <Menu.Item onClick={ () => handleLiClick("Time") }>Time</Menu.Item>,
     },
   ];
   const updateTable = async () => {
@@ -252,25 +252,24 @@ const MainTrashBoard = () => {
     <>
       <div className="main-trash-wrapper">
         <Card>
-          <Header className="main-header">
-            <div className="trash-heaser-btn-wrapper">
-              <div className="project-name">
-                <h3>Trash</h3>
-              </div>
-            </div>
-            {windowWidth <= 991 ? (
+          <div className="heading-wrapper">
+            <h2>Trash</h2>
+          </div>
+
+          <div className="global-search">
+            { windowWidth <= 991 ? (
               <>
                 <Popover
                   content={
                     <Menu>
-                      {tabOptions.map(option => (
+                      { tabOptions.map(option => (
                         <Menu.Item
-                          key={option.key}
-                          onClick={() => handleLiClick(option.key)}
+                          key={ option.key }
+                          onClick={ () => handleLiClick(option.key) }
                         >
-                          {option.label}
+                          { option.label }
                         </Menu.Item>
-                      ))}
+                      )) }
                     </Menu>
                   }
                   placement="bottomLeft"
@@ -285,39 +284,39 @@ const MainTrashBoard = () => {
               <div className="header_tabination">
                 <ul className="tab_menu">
                   <li
-                    className={selectedTab === "Project" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Project")}
+                    className={ selectedTab === "Project" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Project") }
                   >
                     Project
                   </li>
                   <li
-                    className={selectedTab === "Discussion" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Discussion")}
+                    className={ selectedTab === "Discussion" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Discussion") }
                   >
                     Discussion
                   </li>
                   <li
-                    className={selectedTab === "Tasks" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Tasks")}
+                    className={ selectedTab === "Tasks" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Tasks") }
                   >
                     Tasks
                   </li>
                   <li
-                    className={selectedTab === "Bugs" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Bugs")}
+                    className={ selectedTab === "Bugs" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Bugs") }
                   >
                     Bugs
                   </li>
                   <li
-                    className={selectedTab === "Notes" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Notes")}
+                    className={ selectedTab === "Notes" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Notes") }
                   >
                     Notes
                   </li>
 
                   <li
-                    className={selectedTab === "Time" ? "active-tab" : ""}
-                    onClick={() => handleLiClick("Time")}
+                    className={ selectedTab === "Time" ? "active-tab" : "" }
+                    onClick={ () => handleLiClick("Time") }
                   >
                     Time
                   </li>
@@ -328,9 +327,9 @@ const MainTrashBoard = () => {
                       title="Do you really want to Restore?"
                       okText="Yes"
                       cancelText="No"
-                      onConfirm={handleRestore}
+                      onConfirm={ handleRestore }
                     >
-                      <Button type="link success" disabled={!isAnyRowSelected}>
+                      <Button type="link success" disabled={ !isAnyRowSelected }>
                         <RollbackOutlined />
                       </Button>
                     </Popconfirm>
@@ -340,34 +339,35 @@ const MainTrashBoard = () => {
                       title="Do you really want to Delete?"
                       okText="Yes"
                       cancelText="No"
-                      onConfirm={handleDelete}
+                      onConfirm={ handleDelete }
                     >
-                      <Button type="link delete" disabled={!isAnyRowSelected}>
+                      <Button type="link delete" disabled={ !isAnyRowSelected }>
                         <AiOutlineDelete
-                          style={{ fontSize: "18px", color: "red" }}
+                          style={ { fontSize: "18px", color: "red" } }
                         />
                       </Button>
                     </Popconfirm>
                   </Tooltip>
                 </div>
               </div>
-            )}
-          </Header>
+            ) }
+          </div>
+
 
           <div className="table-content">
             <Table
-              rowSelection={rowSelection}
-              scroll={{
+              rowSelection={ rowSelection }
+              scroll={ {
                 x: "100%",
-              }}
-              columns={columns}
-              dataSource={tableData}
-              pagination={{
+              } }
+              columns={ columns }
+              dataSource={ tableData }
+              pagination={ {
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30"],
                 showTotal: showTotal,
                 ...pagination,
-              }}
+              } }
               rowKey="_id"
             />
           </div>

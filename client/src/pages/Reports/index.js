@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Header } from "antd/lib/layout/layout";
-import { Form, Popover, Select, Space, Table } from "antd";
+import { Card, Form, Popover, Select, Space, Table } from "antd";
 import ReactApexChart from "react-apexcharts";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
@@ -24,7 +24,7 @@ const BREAKPOINTS = {
 
 // Memoized components
 const SortIcon = React.memo(({ sortOrder }) => (
-  sortOrder === "asc" 
+  sortOrder === "asc"
     ? <i className="fi fi-rr-arrow-small-up"></i>
     : <i className="fi fi-rr-arrow-small-down"></i>
 ));
@@ -73,12 +73,12 @@ const ProjectsRunning = () => {
 
   // Memoized utility functions
   const formatTitle = useCallback((title) => {
-    return title?.replace(/(?:^|\s)([a-z])/g, (match, group1) => 
+    return title?.replace(/(?:^|\s)([a-z])/g, (match, group1) =>
       match?.charAt(0) + group1?.toUpperCase()
     );
   }, []);
 
-  const formatDate = useCallback((date) => 
+  const formatDate = useCallback((date) =>
     moment(date).format("DD MMM YYYY"), []);
 
   // Memoized table columns
@@ -90,9 +90,9 @@ const ProjectsRunning = () => {
       render: (_, record) => {
         const formattedTitle = formatTitle(record?.title);
         return (
-          <Link to={`/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}`}>
+          <Link to={ `/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}` }>
             <div className="project_title_main_div">
-              <span>{formattedTitle}</span>
+              <span>{ formattedTitle }</span>
             </div>
           </Link>
         );
@@ -106,8 +106,8 @@ const ProjectsRunning = () => {
       width: 300,
       key: "managerName",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {removeTitle(record.managerName)}
+        <span style={ { textTransform: "capitalize" } }>
+          { removeTitle(record.managerName) }
         </span>
       ),
       sorter: (a, b) => a.managerName.localeCompare(b.managerName),
@@ -119,8 +119,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.technologyName[0].localeCompare(b.technologyName[0]),
       key: "technologyName",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {record.technologyName.join(" , ")}
+        <span style={ { textTransform: "capitalize" } }>
+          { record.technologyName.join(" , ") }
         </span>
       ),
     },
@@ -131,8 +131,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
       key: "projecttypeName",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {record.project_typeName}
+        <span style={ { textTransform: "capitalize" } }>
+          { record.project_typeName }
         </span>
       ),
     },
@@ -143,8 +143,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.estimatedHours.localeCompare(b.estimatedHours),
       key: "estimatedHours",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {record.estimatedHours}
+        <span style={ { textTransform: "capitalize" } }>
+          { record.estimatedHours }
         </span>
       ),
     },
@@ -155,8 +155,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.total_logged_time.localeCompare(b.total_logged_time),
       key: "total_logged_time",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {record.total_logged_time}
+        <span style={ { textTransform: "capitalize" } }>
+          { record.total_logged_time }
         </span>
       ),
     },
@@ -167,8 +167,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.start_date.localeCompare(b.start_date),
       key: "start_date",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {formatDate(record.start_date)}
+        <span style={ { textTransform: "capitalize" } }>
+          { formatDate(record.start_date) }
         </span>
       ),
     },
@@ -179,8 +179,8 @@ const ProjectsRunning = () => {
       sorter: (a, b) => a.end_date.localeCompare(b.end_date),
       key: "end_date",
       render: (_, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {formatDate(record.end_date)}
+        <span style={ { textTransform: "capitalize" } }>
+          { formatDate(record.end_date) }
         </span>
       ),
     },
@@ -191,7 +191,7 @@ const ProjectsRunning = () => {
     const filteredProjectTypeData = projectTypeData.filter(
       entry => entry.project_typeName
     );
-    
+
     return {
       filteredProjectTypeData,
       projectTypeReportData: filteredProjectTypeData.map(entry => entry.totalProjects),
@@ -204,7 +204,7 @@ const ProjectsRunning = () => {
   // Memoized chart configurations
   const pieChartData = useMemo(() => {
     if (!pieeChartData || pieeChartData.length === 0) return null;
-    
+
     return {
       series: pieeChartData,
       options: {
@@ -229,9 +229,9 @@ const ProjectsRunning = () => {
 
   const horizontalBarChartData = useMemo(() => {
     const { filteredProjectTypeData, projectTypeReportData, projectTypeLabels } = processedChartData;
-    
+
     if (filteredProjectTypeData.length === 0) return null;
-    
+
     return {
       series: [
         {
@@ -297,9 +297,9 @@ const ProjectsRunning = () => {
 
   const verticalBarChartData = useMemo(() => {
     const { technologyReportData, technologyLabels } = processedChartData;
-    
+
     if (!technologiesData || technologiesData.length === 0) return null;
-    
+
     return {
       series: [
         {
@@ -406,33 +406,33 @@ const ProjectsRunning = () => {
     mode = "multiple"
   ) => (
     <div className="project-running-reports-fillter">
-      <Form.Item name={name}>
+      <Form.Item name={ name }>
         <Select
-          placeholder={placeholder}
-          mode={mode}
+          placeholder={ placeholder }
+          mode={ mode }
           showSearch
-          value={value}
-          onChange={onChange}
-          filterOption={(input, option) =>
+          value={ value }
+          onChange={ onChange }
+          filterOption={ (input, option) =>
             option.children
               ?.toLowerCase()
               .indexOf(input?.toLowerCase()) >= 0
           }
-          filterSort={(optionA, optionB) =>
+          filterSort={ (optionA, optionB) =>
             optionA.children
               ?.toLowerCase()
               .localeCompare(optionB.children?.toLowerCase())
           }
         >
-          {options.map((item, index) => (
+          { options.map((item, index) => (
             <Option
-              key={index}
-              value={item[valueKey]}
-              style={{ textTransform: "capitalize" }}
+              key={ index }
+              value={ item[valueKey] }
+              style={ { textTransform: "capitalize" } }
             >
-              {labelKey === "manager_name" ? removeTitle(item[labelKey]) : item[labelKey]}
+              { labelKey === "manager_name" ? removeTitle(item[labelKey]) : item[labelKey] }
             </Option>
-          ))}
+          )) }
         </Select>
       </Form.Item>
     </div>
@@ -440,178 +440,181 @@ const ProjectsRunning = () => {
 
   const renderSortOptions = useCallback(() => (
     <div className="project-runnig-sort-by-listing">
-      {sortOptions.map(({ key, label }) => (
-        <p key={key} onClick={() => handleSortSelect(key)}>
-          {label}
-          {selectedSort === key && <SortIcon sortOrder={sortOrder} />}
+      { sortOptions.map(({ key, label }) => (
+        <p key={ key } onClick={ () => handleSortSelect(key) }>
+          { label }
+          { selectedSort === key && <SortIcon sortOrder={ sortOrder } /> }
         </p>
-      ))}
+      )) }
     </div>
   ), [sortOptions, handleSortSelect, selectedSort, sortOrder]);
 
   const renderChart = useCallback((chartData, type, width = "100%") => {
     if (!chartData) return null;
-    
+
     return (
       <ReactApexChart
-        key={type === "pie" ? chartKey : undefined}
-        options={chartData.options}
-        series={chartData.series}
-        type={type}
-        width={width}
+        key={ type === "pie" ? chartKey : undefined }
+        options={ chartData.options }
+        series={ chartData.series }
+        type={ type }
+        width={ width }
       />
     );
   }, [chartKey]);
 
   return (
-    <div className="main-time-sheet-project-wrapper">
-      <Header className="main-header">
-        <div className="project-name">
-          <h3 style={{ textTransform: "capitalize" }}>Projects-Running</h3>
+    <Card className="employee-card">
+
+      <div className="heading-wrapper">
+
+        <h2>Projects-Running</h2>
+
+      </div>
+
+      <div className="global-search" >
+
+        <div className="header">
+
+          <h2>Filter</h2>
         </div>
-      </Header>
-      
-      <div className="project-wrapper new-project-overview project-running-reports">
-        <div className="peoject-page">
-          <div className="header">
-            <div className="project-running-reports-fillter-wrapper">
-              <h1 style={{ textTransform: "capitalize" }}>Filter</h1>
-              
-              {renderFilterSelect(
-                "technology",
-                "Technology",
-                value,
-                handleTechnologyChange,
-                technologyList,
-                "_id",
-                "project_tech"
-              )}
-              
-              {renderFilterSelect(
-                "projectManager",
-                "Project Manager",
-                projectManager,
-                handleManagerChange,
-                projectManagerList,
-                "_id",
-                "manager_name"
-              )}
-              
-              {renderFilterSelect(
-                "projectype",
-                "Project Type",
-                projectType,
-                handleTypeChange,
-                projectTypeList,
-                "_id",
-                "project_type"
-              )}
-            </div>
-            
-            <div className="project-running-reports-fillter">
-              <h3>Total Projects</h3>
-              <span>{metaDataOfReports.total}</span>
-            </div>
-          </div>
+        <div className="filter-btn-wrapper projects-running">
 
-          <div className="project-panel-header">
-            <div
-              className="project-runnig-data-wrapper"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-              }}
-            >
-              {renderChart(pieChartData, "pie")}
-              {renderChart(horizontalBarChartData, "bar")}
-              {renderChart(verticalBarChartData, "bar")}
-            </div>
+          { renderFilterSelect(
+            "technology",
+            "Technology",
+            value,
+            handleTechnologyChange,
+            technologyList,
+            "_id",
+            "project_tech"
+          ) }
 
-            <div
-              className="project-panel-table-data"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
-              {tableData && tableData.length > 0 && (
-                <Popover
-                  placement="left"
-                  visible={isPopoverVisible}
-                  onVisibleChange={handlePopoverClose}
-                  content={
-                    <>
-                      <div onClick={() => setIsPopoverVisible(true)}>
-                        <Popover
-                          placement="rightTop"
-                          visible={sortbyPopUp}
-                          onVisibleChange={setIssortbyPopUp}
-                          content={renderSortOptions()}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                            className="project-running-sort-by-popup"
-                          >
-                            <i className="fi fi-rr-caret-left"></i>
-                            <p>sortBy</p>
-                          </div>
-                        </Popover>
-                      </div>
+          { renderFilterSelect(
+            "projectManager",
+            "Project Manager",
+            projectManager,
+            handleManagerChange,
+            projectManagerList,
+            "_id",
+            "manager_name"
+          ) }
 
-                      <p onClick={handleExportClick} style={{ cursor: "pointer" }}>
-                        Export
-                      </p>
-                      <p onClick={handleResetClick} style={{ cursor: "pointer" }}>
-                        Reset
-                      </p>
-                    </>
-                  }
-                >
-                  <Space align="end" style={{ marginRight: 10 }}>
-                    <i
-                      onClick={handleOpenThreeDotMenu}
-                      style={{ cursor: "pointer" }}
-                      className="fi fi-br-menu-dots-vertical"
-                    ></i>
-                  </Space>
-                </Popover>
-              )}
-
-              <div hidden>
-                <ReactHTMLTableToExcel
-                  id="test-table-xls-button"
-                  className="ant-btn-primary"
-                  table="table-to-xls"
-                  filename="Projects"
-                  sheet="tablexls"
-                  buttonText="Export XLS"
-                />
-                <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
-              </div>
-              
-              {tableData && tableData.length > 0 ? (
-                <Table
-                  columns={columns}
-                  dataSource={tableData}
-                  pagination={{
-                    showSizeChanger: true,
-                    pageSizeOptions: ["10", "20", "30"],
-                    showTotal: showTotal,
-                    ...pagination,
-                  }}
-                  onChange={handleTableChange}
-                />
-              ) : (
-                <NoDataFound />
-              )}
-            </div>
+          { renderFilterSelect(
+            "projectype",
+            "Project Type",
+            projectType,
+            handleTypeChange,
+            projectTypeList,
+            "_id",
+            "project_type"
+          ) }
+          <div className="project-running-reports-fillter">
+            <h3>Total Projects</h3>
+            <span>{ metaDataOfReports.total }</span>
           </div>
         </div>
       </div>
-    </div>
+
+
+
+      <div className="project-panel-header">
+        <div
+          className="project-runnig-data-wrapper"
+          style={ {
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          } }
+        >
+          { renderChart(pieChartData, "pie") }
+          { renderChart(horizontalBarChartData, "bar") }
+          { renderChart(verticalBarChartData, "bar") }
+        </div>
+
+        <div
+          className="project-panel-table-data"
+          onMouseEnter={ handleMouseEnter }
+          onMouseLeave={ handleMouseLeave }
+        >
+          { tableData && tableData.length > 0 && (
+            <Popover
+              placement="left"
+              visible={ isPopoverVisible }
+              onVisibleChange={ handlePopoverClose }
+              content={
+                <>
+                  <div onClick={ () => setIsPopoverVisible(true) }>
+                    <Popover
+                      placement="rightTop"
+                      visible={ sortbyPopUp }
+                      onVisibleChange={ setIssortbyPopUp }
+                      content={ renderSortOptions() }
+                    >
+                      <div
+                        style={ {
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        } }
+                        className="project-running-sort-by-popup"
+                      >
+                        <i className="fi fi-rr-caret-left"></i>
+                        <p>sortBy</p>
+                      </div>
+                    </Popover>
+                  </div>
+
+                  <p onClick={ handleExportClick } style={ { cursor: "pointer" } }>
+                    Export
+                  </p>
+                  <p onClick={ handleResetClick } style={ { cursor: "pointer" } }>
+                    Reset
+                  </p>
+                </>
+              }
+            >
+              <Space align="end" style={ { marginRight: 10 } }>
+                <i
+                  onClick={ handleOpenThreeDotMenu }
+                  style={ { cursor: "pointer" } }
+                  className="fi fi-br-menu-dots-vertical"
+                ></i>
+              </Space>
+            </Popover>
+          ) }
+
+          <div hidden>
+            <ReactHTMLTableToExcel
+              id="test-table-xls-button"
+              className="ant-btn-primary"
+              table="table-to-xls"
+              filename="Projects"
+              sheet="tablexls"
+              buttonText="Export XLS"
+            />
+            <div dangerouslySetInnerHTML={ { __html: html["html"] } }></div>
+          </div>
+
+          { tableData && tableData.length > 0 ? (
+            <Table
+              columns={ columns }
+              dataSource={ tableData }
+              pagination={ {
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "30"],
+                showTotal: showTotal,
+                ...pagination,
+              } }
+              onChange={ handleTableChange }
+            />
+          ) : (
+            <NoDataFound />
+          ) }
+        </div>
+      </div>
+
+    </Card>
   );
 };
 

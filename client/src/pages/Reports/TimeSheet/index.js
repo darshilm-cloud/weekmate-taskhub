@@ -4,7 +4,7 @@ import ReactApexChart from "react-apexcharts";
 import TimeSheetController from "./TimeSheetController";
 import "./timesheet.css";
 import dayjs from "dayjs";
-import { DatePicker, Space, Select, Table, Popover } from "antd";
+import { DatePicker, Space, Select, Table, Popover, Card } from "antd";
 import moment from "moment";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
@@ -60,7 +60,7 @@ const TimeSheet = () => {
   // Memoized chart configurations
   const pieChartConfig = useMemo(() => {
     if (pieeChartData.length === 0) return null;
-    
+
     return {
       series: pieeChartData,
       options: {
@@ -80,7 +80,7 @@ const TimeSheet = () => {
             horizontal: 5,
             vertical: 2
           },
-          formatter: function(seriesName, opts) {
+          formatter: function (seriesName, opts) {
             // Truncate long names and add tooltip
             if (seriesName.length > 15) {
               return seriesName.substring(0, 15) + "...";
@@ -332,8 +332,8 @@ const TimeSheet = () => {
       width: 300,
       key: "user",
       render: (text, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {removeTitle(record.user)}
+        <span style={ { textTransform: "capitalize" } }>
+          { removeTitle(record.user) }
         </span>
       ),
       sorter: (a, b) => a.user.localeCompare(b.user),
@@ -346,13 +346,13 @@ const TimeSheet = () => {
       render: (text, record) => {
         const Title = record?.project;
         const ProjectId = record?.project_id;
-        const formattedTitle = Title?.replace(/(?:^|\s)([a-z])/g, function(match, group1) {
+        const formattedTitle = Title?.replace(/(?:^|\s)([a-z])/g, function (match, group1) {
           return match?.charAt(0) + group1?.toUpperCase();
         });
         return (
-          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
+          <Link to={ `/${companySlug}/project/app/${ProjectId}?tab=Time` }>
             <div className="project_title_main_div">
-              <span>{formattedTitle}</span>
+              <span>{ formattedTitle }</span>
             </div>
           </Link>
         );
@@ -368,11 +368,11 @@ const TimeSheet = () => {
         text ? (
           <div
             className="time-description-text"
-            dangerouslySetInnerHTML={{
-              __html: text.length > 10 
-                ? text.slice(0, 15).replace(/\n/g, '<br>') + "..." 
+            dangerouslySetInnerHTML={ {
+              __html: text.length > 10
+                ? text.slice(0, 15).replace(/\n/g, '<br>') + "..."
                 : text.replace(/\n/g, '<br>'),
-            }}
+            } }
           />
         ) : (
           "-"
@@ -386,7 +386,7 @@ const TimeSheet = () => {
       key: "logged_date",
       render: (text, record) => {
         const startDate = moment(record.logged_date).format("DD MMM YYYY");
-        return <span style={{ textTransform: "capitalize" }}>{startDate}</span>;
+        return <span style={ { textTransform: "capitalize" } }>{ startDate }</span>;
       },
       sorter: (a, b) => a.logged_date - b.logged_date,
     },
@@ -395,8 +395,8 @@ const TimeSheet = () => {
       width: 50,
       dataIndex: "logged_time",
       render: (text, record) => (
-        <span style={{ textTransform: "capitalize" }}>
-          {record.logged_time}
+        <span style={ { textTransform: "capitalize" } }>
+          { record.logged_time }
         </span>
       ),
       sorter: (a, b) => a.logged_hours - b.logged_hours,
@@ -433,313 +433,309 @@ const TimeSheet = () => {
   // Memoized sort indicators
   const SortIndicator = useCallback(({ field }) => {
     if (selectedSort !== field) return null;
-    return sortOrder === "asc" 
+    return sortOrder === "asc"
       ? <i className="fi fi-rr-arrow-small-up" />
       : <i className="fi fi-rr-arrow-small-down" />;
   }, [selectedSort, sortOrder]);
 
   return (
-    <div className="time-sheet-report-main-wrapper">
-      <Header className="main-header">
-        <div className="project-name">
-          <h3 style={{ textTransform: "capitalize" }}>TimeSheet</h3>
-          <div className="timesheet-startend-date">
-            <RangePicker 
-              value={selectedRange} 
-              presets={rangePresets} 
-              onChange={onRangeChange} 
-            />
-          </div>
+    <Card className="employee-card">
+
+      <div className="heading-wrapper">
+        <h2 >TimeSheet</h2>
+        <div className="timesheet-startend-date">
+          <RangePicker
+            value={ selectedRange }
+            presets={ rangePresets }
+            onChange={ onRangeChange }
+          />
         </div>
-      </Header>
-
-      <div className="project-wrapper new-project-overview time-sheet">
-        <div className="peoject-page">
-          <div className="header" style={{ display: "flex", justifyContent: "space-between" }}>
-            <Select
-              placeholder="Technology"
-              mode="multiple"
-              showSearch
-              {...filterOptions}
-              value={value}
-              onChange={handleTechnologyChange}
-            >
-              {technologyList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {item?.project_tech}
-                </Option>
-              ))}
-            </Select>
-
-            <Select
-              mode="multiple"
-              {...filterOptions}
-              value={project}
-              onChange={handleProjectChange}
-              showSearch
-              placeholder="Project"
-            >
-              {projectList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {item.title}
-                </Option>
-              ))}
-            </Select>
-
-            <Select
-              mode="multiple"
-              value={projectType}
-              onChange={handleTypeChange}
-              showSearch
-              placeholder="Project Type"
-              {...filterOptions}
-            >
-              {projectTypeList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {item.project_type}
-                </Option>
-              ))}
-            </Select>
-
-            <Select
-              mode="multiple"
-              value={manager}
-              {...filterOptions}
-              onChange={handleManagerChange}
-              showSearch
-              placeholder="Manager"
-            >
-              {projectManagerList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {removeTitle(item.manager_name)}
-                </Option>
-              ))}
-            </Select>
-
-            <Select
-              mode="multiple"
-              value={department}
-              onChange={handleDepartmentSelection}
-              showSearch
-              placeholder="Department"
-              {...filterOptions}
-            >
-              {departmentList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {item.sub_department_name}
-                </Option>
-              ))}
-            </Select>
-
-            <Select
-              mode="multiple"
-              value={user}
-              onChange={handleUserChange}
-              showSearch
-              placeholder="User"
-              {...filterOptions}
-            >
-              {userEmployeeList.map((item, index) => (
-                <Option
-                  key={index}
-                  value={item._id}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {removeTitle(item.full_name)}
-                </Option>
-              ))}
-            </Select>
-
-            <div className="panel-total-hours">
-              <h3>Total Hours</h3>
-              <span>{totalLoggedHours}</span>
-            </div>
-          </div>
-
-          <div className="project-panel-header">
-            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
-              {pieChartConfig && (
-                <div style={{ flex: "0 0 auto", minWidth: "350px", maxWidth: "600px" }}>
-                  <ReactApexChart
-                    key={chartKey}
-                    options={pieChartConfig.options}
-                    series={pieChartConfig.series}
-                    type="pie"
-                    className="timesheetchart"
-                    width="100%"
-                  />
-                </div>
-              )}
-              {horizontalBarChartConfig && (
-                <div style={{ flex: "1 1 auto", minWidth: "300px" }}>
-                  <ReactApexChart
-                    options={horizontalBarChartConfig.options}
-                    series={horizontalBarChartConfig.series}
-                    type="bar"
-                    className="timesheetchart"
-                    width="100%"
-                  />
-                </div>
-              )}
-              {verticalBarChartConfig && (
-                <div style={{ flex: "1 1 auto", minWidth: "300px" }}>
-                  <ReactApexChart
-                    options={verticalBarChartConfig.options}
-                    series={verticalBarChartConfig.series}
-                    type="bar"
-                    className="timesheetchart"
-                    width="100%"
-                  />
-                </div>
-              )}
-              {verticalBarChartHoursConfig && (
-                <div style={{ flex: "1 1 auto", minWidth: "300px" }}>
-                  <ReactApexChart
-                    className="right-time-sheet-data"
-                    options={verticalBarChartHoursConfig.options}
-                    series={verticalBarChartHoursConfig.series}
-                    type="bar"
-                    width="100%"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="sheet-data-wrapper" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div
-                className="left-time-sheet-data"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+      </div>
+      <div className="global-search" >
+        <div className="filter-btn-wrapper timesheet">
+          <Select
+            placeholder="Technology"
+            mode="multiple"
+            showSearch
+            { ...filterOptions }
+            value={ value }
+            onChange={ handleTechnologyChange }
+          >
+            { technologyList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
               >
-                {tableData && tableData.length > 0 && (
-                  <Popover
-                    placement="left"
-                    visible={isPopoverVisible}
-                    onVisibleChange={handlePopoverVisibilityChange}
-                    content={
-                      <>
-                        <div
-                          onClick={() => setIsPopoverVisible(true)}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                          className="time-sheet-sort-by-popup"
-                        >
-                          <Popover
-                            placement="right"
-                            visible={sortbyPopUp}
-                            onVisibleChange={setIssortbyPopUp}
-                            overlayStyle={{ marginLeft: 16 }}
-                            trigger="click"
-                            content={
-                              <div className="time-sheet-short-by-listing">
-                                {[
-                                  { key: "user", label: "User" },
-                                  { key: "project", label: "Project" },
-                                  { key: "descriptions", label: "Description" },
-                                  { key: "logged_date", label: "Date" },
-                                  { key: "logged_time", label: "Hours" },
-                                ].map(({ key, label }) => (
-                                  <p key={key} onClick={() => handleSortSelect(key)}>
-                                    {label}
-                                    <SortIndicator field={key} />
-                                  </p>
-                                ))}
-                              </div>
-                            }
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                              }}
-                              className="time-sheet-sort-by-popup"
-                            >
-                              <p>sortBy</p>
-                              <i className="fi fi-rr-caret-right" />
-                            </div>
-                          </Popover>
-                        </div>
-                        <p onClick={handleCsvExport} style={{ cursor: "pointer" }}>
-                          Export
-                        </p>
-                        <p onClick={onReset} style={{ cursor: "pointer" }}>
-                          Reset
-                        </p>
-                      </>
-                    }
-                  >
-                    <Space align="end" style={{ marginRight: 10 }}>
-                      <i
-                        onClick={handleOpenThreeDotMenu}
-                        style={{ cursor: "pointer" }}
-                        className="fi fi-br-menu-dots-vertical"
-                      />
-                    </Space>
-                  </Popover>
-                )}
+                { item?.project_tech }
+              </Option>
+            )) }
+          </Select>
 
-                <div hidden>
-                  <ReactHTMLTableToExcel
-                    id="test-table-xls-button"
-                    className="ant-btn-primary"
-                    table="table-to-xls"
-                    filename="Timesheet"
-                    sheet="tablexls"
-                    buttonText="Export XLS"
-                  />
-                  <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
-                </div>
+          <Select
+            mode="multiple"
+            { ...filterOptions }
+            value={ project }
+            onChange={ handleProjectChange }
+            showSearch
+            placeholder="Project"
+          >
+            { projectList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
+              >
+                { item.title }
+              </Option>
+            )) }
+          </Select>
 
-                {tableData && tableData.length > 0 ? (
-                  <Table
-                    size="small"
-                    columns={columns}
-                    dataSource={tableData}
-                    pagination={{
-                      showSizeChanger: true,
-                      pageSizeOptions: ["10", "20", "30"],
-                      showTotal: showTotal,
-                      ...pagination,
-                    }}
-                    onChange={handleTableChange}
-                    className="custom-table"
-                    headerClassName="custom-header-row"
-                  />
-                ) : (
-                  <div className="no-data-found">
-                    <h1>No Data</h1>
-                  </div>
-                )}
-              </div>
-            </div>
+          <Select
+            mode="multiple"
+            value={ projectType }
+            onChange={ handleTypeChange }
+            showSearch
+            placeholder="Project Type"
+            { ...filterOptions }
+          >
+            { projectTypeList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
+              >
+                { item.project_type }
+              </Option>
+            )) }
+          </Select>
+
+          <Select
+            mode="multiple"
+            value={ manager }
+            { ...filterOptions }
+            onChange={ handleManagerChange }
+            showSearch
+            placeholder="Manager"
+          >
+            { projectManagerList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
+              >
+                { removeTitle(item.manager_name) }
+              </Option>
+            )) }
+          </Select>
+
+          <Select
+            mode="multiple"
+            value={ department }
+            onChange={ handleDepartmentSelection }
+            showSearch
+            placeholder="Department"
+            { ...filterOptions }
+          >
+            { departmentList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
+              >
+                { item.sub_department_name }
+              </Option>
+            )) }
+          </Select>
+
+          <Select
+            mode="multiple"
+            value={ user }
+            onChange={ handleUserChange }
+            showSearch
+            placeholder="User"
+            { ...filterOptions }
+          >
+            { userEmployeeList.map((item, index) => (
+              <Option
+                key={ index }
+                value={ item._id }
+                style={ { textTransform: "capitalize" } }
+              >
+                { removeTitle(item.full_name) }
+              </Option>
+            )) }
+          </Select>
+
+          <div className="panel-total-hours">
+            <h3>Total Hours</h3>
+            <span>{ totalLoggedHours }</span>
           </div>
         </div>
       </div>
-    </div>
+      <div className="project-panel-header">
+        <div style={ { display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" } }>
+          { pieChartConfig && (
+            <div style={ { flex: "0 0 auto", minWidth: "350px", maxWidth: "600px" } }>
+              <ReactApexChart
+                key={ chartKey }
+                options={ pieChartConfig.options }
+                series={ pieChartConfig.series }
+                type="pie"
+                className="timesheetchart"
+                width="100%"
+              />
+            </div>
+          ) }
+          { horizontalBarChartConfig && (
+            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
+              <ReactApexChart
+                options={ horizontalBarChartConfig.options }
+                series={ horizontalBarChartConfig.series }
+                type="bar"
+                className="timesheetchart"
+                width="100%"
+              />
+            </div>
+          ) }
+          { verticalBarChartConfig && (
+            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
+              <ReactApexChart
+                options={ verticalBarChartConfig.options }
+                series={ verticalBarChartConfig.series }
+                type="bar"
+                className="timesheetchart"
+                width="100%"
+              />
+            </div>
+          ) }
+          { verticalBarChartHoursConfig && (
+            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
+              <ReactApexChart
+                className="right-time-sheet-data"
+                options={ verticalBarChartHoursConfig.options }
+                series={ verticalBarChartHoursConfig.series }
+                type="bar"
+                width="100%"
+              />
+            </div>
+          ) }
+        </div>
+
+        <div className="sheet-data-wrapper" style={ { display: "flex", justifyContent: "space-between" } }>
+          <div
+            className="left-time-sheet-data"
+            onMouseEnter={ handleMouseEnter }
+            onMouseLeave={ handleMouseLeave }
+          >
+            { tableData && tableData.length > 0 && (
+              <Popover
+                placement="left"
+                visible={ isPopoverVisible }
+                onVisibleChange={ handlePopoverVisibilityChange }
+                content={
+                  <>
+                    <div
+                      onClick={ () => setIsPopoverVisible(true) }
+                      style={ {
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      } }
+                      className="time-sheet-sort-by-popup"
+                    >
+                      <Popover
+                        placement="right"
+                        visible={ sortbyPopUp }
+                        onVisibleChange={ setIssortbyPopUp }
+                        overlayStyle={ { marginLeft: 16 } }
+                        trigger="click"
+                        content={
+                          <div className="time-sheet-short-by-listing">
+                            { [
+                              { key: "user", label: "User" },
+                              { key: "project", label: "Project" },
+                              { key: "descriptions", label: "Description" },
+                              { key: "logged_date", label: "Date" },
+                              { key: "logged_time", label: "Hours" },
+                            ].map(({ key, label }) => (
+                              <p key={ key } onClick={ () => handleSortSelect(key) }>
+                                { label }
+                                <SortIndicator field={ key } />
+                              </p>
+                            )) }
+                          </div>
+                        }
+                      >
+                        <div
+                          style={ {
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          } }
+                          className="time-sheet-sort-by-popup"
+                        >
+                          <p>sortBy</p>
+                          <i className="fi fi-rr-caret-right" />
+                        </div>
+                      </Popover>
+                    </div>
+                    <p onClick={ handleCsvExport } style={ { cursor: "pointer" } }>
+                      Export
+                    </p>
+                    <p onClick={ onReset } style={ { cursor: "pointer" } }>
+                      Reset
+                    </p>
+                  </>
+                }
+              >
+                <Space align="end" style={ { marginRight: 10 } }>
+                  <i
+                    onClick={ handleOpenThreeDotMenu }
+                    style={ { cursor: "pointer" } }
+                    className="fi fi-br-menu-dots-vertical"
+                  />
+                </Space>
+              </Popover>
+            ) }
+
+            <div hidden>
+              <ReactHTMLTableToExcel
+                id="test-table-xls-button"
+                className="ant-btn-primary"
+                table="table-to-xls"
+                filename="Timesheet"
+                sheet="tablexls"
+                buttonText="Export XLS"
+              />
+              <div dangerouslySetInnerHTML={ { __html: html["html"] } } />
+            </div>
+
+            { tableData && tableData.length > 0 ? (
+              <Table
+                size="small"
+                columns={ columns }
+                dataSource={ tableData }
+                pagination={ {
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "30"],
+                  showTotal: showTotal,
+                  ...pagination,
+                } }
+                onChange={ handleTableChange }
+                className="custom-table"
+                headerClassName="custom-header-row"
+              />
+            ) : (
+              <div className="no-data-found">
+                <h1>No Data</h1>
+              </div>
+            ) }
+          </div>
+        </div>
+      </div>
+
+    </Card>
   );
 };
 

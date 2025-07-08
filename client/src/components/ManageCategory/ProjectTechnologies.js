@@ -297,11 +297,9 @@ const ProjectTechnologies = () => {
   return (
     <Card className="employee-card">
       <div className="project-technology-container">
-        <div className="profile-sub-head">
-          <div className="heading-main">
+     
+          <div className="heading-wrapper">
             <h2>Project Technologies</h2>
-          </div>
-          <div className="head-box-inner">
             <Button
               className="addleave-btn"
               type="primary"
@@ -309,6 +307,8 @@ const ProjectTechnologies = () => {
             >
               + Add
             </Button>
+          </div>
+          <div className="global-search">
             <Input.Search
               ref={searchRef}
               placeholder="Search..."
@@ -375,7 +375,7 @@ const ProjectTechnologies = () => {
             onChange={handleTableChange}
           />
         </div>
-      </div>
+      
     </Card>
   );
 };

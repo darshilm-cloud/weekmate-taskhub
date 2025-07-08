@@ -205,10 +205,14 @@
 }
 
 .left-time-sheet-data .no-data-found {
-  text-align: center;
-  opacity: 0.3;
+    position: absolute;
+    left: 50%;
+    top: 50%;
 }
+.left-time-sheet-data .no-data-found  h1{
+    color: #adadad;
 
+}
 .time-wrapper-left .sidebar-menu-links .active>div {
   word-break: break-word;
 }
