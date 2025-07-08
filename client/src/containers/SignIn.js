@@ -16,9 +16,9 @@ import TaskHub from "../assets/images/taskhubicon.svg";
 import { Modal, Typography } from "antd";
 
 function SignIn() {
-  const { Title, Text } = Typography;
-  const dispatch = useDispatch();
   const { verificationToken, companySlug } = useParams();
+  const dispatch = useDispatch();
+  const { Title, Text } = Typography;
 
   const login_logo = localStorage.getItem("loginLogo");
   const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
@@ -131,7 +131,6 @@ function SignIn() {
       centered: true,
     });
   };
-
 
   return (
     <div className="gx-app-login-wrap account-login">
