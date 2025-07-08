@@ -61,6 +61,7 @@ function SignIn() {
       const reqBody = {
         email: values.email.trim(),
         password: values.password.trim(),
+        slug: companySlug
       };
 
       const response = await Service.makeAPICall({
