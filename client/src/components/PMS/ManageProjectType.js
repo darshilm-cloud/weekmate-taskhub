@@ -298,14 +298,15 @@ function ManageProjectType() {
     <>
       <Card className="employee-card">
         <div className="project-type-container">
-          <div className="profile-sub-head">
-            <div className="heading-main">
+         
+            <div className="heading-wrapper">
               <h2>Project Type</h2>
-            </div>
-            <div className="head-box-inner">
+          
               <Button onClick={showModal} type="primary">
                 + Add
               </Button>
+            </div>
+            <div className="global-search">
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -314,7 +315,7 @@ function ManageProjectType() {
                 style={{ width: 200 }}
               />
             </div>
-          </div>
+       
           <div className="block-table-content">
             <Table
               columns={columns}

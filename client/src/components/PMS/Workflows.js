@@ -302,11 +302,9 @@ function Workflows() {
     <>
       <Card className="employee-card">
         <div className="workflow-container">
-          <div className="profile-sub-head">
-            <div className="heading-main">
+         
+            <div className="heading-wrapper">
               <h2>Workflow</h2>
-            </div>
-            <div className="head-box-inner">
               <Button
                 className="addleave-btn"
                 type="primary"
@@ -314,6 +312,8 @@ function Workflows() {
               >
                 + Add
               </Button>
+            </div>
+            <div className="global-search">
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -322,7 +322,7 @@ function Workflows() {
                 className="mr2"
               />
             </div>
-          </div>
+
 
           <div className="block-table-content">
             <Table

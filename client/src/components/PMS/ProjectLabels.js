@@ -332,11 +332,9 @@ function ProjectLabels() {
     <>
       <Card className="employee-card">
         <div className="project-labels-container">
-          <div className="profile-sub-head">
-            <div className="heading-main">
+       
+            <div className="heading-wrapper">
               <h2>Project Labels</h2>
-            </div>
-            <div className="head-box-inner">
               <Button
                 className="addleave-btn"
                 onClick={showModal}
@@ -345,6 +343,8 @@ function ProjectLabels() {
               >
                 + Add
               </Button>
+            </div>
+            <div className="global-search">
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -352,7 +352,7 @@ function ProjectLabels() {
                 style={{ width: 200 }}
               />
             </div>
-          </div>
+      
           <Modal
             open={isModalOpen}
             onOk={handleOk}

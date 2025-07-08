@@ -1479,9 +1479,9 @@ function AssignProject() {
               ...pagination,
             } }
             onChange={ handleTableChange }
-            scroll={ {
-              x: "100%",
-            } }
+            // scroll={ {
+            //   x: "100%",
+            // } }
           />
         </div>
       </Card>

@@ -26645,7 +26645,11 @@ tr.ant-table-expanded-row .ant-descriptions-view table {
   white-space: nowrap;
   transform: translate(0);
 }
-
+.user-module-wrapper .ant-tabs>.ant-tabs-nav .ant-tabs-nav-wrap{
+  background-color: #fff;
+  border-radius: 3px;
+  padding-top: 10px;
+}
 .ant-tabs>.ant-tabs-nav .ant-tabs-nav-wrap::before,
 .ant-tabs>div>.ant-tabs-nav .ant-tabs-nav-wrap::before,
 .ant-tabs>.ant-tabs-nav .ant-tabs-nav-wrap::after,

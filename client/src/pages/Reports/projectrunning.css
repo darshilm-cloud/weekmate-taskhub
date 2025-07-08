@@ -130,7 +130,8 @@
 .project-running-reports-fillter .ant-form-item-control-input,
 .project-running-reports-fillter .ant-form-item,
 .project-running-reports-fillter .ant-form-item>div {
-    height: 100%;
+    height: auto;
+    margin: 0;
 }
 
 .project-running-reports .ant-table-tbody>tr>td {

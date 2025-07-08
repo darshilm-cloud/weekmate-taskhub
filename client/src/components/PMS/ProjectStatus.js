@@ -273,11 +273,9 @@ function ProjectStatus() {
     <>
       <Card className="employee-card">
         <div className="project-status-container">
-          <div className="profile-sub-head">
-            <div className="heading-main">
+        
+            <div className="heading-wrapper">
               <h2>Project Status</h2>
-            </div>
-            <div className="head-box-inner">
               <Button
                 type="primary"
                 className="addleave-btn"
@@ -287,6 +285,8 @@ function ProjectStatus() {
               >
                 Add
               </Button>
+            </div>
+            <div className="global-search">
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -294,7 +294,7 @@ function ProjectStatus() {
                 style={{ width: 200 }}
               />
             </div>
-          </div>
+        
           <Modal
             open={isModalOpen}
             onOk={handleOk}
