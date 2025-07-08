@@ -301,7 +301,7 @@ function AssignProject() {
         );
 
         return (
-          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
+          <Link to={ `/${companySlug}/project/app/${ProjectId}?tab=${record?.defaultTab?.name}` }>
             <div className="project_title_main_div">
               <span>{ formattedTitle }</span>
             </div>
@@ -1096,10 +1096,13 @@ function AssignProject() {
                   }
                 >
                   <Button className="dropdown-button">
-                    <span>
-                      Account Manager:
-                      <i className="fi fi-rr-users"></i>
-                      { acc_manager.length === 0 ? "All" : "Selected" }
+                    <span className="filter-text">
+                      <span>
+                        Account Manager:</span>
+                      <span>
+                        { acc_manager.length === 0 ? "All" : "Selected" }
+                      </span>
+
                     </span>
                   </Button>
                 </Popover>
@@ -1166,10 +1169,15 @@ function AssignProject() {
                     </div>
                   }
                 >
-                  <Button className="dropdown-button">  
-                    <span >Project Manager:
-                      <i className="fi fi-rr-users"></i>
-                      { manager.length === 0 ? "All" : "Selected" }
+                  <Button className="dropdown-button">
+                    <span className="filter-text">
+
+                      <span >Project Manager:</span>
+                      <span>
+
+                        { manager.length === 0 ? "All" : "Selected" }
+                      </span>
+
                     </span>
                   </Button>
                 </Popover>
@@ -1240,11 +1248,17 @@ function AssignProject() {
                 </div>
               }
             >
-              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
-                <h6 style={ { margin: 0 } }>Technology:</h6>
-                <i className="fas fa-briefcase"></i>{ " " }
-                { technology.length === 0 ? "All" : "Selected" }
-              </div>
+
+              <Button className="dropdown-button">
+                <span className="filter-text">
+
+                  <span >Technology:</span>
+                  <span>
+
+                    { technology.length === 0 ? "All" : "Selected" }
+                  </span>
+                </span>
+              </Button>
             </Popover>
 
 
@@ -1302,11 +1316,18 @@ function AssignProject() {
                 </div>
               }
             >
-              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
-                <h6 style={ { margin: 0 } }>Project Type:</h6>
-                <i className="fas fa-briefcase"></i>{ " " }
-                { projectType.length === 0 ? "All" : "Selected" }
-              </div>
+
+
+              <Button className="dropdown-button">
+                <span className="filter-text">
+
+                  <span >Project Type:</span>
+                  <span>
+
+                    { projectType.length === 0 ? "All" : "Selected" }
+                  </span>
+                </span>
+              </Button>
             </Popover>
 
             <Popover
@@ -1368,11 +1389,17 @@ function AssignProject() {
                 </div>
               }
             >
-              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
-                <h6 style={ { margin: 0 } }>Assignees:</h6>
-                <i className="fi fi-rr-users"></i>{ " " }
-                { assignees.length === 0 ? "All" : "Selected" }
-              </div>
+
+
+              <Button className="dropdown-button">
+                <span className="filter-text">
+                  <span >Assignees:</span>
+                  <span>
+                    { assignees.length === 0 ? "All" : "Selected" }
+                  </span>
+                </span>
+
+              </Button>
             </Popover>
 
             <Popover
@@ -1419,15 +1446,22 @@ function AssignProject() {
                 </div>
               }
             >
-              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
-                <h6 style={ { margin: 0 } }>Sort By:</h6>
-                <CheckSquareOutlined />
-                { sortOption === "createdAt"
-                  ? "Latest Updated"
-                  : sortOption === "title"
-                    ? "Name"
-                    : "Status" }
-              </div>
+
+              <Button className="dropdown-button">
+                <span className="filter-text">
+
+                  <span >Sort By:
+                  </span>
+                  <span>
+
+                    { sortOption === "createdAt"
+                      ? "Latest Updated"
+                      : sortOption === "title"
+                        ? "Name"
+                        : "Status" }
+                  </span>
+                </span>
+              </Button>
             </Popover>
 
           </div>

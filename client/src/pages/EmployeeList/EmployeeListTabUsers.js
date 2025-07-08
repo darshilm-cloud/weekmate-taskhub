@@ -132,8 +132,8 @@ const EmployeeListTabUsers = () => {
       render: (text, record) => {
         const full_name = record.full_name;
         return (
-          <span style={{ textTransform: "capitalize" }}>
-            {removeTitle(full_name)}
+          <span style={ { textTransform: "capitalize" } }>
+            { removeTitle(full_name) }
           </span>
         );
       },
@@ -143,7 +143,7 @@ const EmployeeListTabUsers = () => {
       key: "emp_code",
       render: (text, record) => {
         const position = record?.emp_code;
-        return <span style={{ textTransform: "capitalize" }}>{position}</span>;
+        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
       },
     },
     {
@@ -152,7 +152,7 @@ const EmployeeListTabUsers = () => {
       key: "designation_name",
       render: (text, record) => {
         const position = record?.designation_name;
-        return <span style={{ textTransform: "capitalize" }}>{position}</span>;
+        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
       },
     },
     {
@@ -160,7 +160,7 @@ const EmployeeListTabUsers = () => {
       dataIndex: "role_name",
       key: "role_name",
       render: (text, record) => {
-        return <span>{record?.pms_role?.role_name}</span>;
+        return <span>{ record?.pms_role?.role_name }</span>;
       },
     },
     {
@@ -169,7 +169,7 @@ const EmployeeListTabUsers = () => {
       key: "department_name",
       render: (text, record) => {
         const position = record?.department_name;
-        return <span style={{ textTransform: "capitalize" }}>{position}</span>;
+        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
       },
     },
     {
@@ -177,13 +177,13 @@ const EmployeeListTabUsers = () => {
       dataIndex: "action",
       render: (text, record) => (
         <div
-          style={{
+          style={ {
             display: "flex",
             flexwrap: "wrap",
-          }}
+          } }
         >
-          <Link to={`/${companySlug}/roles-permission/${record._id}`}>
-            <ApiOutlined props={record._id} />
+          <Link to={ `/${companySlug}/roles-permission/${record._id}` }>
+            <ApiOutlined props={ record._id } />
           </Link>
         </div>
       ),
@@ -193,7 +193,7 @@ const EmployeeListTabUsers = () => {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
+        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
       </label>
     );
   };
@@ -351,28 +351,30 @@ const EmployeeListTabUsers = () => {
 
   return (
     <>
-      <div className="profile-sub-head employee-module">
-        <div className="head-box-inner">
-          <Search
-            ref={searchRef}
-            placeholder="Search..."
-            onSearch={onSearch}
-            onKeyUp={resetSearchFilter}
-            style={{ width: 200 }}
-            onChange={(e) => {
-              setPagination({ ...pagination, current: 1 });
-            }}
-          />
-          <Button onClick={openFilterModel} className="filter-btn">
+      <div className="profile-sub-head  global-search  employee-module">
+
+        <Search
+          ref={ searchRef }
+          placeholder="Search..."
+          onSearch={ onSearch }
+          onKeyUp={ resetSearchFilter }
+          style={ { width: 200 } }
+          onChange={ (e) => {
+            setPagination({ ...pagination, current: 1 });
+          } }
+        />
+        <div className="filter-btn-wrapper">
+
+          <Button onClick={ openFilterModel } className="filter-btn">
             Filter
           </Button>
           <Button
             className="ant-delete"
-            onClick={() => {
+            onClick={ () => {
               formData.resetFields();
               setFilterData(null);
-            }}
-            disabled={filterData != null ? false : true}
+            } }
+            disabled={ filterData != null ? false : true }
           >
             Clear Filter
           </Button>
@@ -380,138 +382,139 @@ const EmployeeListTabUsers = () => {
           <Button
             className="mr2 export-btn"
             id="exportButton"
-            disabled={pagination.total != 0 ? false : true}
-            onClick={exportCSV}
+            disabled={ pagination.total != 0 ? false : true }
+            onClick={ exportCSV }
           >
             Export CSV
           </Button>
         </div>
       </div>
+
       <div className="block-table-content">
         <Table
-          columns={columns}
-          pagination={{
+          columns={ columns }
+          pagination={ {
             showSizeChanger: true,
             ...pagination,
-          }}
-          footer={getFooterDetails}
-          onChange={handleTableChange}
-          dataSource={userlist}
+          } }
+          footer={ getFooterDetails }
+          onChange={ handleTableChange }
+          dataSource={ userlist }
         />
       </div>
 
       <Modal
         title="Filter"
-        width={1000}
-        open={isModalOpen}
-        footer={false}
-        onOk={handleOk}
-        onCancel={handleCancel}
+        width={ 1000 }
+        open={ isModalOpen }
+        footer={ false }
+        onOk={ handleOk }
+        onCancel={ handleCancel }
       >
         <div className="filter-pop-wrapper">
           <Row>
-            <Col span={24}>
-              <Form form={formData} {...formItemLayout} onFinish={filterEmp}>
+            <Col span={ 24 }>
+              <Form form={ formData } { ...formItemLayout } onFinish={ filterEmp }>
                 <div className="inout-employee">
                   <Row>
-                    <Col sm={24} lg={12}>
+                    <Col sm={ 24 } lg={ 12 }>
                       <div className="filter-employeelist">
                         <Form.Item label="Employee code" name="employee_code">
                           <Select
                             size="large"
                             showSearch
-                            filterOption={(input, option) =>
+                            filterOption={ (input, option) =>
                               option.children
                                 .toLowerCase()
                                 .indexOf(input.toLowerCase()) >= 0
                             }
-                            filterSort={(optionA, optionB) =>
+                            filterSort={ (optionA, optionB) =>
                               optionA.children
                                 .toLowerCase()
                                 .localeCompare(optionB.children.toLowerCase())
                             }
-                            onChange={(e) => {
+                            onChange={ (e) => {
                               let data = employee.filter(
                                 (val) => val.emp_code == e
                               );
                               formData.setFieldsValue({
                                 employee: data[0]?._id,
                               });
-                            }}
+                            } }
                           >
-                            {employee.map((item, index) => (
+                            { employee.map((item, index) => (
                               <Option
-                                key={index}
-                                value={item?.emp_code}
-                                style={{ textTransform: "capitalize" }}
+                                key={ index }
+                                value={ item?.emp_code }
+                                style={ { textTransform: "capitalize" } }
                               >
-                                {item?.emp_code}
+                                { item?.emp_code }
                               </Option>
-                            ))}
+                            )) }
                           </Select>
                         </Form.Item>
                         <Form.Item label="Designation" name="designation_id">
                           <Select
                             size="large"
                             showSearch
-                            filterOption={(input, option) =>
+                            filterOption={ (input, option) =>
                               option.children
                                 .toLowerCase()
                                 .indexOf(input.toLowerCase()) >= 0
                             }
-                            filterSort={(optionA, optionB) =>
+                            filterSort={ (optionA, optionB) =>
                               optionA.children
                                 .toLowerCase()
                                 .localeCompare(optionB.children.toLowerCase())
                             }
                           >
-                            {designationList.map((item, index) => (
+                            { designationList.map((item, index) => (
                               <>
                                 <Option
-                                  key={index}
-                                  value={item._id}
-                                  style={{ textTransform: "capitalize" }}
+                                  key={ index }
+                                  value={ item._id }
+                                  style={ { textTransform: "capitalize" } }
                                 >
-                                  {item.designation_name}
+                                  { item.designation_name }
                                 </Option>
                               </>
-                            ))}
+                            )) }
                           </Select>
                         </Form.Item>
                       </div>
                     </Col>
-                    <Col sm={24} lg={12}>
+                    <Col sm={ 24 } lg={ 12 }>
                       <div>
                         <Form.Item label="Employee" name="employee">
                           <Select
                             size="large"
                             showSearch
-                            filterOption={(input, option) =>
+                            filterOption={ (input, option) =>
                               option.children
                                 .toLowerCase()
                                 .indexOf(input.toLowerCase()) >= 0
                             }
-                            filterSort={(optionA, optionB) =>
+                            filterSort={ (optionA, optionB) =>
                               optionA.children
                                 .toLowerCase()
                                 .localeCompare(optionB.children.toLowerCase())
                             }
-                            onChange={(e) => {
+                            onChange={ (e) => {
                               let data = employee.filter((val) => val._id == e);
                               formData.setFieldsValue({
                                 employee_code: data[0]?.emp_code,
                               });
-                            }}
+                            } }
                           >
-                            {employee.map((item, index) => (
+                            { employee.map((item, index) => (
                               <Option
-                                key={index}
-                                value={item?._id}
-                                style={{ textTransform: "capitalize" }}
+                                key={ index }
+                                value={ item?._id }
+                                style={ { textTransform: "capitalize" } }
                               >
-                                {removeTitle(item.full_name)}
+                                { removeTitle(item.full_name) }
                               </Option>
-                            ))}
+                            )) }
                           </Select>
                         </Form.Item>
 
@@ -519,26 +522,26 @@ const EmployeeListTabUsers = () => {
                           <Select
                             size="large"
                             showSearch
-                            filterOption={(input, option) =>
+                            filterOption={ (input, option) =>
                               option.children
                                 .toLowerCase()
                                 .indexOf(input.toLowerCase()) >= 0
                             }
-                            filterSort={(optionA, optionB) =>
+                            filterSort={ (optionA, optionB) =>
                               optionA.children
                                 .toLowerCase()
                                 .localeCompare(optionB.children.toLowerCase())
                             }
                           >
-                            {departmentList.map((item, index) => (
+                            { departmentList.map((item, index) => (
                               <Option
-                                key={index}
-                                value={item._id}
-                                style={{ textTransform: "capitalize" }}
+                                key={ index }
+                                value={ item._id }
+                                style={ { textTransform: "capitalize" } }
                               >
-                                {item.department_name}
+                                { item.department_name }
                               </Option>
-                            ))}
+                            )) }
                           </Select>
                         </Form.Item>
                       </div>
@@ -552,17 +555,17 @@ const EmployeeListTabUsers = () => {
                     >
                       Apply
                     </Button>
-                    <Button type="primary" onClick={onReset}>
+                    <Button type="primary" onClick={ onReset }>
                       Reset
                     </Button>
                     <Button
                       type="primary"
-                      onClick={handleCancel}
+                      onClick={ handleCancel }
                       className="ant-delete"
                     >
                       Cancel
                     </Button>
-                  </div>{" "}
+                  </div>{ " " }
                 </div>
               </Form>
             </Col>

@@ -62,8 +62,6 @@ const AdminDashboard = () => {
     <div
       style={{
         padding: "24px",
-        background: "#f0f2f5",
-        minHeight: "100vh",
       }}
     >
       {/* Dashboard Cards */}
