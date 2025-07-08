@@ -4,8 +4,8 @@ import Service from "../service";
 import PropTypes from 'prop-types';
 import TaskHub from "../assets/images/taskhubicon.svg"
 function ResetPassword({ match, computedMatch, history }) {
-  const companySlug = localStorage.getItem("companyDomain"); 
-  const Logo = localStorage.getItem("LogoURL");
+  const companySlug = localStorage.getItem("companyDomain");
+  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
 
   const handleSubmit = async values => {
     try {
@@ -43,13 +43,8 @@ function ResetPassword({ match, computedMatch, history }) {
           <div className="gx-app-login-main-content">
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
-                { Logo ? (
-                  <img alt="example" src={ TaskHub } />
-                ) : (
-                  <img alt="example" src={ TaskHub } />
-                ) }
-              </div>
-
+                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub } />
+                  </div>
             </div>
             <div className="gx-app-login-content">
               <div className="form-center">

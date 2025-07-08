@@ -413,11 +413,14 @@ exports.deleteCompany = async (req, res) => {
 // Company file upload size API
 exports.updateCompanyFileUploadSize = async (req, res) => {
   try {
+    console.log(req.user,"req.user ")
+
     const {
-      _id: decodedUserId,
+      _id,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
-      companyId: decodedCompanyId
+      companyId
     } = req.user || {};
+
 
     if (
       ![

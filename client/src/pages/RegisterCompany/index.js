@@ -497,6 +497,8 @@ const CompanyRegistration = () => {
     [currentStep, goBack, handleAdminNext, handleCompanySubmit, isSubmitting]
   );
 
+  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
+
   return (
     <div className="registration-wrapper">
       <Row justify="center" className="registration-main-row">
@@ -513,7 +515,7 @@ const CompanyRegistration = () => {
             <Row justify="center" className="logo-row">
               <Col xs={24} className="min-logo-wrapper">
                 <div className="login-page-logo">
-                  <img src={TaskHub} alt="TaskHub" />
+                  <img src={companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub} alt="TaskHub" />
                 </div>
               </Col>
             </Row>

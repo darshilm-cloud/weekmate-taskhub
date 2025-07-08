@@ -192,7 +192,7 @@ const SMTPConfig = () => {
     try {
       const res = await Service.makeAPICall({
         methodName: Service.putMethod,
-        api_url: `${Service.editCompany}/${userData.companyDetails._id}`,
+        api_url: Service.fileSizeUpload,
         body: { fileUploadSize: maxFileLimit },
       });
 
@@ -206,7 +206,7 @@ const SMTPConfig = () => {
           ...currentUserData,
           companyDetails: {
             ...currentUserData.currentUserData,
-            fileUploadSize: maxFileLimit,
+            fileUploadSize: maxFileLimit * 1024,
           },
         };
         localStorage.setItem("user_data", JSON.stringify(newUserData));

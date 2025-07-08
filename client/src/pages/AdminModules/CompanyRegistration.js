@@ -68,10 +68,10 @@ const CompanyRegistration = () => {
 
   // File upload states
   const [docFldLogo, setDocFldLogo] = useState(() =>
-    localStorage.getItem("companyLogoUrl")
+    localStorage.getItem(`companyLogoUrl-${companySlug}`)
   );
   const [docFldFavicon, setDocFldFavicon] = useState(() =>
-    localStorage.getItem("companyFavIcoUrl")
+    localStorage.getItem(`companyFavIcoUrl-${companySlug}`)
   );
   const [faviconFileList, setFaviconFileList] = useState([]);
   const [logoFileList, setLogoFileList] = useState([]);
@@ -268,10 +268,10 @@ const CompanyRegistration = () => {
 
         setLocalStorageItem("userData", updatedLocalData);
         setLocalStorageItem(
-          "companyFavIcoUrl",
+          `companyFavIcoUrl-${companySlug}`,
           updatedCompany?.companyFavIcoUrl
         );
-        setLocalStorageItem("companyLogoUrl", updatedCompany?.companyLogoUrl);
+        setLocalStorageItem(`companyLogoUrl-${companySlug}`, updatedCompany?.companyLogoUrl);
 
         // Handle new company creation
         if (!editingCompany && resetToken && saveCompany) {
@@ -280,8 +280,8 @@ const CompanyRegistration = () => {
         window.location.reload();
         await fetchCompanies();
         setIsModalVisible(false);
-        setDocFldLogo(localStorage.getItem("companyLogoUrl") || null);
-        setDocFldFavicon(localStorage.getItem("companyFavIcoUrl") || null);
+        setDocFldLogo(localStorage.getItem(`companyLogoUrl-${companySlug}`) || null);
+        setDocFldFavicon(localStorage.getItem(`companyFavIcoUrl-${companySlug}`) || null);
       } else {
         message.error("Failed to save company");
       }

@@ -6,6 +6,7 @@ import TaskHub from "../assets/images/taskhubicon.svg"
 
 function ForgetPassword() {
   const companySlug = localStorage.getItem("companyDomain");
+  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   
   const handleSubmit = async values => {
     try {
@@ -33,7 +34,7 @@ function ForgetPassword() {
           <div className="gx-app-login-main-content">
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
-                <img alt="example" src={ TaskHub } />
+                <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub } />
               </div>
             </div>
             <div className="gx-app-login-content">

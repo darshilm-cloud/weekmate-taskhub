@@ -276,7 +276,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     [selectedKeys, openKeys, onOpenChange, item]
   );
 
-  const companyLogoPath = localStorage.getItem("companyLogoUrl");
+  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
 
   return (
     <>

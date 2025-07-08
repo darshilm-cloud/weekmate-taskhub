@@ -17,6 +17,7 @@ import { Modal, Typography } from "antd";
 
 function SignIn() {
   const { verificationToken, companySlug } = useParams();
+  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   const dispatch = useDispatch();
   const { Title, Text } = Typography;
 
@@ -67,7 +68,6 @@ function SignIn() {
         api_url: Service.login,
         body: reqBody,
       });
-
       if (
         response.data &&
         response?.data?.data &&
@@ -79,6 +79,8 @@ function SignIn() {
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
         localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
+        localStorage.setItem(`companyLogoUrl-${companySlug}`,userData?.user?.companyDetails?.companyLogoUrl)
+        localStorage.setItem(`companyFavIcoUrl-${companySlug}`,userData?.user?.companyDetails?.companyFavIcoUrl)
 
         //cookie
         setCookie(
@@ -140,7 +142,7 @@ function SignIn() {
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
                 { login_logo ? (
-                  <img alt="example" src={ TaskHub } />
+                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub } />
                 ) : (
                   <img
                     alt="example"
@@ -149,7 +151,7 @@ function SignIn() {
                       maxWidth: "80px",
                       marginBottom: "0",
                     } }
-                    src={ TaskHub }
+                    src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
                   />
                 ) }
               </div>

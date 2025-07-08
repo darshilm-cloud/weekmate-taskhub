@@ -125,7 +125,7 @@ function RestrictedRoute({
         ) : (
           <Redirect
             to={{
-              pathname: "/signin",
+              pathname: companySlug ? `/${companySlug}/signin` : "/signin",
               state: { from: location },
             }}
           />
@@ -156,10 +156,11 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
 }
 
 function App() {
+  const companySlug = localStorage.getItem("companyDomain");
   const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
 
   const title = userData?.companyDetails?.companyName || "TaskHub";
-  const faviconPath = localStorage.getItem("companyFavIcoUrl");
+  const faviconPath = localStorage.getItem(`companyFavIcoUrl-${companySlug}`);
 
   const dispatch = useDispatch();
   const { locale, themeType, navStyle, layoutType, themeColor } = useSelector(
