@@ -149,7 +149,7 @@ const CompanyRegistration = () => {
 
   // Generate URL preview
   const urlPreview = useMemo(() => {
-    return companySlug ? `https://${BASE_DOMAIN}/${companySlug}` : `https://${BASE_DOMAIN}/your-company`;
+    return companySlug ? `${BASE_DOMAIN}/${companySlug}` : `${BASE_DOMAIN}/your-company`;
   }, [companySlug]);
 
   // Step 1: Admin Details Handler
