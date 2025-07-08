@@ -625,7 +625,7 @@ const CompanyRegistration = () => {
                   <img
                     src={`${process.env.REACT_APP_API_URL}/public/${docFldLogo}`}
                     alt="Logo"
-                    style={{ marginTop: 8, width: 100, height: "auto" }}
+                    style={{ marginTop: 8, width: 100, height: "auto", maxWidth:"fit-content" }}
                   />
                 )}
               </Form.Item>

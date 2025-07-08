@@ -20,7 +20,7 @@ const EmployeeMasterList = () => {
   return (
     <>
       <Card className="employee-card addleave-btn user-module-wrapper">
-        <div className="heading-main">
+        <div className="heading-wrapper">
           <h2>Users</h2>
         </div>
 

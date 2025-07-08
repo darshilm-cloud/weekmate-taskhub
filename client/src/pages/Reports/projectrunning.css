@@ -1,8 +1,7 @@
 .project-running-reports .header {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    background: #cccccc33;
+    justify-content: center;
     margin: 0;
     padding: 25px 30px;
 }
@@ -201,7 +200,7 @@
 .main-time-sheet-project-wrapper .project-running-reports .project-running-reports-fillter-wrapper .ant-select-selector {
     max-height: 56px;
     overflow: auto;
-    height: 100%;
+
 }
 
 

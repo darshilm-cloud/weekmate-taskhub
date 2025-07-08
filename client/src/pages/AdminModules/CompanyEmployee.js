@@ -81,10 +81,10 @@ const CompanyEmployee = () => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     const formData = new FormData();
     formData.append("attachment", file);
-  
+
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -94,7 +94,7 @@ const CompanyEmployee = () => {
           "content-type": "multipart/form-data",
         },
       });
-  
+
       if (response.status == 200) {
         fetchEmployees();
       } else {
@@ -102,7 +102,7 @@ const CompanyEmployee = () => {
         if (response.data) {
           let csvContent = "";
           let filename = "invalid_users.csv";
-  
+
           // Check if response.data is text (assuming it's CSV-like data)
           if (typeof response.data === 'string') {
             csvContent = response.data;
@@ -110,15 +110,15 @@ const CompanyEmployee = () => {
             // Convert object to CSV format
             const headers = Object.keys(response.data);
             csvContent = headers.join(',') + '\n';
-            
+
             if (Array.isArray(response.data)) {
               // If it's an array of objects
               response.data.forEach(row => {
                 const values = headers.map(header => {
                   const value = row[header] || '';
                   // Escape commas and quotes in CSV
-                  return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-                    ? `"${value.replace(/"/g, '""')}"` 
+                  return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+                    ? `"${value.replace(/"/g, '""')}"`
                     : value;
                 });
                 csvContent += values.join(',') + '\n';
@@ -127,14 +127,14 @@ const CompanyEmployee = () => {
               // If it's a single object
               const values = headers.map(header => {
                 const value = response.data[header] || '';
-                return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-                  ? `"${value.replace(/"/g, '""')}"` 
+                return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+                  ? `"${value.replace(/"/g, '""')}"`
                   : value;
               });
               csvContent += values.join(',') + '\n';
             }
           }
-  
+
           // Create and download CSV file
           const blob = new Blob([csvContent], {
             type: "text/csv;charset=utf-8;",
@@ -147,7 +147,7 @@ const CompanyEmployee = () => {
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
-  
+
           message.warning("Upload completed with errors. CSV downloaded.");
           fetchEmployees();
         } else {
@@ -158,7 +158,7 @@ const CompanyEmployee = () => {
       // Simplified catch block - just handle general errors
       message.error("Upload failed. Please try again.");
     }
-  
+
     e.target.value = "";
   };
 
@@ -261,9 +261,9 @@ const CompanyEmployee = () => {
       title: "Active",
       dataIndex: "isActivate",
       render: (isActivate) =>
-      isActivate ? (
+        isActivate ? (
           <button
-            style={{
+            style={ {
               backgroundColor: "#28a745", // Bootstrap green
               border: "none",
               borderRadius: "4px",
@@ -271,13 +271,13 @@ const CompanyEmployee = () => {
               color: "#fff",
               cursor: "default",
               fontWeight: "500",
-            }}
+            } }
           >
             Active
           </button>
         ) : (
           <button
-            style={{
+            style={ {
               // backgroundColor: '#28a745', // Bootstrap green
               border: "none",
               borderRadius: "4px",
@@ -285,7 +285,7 @@ const CompanyEmployee = () => {
               // color: '#fff',
               cursor: "default",
               fontWeight: "500",
-            }}
+            } }
           >
             Deactivated
           </button>
@@ -296,28 +296,28 @@ const CompanyEmployee = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title="View">
-            {" "}
+            { " " }
             <Button
               className="view-btn"
-              icon={<EyeOutlined />}
-              onClick={() => showAddEditModal(record, "view")}
+              icon={ <EyeOutlined /> }
+              onClick={ () => showAddEditModal(record, "view") }
             />
           </Tooltip>
           <Tooltip title="Edit">
             <Button
               className="edit-btn"
-              icon={<EditOutlined />}
-              onClick={() => showAddEditModal(record, "edit")}
+              icon={ <EditOutlined /> }
+              onClick={ () => showAddEditModal(record, "edit") }
             />
           </Tooltip>
           <Popconfirm
-            title={`Are you sure you want to delete ${record?.first_name} ${record?.last_name}?`}
-            onConfirm={() => handleDelete(record._id)}
+            title={ `Are you sure you want to delete ${record?.first_name} ${record?.last_name}?` }
+            onConfirm={ () => handleDelete(record._id) }
             okText="Yes"
             cancelText="No"
           >
             <Tooltip title="Delete">
-              <Button className="delete-btn" danger icon={<DeleteOutlined />} />
+              <Button className="delete-btn" danger icon={ <DeleteOutlined /> } />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -325,71 +325,72 @@ const CompanyEmployee = () => {
     },
   ];
 
-  return (
+  return (  
     <div>
       <Card>
         <div className="heading-wrapper">
+          <h2>Company Employees</h2>
           <Button
             type="primary"
-            onClick={() => history.push(`/${companySlug}/admin/company-registartion`)}
+            onClick={ () => history.push(`/${companySlug}/admin/company-registartion`) }
           >
             Back
           </Button>
-          <h2>Company Employees</h2>
-          <input
-            type="file"
-            accept=".csv"
-            ref={inputRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-          />
-          <div
-            className="button-group-import-csv"
-            style={{ display: "flex", gap: "8px" }}
-          >
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              onClick={exportSampleCSVfile}
-            >
-              Sample CSV
-            </Button>
-            <Button
-              type="primary"
-              icon={<UploadOutlined />}
-              onClick={() => inputRef.current?.click()}
-            >
-              Import CSV
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => showAddEditModal()}
-            >
-              Add Employee
-            </Button>
-          </div>
+
         </div>
 
         <div className="global-search">
           <Input.Search
             placeholder="Search employees"
             allowClear
-            onSearch={(value) => {
+            onSearch={ (value) => {
               setSearchText(value);
               fetchEmployees(1, pagination.pageSize, value);
-            }}
-            style={{ width: 300 }}
+            } }
+            style={ { width: 300 } }
           />
+          <input
+            type="file"
+            accept=".csv"
+            ref={ inputRef }
+            style={ { display: "none" } }
+            onChange={ handleFileChange }
+          />
+          <div
+            className="button-group-import-csv"
+            style={ { display: "flex", gap: "8px" } }
+          >
+            <Button
+              type="primary"
+              icon={ <DownloadOutlined /> }
+              onClick={ exportSampleCSVfile }
+            >
+              Sample CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={ <UploadOutlined /> }
+              onClick={ () => inputRef.current?.click() }
+            >
+              Import CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={ <PlusOutlined /> }
+              onClick={ () => showAddEditModal() }
+            >
+              Add Employee
+            </Button>
+          </div>
         </div>
 
         <Table
-          columns={columns}
-          dataSource={employees}
+          columns={ columns }
+          dataSource={ employees }
           rowKey="_id"
-          loading={loading}
+          loading={ loading }
           // footer={() => `Total Employee ${employees.length}`}
-          pagination={{
+          pagination={ {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
@@ -399,7 +400,7 @@ const CompanyEmployee = () => {
               `${range[0]}-${range[1]} of ${total} records`,
             onChange: (page, pageSize) =>
               fetchEmployees(page, pageSize, searchText),
-          }}
+          } }
         />
       </Card>
 
@@ -408,65 +409,65 @@ const CompanyEmployee = () => {
           modalMode === "view"
             ? "View Employee"
             : editData
-            ? "Edit Employee"
-            : "Add Employee"
+              ? "Edit Employee"
+              : "Add Employee"
         }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
+        open={ modalVisible }
+        onCancel={ () => setModalVisible(false) }
         footer={
           modalMode === "view"
             ? null
             : [
-                <Button
-                  key="cancel"
-            
-                  className="delete-btn"
-                  onClick={() => setModalVisible(false)}
-                >
-                  Cancel
-                </Button>,
-                <Button key="submit" type="primary" onClick={handleSubmit}>
-                  {editData ? "Update" : "Add"}
-                </Button>,
-              ]
+              <Button
+                key="cancel"
+
+                className="delete-btn"
+                onClick={ () => setModalVisible(false) }
+              >
+                Cancel
+              </Button>,
+              <Button key="submit" type="primary" onClick={ handleSubmit }>
+                { editData ? "Update" : "Add" }
+              </Button>,
+            ]
         }
       >
-        <Form form={form} layout="vertical">
+        <Form form={ form } layout="vertical">
           <Form.Item
             name="first_name"
             label="First Name"
-            rules={[{ required: true }]}
+            rules={ [{ required: true }] }
           >
             <Input
               placeholder="Enter first name"
-              disabled={modalMode === "view"}
+              disabled={ modalMode === "view" }
             />
           </Form.Item>
 
           <Form.Item
             name="last_name"
             label="Last Name"
-            rules={[{ required: true }]}
+            rules={ [{ required: true }] }
           >
             <Input
               placeholder="Enter last name"
-              disabled={modalMode === "view"}
+              disabled={ modalMode === "view" }
             />
           </Form.Item>
 
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ required: true, type: "email" }]}
+            rules={ [{ required: true, type: "email" }] }
           >
-            <Input placeholder="Enter email" disabled={modalMode === "view"} />
+            <Input placeholder="Enter email" disabled={ modalMode === "view" } />
           </Form.Item>
 
-          {!editData && modalMode !== "view" && (
+          { !editData && modalMode !== "view" && (
             <Form.Item
               name="password"
               label="Password"
-              rules={[
+              rules={ [
                 { required: true, message: "Password is required" },
                 {
                   validator: (_, value) => {
@@ -478,33 +479,33 @@ const CompanyEmployee = () => {
                     return Promise.resolve();
                   },
                 },
-              ]}
+              ] }
             >
               <Input.Password
                 placeholder="Enter password"
                 autoComplete="new-password"
               />
             </Form.Item>
-          )}
+          ) }
 
-          {editData && (
-            <Row gutter={24}>
-              <Col xs={24} sm={12}>
+          { editData && (
+            <Row gutter={ 24 }>
+              <Col xs={ 24 } sm={ 12 }>
                 <Form.Item
                   name="isActivate"
                   label="Is Active"
-                  rules={[{ required: true }]}
+                  rules={ [{ required: true }] }
                 >
-                  <Radio.Group disabled={modalMode === "view"}>
-                    <Radio value={true}>Yes</Radio>
-                    <Radio value={false}>No</Radio>
+                  <Radio.Group disabled={ modalMode === "view" }>
+                    <Radio value={ true }>Yes</Radio>
+                    <Radio value={ false }>No</Radio>
                   </Radio.Group>
                 </Form.Item>
               </Col>
 
-              
+
             </Row>
-          )}
+          ) }
         </Form>
       </Modal>
     </div>

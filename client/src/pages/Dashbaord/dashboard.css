@@ -48,7 +48,7 @@ p {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-
+box-shadow: 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 1px 2px #0000000d;
 }
 
 .progress-of-logged-hours-background .progress-bar-container .ant-progress-bg-inner {
@@ -84,9 +84,11 @@ p {
     width: 100%;
     font-size: 15px;
     padding: 12px 12px 12px 12px;
-    box-shadow: 0px 0px 5px 0px #ccc;
+    -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
+    box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
     border: none;
     border-radius: 5px;
+    
 }
 
 .profile-input-setting-wrapper {
@@ -144,10 +146,11 @@ span.profile-setting a {
     background-color: #fff;
     padding: 3px;
     border-radius: 10px;
-    box-shadow: 0px 0px 5px 0px #ccc;
+    box-shadow: 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 1px 2px #0000000d;
     height: 375px;
     overflow: hidden;
 }
+
 input#meJumpField-inputEl:focus-visible {
     outline: 2px solid #1048711a;
     box-shadow: 0px 0px 9px -3px;

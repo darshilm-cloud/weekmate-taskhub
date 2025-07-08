@@ -92,7 +92,7 @@ const Projectexpences = () => {
   // Local state
   const [formDetail] = Form.useForm();
   const [viewData, setViewData] = useState({});
-  
+
   const dispatch = useDispatch();
 
   // Memoized user data and permissions
@@ -185,293 +185,305 @@ const Projectexpences = () => {
   // Memoized filter components
   const ProjectFilter = useMemo(() => (
     !userPermissions.hasClientAccess && (
-      <div style={{ cursor: "pointer" }}>
-        <h6>Project:</h6>
-        <Popover
-          trigger="click"
-          placement="bottomRight"
-          visible={popOver.project}
-          onVisibleChange={() => handleVisibleChange("project", true)}
-          content={
-            <div className="assignees-popover assign-global-height">
-              <ul style={{ listStyle: "none" }}>
-                <li>
-                  <Checkbox
-                    checked={selectedProject.length === 0}
-                    onChange={() => handleFilters("", selectedProject, setSelectedProject)}
-                  >
-                    All
-                  </Checkbox>
-                </li>
-              </ul>
-              <div className="search-filter">
-                <Input
-                  placeholder="Search"
-                  value={searchProject}
-                  onChange={handleSearchProjects}
-                />
-              </div>
-              <div>
-                <ul className="assigness-data" style={{ listStyle: "none" }}>
-                  {filteredProjectsList.map((item) => (
-                    <li key={item._id}>
-                      <Checkbox
-                        onChange={() => handleFilters(item, selectedProject, setSelectedProject)}
-                        checked={selectedProject.includes(item._id)}
-                      >
-                        <span>{item?.title}</span>
-                      </Checkbox>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="popover-footer-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  onClick={() => {
-                    getprojectexpencesList();
-                    setPopOver({ ...popOver, project: false });
-                  }}
+      <Popover
+        trigger="click"
+        visible={ popOver.project }
+        onVisibleChange={ (visible) => handleVisibleChange("project", visible) }
+        placement="bottomRight"
+        content={
+          <div className="right-popover-wrapper">
+            <ul className="assigness-data" style={ { listStyle: "none" } }>
+              <li>
+                <Checkbox
+                  checked={ selectedProject.length === 0 }
+                  onChange={ () => handleFilters("", selectedProject, setSelectedProject) }
                 >
-                  Apply
-                </Button>
-                <Button
-                  className="square-outline-btn"
-                  onClick={() => setPopOver({ ...popOver, project: false })}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  All
+                </Checkbox>
+              </li>
+            </ul>
+            <div className="search-filter">
+              <Input
+                placeholder="Search"
+                value={ searchProject }
+                onChange={ handleSearchProjects }
+              />
             </div>
-          }
-        >
-          <i className="fa-solid fa-list-check"></i>{" "}
-          {selectedProject.length === 0 ? "All" : "Selected"}
-        </Popover>
-      </div>
+            <div>
+              <ul className="assigness-data" style={ { listStyle: "none" } }>
+                { filteredProjectsList.map((item) => (
+                  <li key={ item._id }>
+                    <Checkbox
+                      onChange={ () => handleFilters(item, selectedProject, setSelectedProject) }
+                      checked={ selectedProject.includes(item._id) }
+                    >
+                      <span>{ item?.title }</span>
+                    </Checkbox>
+                  </li>
+                )) }
+              </ul>
+            </div>
+            <div className="popver-footer-btn">
+              <Button
+                type="primary"
+                className="square-primary-btn ant-btn-primary"
+                onClick={ () => {
+                  getprojectexpencesList();
+                  handleVisibleChange("project", false);
+                } }
+              >
+                Apply
+              </Button>
+              <Button
+                className="square-outline-btn ant-delete"
+                onClick={ () => handleVisibleChange("project", false) }
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <Button className="dropdown-button">
+          <span className="filter-text">
+            <span>Project:</span>
+            <span>
+              { selectedProject.length === 0 ? "All" : `Selected (${selectedProject.length})` }
+            </span>
+          </span>
+        </Button>
+      </Popover>
     )
   ), [userPermissions.hasClientAccess, popOver.project, selectedProject, searchProject, filteredProjectsList, handleVisibleChange, handleFilters, handleSearchProjects, setSelectedProject, getprojectexpencesList, setPopOver]);
 
   const TechnologyFilter = useMemo(() => (
     userPermissions.isSuperAdmin && (
-      <div style={{ cursor: "pointer" }}>
-        <h6>Technology:</h6>
-        <Popover
-          trigger="click"
-          placement="bottomRight"
-          visible={popOver.technology}
-          onVisibleChange={() => handleVisibleChange("technology", true)}
-          content={
-            <div className="assignees-popover assign-global-height">
-              <ul>
-                <li>
-                  <Checkbox
-                    checked={technology.length === 0}
-                    onChange={() => handleFilters("", technology, setTechnology)}
-                  >
-                    All
-                  </Checkbox>
-                </li>
-              </ul>
-              <div className="search-filter">
-                <Input
-                  placeholder="Search"
-                  value={searchTechnology}
-                  onChange={handleSearchTechnology}
-                />
-              </div>
-              <div>
-                <ul className="assigness-data">
-                  {filteredTechnologyList.map((item) => (
-                    <li key={item._id}>
-                      <Checkbox
-                        onChange={() => handleFilters(item, technology, setTechnology)}
-                        checked={technology.includes(item._id)}
-                      >
-                        {item.project_tech}
-                      </Checkbox>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="popover-footer-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  onClick={() => {
-                    getprojectexpencesList();
-                    setPopOver({ ...popOver, technology: false });
-                  }}
+      <Popover
+        trigger="click"
+        visible={ popOver.technology }
+        onVisibleChange={ (visible) => handleVisibleChange("technology", visible) }
+        placement="bottomRight"
+        content={
+          <div className="right-popover-wrapper">
+            <ul className="assigness-data">
+              <li>
+                <Checkbox
+                  checked={ technology.length === 0 }
+                  onChange={ () => handleFilters("", technology, setTechnology) }
                 >
-                  Apply
-                </Button>
-                <Button
-                  className="square-outline-btn"
-                  onClick={() => handleVisibleChange("technology", false)}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  All
+                </Checkbox>
+              </li>
+            </ul>
+            <div className="search-filter">
+              <Input
+                placeholder="Search"
+                value={ searchTechnology }
+                onChange={ handleSearchTechnology }
+              />
             </div>
-          }
-        >
-          <i className="fas fa-briefcase"></i>{" "}
-          {technology.length === 0 ? "All" : "Selected"}
-        </Popover>
-      </div>
+            <div>
+              <ul className="assigness-data">
+                { filteredTechnologyList.map((item) => (
+                  <li key={ item._id }>
+                    <Checkbox
+                      onChange={ () => handleFilters(item, technology, setTechnology) }
+                      checked={ technology.includes(item._id) }
+                    >
+                      { item.project_tech }
+                    </Checkbox>
+                  </li>
+                )) }
+              </ul>
+            </div>
+            <div className="popver-footer-btn">
+              <Button
+                type="primary"
+                className="square-primary-btn ant-btn-primary"
+                onClick={ () => {
+                  getprojectexpencesList();
+                  handleVisibleChange("technology", false);
+                } }
+              >
+                Apply
+              </Button>
+              <Button
+                className="square-outline-btn ant-delete"
+                onClick={ () => handleVisibleChange("technology", false) }
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <Button className="dropdown-button">
+          <span className="filter-text">
+            <span>Technology:</span>
+            <span>
+              { technology.length === 0 ? "All" : `Selected (${technology.length})` }
+            </span>
+          </span>
+        </Button>
+      </Popover>
     )
   ), [userPermissions.isSuperAdmin, popOver.technology, technology, searchTechnology, filteredTechnologyList, handleVisibleChange, handleFilters, handleSearchTechnology, setTechnology, getprojectexpencesList, setPopOver]);
 
   const ManagerFilter = useMemo(() => (
     userPermissions.isSuperAdmin && (
-      <div style={{ cursor: "pointer" }}>
-        <h6>Manager:</h6>
-        <Popover
-          trigger="click"
-          placement="bottomRight"
-          visible={popOver.manager}
-          onVisibleChange={() => handleVisibleChange("manager", true)}
-          content={
-            <div className="assignees-popover assign-global-height">
-              <ul>
-                <li>
-                  <Checkbox
-                    checked={manager.length === 0}
-                    onChange={() => handleFilters("", manager, setManager)}
-                  >
-                    All
-                  </Checkbox>
-                </li>
-              </ul>
-              <div className="search-filter">
-                <Input
-                  placeholder="Search"
-                  value={searchManager}
-                  onChange={handleSearchManager}
-                />
-              </div>
-              <div>
-                <ul className="assigness-data">
-                  {filteredManagerList.map((item) => (
-                    <li key={item._id}>
-                      <Checkbox
-                        onChange={() => handleFilters(item, manager, setManager)}
-                        checked={manager.includes(item._id)}
-                      >
-                        <MyAvatar
-                          userName={item?.manager_name || "-"}
-                          src={item?.emp_img}
-                          key={item?._id}
-                          alt={item?.manager_name}
-                        />
-                        <span>{removeTitle(item?.manager_name)}</span>
-                      </Checkbox>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="popover-footer-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  onClick={() => {
-                    getprojectexpencesList();
-                    setPopOver({ ...popOver, manager: false });
-                  }}
+      <Popover
+        trigger="click"
+        visible={ popOver.manager }
+        onVisibleChange={ (visible) => handleVisibleChange("manager", visible) }
+        placement="bottomRight"
+        content={
+          <div className="right-popover-wrapper">
+            <ul className="assigness-data">
+              <li>
+                <Checkbox
+                  checked={ manager.length === 0 }
+                  onChange={ () => handleFilters("", manager, setManager) }
                 >
-                  Apply
-                </Button>
-                <Button
-                  className="square-outline-btn"
-                  onClick={() => setPopOver({ ...popOver, manager: false })}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  All
+                </Checkbox>
+              </li>
+            </ul>
+            <div className="search-filter">
+              <Input
+                placeholder="Search"
+                value={ searchManager }
+                onChange={ handleSearchManager }
+              />
             </div>
-          }
-        >
-          <i className="fi fi-rr-users"></i>{" "}
-          {manager.length === 0 ? "All" : "Selected"}
-        </Popover>
-      </div>
+            <div>
+              <ul className="assigness-data">
+                { filteredManagerList.map((item) => (
+                  <li key={ item._id }>
+                    <Checkbox
+                      onChange={ () => handleFilters(item, manager, setManager) }
+                      checked={ manager.includes(item._id) }
+                    >
+                      <MyAvatar
+                        userName={ item?.manager_name || "-" }
+                        src={ item?.emp_img }
+                        key={ item?._id }
+                        alt={ item?.manager_name }
+                      />
+                      <span>{ removeTitle(item?.manager_name) }</span>
+                    </Checkbox>
+                  </li>
+                )) }
+              </ul>
+            </div>
+            <div className="popver-footer-btn">
+              <Button
+                type="primary"
+                className="square-primary-btn ant-btn-primary"
+                onClick={ () => {
+                  getprojectexpencesList();
+                  handleVisibleChange("manager", false);
+                } }
+              >
+                Apply
+              </Button>
+              <Button
+                className="square-outline-btn ant-delete"
+                onClick={ () => handleVisibleChange("manager", false) }
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <Button className="dropdown-button">
+          <span className="filter-text">
+            <span>Manager:</span>
+            <span>
+              { manager.length === 0 ? "All" : `Selected (${manager.length})` }
+            </span>
+          </span>
+        </Button>
+      </Popover>
     )
   ), [userPermissions.isSuperAdmin, popOver.manager, manager, searchManager, filteredManagerList, handleVisibleChange, handleFilters, handleSearchManager, setManager, getprojectexpencesList, setPopOver]);
 
   const AccountManagerFilter = useMemo(() => (
     userPermissions.isSuperAdmin && (
-      <div style={{ cursor: "pointer" }}>
-        <h6>Account Manager:</h6>
-        <Popover
-          trigger="click"
-          placement="bottomRight"
-          visible={popOver.accontManager}
-          onVisibleChange={() => handleVisibleChange("accontManager", true)}
-          content={
-            <div className="assignees-popover assign-global-height">
-              <ul>
-                <li>
-                  <Checkbox
-                    checked={accontManager?.length === 0}
-                    onChange={() => handleFilters("", accontManager, setAccountManager)}
-                  >
-                    All
-                  </Checkbox>
-                </li>
-              </ul>
-              <div className="search-filter">
-                <Input
-                  placeholder="Search"
-                  value={searchAccountManager}
-                  onChange={handleSearchAccountManager}
-                />
-              </div>
-              <div>
-                <ul className="assigness-data">
-                  {filteredAccManagerList.map((item) => (
-                    <li key={item._id}>
-                      <Checkbox
-                        onChange={() => handleFilters(item, accontManager, setAccountManager)}
-                        checked={accontManager?.includes(item._id)}
-                      >
-                        <MyAvatar
-                          userName={item?.manager_name || "-"}
-                          src={item?.emp_img}
-                          key={item?._id}
-                          alt={item?.manager_name}
-                        />
-                        <span>{removeTitle(item?.manager_name)}</span>
-                      </Checkbox>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="popover-footer-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  onClick={() => {
-                    getprojectexpencesList();
-                    setPopOver({ ...popOver, accontManager: false });
-                  }}
+      <Popover
+        trigger="click"
+        visible={ popOver.accontManager }
+        onVisibleChange={ (visible) => handleVisibleChange("accontManager", visible) }
+        placement="bottomRight"
+        content={
+          <div className="right-popover-wrapper">
+            <ul className="assigness-data">
+              <li>
+                <Checkbox
+                  checked={ accontManager?.length === 0 }
+                  onChange={ () => handleFilters("", accontManager, setAccountManager) }
                 >
-                  Apply
-                </Button>
-                <Button
-                  className="square-outline-btn"
-                  onClick={() => setPopOver({ ...popOver, accontManager: false })}
-                >
-                  Cancel
-                </Button>
-              </div>
+                  All
+                </Checkbox>
+              </li>
+            </ul>
+            <div className="search-filter">
+              <Input
+                placeholder="Search"
+                value={ searchAccountManager }
+                onChange={ handleSearchAccountManager }
+              />
             </div>
-          }
-        >
-          <i className="fi fi-rr-users"></i>{" "}
-          {accontManager?.length === 0 ? "All" : "Selected"}
-        </Popover>
-      </div>
+            <div>
+              <ul className="assigness-data">
+                { filteredAccManagerList.map((item) => (
+                  <li key={ item._id }>
+                    <Checkbox
+                      onChange={ () => handleFilters(item, accontManager, setAccountManager) }
+                      checked={ accontManager?.includes(item._id) }
+                    >
+                      <MyAvatar
+                        userName={ item?.manager_name || "-" }
+                        src={ item?.emp_img }
+                        key={ item?._id }
+                        alt={ item?.manager_name }
+                      />
+                      <span>{ removeTitle(item?.manager_name) }</span>
+                    </Checkbox>
+                  </li>
+                )) }
+              </ul>
+            </div>
+            <div className="popver-footer-btn">
+              <Button
+                type="primary"
+                className="square-primary-btn ant-btn-primary"
+                onClick={ () => {
+                  getprojectexpencesList();
+                  handleVisibleChange("accontManager", false);
+                } }
+              >
+                Apply
+              </Button>
+              <Button
+                className="square-outline-btn ant-delete"
+                onClick={ () => handleVisibleChange("accontManager", false) }
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <Button className="dropdown-button">
+          <span className="filter-text">
+            <span>Account Manager:</span>
+            <span>
+              { accontManager?.length === 0 ? "All" : `Selected (${accontManager?.length})` }
+            </span>
+          </span>
+        </Button>
+      </Popover>
     )
   ), [userPermissions.isSuperAdmin, popOver.accontManager, accontManager, searchAccountManager, filteredAccManagerList, handleVisibleChange, handleFilters, handleSearchAccountManager, setAccountManager, getprojectexpencesList, setPopOver]);
 
@@ -488,9 +500,9 @@ const Projectexpences = () => {
         title: "Amount",
         render: (text) =>
           text?.cost_in_usd ? (
-            <span style={{ display: 'flex', justifyContent: 'start', gap: '5px' }}>
+            <span style={ { display: 'flex', justifyContent: 'start', gap: '5px' } }>
               <span>$</span>
-              <span>{text.cost_in_usd}</span>
+              <span>{ text.cost_in_usd }</span>
             </span>
           ) : "-",
       },
@@ -506,12 +518,12 @@ const Projectexpences = () => {
         title: "Date",
         render: (text) => {
           const createdDate = moment(text.createdAt).format("DD MMM YYYY");
-          return <span>{createdDate || "-"}</span>;
+          return <span>{ createdDate || "-" }</span>;
         },
       },
       {
         title: "Status",
-        render: (text) => <span>{text.status}</span>,
+        render: (text) => <span>{ text.status }</span>,
       },
     ];
 
@@ -520,28 +532,28 @@ const Projectexpences = () => {
       baseColumns.push({
         title: "Actions",
         render: (text) => (
-          <div style={{
+          <div style={ {
             display: "flex",
             flexDirection: "row",
             justifyContent: "start",
             alignItems: "center",
             gap: "20px",
-          }}>
+          } }>
             <EyeOutlined
-              onClick={() => handleViewExpense(text?._id)}
-              style={{ cursor: "pointer" }}
+              onClick={ () => handleViewExpense(text?._id) }
+              style={ { cursor: "pointer" } }
             />
-            <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
-              <EditOutlined style={{ color: "green" }} />
+            <Link to={ `/${companySlug}/edit/projectexpenseform/${text._id}` }>
+              <EditOutlined style={ { color: "green" } } />
             </Link>
             <Popconfirm
-              icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+              icon={ <QuestionCircleOutlined style={ { color: "red" } } /> }
               title="Are you sure to delete this Expense?"
-              onConfirm={() => deleteProjectExpences(text._id)}
+              onConfirm={ () => deleteProjectExpences(text._id) }
               okText="Yes"
               cancelText="No"
             >
-              <DeleteOutlined style={{ color: "red" }} />
+              <DeleteOutlined style={ { color: "red" } } />
             </Popconfirm>
           </div>
         ),
@@ -550,19 +562,19 @@ const Projectexpences = () => {
       baseColumns.push({
         title: "Actions",
         render: (text) => (
-          <div style={{
+          <div style={ {
             display: "flex",
             flexDirection: "row",
             justifyContent: "center",
             alignItems: "center",
             gap: "20px",
-          }}>
+          } }>
             <EyeOutlined
-              onClick={() => handleViewExpense(text?._id)}
-              style={{ cursor: "pointer" }}
+              onClick={ () => handleViewExpense(text?._id) }
+              style={ { cursor: "pointer" } }
             />
-            <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
-              <EditOutlined style={{ color: "green" }} />
+            <Link to={ `/${companySlug}/edit/projectexpenseform/${text._id}` }>
+              <EditOutlined style={ { color: "green" } } />
             </Link>
           </div>
         ),
@@ -576,98 +588,108 @@ const Projectexpences = () => {
     <>
       <div className="ant-project-task all-project-main-wrapper positive-feedback-review">
         <Card>
-          <div className="profile-sub-head">
-            <div className="head-box-inner">
-              <div className="heading-main">
-                <h2>Project Expense</h2>
-              </div>
-              {userPermissions.canAddExpense && (
-                <Link to={`/${companySlug}/add/projectexpenseform`}>
-                  <Button type="primary" className="square-primary-btn">
-                    Add Project Expense
-                  </Button>
-                </Link>
-              )}
-            </div>
 
-            <div className="status-content">
-              {ProjectFilter}
-              {TechnologyFilter}
-              {ManagerFilter}
-              {AccountManagerFilter}
 
-              <div style={{ cursor: "pointer" }}>
-                <h6>Need to Bill Customer:</h6>
-                <Popover
-                  trigger="click"
-                  placement="bottomRight"
-                  visible={popOver.need_to_bill_customer}
-                  onVisibleChange={() => handleVisibleChange("need_to_bill_customer", true)}
-                  content={
-                    <div className="assignees-popover assign-global-height">
-                      <ul>
-                        <Radio.Group
-                          onChange={handleReviewTypeFilter}
-                          value={need_to_bill_customer}
-                        >
-                          <li>
-                            <Radio value="All">All</Radio>
-                          </li>
-                          <li>
-                            <Radio value="Yes">Yes</Radio>
-                          </li>
-                          <li>
-                            <Radio value="No">No</Radio>
-                          </li>
-                        </Radio.Group>
-                      </ul>
-                      <div className="popover-footer-btn">
-                        <Button
-                          type="primary"
-                          className="square-primary-btn"
-                          onClick={() => {
-                            getprojectexpencesList();
-                            setPopOver({ ...popOver, feedBackType: false });
-                          }}
-                        >
-                          Apply
-                        </Button>
-                        <Button
-                          className="square-outline-btn"
-                          onClick={() => setPopOver({ ...popOver, feedBackType: false })}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+          <div class="heading-wrapper"><h2>Project Expense</h2>
+            { userPermissions.canAddExpense && (
+              <Link to={ `/${companySlug}/add/projectexpenseform` }>
+                <Button type="primary" className="square-primary-btn">
+                  Add Project Expense
+                </Button>
+              </Link>
+            ) }
+          </div>
+
+
+          <div className="global-search">
+
+
+            <div className="filter-btn-wrapper">
+
+              { ProjectFilter }
+              { TechnologyFilter }
+              { ManagerFilter }
+              { AccountManagerFilter }
+              <Popover
+                trigger="click"
+                visible={ popOver.need_to_bill_customer }
+                onVisibleChange={ (visible) => handleVisibleChange("need_to_bill_customer", visible) }
+                placement="bottomRight"
+                content={
+                  <div className="right-popover-wrapper">
+                    <ul className="assigness-data">
+                      <Radio.Group
+                        onChange={ (e) => handleReviewTypeFilter(e.target.value) }
+                        value={ need_to_bill_customer }
+                      >
+                        <li>
+                          <Radio value="All">All</Radio>
+                        </li>
+                        <li>
+                          <Radio value="Yes">Yes</Radio>
+                        </li>
+                        <li>
+                          <Radio value="No">No</Radio>
+                        </li>
+                      </Radio.Group>
+                    </ul>
+                    <div className="popver-footer-btn">
+                      <Button
+                        type="primary"
+                        className="square-primary-btn ant-btn-primary"
+                        onClick={ () => {
+                          getprojectexpencesList();
+                          handleVisibleChange("need_to_bill_customer", false);
+                        } }
+                      >
+                        Apply
+                      </Button>
+                      <Button
+                        className="square-outline-btn ant-delete"
+                        onClick={ () => handleVisibleChange("need_to_bill_customer", false) }
+                      >
+                        Cancel
+                      </Button>
                     </div>
-                  }
-                >
-                  <i className="fa-solid fa-list-check"></i>{" "}
-                  {need_to_bill_customer === "All" ? "All" : "Selected"}
-                </Popover>
-              </div>
+                  </div>
+                }
+              >
+                <Button className="dropdown-button">
+                  <span className="filter-text">
+                    <span>Need to Bill Customer:</span>
+                    <span>
+                      { need_to_bill_customer === "All"
+                        ? "All"
+                        : need_to_bill_customer === "Yes"
+                          ? "Yes"
+                          : "No" }
+                    </span>
+                  </span>
+                </Button>
+              </Popover>
 
               <Button
                 className="mr2"
                 id="exportButton"
-                disabled={pagination.total === 0}
-                onClick={exportCSV}
+                disabled={ pagination.total === 0 }
+                onClick={ exportCSV }
               >
                 Export CSV
               </Button>
             </div>
           </div>
 
+
           <Table
-            pagination={{
+            pagination={ {
               showSizeChanger: true,
               pageSizeOptions: PAGINATION_OPTIONS,
               showTotal: showTotal,
               ...pagination,
-            }}
-            columns={columns}
-            onChange={handleTableChange}
-            dataSource={projectexpencesList}
+            } }
+            columns={ columns }
+            onChange={ handleTableChange }
+            dataSource={ projectexpencesList }
           />
         </Card>
       </div>
@@ -676,67 +698,67 @@ const Projectexpences = () => {
         width="600px"
         title="Project Expense Details"
         destroyOnClose
-        onCancel={handleModalClose}
-        open={isModalOpenTopic}
-        footer={null}
+        onCancel={ handleModalClose }
+        open={ isModalOpenTopic }
+        footer={ null }
       >
-        <Form form={formDetail} layout="vertical" style={{ padding: '20px' }}>
-          <Form.Item 
-            label={<Text strong>Purchase Request Details</Text>} 
+        <Form form={ formDetail } layout="vertical" style={ { padding: '20px' } }>
+          <Form.Item
+            label={ <Text strong>Purchase Request Details</Text> }
             name="purchase_request_details"
           >
             <Input.TextArea
               placeholder="Enter purchase request details"
-              rows={4}
+              rows={ 4 }
               disabled
               className="border-gray-300"
             />
           </Form.Item>
 
-          {viewData?.details && (
-            <Form.Item 
-              label={<Text strong>Accounting Details</Text>} 
+          { viewData?.details && (
+            <Form.Item
+              label={ <Text strong>Accounting Details</Text> }
               name="details"
             >
               <Input.TextArea
                 placeholder="Accounting details"
-                rows={4}
+                rows={ 4 }
                 disabled
                 className="border-gray-300"
               />
             </Form.Item>
-          )}
+          ) }
 
-          {viewData?.nature_Of_expense && (
-            <Form.Item 
-              label={<Text strong>Nature Of Expense</Text>} 
+          { viewData?.nature_Of_expense && (
+            <Form.Item
+              label={ <Text strong>Nature Of Expense</Text> }
               name="nature_Of_expense"
             >
               <Input.TextArea
                 placeholder="Nature Of Expense"
-                rows={4}
+                rows={ 4 }
                 disabled
                 className="border-gray-300"
               />
             </Form.Item>
-          )}
+          ) }
 
-          {viewData?.projectexpences?.length > 0 && (
-            <Row align="middle" style={{ marginTop: 16 }}>
+          { viewData?.projectexpences?.length > 0 && (
+            <Row align="middle" style={ { marginTop: 16 } }>
               <Col>
                 <Text strong>Document: </Text>
                 <a
-                  href={`${process.env.REACT_APP_API_URL}/public/projectexpense/${viewData?.projectexpences}`}
+                  href={ `${process.env.REACT_APP_API_URL}/public/projectexpense/${viewData?.projectexpences}` }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ml-2 text-blue-500 hover:text-blue-700"
                 >
-                  <FileTextOutlined style={{ marginRight: 5 }} />
-                  {viewData?.projectexpences}
+                  <FileTextOutlined style={ { marginRight: 5 } } />
+                  { viewData?.projectexpences }
                 </a>
               </Col>
             </Row>
-          )}
+          ) }
         </Form>
       </Modal>
     </>

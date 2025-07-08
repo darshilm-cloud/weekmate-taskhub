@@ -3528,6 +3528,7 @@ span.anticon.anticon-down svg {
     flex-wrap: wrap;
     justify-content: center;
     gap: 15px;
+    margin-left: auto;
 }
 
 .inout-employee .filter-btn-wrapper button.css-dev-only-do-not-override-dkbvqv {
@@ -4738,7 +4739,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     transition: none 0s ease 0s;
     transition: initial;
 }
-
+.sidebar-menu .ant-menu-submenu,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
     align-items: center;
     background: #0000;
@@ -4754,6 +4755,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     margin-bottom: 15px;
     margin-inline: 4px;
     padding: 12px 15px;
+    border-radius: 0;
 }
 
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item svg {
@@ -4768,12 +4770,12 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     margin: 0;
     white-space: break-spaces;
 }
-
+.sidebar-menu .ant-menu-submenu:hover,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
     background: #ffffff17;
-    border-left: 2px solid #3f3e3e;
+    border-left: 2px solid #ffff;
 }
-
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected:hover {
     background: #ffffff17;
@@ -4829,7 +4831,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .ant-table-content {
     height: 100%;
-    max-height: calc(100vh - 270px);
+    max-height: calc(100vh - 170px);
     overflow: auto;
 }
 
@@ -4895,7 +4897,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-pagination .ant-pagination-item-active a {
-    background: #fff;
     color: #3f4350;
     border-color: #c2c3c5;
 }
@@ -4923,6 +4924,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector,
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined {
     border-color: #c2c3c5;
+    height: 35px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-search-button {
@@ -5024,6 +5026,8 @@ padding: 0 10px;
 .admin-user .ant-upload .ant-btn {
     padding: 7.9px 11px;
     width: 100%;
+    display: flex;
+    gap:5px;
 }
 
 .admin-user .ant-table-wrapper .ant-table {
@@ -5524,6 +5528,7 @@ padding: 0 10px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    margin-left: auto;
 }
  .filter-btn-wrapper .dropdown-button {
     padding: 8px 12px;
@@ -5534,7 +5539,28 @@ padding: 0 10px;
     line-height: normal;
     height: 40px;
 }
-
+.filter-btn-wrapper .ant-btn{
+    margin-bottom: 0;
+}
+.filter-btn-wrapper .ant-btn.ant-btn-variant-outlined:hover{
+    background-color: #fff;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    color: #0171c2;
+    border-color:#0171c2 ;
+}
+.filter-btn-wrapper  .ant-btn .filter-text {
+    display: flex;
+    gap: 5px;
+}
+.assignees-popover  .ant-checkbox-wrapper,
+.right-popover-wrapper .ant-radio-wrapper{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 5px 0;
+    
+}
 @media (max-width: 991px) {
     .top-header.ant-layout-header {
         background-image: linear-gradient(-303deg, rgb(0, 39, 66), rgb(39, 114, 168) 56%, rgb(4, 49, 82)) !important;
