@@ -15,6 +15,7 @@ const { createJWTToken } = require("../helpers/JWTToken");
 const { emailSenderForPMS } = require("../helpers/common");
 const Employees = mongoose.model("employees");
 const PMSClients = mongoose.model("pmsclients");
+const Company = mongoose.model("companies");
 const config = require("../settings/config.json");
 const {
   forgetPasswordContent,
@@ -117,42 +118,113 @@ exports.login = async (req, res, next) => {
       );
     }
 
-    // Verify user password..
-    loginUser.comparePassword(value.password, async function (error, isMatch) {
-      if (error || !isMatch) {
+    if (loginUser?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN) {
+      // Verify user password..
+      loginUser.comparePassword(
+        value.password,
+        async function (error, isMatch) {
+          if (error || !isMatch) {
+            return errorResponse(
+              res,
+              statusCode.UNAUTHORIZED,
+              messages.PASSWORD_INVALID
+            );
+          }
+
+          const user = await module.exports.dataForJWT(loginUser);
+          const auth_token = createJWTToken(
+            user,
+            157680000 // 5 year
+          );
+          // Get login user permissions..
+          let permissions = await module.exports.getUserPermissions(user._id);
+          return successResponse(
+            res,
+            statusCode.SUCCESS,
+            messages.USER_LOGIN,
+            { user, auth_token },
+            {},
+            permissions,
+            user?.pms_role_id?._id
+          );
+        }
+      );
+    } else {
+      if (!value?.slug) {
         return errorResponse(
           res,
           statusCode.UNAUTHORIZED,
-          messages.PASSWORD_INVALID
+          "Please login with your company url"
         );
-      }
+      } else {
+        let getCompanyDetails = await Company.findOne({
+          companyDomain: value.slug,
+          isActive: true
+        });
 
-      await Employees.findByIdAndUpdate(loginUser._id, {
-        $push: {
-          loginActivity: {
-            $each: [new Date()],
-            $slice: -5 // keep only last 5 entries
-          }
+        if (getCompanyDetails) {
+          // Verify user password..
+          loginUser.comparePassword(
+            value.password,
+            async function (error, isMatch) {
+              if (error || !isMatch) {
+                return errorResponse(
+                  res,
+                  statusCode.UNAUTHORIZED,
+                  messages.PASSWORD_INVALID
+                );
+              }
+
+              await Employees.findByIdAndUpdate(loginUser._id, {
+                $push: {
+                  loginActivity: {
+                    $each: [new Date()],
+                    $slice: -5 // keep only last 5 entries
+                  }
+                }
+              });
+
+              const user = await module.exports.dataForJWT(loginUser);
+              
+              if (
+                user?.companyDetails?.companyDomain !==
+                getCompanyDetails?.companyDomain
+              ) {
+                return errorResponse(
+                  res,
+                  statusCode.NOT_FOUND,
+                  "You are not register in company"
+                );
+              }
+
+              const auth_token = createJWTToken(
+                user,
+                157680000 // 5 year
+              );
+              // Get login user permissions..
+              let permissions = await module.exports.getUserPermissions(
+                user._id
+              );
+              return successResponse(
+                res,
+                statusCode.SUCCESS,
+                messages.USER_LOGIN,
+                { user, auth_token },
+                {},
+                permissions,
+                user?.pms_role_id?._id
+              );
+            }
+          );
+        } else {
+          return errorResponse(
+            res,
+            statusCode.NOT_FOUND,
+            "Company not found or you are not register in company"
+          );
         }
-      });
-
-      const user = await module.exports.dataForJWT(loginUser);
-      const auth_token = createJWTToken(
-        user,
-        157680000 // 5 year
-      );
-      // Get login user permissions..
-      let permissions = await module.exports.getUserPermissions(user._id);
-      return successResponse(
-        res,
-        statusCode.SUCCESS,
-        messages.USER_LOGIN,
-        { user, auth_token },
-        {},
-        permissions,
-        user?.pms_role_id?._id
-      );
-    });
+      }
+    }
   } catch (error) {
     console.log("🚀 ~ exports.login= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
@@ -192,7 +264,6 @@ exports.getDataForLoginUser = async (reqBody) => {
 };
 
 exports.dataForJWT = async (userData) => {
-  console.log("🚀 ~ exports.dataForJWT= ~ userData:", userData)
   try {
     if (userData?.pms_role_id?.role_name == "Client") {
       userData = await PMSClients.findOne({

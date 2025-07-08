@@ -13,11 +13,11 @@ const CompanySchema = new mongoose.Schema(
     },
     companyLogoUrl: {
       type: String,
-      default:""
+      default: ""
     },
     companyFavIcoUrl: {
       type: String,
-      default:""
+      default: ""
     },
     isActive: {
       type: Boolean,
@@ -41,8 +41,9 @@ const CompanySchema = new mongoose.Schema(
       default: 1 * 1024 // 10 MB, stored in KB
     },
     companyDomain: {
-      type: String
-    },
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true
@@ -51,6 +52,7 @@ const CompanySchema = new mongoose.Schema(
 
 CompanySchema.index({ companyName: 1 });
 CompanySchema.index({ companyEmail: 1 });
+CompanySchema.index({ companyDomain: 1 });
 CompanySchema.index({ isActive: 1 });
 CompanySchema.index({ isDeleted: 1 });
 

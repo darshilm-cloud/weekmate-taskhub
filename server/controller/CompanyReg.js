@@ -32,7 +32,6 @@ exports.registerAdminAndCompany = async (req, res) => {
       adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyEmail, companyDomain },
     } = value;
-    console.log("🚀 ~ exports.registerAdminAndCompany= ~ value:", value,first_name)
     
 
     // 🔍 Check if admin email already exists in main database
@@ -56,6 +55,16 @@ exports.registerAdminAndCompany = async (req, res) => {
       );
     }
 
+     // 🔍 Check if company name already exists in main database
+     const existingCompanyDomain = await CompanyModel.findOne({ companyDomain });
+     if (existingCompanyDomain) {
+       return errorResponse(
+         res,
+         statusCode.CONFLICT,
+         "Company domain or slug already exists, please try with different slug or domain"
+       );
+     }
+ 
     // 🔍 Check if company email already exists in main database
     const existingCompanyEmail = await CompanyModel.findOne({ companyEmail });
     if (existingCompanyEmail) {

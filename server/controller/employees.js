@@ -435,3 +435,29 @@ exports.addEmpPMSRole = async (emps) => {
     console.log("🚀 ~ exports.addEmpPermissions= ~ error:", error);
   }
 };
+
+// Edit employee details API
+exports.editEmployee = async (req, res) => {
+  try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
+    const { firstName, lastName, profileImage } = req.body;
+
+    const { userId } = req.params;
+    
+    let updateObj = {};
+
+    if (firstName) updateObj.first_name = firstName;
+    if (lastName) updateObj.last_name = lastName;
+    if (profileImage) updateObj.emp_img = profileImage;
+    updateObj.full_name = `${firstName} ${lastName}`;
+  } catch (error) {
+    console.log("🚀 ~ exports.editEmployee= ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
