@@ -418,7 +418,8 @@ $breakpoints: (
       .ant-card-body {
         padding: spacing(xxxl);
         background: transparent;
-overflow: hidden;
+        overflow: hidden;
+
         @include respond-below(md) {
           padding: spacing(xl);
         }
@@ -470,7 +471,9 @@ overflow: hidden;
 
 
             &.gmail {
-line-height: normal;
+              line-height: normal;
+              height: auto;
+
               &.selected,
               &:hover {
                 background: $gmail-gradient;

@@ -54,19 +54,17 @@ const ProjectListModal = ({
         style={{ padding: "0", borderBottom: "none" }}
       >
         <Form form={form}>
-          <Form.Item name="title">
+         
             <Input
               onChange={handleInputChange}
               bordered={false}
               style={{
-                height: "52px",
-                margin: "0",
-                outline: "none",
-                boxShadow: "#0e304854 0px 1px 7px 0px",
+                boxShadow:" 0px 0px 4px 0px #eeee",
+                border:"1px solid #ccc"
               }}
               placeholder="Search Projects..."
             />
-          </Form.Item>
+       
         </Form>
       </div>
       <div className="list-project">

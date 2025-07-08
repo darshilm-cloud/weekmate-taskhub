@@ -3787,7 +3787,6 @@ span.process_bar {
 .profile-sub-head {
   display: flex;
   padding: 16px 24px;
-  background-color: #f2f5f8;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
