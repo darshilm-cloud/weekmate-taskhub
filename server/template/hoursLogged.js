@@ -2,12 +2,14 @@ const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
 const ejs = require("ejs");
 const moment = require("moment");
-const { emailSenderForPMS, getUserName } = require("../helpers/common");
+const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 class TaskHoursLogged {
   taskHoursLoggedMail = async (data, companyId) => {
     try {
+        let companyData = await getCompanyData(companyId);
+
       let html = ``;
 
       html = `
@@ -112,7 +114,7 @@ class TaskHoursLogged {
                   font-size: 30px;
                   padding-bottom: 5px;
                   font-weight: 600;
-                "> Elsner Technologies Pvt Ltd </h1>
+                "> ${companyData?.companyName || "Taskhub"} </h1>
                     </td>
                 </tr>
             </tbody>
@@ -466,6 +468,8 @@ class TaskHoursLogged {
 
   subTaskHoursLoggedMail = async (data, companyId) => {
     try {
+        let companyData = await getCompanyData(companyId);
+
       let html = ``;
 
       html = `
@@ -665,7 +669,7 @@ class TaskHoursLogged {
 <body>
     <div class="main-wrapper-block">
         <header>
-            <h1>Elsner Technologies Pvt Ltd</h1>
+            <h1>${companyData?.companyName || "Taskhub"}</h1>
         </header>
         <div class="main-template-wrapper">
             <div class="title-block">

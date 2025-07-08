@@ -1,7 +1,7 @@
 const {
   successResponse,
   catchBlockErrorResponse,
-  errorResponse,
+  errorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const RolePermissions = mongoose.model("role_permissions");
@@ -18,7 +18,7 @@ const PMSClients = mongoose.model("pmsclients");
 const config = require("../settings/config.json");
 const {
   forgetPasswordContent,
-  resetPasswordContent,
+  resetPasswordContent
 } = require("../template/clientPasswordMails");
 const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
@@ -26,7 +26,7 @@ const { validateFormatter } = require("../configs");
 exports.authenticationGetData = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      token: Joi.string().required(),
+      token: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -68,13 +68,13 @@ exports.authenticationGetData = async (req, res) => {
 
 exports.getUserPermissions = async (userId) => {
   try {
-    const loginUser = await this.getDataForLoginUser({_id: userId});
+    const loginUser = await this.getDataForLoginUser({ _id: userId });
     let permission = [];
 
     if (loginUser && loginUser?.pms_role_id) {
       const getPermissions = await RolePermissions.find({
         pms_role_id: new mongoose.Types.ObjectId(loginUser.pms_role_id),
-        isDeleted: false,
+        isDeleted: false
       });
 
       if (getPermissions && getPermissions.length > 0) {
@@ -90,11 +90,7 @@ exports.getUserPermissions = async (userId) => {
 // Login API
 exports.login = async (req, res, next) => {
   try {
-
-    const { error, value } = validateFormatter(
-      getLoginSchema(),
-      req.body
-    );
+    const { error, value } = validateFormatter(getLoginSchema(), req.body);
     if (error) {
       return errorResponse(
         res,
@@ -102,7 +98,6 @@ exports.login = async (req, res, next) => {
         error.details[0].message
       );
     }
-
 
     const loginUser = await this.getDataForLoginUser(value);
     if (!loginUser) {
@@ -132,17 +127,14 @@ exports.login = async (req, res, next) => {
         );
       }
 
-      await Employees.findByIdAndUpdate(
-        loginUser._id,
-        {
-          $push: {
-            loginActivity: {
-              $each: [new Date()],
-              $slice: -5 // keep only last 5 entries
-            }
+      await Employees.findByIdAndUpdate(loginUser._id, {
+        $push: {
+          loginActivity: {
+            $each: [new Date()],
+            $slice: -5 // keep only last 5 entries
           }
         }
-      );
+      });
 
       const user = await module.exports.dataForJWT(loginUser);
       const auth_token = createJWTToken(
@@ -175,17 +167,24 @@ exports.getDataForLoginUser = async (reqBody) => {
       isSoftDeleted: false,
       ...(reqBody?._id
         ? { _id: new mongoose.Types.ObjectId(reqBody?._id) }
-        : {}),
+        : {})
     };
-      userData = await Employees.findOne({
+    userData = await Employees.findOne({
+      ...obj,
+      ...(reqBody.email ? { email: reqBody.email } : {})
+    })
+      .populate("pms_role_id", "role_name")
+      .exec();
+
+    if (!userData) {
+      userData = await PMSClients.findOne({
         ...obj,
-        ...(reqBody.email
-          ? { email: reqBody.email }
-          : {})
+        ...(reqBody.email ? { email: reqBody.email } : {})
       })
         .populate("pms_role_id", "role_name")
         .exec();
-    
+    }
+
     return userData;
   } catch (error) {
     console.log("🚀 ~ exports.getDataForLoginUser=async ~ error:", error);
@@ -193,17 +192,18 @@ exports.getDataForLoginUser = async (reqBody) => {
 };
 
 exports.dataForJWT = async (userData) => {
+  console.log("🚀 ~ exports.dataForJWT= ~ userData:", userData)
   try {
-    if (userData?.role_id?.role_type == "pms_client") {
+    if (userData?.pms_role_id?.role_name == "Client") {
       userData = await PMSClients.findOne({
-        _id: new mongoose.Types.ObjectId(userData._id),
+        _id: new mongoose.Types.ObjectId(userData._id)
       })
         .populate("pms_role_id", "role_name")
         .populate("companyId")
         .exec();
     } else {
       userData = await Employees.findOne({
-        _id: new mongoose.Types.ObjectId(userData._id),
+        _id: new mongoose.Types.ObjectId(userData._id)
       })
         .populate("pms_role_id", "role_name")
         .populate("companyId")
@@ -216,11 +216,11 @@ exports.dataForJWT = async (userData) => {
       last_name: userData.last_name,
       email: userData.email,
       phone_number: userData.phone_number,
-      companyId:userData?.companyId?._id,
-      companyDetails:userData.companyId,
+      companyId: userData?.companyId?._id,
+      companyDetails: userData.companyId,
       ...(userData.full_name ? { full_name: userData.full_name } : {}),
       ...(userData.emp_img ? { emp_img: userData.emp_img } : {}),
-      ...(userData.pms_role_id ? { pms_role_id: userData.pms_role_id } : {}),
+      ...(userData.pms_role_id ? { pms_role_id: userData.pms_role_id } : {})
     };
   } catch (error) {
     console.log("🚀 ~dataForJWT :  error:", error);
@@ -231,7 +231,7 @@ exports.updatePassword = async (req, res) => {
   const validationSchema = Joi.object({
     oldpassword: Joi.string().required(),
     newPassword: Joi.string().required(),
-    user_id: Joi.string().required(),
+    user_id: Joi.string().required()
   });
   const { error, value } = validationSchema.validate(req.body);
   if (error) {
@@ -254,7 +254,7 @@ exports.updatePassword = async (req, res) => {
         } else {
           const result = await PMSClients.updateOne(
             {
-              _id: userData._id,
+              _id: userData._id
             },
             {
               $set: {
@@ -262,8 +262,8 @@ exports.updatePassword = async (req, res) => {
                 password: crypto
                   .createHash("md5")
                   .update(value.newPassword)
-                  .digest("hex"),
-              },
+                  .digest("hex")
+              }
             }
           ).exec();
           // await userData.save();
@@ -283,7 +283,7 @@ exports.updatePassword = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      email: Joi.string().required(),
+      email: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -295,7 +295,7 @@ exports.forgotPassword = async (req, res) => {
     }
     const empData = await Employees.findOne({
       email: value.email.toLowerCase(),
-      isSoftDeleted: false,
+      isSoftDeleted: false
     }).exec();
     if (empData?.email) {
       return errorResponse(
@@ -306,7 +306,7 @@ exports.forgotPassword = async (req, res) => {
     }
     const userData = await PMSClients.findOne({
       email: value.email.toLowerCase(),
-      isSoftDeleted: false,
+      isSoftDeleted: false
     }).exec();
     if (!userData) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.EMAIL_INVALID);
@@ -319,22 +319,22 @@ exports.forgotPassword = async (req, res) => {
       );
     }
     let jwtData = {
-      passwordResetToken: emailResetToken,
+      passwordResetToken: emailResetToken
     };
     const result = await PMSClients.updateOne(
       {
-        _id: userData._id,
+        _id: userData._id
       },
       {
         $set: {
-          resetCode: jwtData.passwordResetToken,
-        },
+          resetCode: jwtData.passwordResetToken
+        }
       }
     ).exec();
 
     if (result) {
       const authToken = jwt.sign(jwtData, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "24h",
+        expiresIn: "24h"
       });
       await emailSenderForPMS(
         userData.email,
@@ -369,7 +369,7 @@ exports.resetPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       password: Joi.string().required(),
-      emailResetToken: Joi.string().required(),
+      emailResetToken: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -389,14 +389,14 @@ exports.resetPassword = async (req, res) => {
 
     if (passwordResetToken) {
       const userData = await PMSClients.findOne({
-        resetCode: passwordResetToken,
+        resetCode: passwordResetToken
       });
 
       if (userData) {
         userData.resetCode = null;
         const result = await PMSClients.updateOne(
           {
-            _id: userData._id,
+            _id: userData._id
           },
           {
             $set: {
@@ -404,8 +404,8 @@ exports.resetPassword = async (req, res) => {
               password: crypto
                 .createHash("md5")
                 .update(value.password)
-                .digest("hex"),
-            },
+                .digest("hex")
+            }
           }
         ).exec();
 
@@ -444,14 +444,14 @@ exports.checkUserIsAdmin = async (userId) => {
   try {
     let isAdmin = false;
     const loginUser = await this.getDataForLoginUser({
-      _id: userId,
+      _id: userId
     });
 
     if (
       loginUser &&
       loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
-    isAdmin = true;
+      isAdmin = true;
     console.log("🚀 ~ exports.checkUserIsAdmin= ~ isAdmin:", isAdmin);
 
     return isAdmin;
@@ -464,7 +464,7 @@ exports.checkUserIsSuperAdmin = async (userId) => {
   try {
     let isSuperAdmin = false;
     const loginUser = await this.getDataForLoginUser({
-      _id: userId,
+      _id: userId
     });
 
     if (
@@ -472,7 +472,10 @@ exports.checkUserIsSuperAdmin = async (userId) => {
       loginUser?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN
     )
       isSuperAdmin = true;
-    console.log("🚀 ~ exports.checkUserIsSuperAdmin= ~ isSuperAdmin:", isSuperAdmin);
+    console.log(
+      "🚀 ~ exports.checkUserIsSuperAdmin= ~ isSuperAdmin:",
+      isSuperAdmin
+    );
 
     return isSuperAdmin;
   } catch (error) {
