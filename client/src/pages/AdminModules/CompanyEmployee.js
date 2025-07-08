@@ -419,7 +419,7 @@ const CompanyEmployee = () => {
             : [
                 <Button
                   key="cancel"
-                  type="primary"
+            
                   className="delete-btn"
                   onClick={() => setModalVisible(false)}
                 >

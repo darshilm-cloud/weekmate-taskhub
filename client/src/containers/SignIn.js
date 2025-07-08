@@ -108,51 +108,51 @@ function SignIn() {
   const showVerificationModal = (message, verfyed) => {
     Modal.success({
       title: (
-        <Title level={4} style={{ marginBottom: 0 }}>
-          {verfyed ? "Verified" : "Not Verified"}
+        <Title level={ 4 } style={ { marginBottom: 0 } }>
+          { verfyed ? "Verified" : "Not Verified" }
         </Title>
       ),
       content: (
-        <div style={{ marginTop: 8 }}>
+        <div style={ { marginTop: 8 } }>
           <Text>
-            Your email has {verfyed ? "" : "not"} been successfully verified.
+            Your email has { verfyed ? "" : "not" } been successfully verified.
           </Text>
           <br />
-          <Text type="secondary">{message} </Text>
+          <Text type="secondary">{ message } </Text>
         </div>
       ),
-      okText: (
-        <>
-          <Button type="primary" block size="large" className="ant-btn-primary">
-            Ok
-          </Button>
-        </>
-      ),
+      okText: "Ok",
+      okButtonProps: {
+        type: "primary",
+        size: "large",
+        className: "ant-btn-primary",
+    
+      },
       centered: true,
     });
   };
 
-  
+
   return (
     <div className="gx-app-login-wrap account-login">
       <div className="gx-app-login-container">
         <Row className="gx-app-login-main-content">
-          <Col xs={24} sm={24} md={24} lg={24} className="gx-app-login-content">
+          <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 } className="gx-app-login-content">
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
-                {login_logo ? (
-                  <img alt="example" src={TaskHub} />
+                { login_logo ? (
+                  <img alt="example" src={ TaskHub } />
                 ) : (
                   <img
                     alt="example"
-                    style={{
+                    style={ {
                       width: "40%",
                       maxWidth: "80px",
                       marginBottom: "0",
-                    }}
-                    src={TaskHub}
+                    } }
+                    src={ TaskHub }
                   />
-                )}
+                ) }
               </div>
             </div>
 
@@ -169,11 +169,11 @@ function SignIn() {
               <Form
                 name="basic"
                 className="gx-signin-form gx-form-row0"
-                onFinishFailed={onFinishFailed}
-                form={form}
-                onFinish={(values) => {
+                onFinishFailed={ onFinishFailed }
+                form={ form }
+                onFinish={ (values) => {
                   loginFn(values);
-                }}
+                } }
                 layout="vertical"
               >
                 <div className="form-label">
@@ -183,7 +183,7 @@ function SignIn() {
                 </div>
                 <div className="form-content">
                   <Form.Item
-                    rules={[
+                    rules={ [
                       {
                         required: true,
                         message: "Please enter your Login Id!",
@@ -192,7 +192,7 @@ function SignIn() {
                         type: "email",
                         message: "Please enter valid Login Id",
                       },
-                    ]}
+                    ] }
                     name="email"
                   >
                     <Input type="email" placeholder="Login Id" />
@@ -209,12 +209,12 @@ function SignIn() {
                 <div className="form-content">
                   <Form.Item
                     name="password"
-                    rules={[
+                    rules={ [
                       {
                         required: true,
                         message: "Please enter your password!",
                       },
-                    ]}
+                    ] }
                   >
                     <Input.Password placeholder="Password" />
                   </Form.Item>
@@ -239,9 +239,9 @@ function SignIn() {
                     type="primary"
                     htmlType="button"
                     className="gx-mb-0"
-                    onClick={() => {
+                    onClick={ () => {
                       history.push(`/register-company`);
-                    }}
+                    } }
                     block
                   >
                     <IntlMessages id="app.userAuth.signUpForNewCompany" />
@@ -249,7 +249,7 @@ function SignIn() {
                 </Form.Item> */}
 
                 <Form.Item>
-                  <div style={{ textAlign: "center" }}>
+                  <div style={ { textAlign: "center" } }>
                     Forgot your Login details?
                     <Link to={`/${companySlug}/forgot-password`}>
                       &nbsp;Get help logging in.
@@ -260,7 +260,7 @@ function SignIn() {
             </div>
           </Col>
         </Row>
-        {showMessage ? message.error(alertMessage.toString()) : null}
+        { showMessage ? message.error(alertMessage.toString()) : null }
       </div>
     </div>
   );

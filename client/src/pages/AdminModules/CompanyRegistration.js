@@ -547,7 +547,7 @@ const CompanyRegistration = () => {
           ) : (
             <>
               <Button
-                type="primary"
+    
                 className="delete-btn"
                 onClick={handleModalClose}
                 disabled={loading}

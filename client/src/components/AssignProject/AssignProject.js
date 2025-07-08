@@ -16,6 +16,7 @@ import {
   Col,
   DatePicker,
   Space,
+  Drawer,
 } from "antd";
 import {
   CheckSquareOutlined,
@@ -108,6 +109,9 @@ function AssignProject() {
     acc_manager: false,
   });
   const [searchKeyword, setSearchKeyword] = useState("");
+
+
+
 
   const handleSearch = (searchValue) => {
     setSearchKeyword(searchValue);
@@ -299,7 +303,7 @@ function AssignProject() {
         return (
           <Link to={`/${companySlug}/project/app/${ProjectId}?tab=${record?.defaultTab?.name}`}>
             <div className="project_title_main_div">
-              <span>{formattedTitle}</span>
+              <span>{ formattedTitle }</span>
             </div>
           </Link>
         );
@@ -323,8 +327,8 @@ function AssignProject() {
         }
 
         return (
-          <span style={{ textTransform: "capitalize" }}>
-            {startDate} - {endDate}
+          <span style={ { textTransform: "capitalize" } }>
+            { startDate } - { endDate }
           </span>
         );
       },
@@ -337,16 +341,16 @@ function AssignProject() {
       render: (text, record) => {
         return (
           <div className="avtar-group">
-            {record?.acc_manager ? (
+            { record?.acc_manager ? (
               <MyAvatar
-                userName={record?.acc_manager?.full_name || "-"}
-                src={record?.acc_manager?.emp_img}
-                key={record?.acc_manager?._id}
-                alt={record?.acc_manager?.full_name}
+                userName={ record?.acc_manager?.full_name || "-" }
+                src={ record?.acc_manager?.emp_img }
+                key={ record?.acc_manager?._id }
+                alt={ record?.acc_manager?.full_name }
               />
             ) : (
               " - "
-            )}
+            ) }
           </div>
         );
       },
@@ -359,16 +363,16 @@ function AssignProject() {
       render: (text, record) => {
         return (
           <div className="avtar-group">
-            {record?.manager ? (
+            { record?.manager ? (
               <MyAvatar
-                userName={record?.manager?.full_name || "-"}
-                src={record?.manager?.emp_img}
-                key={record?.manager?._id}
-                alt={record?.manager?.full_name}
+                userName={ record?.manager?.full_name || "-" }
+                src={ record?.manager?.emp_img }
+                key={ record?.manager?._id }
+                alt={ record?.manager?.full_name }
               />
             ) : (
               " - "
-            )}
+            ) }
           </div>
         );
       },
@@ -382,8 +386,8 @@ function AssignProject() {
         return (
           <div className="avtar-group">
             <MyAvatarGroup
-              record={record?.assignees}
-              maxPopoverTrigger={"click"}
+              record={ record?.assignees }
+              maxPopoverTrigger={ "click" }
             />
           </div>
         );
@@ -400,39 +404,39 @@ function AssignProject() {
       render: (text, record) => {
         const content = (
           <div className="project-edit-btn-wrapper">
-            {hasPermission(["project_edit"]) && (
+            { hasPermission(["project_edit"]) && (
               <>
                 <div
-                  onClick={() => {
+                  onClick={ () => {
                     showModal(record._id);
                     setModalMode("Edit");
-                  }}
-                  style={{ cursor: "pointer" }}
+                  } }
+                  style={ { cursor: "pointer" } }
                 >
                   <EditTwoTone twoToneColor="green" />
                   Edit
                 </div>
               </>
-            )}
-            {hasPermission(["project_delete"]) && (
+            ) }
+            { hasPermission(["project_delete"]) && (
               <Popconfirm
                 title="Do you want to delete?"
                 okText="Yes"
                 cancelText="No"
-                onConfirm={() => deleteProject(record?._id)}
+                onConfirm={ () => deleteProject(record?._id) }
               >
-                <div className="ant-delete" style={{ cursor: "pointer" }}>
+                <div className="ant-delete" style={ { cursor: "pointer" } }>
                   <DeleteTwoTone twoToneColor="red" />
                   Delete
                 </div>
               </Popconfirm>
-            )}
+            ) }
           </div>
         );
 
         return (
           <div className="edit-delete">
-            <Popover content={content} trigger="click" placement="left">
+            <Popover content={ content } trigger="click" placement="left">
               <i className="fa-solid fa-ellipsis-vertical"></i>
             </Popover>
           </div>
@@ -543,8 +547,8 @@ function AssignProject() {
         project_status: values.project_status
           ? values.project_status
           : projectStatusList.find(
-              (item) => item?.title?.toLowerCase() === "active"
-            )?._id,
+            (item) => item?.title?.toLowerCase() === "active"
+          )?._id,
         workFlow: values.workFlow,
         project_type: values.project_type,
         descriptions: editorData,
@@ -996,498 +1000,482 @@ function AssignProject() {
   return (
     <div className="ant-project-task  all-project-main-wrapper">
       <Card>
-        <div className="profile-sub-head">
-          <div className="head-box-inner">
-            <div className="heading-main">
-              <h2>All Projects</h2>
-            </div>
-            {hasPermission(["project_add"]) && (
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
-                className="square-primary-btn"
-                onClick={() => {
-                  showModal();
-                  setModalMode("add");
-                }}
-              >
-                Add Project
-              </Button>
-            )}
-            <Search
-              ref={searchRef}
-              placeholder="Search..."
-              onSearch={onSearch}
-              onKeyUp={resetSearchFilter}
-            />
+
+        <div className="heading-wrapper">
+          <div className="heading-main">
+            <h2>All Projects</h2>
           </div>
+          { hasPermission(["project_add"]) && (
+            <Button
+              icon={ <PlusOutlined /> }
+              type="primary"
+              className="square-primary-btn"
+              onClick={ () => {
+                showModal();
+                setModalMode("add");
+              } }
+            >
+              Add Project
+            </Button>
+          ) }
 
-          <div className="status-content">
-            {getRoles(["Admin"]) && (
+        </div>
+
+
+        <div className="global-search">
+          <Search
+            ref={ searchRef }
+            placeholder="Search..."
+            onSearch={ onSearch }
+            onKeyUp={ resetSearchFilter }
+          />
+          <div className="filter-btn-wrapper ">
+            { getRoles(["Admin"]) && (
               <>
-                <div style={{ cursor: "pointer" }}>
-                  <h6>Account Manager:</h6>
-                  <Popover
-                    trigger="click"
-                    placement="bottomRight"
-                    visible={popOver.acc_manager}
-                    onVisibleChange={() =>
-                      handleVisibleChange("acc_manager", true)
-                    }
-                    content={
-                      <div className="assignees-popover assign-global-height">
-                        <ul>
-                          <li>
-                            <Checkbox
-                              checked={acc_manager.length === 0}
-                              onChange={() =>
-                                handleFilters("", acc_manager, setAccManager)
-                              }
-                            >
-                              {" "}
-                              All
-                            </Checkbox>
-                          </li>
-                        </ul>
-                        <div className="search-filter">
-                          <Input
-                            placeholder="Search"
-                            value={searchAccManager}
-                            onChange={handleSearchAccManager}
-                          />
-                        </div>
-                        <div>
-                          <ul className="assigness-data">
-                            {filteredAccManagerList.map((item) => (
-                              <li key={item._id}>
-                                <Checkbox
-                                  onChange={() => {
-                                    handleFilters(
-                                      item,
-                                      acc_manager,
-                                      setAccManager
-                                    );
-                                  }}
-                                  checked={acc_manager.includes(item._id)}
-                                >
-                                  {removeTitle(item?.full_name)}
-                                </Checkbox>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="popover-footer-btn">
-                          <Button
-                            type="primary"
-                            className="square-primary-btn ant-btn-primary"
-                            onClick={() => {
-                              getProjectListing();
-                              setPopOver({ ...popOver, acc_manager: false });
-                            }}
+                <Popover
+                  trigger="click"
+                  placement="bottomRight"
+                  open={ popOver.acc_manager }
+                  onOpenChange={ (visible) => handleVisibleChange("acc_manager", visible) }
+                  content={
+                    <div className="assignees-popover assign-global-height">
+                      <ul>
+                        <li>
+                          <Checkbox
+                            checked={ acc_manager.length === 0 }
+                            onChange={ () => handleFilters("", acc_manager, setAccManager) }
                           >
-                            Apply
-                          </Button>
-                          <Button
-                            className="square-outline-btn ant-delete"
-                            onClick={() => {
-                              setPopOver({ ...popOver, acc_manager: false });
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <i className="fi fi-rr-users"></i>{" "}
-                    {acc_manager.length == 0 ? "All" : "Selected"}
-                  </Popover>
-                </div>
-                <div style={{ cursor: "pointer" }}>
-                  <h6>Project Manager:</h6>
-                  <Popover
-                    trigger="click"
-                    placement="bottomRight"
-                    visible={popOver.manager}
-                    onVisibleChange={() => handleVisibleChange("manager", true)}
-                    content={
-                      <div className="assignees-popover assign-global-height">
-                        <ul>
-                          <li>
-                            <Checkbox
-                              checked={manager.length === 0}
-                              onChange={() =>
-                                handleFilters("", manager, setManager)
-                              }
-                            >
-                              {" "}
-                              All
-                            </Checkbox>
-                          </li>
-                        </ul>
-                        <div className="search-filter">
-                          <Input
-                            placeholder="Search"
-                            value={searchManager}
-                            onChange={handleSearchManager}
-                          />
-                        </div>
-                        <div>
-                          <ul className="assigness-data">
-                            {filteredManagerList.map((item) => (
-                              <li key={item._id}>
-                                <Checkbox
-                                  onChange={() => {
-                                    handleFilters(item, manager, setManager);
-                                  }}
-                                  checked={manager.includes(item._id)}
-                                >
-                                  {removeTitle(item.manager_name)}
-                                </Checkbox>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="popover-footer-btn">
-                          <Button
-                            type="primary"
-                            className="square-primary-btn ant-btn-primary"
-                            onClick={() => {
-                              getProjectListing();
-                              setPopOver({ ...popOver, manager: false });
-                            }}
-                          >
-                            Apply
-                          </Button>
-                          <Button
-                            className="square-outline-btn ant-delete"
-                            onClick={() => {
-                              setPopOver({ ...popOver, manager: false });
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <i className="fi fi-rr-users"></i>{" "}
-                    {manager.length == 0 ? "All" : "Selected"}
-                  </Popover>
-                </div>
-              </>
-            )}
-
-            <div style={{ cursor: "pointer" }}>
-              <h6>Technology:</h6>
-              <Popover
-                trigger="click"
-                placement="bottomRight"
-                visible={popOver.technology}
-                onVisibleChange={() => handleVisibleChange("technology", true)}
-                content={
-                  <div className="assignees-popover assign-global-height">
-                    <ul>
-                      <li>
-                        <Checkbox
-                          checked={technology.length === 0}
-                          onChange={() =>
-                            handleFilters("", technology, setTechnology)
-                          }
-                        >
-                          {" "}
-                          All
-                        </Checkbox>
-                      </li>
-                    </ul>
-                    <div className="search-filter">
-                      <Input
-                        placeholder="Search"
-                        value={searchTechnology}
-                        onChange={handleSearchTechnology}
-                      />
-                    </div>
-                    <div>
-                      <ul className="assigness-data">
-                        {filteredTechnologyList.map((item) => (
-                          <li key={item._id}>
-                            <Checkbox
-                              onChange={() => {
-                                handleFilters(item, technology, setTechnology);
-                              }}
-                              checked={technology.includes(item._id)}
-                            >
-                              {item.project_tech}
-                            </Checkbox>
-                          </li>
-                        ))}
+                            { " " }All
+                          </Checkbox>
+                        </li>
                       </ul>
-                    </div>
-                    <div className="popover-footer-btn">
-                      <Button
-                        type="primary"
-                        className="square-primary-btn ant-btn-primary"
-                        onClick={() => {
-                          getProjectListing();
-                          handleVisibleChange("technology", false);
-                        }}
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        className="square-outline-btn ant-delete"
-                        onClick={() => {
-                          handleVisibleChange("technology", false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                }
-              >
-                <i className="fas fa-briefcase"></i>{" "}
-                {technology.length == 0 ? "All" : "Selected"}
-              </Popover>
-            </div>
-
-            <div style={{ cursor: "pointer" }}>
-              <h6>Project Type:</h6>
-              <Popover
-                trigger="click"
-                placement="bottomRight"
-                visible={popOver.type}
-                onVisibleChange={(visible) =>
-                  handleVisibleChange("type", visible)
-                }
-                content={
-                  <div className="assignees-popover">
-                    {/* <h4>Assignees</h4> */}
-                    <ul>
-                      <li>
-                        <Checkbox
-                          checked={projectType.length === 0}
-                          onChange={() =>
-                            handleFilters("", projectType, setProjectType)
-                          }
+                      <div className="search-filter">
+                        <Input
+                          placeholder="Search"
+                          value={ searchAccManager }
+                          onChange={ handleSearchAccManager }
+                        />
+                      </div>
+                      <div>
+                        <ul className="assigness-data">
+                          { filteredAccManagerList.map((item) => (
+                            <li key={ item._id }>
+                              <Checkbox
+                                onChange={ () => {
+                                  handleFilters(item, acc_manager, setAccManager);
+                                } }
+                                checked={ acc_manager.includes(item._id) }
+                              >
+                                { removeTitle(item?.full_name) }
+                              </Checkbox>
+                            </li>
+                          )) }
+                        </ul>
+                      </div>
+                      <div className="popover-footer-btn">
+                        <Button
+                          type="primary"
+                          className="square-primary-btn ant-btn-primary"
+                          onClick={ () => {
+                            getProjectListing();
+                            setPopOver({ ...popOver, acc_manager: false });
+                          } }
                         >
-                          {" "}
-                          All
-                        </Checkbox>
-                      </li>
-                      {projectTypeList.map((item) => (
+                          Apply
+                        </Button>
+                        <Button
+                          className="square-outline-btn ant-delete"
+                          onClick={ () => {
+                            setPopOver({ ...popOver, acc_manager: false });
+                          } }
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                >
+                  <Button className="dropdown-button">
+                    <span>
+                      Account Manager:
+                      <i className="fi fi-rr-users"></i>
+                      { acc_manager.length === 0 ? "All" : "Selected" }
+                    </span>
+                  </Button>
+                </Popover>
+
+
+                <Popover
+                  trigger="click"
+                  placement="bottomRight"
+                  open={ popOver.manager }
+                  onOpenChange={ (visible) => handleVisibleChange("manager", visible) }
+                  content={
+                    <div className="assignees-popover assign-global-height">
+                      <ul>
                         <li>
                           <Checkbox
-                            onChange={() => {
-                              handleFilters(item, projectType, setProjectType);
-                            }}
-                            checked={projectType.includes(item._id)}
+                            checked={ manager.length === 0 }
+                            onChange={ () => handleFilters("", manager, setManager) }
                           >
-                            {item?.project_type}
+                            { " " }All
                           </Checkbox>
                         </li>
-                      ))}
-                    </ul>
-                    <div className="popver-footer-btn">
-                      <Button
-                        type="primary"
-                        className="square-primary-btn ant-btn-primary"
-                        onClick={() => {
-                          getProjectListing();
-                          handleVisibleChange("type", false);
-                        }}
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        className="square-outline-btn ant-delete"
-                        onClick={() => {
-                          handleVisibleChange("type", false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                }
-              >
-                <i className="fas fa-briefcase"></i>{" "}
-                {projectType.length == 0 ? "All" : "Selected"}
-              </Popover>
-            </div>
-
-            <div style={{ cursor: "pointer" }}>
-              <h6>Assignees:</h6>
-              <Popover
-                trigger="click"
-                visible={popOver.assignees}
-                onVisibleChange={(visible) =>
-                  handleVisibleChange("assignees", visible)
-                }
-                placement="bottomRight"
-                content={
-                  <div className="assignees-popover assign-global-height">
-                    <ul>
-                      <li>
-                        <Checkbox
-                          checked={assignees.length === 0}
-                          onChange={() =>
-                            handleFilters("", assignees, setAssignees)
-                          }
+                      </ul>
+                      <div className="search-filter">
+                        <Input
+                          placeholder="Search"
+                          value={ searchManager }
+                          onChange={ handleSearchManager }
+                        />
+                      </div>
+                      <div>
+                        <ul className="assigness-data">
+                          { filteredManagerList.map((item) => (
+                            <li key={ item._id }>
+                              <Checkbox
+                                onChange={ () => handleFilters(item, manager, setManager) }
+                                checked={ manager.includes(item._id) }
+                              >
+                                { removeTitle(item.manager_name) }
+                              </Checkbox>
+                            </li>
+                          )) }
+                        </ul>
+                      </div>
+                      <div className="popover-footer-btn">
+                        <Button
+                          type="primary"
+                          className="square-primary-btn ant-btn-primary"
+                          onClick={ () => {
+                            getProjectListing();
+                            setPopOver({ ...popOver, manager: false });
+                          } }
                         >
-                          {" "}
-                          All
+                          Apply
+                        </Button>
+                        <Button
+                          className="square-outline-btn ant-delete"
+                          onClick={ () => {
+                            setPopOver({ ...popOver, manager: false });
+                          } }
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                >
+                  <Button className="dropdown-button">  
+                    <span >Project Manager:
+                      <i className="fi fi-rr-users"></i>
+                      { manager.length === 0 ? "All" : "Selected" }
+                    </span>
+                  </Button>
+                </Popover>
+
+
+              </>
+            ) }
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              visible={ popOver.technology }
+              onVisibleChange={ () => handleVisibleChange("technology", true) }
+              content={
+                <div className="assignees-popover assign-global-height">
+                  <ul>
+                    <li>
+                      <Checkbox
+                        checked={ technology.length === 0 }
+                        onChange={ () => handleFilters("", technology, setTechnology) }
+                      >
+                        { " " }All
+                      </Checkbox>
+                    </li>
+                  </ul>
+                  <div className="search-filter">
+                    <Input
+                      placeholder="Search"
+                      value={ searchTechnology }
+                      onChange={ handleSearchTechnology }
+                    />
+                  </div>
+                  <div>
+                    <ul className="assigness-data">
+                      { filteredTechnologyList.map((item) => (
+                        <li key={ item._id }>
+                          <Checkbox
+                            onChange={ () =>
+                              handleFilters(item, technology, setTechnology)
+                            }
+                            checked={ technology.includes(item._id) }
+                          >
+                            { item.project_tech }
+                          </Checkbox>
+                        </li>
+                      )) }
+                    </ul>
+                  </div>
+                  <div className="popover-footer-btn">
+                    <Button
+                      type="primary"
+                      className="square-primary-btn ant-btn-primary"
+                      onClick={ () => {
+                        getProjectListing();
+                        handleVisibleChange("technology", false);
+                      } }
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      className="square-outline-btn ant-delete"
+                      onClick={ () => {
+                        handleVisibleChange("technology", false);
+                      } }
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
+                <h6 style={ { margin: 0 } }>Technology:</h6>
+                <i className="fas fa-briefcase"></i>{ " " }
+                { technology.length === 0 ? "All" : "Selected" }
+              </div>
+            </Popover>
+
+
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              visible={ popOver.type }
+              onVisibleChange={ (visible) => handleVisibleChange("type", visible) }
+              content={
+                <div className="assignees-popover">
+                  <ul>
+                    <li>
+                      <Checkbox
+                        checked={ projectType.length === 0 }
+                        onChange={ () =>
+                          handleFilters("", projectType, setProjectType)
+                        }
+                      >
+                        { " " }All
+                      </Checkbox>
+                    </li>
+                    { projectTypeList.map((item) => (
+                      <li key={ item._id }>
+                        <Checkbox
+                          onChange={ () => {
+                            handleFilters(item, projectType, setProjectType);
+                          } }
+                          checked={ projectType.includes(item._id) }
+                        >
+                          { item?.project_type }
                         </Checkbox>
                       </li>
-                    </ul>
-                    <div className="search-filter">
-                      <Input
-                        placeholder="Search"
-                        value={searchAssignees}
-                        onChange={handleSearchTermAssignees}
-                      />
-                    </div>
-                    <ul className="assigness-data">
-                      {filteredAssigneesList.map((item) => (
-                        <li>
-                          <Checkbox
-                            onChange={() => {
-                              handleFilters(item, assignees, setAssignees);
-                            }}
-                            checked={assignees.includes(item._id)}
-                          >
-                            {removeTitle(item?.full_name)}
-                          </Checkbox>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="popover-footer-btn">
-                      <Button
-                        type="primary"
-                        className="square-primary-btn ant-btn-primary"
-                        onClick={() => {
-                          getProjectListing();
-                          handleVisibleChange("assignees", false);
-                        }}
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        className="square-outline-btn ant-delete"
-                        onClick={() => handleVisibleChange("assignees", false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                    )) }
+                  </ul>
+                  <div className="popver-footer-btn">
+                    <Button
+                      type="primary"
+                      className="square-primary-btn ant-btn-primary"
+                      onClick={ () => {
+                        getProjectListing();
+                        handleVisibleChange("type", false);
+                      } }
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      className="square-outline-btn ant-delete"
+                      onClick={ () => {
+                        handleVisibleChange("type", false);
+                      } }
+                    >
+                      Cancel
+                    </Button>
                   </div>
-                }
-              >
-                <i className="fi fi-rr-users"></i>{" "}
-                {assignees.length == 0 ? "All" : "Selected"}
-              </Popover>
-            </div>
+                </div>
+              }
+            >
+              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
+                <h6 style={ { margin: 0 } }>Project Type:</h6>
+                <i className="fas fa-briefcase"></i>{ " " }
+                { projectType.length === 0 ? "All" : "Selected" }
+              </div>
+            </Popover>
 
-            <div style={{ cursor: "pointer" }}>
-              <h6>Sort By:</h6>
-              <Popover
-                trigger="click"
-                visible={popOver.sortBy}
-                onVisibleChange={() => handleVisibleChange("sortBy", true)}
-                placement="bottomRight"
-                content={
-                  <div className="right-popover-wrapper">
-                    <ul className="assigness-data">
-                      <Radio.Group
-                        onChange={(e) => {
-                          handleSortFilter(e.target.value);
-                        }}
-                        value={sortOption}
+            <Popover
+              trigger="click"
+              visible={ popOver.assignees }
+              onVisibleChange={ (visible) => handleVisibleChange("assignees", visible) }
+              placement="bottomRight"
+              content={
+                <div className="assignees-popover assign-global-height">
+                  <ul>
+                    <li>
+                      <Checkbox
+                        checked={ assignees.length === 0 }
+                        onChange={ () => handleFilters("", assignees, setAssignees) }
                       >
-                        <li>
-                          <Radio value="createdAt"> Latest Updated</Radio>
-                        </li>
-                        <li>
-                          <Radio value="title">Name</Radio>
-                        </li>
-                        <li>
-                          <Radio value="project_type">Status</Radio>
-                        </li>
-                      </Radio.Group>
-                    </ul>
-                    <div className="popver-footer-btn">
-                      <Button
-                        type="primary"
-                        className="square-primary-btn ant-btn-primary"
-                        onClick={() => {
-                          getProjectListing();
-                          handleVisibleChange("sortBy", false);
-                        }}
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        className="square-outline-btn ant-delete"
-                        onClick={() => handleVisibleChange("sortBy", false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                        { " " }All
+                      </Checkbox>
+                    </li>
+                  </ul>
+                  <div className="search-filter">
+                    <Input
+                      placeholder="Search"
+                      value={ searchAssignees }
+                      onChange={ handleSearchTermAssignees }
+                    />
                   </div>
-                }
-              >
-                <CheckSquareOutlined />{" "}
-                {sortOption === "createdAt"
+                  <ul className="assigness-data">
+                    { filteredAssigneesList.map((item) => (
+                      <li key={ item._id }>
+                        <Checkbox
+                          onChange={ () => {
+                            handleFilters(item, assignees, setAssignees);
+                          } }
+                          checked={ assignees.includes(item._id) }
+                        >
+                          { removeTitle(item?.full_name) }
+                        </Checkbox>
+                      </li>
+                    )) }
+                  </ul>
+                  <div className="popover-footer-btn">
+                    <Button
+                      type="primary"
+                      className="square-primary-btn ant-btn-primary"
+                      onClick={ () => {
+                        getProjectListing();
+                        handleVisibleChange("assignees", false);
+                      } }
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      className="square-outline-btn ant-delete"
+                      onClick={ () => handleVisibleChange("assignees", false) }
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
+                <h6 style={ { margin: 0 } }>Assignees:</h6>
+                <i className="fi fi-rr-users"></i>{ " " }
+                { assignees.length === 0 ? "All" : "Selected" }
+              </div>
+            </Popover>
+
+            <Popover
+              trigger="click"
+              visible={ popOver.sortBy }
+              onVisibleChange={ (visible) => handleVisibleChange("sortBy", visible) }
+              placement="bottomRight"
+              content={
+                <div className="right-popover-wrapper">
+                  <ul className="assigness-data">
+                    <Radio.Group
+                      onChange={ (e) => handleSortFilter(e.target.value) }
+                      value={ sortOption }
+                    >
+                      <li>
+                        <Radio value="createdAt">Latest Updated</Radio>
+                      </li>
+                      <li>
+                        <Radio value="title">Name</Radio>
+                      </li>
+                      <li>
+                        <Radio value="project_type">Status</Radio>
+                      </li>
+                    </Radio.Group>
+                  </ul>
+                  <div className="popver-footer-btn">
+                    <Button
+                      type="primary"
+                      className="square-primary-btn ant-btn-primary"
+                      onClick={ () => {
+                        getProjectListing();
+                        handleVisibleChange("sortBy", false);
+                      } }
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      className="square-outline-btn ant-delete"
+                      onClick={ () => handleVisibleChange("sortBy", false) }
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <div style={ { cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" } }>
+                <h6 style={ { margin: 0 } }>Sort By:</h6>
+                <CheckSquareOutlined />
+                { sortOption === "createdAt"
                   ? "Latest Updated"
                   : sortOption === "title"
-                  ? "Name"
-                  : "Status"}
-              </Popover>
-            </div>
+                    ? "Name"
+                    : "Status" }
+              </div>
+            </Popover>
+
           </div>
+
         </div>
 
         <div className="block-table-content new-block-table">
           <Table
-            columns={columns}
-            dataSource={columnDetails}
-            pagination={{
+            columns={ columns }
+            dataSource={ columnDetails }
+            pagination={ {
               showSizeChanger: true,
               pageSizeOptions: ["10", "20", "30"],
               showTotal: showTotal,
               ...pagination,
-            }}
-            onChange={handleTableChange}
-            scroll={{
+            } }
+            onChange={ handleTableChange }
+            scroll={ {
               x: "100%",
-            }}
+            } }
           />
         </div>
       </Card>
 
       <Modal
-        footer={false}
-        open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
+        footer={ false }
+        open={ isModalOpen }
+        onOk={ handleOk }
+        onCancel={ handleCancel }
         className="project-add-wrapper"
       >
         <div className="modal-header">
-          <h1>{modalMode === "add" ? "Add Project" : "Edit Project"}</h1>
+          <h1>{ modalMode === "add" ? "Add Project" : "Edit Project" }</h1>
         </div>
         <div className="overview-modal-wrapper">
           <Form
-            form={form}
-            onFinish={(values) => {
+            form={ form }
+            onFinish={ (values) => {
               modalMode === "add"
                 ? addProjectDetails(values)
                 : editProjectdetails(data?._id, values);
-            }}
+            } }
           >
             <div className="topic-cancel-wrapper">
               <div className="pop-project-task-main-wrapper">
                 <Form.Item
                   name="title"
-                  rules={[
+                  rules={ [
                     {
                       required: true,
                       whitespace: true,
@@ -1497,21 +1485,21 @@ function AssignProject() {
                       pattern: generatePattern(projectTypeSlug),
                       message: "Title must be in the format SO1140/TM/PMS",
                     },
-                  ]}
+                  ] }
                 >
                   <Input placeholder="SO1140/TM/PMS" />
                 </Form.Item>
 
                 <Row>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       name="technology"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please select a technology",
                         },
-                      ]}
+                      ] }
                       className="assign-project-tech-input"
                     >
                       <Select
@@ -1519,71 +1507,71 @@ function AssignProject() {
                         placeholder="Technology"
                         size="large"
                         showSearch
-                        filterOption={(input, option) =>
+                        filterOption={ (input, option) =>
                           option.children
                             ?.toLowerCase()
                             ?.indexOf(input?.toLowerCase()) >= 0
                         }
-                        filterSort={(optionA, optionB) =>
+                        filterSort={ (optionA, optionB) =>
                           optionA.children
                             ?.toLowerCase()
                             ?.localeCompare(optionB.children?.toLowerCase())
                         }
-                        onChange={handleProjectTech}
-                        value={projectTech}
+                        onChange={ handleProjectTech }
+                        value={ projectTech }
                       >
-                        {technologyList.map((item, index) => (
+                        { technologyList.map((item, index) => (
                           <>
                             <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
+                              key={ index }
+                              value={ item._id }
+                              style={ { textTransform: "capitalize" } }
                             >
-                              {item.project_tech}
+                              { item.project_tech }
                             </Option>
                           </>
-                        ))}
+                        )) }
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col span={12} className="assign-project-tech-input">
+                  <Col span={ 12 } className="assign-project-tech-input">
                     <Form.Item
                       className="poject-type"
                       name="project_type"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please select a project type",
                         },
-                      ]}
+                      ] }
                     >
                       <Select
                         placeholder="Project Type"
                         size="large"
                         showSearch
-                        filterOption={(input, option) =>
+                        filterOption={ (input, option) =>
                           option.children
                             ?.toLowerCase()
                             ?.indexOf(input?.toLowerCase()) >= 0
                         }
-                        filterSort={(optionA, optionB) =>
+                        filterSort={ (optionA, optionB) =>
                           optionA.children
                             ?.toLowerCase()
                             ?.localeCompare(optionB.children?.toLowerCase())
                         }
-                        onChange={(value) => setProjectTypeselect(value)}
+                        onChange={ (value) => setProjectTypeselect(value) }
                       >
-                        {projectTypeList.map((item, index) => (
+                        { projectTypeList.map((item, index) => (
                           <>
                             <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
+                              key={ index }
+                              value={ item._id }
+                              style={ { textTransform: "capitalize" } }
                             >
-                              {item.project_type}
+                              { item.project_type }
                             </Option>
                           </>
-                        ))}
+                        )) }
                       </Select>
                     </Form.Item>
                   </Col>
@@ -1591,15 +1579,15 @@ function AssignProject() {
 
                 <Form.Item
                   label="Description"
-                  colon={false}
+                  colon={ false }
                   name="descriptions"
                 >
                   <CKEditor
-                    editor={Custombuild}
-                    data={editorData}
-                    onChange={handleChange}
-                    onPaste={handlePaste}
-                    config={{
+                    editor={ Custombuild }
+                    data={ editorData }
+                    onChange={ handleChange }
+                    onPaste={ handlePaste }
+                    config={ {
                       toolbar: [
                         "heading",
                         "|",
@@ -1666,13 +1654,13 @@ function AssignProject() {
                       styles: {
                         height: "10px",
                       },
-                    }}
+                    } }
                   />
                 </Form.Item>
 
                 <Form.Item
                   label="Account Manager"
-                  colon={false}
+                  colon={ false }
                   name="acc_manager"
                   rules={
                     projectTypeselect === "65b9e9e70f085dbd9bb12797"
@@ -1684,137 +1672,137 @@ function AssignProject() {
                     size="large"
                     showSearch
                     // optionFilterProp="children"
-                    filterOption={(input, option) =>
+                    filterOption={ (input, option) =>
                       option.children
                         ?.toLowerCase()
                         ?.indexOf(input?.toLowerCase()) >= 0
                     }
-                    filterSort={(optionA, optionB) =>
+                    filterSort={ (optionA, optionB) =>
                       optionA.children
                         ?.toLowerCase()
                         ?.localeCompare(optionB.children?.toLowerCase())
                     }
                   >
-                    {accountManagerList.map((item, index) => (
+                    { accountManagerList.map((item, index) => (
                       <>
                         <Option
-                          key={index}
-                          value={item._id}
-                          style={{ textTransform: "capitalize" }}
+                          key={ index }
+                          value={ item._id }
+                          style={ { textTransform: "capitalize" } }
                         >
-                          {removeTitle(item.full_name)}
+                          { removeTitle(item.full_name) }
                         </Option>
                       </>
-                    ))}
+                    )) }
                   </Select>
                 </Form.Item>
 
                 <Row>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Associate Workflow"
-                      colon={false}
+                      colon={ false }
                       name="workFlow"
-                      initialValue={workflow.find((w) => w.isDefault)?._id}
-                      rules={[
+                      initialValue={ workflow.find((w) => w.isDefault)?._id }
+                      rules={ [
                         {
                           required: true,
                         },
-                      ]}
+                      ] }
                     >
                       <Select
                         size="large"
                         showSearch
-                        onDropdownVisibleChange={(open) =>
+                        onDropdownVisibleChange={ (open) =>
                           open && getWorkflow()
                         }
                       >
-                        {workflow.map((item, index) => (
+                        { workflow.map((item, index) => (
                           <>
                             <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
+                              key={ index }
+                              value={ item._id }
+                              style={ { textTransform: "capitalize" } }
                             >
-                              {item.project_workflow}
+                              { item.project_workflow }
                             </Option>
                           </>
-                        ))}
+                        )) }
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Project manager"
-                      colon={false}
+                      colon={ false }
                       name="manager"
                       className="subscriber-btn"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please select a project manager",
                         },
-                      ]}
+                      ] }
                     >
                       <Select
                         size="large"
                         showSearch
                         // optionFilterProp="children"
-                        filterOption={(input, option) =>
+                        filterOption={ (input, option) =>
                           option.children
                             ?.toLowerCase()
                             ?.indexOf(input?.toLowerCase()) >= 0
                         }
-                        filterSort={(optionA, optionB) =>
+                        filterSort={ (optionA, optionB) =>
                           optionA.children
                             ?.toLowerCase()
                             ?.localeCompare(optionB.children?.toLowerCase())
                         }
                       >
-                        {projectManagerList.map((item, index) => (
+                        { projectManagerList.map((item, index) => (
                           <>
                             <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
+                              key={ index }
+                              value={ item._id }
+                              style={ { textTransform: "capitalize" } }
                             >
-                              {removeTitle(item.manager_name)}
+                              { removeTitle(item.manager_name) }
                             </Option>
                           </>
-                        ))}
+                        )) }
                       </Select>
                     </Form.Item>
                   </Col>
 
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Assignees"
-                      colon={false}
+                      colon={ false }
                       name="assignees"
                       className="subscriber-btn"
                     >
                       <Space
                         direction="vertical"
-                        style={{
+                        style={ {
                           width: "100%",
-                        }}
+                        } }
                       >
                         <MultiSelect
-                          onSearch={handleSearch}
-                          onChange={handleSelectedItemsChange}
+                          onSearch={ handleSearch }
+                          onChange={ handleSelectedItemsChange }
                           values={
                             selectedItems &&
                             selectedItems.map((item) => item._id)
                           }
-                          listData={projectAssigneesList}
-                          search={searchKeyword}
+                          listData={ projectAssigneesList }
+                          search={ searchKeyword }
                         />
                       </Space>
 
                       <div className="list-clear-btn">
                         <Button
                           className="list-clear-btn ant-delete"
-                          onClick={handleClearAssignees}
+                          onClick={ handleClearAssignees }
                         >
                           Clear
                         </Button>
@@ -1822,28 +1810,28 @@ function AssignProject() {
                     </Form.Item>
                   </Col>
 
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Client"
-                      colon={false}
+                      colon={ false }
                       name="client"
                       className="subscriber-btn"
                     >
                       <MultiSelect
-                        onSearch={handleSearch}
-                        onChange={handleClients}
+                        onSearch={ handleSearch }
+                        onChange={ handleClients }
                         values={
                           selectedClient &&
                           selectedClient.map((item) => item._id)
                         }
-                        listData={projectClientList}
-                        search={searchKeyword}
+                        listData={ projectClientList }
+                        search={ searchKeyword }
                       />
 
                       <div className="clear-btn">
                         <Button
                           className="list-clear-btn ant-delete"
-                          onClick={handleClearClient}
+                          onClick={ handleClearClient }
                         >
                           Clear
                         </Button>
@@ -1851,28 +1839,28 @@ function AssignProject() {
                     </Form.Item>
                   </Col>
 
-                  <Col span={12}></Col>
+                  <Col span={ 12 }></Col>
                 </Row>
                 <Row>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Project Estimated Hours"
-                      colon={false}
+                      colon={ false }
                       name="estimatedHours"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please provide estimated hours",
                         },
-                      ]}
+                      ] }
                     >
-                      <Input type="number" min={0} />
+                      <Input type="number" min={ 0 } />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Status"
-                      colon={false}
+                      colon={ false }
                       name="project_status"
                     >
                       <Select
@@ -1883,60 +1871,60 @@ function AssignProject() {
                           )?._id
                         }
                         showSearch
-                        filterOption={(input, option) =>
+                        filterOption={ (input, option) =>
                           option.children
                             ?.toLowerCase()
                             ?.indexOf(input?.toLowerCase()) >= 0
                         }
-                        filterSort={(optionA, optionB) =>
+                        filterSort={ (optionA, optionB) =>
                           optionA.children
                             ?.toLowerCase()
                             ?.localeCompare(optionB.children?.toLowerCase())
                         }
                       >
-                        {projectStatusList.map((item, index) => (
+                        { projectStatusList.map((item, index) => (
                           <>
                             <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
+                              key={ index }
+                              value={ item._id }
+                              style={ { textTransform: "capitalize" } }
                             >
-                              {item.title}
+                              { item.title }
                             </Option>
                           </>
-                        ))}
+                        )) }
                       </Select>
                     </Form.Item>
                   </Col>
                 </Row>
                 <Row>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="Start Date"
-                      colon={false}
+                      colon={ false }
                       name="start_date"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please select a start date",
                         },
-                      ]}
+                      ] }
                     >
                       <DatePicker
                         placeholder="Start Date"
-                        onChange={(date, dateString) => {
+                        onChange={ (date, dateString) => {
                           onChange(date, dateString, "start_date");
                           form.setFieldValue({ end_date: "" });
-                        }}
+                        } }
                       />
                     </Form.Item>
                   </Col>
-                  <Col span={12}>
+                  <Col span={ 12 }>
                     <Form.Item
                       label="End Date"
-                      colon={false}
+                      colon={ false }
                       name="end_date"
-                      rules={[
+                      rules={ [
                         {
                           required: true,
                           message: "Please select an end date",
@@ -1956,16 +1944,16 @@ function AssignProject() {
                             );
                           },
                         }),
-                      ]}
+                      ] }
                     >
                       <DatePicker
                         placeholder="End Date"
-                        onChange={(date, dateString) =>
+                        onChange={ (date, dateString) =>
                           onChange(date, dateString, "end_date")
                         }
-                        disabledDate={(value) => {
+                        disabledDate={ (value) => {
                           return value < form.getFieldValue("start_date");
-                        }}
+                        } }
                       />
                     </Form.Item>
                   </Col>
@@ -1975,13 +1963,13 @@ function AssignProject() {
                     <Button type="primary" htmlType="submit">
                       Save
                     </Button>
-                    <Button className="ant-delete" onClick={handleCancel}>
+                    <Button className="ant-delete" onClick={ handleCancel }>
                       Cancel
                     </Button>
                   </div>
                   <Form.Item name="isBillable" valuePropName="checked">
-                    <Checkbox onChange={handleBillable}>
-                      <span style={{ fontWeight: "bold" }}>Billable</span>
+                    <Checkbox onChange={ handleBillable }>
+                      <span style={ { fontWeight: "bold" } }>Billable</span>
                     </Checkbox>
                   </Form.Item>
                 </div>

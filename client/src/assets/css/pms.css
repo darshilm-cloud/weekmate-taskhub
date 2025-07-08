@@ -1045,7 +1045,6 @@ ul.tab_menu li.active-tab {
 }
 
 .profile-sub-head {
-    background: linear-gradient(189deg, #ECF0F5 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
     padding: 10px 10px;
     display: flex;
     align-items: center;
@@ -1202,6 +1201,8 @@ ul.tab_menu li.active-tab {
 
 .overview-modal-wrapper {
     padding: 20px;
+    height: 600px;
+    overflow: auto;
 }
 
 .modal-header {
@@ -3656,9 +3657,7 @@ span.anticon.anticon-down svg {
     padding: 15px 40px;
 }
 
-.modal-header .ant-form-item-control-input .ant-form-item-control-input-content {
-    padding: 20px 40px;
-}
+
 
 .right-task-detail-panel .history-prev h2 {
     font-size: 15px;
@@ -4748,7 +4747,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: #fff;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 0px;
     height: auto;
     justify-content: center;
     line-height: 1;
@@ -4806,9 +4805,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 {
-    color: #3f4350;
-    font-size: var(--font-size-20px);
+      font-size: 1.6rem;
     font-weight: 600;
+    line-height: normal;
+    color: #1f2937;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
@@ -4920,13 +4920,13 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     background-color: #185d87;
     color: #fff;
 }
-
+body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector,
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined {
     border-color: #c2c3c5;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-search-button {
-    height: 32px;
+    height: 35px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined:focus,
@@ -4953,14 +4953,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     padding: 0;
 }
 
-.admin-user .ant-modal-content .ant-modal-header {
-    background: var(--ant-modal-header);
-    border-bottom: 1px solid var(--border-color);
-    padding: 20px;
+.admin-user .ant-modal .ant-btn.delete-btn{
+padding: 0 10px;
 }
-
 .admin-user .ant-modal-content .ant-modal-header .ant-modal-title {
-    color: var(--text-white);
     font-weight: 600;
     background-color: transparent;
 }
@@ -5191,7 +5187,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: #fff;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 0px;
     height: auto;
     justify-content: center;
     line-height: 1;
@@ -5521,6 +5517,22 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-modal .ant-modal-content .ant-modal-footer {
     margin-top: 0;
     padding: 0 16px 16px;
+}
+
+
+.filter-btn-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+ .filter-btn-wrapper .dropdown-button {
+    padding: 8px 12px;
+    color: #0c3f64;
+    border: 1px solid rgb(223, 227, 235);
+    border-radius: 3px;
+    background: #f1f7fb;
+    line-height: normal;
+    height: 40px;
 }
 
 @media (max-width: 991px) {
