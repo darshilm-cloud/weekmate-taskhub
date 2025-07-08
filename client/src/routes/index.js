@@ -79,7 +79,7 @@ const index = ({ match, userPermission }) => {
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
-      path: ":companySlug/:companySlug/project-technologies",
+      path: ":companySlug/project-technologies",
       component: ProjectTechnologies,
       roleName: [config.PMS_ROLES.ADMIN],
     },
