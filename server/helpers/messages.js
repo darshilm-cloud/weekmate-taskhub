@@ -161,6 +161,7 @@ module.exports = {
   COMPANY_NAME_EXIST: "Company with this name already exists",
   COMPANY_EMAIL_EXIST: "Company with this email already exists",
   COMPANY_CREATED: "Company created successfully",
+  COMPANY_DOMAIN_EXIST: "Company domain already exists",
 
   SMTP_NOT_FOUND:'SMTP configuration not found',
   SMTP_FOUND:"SMTP configuration retrieved successfully",

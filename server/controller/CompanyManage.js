@@ -6,6 +6,7 @@ const {
   LISTING,
   DELETED,
   COMPANY_NAME_EXIST,
+  COMPANY_DOMAIN_EXIST,
   COMPANY_EMAIL_EXIST
 } = require("../helpers/messages");
 const {
@@ -322,10 +323,16 @@ exports.editCompany = async (req, res) => {
       );
     }
 
-    const { companyEmail, companyName, logo, favicon } = value;
+    const { companyEmail, companyName, logo, favicon, companyDomain } = value;
+
+    // Check for duplicate email, name, or domain
     const existingCompany = await CompanyModel.findOne({
       _id: { $ne: companyId },
-      $or: [{ companyEmail: companyEmail }, { companyName: companyName }]
+      $or: [
+        { companyEmail: companyEmail },
+        { companyName: companyName },
+        { companyDomain: companyDomain }
+      ]
     });
 
     if (existingCompany) {
@@ -335,6 +342,8 @@ exports.editCompany = async (req, res) => {
         duplicateField = COMPANY_EMAIL_EXIST;
       } else if (existingCompany.companyName === companyName) {
         duplicateField = COMPANY_NAME_EXIST;
+      } else if (existingCompany.companyDomain === companyDomain) {
+        duplicateField = COMPANY_DOMAIN_EXIST;
       }
 
       return errorResponse(res, statusCode.BAD_REQUEST, duplicateField);
@@ -351,7 +360,8 @@ exports.editCompany = async (req, res) => {
       companyEmail,
       companyName,
       companyLogoUrl: logo,
-      companyFavIcoUrl: favicon
+      companyFavIcoUrl: favicon,
+      companyDomain
     };
 
     // Update company
@@ -374,6 +384,7 @@ exports.editCompany = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 // Delete Company API
 exports.deleteCompany = async (req, res) => {

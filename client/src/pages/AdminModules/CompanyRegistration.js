@@ -20,6 +20,8 @@ import {
   DeleteOutlined,
   UploadOutlined,
   UserOutlined,
+  LinkOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import Service from "../../service";
@@ -89,13 +91,26 @@ const CompanyRegistration = () => {
   const [searchText, setSearchText] = useState("");
 
   // Memoized values
-  const localData = useMemo(() => getLocalStorageItem("userData") || {}, []);
+  const localData = useMemo(() => getLocalStorageItem("user_data") || {}, []);
 
   // Error handling
   const handleApiError = useCallback((error) => {
     console.error("API Error:", error);
     message.error(error?.message || "Something went wrong. Please try again.");
   }, []);
+
+  // Image removal handlers
+  const handleLogoRemove = useCallback(() => {
+    setDocFldLogo("");
+    setLogoFileList([]);
+    form.setFieldsValue({ logo: "" });
+  }, [form]);
+
+  const handleFaviconRemove = useCallback(() => {
+    setDocFldFavicon("");
+    setFaviconFileList([]);
+    form.setFieldsValue({ favicon: "" });
+  }, [form]);
 
   // Fetch companies with optimized dependencies
   const fetchCompanies = useCallback(async () => {
@@ -161,11 +176,12 @@ const CompanyRegistration = () => {
           companyName: record.companyName,
           companyEmail: record.companyEmail || record.email,
           ownerName: record.ownerName,
+          companySlug: record.companyDomain,
           logo: `${process.env.REACT_APP_API_URL}${record.companyLogoUrl}`,
-          favicon: `${process.env.REACT_APP_API_URL}${record.companyLogoUrl}`,
+          favicon: `${process.env.REACT_APP_API_URL}${record.companyFavIcoUrl}`,
         });
         setDocFldLogo(record.companyLogoUrl);
-        setDocFldFavicon(record.companyLogoUrl);
+        setDocFldFavicon(record.companyFavIcoUrl);
         setEditingCompany(record);
       } else {
         form.resetFields();
@@ -179,11 +195,11 @@ const CompanyRegistration = () => {
 
   const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
-    const userData = getLocalStorageItem("userData") || {};
+    const user_data = getLocalStorageItem("user_data") || {};
     setFaviconFileList([]);
     setLogoFileList([]);
-    setDocFldLogo(userData.companyLogoUrl || null);
-    setDocFldFavicon(userData.companyFavIcoUrl || null);
+    setDocFldLogo(user_data.companyDetails.companyLogoUrl || null);
+    setDocFldFavicon(user_data.companyDetails.companyFavIcoUrl || null);
   }, []);
 
   // Delete handler
@@ -216,12 +232,14 @@ const CompanyRegistration = () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
+      const latestSlug = companySlug == values.companySlug ? companySlug : values.companySlug;
 
       const payload = {
         companyName: values.companyName,
         companyEmail: values.companyEmail,
-        logo: docFldLogo,
-        favicon: docFldFavicon,
+        companyDomain: values.companySlug,
+        logo: docFldLogo || "", 
+        favicon: docFldFavicon || "",
         ownerName: values.ownerName,
       };
 
@@ -256,32 +274,40 @@ const CompanyRegistration = () => {
         // Update localStorage efficiently
         const updatedLocalData = {
           ...localData,
-          companyName: updatedCompany?.companyName,
-          companyEmail: updatedCompany?.companyEmail,
-          companyLogoUrl: updatedCompany?.companyLogoUrl,
-          companyFavIcoUrl: updatedCompany?.companyFavIcoUrl,
-          lastActiveChat: lastActiveChat,
-          channelId: lastActiveChat?.id,
-          companyId,
-          fileUploadSize,
+          companyDetails: {
+            ...localData.companyDetails,
+            companyName: updatedCompany?.companyName,
+            companyEmail: updatedCompany?.companyEmail,
+            companyLogoUrl: updatedCompany?.companyLogoUrl,
+            companyFavIcoUrl: updatedCompany?.companyFavIcoUrl,
+            lastActiveChat: lastActiveChat,
+            channelId: lastActiveChat?.id,
+            companyId,
+            fileUploadSize,
+          },
         };
 
-        setLocalStorageItem("userData", updatedLocalData);
+        setLocalStorageItem("user_data", updatedLocalData);
         setLocalStorageItem(
-          `companyFavIcoUrl-${companySlug}`,
+          `companyFavIcoUrl-${latestSlug}`,
           updatedCompany?.companyFavIcoUrl
         );
-        setLocalStorageItem(`companyLogoUrl-${companySlug}`, updatedCompany?.companyLogoUrl);
+        setLocalStorageItem(`companyLogoUrl-${latestSlug}`, updatedCompany?.companyLogoUrl);
 
         // Handle new company creation
         if (!editingCompany && resetToken && saveCompany) {
           setLocalStorageItem("authToken", resetToken);
         }
-        window.location.reload();
+        if (companySlug == values.companySlug) {
+          window.location.reload();
+        } else {
+          localStorage.setItem("companyDomain", latestSlug);
+          window.location.href = `/${latestSlug}/admin/company-registartion`;
+        }
         await fetchCompanies();
         setIsModalVisible(false);
-        setDocFldLogo(localStorage.getItem(`companyLogoUrl-${companySlug}`) || null);
-        setDocFldFavicon(localStorage.getItem(`companyFavIcoUrl-${companySlug}`) || null);
+        setDocFldLogo(localStorage.getItem(`companyLogoUrl-${latestSlug}`) || null);
+        setDocFldFavicon(localStorage.getItem(`companyFavIcoUrl-${latestSlug}`) || null);
       } else {
         message.error("Failed to save company");
       }
@@ -461,7 +487,41 @@ const CompanyRegistration = () => {
       companyEmail: [
         { required: true, message: "Please enter company email" },
         { type: "email", message: "Invalid email format" },
-      ]
+      ],
+      companySlug: [
+        { required: true, message: "Please input company slug!" },
+        { min: 3, message: "Slug must be at least 3 characters!" },
+        { max: 50, message: "Slug must be less than 50 characters!" },
+        {
+          validator: (_, value) => {
+            if (!value) return Promise.resolve();
+            
+            // Check if slug contains only allowed characters (letters, numbers, hyphens)
+            const slugRegex = /^[a-z0-9-]+$/;
+            if (!slugRegex.test(value)) {
+              return Promise.reject(
+                new Error("Slug can only contain lowercase letters, numbers, and hyphens")
+              );
+            }
+            
+            // Check if slug starts or ends with hyphen
+            if (value.startsWith('-') || value.endsWith('-')) {
+              return Promise.reject(
+                new Error("Slug cannot start or end with a hyphen")
+              );
+            }
+            
+            // Check for consecutive hyphens
+            if (value.includes('--')) {
+              return Promise.reject(
+                new Error("Slug cannot contain consecutive hyphens")
+              );
+            }
+            
+            return Promise.resolve();
+          },
+        },
+      ],
     }),
     []
   );
@@ -469,9 +529,9 @@ const CompanyRegistration = () => {
   // Modal effects
   useEffect(() => {
     if (isModalVisible) {
-      const userData = getLocalStorageItem("userData") || {};
-      setDocFldLogo(userData.companyLogoUrl || null);
-      setDocFldFavicon(userData.companyFavIcoUrl || null);
+      const user_data = getLocalStorageItem("user_data") || {};
+      setDocFldLogo(user_data.companyDetails.companyLogoUrl || null);
+      setDocFldFavicon(user_data.companyDetails.companyFavIcoUrl || null);
     }
   }, [isModalVisible]);
 
@@ -547,7 +607,6 @@ const CompanyRegistration = () => {
           ) : (
             <>
               <Button
-    
                 className="delete-btn"
                 onClick={handleModalClose}
                 disabled={loading}
@@ -589,16 +648,22 @@ const CompanyRegistration = () => {
             />
           </Form.Item>
 
-          {/* <Form.Item
-            name="domain"
-            label="Company Slug"
-            rules={formRules.domain}
-          >
-            <Input
-              placeholder="Enter company slug"
-              disabled={modalData.mode === "view"}
-            />
-          </Form.Item> */}
+          <Row gutter={24}>
+            <Col xs={24}>
+              <Form.Item
+                label="Company Slug"
+                name="companySlug"
+                rules={formRules.companySlug}
+                extra="This will be used to create your company's unique domain. Only lowercase letters, numbers, and hyphens are allowed."
+              >
+                <Input
+                  disabled={modalData.mode === "view"}
+                  prefix={<LinkOutlined />}
+                  placeholder="my-company"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Row gutter={24}>
             <Col xs={24} sm={12}>
@@ -622,11 +687,36 @@ const CompanyRegistration = () => {
                   </Button>
                 </Upload>
                 {docFldLogo && (
-                  <img
-                    src={`${process.env.REACT_APP_API_URL}/public/${docFldLogo}`}
-                    alt="Logo"
-                    style={{ marginTop: 8, width: 100, height: "auto", maxWidth:"fit-content" }}
-                  />
+                  <div style={{ position: "relative", display: "inline-block", marginTop: 8 }}>
+                    <img
+                      src={`${process.env.REACT_APP_API_URL}/public/${docFldLogo}`}
+                      alt="Logo"
+                      style={{ width: 100, height: "auto", maxWidth: "fit-content" }}
+                    />
+                    {modalData.mode !== "view" && (
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={handleLogoRemove}
+                        style={{
+                          position: "absolute",
+                          top: -8,
+                          right: -8,
+                          background: "#ff4d4f",
+                          color: "white",
+                          borderRadius: "50%",
+                          width: 20,
+                          height: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 12,
+                        }}
+                      />
+                    )}
+                  </div>
                 )}
               </Form.Item>
             </Col>
@@ -651,11 +741,36 @@ const CompanyRegistration = () => {
                   </Button>
                 </Upload>
                 {docFldFavicon && (
-                  <img
-                    src={`${process.env.REACT_APP_API_URL}/public/${docFldFavicon}`}
-                    alt="Favicon"
-                    style={{ marginTop: 8, width: 32, height: 32 }}
-                  />
+                  <div style={{ position: "relative", display: "inline-block", marginTop: 8 }}>
+                    <img
+                      src={`${process.env.REACT_APP_API_URL}/public/${docFldFavicon}`}
+                      alt="Favicon"
+                      style={{ width: 32, height: 32 }}
+                    />
+                    {modalData.mode !== "view" && (
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={handleFaviconRemove}
+                        style={{
+                          position: "absolute",
+                          top: -8,
+                          right: -8,
+                          background: "#ff4d4f",
+                          color: "white",
+                          borderRadius: "50%",
+                          width: 20,
+                          height: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 12,
+                        }}
+                      />
+                    )}
+                  </div>
                 )}
               </Form.Item>
             </Col>
