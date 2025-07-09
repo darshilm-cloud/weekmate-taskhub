@@ -331,7 +331,7 @@ function App() {
               component={CompanyRegistration}
             />
             <AuthRoute
-              path={`${match.url}forgot-password`}
+              path={`${match.url}:companySlug/forgot-password`}
               component={ForgotPassword}
             />
             <AuthRoute

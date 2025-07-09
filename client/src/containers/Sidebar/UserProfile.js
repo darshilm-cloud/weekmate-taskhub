@@ -23,6 +23,7 @@ import {
   EyeOutlined,
   EyeTwoTone,
   MoreOutlined,
+  TrophyOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
 import ProfileImage from "../../assets/images/default_profile.jpg";
@@ -44,6 +45,7 @@ import moment from "moment";
 import { getRoles } from "../../util/hasPermission";
 import { notificationType } from "../../settings/notificationTypes";
 import { UserProfileBaseUrl } from "../../constants";
+import UserProfileModal from "./UserProfileModal";
 
 function UserProfile() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -90,6 +92,7 @@ function UserProfile() {
     fav_logo: null,
   });
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleCheckboxChange = (type) => {
     setSelectedCheckbox(type); // Update selected checkbox type
@@ -292,7 +295,9 @@ function UserProfile() {
         return {
           title: "Assign project",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
 
@@ -340,14 +345,18 @@ function UserProfile() {
         return {
           title: "Subscribe in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
       case "discussionTagged":
         return {
           title: "Mention in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
       case "bugsAssigned":
@@ -381,21 +390,27 @@ function UserProfile() {
         return {
           title: "Subscribe in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
       case "noteCommentsTagged":
         return {
           title: "Mention in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
       case "fileSubscribed":
         return {
           title: "Subscribed in files",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab}`
+            `/${companySlug}/project/app/${id}?tab=${
+              checkNotificationType(type).tab
+            }`
           ),
         };
       default:
@@ -704,6 +719,16 @@ function UserProfile() {
         <>
           {getRoles(["Client"]) && <li onClick={showModal}>Change Password</li>}
           {!getRoles(["Client"]) && (
+            <>
+            <li
+              onClick={() => {
+                setSettingModal(true);
+                emailPreference();
+                generalSettingApp();
+              }}
+            >
+              Profile
+            </li>
             <li
               onClick={() => {
                 setSettingModal(true);
@@ -713,6 +738,7 @@ function UserProfile() {
             >
               General Settings
             </li>
+            </>
           )}
 
           <li onClick={() => dispatch(userSignOut())}>Logout</li>
@@ -1489,13 +1515,7 @@ function UserProfile() {
                                 A file is subscribed to me
                               </Checkbox>
                             </Form.Item>
-                            {getRoles([
-                              "PC",
-                              "TL",
-                              "Admin",
-                              "Admin",
-                              "AM",
-                            ]) && (
+                            {getRoles(["PC", "TL", "Admin", "Admin", "AM"]) && (
                               <Form.Item
                                 name="hoursLogged"
                                 valuePropName="checked"
@@ -1803,6 +1823,13 @@ function UserProfile() {
                 )}
               </Tabs>
             </Modal>
+
+            <UserProfileModal
+              isModalOpen={true}
+              handleCancel={()=>{}}
+              updateUserProfile={()=>{}}
+              userData={{}}
+            />
           </div>
         </div>
       </div>
