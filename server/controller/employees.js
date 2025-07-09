@@ -449,13 +449,28 @@ exports.editEmployee = async (req, res) => {
     const { firstName, lastName, profileImage } = req.body;
 
     const { userId } = req.params;
-    
+
     let updateObj = {};
 
     if (firstName) updateObj.first_name = firstName;
     if (lastName) updateObj.last_name = lastName;
-    if (profileImage) updateObj.emp_img = profileImage;
+    if (profileImage || profileImage == "") updateObj.emp_img = profileImage;
     updateObj.full_name = `${firstName} ${lastName}`;
+
+    let editEmployee = await Employees.findOneAndUpdate(
+      {
+        _id: newObjectId(userId)
+      },
+      {
+        $set: {
+          ...updateObj
+        }
+      },
+      { new: true }
+    );
+
+    return successResponse(res, statusCode.SUCCESS, messages.UPDATED, editEmployee, {});
+
   } catch (error) {
     console.log("🚀 ~ exports.editEmployee= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
