@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Form, Input, Button, Upload, message, Avatar } from "antd";
-import { EditOutlined, UploadOutlined } from "@ant-design/icons";
+import { EditOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
 
 const UserProfileModal = ({
   isModalOpen,
@@ -48,76 +48,77 @@ const UserProfileModal = ({
 
   return (
     <Modal
-      open={isModalOpen}
+      className="user-profile"
+      // open={ isModalOpen }
       title="User Profile"
-      onCancel={handleCancel}
-      footer={null}
+      onCancel={ handleCancel }
+      footer={ null }
       destroyOnClose
     >
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={{ position: "relative", display: "inline-block" }}>
+      <div style={ { textAlign: "center", marginBottom: 24 } }>
+        <div style={ { position: "relative", display: "inline-block" } }>
           <Avatar
-            size={100}
-            src={previewImage}
-            icon={!previewImage && <UserIcon />}
-            style={{ backgroundColor: "#f0f0f0" }}
+            size={ 100 }
+            src={ previewImage }
+            icon={ !previewImage && <UserOutlined /> }
+            style={ { backgroundColor: "#f0f0f0" } }
           />
           <Upload
-            showUploadList={false}
-            beforeUpload={() => false}
-            onChange={handleImageChange}
+            showUploadList={ false }
+            beforeUpload={ () => false }
+            onChange={ handleImageChange }
             accept="image/*"
           >
             <div
-              style={{
+              style={ {
                 position: "absolute",
-                bottom: 0,
+                top: 0,
                 right: 0,
                 width: 32,
                 height: 32,
-                backgroundColor: "#1890ff",
+                backgroundColor: "#f0f0f0",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                border: "2px solid white",
+                border: "3px solid white",
                 transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = "#40a9ff";
+              } }
+              onMouseEnter={ (e) => {
+                e.target.style.backgroundColor = "#eee";
                 e.target.style.transform = "scale(1.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = "#1890ff";
+              } }
+              onMouseLeave={ (e) => {
+                e.target.style.backgroundColor = "#eee";
                 e.target.style.transform = "scale(1)";
-              }}
+              } }
             >
-              <EditOutlined style={{ color: "white", fontSize: 14 }} />
+              <EditOutlined style={ { color: "#888", fontSize: 14 } } />
             </div>
           </Upload>
         </div>
-        <div style={{ marginTop: 8, color: "#888", fontSize: 12 }}>
+        <div style={ { marginTop: 8, color: "#888", fontSize: 12 } }>
           Image must be JPG, PNG, or GIF, under 2MB.
         </div>
       </div>
 
       <Form
-        form={form}
+        form={ form }
         layout="vertical"
-        initialValues={{
+        initialValues={ {
           firstName: userData?.firstName || "",
           lastName: userData?.lastName || "",
-        }}
-        onFinish={handleFinish}
+        } }
+        onFinish={ handleFinish }
       >
         <Form.Item
           label="First Name"
           name="firstName"
-          rules={[
+          rules={ [
             { required: true, message: "First name is required" },
             { min: 2, message: "First name must be at least 2 characters" },
-          ]}
+          ] }
         >
           <Input placeholder="Enter first name" />
         </Form.Item>
@@ -125,23 +126,23 @@ const UserProfileModal = ({
         <Form.Item
           label="Last Name"
           name="lastName"
-          rules={[
+          rules={ [
             { required: true, message: "Last name is required" },
             { min: 2, message: "Last name must be at least 2 characters" },
-          ]}
+          ] }
         >
           <Input placeholder="Enter last name" />
         </Form.Item>
 
         <Form.Item label="Email">
-          <Input value={userData?.email} disabled />
+          <Input value={ userData?.email } disabled />
         </Form.Item>
 
-        <Form.Item style={{ textAlign: "right", marginTop: 24 }}>
-          <Button onClick={handleCancel} style={{ marginRight: 8 }}>
+        <Form.Item style={ { textAlign: "right" } } >
+          <Button className="delete-btn" onClick={ handleCancel } style={ { margin: "0 10px", display: "inline-block" } }>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" style={ { margin: "0 10px", display: "inline-block" } }>
             Save Changes
           </Button>
         </Form.Item>
@@ -150,11 +151,5 @@ const UserProfileModal = ({
   );
 };
 
-// A fallback user icon if no image
-const UserIcon = () => (
-  <span role="img" aria-label="user" style={{ fontSize: 40 }}>
-    👤
-  </span>
-);
 
 export default UserProfileModal;
