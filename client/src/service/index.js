@@ -121,6 +121,7 @@ export default class Service {
 
   //user - employees
   static getUsermaster = "/employees/get";
+  static editEmployee = "/employees/editEmployee";
 
   // project status
   static getProjectStatus = "/project/status/get";

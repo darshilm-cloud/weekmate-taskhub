@@ -66,7 +66,16 @@ function ManageProjectType() {
         );
       },
     },
-
+    {
+      title: "Project Slug",
+      dataIndex: "slug",
+      key: "slug",
+      width: 700,
+      render: (text, record) => {
+        const slug = record?.slug;
+        return  <span style={{ textTransform: "capitalize" }}>{slug}</span>
+      },
+    },
     {
       title: "Actions",
       dataIndex: "action",

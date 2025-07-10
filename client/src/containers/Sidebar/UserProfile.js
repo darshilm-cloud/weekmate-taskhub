@@ -722,9 +722,7 @@ function UserProfile() {
             <>
             <li
               onClick={() => {
-                setSettingModal(true);
-                emailPreference();
-                generalSettingApp();
+                setIsProfileModalOpen(true);
               }}
             >
               Profile
@@ -1258,7 +1256,7 @@ function UserProfile() {
                 <img
                   src={
                     authUser?.emp_img
-                      ? `${UserProfileBaseUrl}${authUser.emp_img}`
+                      ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
                       : ProfileImage
                   }
                   className="avatar-user"
@@ -1825,10 +1823,8 @@ function UserProfile() {
             </Modal>
 
             <UserProfileModal
-              isModalOpen={true}
-              handleCancel={()=>{}}
-              updateUserProfile={()=>{}}
-              userData={{}}
+              isModalOpen={isProfileModalOpen}
+              handleClose={()=>setIsProfileModalOpen(false)}
             />
           </div>
         </div>

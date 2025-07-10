@@ -350,21 +350,10 @@ const CompanyRegistration = () => {
 
           if (response.data.status === 1) {
             message.success(response.data.message);
-            setDocFunction(response.data.data[0]?.file_path);
-            form.setFieldsValue({
-              [fileType === "company_logo" ? "logo" : "favicon"]: response.data.data[0]?.file_path,
-            });
-            onSuccess(response.data.data, file);
-          } else {
-            message.error(`${fileType} upload failed`);
-            onError(new Error("Upload failed"));
+           return response.data.data[0]?.file_path  
           }
         } catch (error) {
           console.error("Upload error:", error);
-          message.error(
-            error?.response?.data?.message || `Error uploading ${fileType}`
-          );
-          onError(error);
         }
       };
     },
