@@ -19,6 +19,7 @@ const {
   getPagination,
   searchDataArr,
 } = require("../helpers/queryHelper");
+const config = require("../settings/config.json");
 
 exports.addPMSRole = async (req, res) => {
   try {
@@ -141,7 +142,7 @@ exports.getEmpRoles = async (req, res) => {
     }
 
     const allRoles = await PMSRoles.find(
-      { isDeleted: false },
+      { isDeleted: false, role_name:{$ne:config.PMS_ROLES.CLIENT} },
       { role_name: 1 }
     );
     let response = [];
