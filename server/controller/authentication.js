@@ -63,7 +63,7 @@ exports.authenticationGetData = async (req, res) => {
     );
   } catch (error) {
     console.log("🚀 ~ exports.authenticationGetData= ~ error:", error);
-    return errorResponse(res, statusCode.UNAUTHORIZED, error.message);
+    return errorResponse(res, statusCode.SERVER_ERROR, error.message);
   }
 };
 
@@ -113,7 +113,7 @@ exports.login = async (req, res, next) => {
     if (!loginUser.isActivate) {
       return errorResponse(
         res,
-        statusCode.UNAUTHORIZED,
+        statusCode.BAD_REQUEST,
         messages.ACCOUNT_DEACTIVATE
       );
     }
@@ -126,7 +126,7 @@ exports.login = async (req, res, next) => {
           if (error || !isMatch) {
             return errorResponse(
               res,
-              statusCode.UNAUTHORIZED,
+              statusCode.BAD_REQUEST,
               messages.PASSWORD_INVALID
             );
           }
@@ -153,7 +153,7 @@ exports.login = async (req, res, next) => {
       if (!value?.slug) {
         return errorResponse(
           res,
-          statusCode.UNAUTHORIZED,
+          statusCode.BAD_REQUEST,
           "Please login with your company url"
         );
       } else {
@@ -170,7 +170,7 @@ exports.login = async (req, res, next) => {
               if (error || !isMatch) {
                 return errorResponse(
                   res,
-                  statusCode.UNAUTHORIZED,
+                  statusCode.BAD_REQUEST,
                   messages.PASSWORD_INVALID
                 );
               }
