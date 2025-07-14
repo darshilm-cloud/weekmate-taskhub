@@ -26,7 +26,8 @@ const employeeSchema = new Schema({
   deletedAt: { type: Date, default: null },
   isSoftDeleted: { type: Boolean, default: false },
   isActivate: { type: Boolean, default: true },
-  isAdmin: { type: Boolean, default: false }
+  isAdmin: { type: Boolean, default: false },
+  resetCode: { type: String }
 });
 
 employeeSchema.pre("save", function (next) {
