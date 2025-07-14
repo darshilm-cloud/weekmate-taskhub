@@ -1378,6 +1378,13 @@ exports.getBugsWorkFlow = async (req, res) => {
 
 exports.getPMSClient = async (req, res) => {
   try {
+      // Decode user from token
+      const {
+        _id: decodedUserId,
+        pms_role_id: { _id: roleId, role_name: roleName } = {},
+        companyId: decodedCompanyId
+      } = req.user || {};
+
     const validationSchema = Joi.object({
       client_id: Joi.string().optional().default(null),
       isDropdown: Joi.boolean().optional().default(false),
@@ -1403,6 +1410,7 @@ exports.getPMSClient = async (req, res) => {
         $match: {
           isDeleted: false,
           isSoftDeleted: false,
+          companyId:newObjectId(decodedCompanyId),
           ...(value?.isDropdown == true ? { isActivate: true } : {}),
           ...(value?.client_id && {
             _id: new mongoose.Types.ObjectId(value.client_id)
