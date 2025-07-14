@@ -26,6 +26,12 @@ function SignIn() {
   const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
 
   useEffect(() => {
+    if(!companySlug){
+      let storedSlug = localStorage.getItem("companyDomain")
+      if(storedSlug){
+        history.push(`/${storedSlug}/signin`);
+      }
+    }
     if (verificationToken) {
       tokenVerfication(verificationToken);
     }
