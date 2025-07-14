@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Button, Input, message, Form, Row, Col } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useHistory } from "react-router-dom";
 import Service from "../service/index";
 import {
   userRole,
@@ -16,6 +16,7 @@ import TaskHub from "../assets/images/taskhubicon.svg";
 import { Modal, Typography } from "antd";
 
 function SignIn() {
+  const history = useHistory();
   const { verificationToken, companySlug } = useParams();
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   const dispatch = useDispatch();
@@ -45,6 +46,7 @@ function SignIn() {
       } else {
         showVerificationModal(response.data.message, false);
       }
+      history.push(`/${companySlug}/signin`)
     } catch (error) {
       console.log(error);
     }

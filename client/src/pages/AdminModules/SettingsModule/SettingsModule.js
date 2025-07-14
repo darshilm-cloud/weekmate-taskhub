@@ -41,7 +41,7 @@ const { TabPane } = Tabs;
 const PROVIDERS = {
   gmail: {
     name: "Gmail",
-    host: "mail.weekmate.in",
+    host: "smtp.gmail.com",
     port: 465,
     secure: true,
     color: "gmail",
@@ -387,7 +387,6 @@ const SMTPConfig = () => {
                       <Input
                         placeholder="smtp.gmail.com"
                         className="form-input"
-                        disabled
                       />
                     </Form.Item>
                   </Col>
