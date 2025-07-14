@@ -21,14 +21,14 @@ class Authentication {
         return errorResponse(res, statusCode.FORBIDDEN, messages.FORBIDDEN);
       }
       
-      const userData = await employeeSchema
-        .findById(data._id)
-        .select("isDeleted isActivate")
-        .lean();  // Returns plain JavaScript object, faster
+      // const userData = await employeeSchema
+      //   .findById(data._id)
+      //   .select("isDeleted isActivate")
+      //   .lean();  // Returns plain JavaScript object, faster
       
-      if (!userData || !userData.isActivate || userData.isDeleted) {
-        return errorResponse(res, statusCode.UNAUTHORIZED, messages.UNAUTHORIZED);
-      }
+      // if (!userData || !userData.isActivate || userData.isDeleted) {
+      //   return errorResponse(res, statusCode.UNAUTHORIZED, messages.UNAUTHORIZED);
+      // }
 
       req.user = data;
       next();

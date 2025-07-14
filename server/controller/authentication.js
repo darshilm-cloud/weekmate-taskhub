@@ -245,16 +245,14 @@ exports.getDataForLoginUser = async (reqBody) => {
       ...obj,
       ...(reqBody.email ? { email: reqBody.email } : {})
     })
-      .populate("pms_role_id", "role_name")
-      .exec();
+      .populate("pms_role_id", "role_name");
 
     if (!userData) {
       userData = await PMSClients.findOne({
         ...obj,
         ...(reqBody.email ? { email: reqBody.email } : {})
       })
-        .populate("pms_role_id", "role_name")
-        .exec();
+        .populate("pms_role_id", "role_name");
     }
 
     return userData;
