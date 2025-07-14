@@ -20,14 +20,15 @@ class Authentication {
         // Using Response class for consistent error handling
         return errorResponse(res, statusCode.FORBIDDEN, messages.FORBIDDEN);
       }
-      // const userData = await employeeSchema
-      //   .findById(data._id)
-      //   .select("isDeleted isActivate")
-      //   .lean();  // Returns plain JavaScript object, faster
       
-      // if (!userData || !userData.isActivate || userData.isDeleted) {
-      //   return errorResponse(res, statusCode.UNAUTHORIZED, messages.UNAUTHORIZED);
-      // }
+      const userData = await employeeSchema
+        .findById(data._id)
+        .select("isDeleted isActivate")
+        .lean();  // Returns plain JavaScript object, faster
+      
+      if (!userData || !userData.isActivate || userData.isDeleted) {
+        return errorResponse(res, statusCode.UNAUTHORIZED, messages.UNAUTHORIZED);
+      }
 
       req.user = data;
       next();
