@@ -258,13 +258,13 @@ const CompanyEmployee = () => {
       dataIndex: "email",
     },
     {
-      title: "Active",
+      title: "Status",
       dataIndex: "isActivate",
       render: (isActivate) =>
         isActivate ? (
           <button
             style={ {
-              backgroundColor: "#28a745", // Bootstrap green
+              backgroundColor: "#28a745",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -278,11 +278,11 @@ const CompanyEmployee = () => {
         ) : (
           <button
             style={ {
-              // backgroundColor: '#28a745', // Bootstrap green
+              backgroundColor: '#dc3545',
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
-              // color: '#fff',
+              color: '#fff',
               cursor: "default",
               fontWeight: "500",
             } }

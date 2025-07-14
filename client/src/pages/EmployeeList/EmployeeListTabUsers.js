@@ -138,23 +138,7 @@ const EmployeeListTabUsers = () => {
         );
       },
     },
-    {
-      title: "EMP Code",
-      key: "emp_code",
-      render: (text, record) => {
-        const position = record?.emp_code;
-        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
-      },
-    },
-    {
-      title: "Designation",
-      dataIndex: "designation",
-      key: "designation_name",
-      render: (text, record) => {
-        const position = record?.designation_name;
-        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
-      },
-    },
+   
     {
       title: "Role",
       dataIndex: "role_name",
@@ -163,15 +147,7 @@ const EmployeeListTabUsers = () => {
         return <span>{ record?.pms_role?.role_name }</span>;
       },
     },
-    {
-      title: "Department",
-      dataIndex: "department",
-      key: "department_name",
-      render: (text, record) => {
-        const position = record?.department_name;
-        return <span style={ { textTransform: "capitalize" } }>{ position }</span>;
-      },
-    },
+   
     {
       title: "Actions",
       dataIndex: "action",

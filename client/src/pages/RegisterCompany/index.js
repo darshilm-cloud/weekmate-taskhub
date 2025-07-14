@@ -22,6 +22,7 @@ import {
 import "./companyregister.scss";
 import TaskHub from "../../assets/images/taskhubicon.svg";
 import Service from "../../service";
+import { useHistory } from "react-router-dom";
 
 const { Step } = Steps;
 const { Title, Text } = Typography;
@@ -63,7 +64,7 @@ const VALIDATION_RULES = {
   companySlug: [
     { required: true, message: "Please input company slug!" },
     { min: 3, message: "Slug must be at least 3 characters!" },
-    { max: 50, message: "Slug must be less than 50 characters!" },
+    { max: 8, message: "Slug must be less than 8 characters!" },
     {
       validator: (_, value) => {
         if (!value) return Promise.resolve();
@@ -97,6 +98,7 @@ const VALIDATION_RULES = {
 };
 
 const CompanyRegistration = () => {
+  const history = useHistory();
   // State management
   const [currentStep, setCurrentStep] = useState(0);
   const [validatedAdminData, setValidatedAdminData] = useState(null);
@@ -221,7 +223,8 @@ const CompanyRegistration = () => {
       });
 
       if (response.data.status === 1) {
-        showVerificationModal(response.data.message);
+        showVerificationModal(response.data.message)
+        history.push(`/${companyData.companySlug || currentFormValues.companySlug}/signin`);
       } else {
         showErrorMessage(response.data.message || "Registration failed");
       }

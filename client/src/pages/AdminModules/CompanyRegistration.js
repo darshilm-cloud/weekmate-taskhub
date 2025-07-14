@@ -31,7 +31,7 @@ import { useHistory } from "react-router-dom";
 const INITIAL_PAGE_SIZE = 20;
 const INITIAL_SORT_BY = "createdAt";
 const INITIAL_SORT_ORDER = "desc";
-const ALLOWED_FILE_TYPES = ["image/png", "image/svg+xml", "image/jpeg"];
+const ALLOWED_FILE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const PAGE_SIZE_OPTIONS = ["20", "30", "50"];
 
 // Utility functions
@@ -78,6 +78,10 @@ const CompanyRegistration = () => {
   const [faviconFileList, setFaviconFileList] = useState([]);
   const [logoFileList, setLogoFileList] = useState([]);
 
+  // New states for pending file uploads
+  const [pendingLogoFile, setPendingLogoFile] = useState(null);
+  const [pendingFaviconFile, setPendingFaviconFile] = useState(null);
+
   // Pagination and filtering states
   const [pagination, setPagination] = useState({
     current: 1,
@@ -103,12 +107,14 @@ const CompanyRegistration = () => {
   const handleLogoRemove = useCallback(() => {
     setDocFldLogo("");
     setLogoFileList([]);
+    setPendingLogoFile(null);
     form.setFieldsValue({ logo: "" });
   }, [form]);
 
   const handleFaviconRemove = useCallback(() => {
     setDocFldFavicon("");
     setFaviconFileList([]);
+    setPendingFaviconFile(null);
     form.setFieldsValue({ favicon: "" });
   }, [form]);
 
@@ -189,6 +195,10 @@ const CompanyRegistration = () => {
         setDocFldFavicon(null);
         setEditingCompany(null);
       }
+
+      // Reset pending files
+      setPendingLogoFile(null);
+      setPendingFaviconFile(null);
     },
     [form]
   );
@@ -198,6 +208,8 @@ const CompanyRegistration = () => {
     const user_data = getLocalStorageItem("user_data") || {};
     setFaviconFileList([]);
     setLogoFileList([]);
+    setPendingLogoFile(null);
+    setPendingFaviconFile(null);
     setDocFldLogo(user_data.companyDetails.companyLogoUrl || null);
     setDocFldFavicon(user_data.companyDetails.companyFavIcoUrl || null);
   }, []);
@@ -227,19 +239,73 @@ const CompanyRegistration = () => {
     [fetchCompanies, handleApiError]
   );
 
-  // Save handler with optimized localStorage updates
+  // File upload function
+  const uploadFile = useCallback(async (file, fileType) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: `${Service.fileUpload}?file_for=${fileType}`,
+        body: formData,
+        options: {
+          "content-type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.status === 1) {
+        return response.data.data[0]?.file_path;
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      throw error;
+    }
+  }, []);
+
+  // Save handler with file upload on submit
   const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      const latestSlug = companySlug == values.companySlug ? companySlug : values.companySlug;
+      const latestSlug =
+        companySlug == values.companySlug ? companySlug : values.companySlug;
+
+      let logoUrl = docFldLogo;
+      let faviconUrl = docFldFavicon;
+
+      // Upload logo if pending
+      if (pendingLogoFile) {
+        try {
+          logoUrl = await uploadFile(pendingLogoFile, "company_logo");
+          message.success("Logo uploaded successfully");
+        } catch (error) {
+          message.error("Failed to upload logo");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Upload favicon if pending
+      if (pendingFaviconFile) {
+        try {
+          faviconUrl = await uploadFile(pendingFaviconFile, "favicon");
+          message.success("Favicon uploaded successfully");
+        } catch (error) {
+          message.error("Failed to upload favicon");
+          setLoading(false);
+          return;
+        }
+      }
 
       const payload = {
         companyName: values.companyName,
         companyEmail: values.companyEmail,
         companyDomain: values.companySlug,
-        logo: docFldLogo || "", 
-        favicon: docFldFavicon || "",
+        logo: logoUrl || "",
+        favicon: faviconUrl || "",
         ownerName: values.ownerName,
       };
 
@@ -292,7 +358,10 @@ const CompanyRegistration = () => {
           `companyFavIcoUrl-${latestSlug}`,
           updatedCompany?.companyFavIcoUrl
         );
-        setLocalStorageItem(`companyLogoUrl-${latestSlug}`, updatedCompany?.companyLogoUrl);
+        setLocalStorageItem(
+          `companyLogoUrl-${latestSlug}`,
+          updatedCompany?.companyLogoUrl
+        );
 
         // Handle new company creation
         if (!editingCompany && resetToken && saveCompany) {
@@ -306,8 +375,12 @@ const CompanyRegistration = () => {
         }
         await fetchCompanies();
         setIsModalVisible(false);
-        setDocFldLogo(localStorage.getItem(`companyLogoUrl-${latestSlug}`) || null);
-        setDocFldFavicon(localStorage.getItem(`companyFavIcoUrl-${latestSlug}`) || null);
+        setDocFldLogo(
+          localStorage.getItem(`companyLogoUrl-${latestSlug}`) || null
+        );
+        setDocFldFavicon(
+          localStorage.getItem(`companyFavIcoUrl-${latestSlug}`) || null
+        );
       } else {
         message.error("Failed to save company");
       }
@@ -326,57 +399,42 @@ const CompanyRegistration = () => {
     fetchCompanies,
     docFldLogo,
     docFldFavicon,
+    pendingLogoFile,
+    pendingFaviconFile,
+    uploadFile,
     form,
     localData,
     handleApiError,
   ]);
 
-  // File upload handlers
-  const createUploadHandler = useCallback(
-    (fileType, setDocFunction) => {
-      return async ({ file, onSuccess, onError }) => {
-        try {
-          const formData = new FormData();
-          formData.append("image", file);
-
-          const response = await Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: `${Service.fileUpload}?file_for=${fileType}`,
-            body: formData,
-            options: {
-              "content-type": "multipart/form-data",
-            },
-          });
-
-          if (response.data.status === 1) {
-            message.success(response.data.message);
-           return response.data.data[0]?.file_path  
-          }
-        } catch (error) {
-          console.error("Upload error:", error);
-        }
-      };
-    },
-    [form]
-  );
-
-  const handleLogoUpload = useMemo(
-    () => createUploadHandler("company_logo", setDocFldLogo),
-    [createUploadHandler]
-  );
-
-  const handleFaviconUpload = useMemo(
-    () => createUploadHandler("favicon", setDocFldFavicon),
-    [createUploadHandler]
-  );
-
   // File validation
   const validateFile = useCallback((file) => {
     const isAllowedType = ALLOWED_FILE_TYPES.includes(file.type);
     if (!isAllowedType) {
-      message.error("Only PNG, JPG and SVG files are allowed!");
+      message.error("Only PNG, JPG and WEBP files are allowed!");
+      return Upload.LIST_IGNORE;
     }
-    return isAllowedType || Upload.LIST_IGNORE;
+    // Valid file, but don't auto-upload
+    return false;
+  }, []);
+
+  // Handle file selection (not upload)
+  const handleLogoChange = useCallback(({ fileList }) => {
+    setLogoFileList(fileList);
+    if (fileList.length > 0) {
+      setPendingLogoFile(fileList[0].originFileObj);
+    } else {
+      setPendingLogoFile(null);
+    }
+  }, []);
+
+  const handleFaviconChange = useCallback(({ fileList }) => {
+    setFaviconFileList(fileList);
+    if (fileList.length > 0) {
+      setPendingFaviconFile(fileList[0].originFileObj);
+    } else {
+      setPendingFaviconFile(null);
+    }
   }, []);
 
   // Table handlers
@@ -437,7 +495,9 @@ const CompanyRegistration = () => {
               <Button
                 className="view-btn"
                 icon={<UserOutlined />}
-                onClick={() => history.push(`/${companySlug}/admin/company-employee`)}
+                onClick={() =>
+                  history.push(`/${companySlug}/admin/company-employee`)
+                }
               />
             </Tooltip>
             <Tooltip title="Edit">
@@ -484,29 +544,31 @@ const CompanyRegistration = () => {
         {
           validator: (_, value) => {
             if (!value) return Promise.resolve();
-            
+
             // Check if slug contains only allowed characters (letters, numbers, hyphens)
             const slugRegex = /^[a-z0-9-]+$/;
             if (!slugRegex.test(value)) {
               return Promise.reject(
-                new Error("Slug can only contain lowercase letters, numbers, and hyphens")
+                new Error(
+                  "Slug can only contain lowercase letters, numbers, and hyphens"
+                )
               );
             }
-            
+
             // Check if slug starts or ends with hyphen
-            if (value.startsWith('-') || value.endsWith('-')) {
+            if (value.startsWith("-") || value.endsWith("-")) {
               return Promise.reject(
                 new Error("Slug cannot start or end with a hyphen")
               );
             }
-            
+
             // Check for consecutive hyphens
-            if (value.includes('--')) {
+            if (value.includes("--")) {
               return Promise.reject(
                 new Error("Slug cannot contain consecutive hyphens")
               );
             }
-            
+
             return Promise.resolve();
           },
         },
@@ -659,14 +721,15 @@ const CompanyRegistration = () => {
               <Form.Item label="Logo">
                 <Upload
                   name="logo"
-                  listType="picture"
+                  listType="text"
                   maxCount={1}
-                  customRequest={handleLogoUpload}
                   disabled={modalData.mode === "view"}
                   fileList={logoFileList}
-                  onChange={({ fileList }) => setLogoFileList(fileList)}
+                  onChange={handleLogoChange}
                   showUploadList={{ showPreviewIcon: true }}
                   beforeUpload={validateFile}
+                  action=""
+                  accept=".png,.jpg,.jpeg,.webp"
                 >
                   <Button
                     icon={<UploadOutlined />}
@@ -675,12 +738,22 @@ const CompanyRegistration = () => {
                     Upload Logo
                   </Button>
                 </Upload>
-                {docFldLogo && (
-                  <div style={{ position: "relative", display: "inline-block", marginTop: 8 }}>
+                {docFldLogo && logoFileList.length == 0 && (
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "inline-block",
+                      marginTop: 8,
+                    }}
+                  >
                     <img
                       src={`${process.env.REACT_APP_API_URL}/public/${docFldLogo}`}
                       alt="Logo"
-                      style={{ width: 100, height: "auto", maxWidth: "fit-content" }}
+                      style={{
+                        width: 100,
+                        height: "auto",
+                        maxWidth: "fit-content",
+                      }}
                     />
                     {modalData.mode !== "view" && (
                       <Button
@@ -712,13 +785,14 @@ const CompanyRegistration = () => {
             <Col xs={24} sm={12}>
               <Form.Item label="Favicon">
                 <Upload
+                  action=""
+                  accept=".png,.jpg,.jpeg,.webp"
                   name="favicon"
-                  listType="picture"
+                  listType="text"
                   maxCount={1}
-                  customRequest={handleFaviconUpload}
                   disabled={modalData.mode === "view"}
                   fileList={faviconFileList}
-                  onChange={({ fileList }) => setFaviconFileList(fileList)}
+                  onChange={handleFaviconChange}
                   showUploadList={{ showPreviewIcon: true }}
                   beforeUpload={validateFile}
                 >
@@ -729,8 +803,14 @@ const CompanyRegistration = () => {
                     Upload Favicon
                   </Button>
                 </Upload>
-                {docFldFavicon && (
-                  <div style={{ position: "relative", display: "inline-block", marginTop: 8 }}>
+                {docFldFavicon && faviconFileList.length == 0 && (
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "inline-block",
+                      marginTop: 8,
+                    }}
+                  >
                     <img
                       src={`${process.env.REACT_APP_API_URL}/public/${docFldFavicon}`}
                       alt="Favicon"
