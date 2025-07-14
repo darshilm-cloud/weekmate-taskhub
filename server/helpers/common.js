@@ -131,36 +131,38 @@ class CommonHelpers {
       const companyId = req?.user?.companyId;
       const Company = mongoose.model("companies");
       const company = await Company.findById(companyId);
-  
+
       const maxKb = company?.fileUploadSize || 1024; // default to 1 MB
       const maxSizeBytes = maxKb * 1024;
-  
+
       const upload = multer({
         storage: multer.diskStorage({
           destination: this.dynamicDestination,
           filename: function (req, file, cb) {
-            const baseName = file.originalname.substring(0, file.originalname.lastIndexOf(".")) || file.originalname;
-            const fileName = baseName.trim().replace(/\s+/g, "_") + `_${Date.now()}` + path.extname(file.originalname);
+            const baseName =
+              file.originalname.substring(
+                0,
+                file.originalname.lastIndexOf(".")
+              ) || file.originalname;
+            const fileName =
+              baseName.trim().replace(/\s+/g, "_") +
+              `_${Date.now()}` +
+              path.extname(file.originalname);
             cb(null, fileName);
           }
         }),
         limits: { fileSize: maxSizeBytes }
       }).any(); // or .single("file")
-  
+
       // Call the multer middleware
       upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
-          return errorResponse(
-            res,
-            statusCode.BAD_REQUEST,
-            err.message
-          );
+          return errorResponse(res, statusCode.BAD_REQUEST, err.message);
         } else if (err) {
           return catchBlockErrorResponse(res, err.message);
         }
         next();
       });
-  
     } catch (err) {
       console.error("Upload Middleware Error:", err);
       return catchBlockErrorResponse(res, err.message);
@@ -189,10 +191,15 @@ class CommonHelpers {
       if (companyId) {
         console.log("📧 Using company SMTP for:", companyId);
 
+        companyId = validObjectId(companyId)
+          ? companyId
+          : newObjectId(companyId);
+          
         const SMTP = mongoose.model("smtp_configs");
         const getSMTP = await SMTP.findOne({
-          companyId: newObjectId(companyId)
+          companyId
         });
+        console.log("🚀 ~ CommonHelpers ~ getSMTP:", getSMTP);
 
         if (!getSMTP) {
           throw new Error("SMTP configuration not found for the company");

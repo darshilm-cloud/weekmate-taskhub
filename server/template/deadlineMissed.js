@@ -1,7 +1,7 @@
 const { emailSenderForPMS, getUserName } = require("../helpers/common");
 
 // single project wise mail
-exports.projectDeadlineMissedMail = async (data, companyId) => {
+exports.projectDeadlineMissedMail = async (data) => {
   try {
     let html = `
       <!DOCTYPE html>
@@ -41,21 +41,20 @@ exports.projectDeadlineMissedMail = async (data, companyId) => {
       `;
 
     let mailIds = [data?.manager?.email];
-    // let mailIds = [data?.manager?.email, data?.manager_of_manager?.email];
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Project Deadline - ${data?.projectId}`,
       html
     };
 
-    await emailSenderForPMS(companyId, mailIds, mailData, []);
+    await emailSenderForPMS(data?.manager?.companyId, mailIds, mailData, []);
     return;
   } catch (error) {
     console.log("🚀 ~ exports.projectDeadlineMissedMail= ~ error:", error);
   }
 };
 
-exports.taskDeadlineMissedMail = async (data, companyId) => {
+exports.taskDeadlineMissedMail = async (data) => {
   try {
     let html = `
         <!DOCTYPE html>
@@ -107,14 +106,13 @@ exports.taskDeadlineMissedMail = async (data, companyId) => {
         `;
 
     let mailIds = [data?.manager?.email];
-    // let mailIds = [data?.manager?.email, data?.manager_of_manager?.email];
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Tasks Deadline - ${data?.projectId}`,
       html
     };
 
-    await emailSenderForPMS(companyId, mailIds, mailData, []);
+    await emailSenderForPMS(data?.manager?.companyId, mailIds, mailData, []);
     return;
   } catch (error) {
     console.log("🚀 ~ exports.projectDeadlineMissedMail= ~ error:", error);

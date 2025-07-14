@@ -185,7 +185,7 @@ exports.login = async (req, res, next) => {
               });
 
               const user = await module.exports.dataForJWT(loginUser);
-              
+
               if (
                 user?.companyDetails?.companyDomain !==
                 getCompanyDetails?.companyDomain
@@ -301,18 +301,37 @@ exports.dataForJWT = async (userData) => {
 exports.updatePassword = async (req, res) => {
   const validationSchema = Joi.object({
     oldpassword: Joi.string().required(),
-    newPassword: Joi.string().required(),
-    user_id: Joi.string().required()
+    newPassword: Joi.string().required()
   });
+
   const { error, value } = validationSchema.validate(req.body);
   if (error) {
     return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
   }
-  const userData = await PMSClients.findById(value.user_id).exec();
+
+   // Decode user from token
+   const {
+    _id: decodedUserId,
+    pms_role_id: { _id: roleId, role_name: roleName } = {},
+    companyId: decodedCompanyId
+  } = req.user || {};
+
+  let userData = null;
+
+  // Check in Employees
+  userData = await Employees.findById(decodedUserId);
+
+  if (!userData) {
+    // If not found in Employees, check in PMSClients
+    userData = await PMSClients.findById(decodedUserId);
+  }
+  
+  
   userData.comparePassword(value.newPassword, async function (error, isMatch) {
     if (isMatch) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.PASSWORD_SAME);
     }
+
     userData.comparePassword(
       value.oldpassword,
       async function (error, isMatch) {
@@ -323,22 +342,10 @@ exports.updatePassword = async (req, res) => {
             messages.PASSWORD_WRONG
           );
         } else {
-          const result = await PMSClients.updateOne(
-            {
-              _id: userData._id
-            },
-            {
-              $set: {
-                plain_password: value.newPassword,
-                password: crypto
-                  .createHash("md5")
-                  .update(value.newPassword)
-                  .digest("hex")
-              }
-            }
-          ).exec();
-          // await userData.save();
-          if (result.modifiedCount > 0) {
+          userData.password = value.newPassword;
+          const result = await userData.save();
+
+          if (result) {
             return successResponse(
               res,
               statusCode.SUCCESS,
@@ -364,21 +371,25 @@ exports.forgotPassword = async (req, res) => {
         error.details[0].message
       );
     }
-    const empData = await Employees.findOne({
+
+    let userData = null;
+
+    // Check in Employees
+    userData = await Employees.findOne({
       email: value.email.toLowerCase(),
-      isSoftDeleted: false
-    }).exec();
-    if (empData?.email) {
-      return errorResponse(
-        res,
-        statusCode.BAD_GATEWAY,
-        messages.PASSWORD_CHANGE_HRMS
-      );
+      isSoftDeleted: false,
+      isActivate: true
+    });
+
+    if (!userData) {
+      // If not found in Employees, check in PMSClients
+      userData = await PMSClients.findOne({
+        email: value.email.toLowerCase(),
+        isSoftDeleted: false,
+        isActivate: true
+      });
     }
-    const userData = await PMSClients.findOne({
-      email: value.email.toLowerCase(),
-      isSoftDeleted: false
-    }).exec();
+
     if (!userData) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.EMAIL_INVALID);
     }
@@ -392,30 +403,21 @@ exports.forgotPassword = async (req, res) => {
     let jwtData = {
       passwordResetToken: emailResetToken
     };
-    const result = await PMSClients.updateOne(
-      {
-        _id: userData._id
-      },
-      {
-        $set: {
-          resetCode: jwtData.passwordResetToken
-        }
-      }
-    ).exec();
+
+    userData.resetCode = jwtData.passwordResetToken;
+    const result = await userData.save();
 
     if (result) {
       const authToken = jwt.sign(jwtData, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "24h"
       });
       await emailSenderForPMS(
+        result.companyId,
         userData.email,
         forgetPasswordContent(userData, authToken),
         []
       );
-      PMSClients.updateOne(
-        { _id: userData._id },
-        { $set: { isEmailsent: true } }
-      );
+
       return successResponse(res, statusCode.SUCCESS, messages.MAIL_SENT);
     }
   } catch (error) {
@@ -450,6 +452,7 @@ exports.resetPassword = async (req, res) => {
         error.details[0].message
       );
     }
+
     let passwordResetToken = null;
 
     const decoded = await this.jwtTokenVerifier(value.emailResetToken);
@@ -459,29 +462,28 @@ exports.resetPassword = async (req, res) => {
     }
 
     if (passwordResetToken) {
-      const userData = await PMSClients.findOne({
+      let userData = null;
+
+      // Check in Employees
+      userData = await Employees.findOne({
         resetCode: passwordResetToken
       });
 
+      if (!userData) {
+        // If not found in Employees, check in PMSClients
+        userData = await PMSClients.findOne({
+          resetCode: passwordResetToken
+        });
+      }
+
       if (userData) {
         userData.resetCode = null;
-        const result = await PMSClients.updateOne(
-          {
-            _id: userData._id
-          },
-          {
-            $set: {
-              plain_password: value.password,
-              password: crypto
-                .createHash("md5")
-                .update(value.password)
-                .digest("hex")
-            }
-          }
-        ).exec();
+        userData.password = value.password;
+        const result = await userData.save();
 
-        if (result.modifiedCount > 0) {
+        if (result) {
           await emailSenderForPMS(
+            result.companyId,
             userData.email,
             resetPasswordContent(userData),
             []

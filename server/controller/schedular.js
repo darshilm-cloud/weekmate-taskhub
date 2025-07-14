@@ -3,14 +3,14 @@ const moment = require("moment");
 const { DEFAULT_DATA } = require("../helpers/constant");
 const {
   projectDeadlineMissedMail,
-  taskDeadlineMissedMail,
+  taskDeadlineMissedMail
 } = require("../template/deadlineMissed");
 const Project = mongoose.model("projects");
 const Complaints = mongoose.model("complaints");
+const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
 const {
-  getCreatedUpdatedDeletedByQuery,
-} = require("../helpers/common");
-const { newReminderMailforStatusUpdate } = require("../template/reminderMailforComplaintStatusUpdate");
+  newReminderMailforStatusUpdate
+} = require("../template/reminderMailforComplaintStatusUpdate");
 
 exports.scheduleCronForProjectMissedDeadline = async () => {
   try {
@@ -20,12 +20,12 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
     let matchQuery = {
       isDeleted: false,
       "project_status.title": {
-        $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+        $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
       },
       end_date: {
         $gte: yesterday,
-        $lt: today,
-      },
+        $lt: today
+      }
     };
 
     const mainQuery = [
@@ -39,14 +39,14 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
       {
         $lookup: {
@@ -58,20 +58,20 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_type"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_type",
-        },
+          as: "project_type"
+        }
       },
       {
         $unwind: {
           path: "$project_type",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -83,20 +83,20 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_status",
-        },
+          as: "project_status"
+        }
       },
       {
         $unwind: {
           path: "$project_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
 
       { $match: matchQuery },
@@ -112,47 +112,20 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "manager_of_manager",
-        },
-      },
-      {
-        $unwind: {
-          path: "$manager_of_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       {
         $project: {
@@ -169,16 +142,10 @@ exports.scheduleCronForProjectMissedDeadline = async () => {
             last_name: 1,
             full_name: 1,
             email: 1,
-          },
-          manager_of_manager: {
-            _id: 1,
-            full_name: 1,
-            first_name: 1,
-            last_name: 1,
-            email: 1,
-          },
-        },
-      },
+            companyId: 1
+          }
+        }
+      }
     ];
 
     let data = await Project.aggregate(mainQuery);
@@ -212,28 +179,28 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_status"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project_status",
-        },
+          as: "project_status"
+        }
       },
       {
         $unwind: {
           path: "$project_status",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $match: {
           isDeleted: false,
           "project_status.title": {
-            $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-          },
-        },
+            $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+          }
+        }
       },
       {
         $lookup: {
@@ -250,20 +217,20 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$mainTaskId"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "mainTask",
-              },
+                as: "mainTask"
+              }
             },
             {
               $unwind: {
                 path: "$mainTask",
-                preserveNullAndEmptyArrays: true,
-              },
+                preserveNullAndEmptyArrays: true
+              }
             },
             {
               $lookup: {
@@ -275,20 +242,20 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
                       $expr: {
                         $and: [
                           { $eq: ["$_id", "$$task_status"] },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
+                          { $eq: ["$isDeleted", false] }
+                        ]
+                      }
+                    }
+                  }
                 ],
-                as: "task_status",
-              },
+                as: "task_status"
+              }
             },
             {
               $unwind: {
                 path: "$task_status",
-                preserveNullAndEmptyArrays: false,
-              },
+                preserveNullAndEmptyArrays: false
+              }
             },
             {
               $match: {
@@ -299,18 +266,18 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
                     {
                       $ne: [
                         "$task_status.title",
-                        DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-                      ],
+                        DEFAULT_DATA.WORKFLOW_STATUS.DONE
+                      ]
                     },
                     { $gte: ["$due_date", yesterday] },
-                    { $lt: ["$due_date", today] },
-                  ],
-                },
-              },
-            },
+                    { $lt: ["$due_date", today] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "tasks",
-        },
+          as: "tasks"
+        }
       },
       //   {
       //     $group: {
@@ -332,54 +299,27 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "manager_of_manager",
-        },
-      },
-      {
-        $unwind: {
-          path: "$manager_of_manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $match: {
           $expr: {
-            $and: [{ $gt: [{ $size: "$tasks" }, 0] }],
-          },
-        },
+            $and: [{ $gt: [{ $size: "$tasks" }, 0] }]
+          }
+        }
       },
       {
         $project: {
@@ -397,16 +337,10 @@ exports.scheduleCronForTaskMissedDeadline = async () => {
             last_name: 1,
             full_name: 1,
             email: 1,
-          },
-          manager_of_manager: {
-            _id: 1,
-            first_name: 1,
-            last_name: 1,
-            full_name: 1,
-            email: 1,
-          },
-        },
-      },
+            companyId: 1
+          }
+        }
+      }
     ];
 
     let data = await Project.aggregate(mainQuery);
@@ -432,9 +366,10 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
       let currentDate = moment(startDate);
 
       while (count < days) {
-        currentDate.add(1, 'days');
+        currentDate.add(1, "days");
         // Check if the day is a working day (Monday to Friday)
-        if (currentDate.isoWeekday() < 6) { // 6 means Saturday, 7 means Sunday
+        if (currentDate.isoWeekday() < 6) {
+          // 6 means Saturday, 7 means Sunday
           count++;
         }
       }
@@ -445,7 +380,7 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
     let data = await Complaints.aggregate([
       {
         $match: {
-          isDeleted: false,
+          isDeleted: false
         }
       },
       {
@@ -461,22 +396,25 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
                     { $eq: ["$isDeleted", false] },
                     {
                       $not: {
-                        $in: ["$status", ["client_review", "resolved", "customer_lost"]]
+                        $in: [
+                          "$status",
+                          ["client_review", "resolved", "customer_lost"]
+                        ]
                       }
-                    },
-                  ],
-                },
-              },
-            },
+                    }
+                  ]
+                }
+              }
+            }
           ],
-          as: "status_data",
-        },
+          as: "status_data"
+        }
       },
       {
         $unwind: {
           path: "$status_data",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -488,20 +426,20 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -513,20 +451,20 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "technology",
-        },
+          as: "technology"
+        }
       },
       {
         $unwind: {
           path: "$technology",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -540,20 +478,20 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -567,74 +505,20 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
                     { $eq: ["$_id", "$$acc_manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "acc_manager",
-        },
+          as: "acc_manager"
+        }
       },
       {
         $unwind: {
           path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "acc_managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
@@ -645,7 +529,7 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
             title: 1,
             manager: 1,
             acc_manager: 1,
-            technology: 1,
+            technology: 1
           },
           status_data: {
             _id: 1,
@@ -653,38 +537,29 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
           },
           technology: {
             _id: 1,
-            project_tech: 1,
+            project_tech: 1
           },
           manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1
-          },
-          managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1
+            email: 1,
+            companyId: 1
           },
           acc_manager: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            email: 1
-          },
-          acc_managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1
+            email: 1,
+            companyId: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
             client_img: 1,
-            email: 1
+            email: 1,
+            companyId: 1
           },
           project_id: 1,
           client_name: 1,
@@ -694,19 +569,21 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
           escalation_level: 1,
           status: 1,
           updatedAt: 1,
-          createdAt: 1,
-        },
-      },
-
+          createdAt: 1
+        }
+      }
     ]);
 
     const today = moment().startOf("day"); // Get today's date
 
     let emailDetails = [];
-    data.forEach(complaint => {
-      const fiveWorkingDaysBefore = calculateWorkingDaysBefore(moment(complaint.createdAt), 5);
+    data.forEach((complaint) => {
+      const fiveWorkingDaysBefore = calculateWorkingDaysBefore(
+        moment(complaint.createdAt),
+        5
+      );
 
-      if ((fiveWorkingDaysBefore.startOf("day")).isSame(today)) {
+      if (fiveWorkingDaysBefore.startOf("day").isSame(today)) {
         console.log(`Reminder query for complaint ID: ${complaint._id}`);
         emailDetails.push(complaint);
       }
@@ -714,10 +591,6 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
     for (const ele of emailDetails) {
       await newReminderMailforStatusUpdate(ele);
     }
-
-
-
-
   } catch (error) {
     console.log(
       "🚀 ~ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus= ~ error:",
