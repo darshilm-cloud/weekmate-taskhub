@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, Upload, message, Avatar, Spin } from "antd";
-import { EditOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons";
+import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import { userSignInSuccess } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
@@ -194,7 +194,8 @@ const UserProfileModal = ({
   return (
     <Modal
       open={isModalOpen}
-      title="Edit Profile"
+      title="User Profile"
+      className="user-profile"
       onCancel={handleModalCancel}
       footer={null}
       destroyOnClose
@@ -228,16 +229,16 @@ const UserProfileModal = ({
             style={{ backgroundColor: "#f0f0f0" }}
           />
           <Upload
-            showUploadList={false}
-            beforeUpload={() => false}
-            onChange={handleImageChange}
+            showUploadList={ false }
+            beforeUpload={ () => false }
+            onChange={ handleImageChange }
             accept="image/*"
             disabled={uploading || saving}
           >
             <div
-              style={{
+              style={ {
                 position: "absolute",
-                bottom: 0,
+                top: 0,
                 right: 0,
                 width: 32,
                 height: 32,
@@ -263,17 +264,17 @@ const UserProfileModal = ({
                 }
               }}
             >
-              <EditOutlined style={{ color: "white", fontSize: 14 }} />
+              <EditOutlined style={ { color: "#888", fontSize: 14 } } />
             </div>
           </Upload>
         </div>
-        <div style={{ marginTop: 8, color: "#888", fontSize: 12 }}>
+        <div style={ { marginTop: 8, color: "#888", fontSize: 12 } }>
           Image must be JPG, PNG, or GIF, under 2MB.
         </div>
       </div>
 
       <Form
-        form={form}
+        form={ form }
         layout="vertical"
         onFinish={handleFinish}
         disabled={saving}
@@ -281,7 +282,7 @@ const UserProfileModal = ({
         <Form.Item
           label="First Name"
           name="firstName"
-          rules={[
+          rules={ [
             { required: true, message: "First name is required" },
             { min: 2, message: "First name must be at least 2 characters" },
             { max: 50, message: "First name cannot exceed 50 characters" },
@@ -293,7 +294,7 @@ const UserProfileModal = ({
         <Form.Item
           label="Last Name"
           name="lastName"
-          rules={[
+          rules={ [
             { required: true, message: "Last name is required" },
             { min: 2, message: "Last name must be at least 2 characters" },
             { max: 50, message: "Last name cannot exceed 50 characters" },
@@ -303,7 +304,7 @@ const UserProfileModal = ({
         </Form.Item>
 
         <Form.Item label="Email">
-          <Input value={userData?.email} disabled />
+          <Input value={ userData?.email } disabled />
         </Form.Item>
 
         <Form.Item style={{ textAlign: "right", marginTop: 24, marginBottom: 0 }}>

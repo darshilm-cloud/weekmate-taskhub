@@ -17,6 +17,7 @@
     margin-bottom: 10px;
     background: #eeeeee52;
   }
+
   .notidication-modal .filter-notification-checkbox ul li {
     /* border-left: none; */
     background: none;
@@ -26,33 +27,34 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-.filter-notification-checkbox ul li.active {
-  color: #fff;
-  border-color: #038fde;
-  background: #038fde;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
-  color: #ffffff ;
-  background-color: #038fde !important;
-   padding:8px 20px;
-  border-radius:20px;
-  cursor:pointer
+  }
 
-}
-.filter-notification-checkbox ul li{
-  padding:8px 20px;
-  border-radius:20px;
-  border:1px solid #000;
-  cursor:pointer
-}
+  .filter-notification-checkbox ul li.active {
+    color: #fff;
+    border-color: #038fde;
+    background: #038fde;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+    color: #ffffff;
+    background-color: #038fde !important;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer
+  }
 
-.filter-notification-checkbox ul>li {
-  display: flex;
-  margin-right: 5px;
-  align-items: baseline;
-  gap: 5px;
-}
+  .filter-notification-checkbox ul li {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid #000;
+    cursor: pointer
+  }
+
+  .filter-notification-checkbox ul>li {
+    display: flex;
+    margin-right: 5px;
+    align-items: baseline;
+    gap: 5px;
+  }
 
   .notidication-modal .notification-time {
     color: #808080c4;
@@ -203,4 +205,17 @@
     height: 50px;
     width: 150px;
     display: flex;
+  }
+
+  .user-profile .ant-modal-body .ant-avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+   .user-profile .ant-modal-body .ant-btn-primary {
+    margin: 0;
   }
