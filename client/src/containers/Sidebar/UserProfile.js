@@ -1242,7 +1242,7 @@ function UserProfile() {
             >
               <div className="bell-icon">
                 <i className="fi fi-rr-bell width-18"></i>
-                {<span className="count">{0 || dataCount}</span>}
+                {dataCount > 0 && <span className="count">{dataCount}</span>}
               </div>
             </Popover>
 

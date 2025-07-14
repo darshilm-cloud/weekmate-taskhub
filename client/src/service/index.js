@@ -504,55 +504,12 @@ export default class Service {
     );
     //response interceptor to refresh token on receiving token expired error
     axios.interceptors.response.use(
-      (response) => {
-        if (response.data.code == 401) {
-          localStorage.clear();
-          window.location = "/signin";
-        } else if (response.data.code == 403) {
-          window.location.href = `${process.env.REACT_APP_URL}unauthorised`;
-        } else {
-          return response;
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          this.logOut();
         }
-      },
-      async function (error) {
-        const originalRequest = error.config;
-        let refreshToken = localStorage.getItem("refreshToken");
-        if (
-          refreshToken &&
-          error?.response?.status === 401 &&
-          !originalRequest._retry
-        ) {
-          if (originalRequest.url.includes("/refreshToken")) {
-            return Promise.reject(error);
-          }
-          originalRequest._retry = true;
-          try {
-            const url = Service.API_URL + Service.refreshToken;
-            const response = await axios.post(url, {
-              refreshToken: refreshToken,
-            });
-            if (response.status === 200 && response.data.authToken) {
-              localStorage.setItem(
-                "accessToken",
-                response.data.authToken.accessToken
-              );
-              localStorage.setItem(
-                "refreshToken",
-                response.data.authToken.refreshToken
-              );
-              const res = await axios(originalRequest);
-              return res;
-            } else {
-              return Promise.reject(response);
-            }
-          } catch (e) {
-            return Promise.reject(e);
-          }
-        } else if (refreshToken && error?.response?.status === 403) {
-          window.location.href = `${process.env.REACT_APP_URL}unauthorised`;
-        } else {
-          return Promise.reject(error);
-        }
+        return Promise.reject(error);
       }
     );
 
@@ -621,10 +578,20 @@ export default class Service {
   }
 
   static logOut() {
-    localStorage.clear();
+    localStorage.removeItem('user_data')
+    localStorage.removeItem('is_reporting_manager')
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('title')
+    localStorage.removeItem('headerLogo')
+    localStorage.removeItem('loginLogo')  
+    localStorage.removeItem('logoMode')
+    localStorage.removeItem('favIcon')
+  
+  
+    removeCookie("user_permission")
+    removeCookie("pms_role_id")
     window.location = "/signin";
-    removeCookie("user_permission");
-    removeCookie("pms_role_id");
   }
 
   static uuidv4() {
