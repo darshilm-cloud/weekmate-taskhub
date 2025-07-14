@@ -301,18 +301,37 @@ exports.dataForJWT = async (userData) => {
 exports.updatePassword = async (req, res) => {
   const validationSchema = Joi.object({
     oldpassword: Joi.string().required(),
-    newPassword: Joi.string().required(),
-    user_id: Joi.string().required()
+    newPassword: Joi.string().required()
   });
+
   const { error, value } = validationSchema.validate(req.body);
   if (error) {
     return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
   }
-  const userData = await PMSClients.findById(value.user_id).exec();
+
+   // Decode user from token
+   const {
+    _id: decodedUserId,
+    pms_role_id: { _id: roleId, role_name: roleName } = {},
+    companyId: decodedCompanyId
+  } = req.user || {};
+
+  let userData = null;
+
+  // Check in Employees
+  userData = await Employees.findById(decodedUserId);
+
+  if (!userData) {
+    // If not found in Employees, check in PMSClients
+    userData = await PMSClients.findById(decodedUserId);
+  }
+  
+  
   userData.comparePassword(value.newPassword, async function (error, isMatch) {
     if (isMatch) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.PASSWORD_SAME);
     }
+
     userData.comparePassword(
       value.oldpassword,
       async function (error, isMatch) {
@@ -323,22 +342,10 @@ exports.updatePassword = async (req, res) => {
             messages.PASSWORD_WRONG
           );
         } else {
-          const result = await PMSClients.updateOne(
-            {
-              _id: userData._id
-            },
-            {
-              $set: {
-                plain_password: value.newPassword,
-                password: crypto
-                  .createHash("md5")
-                  .update(value.newPassword)
-                  .digest("hex")
-              }
-            }
-          ).exec();
-          // await userData.save();
-          if (result.modifiedCount > 0) {
+          userData.password = value.newPassword;
+          const result = await userData.save();
+
+          if (result) {
             return successResponse(
               res,
               statusCode.SUCCESS,
@@ -383,7 +390,6 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
-
     if (!userData) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.EMAIL_INVALID);
     }
@@ -411,7 +417,7 @@ exports.forgotPassword = async (req, res) => {
         forgetPasswordContent(userData, authToken),
         []
       );
-     
+
       return successResponse(res, statusCode.SUCCESS, messages.MAIL_SENT);
     }
   } catch (error) {
@@ -470,12 +476,10 @@ exports.resetPassword = async (req, res) => {
         });
       }
 
-
       if (userData) {
         userData.resetCode = null;
         userData.password = value.password;
         const result = await userData.save();
-
 
         if (result) {
           await emailSenderForPMS(
