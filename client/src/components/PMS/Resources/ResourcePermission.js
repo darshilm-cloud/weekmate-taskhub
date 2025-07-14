@@ -1,4 +1,4 @@
-import { Card, Table, Radio } from "antd";
+import { Card, Table, Radio, message } from "antd";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Service from "../../../service";
@@ -65,6 +65,12 @@ function ResourcePermission(props) {
   };
 
   const handleModuleToggle = async event => {
+    const user_data = JSON.parse(localStorage.getItem("user_data"));
+    if(user_data?._id == props.match.params.id){
+      message.error("You can not update your own role")
+      return 
+    }
+
     const payload = {
       user_id: props.match.params.id,
       pms_role_id: event.target.value,
@@ -85,12 +91,6 @@ function ResourcePermission(props) {
   const handleTableChange = page => {
     setPagination({ ...pagination, ...page });
   };
-
-  // empData.map(value => {
-  //   if (value.isAccess == true) {
-  //     return value._id;
-  //   }
-  // });
 
   return (
     <div className="taskhub-wrapper">

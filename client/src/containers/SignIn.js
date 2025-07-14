@@ -46,7 +46,6 @@ function SignIn() {
           token,
         },
       });
-      console.log(response, "response");
       if (response.data.status == 1) {
         showVerificationModal(response.data.message, true);
       } else {
@@ -78,8 +77,6 @@ function SignIn() {
         body: reqBody,
       });
       if (
-        response.data &&
-        response?.data?.data &&
         response?.data?.status == 1
       ) {
         message.success(response?.data?.message);
