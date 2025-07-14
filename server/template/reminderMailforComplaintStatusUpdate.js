@@ -1,7 +1,7 @@
 const { emailSenderForPMS } = require("../helpers/common");
 
 class ReminderMail {
-  newReminderMailforStatusUpdate = async (data, companyId) => {
+  newReminderMailforStatusUpdate = async (data) => {
     try {
       let html = `
            <div style="font-family: Arial, sans-serif; color: #333;">
@@ -40,11 +40,9 @@ class ReminderMail {
 
       let cc = [
         data?.acc_manager?.email
-        // data?.managers_rm?.email,
-        // data?.acc_managers_rm?.email,
       ];
 
-      await emailSenderForPMS(companyId, data?.manager?.email, mailData, cc);
+      await emailSenderForPMS(data?.manager?.companyId, data?.manager?.email, mailData, cc);
     } catch (error) {
       console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
     }
