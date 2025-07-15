@@ -10,7 +10,7 @@ const CompanyRegistrationMail = require("../models/CompanyRegistrationMail");
 const nodemailer = require("nodemailer");
 const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
-const { addDefaultProjectStatus } = require("../helpers/common");
+const { addDefaultProjectStatus, addDefaultPermission } = require("../helpers/common");
 
 
 // Register a company details API
@@ -240,8 +240,13 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       }
     ]);
 
+    
+
     const enrichedUser = userDetails[0];
 
+    //Add default permission for users
+    await addDefaultPermission(company._id,newUser._id)
+    
     // Add default project status for company
     await addDefaultProjectStatus(company._id,newUser._id)
 

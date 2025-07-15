@@ -269,7 +269,15 @@ exports.addResourcePermission = async (req, res) => {
 
 exports.getRolePermissions = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const rolePermissions = await RolePermissions.find({
+      companyId:newObjectId(decodedCompanyId),
       pms_role_id: new mongoose.Types.ObjectId(req.params.roleId),
       isDeleted: false,
     });

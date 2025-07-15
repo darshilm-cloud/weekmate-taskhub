@@ -120,7 +120,7 @@ app.use((req, res, next) => {
     res.json = async function (resBody) {
       // Modify the response body here
       // Get login user permissions..
-      resBody.permissions = await getUserPermissions(req.user._id);
+      resBody.permissions = await getUserPermissions(req.user._id,req.user.companyId);
       // Get login user pms role
       const loginUser = await getDataForLoginUser({
         _id: req.user._id,

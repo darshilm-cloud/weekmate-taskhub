@@ -193,7 +193,7 @@ class CommonHelpers {
         companyId = validObjectId(companyId)
           ? companyId
           : newObjectId(companyId);
-          
+
         const SMTP = mongoose.model("smtp_configs");
         const getSMTP = await SMTP.findOne({
           companyId
@@ -835,7 +835,7 @@ class CommonHelpers {
     ];
 
     const statusesToInsert = defaultStatuses.map((status) => ({
-      companyId: newObjectId(companyId),
+      companyId: companyId,
       title: status.title,
       isDefault: true,
       createdBy: userId,
@@ -843,6 +843,45 @@ class CommonHelpers {
     }));
 
     await ProjectStatus.insertMany(statusesToInsert);
+  }
+
+  async addDefaultPermission(companyId, userId) {
+    const Resource = mongoose.model("resource");
+    const rolePermission = mongoose.model("role_permissions");
+    const PMSRoles = mongoose.model("pms_roles");
+
+    const getAllResources = await Resource.find().select("_id resource_name");
+    const getAllRoles = await PMSRoles.find().select("_id role_name");
+
+    let permissions = [];
+    getAllRoles.map((roles) => {
+      if (roles?.role_name === "Admin") {
+        getAllResources.map((resource) =>
+          permissions.push({
+            companyId: companyId,
+            resource_id: resource?._id,
+            pms_role_id: roles?._id,
+            createdBy: userId,
+            updatedBy: userId
+          })
+        );
+      } else {
+        getAllResources.map((resource) => {
+          if (resource?.resource_name == "view_timesheet") {
+            permissions.push({
+              companyId: companyId,
+              resource_id: resource?._id,
+              pms_role_id: roles?._id,
+              createdBy: userId,
+              updatedBy: userId
+            });
+          }
+        });
+      }
+    });
+
+
+    await rolePermission.insertMany(permissions);
   }
 }
 

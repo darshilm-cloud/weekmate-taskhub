@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-let Resources = mongoose.model("resource");
 let PMSRole = mongoose.model("pms_roles");
 
 const fs = require("fs");

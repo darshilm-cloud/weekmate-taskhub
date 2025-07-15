@@ -67,13 +67,14 @@ exports.authenticationGetData = async (req, res) => {
   }
 };
 
-exports.getUserPermissions = async (userId) => {
+exports.getUserPermissions = async (userId, companyId) => {
   try {
     const loginUser = await this.getDataForLoginUser({ _id: userId });
     let permission = [];
 
     if (loginUser && loginUser?.pms_role_id) {
       const getPermissions = await RolePermissions.find({
+        companyId: companyId,
         pms_role_id: new mongoose.Types.ObjectId(loginUser.pms_role_id),
         isDeleted: false
       });
@@ -137,7 +138,10 @@ exports.login = async (req, res, next) => {
             157680000 // 5 year
           );
           // Get login user permissions..
-          let permissions = await module.exports.getUserPermissions(user._id);
+          let permissions = await module.exports.getUserPermissions(
+            user._id,
+            user.companyId
+          );
           return successResponse(
             res,
             statusCode.SUCCESS,
@@ -203,7 +207,8 @@ exports.login = async (req, res, next) => {
               );
               // Get login user permissions..
               let permissions = await module.exports.getUserPermissions(
-                user._id
+                user._id,
+                user.companyId
               );
               return successResponse(
                 res,
@@ -244,15 +249,13 @@ exports.getDataForLoginUser = async (reqBody) => {
     userData = await Employees.findOne({
       ...obj,
       ...(reqBody.email ? { email: reqBody.email } : {})
-    })
-      .populate("pms_role_id", "role_name");
+    }).populate("pms_role_id", "role_name");
 
     if (!userData) {
       userData = await PMSClients.findOne({
         ...obj,
         ...(reqBody.email ? { email: reqBody.email } : {})
-      })
-        .populate("pms_role_id", "role_name");
+      }).populate("pms_role_id", "role_name");
     }
 
     return userData;
@@ -307,8 +310,8 @@ exports.updatePassword = async (req, res) => {
     return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
   }
 
-   // Decode user from token
-   const {
+  // Decode user from token
+  const {
     _id: decodedUserId,
     pms_role_id: { _id: roleId, role_name: roleName } = {},
     companyId: decodedCompanyId
@@ -323,8 +326,7 @@ exports.updatePassword = async (req, res) => {
     // If not found in Employees, check in PMSClients
     userData = await PMSClients.findById(decodedUserId);
   }
-  
-  
+
   userData.comparePassword(value.newPassword, async function (error, isMatch) {
     if (isMatch) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.PASSWORD_SAME);
@@ -413,7 +415,7 @@ exports.forgotPassword = async (req, res) => {
       await emailSenderForPMS(
         result.companyId,
         userData.email,
-        forgetPasswordContent(userData, authToken,value.companySlug),
+        forgetPasswordContent(userData, authToken, value.companySlug),
         []
       );
 

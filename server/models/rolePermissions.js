@@ -3,6 +3,7 @@ const { utcDefault } = require("../configs");
 const Schema = mongoose.Schema;
 
 const RolePermissionsSchema = new mongoose.Schema({
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   pms_role_id: {
     type: Schema.Types.ObjectId,
     ref: "pms_roles",
