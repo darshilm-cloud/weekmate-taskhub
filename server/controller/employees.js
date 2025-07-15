@@ -170,12 +170,6 @@ exports.getEmployees = async (req, res) => {
 // Export employee data..
 exports.exportEmpData = async (query, exportFileType) => {
   try {
-    // Decode user from token
-    const {
-      _id: decodedUserId,
-      pms_role_id: { _id: roleId, role_name: roleName } = {},
-      companyId: decodedCompanyId
-    } = req.user || {};
 
     let result = [];
     const data = await Employees.aggregate([
@@ -190,11 +184,12 @@ exports.exportEmpData = async (query, exportFileType) => {
       // Map the rest of the fields
       result.push({
         Name: item.full_name,
+        Email:item.email,
         Role: item?.pms_role?.role_name || "-"
       });
     }
 
-    const csvFields = ["Name", "Role"];
+    const csvFields = ["Name","Email", "Role"];
 
     const exportFileTypeLower = _.toLower(exportFileType);
 
