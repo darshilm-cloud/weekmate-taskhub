@@ -73,7 +73,7 @@ exports.addComplaintStatus = async (req, res) => {
     );
     if (!["in_progress", "customer_lost"].includes(value?.status)) {
       let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
-      await newComplaintStatusMail(emailDetails, "add");
+      await newComplaintStatusMail(emailDetails, "add",decodedCompanyId);
     }
     if (value?.resolved_status != undefined && value?.resolved_status) {
       let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
@@ -263,7 +263,7 @@ exports.updateComplaintStatus = async (req, res) => {
 
     if (!["in_progress", "customer_lost"].includes(value?.status)) {
       let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
-      await newComplaintStatusMail(emailDetails, "edit");
+      await newComplaintStatusMail(emailDetails, "edit",decodedCompanyId);
     }
     if (value?.resolved_status != undefined && value?.resolved_status) {
       let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);

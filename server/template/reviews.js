@@ -1,8 +1,10 @@
-const { emailSenderForPMS } = require("../helpers/common");
+const { emailSenderForPMS, getCompanyData } = require("../helpers/common");
 
 class ReviewsMail {
   newReviewsMail = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(data?.manager?.companyId);
+
       let html = `
             <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
   <div style="background-color: #03497a; color: #fff; padding: 20px; text-align: center;">
@@ -41,7 +43,7 @@ class ReviewsMail {
 
   <div style="padding: 20px; background-color: #f9f9f9; ">
     <p style="margin: 0; font-size: 14px; color: #555;">Thanks and Regards,</p>
-    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">Elsner Technologies Pvt. Ltd.</p>
+    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">${companyData?.companyName || "Taskhub"}</p>
   </div>
 </div>
         `;

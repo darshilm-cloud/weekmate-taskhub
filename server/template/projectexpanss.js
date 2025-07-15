@@ -1,8 +1,10 @@
-const { emailSenderForPMS } = require("../helpers/common");
+const { emailSenderForPMS, getCompanyData } = require("../helpers/common");
 
 class ProjectExpansseMail {
   newProjectExpecesMail = async (data, lognusername, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
   
@@ -71,7 +73,7 @@ ${
   <!-- Footer Section -->
   <div style="padding: 20px; background-color: #f9f9f9;">
     <p style="margin: 0; font-size: 14px; color: #555;">Thanks and Regards,</p>
-    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">Elsner Technologies Pvt. Ltd.</p>
+    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">${companyData?.companyName || "Taskhub"}</p>
   </div>
 </div>
 `;
@@ -100,7 +102,7 @@ ${
 
   approveProjectExpecesMail = async (data, updatedName, companyId) => {
     try {
-      console.log(data, "DAtatat", updatedName);
+      let companyData = await getCompanyData(companyId);
 
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -176,7 +178,7 @@ ${
   <!-- Footer Section -->
   <div style="padding: 20px; background-color: #f9f9f9;">
     <p style="margin: 0; font-size: 14px; color: #555;">Thanks and Regards,</p>
-    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">Elsner Technologies Pvt. Ltd.</p>
+    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">${companyData?.companyName || "Taskhub"}</p>
   </div>
 </div>
 `;
@@ -214,6 +216,8 @@ ${
 
   paidProjectExpecesMail = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
   
@@ -284,7 +288,7 @@ ${
   <!-- Footer Section -->
   <div style="padding: 20px; background-color: #f9f9f9;">
     <p style="margin: 0; font-size: 14px; color: #555;">Thanks and Regards,</p>
-    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">Elsner Technologies Pvt. Ltd.</p>
+    <p style="margin: 5px 0 0; font-weight: bold; font-size: 14px;">${companyData?.companyName || "Taskhub"}</p>
   </div>
 </div>
 `;

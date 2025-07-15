@@ -1,8 +1,10 @@
-const { emailSenderForPMS } = require("../helpers/common");
+const { emailSenderForPMS, getCompanyData } = require("../helpers/common");
 
 class ComplaintMail {
   newComplaintMail = async (data, companyId) => {
     try {
+      let companyData = await getCompanyData(companyId);
+
       const getPriorityStyle = (priority) => {
         switch (priority.toLowerCase()) {
           case "critical":
@@ -91,7 +93,7 @@ class ComplaintMail {
         
                     <br>
                     <p style="margin: 0;">Thanks and Regards,</p>
-                    <p style="margin: 0;">Elsner Technologies Pvt. Ltd.</p>
+                    <p style="margin: 0;">${companyData?.companyName || "Taskhub"}</p>
                 </div>
             </div>
         `;

@@ -1,9 +1,11 @@
-const { emailSenderForPMS } = require("../helpers/common");
+const { emailSenderForPMS, getCompanyData } = require("../helpers/common");
 
 
 class CompalaintStatusMail {
-    newComplaintStatusMail = async (data, op) => {
+    newComplaintStatusMail = async (data, op,companyId) => {
         try {
+            let companyData = await getCompanyData(companyId);
+
             const statusMap = {
                 client_review: "Client Review",
                 open: "Open",
@@ -66,7 +68,7 @@ class CompalaintStatusMail {
                     </p>
                     <br>
                     <p style="margin-bottom:0;">Thanks and Regards,</p>
-                    <p style="margin: 0;">Elsner Technologies Pvt. Ltd.</p>
+                    <p style="margin: 0;">${companyData?.companyName || "Taskhub"}</p>
                 </div>
             </div>
             `;
@@ -90,10 +92,6 @@ class CompalaintStatusMail {
                 }
             }
 
-
-            if (['6627428b2cd9adde1a7ef5f8', '6641eb0b333ffa11fc45430f'].includes(data.technology._id.toString())) {
-                cc.push(process.env.SHLOK_EMAIL)
-              }
             await emailSenderForPMS(data?.createdBy?.email, mailData, cc);
 
             return;
@@ -104,6 +102,7 @@ class CompalaintStatusMail {
 
     newComplaintStatusResolutionFeedbackMailToClient = async (data, companyId) => {
         try {
+            let companyData = await getCompanyData(companyId);
             let html = `
                 <div style="font-family: Arial, sans-serif; color: #333;">
                     <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; width: 70%;">
@@ -123,7 +122,7 @@ class CompalaintStatusMail {
                         <br>
                         
                         <p style="margin-bottom: 0;">Thanks and regards,</p>
-                        <p style="margin: 0;">Elsner Technologies Pvt. Ltd.</p>
+                        <p style="margin: 0;">${companyData?.companyName || "Taskhub"}</p>
                     </div>
                  </div>
 
