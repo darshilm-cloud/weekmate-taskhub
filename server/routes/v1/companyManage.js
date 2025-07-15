@@ -5,6 +5,8 @@ const CompanyManage = require("../../controller/CompanyManage");
 // POST /getCompanyList
 router.post("/getCompanyList", CompanyManage.getCompanyList);
 
+router.post("/getCompanyDetails", CompanyManage.getCompanyDetails);
+
 // POST /addCompany
 router.post("/addCompany", CompanyManage.addCompany);
 
