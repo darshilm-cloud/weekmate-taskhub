@@ -152,11 +152,11 @@ function SignIn() {
                 ) : (
                   <img
                     alt="example"
-                    style={ {
-                      width: "40%",
-                      maxWidth: "80px",
-                      marginBottom: "0",
-                    } }
+                    // style={ {
+                    //   width: "40%",
+                    //   maxWidth: "80px",
+                    //   marginBottom: "0",
+                    // } }
                     src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
                   />
                 ) }

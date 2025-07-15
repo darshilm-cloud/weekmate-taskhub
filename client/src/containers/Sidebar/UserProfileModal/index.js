@@ -51,15 +51,15 @@ const UserProfileModal = ({
   const updateUserProfile = async (values) => {
     try {
       setSaving(true);
-      
+
       let profileImageUrl = userData?.emp_img || "";
-      
+
       // Upload image if a new one was selected
       if (imageFile) {
         setUploading(true);
         profileImageUrl = await uploadFile(imageFile, "profile");
         setUploading(false);
-        
+
         if (!profileImageUrl) {
           setSaving(false);
           return; // Stop if upload failed
@@ -85,7 +85,7 @@ const UserProfileModal = ({
 
       if (response.data.status === 1) {
         message.success("Profile updated successfully!");
-        
+
         // Update local state
         setUserData(prev => ({
           ...prev,
@@ -93,7 +93,7 @@ const UserProfileModal = ({
           last_name: values.lastName,
           emp_img: profileImageUrl,
         }));
-        
+
         // Update localStorage if needed
         const updatedUserData = {
           ...user_data,
@@ -103,10 +103,10 @@ const UserProfileModal = ({
         };
         localStorage.setItem("user_data", JSON.stringify(updatedUserData));
         dispatch(userSignInSuccess(updatedUserData));
-        
+
         // Reset image file state
         setImageFile(null);
-        
+
         // Call parent handler
         handleOk && handleOk(updatedUserData);
       } else {
@@ -157,12 +157,12 @@ const UserProfileModal = ({
         methodName: Service.getMethod,
         api_url: `/employees/${user_data?._id}`,
       });
-      
+
       if (response.data.status === 1) {
         const userDetails = response.data.data[0];
         setUserData(userDetails);
         setPreviewImage(`${process.env.REACT_APP_API_URL}/public/${userDetails.emp_img}`);
-        
+
         // Set form values
         form.setFieldsValue({
           firstName: userDetails.first_name,
@@ -192,48 +192,62 @@ const UserProfileModal = ({
   }, [isModalOpen, user_data?._id]);
 
   return (
-    <Modal
-      open={isModalOpen}
+<Modal
+      open={ isModalOpen }
       title="User Profile"
       className="user-profile"
-      onCancel={handleModalCancel}
-      footer={null}
+      onCancel={ handleModalCancel }
+      footer={[
+        <Button key="cancel" className="delete-btn" onClick={ handleModalCancel } disabled={ saving }>
+          Cancel
+        </Button>,
+        <Button
+          key="save"
+          type="primary"
+          htmlType="submit"
+          loading={ saving || uploading }
+          disabled={ saving || uploading }
+          onClick={() => form.submit()}
+        >
+          { uploading ? "Uploading..." : saving ? "Saving..." : "Save Changes" }
+        </Button>
+      ]}
       destroyOnClose
-      width={500}
+      width={ 500 }
     >
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={{ position: "relative", display: "inline-block" }}>
-          {uploading && (
+      <div style={ { textAlign: "center", marginBottom: 24 } }>
+        <div style={ { position: "relative", display: "inline-block" } }>
+          { uploading && (
             <div
-              style={{
+              style={ {
                 position: "absolute",
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                backgroundColor: "rgb(231 231 231)",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 zIndex: 1,
-              }}
+              } }
             >
               <Spin size="large" />
             </div>
-          )}
+          ) }
           <Avatar
-            size={100}
-            src={previewImage}
-            icon={!previewImage && <UserOutlined />}
-            style={{ backgroundColor: "#f0f0f0" }}
+            size={ 100 }
+            src={ previewImage }
+            icon={ !previewImage && <UserOutlined /> }
+            style={ { backgroundColor: "#f0f0f0" } }
           />
           <Upload
             showUploadList={ false }
             beforeUpload={ () => false }
             onChange={ handleImageChange }
             accept="image/*"
-            disabled={uploading || saving}
+            disabled={ uploading || saving }
           >
             <div
               style={ {
@@ -242,7 +256,7 @@ const UserProfileModal = ({
                 right: 0,
                 width: 32,
                 height: 32,
-                backgroundColor: uploading || saving ? "#d9d9d9" : "#1890ff",
+                backgroundColor: uploading || saving ? "#d9d9d9" : "rgb(231 231 231)",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
@@ -250,19 +264,19 @@ const UserProfileModal = ({
                 cursor: uploading || saving ? "not-allowed" : "pointer",
                 border: "2px solid white",
                 transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
+              } }
+              onMouseEnter={ (e) => {
                 if (!uploading && !saving) {
                   e.target.style.backgroundColor = "#40a9ff";
                   e.target.style.transform = "scale(1.1)";
                 }
-              }}
-              onMouseLeave={(e) => {
+              } }
+              onMouseLeave={ (e) => {
                 if (!uploading && !saving) {
-                  e.target.style.backgroundColor = "#1890ff";
+                  e.target.style.backgroundColor = "rgb(231 231 231)";
                   e.target.style.transform = "scale(1)";
                 }
-              }}
+              } }
             >
               <EditOutlined style={ { color: "#888", fontSize: 14 } } />
             </div>
@@ -276,8 +290,8 @@ const UserProfileModal = ({
       <Form
         form={ form }
         layout="vertical"
-        onFinish={handleFinish}
-        disabled={saving}
+        onFinish={ handleFinish }
+        disabled={ saving }
       >
         <Form.Item
           label="First Name"
@@ -286,7 +300,7 @@ const UserProfileModal = ({
             { required: true, message: "First name is required" },
             { min: 2, message: "First name must be at least 2 characters" },
             { max: 50, message: "First name cannot exceed 50 characters" },
-          ]}
+          ] }
         >
           <Input placeholder="Enter first name" />
         </Form.Item>
@@ -298,27 +312,13 @@ const UserProfileModal = ({
             { required: true, message: "Last name is required" },
             { min: 2, message: "Last name must be at least 2 characters" },
             { max: 50, message: "Last name cannot exceed 50 characters" },
-          ]}
+          ] }
         >
           <Input placeholder="Enter last name" />
         </Form.Item>
 
         <Form.Item label="Email">
           <Input value={ userData?.email } disabled />
-        </Form.Item>
-
-        <Form.Item style={{ textAlign: "right", marginTop: 24, marginBottom: 0 }}>
-          <Button onClick={handleModalCancel} style={{ marginRight: 8 }} disabled={saving}>
-            Cancel
-          </Button>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            loading={saving || uploading}
-            disabled={saving || uploading}
-          >
-            {uploading ? "Uploading..." : saving ? "Saving..." : "Save Changes"}
-          </Button>
         </Form.Item>
       </Form>
     </Modal>

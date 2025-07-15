@@ -216,6 +216,13 @@
     align-items: center;
     justify-content: center;
   }
-   .user-profile .ant-modal-body .ant-btn-primary {
+
+  .user-profile .ant-modal-body .ant-btn-primary {
     margin: 0;
+  }
+
+  .ant-modal  .permission-modal-close-icon {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
   }
