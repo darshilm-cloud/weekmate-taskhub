@@ -8,6 +8,7 @@ import {
   Col,
   Select,
   message,
+  Tooltip
 } from "antd";
 import React, { useState, useEffect, useRef } from "react";
 import { ApiOutlined } from "@ant-design/icons";
@@ -73,19 +74,33 @@ const EmployeeListTabUsers = () => {
     {
       title: "Actions",
       dataIndex: "action",
-      render: (text, record) => (
-        <div
-          style={ {
-            display: "flex",
-            flexwrap: "wrap",
-          } }
-        >
-          <Link disabled={user_data?._id == record._id} to={ `/${companySlug}/roles-permission/${record._id}` }>
-            <ApiOutlined props={ record._id } />
-          </Link>
-        </div>
-      ),
-    },
+      render: (text, record) => {
+        const isDisabled = user_data?._id == record._id;
+        
+        return (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+            }}
+          >
+            <Tooltip 
+              title={isDisabled ? "You cannot edit your own permissions" : "Edit permissions"}
+              open={isDisabled ? undefined : false}
+            >
+              <span>
+                <Link 
+                  disabled={isDisabled} 
+                  to={`/${companySlug}/roles-permission/${record._id}`}
+                >
+                  <ApiOutlined props={record._id} />
+                </Link>
+              </span>
+            </Tooltip>
+          </div>
+        );
+      },
+    }
   ];
 
   const getFooterDetails = () => {
