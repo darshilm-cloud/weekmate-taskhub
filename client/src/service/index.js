@@ -510,6 +510,7 @@ export default class Service {
       (response) => response,
       async (error) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
+          console.log("from here 1")
           this.logOut();
         }
         return Promise.reject(error);
@@ -528,6 +529,7 @@ export default class Service {
         return response;
       } catch (error) {
         if (props && error.response && error.response.status === 401) {
+          console.log("from here 2")
           this.logOut(props);
         }
         return error.response;
@@ -543,6 +545,7 @@ export default class Service {
         return response;
       } catch (error) {
         if (props && error.response && error.response.status === 401) {
+          console.log("from here 3")
           this.logOut(props);
         }
         return error.response;
@@ -558,6 +561,7 @@ export default class Service {
         return response;
       } catch (error) {
         if (props && error.response && error.response.status === 401) {
+          console.log("from here 4")
           this.logOut(props);
         }
         return error.response;
@@ -573,6 +577,7 @@ export default class Service {
         return response;
       } catch (error) {
         if (props && error.response && error.response.status === 401) {
+          console.log("from here 5")
           this.logOut(props);
         }
         return error.response;
@@ -627,7 +632,8 @@ export default class Service {
         (pms_role && data.pms_role_id !== pms_role) ||
         !arraysAreEqual(permissions, storage_permission)
       ) {
-        this.logOut();
+        console.log("from here 6")
+        // this.logOut();
       }
     } catch (error) {
       console.log(error, "error");
