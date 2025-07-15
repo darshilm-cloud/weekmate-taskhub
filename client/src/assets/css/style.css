@@ -37489,7 +37489,9 @@ h6,
   overflow-y: auto;
 }
 .Etask-hub-logo img {
-  max-width: 40px;
+  max-width: 80px;
+  height: auto;
+  min-width: 80px;
   width: 100%;
   display: block;
   margin: 0 auto;
@@ -48912,7 +48914,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .gx-app-logo.account_logo img {
-  max-width: 80px;
+  max-width: 100px;
+  min-width: 100px;
+  height: auto;
   width: 100%;
   display: block;
   margin: 0 auto;

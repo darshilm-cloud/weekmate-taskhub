@@ -3402,7 +3402,10 @@ span.anticon.anticon-down svg {
     min-width: 250px;
     max-width: 250px;
 }
+.task-detail-panel.task-model .right-task-detail-panel .folder-comment .ant-form-item{
+    margin-bottom: 0;
 
+}
 :where(.css-dev-only-do-not-override-dkbvqv).ant-form-item .ant-form-item-control:first-child:not([class^="'ant-col-'"]):not([class*="' ant-col-'"]) {
     width: 100%;
     min-width: 490px;
@@ -5566,6 +5569,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     line-height: normal;
     height: 40px;
 }
+
 .project-running-reports-fillter .ant-form-item>div {
     margin: 0;
 }
