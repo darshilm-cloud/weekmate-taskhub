@@ -509,6 +509,7 @@ const Projectexpences = () => {
       {
         title: "Need to Bill Customer",
         render: (text) => text?.need_to_bill_customer ? "YES" : "NO",
+        ellipsis: false
       },
       {
         title: "Created By",

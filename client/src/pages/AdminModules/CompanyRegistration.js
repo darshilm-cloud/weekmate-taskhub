@@ -735,7 +735,7 @@ const CompanyRegistration = () => {
                     icon={<UploadOutlined />}
                     disabled={modalData.mode === "view"}
                   >
-                    Upload Logo
+                    {`${docFldLogo ? "Update" : "Upload"} Logo`}
                   </Button>
                 </Upload>
                 {docFldLogo && logoFileList.length == 0 && (
@@ -800,7 +800,7 @@ const CompanyRegistration = () => {
                     icon={<UploadOutlined />}
                     disabled={modalData.mode === "view"}
                   >
-                    Upload Favicon
+                  {`${docFldFavicon ? "Update" : "Upload"} Favicon`}
                   </Button>
                 </Upload>
                 {docFldFavicon && faviconFileList.length == 0 && (

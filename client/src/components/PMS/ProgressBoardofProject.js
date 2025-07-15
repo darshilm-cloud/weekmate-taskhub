@@ -178,7 +178,7 @@ function ProgressBoardofProject() {
         setColumnDetails(updatedColumns);
         getManageTabs();
         getProjectByID();
-        setTabsModal(false);
+        // setTabsModal(false);
       }
     } catch (error) {
       console.log(error, "Manage Tabs");

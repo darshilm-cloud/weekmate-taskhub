@@ -159,7 +159,7 @@ exports.getCompanyList = async (req, res) => {
 // Get company Details by slug
 exports.getCompanyDetails = async (req, res) => {
   try {
-    const { slug } = req.body;
+    const { slug } = req.query;
 
     let details =await CompanyModel.findOne({ companyDomain: slug }).select(
       "companyLogoUrl companyFavIcoUrl companyName"

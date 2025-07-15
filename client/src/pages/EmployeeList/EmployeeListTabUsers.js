@@ -18,6 +18,7 @@ import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
 
 const EmployeeListTabUsers = () => {
+  const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
 
   const Search = Input.Search;
@@ -79,7 +80,7 @@ const EmployeeListTabUsers = () => {
             flexwrap: "wrap",
           } }
         >
-          <Link to={ `/${companySlug}/roles-permission/${record._id}` }>
+          <Link disabled={user_data?._id == record._id} to={ `/${companySlug}/roles-permission/${record._id}` }>
             <ApiOutlined props={ record._id } />
           </Link>
         </div>

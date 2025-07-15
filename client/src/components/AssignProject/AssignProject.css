@@ -161,10 +161,10 @@
 }
 
 .all-project-main-wrapper .edit-delete [class="fa-solid fa-ellipsis-vertical"] {
-    display: none;
+    /* display: none; */
 }
 
-.all-project-main-wrapper .ant-table-cell:hover [class="fa-solid fa-ellipsis-vertical"] {
+/* .all-project-main-wrapper .ant-table-cell:hover [class="fa-solid fa-ellipsis-vertical"] {
     display: block;
     cursor: pointer;
     color: #358CC0;
@@ -173,7 +173,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-}
+} */
 
 .all-project-main-wrapper .ant-table-cell:hover .edit-delete .edit-btn {
     display: block;

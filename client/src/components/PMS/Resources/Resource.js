@@ -222,58 +222,58 @@ function Resource() {
         );
       },
     },
-    {
-      title: "Actions",
-      dataIndex: "action",
-      width: 200,
-      render: (text, record) => (
-        <div className="edit-delete">
-          {flag == true && editid == record?._id ? (
-            <>
-              <Button type="link edit">
-                <SaveTwoTone
-                  style={{ fontSize: "18px" }}
-                  onClick={() => {
-                    handleEdit(record?._id);
-                    setFlag(false);
-                    setEditid("");
-                  }}
-                />
-              </Button>
-              <Button
-                type="link delete"
-                title="View"
-                onClick={() => setEditid("")}
-              >
-                <CloseCircleTwoTone style={{ fontSize: "18px" }} />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button type="link edit">
-                <EditOutlined
-                  style={{ fontSize: "18px" }}
-                  onClick={() => {
-                    setEditid(record?._id);
-                    setFlag(true);
-                  }}
-                />
-              </Button>
-              <Popconfirm
-                title="Do you really want to delete this Resource?"
-                okText="Yes"
-                cancelText="No"
-                onConfirm={() => handleResourceDelete(record?._id)}
-              >
-                <Button type="link delete">
-                  <AiOutlineDelete style={{ fontSize: "18px" }} />
-                </Button>
-              </Popconfirm>
-            </>
-          )}
-        </div>
-      ),
-    },
+    // {
+    //   title: "Actions",
+    //   dataIndex: "action",
+    //   width: 200,
+    //   render: (text, record) => (
+    //     <div className="edit-delete">
+    //       {flag == true && editid == record?._id ? (
+    //         <>
+    //           <Button type="link edit">
+    //             <SaveTwoTone
+    //               style={{ fontSize: "18px" }}
+    //               onClick={() => {
+    //                 handleEdit(record?._id);
+    //                 setFlag(false);
+    //                 setEditid("");
+    //               }}
+    //             />
+    //           </Button>
+    //           <Button
+    //             type="link delete"
+    //             title="View"
+    //             onClick={() => setEditid("")}
+    //           >
+    //             <CloseCircleTwoTone style={{ fontSize: "18px" }} />
+    //           </Button>
+    //         </>
+    //       ) : (
+    //         <>
+    //           <Button type="link edit">
+    //             <EditOutlined
+    //               style={{ fontSize: "18px" }}
+    //               onClick={() => {
+    //                 setEditid(record?._id);
+    //                 setFlag(true);
+    //               }}
+    //             />
+    //           </Button>
+    //           <Popconfirm
+    //             title="Do you really want to delete this Resource?"
+    //             okText="Yes"
+    //             cancelText="No"
+    //             onConfirm={() => handleResourceDelete(record?._id)}
+    //           >
+    //             <Button type="link delete">
+    //               <AiOutlineDelete style={{ fontSize: "18px" }} />
+    //             </Button>
+    //           </Popconfirm>
+    //         </>
+    //       )}
+    //     </div>
+    //   ),
+    // },
   ];
 
   const showModal = () => {
@@ -302,14 +302,14 @@ function Resource() {
       
             <div className="heading-wrapper">
               <h2>Resources</h2>
-              <Button
+              {/* <Button
                 className="addleave-btn"
                 onClick={showModal}
                 size="default"
                 type="primary"
               >
                 + Add
-              </Button>
+              </Button> */}
             </div>
             <div className="global-search">
               <Search

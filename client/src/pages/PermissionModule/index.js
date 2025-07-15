@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Button, Card, Modal, Switch, Table } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
@@ -7,6 +7,7 @@ import "./PermissionModule.css";
 
 const PermissionModule = () => {
   const companySlug = localStorage.getItem("companyDomain");
+  const [roleName, setRoleName] = useState("")
   const {
     roleListData,
     permissionListData,
@@ -62,7 +63,10 @@ const PermissionModule = () => {
                 className="add-permission-button"
                 type="primary"
                 size="large"
-                onClick={() => handleRolePermissionClick(record._id)}
+                onClick={() => {
+                  handleRolePermissionClick(record._id)
+                  setRoleName(record?.role_name)
+                }}
               >
                 Add Permission For Role
               </Button>
@@ -121,6 +125,7 @@ const PermissionModule = () => {
         className="permission-edit-modal"
       >
         <div className="permission-modal-content-wrapper">
+            <h2 style={{textAlign:"center"}}>{roleName}</h2>
           <div className="permission-content-header">
             <div className="permission-content-title">
               <h2>Permission List</h2>

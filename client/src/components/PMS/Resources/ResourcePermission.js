@@ -64,13 +64,7 @@ function ResourcePermission(props) {
     }
   };
 
-  const handleModuleToggle = async event => {
-    const user_data = JSON.parse(localStorage.getItem("user_data"));
-    if(user_data?._id == props.match.params.id){
-      message.error("You can not update your own role")
-      return 
-    }
-
+  const handleModuleToggle = async event => {   
     const payload = {
       user_id: props.match.params.id,
       pms_role_id: event.target.value,

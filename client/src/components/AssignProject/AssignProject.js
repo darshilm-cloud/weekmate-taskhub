@@ -391,7 +391,7 @@ function AssignProject() {
 
   if (hasPermission(["project_edit"])) {
     columns.push({
-      title: "",
+      title: "Actions",
       dataIndex: "actions",
       key: "actions",
       width: 100,
@@ -430,7 +430,7 @@ function AssignProject() {
 
         return (
           <div className="edit-delete">
-            <Popover content={ content } trigger="click" placement="left">
+            <Popover arrow={false} content={ content } trigger="click" placement="left">
               <i className="fa-solid fa-ellipsis-vertical"></i>
             </Popover>
           </div>

@@ -239,7 +239,7 @@ function ProjectStatus() {
             </>
           ) : (
             <>
-              <Button type="link edit">
+              <Button disabled={record.isDefault} type="link edit">
                 <EditOutlined
                   style={{ color: "green", fontSize: "18px" }}
                   onClick={() => {
@@ -254,7 +254,7 @@ function ProjectStatus() {
                 cancelText="No"
                 onConfirm={() => handleDeleteProjectTech(record?._id)}
               >
-                <Button type="link delete">
+                <Button disabled={record.isDefault} type="link delete">
                   <AiOutlineDelete style={{ color: "red", fontSize: "18px" }} />
                 </Button>
               </Popconfirm>

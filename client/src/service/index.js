@@ -523,7 +523,7 @@ export default class Service {
       }
       try {
         const response = await axios.get(api_url);
-        if (!api_url.includes(this.getGeneralSetting)) {
+        if (!api_url.includes(this.getCompanyDetails)) {
           this.permissionRoleChange(response.data);
         }
         return response;
@@ -632,7 +632,6 @@ export default class Service {
         (pms_role && data.pms_role_id !== pms_role) ||
         !arraysAreEqual(permissions, storage_permission)
       ) {
-        console.log("from here 6")
         // this.logOut();
       }
     } catch (error) {

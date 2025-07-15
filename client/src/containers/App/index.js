@@ -289,11 +289,8 @@ function App() {
     try {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
-        api_url: Service.getCompanyDetails,
-        methodName: Service.postMethod,
-        body: {
-          slug:companySlug
-        }
+        api_url: `${Service.getCompanyDetails}?slug=${companySlug}`,
+        methodName: Service.getMethod
       });
       if (response.data.status == 1) {
         dispatch(hideAuthLoader());
