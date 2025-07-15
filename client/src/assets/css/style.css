@@ -37487,6 +37487,10 @@ h6,
   background-color: var(--bg-sidebar);
   color: #545454 !important;
   overflow-y: auto;
+  padding: 0;
+}
+.Etask-hub-logo{
+  padding: 10px;
 }
 .Etask-hub-logo img {
   max-width: 80px;
@@ -37495,6 +37499,8 @@ h6,
   width: 100%;
   display: block;
   margin: 0 auto;
+  max-height: 55px;
+  object-fit: contain;
 }
 /* 
   .ant-menu-dark .ant-menu-item,
