@@ -77,7 +77,6 @@ function AssignProject() {
   const [workflow, setWorkflow] = useState([]);
   const [projectManagerList, setProjectManagerList] = useState([]);
   const [accountManagerList, setAccountManagerList] = useState([]);
-  const [isBillable, setisBillable] = useState(false);
   const [projectAssigneesList, setProjectAssigneesList] = useState([]);
 
   //UseState to store exist data:
@@ -155,10 +154,6 @@ function AssignProject() {
     if (editProjectId) {
       history.push(`/${companySlug}/project/app/${editProjectId}`);
     }
-  };
-
-  const handleBillable = (e) => {
-    setisBillable(e.target.checked);
   };
 
   const onSearch = (value) => {
@@ -249,7 +244,6 @@ function AssignProject() {
           end_date: projectDetails?.end_date
             ? dayjs(projectDetails.end_date)
             : null,
-          isBillable: projectDetails?.isBillable,
         });
         getProjectassignees();
       }
@@ -553,8 +547,6 @@ function AssignProject() {
         project_type: values.project_type,
         descriptions: editorData,
         technology: values.technology,
-        isBillable: isBillable,
-        isBillable: isBillable,
       };
       form.setFieldsValue({
         assignees: assignees,
@@ -2001,11 +1993,7 @@ function AssignProject() {
                       Cancel
                     </Button>
                   </div>
-                  <Form.Item name="isBillable" valuePropName="checked">
-                    <Checkbox onChange={ handleBillable }>
-                      <span style={ { fontWeight: "bold" } }>Billable</span>
-                    </Checkbox>
-                  </Form.Item>
+                
                 </div>
               </div>
             </div>

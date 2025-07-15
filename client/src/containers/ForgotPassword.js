@@ -12,17 +12,15 @@ function ForgetPassword() {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.forgotPassword,
-        body: values,
+        api_url: Service.forgetPasswordV2,
+        body: {...values, companySlug},
       });
-      if (response?.status === 200) {
-
+      if (response.data.status === 1) {
         message.success(response?.data?.message);
       } else {
         message.error(response?.data?.message);
       }
     } catch (error) {
-      // dispatch(hideAuthLoader());
       console.log(error);
     }
   };

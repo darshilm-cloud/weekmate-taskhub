@@ -15,17 +15,17 @@ function ResetPassword({ match, computedMatch, history }) {
       if (typeof token === "undefined" || token === null || token === "") {
         return message.error("Reset token not found!");
       }
+      
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.resetPassword,
+        api_url: Service.resetPasswordV2,
         body: {
-          // email: values?.email,
           password: values?.password,
           emailResetToken: token,
         },
       });
 
-      if (response?.data) {
+      if (response.data.status == 1) {
         message.success(response?.data?.message);
         history.push(`/${companySlug}/signin`);
       } else {

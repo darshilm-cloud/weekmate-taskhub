@@ -162,7 +162,7 @@ exports.getCompanyDetails = async (req, res) => {
     const { slug } = req.body;
 
     let details =await CompanyModel.findOne({ companyDomain: slug }).select(
-      "companyLogoUrl companyFavIcoUrl"
+      "companyLogoUrl companyFavIcoUrl companyName"
     );
 
     return successResponse(

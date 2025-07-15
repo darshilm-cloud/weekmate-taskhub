@@ -359,7 +359,8 @@ exports.updatePassword = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      email: Joi.string().required()
+      email: Joi.string().required(),
+      companySlug: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -412,7 +413,7 @@ exports.forgotPassword = async (req, res) => {
       await emailSenderForPMS(
         result.companyId,
         userData.email,
-        forgetPasswordContent(userData, authToken),
+        forgetPasswordContent(userData, authToken,value.companySlug),
         []
       );
 

@@ -68,7 +68,9 @@ export default class Service {
   static editAdmin = "/admin/editadminuserprofile";
   static refreshToken = "/auth/refreshToken";
   static forgotPassword = "/authentication/client/forgotPassword";
+  static forgetPasswordV2 = "/authentication/forgotPassword";
   static resetPassword = "/authentication/client/resetPassword";
+  static resetPasswordV2 = "/authentication/resetPassword";
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
   static login = "/authentication/login";
 
@@ -454,6 +456,7 @@ export default class Service {
   static addCompany = '/CompanyManage/addCompany'
   static editCompany = '/CompanyManage/editCompany'
   static deleteCompany = '/CompanyManage/deleteCompany'
+  static getCompanyDetails = "/CompanyManage/getCompanyDetails"
 
   static getUsersList = '/adminManage/getUsersList'
   static addUser = '/adminManage/addUser'

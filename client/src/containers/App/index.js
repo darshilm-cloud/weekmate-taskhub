@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import URLSearchParams from "url-search-params";
 import {
@@ -7,7 +7,7 @@ import {
   Switch,
   useHistory,
   useLocation,
-  useRouteMatch,
+  useRouteMatch
 } from "react-router-dom";
 import { ConfigProvider, message } from "antd";
 import { IntlProvider } from "react-intl";
@@ -155,11 +155,17 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
   );
 }
 
-function App() {
-  const companySlug = localStorage.getItem("companyDomain");
-  const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+function extractSlug(path) {
+  const segments = path.split('/');
+  return segments[1] || null;
+}
 
-  const title = userData?.companyDetails?.companyName || "TaskHub";
+function App() {
+  const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+  const location = useLocation();
+  const [companySlug, setCompanySlug] = useState(localStorage.getItem("companyDomain"))
+  const [siteTitle, setSiteTitle] = useState(userData?.companyDetails?.companyName || "TaskHub")
+
   const faviconPath = localStorage.getItem(`companyFavIcoUrl-${companySlug}`);
 
   const dispatch = useDispatch();
@@ -169,7 +175,6 @@ function App() {
   const { loader, alertMessage, showMessage, authUser, initURL } = useSelector(
     ({ auth }) => auth
   );
-  const location = useLocation();
   const history = useHistory();
   const match = useRouteMatch();
 
@@ -181,6 +186,11 @@ function App() {
 
     link.className = "gx-style";
     document.body.appendChild(link);
+
+    if(!companySlug){
+      let slug = extractSlug(location.pathname)
+      setCompanySlug(slug)
+    }
   }, []);
 
   useEffect(() => {
@@ -270,23 +280,27 @@ function App() {
   }, []);
 
   useEffect(() => {
-    generalSettingApp();
-  }, []);
+    if(companySlug){
+      generalSettingApp();
+    }
+  }, [companySlug]);
 
   const generalSettingApp = async () => {
     try {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
-        api_url: Service.getGeneralSetting,
-        methodName: Service.getMethod,
+        api_url: Service.getCompanyDetails,
+        methodName: Service.postMethod,
+        body: {
+          slug:companySlug
+        }
       });
-      if (response?.data && response?.data?.data) {
+      if (response.data.status == 1) {
         dispatch(hideAuthLoader());
-        localStorage.setItem("title", response?.data?.data.title);
-        localStorage.setItem("favIcon", response?.data?.data.fav_icon);
-        localStorage.setItem("headerLogo", response?.data?.data.header_logo);
-        localStorage.setItem("loginLogo", response?.data?.data.login_logo);
-        localStorage.setItem("logoMode", response?.data?.data.logo_mode);
+        setSiteTitle(response?.data?.data?.companyName)
+        localStorage.setItem("title", response?.data?.data?.companyName);
+        localStorage.setItem(`companyFavIcoUrl-${companySlug}`,  response?.data?.data?.companyFavIcoUrl);
+        localStorage.setItem(`companyLogoUrl-${companySlug}`,  response?.data?.data?.companyLogoUrl);
       }
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -299,7 +313,7 @@ function App() {
   return (
     <>
       <Helmet>
-        <title>{title}</title>
+        <title>{siteTitle}</title>
         <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
       </Helmet>
     <SocketProvider user={authUser}>
@@ -339,7 +353,7 @@ function App() {
               component={EmployeeFeedback}
             />
             <AuthRoute
-              path={`${match.url}reset-password/:token`}
+              path={`${match.url}:companySlug/reset-password/:token`}
               component={ResetPassword}
             />
             <AuthRoute
