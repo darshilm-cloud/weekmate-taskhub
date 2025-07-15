@@ -156,6 +156,27 @@ exports.getCompanyList = async (req, res) => {
   }
 };
 
+// Get company Details by slug
+exports.getCompanyDetails = async (req, res) => {
+  try {
+    const { slug } = req.body;
+
+    let details =await CompanyModel.findOne({ companyDomain: slug }).select(
+      "companyLogoUrl companyFavIcoUrl"
+    );
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      LISTING,
+      details
+    );
+  } catch (error) {
+    console.log("🚀 ~ exports.getCompanyDetails= ~ error:", error)
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
 // Add Company API
 exports.addCompany = async (req, res) => {
   try {
@@ -385,7 +406,6 @@ exports.editCompany = async (req, res) => {
   }
 };
 
-
 // Delete Company API
 exports.deleteCompany = async (req, res) => {
   try {
@@ -394,7 +414,7 @@ exports.deleteCompany = async (req, res) => {
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
-    
+
     // Only allow SuperAdmin and admin to delete company
     if (roleName == CONFIG_JSON.PMS_ROLES.USER) {
       return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
@@ -424,14 +444,13 @@ exports.deleteCompany = async (req, res) => {
 // Company file upload size API
 exports.updateCompanyFileUploadSize = async (req, res) => {
   try {
-    console.log(req.user,"req.user ")
+    console.log(req.user, "req.user ");
 
     const {
       _id,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId
     } = req.user || {};
-
 
     if (
       ![

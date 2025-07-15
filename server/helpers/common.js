@@ -96,7 +96,6 @@ class CommonHelpers {
       const dir = path.join(__dirname, "../", dynamicPath);
 
       try {
-        // sudo chmod 755 /home/nteam/elsnerpms/server/public/
         fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
       } catch (err) {
         console.error("Error creating directory:", err);
