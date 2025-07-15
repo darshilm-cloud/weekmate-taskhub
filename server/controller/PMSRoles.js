@@ -204,6 +204,13 @@ exports.updateEmpRoles = async (req, res) => {
 
 exports.addResourcePermission = async (req, res) => {
   try {
+     // Decode user from token
+     const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       pms_role_id: Joi.string().required(),
       resource_ids: Joi.any().optional().default([]),
@@ -228,6 +235,7 @@ exports.addResourcePermission = async (req, res) => {
 
     // delete exists data..
     await RolePermissions.deleteMany({
+      companyId:newObjectId(decodedCompanyId),
       pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
     })
     
@@ -242,6 +250,7 @@ exports.addResourcePermission = async (req, res) => {
         const resource_id = new mongoose.Types.ObjectId(value.resource_ids[i]);
 
         const isExist = await RolePermissions.findOne({
+          companyId:newObjectId(decodedCompanyId),
           pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
           resource_id: new mongoose.Types.ObjectId(resource_id),
           isDeleted: false,
@@ -249,6 +258,7 @@ exports.addResourcePermission = async (req, res) => {
 
         if (!isExist) {
           const newData = new RolePermissions({
+            companyId:newObjectId(decodedCompanyId),
             resource_id,
             ...obj,
           });
