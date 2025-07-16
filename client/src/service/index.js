@@ -632,7 +632,7 @@ export default class Service {
         (pms_role && data.pms_role_id !== pms_role) ||
         !arraysAreEqual(permissions, storage_permission)
       ) {
-        // this.logOut();
+        this.logOut();
       }
     } catch (error) {
       console.log(error, "error");

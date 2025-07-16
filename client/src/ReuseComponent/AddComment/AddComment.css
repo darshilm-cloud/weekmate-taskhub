@@ -88,6 +88,11 @@
     color: #000;
 }
 
+.task-model .task-detail-inner .main-btn-wrapper .ant-btn.ant-btn-primary {
+    color: #fff;
+    padding: 10px;
+}
+
 .overview-modal-wrapper .fileAttachment_Box {
     height: 80px;
     width: 100px;
@@ -105,7 +110,7 @@
 
 .bug-task-panel .task-detail-inner span.mention-user-comment,
 .notes-details-model .task-detail-inner span.mention-user-comment,
-.task-model .task-detail-inner span.mention-user-comment  .ck.ck-editor{
+.task-model .task-detail-inner span.mention-user-comment .ck.ck-editor {
     background-color: rgba(0, 0, 0, 0.05);
     border-radius: 2px;
     padding: 0 4px;

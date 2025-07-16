@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button,
@@ -17,14 +17,9 @@ import {
 import PropTypes from "prop-types";
 import {
   CloseCircleOutlined,
-  CloseOutlined,
   DownOutlined,
-  EyeInvisibleOutlined,
   EyeOutlined,
-  EyeTwoTone,
   MoreOutlined,
-  TrophyOutlined,
-  UploadOutlined,
 } from "@ant-design/icons";
 import ProfileImage from "../../assets/images/default_profile.jpg";
 import { Link, withRouter, useHistory } from "react-router-dom";
@@ -53,11 +48,9 @@ function UserProfile() {
   const { authUser } = useSelector(({ auth }) => auth);
   const history = useHistory();
   const [emailSetting] = Form.useForm();
-  const [apiDetailSetting] = Form.useForm();
-  const [generalSetting] = Form.useForm();
   const dispatch = useDispatch();
   const socket = useSocket();
-  const { emitEvent, listenEvent, showBrowserNotification } = useSocketAction();
+  const { emitEvent, listenEvent } = useSocketAction();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [settingModal, setSettingModal] = useState(false);
@@ -70,27 +63,7 @@ function UserProfile() {
   const [unReadId, setUnReadId] = useState([]);
   const { TabPane } = Tabs;
   const [selectedRadio, setSelectedRadio] = useState(null);
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [apiId, setApiId] = useState("");
-  const [logoModeRadio, setLogoModeRadio] = useState();
-  const [fileLists, setFileLists] = useState({
-    login_logo: null,
-    header_logo: null,
-    fav_logo: null,
-  });
-  const attachmentfileRefs = {
-    login_logo: useRef(null),
-    header_logo: useRef(null),
-    fav_logo: useRef(null),
-  };
-  const [generalApp, setGeneralApp] = useState([]);
-  const [generalAdd, setGeneralAdd] = useState([]);
-  const [tempurl, setTempUrl] = useState({
-    login_logo: null,
-    header_logo: null,
-    fav_logo: null,
-  });
+
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -119,86 +92,6 @@ function UserProfile() {
           return false; // Default to not showing if none match
       }
     }
-  };
-
-  const handleTabChange = (activeKey) => {
-    if (activeKey == 2) {
-      getApiKey();
-    }
-  };
-
-  const dimensionConstraints = {
-    login_logo: { width: 250, height: 50 },
-    header_logo: { width: 135, height: 25 },
-    fav_logo: { width: 16, height: 16 },
-  };
-
-  const handleFileChange = async (e, itemName) => {
-    const file = e.target.files[0];
-    const allowedExtensions = ["png", "jpg", "jpeg", "svg", "ico"];
-    const extension = file.name.split(".").pop().toLowerCase();
-
-    if (!allowedExtensions.includes(extension)) {
-      message.error(
-        `File "${file.name}" is not a valid image format. Please select PNG, JPG, JPEG, or SVG file.`
-      );
-      return;
-    }
-
-    const dimensions = await getImageDimensions(file);
-    const constraints = dimensionConstraints[itemName];
-    if (!constraints) {
-      message.error(`No dimension constraints found for item "${itemName}".`);
-      return;
-    }
-
-    if (
-      dimensions.width !== constraints.width ||
-      dimensions.height !== constraints.height
-    ) {
-      message.error(`Image "${itemName}" must be exactly ${constraints.width}x${constraints.height} pixels.
-       The uploaded image is ${dimensions.width}x${dimensions.height} pixels.
-       `);
-      return;
-    }
-
-    setFileLists((prevLists) => ({
-      ...prevLists,
-      [itemName]: file,
-    }));
-
-    setTempUrl((prevUrls) => ({
-      ...prevUrls,
-      [itemName]: URL.createObjectURL(file),
-    }));
-  };
-
-  // Helper function to get image dimensions
-  const getImageDimensions = (file) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ width: img.width, height: img.height });
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const handleRemoveFile = (itemName) => {
-    setFileLists((prevLists) => ({
-      ...prevLists,
-      [itemName]: null,
-    }));
-    setTempUrl((prevUrls) => ({
-      ...prevUrls,
-      [itemName]: null,
-    }));
-    if (attachmentfileRefs[itemName].current) {
-      attachmentfileRefs[itemName].current.value = null;
-    }
-  };
-
-  const togglePasswordVisibility = () => {
-    setPasswordVisible(!passwordVisible);
   };
 
   const handleRadioChange = (e) => {
@@ -457,89 +350,6 @@ function UserProfile() {
     setIsModalOpen(false);
   };
 
-  const handleResetApi = () => {
-    const generateRandomKey = () => {
-      const characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      let result = "";
-      for (let i = 0; i < 25; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters[randomIndex];
-      }
-      return result;
-    };
-    const newApiKey = generateRandomKey();
-    setApiKey(newApiKey);
-    updateApiKey(newApiKey, apiId);
-  };
-
-  const uploadFiles = async (files, type) => {
-    try {
-      const formData = new FormData();
-      for (const file of files) {
-        formData.append("document", file);
-      }
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: `${Service.fileUpload}?file_for=${type}`,
-        body: formData,
-        options: {
-          "content-type": "multipart/form-data",
-        },
-      });
-      return response?.data?.data;
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handlegeneralSetting = async (values) => {
-    const fileAttachment = Object.keys(fileLists)
-      .map((key) => ({ key, file: fileLists[key] }))
-      .filter(({ file }) => file instanceof File);
-    const uploadedPaths = {};
-
-    if (fileAttachment.length > 0) {
-      const filesToUpload = fileAttachment.map(({ file }) => file);
-      const uploadedFiles = await uploadFiles(filesToUpload, "appSetting");
-
-      if (uploadedFiles.length > 0) {
-        fileAttachment.forEach(({ key }, index) => {
-          uploadedPaths[key] = uploadedFiles[index].file_path;
-        });
-      } else {
-        return message.error("File not uploaded, something went wrong");
-      }
-    }
-
-    try {
-      dispatch(showAuthLoader());
-      const reqBody = {
-        title: values.title,
-        fav_icon: uploadedPaths.fav_logo || fileLists.fav_logo.name,
-        logo_mode: values.logo_mode || logoModeRadio,
-        login_logo: uploadedPaths.login_logo || fileLists.fav_logo.name,
-        header_logo: uploadedPaths.header_logo || fileLists.fav_logo.name,
-      };
-
-      const response = await Service.makeAPICall({
-        api_url: Service.addGeneralSetting,
-        methodName: Service.postMethod,
-        body: reqBody,
-      });
-
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
-        setGeneralAdd(response?.data?.data);
-        generalSettingApp();
-
-        console.log(generalAdd, "add edit api response");
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.log(error, "add general setting error");
-    }
-  };
 
   const emailPreference = async () => {
     try {
@@ -576,88 +386,6 @@ function UserProfile() {
       }
     } catch (error) {
       console.log(error, "getMethod error");
-    }
-  };
-
-  const getApiKey = async () => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        api_url: Service.getApiKey,
-        methodName: Service.getMethod,
-      });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
-        setApiKey(response?.data?.data?.api_key);
-        setApiId(response?.data?.data?._id);
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.log(error, "getMethod error");
-    }
-  };
-
-  const generalSettingApp = async () => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        api_url: Service.getGeneralSetting,
-        methodName: Service.getMethod,
-      });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
-        setGeneralApp(response?.data?.data);
-        generalSetting.setFieldValue({
-          title: response?.data?.data?.title,
-        });
-        setFileLists({
-          fav_logo: response.data.data.fav_icon
-            ? {
-                name: response.data.data.fav_icon,
-                url: response.data.data.fav_icon,
-              }
-            : null,
-          login_logo: response.data.data.login_logo
-            ? {
-                name: response.data.data.login_logo,
-                url: response.data.data.login_logo,
-              }
-            : null,
-          header_logo: response.data.data.header_logo
-            ? {
-                name: response.data.data.header_logo,
-                url: response.data.data.header_logo,
-              }
-            : null,
-        });
-        setLogoModeRadio(response.data.data.logo_mode);
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.log(error, "getGeneral setting error");
-    }
-  };
-
-  const updateApiKey = async (newKey, apiId) => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        api_url: Service.updateApiKey,
-        methodName: Service.putMethod,
-        body: {
-          id: apiId,
-          api_key: newKey,
-          key_for: "hrmstimesync",
-        },
-      });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
-        setApiKey(response?.data?.data?.api_key);
-        message.success(response?.data?.message);
-        getApiKey();
-      }
-    } catch (error) {
-      console.log(error, "putmethod error");
     }
   };
 
@@ -731,7 +459,6 @@ function UserProfile() {
               onClick={() => {
                 setSettingModal(true);
                 emailPreference();
-                generalSettingApp();
               }}
             >
               General Settings
@@ -1363,7 +1090,7 @@ function UserProfile() {
               <div className="modal-header">
                 <h1>Settings</h1>
               </div>
-              <Tabs onChange={handleTabChange}>
+              <Tabs>
                 <TabPane key="1" tab="Email Preference">
                   <div className="overview-modal-wrapper">
                     <Form onFinish={handleSettings} form={emailSetting}>

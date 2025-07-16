@@ -45,8 +45,8 @@ const PermissionModule = () => {
         dataIndex: "role_name",
         key: "role_name",
         render: (text, record) => (
-          <span style={{ textTransform: "capitalize" }}>
-            {record?.role_name}
+          <span style={ { textTransform: "capitalize" } }>
+            { record?.role_name }
           </span>
         ),
       },
@@ -58,15 +58,15 @@ const PermissionModule = () => {
           const url = `/${companySlug}/permission-access?role_id=${record._id}`;
 
           return (
-            <Link to={url}>
+            <Link to={ url }>
               <Button
                 className="add-permission-button"
                 type="primary"
                 size="large"
-                onClick={() => {
+                onClick={ () => {
                   handleRolePermissionClick(record._id)
                   setRoleName(record?.role_name)
-                }}
+                } }
               >
                 Add Permission For Role
               </Button>
@@ -82,14 +82,14 @@ const PermissionModule = () => {
   const permissionItems = useMemo(
     () =>
       permissionListData.map((permission) => (
-        <li key={permission._id}>
-          <div style={{ textTransform: "capitalize" }}>
-            {permission.name.replaceAll("_", " ")}
+        <li key={ permission._id }>
+          <div style={ { textTransform: "capitalize" } }>
+            { permission.name.replaceAll("_", " ") }
           </div>
           <div>
             <Switch
-              checked={permission?.isAccess}
-              onChange={(checked) =>
+              checked={ permission?.isAccess }
+              onChange={ (checked) =>
                 handlePermissionToggle(checked, permission._id)
               }
               size="small"
@@ -108,34 +108,36 @@ const PermissionModule = () => {
         </div>
         <div className="block-table-content">
           <Table
-            columns={roleTableColumns}
-            dataSource={roleListData}
-            pagination={false}
+            columns={ roleTableColumns }
+            dataSource={ roleListData }
+            pagination={ false }
             rowKey="_id"
           />
         </div>
       </Card>
 
-      <Modal
-        footer={false}
-        open={PermissionModalOpen}
-        width={500}
-        closable={false}
-        onCancel={handleCloseModal}
+     <Modal
+        footer={ false }
+        open={ PermissionModalOpen }
+        width={ 500 }
+        closable={ false }
+        onCancel={ handleCloseModal }
         className="permission-edit-modal"
-      >
-        <div className="permission-modal-content-wrapper">
-            <h2 style={{textAlign:"center"}}>{roleName}</h2>
+        title={
           <div className="permission-content-header">
             <div className="permission-content-title">
-              <h2>Permission List</h2>
+              <h2>{ roleName }</h2>
             </div>
-            <div className="permission-modla-close-icon">
-              <CloseOutlined onClick={handleCloseModal} />
+            <div className="permission-modal-close-icon">
+              <h3>Permission List</h3>
+              <CloseOutlined onClick={ handleCloseModal } />
             </div>
           </div>
+        }
+      >
+        <div className="permission-modal-content-wrapper">
           <div className="permission-list-wrapper">
-            <ul>{permissionItems}</ul>
+            <ul>{ permissionItems }</ul>
           </div>
         </div>
       </Modal>

@@ -152,7 +152,8 @@ function AssignProject() {
     setShowEditor(!showEditor);
     form.resetFields();
     if (editProjectId) {
-      history.push(`/${companySlug}/project/app/${editProjectId}`);
+      history.goBack();
+      // history.push(`/${companySlug}/project/app/${editProjectId}`);
     }
   };
 

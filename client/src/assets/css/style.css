@@ -37487,12 +37487,20 @@ h6,
   background-color: var(--bg-sidebar);
   color: #545454 !important;
   overflow-y: auto;
+  padding: 0;
+}
+.Etask-hub-logo{
+  padding: 10px;
 }
 .Etask-hub-logo img {
-  max-width: 40px;
+  max-width: 80px;
+  height: auto;
+  min-width: 80px;
   width: 100%;
   display: block;
   margin: 0 auto;
+  max-height: 55px;
+  object-fit: contain;
 }
 /* 
   .ant-menu-dark .ant-menu-item,
@@ -48912,7 +48920,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .gx-app-logo.account_logo img {
-  max-width: 80px;
+  max-width: 100px;
+  min-width: 100px;
+  height: auto;
   width: 100%;
   display: block;
   margin: 0 auto;

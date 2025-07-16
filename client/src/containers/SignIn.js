@@ -38,6 +38,11 @@ function SignIn() {
   }, [verificationToken]);
 
   const tokenVerfication = async (token) => {
+    let accessToken = localStorage.getItem("accessToken");
+    if(accessToken) {
+      history.push(`/${companySlug}/signin`)
+      return
+    };
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -152,11 +157,11 @@ function SignIn() {
                 ) : (
                   <img
                     alt="example"
-                    style={ {
-                      width: "40%",
-                      maxWidth: "80px",
-                      marginBottom: "0",
-                    } }
+                    // style={ {
+                    //   width: "40%",
+                    //   maxWidth: "80px",
+                    //   marginBottom: "0",
+                    // } }
                     src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
                   />
                 ) }

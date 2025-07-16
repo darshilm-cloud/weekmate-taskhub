@@ -682,6 +682,7 @@ const Projectexpences = () => {
 
 
           <Table
+          tableLayout="auto"
             pagination={ {
               showSizeChanger: true,
               pageSizeOptions: PAGINATION_OPTIONS,
