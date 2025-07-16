@@ -84,16 +84,15 @@ ${
         html
       };
 
-      let cc = [
+      let to = [
         data?.createdBy?.email,
         data?.manager?.email,
-        // process.env.ACCOUNTANT_EMAIL_ID,
         data?.acc_manager?.email,
         data?.createdBy_rm?.email
       ];
-      let to = [process.env.CEO_EMAIL, process.env.DIRECTOR_EMAIL];
+      // let to = [process.env.CEO_EMAIL, process.env.DIRECTOR_EMAIL];
 
-      await emailSenderForPMS(companyId, to, mailData, cc);
+      await emailSenderForPMS(companyId, to, mailData);
     } catch (error) {
       console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
     }
@@ -189,25 +188,24 @@ ${
         html
       };
 
-      let cc = [
+      let to = [
         data?.manager?.email,
         process.env.ACCOUNTANT_EMAIL_ID,
         process.env.CEO_EMAIL,
         process.env.DIRECTOR_EMAIL,
         data?.createdBy?.email,
-        data?.acc_manager?.email,
+        // data?.acc_manager?.email,
         // data?.managers_rm?.email,
-        data?.createdBy_rm?.email
+        // data?.createdBy_rm?.email
         // data?.acc_managers_rm?.email,
       ];
-      let to = [
-        process.env.ACCOUNTANT_EMAIL_ID
+      // let to = [
+      //   process.env.ACCOUNTANT_EMAIL_ID,
+      //    process.env.CEO_EMAIL,
+      //   process.env.DIRECTOR_EMAIL,
+      // ];
 
-        //  process.env.CEO_EMAIL,
-        // process.env.DIRECTOR_EMAIL,
-      ];
-
-      await emailSenderForPMS(companyId, to, mailData, cc);
+      await emailSenderForPMS(companyId, to, mailData);
     } catch (error) {
       console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
     }

@@ -46,7 +46,6 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    console.log(file, "fileT");
 
     cb(null, `${Date.now()}_${file.originalname}`);
   }
@@ -101,6 +100,7 @@ exports.addProjectExpense = async (req, res) => {
 
     // ✅ Create New Project Expense
     let data = new ProjectExpanses({
+      companyId: newObjectId(decodedCompanyId),
       project_id: value?.project_id,
       purchase_request_details:
         value?.purchase_request_details.replace(/\n/g, "<br>") || null,
@@ -115,7 +115,6 @@ exports.addProjectExpense = async (req, res) => {
 
     await data.save();
     let emailDetails = await this.getReviewsDetailsForMail(data._id);
-    console.log(emailDetails, "emailDetails");
 
     await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
 
@@ -433,6 +432,13 @@ exports.addProjectExpense = async (req, res) => {
 
 exports.getProjectExpenses = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -504,6 +510,7 @@ exports.getProjectExpenses = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
       ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
       ...(value.priority && { priority: value.priority }),
       ...(value.status && { status: value.status }),
@@ -1291,88 +1298,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           preserveNullAndEmptyArrays: true
         }
       },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "managers_rm"
-        }
-      },
-      {
-        $unwind: {
-          path: "$managers_rm",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "acc_managers_rm"
-        }
-      },
-      {
-        $unwind: {
-          path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "employees",
-          let: { createdByRM: "$createdBy.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$createdByRM"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "createdBy_rm"
-        }
-      },
-      {
-        $unwind: {
-          path: "$createdBy_rm",
-          preserveNullAndEmptyArrays: true
-        }
-      },
       ...(await getCreatedUpdatedDeletedByQuery()),
 
       {
@@ -1391,18 +1316,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
             emp_img: 1,
             email: 1
           },
-          managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1
-          },
-          acc_managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1
-          },
           acc_manager: {
             _id: 1,
             full_name: 1,
@@ -1414,13 +1327,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
             project_tech: 1
           },
           createdBy: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            client_img: 1,
-            email: 1
-          },
-          createdBy_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
@@ -1459,6 +1365,13 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
 
 exports.exportProjectExpenses = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     let result = [];
     const validationSchema = Joi.object({
       isExport: Joi.boolean().default(false),
@@ -1471,7 +1384,9 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const { error, value } = validationSchema.validate(req.body);
     const data = await ProjectExpanses.aggregate([
-      { $match: { isDeleted: false } },
+      {
+        $match: { isDeleted: false, companyId: newObjectId(decodedCompanyId) }
+      },
       {
         $lookup: {
           from: "projects", // Name of the Projects collection
@@ -1520,6 +1435,13 @@ exports.exportProjectExpenses = async (req, res) => {
       }
     ]).exec();
 
+    if(data.length ===0){
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "No data found"
+      );
+    }
     // Loop through each item in the data
     for (let i = 0; i < data.length; i++) {
       let item = data[i];
@@ -1558,20 +1480,10 @@ exports.exportProjectExpenses = async (req, res) => {
     ];
 
     const exportFileTypeLower = _.toLower(value.exportFileType);
-    console.log(exportFileTypeLower, "exportFileTypeLower");
-    console.log("Step 0");
 
     if (exportFileTypeLower === "csv") {
-      console.log("Step 1");
-
       result = await generateCSV(result, csvFields);
     }
-    console.log("Step 2", result);
-
-    //  else if (exportFileTypeLower === "xlsx") {
-    //   result = await generateXLSX(csvData);
-    //   // const linkSource = "data:text/csv;base64," + base64;
-    // }
 
     return res.status(200).json({
       status: "success",
