@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
+const {
+  emailSenderForPMS,
+  getUserName,
+  getCompanyData
+} = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
-
 
 exports.MailForBugNewComments = async (data, companyId) => {
   try {
@@ -96,7 +99,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
                         <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                           <img src=${
                             data.manager && data.manager.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data.manager.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -164,7 +167,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
                           ">
                           <img src=${
                             data?.createdBy && data.createdBy.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data.createdBy.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -275,7 +278,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] A comment has been added to a bug - ${data?.project?.projectId}`,
-      html,
+      html
     };
 
     data.taggedUsers = data.taggedUsers.filter((s) => s !== null);
@@ -285,7 +288,8 @@ exports.MailForBugNewComments = async (data, companyId) => {
       $or: [
         { createdBy: data?.project?.manager },
         { createdBy: { $in: data?.taggedUsers?.map((ele) => ele?._id) } },
-      ],
+        { createdBy: { $in: data?.assignees?.map((ele) => ele._id) } }
+      ]
     });
 
     // to get mailSettings of taggedUsers and manager as of task_tagged_comments setting being true..
@@ -301,7 +305,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
     let mails = [
       ...data?.assignees?.map((a) => a),
       ...data?.taggedUsers?.map((t) => t),
-      data?.manager,
+      data?.manager
     ];
 
     // to get that taggedUsers and manager mailids whose mail setting for task_tagged_comments is true
@@ -325,10 +329,10 @@ exports.MailForBugNewComments = async (data, companyId) => {
     let mailIds = [...uniqueMails];
     let quarterlymailIds = [...quarterlyuniqueMails];
 
-    console.log("🚀 ~ exports.MailForBugNewComments= ~ mailIds?.length:", mailIds?.length)
+    
     if (mailIds?.length > 0) {
       // to send mail to all whose settings allow to send mail
-      await emailSenderForPMS(companyId,mailIds, mailData, []);
+      await emailSenderForPMS(companyId, mailIds, mailData, []);
     }
     if (quarterlymailIds?.length > 0) {
       // to add the mailids of subscribers and maildata to db for sending such mails after every 4 hours

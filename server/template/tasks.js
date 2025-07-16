@@ -98,7 +98,7 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
                         <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                           <img src=${
                             data?.manager && data?.manager.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data?.manager.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -153,7 +153,7 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
                           ">
                           <img src=${
                             data?.createdBy && data?.createdBy.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data?.createdBy.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -324,7 +324,7 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
                                                         <td colspan="2" valign="middle" style="padding:10px 0;border-bottom:1px solid #dfdfdf;font-size:14px"><div style="width:26px;height:26px;display:inline-block;vertical-align:middle;border-radius:50%;overflow:hidden;font-weight:600;font-size:14px;text-transform:uppercase;color:#fff;background:#187cb7;text-align:center;line-height:26px">                            <img src=${
                                                           a && a.emp_img !== ""
                                                             ? process.env
-                                                                .HRMS_IMG_SERVER_URL +
+                                                                .UPLOADS_URL +
                                                               a.emp_img
                                                             : process.env
                                                                 .UPLOADS_URL +
@@ -610,7 +610,7 @@ exports.taskStatusUpdateMail = async (data, companyId) => {
                           <img src="${
                             data?.oldData?.manager &&
                             data?.oldData?.manager.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data?.oldData?.manager.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -659,7 +659,7 @@ exports.taskStatusUpdateMail = async (data, companyId) => {
                           <img src="${
                             data?.newData?.updatedBy &&
                             data?.newData?.updatedBy.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data?.newData?.updatedBy.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"

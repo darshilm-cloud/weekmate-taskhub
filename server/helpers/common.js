@@ -82,6 +82,10 @@ class CommonHelpers {
         dynamicPath = MULTER.COMPLAINT_COMMENTS;
         break;
 
+        case "profile":
+          dynamicPath = MULTER.PROFILE;
+          break;
+
       default:
         break;
     }
