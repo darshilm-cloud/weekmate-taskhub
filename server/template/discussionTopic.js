@@ -95,7 +95,7 @@ exports.topicSubscriberMail = async (data,companyId) => {
                       <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                         <img src=${
                           data?.manager && data?.manager.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
+                            ? process.env.UPLOADS_URL +
                               data?.manager.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
@@ -130,7 +130,7 @@ exports.topicSubscriberMail = async (data,companyId) => {
                         ">
                         <img src=${
                           data?.createdBy && data?.createdBy.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
+                            ? process.env.UPLOADS_URL +
                               data?.createdBy.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
@@ -243,9 +243,9 @@ exports.topicSubscriberMail = async (data,companyId) => {
       .map((subscriber) => subscriber.email);
 
     let clientsmailIds = data?.pms_clients
-      .filter((s) => s._id != undefined)
-      .map((subscriber) => subscriber.email);
-
+    .filter((s) => s._id != undefined)
+    .map((subscriber) => subscriber.email);
+    
     //to get that subscribers mailids whose mail setting for quarterlyMail is true
     let quarterlymailIds = data?.subscribers
       .filter((s) =>
@@ -259,7 +259,9 @@ exports.topicSubscriberMail = async (data,companyId) => {
       (ele) => ele != data?.manager?.email
     );
 
-    await emailSenderForPMS(companyId,[...clientsmailIds], mailData, []);
+    if(clientsmailIds.length > 0){
+      await emailSenderForPMS(companyId,[...clientsmailIds], mailData, []);
+    }
     // For Subscribers:
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
@@ -272,10 +274,10 @@ exports.topicSubscriberMail = async (data,companyId) => {
     }
 
     // For Managers:
-    if (mailSettingsDataMgr.discussion_subscribed) {
+    if (mailSettingsDataMgr && mailSettingsDataMgr.discussion_subscribed) {
       // to send mail to manager and subscribers whose settings allow to send mail
       await emailSenderForPMS(companyId,[data?.manager?.email], mailData, []);
-    } else if (mailSettingsDataMgr.quarterlyMail) {
+    } else if (mailSettingsDataMgr && mailSettingsDataMgr.quarterlyMail) {
       // to add the mailid of manager and maildata to db for sending such mails after every 4 hours
       await mailsToQuarterHours([data?.manager?.email], mailData,companyId);
     }
