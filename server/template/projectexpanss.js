@@ -17,7 +17,6 @@ class ProjectExpansseMail {
 
   <!-- Email Body -->
   <div style="padding: 20px; background-color: #fff;">
-    <p style="margin: 0 0 15px; font-size: 16px;">Dear <strong>Harshal Shah & Chirag Rawal</strong>,</p>
     
     <p style="margin: 0 0 15px; font-size: 16px;">
       <strong>${
