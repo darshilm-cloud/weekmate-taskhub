@@ -472,15 +472,15 @@ exports.getProjectExpenses = async (req, res) => {
     });
 
     const userId = req.user._id;
-    const accountantIds = process.env.ACCOUNTANT_ID;
+    // const accountantIds = process.env.ACCOUNTANT_ID;
     // const userRole = req.user.pms_role_id.role_name
     // ;  // Assuming role is stored in req.user.role
 
     // // Check if the user exists in `pmsclients` and is an accountant
-    const isAccountant = await pmsClients.exists({
-      _id: userId,
-      _id: { $in: accountantIds }
-    });
+    // const isAccountant = await pmsClients.exists({
+    //   _id: userId,
+    //   _id: { $in: accountantIds }
+    // });
 
     // const hasFullAccess = ["Admin"].includes(userRole) || accountantIds.includes(userId);
 
@@ -492,12 +492,13 @@ exports.getProjectExpenses = async (req, res) => {
     const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
 
     const hasFullAccess =
-      allowedRoles.includes(userRole) || accountantIds.includes(userId);
+      allowedRoles.includes(userRole) ;
+      // || accountantIds.includes(userId);
     const hasLimitedAccess = restrictedRoles.includes(userRole);
 
     let orFilter = {};
 
-    if (!isAccountant && !(await checkUserIsSuperAdmin(userId))) {
+    if ( !(await checkUserIsSuperAdmin(userId))) {
       orFilter = {
         $or: [
           { "manager._id": new mongoose.Types.ObjectId(userId) },
