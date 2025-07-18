@@ -2,14 +2,14 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const Notes = mongoose.model("notes_pms");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr,
+  searchDataArr
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -18,10 +18,13 @@ const { noteSubscribersMail } = require("./sendEmail");
 const {
   getArrayChanges,
   getClientQuery,
-  getRefModelFromLoginUser,
+  getRefModelFromLoginUser
 } = require("../helpers/common");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
+const { checkUserIsAdmin } = require("./authentication");
 const { checkIsPMSClient } = require("./PMSRoles");
 
 // Check is exists..
@@ -49,23 +52,23 @@ exports.projectNoteExists = async (reqData, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: reqData?.title?.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: reqData?.title?.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
-    console.log("🚀 ~ exports.projectNoteExists= ~ data:", data)
+    console.log("🚀 ~ exports.projectNoteExists= ~ data:", data);
     if (data.length > 0) isExist = true;
 
     return isExist;
@@ -91,7 +94,7 @@ exports.addNotes = async (req, res) => {
       project_id: Joi.string().required(),
       noteBook_id: Joi.string().optional().default(null),
       subscribers: Joi.array().allow("").optional(),
-      pms_clients: Joi.array().optional().default([]),
+      pms_clients: Joi.array().optional().default([])
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -115,7 +118,7 @@ exports.addNotes = async (req, res) => {
         pms_clients: value.pms_clients || [],
         createdBy: req.user._id,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user)),
+        ...(await getRefModelFromLoginUser(req?.user))
       });
       await data.save();
 
@@ -124,7 +127,7 @@ exports.addNotes = async (req, res) => {
         (value?.subscribers && value?.subscribers.length > 0) ||
         (value?.pms_clients && value?.pms_clients.length > 0)
       ) {
-        await noteSubscribersMail(data._id,[],[],decodedCompanyId);
+        await noteSubscribersMail(data._id, [], [], decodedCompanyId);
       }
       return successResponse(
         res,
@@ -150,7 +153,7 @@ exports.getNotes = async (req, res) => {
       _id: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       notebook_id: Joi.string().optional().default(null),
-      subscribers: Joi.array().optional(),
+      subscribers: Joi.array().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -166,54 +169,48 @@ exports.getNotes = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
-    const isClient = await checkIsPMSClient(req.user._id);
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
-    
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
+
     let matchQuery = {
       isDeleted: false,
-      ...(!isManager && !isSuperAdmin && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin && !isAccManager
         ? {
             $expr: {
               $and: [
                 {
                   $or: [
                     {
-                      $eq: [{ $size: ["$subscribers"] }, 0],
+                      $eq: [{ $size: ["$subscribers"] }, 0]
                     },
                     {
                       $eq: [
                         "$createdBy",
-                        new mongoose.Types.ObjectId(req.user._id),
-                      ],
+                        new mongoose.Types.ObjectId(req.user._id)
+                      ]
                     },
                     {
                       $in: [
                         new mongoose.Types.ObjectId(req.user._id),
-                        "$subscribers",
-                      ],
+                        "$subscribers"
+                      ]
                     },
                     {
                       $in: [
                         new mongoose.Types.ObjectId(req.user._id),
-                        "$pms_clients",
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
+                        "$pms_clients"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           }
         : {}),
       ...(value.notebook_id
@@ -235,16 +232,16 @@ exports.getNotes = async (req, res) => {
               subscribers: {
                 $in: value.subscribers.map(
                   (s) => new mongoose.Types.ObjectId(s)
-                ),
-              },
+                )
+              }
             }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -259,20 +256,20 @@ exports.getNotes = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -284,20 +281,20 @@ exports.getNotes = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$noteBook_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "nbook",
-        },
+          as: "nbook"
+        }
       },
       {
         $unwind: {
           path: "$nbook",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       { $match: matchQuery },
       {
@@ -312,28 +309,28 @@ exports.getNotes = async (req, res) => {
                     { $in: ["$_id", "$$subscribers"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
             },
             {
               $project: {
                 _id: "$_id",
                 full_name: "$full_name",
                 email: "$email",
-                emp_img: "$emp_img",
-              },
-            },
+                emp_img: "$emp_img"
+              }
+            }
           ],
-          as: "subscriberDetails",
-        },
+          as: "subscriberDetails"
+        }
       },
       ...(await getClientQuery()),
       {
         $addFields: {
-          ...(await getClientQuery(true)),
-        },
+          ...(await getClientQuery(true))
+        }
       },
       // { $sort: { isPrivate: -1, _id: -1 } },
       {
@@ -345,45 +342,21 @@ exports.getNotes = async (req, res) => {
           createdAt: 1,
           createdBy: 1,
           subscribers: "$subscriberDetails",
-          // {
-
-          // $map: {
-          //   input: {
-          //     $cond: {
-          //       if: {
-          //         $and: [
-          //           { $isArray: "$subscriberDetails" },
-          //           { $ne: ["$assignesubscriberDetailses", []] },
-          //         ],
-          //       },
-          //       then: "$subscriberDetails",
-          //       else: [],
-          //     },
-          //   },
-          //   as: "subId",
-          //   in: {
-          //     _id: "$$subId._id",
-          //     full_name: "$$subId.full_name",
-          //     email: "$$subId.email",
-          //     emp_img: "$$subId.emp_img",
-          //   },
-          // },
-          // },
           ...(await getClientQuery(true)),
           client_sub: {
-            $concatArrays: ["$subscriberDetails", "$pms_clients"],
+            $concatArrays: ["$subscriberDetails", "$pms_clients"]
           },
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           notebook: {
             _id: "$nbook._id",
-            title: "$nbook.title",
+            title: "$nbook.title"
           },
-          isPrivate: 1,
-        },
-      },
+          isPrivate: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -393,11 +366,16 @@ exports.getNotes = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await Notes.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     data.filter((ele) => {
-      if (ele.createdBy == req.user?._id || isManager || isSuperAdmin || isAccManager) {
+      if (
+        ele.createdBy == req.user?._id ||
+        isAdmin ||
+        isManager ||
+        isAccManager
+      ) {
         ele.isDeletable = true;
         ele.isEditable = true;
       } else {
@@ -412,7 +390,7 @@ exports.getNotes = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -446,7 +424,7 @@ exports.updateNotes = async (req, res) => {
       subscribers: Joi.array().optional(),
       pms_clients: Joi.array().default([]),
       isPrivate: Joi.boolean().optional(),
-      project_id: Joi.optional(),
+      project_id: Joi.optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -473,7 +451,7 @@ exports.updateNotes = async (req, res) => {
           isPrivate: value.isPrivate || false,
           updatedBy: req?.user?._id,
           updatedAt: configs.utcDefault(),
-          ...(await getRefModelFromLoginUser(req?.user, true)),
+          ...(await getRefModelFromLoginUser(req?.user, true))
         },
         { new: true }
       );
@@ -518,7 +496,7 @@ exports.updateNotes = async (req, res) => {
 exports.updateNotesbookmark = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isBookmark: Joi.boolean().required(),
+      isBookmark: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -534,7 +512,7 @@ exports.updateNotesbookmark = async (req, res) => {
         isBookmark: value.isBookmark,
         updatedBy: req?.user?._id,
         updatedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -563,7 +541,7 @@ exports.deleteNotes = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );

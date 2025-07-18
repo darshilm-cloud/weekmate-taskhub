@@ -20,7 +20,7 @@ const {
   getCreatedUpdatedDeletedByQuery
 } = require("../helpers/common");
 const { newComplaintMail } = require("../template/complaints");
-const { checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 //Add Complaint
 exports.addComplaint = async (req, res) => {
@@ -52,6 +52,7 @@ exports.addComplaint = async (req, res) => {
       );
     }
     let data = new Complaints({
+      companyId:newObjectId(decodedCompanyId),
       project_id: value?.project_id || null,
       client_name: value?.client_name || null,
       client_email: value?.client_email || null,
@@ -83,6 +84,13 @@ exports.addComplaint = async (req, res) => {
 //Get Complaint :
 exports.getComplaint = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -114,7 +122,7 @@ exports.getComplaint = async (req, res) => {
       sortBy: value?.sortBy
     });
     let orFilter = {};
-    if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+    if (!(await checkUserIsAdmin(req?.user?._id))) {
       orFilter = {
         $or: [
           { "manager._id": new mongoose.Types.ObjectId(req?.user?._id) },
@@ -127,6 +135,7 @@ exports.getComplaint = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
+      companyId:newObjectId(decodedCompanyId),
       // For details
       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : null),
       // filters..

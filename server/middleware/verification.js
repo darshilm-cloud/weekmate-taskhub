@@ -3,7 +3,7 @@ const Projects = mongoose.model("projects");
 const { errorResponse } = require("../helpers/response");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
-const { checkUserIsSuperAdmin } = require("../controller/authentication");
+const { checkUserIsAdmin } = require("../controller/authentication");
 
 exports.verification = async (req, res, next) => {
   const projectId = req?.params?.id
@@ -17,7 +17,7 @@ exports.verification = async (req, res, next) => {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
 
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
+    const isAdmin = await checkUserIsAdmin(req?.user?._id);
     const isAssignedtoUser = project?.assignees?.includes(req?.user?._id);
     const isManager = project?.manager == req?.user?._id;
     const isAccManager = project?.acc_manager == req?.user?._id;
@@ -27,7 +27,7 @@ exports.verification = async (req, res, next) => {
     if (
       isManager ||
       isAccManager ||
-      isSuperAdmin ||
+      isAdmin ||
       isAssignedtoUser ||
       isCreatedBy ||
       isClient

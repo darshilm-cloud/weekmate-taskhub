@@ -39,7 +39,7 @@ const {
 const {
   sheet2
 } = require("../template/timesheetReportsCSVMyLoggedTimeDetailsProject");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const configRoles = require("../settings/config.json");
 const { generateCacheKey } = require("../middleware/CryptoKey");
 const { getCache, storeCache } = require("../middleware/cacheStore");
@@ -357,16 +357,11 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
       );
     }
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let pagination = getPagination({
       pageLimit: value.limit,
@@ -416,7 +411,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         }
       };
     }
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -1012,23 +1007,18 @@ exports.getTaskTotalHours = async (req, res) => {
       );
     }
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let matchQuery = {
       isDeleted: false,
       timesheet_id: new mongoose.Types.ObjectId(value.timesheet_id)
     };
 
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -1580,16 +1570,17 @@ exports.exportTimesheetCSV = async (req, res) => {
       );
     }
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin,isManager,isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(
+        value.project_id,
+        req.user._id
+      ),
+      checkLoginUserIsProjectAccountManager(
+        value.project_id,
+        req.user._id
+      )
+    ])
 
     let pagination = getPagination({
       pageLimit: value.limit,
@@ -1627,7 +1618,7 @@ exports.exportTimesheetCSV = async (req, res) => {
         : {})
     };
 
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -2004,7 +1995,7 @@ exports.getTimesheetsReports = async (req, res) => {
 
     let orFilter = [
       !(
-        (await checkUserIsSuperAdmin(req?.user?._id)) ||
+        (await checkUserIsAdmin(req?.user?._id)) ||
         req?.user?._id == "660a38c0768eaa003f5727c8"
       )
         ? {

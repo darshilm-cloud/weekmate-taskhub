@@ -42,7 +42,7 @@ const {
   checkLoginUserIsProjectManager,
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
@@ -2148,16 +2148,12 @@ exports.getHistory = async (req, res) => {
 exports.getProjectsWiseTask = async (req, res) => {
   try {
     const projectId = new mongoose.Types.ObjectId(req.params.projectId);
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      projectId,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      projectId,
-      req.user._id
-    );
+
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(projectId, req.user._id),
+      checkLoginUserIsProjectAccountManager(projectId, req.user._id)
+    ]);
 
     let matchQuery = {
       isDeleted: false,
@@ -2168,7 +2164,7 @@ exports.getProjectsWiseTask = async (req, res) => {
       { $eq: ["$_id", "$$mainTaskId"] },
       { $eq: ["$isDeleted", false] }
     ];
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       mainTaskQuery = [
         ...mainTaskQuery,
         {

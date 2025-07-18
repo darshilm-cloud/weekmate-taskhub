@@ -21,7 +21,7 @@ const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 
 const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
-const { checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 exports.getTrashProjects = async (req, res) => {
   try {
@@ -59,7 +59,7 @@ exports.getTrashProjects = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -208,7 +208,7 @@ exports.getTrashDiscussion = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "project.createdBy": new mongoose.Types.ObjectId(req.user._id) },
@@ -353,7 +353,7 @@ exports.getTrashTasks = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -535,7 +535,7 @@ exports.getTrashBugs = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -717,7 +717,7 @@ exports.getTrashNotes = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "subscribers._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -864,7 +864,7 @@ exports.getTrashLoggedHours = async (req, res) => {
 
     // Or filter..
     let orFilter = [
-      !(await checkUserIsSuperAdmin(req?.user?._id))
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },

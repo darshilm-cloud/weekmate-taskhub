@@ -543,13 +543,9 @@ exports.checkUserIsSuperAdmin = async (userId) => {
 
     if (
       loginUser &&
-      loginUser?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN
+      loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
       isSuperAdmin = true;
-    console.log(
-      "🚀 ~ exports.checkUserIsSuperAdmin= ~ isSuperAdmin:",
-      isSuperAdmin
-    );
 
     return isSuperAdmin;
   } catch (error) {

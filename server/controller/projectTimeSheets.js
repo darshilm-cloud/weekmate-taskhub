@@ -16,7 +16,7 @@ const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
 const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 // Check is exists..
 exports.projectTimeSheetExists = async (reqData, id = null) => {
@@ -142,23 +142,24 @@ exports.getProjectsTimeSheet = async (req, res) => {
       };
     }
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id)
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin,isManager,isAccManager]=await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(
+        value.project_id,
+        req.user._id
+      ),
+      checkLoginUserIsProjectAccountManager(
+        value.project_id,
+        req.user._id
+      )
+    ])
     
     let loggedHrQuery = [
       { $eq: ["$timesheet_id", "$$timesheet_id"] },
       { $eq: ["$isDeleted", false] },
     ];
 
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       loggedHrQuery = [
         ...loggedHrQuery,
         {
