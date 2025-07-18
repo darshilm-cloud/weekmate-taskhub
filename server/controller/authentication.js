@@ -242,6 +242,7 @@ exports.getDataForLoginUser = async (reqBody) => {
     let obj = {
       isDeleted: false,
       isSoftDeleted: false,
+      isActivate: true,
       ...(reqBody?._id
         ? { _id: new mongoose.Types.ObjectId(reqBody?._id) }
         : {})
@@ -526,7 +527,6 @@ exports.checkUserIsAdmin = async (userId) => {
       loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
       isAdmin = true;
-    console.log("🚀 ~ exports.checkUserIsAdmin= ~ isAdmin:", isAdmin);
 
     return isAdmin;
   } catch (error) {
