@@ -415,12 +415,6 @@ const ProjectExpensesForm = () => {
             <Option value="Paid">Paid</Option>
           </>
         )}
-        {userRole?.pms_role_id?.role_name === "Admin" && (
-          <>
-            <Option value="Approved">Approved</Option>
-            <Option value="Rejected">Rejected</Option>
-          </>
-        )}
       </>
     );
   };

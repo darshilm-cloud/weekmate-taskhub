@@ -1205,7 +1205,7 @@ const BugsPMS = () => {
                             rules={[
                               {
                                 required: true,
-                                message: "Please select at least one item!",
+                                message: "Please select at least one assignee!",
                                 type: "array",
                                 min: 1,
                               },
