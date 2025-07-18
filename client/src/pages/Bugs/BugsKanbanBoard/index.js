@@ -329,6 +329,7 @@ const BugList = ({
                                 </div>
                               </div>
                             )}
+                            
                             <div
                               className="assignees"
                               style={{
@@ -372,7 +373,7 @@ const BugList = ({
                                   icon={<PlusOutlined />}
                                   disabled={
                                     !getRoles(["Admin"]) ||
-                                    boardData?.title == "Closed"
+                                    boardData?.title == "Closed" || !hasPermission(["bug_edit"])
                                   }
                                 />
                               </div>
@@ -437,6 +438,7 @@ const BugList = ({
                                 </Tooltip>
                               </div>
                             </div>
+                            
                             <div className="task-comment-hour-detail-wrapper">
                               <div className="task-comment-bar">
                                 <Tooltip title="Comments" placement="right">

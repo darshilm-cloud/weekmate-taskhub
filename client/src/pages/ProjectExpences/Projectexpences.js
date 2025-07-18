@@ -620,7 +620,7 @@ const Projectexpences = () => {
                   <div className="right-popover-wrapper">
                     <ul className="assigness-data">
                       <Radio.Group
-                        onChange={ (e) => handleReviewTypeFilter(e.target.value) }
+                        onChange={handleReviewTypeFilter}
                         value={ need_to_bill_customer }
                       >
                         <li>
