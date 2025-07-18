@@ -24,7 +24,7 @@ const TasksHoursLogged = mongoose.model("projecttaskhourlogs");
 
 const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
 
-const { statusCode } = require("../helpers/constant");
+const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 
 const configRoles = require("../settings/config.json");
@@ -138,14 +138,42 @@ exports.getProjects = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
-    const data = await Project.find({
-      isDeleted: false,
-      companyId: newObjectId(decodedCompanyId)
-    })
-      .select("_id title")
-      .sort({
-        resource_name: 1
-      });
+    const data = await Project.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          companyId: newObjectId(decodedCompanyId)
+        }
+      },
+      {
+        $lookup: {
+          from: "projectstatuses", // or whatever your project_status collection name is
+          localField: "project_status",
+          foreignField: "_id",
+          as: "project_status"
+        }
+      },
+      {
+        $unwind: "$project_status"
+      },
+      {
+        $match: {
+          "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          project_status: 1
+        }
+      },
+      {
+        $sort: {
+          resource_name: 1
+        }
+      }
+    ]);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);

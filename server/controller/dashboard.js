@@ -207,19 +207,7 @@ exports.getMyProjects = async (req, res) => {
 
     let data = await Project.aggregate(mainQuery);
 
-    // if (value?.isComplaints && value?.isComplaints != undefined) {
-    //   data = data.filter((ele) => {
-    //     if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
-    //       return ele
-    //     };
-    //   })
-
-    // }
-    // console.log(
-    //   "🚀 ~ exports.getMyProjects= ~ mainQuery:",
-    //   JSON.stringify(mainQuery)
-    // );
-
+   
     // check project have project id or not...
     await addProjectRandomId(data);
 
