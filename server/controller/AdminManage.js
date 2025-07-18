@@ -187,7 +187,7 @@ exports.addUser = async (req, res) => {
       email,
       first_name: firstName,
       last_name: lastName,
-      full_name:`${firstName} ${lastName}`,
+      full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
       companyId: newObjectId(companyId)
@@ -236,14 +236,6 @@ exports.addUsersByCsv = async (req, res) => {
 
     const dataPayload = jsonDataFromFile(fileObj);
 
-    // Clean data
-    dataPayload.parse.forEach((item) => {
-      item["Email"] = item["Email"].toString().trim();
-      item["First Name"] = item["First Name"].toString().trim();
-      item["Last Name"] = item["Last Name"].toString().trim();
-      item["Password"] = item["Password"].toString().trim();
-    });
-
     const requiredColumns = ["Email", "First Name", "Last Name", "Password"];
     if (!requiredColumns.every((col) => dataPayload.cols.includes(col))) {
       return errorResponse(
@@ -252,6 +244,14 @@ exports.addUsersByCsv = async (req, res) => {
         messages.COLUMNS_MISMATCH
       );
     }
+
+    // Clean data
+    dataPayload.parse.forEach((item) => {
+      item["Email"] = item["Email"].toString().trim();
+      item["First Name"] = item["First Name"].toString().trim();
+      item["Last Name"] = item["Last Name"].toString().trim();
+      item["Password"] = item["Password"].toString().trim();
+    });
 
     const payloadSchema = Joi.array()
       .items(getAddUserSchemaCSV())
@@ -295,7 +295,7 @@ exports.addUsersByCsv = async (req, res) => {
           email: item.Email,
           first_name: item["First Name"],
           last_name: item["Last Name"],
-          full_name:`${item["First Name"]} ${item["Last Name"]}`,
+          full_name: `${item["First Name"]} ${item["Last Name"]}`,
           password: item.Password, // Optional: await bcrypt.hash(item.Password, 10)
           pms_role_id: roleData._id,
           companyId: companyId
@@ -371,7 +371,8 @@ exports.editUser = async (req, res) => {
     if (email !== undefined) updateFields.email = email;
     if (firstName !== undefined) updateFields.first_name = firstName;
     if (lastName !== undefined) updateFields.last_name = lastName;
-    if(firstName !== undefined && lastName !== undefined) updateFields.full_name = `${firstName} ${lastName}`
+    if (firstName !== undefined && lastName !== undefined)
+      updateFields.full_name = `${firstName} ${lastName}`;
     if (companyId !== undefined) updateFields.companyId = companyId;
     if (isActivate !== undefined) updateFields.isActivate = isActivate;
 
