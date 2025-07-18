@@ -12,10 +12,16 @@
 client/src/settings
 server/settings
 
+
+client/Dockerfile
+server/Dockerfile
+mongodb/
+
 # testing
 /coverage
 
 # production
+client/build
 /build
 docker-compose.yml
 
