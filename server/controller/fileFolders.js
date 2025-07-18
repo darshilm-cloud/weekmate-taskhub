@@ -23,7 +23,7 @@ const {
   checkLoginUserIsProjectManager,
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 //Add file folders :
 exports.addFileFolders = async (req, res) => {
@@ -107,18 +107,13 @@ exports.getFileFolders = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       fileQuery = [
         ...fileQuery,
         {
@@ -161,8 +156,8 @@ exports.getFileFolders = async (req, res) => {
     data.filter((ele) => {
       if (
         ele.createdBy == req.user?._id ||
+        isAdmin ||
         isManager ||
-        isSuperAdmin ||
         isAccManager
       ) {
         ele.isDeletable = true;
@@ -175,8 +170,8 @@ exports.getFileFolders = async (req, res) => {
       ele.files.filter((file) => {
         if (
           file.createdBy == req.user?._id ||
+          isAdmin ||
           isManager ||
-          isSuperAdmin ||
           isAccManager
         ) {
           file.isDeletable = true;
@@ -398,22 +393,16 @@ exports.getProjectAllFiles = async (req, res) => {
       );
     }
 
-    // const isClient = await checkIsPMSClient(req.user._id);
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
-      ...(!isManager && !isSuperAdmin && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin && !isAccManager
         ? {
             $expr: {
               $and: [

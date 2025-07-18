@@ -38,7 +38,7 @@ const {
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const { sheet } = require("../template/exportRepeatedBugsCSV");
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
@@ -1138,16 +1138,12 @@ exports.projectBugsDetailedData = async (req, res) => {
         error.details[0].message
       );
     }
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let bugQuery = [
       { $eq: ["$bug_status", "$$statusId"] },
@@ -1157,7 +1153,7 @@ exports.projectBugsDetailedData = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       bugQuery = [
         ...bugQuery,
         {

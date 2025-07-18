@@ -282,7 +282,11 @@ const ProjectExpensesForm = () => {
             ) {
               if (key === "status" && value === undefined) {
                 formData.append(key, "Pending");
-              } else {
+              } 
+              if(key==="invoice"){
+                formData.delete(key);
+              }
+              else {
                 formData.append(key === "project" ? "project_id" : key, value);
               }
             }

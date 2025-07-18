@@ -95,7 +95,7 @@ exports.MailForTaskNewComments = async (data, companyId) => {
                         <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                           <img src=${
                             data.manager && data.manager.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data.manager.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"
@@ -160,7 +160,7 @@ exports.MailForTaskNewComments = async (data, companyId) => {
                             data?.createdBy &&
                             data?.createdBy?.emp_img &&
                             data.createdBy.emp_img !== ""
-                              ? process.env.HRMS_IMG_SERVER_URL +
+                              ? process.env.UPLOADS_URL +
                                 data.createdBy.emp_img
                               : process.env.UPLOADS_URL +
                                 "defaultProfile/default-profile.png"

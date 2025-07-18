@@ -30,7 +30,7 @@ const {
   generateRandomId
 } = require("../helpers/common");
 const { sheet } = require("../template/tasksCSV");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const { checkIsPMSClient } = require("./PMSRoles");
 
 // Check is exists..
@@ -187,23 +187,10 @@ exports.getProjectsMainTask = async (req, res) => {
       sortBy: value.sortBy
     });
 
-    // const isClient = await checkIsPMSClient(req.user._id);
-    // const isAdmin = await checkUserIsAdmin(req.user._id);
-    // const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    // const isManager = await this.checkLoginUserIsProjectManager(
-    //   value.project_id,
-    //   req.user._id
-    // );
-    // const isAccManager = await this.checkLoginUserIsProjectAccountManager(
-    //   value.project_id,
-    //   req.user._id
-    // );
-
-    const [isClient, isAdmin, isSuperAdmin, isManager, isAccManager] =
+    const [isClient, isAdmin, isManager, isAccManager] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
-        checkUserIsSuperAdmin(req?.user?._id),
         this.checkLoginUserIsProjectManager(value.project_id, req.user._id),
         this.checkLoginUserIsProjectAccountManager(
           value.project_id,
@@ -216,7 +203,7 @@ exports.getProjectsMainTask = async (req, res) => {
       project_id: new mongoose.Types.ObjectId(value.project_id),
       // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      ...(!isManager && !isSuperAdmin && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin && !isAccManager
         ? {
             $or: [
               { isPrivateList: false },
@@ -241,7 +228,7 @@ exports.getProjectsMainTask = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager && !isSuperAdmin && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager  && !isClient && !isAdmin && !isAccManager) {
       task_query = [
         ...task_query,
         {
@@ -879,17 +866,19 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       );
     }
 
-    const isClient = await checkIsPMSClient(req.user._id);
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await this.checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await this.checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isClient, isAdmin, isManager, isAccManager] =
+      await Promise.all([
+        checkIsPMSClient(req.user._id),
+        checkUserIsAdmin(req.user._id),
+        this.checkLoginUserIsProjectManager(
+          value.project_id,
+          req.user._id
+        ),
+        this.checkLoginUserIsProjectAccountManager(
+          value.project_id,
+          req.user._id
+        )
+      ]);
 
     let matchQuery = {
       isDeleted: false,
@@ -905,7 +894,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           }
         : {}),
       // For details
-      ...(!isManager && !isSuperAdmin && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin && !isAccManager
         ? {
             $or: [
               { isPrivateList: false },
@@ -936,7 +925,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager && !isSuperAdmin && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager && !isClient && !isAdmin && !isAccManager) {
       taskQuery = [
         ...taskQuery,
         {

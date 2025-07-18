@@ -13,7 +13,7 @@ const ProjectBugs = mongoose.model("projecttaskbugs");
 // const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
-const { checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const {
   getCreatedUpdatedDeletedByQuery,
   getProjectDefaultSettingQuery,
@@ -53,7 +53,7 @@ exports.getMyProjects = async (req, res) => {
     let orFilter = {};
     // get login user role ...
     // !(await checkUserIsAdmin(req?.user?._id) &&
-    if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+    if (!(await checkUserIsAdmin(req?.user?._id))) {
       orFilter = {
         $or: [
           { assignees: new mongoose.Types.ObjectId(req?.user?._id) },
@@ -207,14 +207,14 @@ exports.getMyProjects = async (req, res) => {
 
     let data = await Project.aggregate(mainQuery);
 
-    if (value?.isComplaints && value?.isComplaints != undefined) {
-      data = data.filter((ele) => {
-        if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
-          return ele
-        };
-      })
+    // if (value?.isComplaints && value?.isComplaints != undefined) {
+    //   data = data.filter((ele) => {
+    //     if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
+    //       return ele
+    //     };
+    //   })
 
-    }
+    // }
     // console.log(
     //   "🚀 ~ exports.getMyProjects= ~ mainQuery:",
     //   JSON.stringify(mainQuery)

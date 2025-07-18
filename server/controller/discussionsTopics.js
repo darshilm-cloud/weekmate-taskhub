@@ -23,7 +23,7 @@ const {
   checkLoginUserIsProjectManager,
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 // Check is exists..
 exports.projectDiscussionTopicExists = async (reqData, id = null) => {
@@ -211,17 +211,13 @@ exports.getDiscussionsTopics = async (req, res) => {
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
 
-    const isAdmin = await checkUserIsAdmin(req?.user?._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req?.user?._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
+
+    if (!isManager && !isAdmin && !isAccManager) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -390,8 +386,8 @@ exports.getDiscussionsTopics = async (req, res) => {
     data.filter((ele) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
+        isAdmin ||
         isManager ||
-        isSuperAdmin ||
         isAccManager
       ) {
         ele.isDeletable = true;

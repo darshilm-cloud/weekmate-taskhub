@@ -43,7 +43,7 @@ const {
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
 const { sheet } = require("../template/projectsReportsCSV");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 const { projectWorkFlowExists } = require("./projectWorkFlow");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
 const { getCache, storeCache } = require("../middleware/cacheStore");
@@ -369,7 +369,7 @@ exports.getProjects = async (req, res) => {
               ]
             }
           : { "manager._id": new mongoose.Types.ObjectId(req.user._id) }
-        : !(await checkUserIsSuperAdmin(req?.user?._id))
+        : !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -1313,16 +1313,11 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
 // Project overview data :
 exports.getProjectOverviewData = async (req, res) => {
   try {
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      req.params.id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      req.params.id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(req.params.id, req.user._id),
+      checkLoginUserIsProjectAccountManager(req.params.id, req.user._id)
+    ]);
 
     let commonQuery = [
       { $eq: ["$project_id", "$$projectId"] },
@@ -1331,7 +1326,7 @@ exports.getProjectOverviewData = async (req, res) => {
     let taskQuery = commonQuery;
     let loggedHrQuery = commonQuery;
 
-    if (!isManager && isSuperAdmin && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin && !isAccManager) {
       taskQuery = [
         ...taskQuery,
         {
@@ -1987,13 +1982,15 @@ exports.getProjectOverviewData = async (req, res) => {
 };
 
 exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
-  const isManager = await checkLoginUserIsProjectManager(projectId, userId);
-  const isAccManager = await checkLoginUserIsProjectAccountManager(
-    projectId,
-    userId
-  );
-  const isSuperAdmin = await checkUserIsSuperAdmin(userId);
-  const isAdmin = await checkUserIsAdmin(userId);
+
+  const [isManager,isAccManager,isAdmin] = await Promise.all([
+    checkLoginUserIsProjectManager(projectId, userId),
+    checkLoginUserIsProjectAccountManager(
+      projectId,
+      userId
+    ),
+    checkUserIsAdmin(userId)
+  ])
 
   let commonQuery = [
     { $eq: ["$project_id", new mongoose.Types.ObjectId(projectId)] },
@@ -2002,7 +1999,7 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
 
   let taskQuery = commonQuery;
 
-  if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+  if (!isManager && !isAdmin && !isAccManager) {
     taskQuery = [
       ...taskQuery,
       {
@@ -2182,10 +2179,7 @@ exports.getProjectsReports = async (req, res) => {
     let loggedHrQuery = commonQuery;
 
     let orFilter = [
-      !(
-        (await checkUserIsSuperAdmin(req?.user?._id)) ||
-        req?.user?._id == "660a38c0768eaa003f5727c8"
-      )
+      !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
               { "managers._id": new mongoose.Types.ObjectId(req.user._id) },

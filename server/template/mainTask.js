@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
+const {
+  emailSenderForPMS,
+  getUserName,
+  getCompanyData
+} = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 exports.mainTaskSubscriberMail = async (data, companyId) => {
@@ -92,8 +96,7 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
                       <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                         <img src=${
                           data?.manager && data?.manager.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
-                              data?.manager.emp_img
+                            ? process.env.UPLOADS_URL + data?.manager.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
                         } alt="" width="30" height="30" style="border-radius: 50%; margin-right: 10px">
@@ -127,8 +130,7 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
                         ">
                         <img src=${
                           data?.createdBy && data?.createdBy.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
-                              data?.createdBy.emp_img
+                            ? process.env.UPLOADS_URL + data?.createdBy.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
                         } width="30" height="30" style="border-radius: 50%; margin-right: 10px"/>
@@ -267,7 +269,9 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
       )
       .map((subscriber) => subscriber.email);
 
-    await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
+    if (clientsmailIds.length > 0) {
+      await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
+    }
     if (mailIds.length > 0) {
       // to send mail to subscribers whose settings allow to send mail
       await emailSenderForPMS(companyId, mailIds, mailData, []);
@@ -371,8 +375,7 @@ exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
                       <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                         <img src=${
                           data?.manager && data?.manager.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
-                              data?.manager.emp_img
+                            ? process.env.UPLOADS_URL + data?.manager.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
                         } alt="" width="30" height="30" style="border-radius: 50%; margin-right: 10px">
@@ -406,8 +409,7 @@ exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
                         ">
                         <img src=${
                           data?.deletedBy && data?.deletedBy?.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
-                              data?.deletedBy?.emp_img
+                            ? process.env.UPLOADS_URL + data?.deletedBy?.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
                         } width="30" height="30" style="border-radius: 50%; margin-right: 10px" />

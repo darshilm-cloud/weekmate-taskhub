@@ -30,6 +30,7 @@ module.exports = {
     BUGS: "/public/taskBugs",
     APP_SETTING: "/public/appSetting",
     COMPLAINT_COMMENTS: "/public/complaint_comments",
+    PROFILE: "/public/profile",
   },
 
   DEFAULT_DATA: {

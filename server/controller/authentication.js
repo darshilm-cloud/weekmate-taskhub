@@ -242,6 +242,7 @@ exports.getDataForLoginUser = async (reqBody) => {
     let obj = {
       isDeleted: false,
       isSoftDeleted: false,
+      isActivate: true,
       ...(reqBody?._id
         ? { _id: new mongoose.Types.ObjectId(reqBody?._id) }
         : {})
@@ -526,7 +527,6 @@ exports.checkUserIsAdmin = async (userId) => {
       loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
       isAdmin = true;
-    console.log("🚀 ~ exports.checkUserIsAdmin= ~ isAdmin:", isAdmin);
 
     return isAdmin;
   } catch (error) {
@@ -543,13 +543,9 @@ exports.checkUserIsSuperAdmin = async (userId) => {
 
     if (
       loginUser &&
-      loginUser?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN
+      loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
     )
       isSuperAdmin = true;
-    console.log(
-      "🚀 ~ exports.checkUserIsSuperAdmin= ~ isSuperAdmin:",
-      isSuperAdmin
-    );
 
     return isSuperAdmin;
   } catch (error) {

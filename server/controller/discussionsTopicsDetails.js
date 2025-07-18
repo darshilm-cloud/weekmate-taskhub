@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const DiscussionsTopicsDetails = mongoose.model("discussionstopicsdetails");
@@ -14,11 +14,14 @@ const { filesManageInDB } = require("./fileUploads");
 const {
   getArrayChanges,
   getRefModelFromLoginUser,
-  getCreatedUpdatedDeletedByQuery,
+  getCreatedUpdatedDeletedByQuery
 } = require("../helpers/common");
 const { sendmailForNewCommentsInTopic } = require("./sendEmail");
-const { checkLoginUserIsProjectManager ,checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
+const { checkUserIsAdmin } = require("./authentication");
 
 //Add Discussions Topic Details :
 exports.addDiscussionsTopicsDetails = async (req, res) => {
@@ -36,7 +39,7 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
       topic_id: Joi.string().required(),
       taggedUsers: Joi.array().optional().default([]),
       attachments: Joi.any().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -67,7 +70,7 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
       taggedUsers: value.taggedUsers,
       createdBy: req.user._id,
       updatedBy: req.user._id,
-      ...(await getRefModelFromLoginUser(req?.user)),
+      ...(await getRefModelFromLoginUser(req?.user))
     });
     await topicsDetails.save();
 
@@ -89,7 +92,7 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
 
     // send mail to subcribers..
     if (value?.taggedUsers && value?.taggedUsers.length > 0) {
-      await sendmailForNewCommentsInTopic(topicsDetails._id,decodedCompanyId);
+      await sendmailForNewCommentsInTopic(topicsDetails._id, decodedCompanyId);
     }
 
     return successResponse(
@@ -110,7 +113,7 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
       project_id: Joi.string().required(),
       topic_id: Joi.string().required(),
       search: Joi.string().allow("").optional(),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -122,29 +125,24 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
       );
     }
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id)
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
       topic_id: new mongoose.Types.ObjectId(value.topic_id),
       // For details
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title"], value.search),
+        ...searchDataArr(["title"], value.search)
       };
     }
 
@@ -161,17 +159,17 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                     {
                       $eq: [
                         "$discussion_topic_details_id",
-                        "$$discussion_topic_details_id",
-                      ],
+                        "$$discussion_topic_details_id"
+                      ]
                     },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "attachments",
-        },
+          as: "attachments"
+        }
       },
       {
         $lookup: {
@@ -185,14 +183,14 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                     { $in: ["$_id", "$$taggedUsersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "taggedUsers",
-        },
+          as: "taggedUsers"
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
@@ -206,7 +204,7 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
           createdBy: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           attachments: {
             $map: {
@@ -216,9 +214,9 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                 _id: "$$attachment._id",
                 name: "$$attachment.name",
                 file_type: "$$attachment.file_type",
-                path: "$$attachment.path",
-              },
-            },
+                path: "$$attachment.path"
+              }
+            }
           },
           taggedUsers: {
             $map: {
@@ -227,29 +225,34 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                   if: {
                     $and: [
                       { $isArray: "$taggedUsers" },
-                      { $ne: ["$taggedUsers", []] },
-                    ],
+                      { $ne: ["$taggedUsers", []] }
+                    ]
                   },
                   then: "$taggedUsers",
-                  else: [],
-                },
+                  else: []
+                }
               },
               as: "taggedUsersId",
               in: {
                 _id: "$$taggedUsersId._id",
                 emp_img: "$$taggedUsersId.emp_img",
-                name: "$$taggedUsersId.full_name",
-              },
-            },
-          },
-        },
-      },
+                name: "$$taggedUsersId.full_name"
+              }
+            }
+          }
+        }
+      }
     ];
 
     const data = await DiscussionsTopicsDetails.aggregate(mainQuery);
 
     data.filter((ele) => {
-      if (ele?.createdBy?._id == req.user?._id || isManager || isSuperAdmin || isAccManager) {
+      if (
+        ele?.createdBy?._id == req.user?._id ||
+        isAdmin ||
+        isManager ||
+        isAccManager
+      ) {
         ele.isDeletable = true;
         ele.isEditable = true;
       } else {
@@ -257,7 +260,6 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
         ele.isEditable = false;
       }
     });
-
 
     return successResponse(
       res,
@@ -287,7 +289,7 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
       topic_id: Joi.string().required(),
       taggedUsers: Joi.array().optional().default([]),
       attachments: Joi.any().optional(),
-      folder_id: Joi.any().optional(),
+      folder_id: Joi.any().optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -318,7 +320,7 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
         project_id: value.project_id,
         taggedUsers: value.taggedUsers,
         updatedBy: req.user._id,
-        ...(await getRefModelFromLoginUser(req?.user, true)),
+        ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
@@ -372,7 +374,7 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
-        ...(await getRefModelFromLoginUser(req?.user, false, true)),
+        ...(await getRefModelFromLoginUser(req?.user, false, true))
       },
       { new: true }
     );

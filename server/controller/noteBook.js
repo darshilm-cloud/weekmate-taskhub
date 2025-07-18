@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const NoteBook = mongoose.model("notebook");
@@ -10,30 +10,21 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
-const { checkLoginUserIsProjectManager, checkLoginUserIsProjectAccountManager } = require("./projectMainTask");
-const { checkUserIsAdmin, checkUserIsSuperAdmin } = require("./authentication");
+const {
+  checkLoginUserIsProjectManager,
+  checkLoginUserIsProjectAccountManager
+} = require("./projectMainTask");
+const { checkUserIsAdmin } = require("./authentication");
 
 // Check is exists..
 exports.projectNoteBookExists = async (reqData, id = null) => {
   try {
     let isExist = false;
-    // const data = await NoteBook.findOne({
-    //   isDeleted: false,
-    //   // title: reqData?.title?.trim()?.toLowerCase(),
-    //   title: { $regex: new RegExp(`^${reqData?.title}$`, "i") },
-    //   project_id: new mongoose.Types.ObjectId(reqData.project_id),
-    //   ...(id
-    //     ? {
-    //         _id: { $ne: id },
-    //       }
-    //     : {}),
-    // });
-    // if (data) isExist = true;
 
     const data = await NoteBook.aggregate([
       {
@@ -42,21 +33,21 @@ exports.projectNoteBookExists = async (reqData, id = null) => {
           isDeleted: false,
           ...(id
             ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
+                _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {}),
-        },
+            : {})
+        }
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
-        },
+          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        }
       },
       {
         $match: {
-          titleLower: reqData?.title.trim().toLowerCase(), // Match the lowercase title
-        },
-      },
+          titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
+        }
+      }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -72,9 +63,9 @@ exports.addNoteBook = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       isPinned: Joi.object({
-        value: Joi.boolean().optional(),
+        value: Joi.boolean().optional()
       }).optional(),
-      project_id: Joi.string().allow("").optional(),
+      project_id: Joi.string().allow("").optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -91,13 +82,13 @@ exports.addNoteBook = async (req, res) => {
         title: value.title,
         project_id: value.project_id,
         createdBy: req.user._id,
-        updatedBy: req.user._id,
+        updatedBy: req.user._id
       });
 
       if (value.isPinned && value.isPinned.value !== undefined) {
         data.isPinned = {
           value: value.isPinned.value,
-          date: configs.utcDefault(),
+          date: configs.utcDefault()
         };
       }
 
@@ -120,7 +111,7 @@ exports.getNoteBook = async (req, res) => {
       sortBy: Joi.string().default("desc"),
       project_id: Joi.string().required(),
       _id: Joi.string().optional(),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().required()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -136,12 +127,12 @@ exports.getNoteBook = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     pagination.sort = {
       "isPinned.value": -1,
-      "isPinned.date": -1,
+      "isPinned.date": -1
     };
 
     let matchQuery = {
@@ -149,48 +140,43 @@ exports.getNoteBook = async (req, res) => {
       ...(value.project_id
         ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
         : {}),
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title", "isTop"], value.search),
+        ...searchDataArr(["title", "isTop"], value.search)
       };
     }
 
     let noteQuery = [
       { $eq: ["$noteBook_id", "$$noteBookId"] },
-      { $eq: ["$isDeleted", false] },
+      { $eq: ["$isDeleted", false] }
     ];
 
-    const isAdmin = await checkUserIsAdmin(req.user._id);
-    const isSuperAdmin = await checkUserIsSuperAdmin(req?.user?._id);
-    const isManager = await checkLoginUserIsProjectManager(
-      value.project_id,
-      req.user._id
-    );
-    const isAccManager = await checkLoginUserIsProjectAccountManager(
-      value.project_id,
-      req.user._id
-    );
-    
-    if (!isManager && !isSuperAdmin && !isAdmin && !isAccManager) {
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
+      checkUserIsAdmin(req.user._id),
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
+
+    if (!isManager && !isAdmin && !isAccManager) {
       noteQuery = [
         ...noteQuery,
         {
           $or: [
             {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
+              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"],
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"],
-            },
-          ],
-        },
+              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+            }
+          ]
+        }
       ];
     }
 
@@ -205,20 +191,20 @@ exports.getNoteBook = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -228,13 +214,13 @@ exports.getNoteBook = async (req, res) => {
             {
               $match: {
                 $expr: {
-                  $and: noteQuery,
-                },
-              },
-            },
+                  $and: noteQuery
+                }
+              }
+            }
           ],
-          as: "notes",
-        },
+          as: "notes"
+        }
       },
 
       { $match: matchQuery },
@@ -245,16 +231,16 @@ exports.getNoteBook = async (req, res) => {
           createdAt: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           isPinned: {
             value: 1,
-            date: 1,
+            date: 1
           },
           // notes :1,
-          total_notes: { $size: "$notes" },
-        },
-      },
+          total_notes: { $size: "$notes" }
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -264,7 +250,7 @@ exports.getNoteBook = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await NoteBook.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     const metaData = {
@@ -273,7 +259,7 @@ exports.getNoteBook = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -299,7 +285,7 @@ exports.getNoteBookdetails = async (req, res) => {
       sortBy: Joi.string().default("desc"),
       notebook_id: Joi.string().required(),
       project_id: Joi.string().required(),
-      subscribers: Joi.array().optional(),
+      subscribers: Joi.array().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -315,7 +301,7 @@ exports.getNoteBookdetails = async (req, res) => {
       pageLimit: value.limit,
       pageNum: value.pageNo,
       sort: value.sort,
-      sortBy: value.sortBy,
+      sortBy: value.sortBy
     });
 
     let matchQuery = {
@@ -325,13 +311,13 @@ exports.getNoteBookdetails = async (req, res) => {
         : {}),
       ...(value.notebook_id
         ? { _id: new mongoose.Types.ObjectId(value.notebook_id) }
-        : {}),
+        : {})
     };
 
     if (value.search) {
       matchQuery = {
         ...matchQuery,
-        ...searchDataArr(["title", "isTop"], value.search),
+        ...searchDataArr(["title", "isTop"], value.search)
       };
     }
 
@@ -346,20 +332,20 @@ exports.getNoteBookdetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -374,13 +360,13 @@ exports.getNoteBookdetails = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$noteBook_id", "$$noteId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
-          ],
-        },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ]
+        }
       },
       { $match: matchQuery },
       {
@@ -389,11 +375,11 @@ exports.getNoteBookdetails = async (req, res) => {
           title: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           isPinned: {
             value: 1,
-            date: 1,
+            date: 1
           },
           Notes: {
             _id: 1,
@@ -401,10 +387,10 @@ exports.getNoteBookdetails = async (req, res) => {
             color: 1,
             project_id: 1,
             notesInfo: 1,
-            subscribers: 1,
-          },
-        },
-      },
+            subscribers: 1
+          }
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -414,7 +400,7 @@ exports.getNoteBookdetails = async (req, res) => {
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await NoteBook.aggregate([
       ...mainQuery,
-      { $sort: pagination.sort },
+      { $sort: pagination.sort }
     ]);
 
     const metaData = {
@@ -423,7 +409,7 @@ exports.getNoteBookdetails = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -444,8 +430,8 @@ exports.updateNoteBook = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       isPinned: Joi.object({
-        value: Joi.boolean().optional(),
-      }).optional(),
+        value: Joi.boolean().optional()
+      }).optional()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -460,16 +446,16 @@ exports.updateNoteBook = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const updateData = {
-        title: value.title,
+        title: value.title
       };
       if (value.isPinned) {
         updateData.isPinned = {
           value: value.isPinned.value,
-          date: configs.utcDefault(),
+          date: configs.utcDefault()
         };
       }
       const data = await NoteBook.findByIdAndUpdate(req.params.id, updateData, {
-        new: true,
+        new: true
       });
       if (!data) {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
@@ -523,7 +509,7 @@ exports.updateNoteBook = async (req, res) => {
 exports.updateNoteBookbookmark = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      isBookmark: Joi.boolean().required(),
+      isBookmark: Joi.boolean().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -536,7 +522,7 @@ exports.updateNoteBookbookmark = async (req, res) => {
     const data = await NoteBook.findByIdAndUpdate(
       req.params.id,
       {
-        isBookmark: value.isBookmark,
+        isBookmark: value.isBookmark
       },
       { new: true }
     );
@@ -558,7 +544,7 @@ exports.deleteNoteBook = async (req, res) => {
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(),
+        deletedAt: configs.utcDefault()
       },
       { new: true }
     );

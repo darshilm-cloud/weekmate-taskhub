@@ -104,7 +104,9 @@ exports.subscribersMail = async (
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$subscriberIds"] },
-                    { $eq: ["$isDeleted", false] }
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
                   ]
                 }
               }
@@ -529,27 +531,6 @@ exports.taskData = async (id, newAddedAssignees = []) => {
                 last_name: "$$assigneeId.last_name",
                 email: "$$assigneeId.email",
                 emp_img: "$$assigneeId.emp_img"
-                // $cond: {
-                //   if: {
-                //     ...(newAddedAssignees.length > 0
-                //       ? {
-                //           $in: [
-                //             "$$assigneeId._id",
-                //             newAddedAssignees.map(
-                //               (n) => new mongoose.Types.ObjectId(n)
-                //             ),
-                //           ],
-                //         }
-                //       : {}),
-                //   },
-                //   then: {
-                //     _id: "$$assigneeId._id",
-                //     full_name: "$$assigneeId.full_name",
-                //     email: "$$assigneeId.email",
-                //     emp_img: "$$assigneeId.emp_img",
-                //   },
-                //   else: null, // Or any other value you prefer for non-matching IDs
-                // },
               }
             }
           },

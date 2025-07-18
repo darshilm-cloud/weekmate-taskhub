@@ -20,7 +20,7 @@ const {
   getCreatedUpdatedDeletedByQuery,
 } = require("../helpers/common");
 const { newReviewsMail } = require("../template/reviews");
-const { checkUserIsSuperAdmin } = require("./authentication");
+const { checkUserIsAdmin } = require("./authentication");
 
 //Add Review
 exports.addReview = async (req, res) => {
@@ -109,7 +109,7 @@ exports.getReview = async (req, res) => {
       sortBy: value?.sortBy,
     });
     let orFilter = {};
-    if (!(await checkUserIsSuperAdmin(req?.user?._id))) {
+    if (!(await checkUserIsAdmin(req?.user?._id))) {
       orFilter = {
         $or: [
           { "manager._id": new mongoose.Types.ObjectId(req?.user?._id) },

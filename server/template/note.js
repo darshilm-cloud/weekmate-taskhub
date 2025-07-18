@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const MailSettings = mongoose.model("mailsettings");
-const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
+const {
+  emailSenderForPMS,
+  getUserName,
+  getCompanyData
+} = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
 exports.noteSubscriberMail = async (data, companyId) => {
@@ -95,7 +99,7 @@ exports.noteSubscriberMail = async (data, companyId) => {
                       <div style=" width: 30px; margin-right: 20px; display: inline-block; height: 30px; vertical-align: top; border-radius: 50%; overflow: hidden; ">
                         <img src=${
                           data?.manager && data?.manager.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
+                            ? process.env.UPLOADS_URL +
                               data?.manager.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
@@ -130,7 +134,7 @@ exports.noteSubscriberMail = async (data, companyId) => {
                         ">
                         <img src=${
                           data?.createdBy && data?.createdBy.emp_img !== ""
-                            ? process.env.HRMS_IMG_SERVER_URL +
+                            ? process.env.UPLOADS_URL +
                               data?.createdBy.emp_img
                             : process.env.UPLOADS_URL +
                               "defaultProfile/default-profile.png"
@@ -246,7 +250,9 @@ exports.noteSubscriberMail = async (data, companyId) => {
       .filter((s) => s !== null)
       .map((subscriber) => subscriber.email);
 
-    await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
+    if (clientsmailIds.length > 0) {
+      await emailSenderForPMS(companyId, clientsmailIds, mailData, []);
+    }
     //to get that subscribers mailids whose mail setting for quarterlyMail is true
     let quarterlymailIds = data?.subscribers
       .filter(
