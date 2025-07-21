@@ -184,7 +184,7 @@ exports.getProjectExpenses = async (req, res) => {
     // const hasFullAccess = ["Admin"].includes(userRole) || accountantIds.includes(userId);
 
     // const userId = req.user._id;
-    const userRole = req.user.pms_role_id?.role_name; // Ensure role_name exists
+    const userRole = roleName; // Ensure role_name exists
     // const accountantIds = process.env.ACCOUNTANT_ID?.split(",") || []; // Ensure it's an array
 
     const allowedRoles = ["Admin"];
@@ -844,9 +844,35 @@ exports.exportProjectExpenses = async (req, res) => {
     });
 
     const { error, value } = validationSchema.validate(req.body);
+
+    const userRole = roleName; // Ensure role_name exists
+
+    const allowedRoles = ["Admin"];
+    const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
+
+    const hasFullAccess =
+      allowedRoles.includes(userRole) ;
+    const hasLimitedAccess = restrictedRoles.includes(userRole);
+
+    let orFilter = {};
+
+    let matchQuery={ isDeleted: false, companyId: newObjectId(decodedCompanyId) }
+
+    // Apply filters based on role
+    if (!hasFullAccess) {
+      if (hasLimitedAccess) {
+        // TL and PC can only see their own created data
+        orFilter = {
+          $or: [{ createdBy: newObjectId(decodedUserId) }]
+        };
+      }
+    }
+
+    matchQuery = { ...matchQuery, ...orFilter };
+
     const data = await ProjectExpanses.aggregate([
       {
-        $match: { isDeleted: false, companyId: newObjectId(decodedCompanyId) }
+        $match: matchQuery
       },
       {
         $lookup: {

@@ -2,10 +2,10 @@ let express = require("express");
 var Router = express.Router();
 var masterController = require("../../controller/master");
 
-Router.get("/get/department", masterController.getEmpDepartment);
-Router.get("/get/subdepartment", masterController.getEmpSubDepartment);
+// Router.get("/get/department", masterController.getEmpDepartment);
+// Router.get("/get/subdepartment", masterController.getEmpSubDepartment);
 Router.get("/get/employees", masterController.getEmployees);
-Router.get("/get/designation", masterController.getEmpDesignations);
+// Router.get("/get/designation", masterController.getEmpDesignations);
 Router.get("/get/resources", masterController.getResource);
 Router.get("/get/projects", masterController.getProjects);
 Router.get("/get/subscribers/:id", masterController.getSubscribers);
