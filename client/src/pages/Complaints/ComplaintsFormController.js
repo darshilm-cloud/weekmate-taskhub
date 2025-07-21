@@ -136,6 +136,7 @@ const ComplaintsFormController = () => {
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data) {
         message.success(response.data.message);
+        getComplaintList();
       }
     } catch (error) {
       console.log(error);
