@@ -1982,15 +1982,11 @@ exports.getProjectOverviewData = async (req, res) => {
 };
 
 exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
-
-  const [isManager,isAccManager,isAdmin] = await Promise.all([
+  const [isManager, isAccManager, isAdmin] = await Promise.all([
     checkLoginUserIsProjectManager(projectId, userId),
-    checkLoginUserIsProjectAccountManager(
-      projectId,
-      userId
-    ),
+    checkLoginUserIsProjectAccountManager(projectId, userId),
     checkUserIsAdmin(userId)
-  ])
+  ]);
 
   let commonQuery = [
     { $eq: ["$project_id", new mongoose.Types.ObjectId(projectId)] },
@@ -2114,6 +2110,12 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
 // Project reports details for graphs
 exports.getProjectsReports = async (req, res) => {
   try {
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -2155,7 +2157,8 @@ exports.getProjectsReports = async (req, res) => {
       sortBy: value?.sortBy
     });
     let matchQuery = {
-      isDeleted: false
+      isDeleted: false,
+      companyId: newObjectId(companyId)
     };
     if (value?.technologies && value?.technologies.length > 0) {
       matchQuery.technology = {
@@ -2493,12 +2496,11 @@ exports.getProjectsReports = async (req, res) => {
               }
             }
           : {}),
-        isDeleted: false
+        isDeleted: false,
+        companyId: newObjectId(companyId)
       })
     ]);
 
-    // const dataTotal = await Project.aggregate(mainQuery);
-    // const totalCountResult = await Project.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
     let metaData = {
       total: totalCount,
