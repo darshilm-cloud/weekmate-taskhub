@@ -344,7 +344,8 @@ exports.getDashboardData = async (req, res) => {
 
     const commonFilter = {
       isActivate: true,
-      isDeleted: false
+      isDeleted: false,
+      companyId:newObjectId(companyId)
     };
 
     // Get role data
@@ -362,7 +363,7 @@ exports.getDashboardData = async (req, res) => {
       const [employeeCount, adminCount] = await Promise.all([
         employeeSchema.countDocuments({
           ...commonFilter,
-          pms_role_id: userRoleData._id
+          // pms_role_id: { $ne: adminRoleData._id }
         }),
         employeeSchema.countDocuments({
           ...commonFilter,

@@ -104,12 +104,12 @@ const TimeSheetController = () => {
     getProjectType();
 
     getProjectList();
-    getDepartmentList();
+    // getDepartmentList();
   }, []);
 
-  useEffect(() => {
-    getUserEmployeeList();
-  }, [departmentList]);
+  // useEffect(() => {
+  //   // getUserEmployeeList();
+  // }, [departmentList]);
 
   const handleTechnologyChange = (selectedValues) => {
     setValue(selectedValues);
@@ -448,7 +448,7 @@ const TimeSheetController = () => {
           (item) => item.totalLoggedHours
         );
         setProjectTyeData(response.data.data.type);
-        setDepartmentData(response.data.data.department);
+        // setDepartmentData(response.data.data.department);
         setUsersData(response.data.data.user);
         setPieChartDataMangerNames(labels);
         setPieChartData(totalHours);
@@ -525,9 +525,9 @@ const TimeSheetController = () => {
       technologyList.length &&
       projectManagerList.length &&
       projectTypeList.length &&
-      projectList.length &&
-      departmentList.length &&
-      userEmployeeList.length
+      projectList.length
+      // departmentList.length &&
+      // userEmployeeList.length
     ) {
       const requestParams = {
         ...(selectedRange && {

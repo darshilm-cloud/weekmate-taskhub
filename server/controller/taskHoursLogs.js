@@ -1908,6 +1908,13 @@ exports.exportTimesheetCSV = async (req, res) => {
 // Timesheets reports details for graphs
 exports.getTimesheetsReports = async (req, res) => {
   try {
+     // Decode user from token
+     const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -1966,11 +1973,11 @@ exports.getTimesheetsReports = async (req, res) => {
         $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
       };
     }
-    if (value.departments && value.departments.length > 0) {
-      matchQuery["dept._id"] = {
-        $in: value?.departments.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
+    // if (value.departments && value.departments.length > 0) {
+    //   matchQuery["dept._id"] = {
+    //     $in: value?.departments.map((ele) => new mongoose.Types.ObjectId(ele))
+    //   };
+    // }
     if (value.technologies && value.technologies.length > 0) {
       matchQuery["tech._id"] = {
         $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele))
@@ -2057,6 +2064,9 @@ exports.getTimesheetsReports = async (req, res) => {
                         "$project_status.title",
                         DEFAULT_DATA.PROJECT_STATUS.ACTIVE
                       ]
+                    },
+                    {
+                      $eq:["$companyId",newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2084,7 +2094,10 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$_id", "$$employee_id"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    {
+                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                    }
                   ]
                 }
               }
@@ -2103,7 +2116,10 @@ exports.getTimesheetsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] }
+                    { $eq: ["$isDeleted", false] },
+                    {
+                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                    }
                   ]
                 }
               }
@@ -2122,7 +2138,10 @@ exports.getTimesheetsReports = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$projecttypes"] },
-                    { $eq: ["$isDeleted", false] }
+                    { $eq: ["$isDeleted", false] },
+                    {
+                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                    }
                   ]
                 }
               }
@@ -2143,7 +2162,10 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$_id", "$$employee_id"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    {
+                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                    }
                   ]
                 }
               }
@@ -2152,31 +2174,31 @@ exports.getTimesheetsReports = async (req, res) => {
           as: "mgr"
         }
       },
-      {
-        $lookup: {
-          from: "subdepartments",
-          let: { department_id: "$employee.subdepartment_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$department_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "dept"
-        }
-      },
-      {
-        $unwind: {
-          path: "$dept",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      // {
+      //   $lookup: {
+      //     from: "subdepartments",
+      //     let: { department_id: "$employee.subdepartment_id" },
+      //     pipeline: [
+      //       {
+      //         $match: {
+      //           $expr: {
+      //             $and: [
+      //               { $in: ["$_id", "$$department_id"] },
+      //               { $eq: ["$isDeleted", false] }
+      //             ]
+      //           }
+      //         }
+      //       }
+      //     ],
+      //     as: "dept"
+      //   }
+      // },
+      // {
+      //   $unwind: {
+      //     path: "$dept",
+      //     preserveNullAndEmptyArrays: false
+      //   }
+      // },
       // ...(await getProjectDefaultSettingQuery("project._id")),
       {
         $match: matchQuery
@@ -2205,7 +2227,7 @@ exports.getTimesheetsReports = async (req, res) => {
               { $toString: "$logged_minutes" }
             ]
           },
-          employeeDepartment: "$dept.sub_department_name",
+          // employeeDepartment: "$dept.sub_department_name",
           // ...(await getProjectDefaultSettingQuery("project._id", true)),
           projectManager: {
             $ifNull: [{ $first: "$mgr.full_name" }, ""]
@@ -2276,29 +2298,29 @@ exports.getTimesheetsReports = async (req, res) => {
     }
 
     // to get the total hours as per departments
-    const deptTotalHours = dataTotal.reduce((acc, curr) => {
-      const { employeeDepartment, logged_hours, logged_minutes } = curr;
-      let totalLoggedHours =
-        parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
-      if (!acc[employeeDepartment]) {
-        acc[employeeDepartment] = {
-          employeeDepartment,
-          employeeDepartment: curr.employeeDepartment,
-          totalLoggedHours: 0
-        };
-      }
-      acc[employeeDepartment].totalLoggedHours += totalLoggedHours;
+    // const deptTotalHours = dataTotal.reduce((acc, curr) => {
+    //   const { employeeDepartment, logged_hours, logged_minutes } = curr;
+    //   let totalLoggedHours =
+    //     parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
+    //   if (!acc[employeeDepartment]) {
+    //     acc[employeeDepartment] = {
+    //       employeeDepartment,
+    //       employeeDepartment: curr.employeeDepartment,
+    //       totalLoggedHours: 0
+    //     };
+    //   }
+    //   acc[employeeDepartment].totalLoggedHours += totalLoggedHours;
 
-      return acc;
-    }, {});
+    //   return acc;
+    // }, {});
     // to convert departments hours floating points to be round upto 2 decimal points
-    for (const dept in deptTotalHours) {
-      if (Object.hasOwnProperty.call(deptTotalHours, dept)) {
-        deptTotalHours[dept].totalLoggedHours = parseFloat(
-          deptTotalHours[dept].totalLoggedHours.toFixed(2)
-        );
-      }
-    }
+    // for (const dept in deptTotalHours) {
+    //   if (Object.hasOwnProperty.call(deptTotalHours, dept)) {
+    //     deptTotalHours[dept].totalLoggedHours = parseFloat(
+    //       deptTotalHours[dept].totalLoggedHours.toFixed(2)
+    //     );
+    //   }
+    // }
 
     // to get the total hours as per types
     const typesTotalHours = dataTotal.reduce((acc, curr) => {
@@ -2359,9 +2381,9 @@ exports.getTimesheetsReports = async (req, res) => {
       type: Object.values(typesTotalHours).sort(
         (a, b) => b.totalLoggedHours - a.totalLoggedHours
       ),
-      department: Object.values(deptTotalHours).sort(
-        (a, b) => b.totalLoggedHours - a.totalLoggedHours
-      ),
+      // department: Object.values(deptTotalHours).sort(
+      //   (a, b) => b.totalLoggedHours - a.totalLoggedHours
+      // ),
       user: Object.values(userTotalHours)
         .sort((a, b) => b.totalLoggedHours - a.totalLoggedHours)
         .slice(0, 9)

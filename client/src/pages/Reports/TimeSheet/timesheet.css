@@ -1,261 +1,537 @@
-.time-sheet .peoject-page>.header>div {
-  flex: 0 0 calc(14.28% - 10px);
-  max-width: 14.28%;
-  margin: 5px;
+/* Enhanced TimeSheet CSS */
+.timesheet-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
-.time-sheet .peoject-page .ant-select-selector {
-  border-radius: unset;
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
-  border: unset;
+.timesheet-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: none;
 }
 
-.time-sheet-report-main-wrapper .ant-select-selector .ant-select-selection-placeholder {
-  color: #000;
+/* Header Styles */
+.page-header {
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px 8px 0 0;
+  margin: -24px -24px 24px -24px;
 }
 
-.time-sheet-report-main-wrapper .time-sheet .panel-total-hours>h3 {
-  font-size: 14px;
-  color: rgb(7 169 114);
-  margin-bottom: 0;
-
-}
-
-.time-sheet-report-main-wrapper .main-header>.project-name {
+.header-content {
   display: flex;
   justify-content: space-between;
-  width: 100%;
-}
-
-.time-sheet-report-main-wrapper .project-name>.timesheet-startend-date>div {
-  border-radius: unset;
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
-  border: unset;
-  border: none;
-
-}
-
-.time-sheet-report-main-wrapper .timesheet-startend-date {
-
-  max-width: 50%;
-  display: flex;
-  justify-content: end;
-}
-
-.time-sheet-report-main-wrapper .project-name>h3 {
-  font-size: 30px;
-  color: #746e6e;
-}
-
-.apexcharts-tooltip {
-  background: #f3f3f3;
-  color: #000;
-}
-
-.time-sheet .panel-total-hours>span {
-  font-size: 30px;
-  color: rgb(7 169 114);
-}
-
-.time-sheet-report-main-wrapper .peoject-page>.header {
-  background: #cccccc33;
-  padding: 25px 30px;
-}
-
-.time-sheet-report-main-wrapper .ant-picker-range .ant-picker-suffix .anticon-calendar,
-.time-sheet-report-main-wrapper .ant-picker-range .ant-picker-range-separator .anticon-swap-right,
-.time-sheet-report-main-wrapper .ant-picker-range input::placeholder {
-  color: #746e6e;
-  font-size: 18px;
-  font-weight: 500;
-  font-family: Helvetica, Arial, sans-serif;
-}
-
-.time-sheet-report-main-wrapper .time-sheet .ant-table-header thead.ant-table-thead tr:first-child {
-  background: rgba(0, 143, 251, 0.85) !important;
-}
-
-.time-sheet .ant-table-header .ant-table-column-sorter-down,
-.time-sheet .ant-table-header .ant-table-column-sorter-up,
-.time-sheet .ant-table-header .ant-table-column-sorters {
-  color: #fff;
-  font-size: 20px;
-}
-
-.time-sheet .peoject-page {
-  width: calc(100% - 66px);
-  width: 100%;
-  background: #fff;
-  max-height: calc(100vh - 310px);
-}
-
-.time-sheet .left-time-sheet-data {
-  flex: 0 0 100%;
-  max-width: 100%;
-  padding: 20px 0;
-  position: relative;
-  width: 100%;
-}
-
-.time-sheet .right-time-sheet-data {
-  flex: 0 0 30%;
-  max-width: 30%;
-  padding: 20px 0;
-}
-
-
-.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-thead th.ant-table-column-has-sorters:hover {
-  background: rgba(0, 143, 251, 0.85);
-}
-
-.time-sheet-report-main-wrapper .ant-table-small .ant-table-thead>tr>th {
-  background: rgba(0, 143, 251, 0.85) !important;
-}
-
-.time-sheet .ant-table.ant-table-small .ant-table-thead .ant-table-column-sorters {
-  padding: 0px 8px;
-  color: #fff;
-}
-
-.time-sheet-edit-btn {
-  position: absolute;
-  top: 0;
-  z-index: 2;
-  right: 25px;
-}
-
-.time-sheet .ant-table-row td.ant-table-cell:nth-child(4),
-.time-sheet .ant-table-row td.ant-table-cell:nth-child(3),
-.time-sheet .ant-table-row td.ant-table-cell:nth-child(2) {
-  white-space: wrap;
-}
-
-.time-sheet .ant-table-header .ant-table-column-sorter-down,
-.time-sheet .ant-table-header .ant-table-column-sorter-up {
-  font-size: 10px;
-  color: #fff;
-}
-
-.time-sheet .ant-table-header .ant-table-column-sorters {
-  font-size: 16px;
-}
-
-.time-sheet-report-main-wrapper .new-project-overview .peoject-page {
-  max-height: calc(100vh - 200px);
-}
-
-.time-sheet-report-main-wrapper .main-time-sheet-report-wrapper {
-  height: 100%;
-  max-height: calc(100vh - 150px);
-}
-
-.time-sheet-report-main-wrapper {
-  height: 100%;
-  max-height: calc(100vh - 100px);
-}
-
-.time-sheet .peoject-page>.header>div.panel-total-hours {
-  text-align: end;
-}
-
-.time-sheet .project-panel-header {
-  text-align: end;
-}
-
-.ant-popover-inner-content .time-sheet-sort-by-popup .fi-rr-caret-right {
-  margin-bottom: 6px;
-  margin-left: 10px;
-}
-
-.time-sheet-short-by-listing>p {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down.active,
-.time-sheet span.anticon.anticon-caret-up.ant-table-column-sorter-up.active {
+.page-title {
+  color: white;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.date-picker-container .custom-date-picker {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+}
+
+.date-picker-container .custom-date-picker .ant-picker-input input {
+  color: white;
   background: transparent;
 }
 
-.time-sheet :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-up,
-:where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-column-sorter-down {
-  font-size: 12px;
-  color: #ffff;
+.date-picker-container .custom-date-picker .ant-picker-input input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.time-sheet .sheet-data-wrapper .ant-table-column-sorter-down,
-.time-sheet .sheet-data-wrapper .ant-table-column-sorter-up {
-  color: #fff;
+.date-picker-container .custom-date-picker .ant-picker-separator,
+.date-picker-container .custom-date-picker .ant-picker-suffix {
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.time-sheet .project-panel-header>div {
-  flex-wrap: wrap;
+.header-stats {
+  display: flex;
+  justify-content: center;
 }
 
-.time-sheet .project-panel-header>div>[options="[object Object]"] {
-  flex: 0 0 50%;
-  max-width: 50%;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 16px 24px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
 }
 
-.time-sheet .ant-select-selector {
-  max-height: 56px;
-  overflow: auto;
+.stat-icon {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.left-time-sheet-data .no-data-found {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-}
-.left-time-sheet-data .no-data-found  h1{
-    color: #adadad;
-
-}
-.time-wrapper-left .sidebar-menu-links .active>div {
-  word-break: break-word;
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-@media screen and (max-width:1680px) {
-  .time-sheet .project-panel-header>div>[options="[object Object]"] {
-    flex: 0 0 50%;
-    max-width: 50%;
+.stat-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Filters Section */
+.filters-section {
+  margin-bottom: 32px;
+}
+
+.filters-header {
+  margin-bottom: 16px;
+}
+
+.filters-header h3 {
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.filter-select-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-select {
+  border-radius: 6px;
+}
+
+.custom-select .ant-select-selector {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.custom-select:hover .ant-select-selector,
+.custom-select.ant-select-focused .ant-select-selector {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.custom-option {
+  text-transform: capitalize;
+}
+
+/* Charts Section */
+.charts-section {
+  margin-bottom: 32px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.chart-header {
+  padding: 16px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chart-content {
+  padding: 20px;
+}
+
+/* Table Section */
+.table-section {
+  margin-top: 32px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.table-header h3 {
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Custom Table Styles */
+.custom-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.custom-table .ant-table-thead > tr > th {
+  background: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+  padding: 16px 12px;
+}
+
+.custom-table .ant-table-tbody > tr > td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.custom-table .ant-table-tbody > tr:hover > td {
+  background: #f8f9fa;
+}
+
+/* Table Cell Styles */
+.user-cell {
+  display: flex;
+  align-items: center;
+}
+
+.user-name {
+  color: #595959;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.project-cell {
+  display: flex;
+  align-items: center;
+}
+
+.project-title-link {
+  color: #1890ff;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.project-title-link:hover {
+  color: #40a9ff;
+  text-decoration: underline;
+}
+
+.description-cell {
+  color: #595959;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.no-description {
+  color: #bfbfbf;
+  font-style: italic;
+}
+
+.date-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.date-icon {
+  color: #1890ff;
+  font-size: 14px;
+}
+
+.date-text {
+  color: #595959;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.time-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f6ffed;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.time-icon {
+  color: #52c41a;
+  font-size: 14px;
+}
+
+.time-hours {
+  color: #52c41a;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Sort Menu */
+.sort-menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* No Data Found */
+.no-data-found {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.no-data-content {
+  text-align: center;
+  color: #8c8c8c;
+}
+
+.no-data-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #d9d9d9;
+}
+
+.no-data-content h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #595959;
+}
+
+.no-data-content p {
+  font-size: 14px;
+  margin: 0;
+  color: #8c8c8c;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+  
+  .filters-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 
-@media screen and (max-width:1450px) {
-  .time-sheet .left-time-sheet-data {
-    flex: 0 0 calc(100% - 40px);
-    max-width: 100%;
+@media (max-width: 768px) {
+  .timesheet-container {
+    padding: 16px;
+  }
+  
+  .page-header {
+    padding: 20px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .page-title {
+    font-size: 24px;
+    text-align: center;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-item {
+    justify-content: center;
   }
 }
 
-@media screen and (max-width:1300px) {
-  .sheet-data-wrapper {
-    flex-wrap: wrap;
+@media (max-width: 480px) {
+  .chart-container {
+    margin: 0 -16px;
   }
-
-  .time-sheet .peoject-page,
-  .time-sheet .left-time-sheet-data {
-    flex: 0 0 100%;
-    max-width: 100%;
+  
+  .stat-value {
+    font-size: 20px;
   }
-}
-
-@media screen and (max-width:1200px) {
-  .time-sheet .peoject-page>.header>div {
-    min-width: 170px;
-  }
-
-  .time-sheet-report-main-wrapper .peoject-page>.header {
-    overflow-x: auto;
+  
+  .filters-section,
+  .charts-section {
+    margin-bottom: 24px;
   }
 }
 
-@media screen and (max-width:1024px) {
-  .time-sheet .project-panel-header>div>[options="[object Object]"] {
-    flex: 0 0 100%;
-    max-width: 100%;
+/*      helll    */
+
+.charts-grid-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.charts-row {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+.chart-half {
+  flex: 1;
+  min-width: 0; /* This ensures proper flex shrinking */
+}
+
+.chart-full {
+  width: 100%;
+}
+
+.chart-full .chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* Enhanced styling for the full-width user chart */
+.chart-full .chart-content {
+  padding: 20px;
+}
+
+.chart-full .chart-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #FF4560 0%, #FF6B7A 100%);
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chart-full .chart-header h3 {
+  margin: 0;
+  color: white;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Responsive Design for Custom Layout */
+@media (max-width: 1200px) {
+  .charts-row {
+    flex-direction: column;
   }
+  
+  .chart-half {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .charts-grid-custom {
+    gap: 16px;
+  }
+  
+  .charts-row {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    margin: 0 -16px;
+  }
+  
+  .chart-full .chart-container {
+    margin: 0 -16px;
+  }
+}
+
+/* Remove the old charts-grid styles and replace with these */
+.charts-section {
+  margin-bottom: 32px;
+}
+
+/* Keep all other existing styles */
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.chart-header {
+  padding: 16px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chart-content {
+  padding: 20px;
 }

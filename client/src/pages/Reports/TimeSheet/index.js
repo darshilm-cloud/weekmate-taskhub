@@ -1,10 +1,10 @@
 import React, { useMemo, useCallback } from "react";
-import { Header } from "antd/lib/layout/layout";
 import ReactApexChart from "react-apexcharts";
 import TimeSheetController from "./TimeSheetController";
 import "./timesheet.css";
 import dayjs from "dayjs";
-import { DatePicker, Space, Select, Table, Popover, Card } from "antd";
+import { DatePicker, Select, Table, Card, Button, Dropdown, Menu, Tooltip, Space, Tag } from "antd";
+import { MoreOutlined, ExportOutlined, ReloadOutlined, SortAscendingOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import moment from "moment";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
@@ -42,7 +42,7 @@ const TimeSheet = () => {
   const chartData = useMemo(() => {
     const projectTypeReportData = projectTypeData.map(entry => entry.totalLoggedHours);
     const projectTypeReportDatalabelsData = projectTypeData.map(entry => entry.projectType);
-    const departMentData = departmentData.map(entry => entry.employeeDepartment);
+    const departMentData = [];
     const departMentLogedHours = departmentData.map(entry => entry.totalLoggedHours);
     const usersDataLabels = usersData.map(entry => removeTitle(entry.user));
     const usersLogedHours = usersData.map(entry => entry.totalLoggedHours);
@@ -65,75 +65,40 @@ const TimeSheet = () => {
       series: pieeChartData,
       options: {
         chart: {
-          width: 380,
           type: "pie",
           height: 350,
         },
         labels: pieechartDataMangerNames,
+        colors: ['#00E396', '#008FFB', '#00D9FF', '#FEB019', '#FF4560', '#775DD0', '#546E7A', '#26a69a'],
         legend: {
-          position: "right",
-          offsetY: 0,
-          height: 350,
-          width: 200,
-          fontSize: "12px",
+          position: "bottom",
+          fontSize: '14px',
           itemMargin: {
-            horizontal: 5,
-            vertical: 2
-          },
-          formatter: function (seriesName, opts) {
-            // Truncate long names and add tooltip
-            if (seriesName.length > 15) {
-              return seriesName.substring(0, 15) + "...";
-            }
-            return seriesName;
+            horizontal: 8,
+            vertical: 4
           }
         },
         tooltip: {
           y: {
             formatter: function (val) {
-              return typeof val !== "undefined" ? val.toFixed(2) : val;
+              return `${val?.toFixed(2)} hours`;
             },
           },
         },
         responsive: [
           {
-            breakpoint: 1024,
-            options: {
-              chart: {
-                width: 300,
-                height: 300,
-              },
-              legend: {
-                position: "bottom",
-                width: undefined,
-                height: 100,
-                offsetY: 10,
-                fontSize: "10px",
-                itemMargin: {
-                  horizontal: 3,
-                  vertical: 1
-                }
-              },
-            },
-          },
-          {
             breakpoint: 768,
             options: {
               chart: {
-                width: 250,
-                height: 250,
+                height: 300,
               },
               legend: {
-                position: "bottom",
-                width: undefined,
-                height: 80,
-                offsetY: 5,
-                fontSize: "9px",
+                fontSize: '12px',
                 itemMargin: {
-                  horizontal: 2,
-                  vertical: 1
+                  horizontal: 4,
+                  vertical: 2
                 }
-              },
+              }
             },
           },
         ],
@@ -156,31 +121,20 @@ const TimeSheet = () => {
           toolbar: { show: false },
           type: "bar",
           height: 350,
-          width: 100,
         },
-        annotations: {
-          xaxis: [{
-            x: 500,
-            borderColor: "#00E396",
-            label: {
-              borderColor: "#00E396",
-              style: {
-                color: "#fff",
-                background: "#00E396",
-              },
-            },
-          }],
-          yaxis: [{
-            y: "July",
-            y2: "September",
-          }],
-        },
+        colors: ['#00E396'],
         plotOptions: {
           bar: {
             horizontal: true,
+            borderRadius: 4,
           },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { 
+          enabled: true,
+          formatter: function (val) {
+            return `${val}h`;
+          }
+        },
         xaxis: {
           categories: chartData.projectTypeReportDatalabelsData,
         },
@@ -188,17 +142,13 @@ const TimeSheet = () => {
           xaxis: { lines: { show: true } },
           yaxis: { lines: { show: false } },
         },
-        yaxis: {
-          reversed: false,
-          axisTicks: { show: true },
+        tooltip: { 
+          y: {
+            formatter: function (val) {
+              return `${val} hours`;
+            },
+          }
         },
-        legend: {
-          show: true,
-          position: "bottom",
-          horizontalAlign: "left",
-          offsetX: 40,
-        },
-        tooltip: { fillSeriesColor: true },
       },
     };
   }, [projectTypeData, chartData.projectTypeReportData, chartData.projectTypeReportDatalabelsData]);
@@ -218,29 +168,20 @@ const TimeSheet = () => {
           toolbar: { show: false },
           type: "bar",
           height: 350,
-          width: 100,
         },
-        annotations: {
-          xaxis: [{
-            x: 500,
-            borderColor: "#00E396",
-            label: {
-              borderColor: "#00E396",
-              style: {
-                color: "#fff",
-                background: "#00E396",
-              },
-            },
-          }],
-          yaxis: [{
-            y: "July",
-            y2: "September",
-          }],
-        },
+        colors: ['#008FFB'],
         plotOptions: {
-          bar: { horizontal: false },
+          bar: { 
+            horizontal: false,
+            borderRadius: 4,
+          },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { 
+          enabled: true,
+          formatter: function (val) {
+            return `${val}h`;
+          }
+        },
         xaxis: {
           categories: chartData.departMentData,
         },
@@ -248,23 +189,47 @@ const TimeSheet = () => {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
         },
-        yaxis: {
-          reversed: false,
-          axisTicks: { show: true },
+        tooltip: { 
+          y: {
+            formatter: function (val) {
+              return `${val} hours`;
+            },
+          }
         },
-        legend: {
-          show: true,
-          position: "right",
-          labels: { colors: "#008FFB" },
-        },
-        tooltip: { fillSeriesColor: true },
       },
     };
   }, [departmentData, chartData.departMentLogedHours, chartData.departMentData]);
 
   const verticalBarChartHoursConfig = useMemo(() => {
     if (usersData.length === 0) return null;
-
+  
+    // Generate different colors for each user
+    const generateColors = (count) => {
+      const baseColors = [
+        '#FF4560', '#008FFB', '#00E396', '#FEB019', '#FF6B7A', 
+        '#775DD0', '#26a69a', '#546E7A', '#FF9F43', '#EE5A24',
+        '#5f27cd', '#00d2d3', '#ff9ff3', '#54a0ff', '#5f27cd',
+        '#10ac84', '#ee5253', '#0abde3', '#feca57', '#ff6b6b',
+        '#1dd1a1', '#feca57', '#ff9ff3', '#3c6382', '#40739e',
+        '#487eb0', '#8c7ae6', '#f8b500', '#e17055', '#81ecec'
+      ];
+      
+      // If we have more users than colors, generate additional colors
+      if (count > baseColors.length) {
+        const additionalColors = [];
+        for (let i = baseColors.length; i < count; i++) {
+          // Generate random colors for additional bars
+          const hue = (i * 137.508) % 360; // Golden angle approximation for better color distribution
+          additionalColors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return [...baseColors, ...additionalColors];
+      }
+      
+      return baseColors.slice(0, count);
+    };
+  
+    const colors = generateColors(chartData.usersLogedHours.length);
+  
     return {
       series: [
         {
@@ -276,71 +241,75 @@ const TimeSheet = () => {
         chart: {
           toolbar: { show: false },
           type: "bar",
-          height: 450,
-          width: 200,
+          height: 400,
         },
-        annotations: {
-          xaxis: [{
-            x: 500,
-            borderColor: "#00E396",
-            label: {
-              borderColor: "#00E396",
-              style: {
-                color: "#fff",
-                background: "#00E396",
-              },
-            },
-          }],
-          yaxis: [{
-            y: "July",
-            y2: "September",
-          }],
-        },
+        colors: colors,
         plotOptions: {
-          bar: { horizontal: false },
+          bar: { 
+            horizontal: false,
+            borderRadius: 4,
+            distributed: true, // This enables different colors for each bar
+          },
         },
         dataLabels: {
           enabled: true,
-          style: { fontSize: "10px" },
+          style: { 
+            fontSize: "10px",
+            colors: ['#fff'], // White text on colored bars
+            fontWeight: 'bold'
+          },
+          formatter: function (val) {
+            return `${val}h`;
+          }
         },
         xaxis: {
           categories: chartData.usersDataLabels,
+          labels: {
+            rotate: -45,
+            style: {
+              fontSize: '12px'
+            }
+          }
         },
         grid: {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
         },
-        yaxis: {
-          reversed: false,
-          axisTicks: { show: true },
-        },
         legend: {
-          show: true,
-          position: "right",
-          labels: { colors: "#008FFB" },
+          show: false, // Hide legend since we have distributed colors
         },
-        tooltip: { fillSeriesColor: true },
+        tooltip: { 
+          y: {
+            formatter: function (val) {
+              return `${val} hours`;
+            },
+          }
+        },
       },
     };
   }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels]);
+  
 
   // Memoized table columns
   const columns = useMemo(() => [
     {
       title: "User",
       dataIndex: "user",
-      width: 300,
+      width: 180,
       key: "user",
       render: (text, record) => (
-        <span style={ { textTransform: "capitalize" } }>
-          { removeTitle(record.user) }
-        </span>
+        <div className="user-cell">
+          <span className="user-name">
+            {removeTitle(record.user)}
+          </span>
+        </div>
       ),
       sorter: (a, b) => a.user.localeCompare(b.user),
+      ellipsis: true,
     },
     {
       title: "Project",
-      width: 250,
+      width: 220,
       dataIndex: "project",
       key: "project",
       render: (text, record) => {
@@ -350,56 +319,68 @@ const TimeSheet = () => {
           return match?.charAt(0) + group1?.toUpperCase();
         });
         return (
-          <Link to={ `/${companySlug}/project/app/${ProjectId}?tab=Time` }>
-            <div className="project_title_main_div">
-              <span>{ formattedTitle }</span>
+          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
+            <div className="project-cell">
+              <span className="project-title-link">{formattedTitle}</span>
             </div>
           </Link>
         );
       },
       sorter: (a, b) => a.project.localeCompare(b.project),
+      ellipsis: true,
     },
     {
       title: "Description",
-      width: 500,
+      width: 300,
       dataIndex: "descriptions",
       key: "descriptions",
       render: (text, record) =>
         text ? (
-          <div
-            className="time-description-text"
-            dangerouslySetInnerHTML={ {
-              __html: text.length > 10
-                ? text.slice(0, 15).replace(/\n/g, '<br>') + "..."
-                : text.replace(/\n/g, '<br>'),
-            } }
-          />
+          <Tooltip title={text} placement="topLeft">
+            <div
+              className="description-cell"
+              dangerouslySetInnerHTML={{
+                __html: text.length > 50
+                  ? text.slice(0, 50).replace(/\n/g, '<br>') + "..."
+                  : text.replace(/\n/g, '<br>'),
+              }}
+            />
+          </Tooltip>
         ) : (
-          "-"
+          <span className="no-description">-</span>
         ),
       sorter: (a, b) => a.descriptions.localeCompare(b.descriptions),
+      ellipsis: true,
     },
     {
       title: "Date",
-      width: 150,
+      width: 120,
       dataIndex: "logged_date",
       key: "logged_date",
       render: (text, record) => {
         const startDate = moment(record.logged_date).format("DD MMM YYYY");
-        return <span style={ { textTransform: "capitalize" } }>{ startDate }</span>;
+        return (
+          <div className="date-cell">
+            <CalendarOutlined className="date-icon" />
+            <span className="date-text">{startDate}</span>
+          </div>
+        );
       },
       sorter: (a, b) => a.logged_date - b.logged_date,
+      align: 'center',
     },
     {
       title: "Time",
-      width: 50,
+      width: 100,
       dataIndex: "logged_time",
       render: (text, record) => (
-        <span style={ { textTransform: "capitalize" } }>
-          { record.logged_time }
-        </span>
+        <div className="time-cell">
+          <ClockCircleOutlined className="time-icon" />
+          <span className="time-hours">{record.logged_time}</span>
+        </div>
       ),
       sorter: (a, b) => a.logged_hours - b.logged_hours,
+      align: 'center',
     },
   ], []);
 
@@ -415,11 +396,6 @@ const TimeSheet = () => {
     csvRef?.click();
   }, []);
 
-  const handlePopoverVisibilityChange = useCallback(() => {
-    setIsPopoverVisible(false);
-    setIssortbyPopUp(false);
-  }, [setIsPopoverVisible, setIssortbyPopUp]);
-
   // Memoized filter options
   const filterOptions = useMemo(() => ({
     filterOption: (input, option) =>
@@ -428,278 +404,233 @@ const TimeSheet = () => {
       optionA.children?.toLowerCase().localeCompare(optionB.children?.toLowerCase())
   }), []);
 
-  const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
+  const showTotal = useCallback(
+    (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
+    []
+  );
 
-  // Memoized sort indicators
-  const SortIndicator = useCallback(({ field }) => {
-    if (selectedSort !== field) return null;
-    return sortOrder === "asc"
-      ? <i className="fi fi-rr-arrow-small-up" />
-      : <i className="fi fi-rr-arrow-small-down" />;
-  }, [selectedSort, sortOrder]);
+  // Render methods
+  const renderFilterSelect = useCallback((
+    placeholder,
+    value,
+    onChange,
+    options,
+    valueKey,
+    labelKey,
+    mode = "multiple"
+  ) => (
+    <div className="filter-select-container">
+      <Select
+        placeholder={placeholder}
+        mode={mode}
+        showSearch
+        value={value}
+        onChange={onChange}
+        className="custom-select"
+        {...filterOptions}
+      >
+        {options.map((item, index) => (
+          <Option
+            key={index}
+            value={item[valueKey]}
+            className="custom-option"
+          >
+            {labelKey === "manager_name" ? removeTitle(item[labelKey]) : 
+             labelKey === "full_name" ? removeTitle(item[labelKey]) : 
+             item[labelKey]}
+          </Option>
+        ))}
+      </Select>
+    </div>
+  ), [filterOptions]);
 
-  return (
-    <Card className="employee-card">
+  const renderChart = useCallback((chartData, type, title) => {
+    if (!chartData) return null;
 
-      <div className="heading-wrapper">
-        <h2 >TimeSheet</h2>
-        <div className="timesheet-startend-date">
-          <RangePicker
-            value={ selectedRange }
-            presets={ rangePresets }
-            onChange={ onRangeChange }
+    return (
+      <div className="chart-container">
+        <div className="chart-header">
+          <h3>{title}</h3>
+        </div>
+        <div className="chart-content">
+          <ReactApexChart
+            key={type === "pie" ? chartKey : undefined}
+            options={chartData.options}
+            series={chartData.series}
+            type={type}
+            height={350}
           />
         </div>
       </div>
-      <div className="global-search" >
-        <div className="filter-btn-wrapper timesheet">
-          <Select
-            placeholder="Technology"
-            mode="multiple"
-            showSearch
-            { ...filterOptions }
-            value={ value }
-            onChange={ handleTechnologyChange }
-          >
-            { technologyList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { item?.project_tech }
-              </Option>
-            )) }
-          </Select>
+    );
+  }, [chartKey]);
 
-          <Select
-            mode="multiple"
-            { ...filterOptions }
-            value={ project }
-            onChange={ handleProjectChange }
-            showSearch
-            placeholder="Project"
-          >
-            { projectList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { item.title }
-              </Option>
-            )) }
-          </Select>
+  // Sort options for dropdown
+  const sortOptions = [
+    { key: "user", label: "User" },
+    { key: "project", label: "Project" },
+    { key: "descriptions", label: "Description" },
+    { key: "logged_date", label: "Date" },
+    { key: "logged_time", label: "Hours" },
+  ];
 
-          <Select
-            mode="multiple"
-            value={ projectType }
-            onChange={ handleTypeChange }
-            showSearch
-            placeholder="Project Type"
-            { ...filterOptions }
-          >
-            { projectTypeList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { item.project_type }
-              </Option>
-            )) }
-          </Select>
+  // Action menu items
+  const actionMenuItems = [
+    {
+      key: 'sort',
+      icon: <SortAscendingOutlined />,
+      label: 'Sort By',
+      children: sortOptions.map(({ key, label }) => ({
+        key,
+        label: (
+          <div className="sort-menu-item">
+            <span>{label}</span>
+            {selectedSort === key && (
+              sortOrder === "asc"
+                ? <i className="fi fi-rr-arrow-small-up"></i>
+                : <i className="fi fi-rr-arrow-small-down"></i>
+            )}
+          </div>
+        ),
+        onClick: () => handleSortSelect(key)
+      }))
+    },
+    {
+      key: 'export',
+      icon: <ExportOutlined />,
+      label: 'Export',
+      onClick: handleCsvExport
+    },
+    {
+      key: 'reset',
+      icon: <ReloadOutlined />,
+      label: 'Reset',
+      onClick: onReset
+    }
+  ];
 
-          <Select
-            mode="multiple"
-            value={ manager }
-            { ...filterOptions }
-            onChange={ handleManagerChange }
-            showSearch
-            placeholder="Manager"
-          >
-            { projectManagerList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { removeTitle(item.manager_name) }
-              </Option>
-            )) }
-          </Select>
-
-          <Select
-            mode="multiple"
-            value={ department }
-            onChange={ handleDepartmentSelection }
-            showSearch
-            placeholder="Department"
-            { ...filterOptions }
-          >
-            { departmentList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { item.sub_department_name }
-              </Option>
-            )) }
-          </Select>
-
-          <Select
-            mode="multiple"
-            value={ user }
-            onChange={ handleUserChange }
-            showSearch
-            placeholder="User"
-            { ...filterOptions }
-          >
-            { userEmployeeList.map((item, index) => (
-              <Option
-                key={ index }
-                value={ item._id }
-                style={ { textTransform: "capitalize" } }
-              >
-                { removeTitle(item.full_name) }
-              </Option>
-            )) }
-          </Select>
-
-          <div className="panel-total-hours">
-            <h3>Total Hours</h3>
-            <span>{ totalLoggedHours }</span>
+  return (
+    <div className="timesheet-container">
+      <Card className="timesheet-card">
+        {/* Header */}
+        <div className="page-header">
+          <div className="header-content">
+            <h1 className="page-title">TimeSheet Report</h1>
+            <div className="header-actions">
+              <div className="date-picker-container">
+                <RangePicker
+                  value={selectedRange}
+                  presets={rangePresets}
+                  onChange={onRangeChange}
+                  className="custom-date-picker"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="header-stats">
+            <div className="stat-item">
+              <ClockCircleOutlined className="stat-icon" />
+              <div className="stat-content">
+                <span className="stat-label">Total Hours</span>
+                <span className="stat-value">{totalLoggedHours}</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="project-panel-header">
-        <div style={ { display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" } }>
-          { pieChartConfig && (
-            <div style={ { flex: "0 0 auto", minWidth: "350px", maxWidth: "600px" } }>
-              <ReactApexChart
-                key={ chartKey }
-                options={ pieChartConfig.options }
-                series={ pieChartConfig.series }
-                type="pie"
-                className="timesheetchart"
-                width="100%"
-              />
-            </div>
-          ) }
-          { horizontalBarChartConfig && (
-            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
-              <ReactApexChart
-                options={ horizontalBarChartConfig.options }
-                series={ horizontalBarChartConfig.series }
-                type="bar"
-                className="timesheetchart"
-                width="100%"
-              />
-            </div>
-          ) }
-          { verticalBarChartConfig && (
-            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
-              <ReactApexChart
-                options={ verticalBarChartConfig.options }
-                series={ verticalBarChartConfig.series }
-                type="bar"
-                className="timesheetchart"
-                width="100%"
-              />
-            </div>
-          ) }
-          { verticalBarChartHoursConfig && (
-            <div style={ { flex: "1 1 auto", minWidth: "300px" } }>
-              <ReactApexChart
-                className="right-time-sheet-data"
-                options={ verticalBarChartHoursConfig.options }
-                series={ verticalBarChartHoursConfig.series }
-                type="bar"
-                width="100%"
-              />
-            </div>
-          ) }
+
+        {/* Filters */}
+        <div className="filters-section">
+          <div className="filters-header">
+            <h3>Filters</h3>
+          </div>
+          <div className="filters-grid">
+            {renderFilterSelect(
+              "Select Technology",
+              value,
+              handleTechnologyChange,
+              technologyList,
+              "_id",
+              "project_tech"
+            )}
+
+            {renderFilterSelect(
+              "Select Project",
+              project,
+              handleProjectChange,
+              projectList,
+              "_id",
+              "title"
+            )}
+
+            {renderFilterSelect(
+              "Select Project Type",
+              projectType,
+              handleTypeChange,
+              projectTypeList,
+              "_id",
+              "project_type"
+            )}
+
+            {renderFilterSelect(
+              "Select Manager",
+              manager,
+              handleManagerChange,
+              projectManagerList,
+              "_id",
+              "manager_name"
+            )}
+
+            {renderFilterSelect(
+              "Select User",
+              user,
+              handleUserChange,
+              userEmployeeList,
+              "_id",
+              "full_name"
+            )}
+          </div>
         </div>
 
-        <div className="sheet-data-wrapper" style={ { display: "flex", justifyContent: "space-between" } }>
-          <div
-            className="left-time-sheet-data"
-            onMouseEnter={ handleMouseEnter }
-            onMouseLeave={ handleMouseLeave }
-          >
-            { tableData && tableData.length > 0 && (
-              <Popover
-                placement="left"
-                visible={ isPopoverVisible }
-                onVisibleChange={ handlePopoverVisibilityChange }
-                content={
-                  <>
-                    <div
-                      onClick={ () => setIsPopoverVisible(true) }
-                      style={ {
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      } }
-                      className="time-sheet-sort-by-popup"
-                    >
-                      <Popover
-                        placement="right"
-                        visible={ sortbyPopUp }
-                        onVisibleChange={ setIssortbyPopUp }
-                        overlayStyle={ { marginLeft: 16 } }
-                        trigger="click"
-                        content={
-                          <div className="time-sheet-short-by-listing">
-                            { [
-                              { key: "user", label: "User" },
-                              { key: "project", label: "Project" },
-                              { key: "descriptions", label: "Description" },
-                              { key: "logged_date", label: "Date" },
-                              { key: "logged_time", label: "Hours" },
-                            ].map(({ key, label }) => (
-                              <p key={ key } onClick={ () => handleSortSelect(key) }>
-                                { label }
-                                <SortIndicator field={ key } />
-                              </p>
-                            )) }
-                          </div>
-                        }
-                      >
-                        <div
-                          style={ {
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          } }
-                          className="time-sheet-sort-by-popup"
-                        >
-                          <p>sortBy</p>
-                          <i className="fi fi-rr-caret-right" />
-                        </div>
-                      </Popover>
-                    </div>
-                    <p onClick={ handleCsvExport } style={ { cursor: "pointer" } }>
-                      Export
-                    </p>
-                    <p onClick={ onReset } style={ { cursor: "pointer" } }>
-                      Reset
-                    </p>
-                  </>
-                }
-              >
-                <Space align="end" style={ { marginRight: 10 } }>
-                  <i
-                    onClick={ handleOpenThreeDotMenu }
-                    style={ { cursor: "pointer" } }
-                    className="fi fi-br-menu-dots-vertical"
-                  />
-                </Space>
-              </Popover>
-            ) }
+        {/* Charts - Updated Layout */}
+        <div className="charts-section">
+          <div className="charts-grid-custom">
+            {/* First row with two charts */}
+            <div className="charts-row">
+              <div className="chart-half">
+                {renderChart(pieChartConfig, "pie", "Hours by Manager")}
+              </div>
+              <div className="chart-half">
+                {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
+              </div>
+            </div>
+            
+            {/* Second row with full-width chart */}
+            <div className="charts-row">
+              <div className="chart-full">
+                {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <div hidden>
+        {/* Table */}
+        <div className="table-section">
+          <div className="table-header">
+            <h3>Time Entries</h3>
+            <div className="table-actions">
+              <Dropdown
+                menu={{ items: actionMenuItems }}
+                trigger={['click']}
+                placement="bottomRight"
+              >
+                <Button type="text" icon={<MoreOutlined />} />
+              </Dropdown>
+            </div>
+          </div>
+
+          <div className="table-container">
+            {/* Hidden export elements */}
+            <div style={{ display: 'none' }}>
               <ReactHTMLTableToExcel
                 id="test-table-xls-button"
                 className="ant-btn-primary"
@@ -708,34 +639,39 @@ const TimeSheet = () => {
                 sheet="tablexls"
                 buttonText="Export XLS"
               />
-              <div dangerouslySetInnerHTML={ { __html: html["html"] } } />
+              <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
             </div>
 
-            { tableData && tableData.length > 0 ? (
+            {tableData && tableData.length > 0 ? (
               <Table
-                size="small"
-                columns={ columns }
-                dataSource={ tableData }
-                pagination={ {
+                columns={columns}
+                dataSource={tableData}
+                rowKey={(record, index) => `${record.user}-${record.project_id}-${index}`}
+                pagination={{
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "30"],
+                  pageSizeOptions: ["10", "20", "30", "50"],
                   showTotal: showTotal,
+                  showQuickJumper: true,
                   ...pagination,
-                } }
-                onChange={ handleTableChange }
+                }}
+                onChange={handleTableChange}
+                size="middle"
+                scroll={{ x: 'max-content' }}
                 className="custom-table"
-                headerClassName="custom-header-row"
               />
             ) : (
               <div className="no-data-found">
-                <h1>No Data</h1>
+                <div className="no-data-content">
+                  <ClockCircleOutlined className="no-data-icon" />
+                  <h3>No time entries found</h3>
+                  <p>Try adjusting your filters or date range</p>
+                </div>
               </div>
-            ) }
+            )}
           </div>
         </div>
-      </div>
-
-    </Card>
+      </Card>
+    </div>
   );
 };
 
