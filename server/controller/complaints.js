@@ -194,6 +194,7 @@ exports.getComplaint = async (req, res) => {
       ...orFilter
     };
 
+
     const mainQuery = [
       {
         $lookup: {
@@ -301,16 +302,27 @@ exports.getComplaint = async (req, res) => {
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
-      // {
-      //     $lookup: {
-      //         from: "complaints_statuses",
-      //         localField: "_id",
-      //         foreignField: "complaint_id",
-      //         as: "complaintstaatus",
-
-      //     }
-      // },
-
+      {
+    $group: {
+      _id: "$_id", // Group by complaint ID to remove duplicates
+      // Keep the first occurrence of each field
+      project: { $first: "$project" },
+      manager: { $first: "$manager" },
+      acc_manager: { $first: "$acc_manager" },
+      technology: { $first: "$technology" },
+      createdBy: { $first: "$createdBy" },
+      project_id: { $first: "$project_id" },
+      client_name: { $first: "$client_name" },
+      client_email: { $first: "$client_email" },
+      complaint: { $first: "$complaint" },
+      priority: { $first: "$priority" },
+      escalation_level: { $first: "$escalation_level" },
+      status: { $first: "$status" },
+      reason: { $first: "$reason" },
+      updatedAt: { $first: "$updatedAt" },
+      createdAt: { $first: "$createdAt" }
+    }
+  },
       {
         $project: {
           _id: 1,
@@ -366,6 +378,7 @@ exports.getComplaint = async (req, res) => {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
     let data = await Complaints.aggregate(listQuery);
+    console.log("🚀 ~ exports.getComplaint= ~ data:", data)
 
     let metaData = {};
     if (!value?.isSearch) {
