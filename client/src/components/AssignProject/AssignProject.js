@@ -109,9 +109,6 @@ function AssignProject() {
   });
   const [searchKeyword, setSearchKeyword] = useState("");
 
-
-
-
   const handleSearch = (searchValue) => {
     setSearchKeyword(searchValue);
   };
@@ -638,7 +635,7 @@ function AssignProject() {
   };
 
   function generatePattern(projectTypeSlug) {
-    const patternString = `^SO\\d+\\/(?:${projectTypeSlug})\\/[\\s\\S]+$`;
+    const patternString = `^[A-Z]{2}\\d+\\/(?:${projectTypeSlug})\\/[\\s\\S]+$`;
     return new RegExp(patternString);
   }
 
@@ -1472,9 +1469,6 @@ function AssignProject() {
               ...pagination,
             } }
             onChange={ handleTableChange }
-            // scroll={ {
-            //   x: "100%",
-            // } }
           />
         </div>
       </Card>
@@ -1510,11 +1504,11 @@ function AssignProject() {
                     },
                     {
                       pattern: generatePattern(projectTypeSlug),
-                      message: "Title must be in the format SO1140/TM/PMS",
+                      message: "Title must be in the format AB1234/TM/ABC",
                     },
                   ] }
                 >
-                  <Input placeholder="SO1140/TM/PMS" />
+                  <Input placeholder="AB1234/TM/ABC" />
                 </Form.Item>
 
                 <Row>
@@ -1994,7 +1988,6 @@ function AssignProject() {
                       Cancel
                     </Button>
                   </div>
-                
                 </div>
               </div>
             </div>
