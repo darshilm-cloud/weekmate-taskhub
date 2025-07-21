@@ -448,3 +448,200 @@ exports.getDashboardData = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
+// Get users list by super admin API
+exports.getUsersList = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 30,
+      search = "",
+      sort = "desc",
+      sortBy = "createdAt",
+      companyId = null
+    } = req.body;
+
+    if (!companyId) {
+      return errorResponse(res, statusCode.SUCCESS, NOT_FOUND);
+    }
+
+    let matchQuery = {
+      isDeleted: false,
+      companyId: newObjectId(companyId)
+    };
+
+    let orFilter = [];
+
+    if (search.length > 0) {
+      orFilter = [
+        ...orFilter,
+        searchDataArr(["first_name", "last_name", "email"], search)
+      ];
+    }
+
+    if (orFilter.length > 0) {
+      matchQuery = { ...matchQuery, $and: orFilter };
+    }
+
+    const mainQuery = [
+      { $match: matchQuery },
+      { $sort: { [sortBy]: sort == "desc" ? -1 : 1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    ];
+
+    const [userData, totalCount] = await Promise.all([
+      employeeSchema.aggregate(mainQuery),
+      employeeSchema.countDocuments(matchQuery)
+    ]);
+
+    const metaData = {
+      total: totalCount,
+      limit: limit,
+      pageNo: page,
+      totalPages: limit > 0 ? Math.ceil(totalCount / limit) : 1,
+      currentPage: page
+    };
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      LISTING,
+      userData,
+      metaData
+    );
+  } catch (error) {
+    console.log("🚀 ~ exports.getUsersList=async ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Add users (employee) by super admin API
+exports.addUser = async (req, res) => {
+  try {
+
+    const { error, value } = validateFormatter(getAddUserSchema(), req.body);
+
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const { email, firstName, lastName, password, companyId } = value;
+
+    // Check for user email and username exist
+    let isEmailExists = await employeeSchema.findOne({
+      email
+    });
+
+    if (isEmailExists) {
+      return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
+    }
+
+    const roleData = await PMSRoles.findOne({
+      role_name: "User",
+      isDeleted: false
+    });
+
+    // Add user according company
+    let employeeObject = {
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      full_name: `${firstName} ${lastName}`,
+      password,
+      pms_role_id: roleData._id,
+      companyId: newObjectId(companyId)
+    };
+
+    let saveEmployee = await new employeeSchema(employeeObject).save();
+
+    if (saveEmployee) {
+      return successResponse(res, statusCode.SUCCESS, USER_ADDED, saveEmployee);
+    } else {
+      return errorResponse(res, statusCode.SERVER_ERROR, SERVER_ERROR);
+    }
+  } catch (error) {
+    console.log("🚀 ~ exports.getCompanyList=async ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Edit users (employee) by super admin API
+exports.editUser = async (req, res) => {
+  try {
+   
+    const { error, value } = validateFormatter(getEditUserSchema(), req.body);
+
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const { userId } = req.params;
+
+    const { email, firstName, lastName, companyId, isActivate } = value;
+
+    // Create an update object with only the fields that are present in the req
+    const updateFields = {};
+
+    if (email !== undefined) updateFields.email = email;
+    if (firstName !== undefined) updateFields.first_name = firstName;
+    if (lastName !== undefined) updateFields.last_name = lastName;
+    if (firstName !== undefined && lastName !== undefined)
+      updateFields.full_name = `${firstName} ${lastName}`;
+    if (companyId !== undefined) updateFields.companyId = companyId;
+    if (isActivate !== undefined) updateFields.isActivate = isActivate;
+
+    // Add updatedAt timestamp
+    updateFields.updatedAt = new Date();
+
+    // Find and update the user with only the provided fields
+    const updatedUser = await employeeSchema.findOneAndUpdate(
+      { _id: newObjectId(userId) },
+      { $set: updateFields },
+      { new: true } // Return the updated document
+    );
+
+    // Check if user exists
+    if (!updatedUser) {
+      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, UPDATED, updatedUser);
+  } catch (error) {
+    console.log("🚀 ~ exports.editUser=async ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+
+//Delete user (employee) by super admin API
+exports.deleteUser = async (req, res) => {
+  try {
+
+    const { userId } = req.params;
+
+    let userData = await employeeSchema.findOne({ _id: newObjectId(userId) });
+
+    if (!userData) {
+      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
+
+    userData.isDeleted = true;
+    userData.isActivate = false;
+
+    await userData.save();
+
+    return successResponse(res, statusCode.SUCCESS, DELETED);
+  } catch (error) {
+    console.log("🚀 ~ exports.deleteUser ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
