@@ -5,12 +5,6 @@ const CompanySchema = new mongoose.Schema(
     companyName: {
       type: String
     },
-    companyEmail: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: true
-    },
     companyLogoUrl: {
       type: String,
       default: ""
@@ -51,7 +45,6 @@ const CompanySchema = new mongoose.Schema(
 );
 
 CompanySchema.index({ companyName: 1 });
-CompanySchema.index({ companyEmail: 1 });
 CompanySchema.index({ companyDomain: 1 });
 CompanySchema.index({ isActive: 1 });
 CompanySchema.index({ isDeleted: 1 });

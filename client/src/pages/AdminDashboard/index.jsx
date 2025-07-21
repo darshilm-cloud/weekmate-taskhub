@@ -10,7 +10,6 @@ const AdminDashboard = () => {
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;
 
-  const [loading, setLoading] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     totalAdmin: 0,
     totalEmployee: 0,
@@ -55,6 +54,7 @@ const AdminDashboard = () => {
       value: dashboardData.totalEmployee,
       icon: <EmployeeIcon />,
       iconBgColor: "rgba(24, 144, 255, 0.1)",
+      navigateTo: "/admin/company-employee"
     },
   ];
   
@@ -64,8 +64,6 @@ const AdminDashboard = () => {
         padding: "24px",
       }}
     >
-      {/* Dashboard Cards */}
-      <Spin spinning={loading}>
         <Row gutter={[24, 24]} justify="start">
           {dashboardCards.map((card, index) => (
             <Col xs={24} sm={12} md={12} lg={8} xl={6} key={index}>
@@ -133,7 +131,6 @@ const AdminDashboard = () => {
             </Col>
           ))}
         </Row>
-      </Spin>
     </div>
   );
 };

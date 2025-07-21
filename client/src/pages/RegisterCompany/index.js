@@ -11,6 +11,7 @@ import {
   Modal,
   Typography,
   Alert,
+  Spin,
 } from "antd";
 import {
   UserOutlined,
@@ -18,6 +19,7 @@ import {
   LockOutlined,
   BankOutlined,
   LinkOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import "./companyregister.scss";
 import TaskHub from "../../assets/images/taskhubicon.svg";
@@ -30,7 +32,30 @@ const { Title, Text } = Typography;
 // Constants to prevent recreation on each render
 const FORM_LAYOUT = "vertical";
 const AUTO_COMPLETE = "off";
-const BASE_DOMAIN = window.location.origin; // Replace with your actual base domain
+const BASE_DOMAIN = window.location.origin;
+
+// MillionVerifier API configuration
+const MILLION_VERIFIER_API = "EtZ9UjCjczYS5lxJyJ9rxvAn7";
+const MILLION_VERIFIER_URL = "https://api.millionverifier.com/api/v3/";
+
+// Email validation function
+const validateEmailWithAPI = async (email) => {
+  try {
+    const response = await fetch(
+      `${MILLION_VERIFIER_URL}?api=${MILLION_VERIFIER_API}&email=${encodeURIComponent(email)}&timeout=10`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Email verification service is unavailable');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Email validation error:', error);
+    throw new Error('Unable to verify email. Please try again later.');
+  }
+};
 
 // Validation rules - memoized to prevent recreation
 const VALIDATION_RULES = {
@@ -40,6 +65,38 @@ const VALIDATION_RULES = {
   email: [
     { required: true, message: "Please input email!" },
     { type: "email", message: "Please enter valid email!" },
+    {
+      validator: async (_, value) => {
+        if (!value) return Promise.resolve();
+        
+        try {
+          const result = await validateEmailWithAPI(value);
+          
+          // Check if email verification was successful
+          if (result.resultcode !== 1 || result.result !== "ok") {
+            return Promise.reject(new Error("Invalid email address. Please enter a valid email."));
+          }
+          
+          // Check if email is from a free/generic provider
+          if (result.free === true) {
+            return Promise.reject(
+              new Error("Generic email addresses (Gmail, Yahoo, Outlook, etc.) are not allowed. Please use a corporate email address.")
+            );
+          }
+          
+          // Check if it's a role-based email (optional additional check)
+          if (result.role === true) {
+            return Promise.reject(
+              new Error("Role-based email addresses (info@, admin@, etc.) are not recommended. Please use a personal corporate email.")
+            );
+          }
+          
+          return Promise.resolve();
+        } catch (error) {
+          return Promise.reject(new Error(error.message || "Email validation failed"));
+        }
+      },
+    },
   ],
   password: [
     { required: true, message: "Please input password!" },
@@ -57,10 +114,6 @@ const VALIDATION_RULES = {
   ],
   confirmPassword: [{ required: true, message: "Please confirm password!" }],
   companyName: [{ required: true, message: "Please input company name!" }],
-  companyEmail: [
-    { required: true, message: "Please input company email!" },
-    { type: "email", message: "Please enter valid email!" },
-  ],
   companySlug: [
     { required: true, message: "Please input company slug!" },
     { min: 3, message: "Slug must be at least 3 characters!" },
@@ -105,6 +158,7 @@ const CompanyRegistration = () => {
   const [validatedCompanyData, setValidatedCompanyData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companySlug, setCompanySlug] = useState('');
+  const [isValidatingEmail, setIsValidatingEmail] = useState(false);
 
   // Form instances - stable references
   const [adminForm] = Form.useForm();
@@ -154,9 +208,23 @@ const CompanyRegistration = () => {
     return companySlug ? `${BASE_DOMAIN}/${companySlug}` : `${BASE_DOMAIN}/your-company`;
   }, [companySlug]);
 
+  // Handle email validation state
+  const handleEmailValidation = useCallback(async (email) => {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) return;
+    
+    setIsValidatingEmail(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for UX
+      // Validation is handled by the form validator
+    } finally {
+      setIsValidatingEmail(false);
+    }
+  }, []);
+
   // Step 1: Admin Details Handler
   const handleAdminNext = useCallback(async () => {
     try {
+      setIsSubmitting(true);
       const adminData = await adminForm.validateFields();
 
       // Store validated admin data (excluding confirmPassword)
@@ -164,7 +232,18 @@ const CompanyRegistration = () => {
       setValidatedAdminData(adminDetailsToStore);
       setCurrentStep(1);
     } catch (error) {
-      showErrorMessage("Please fill all required fields correctly");
+      if (error.errorFields) {
+        const emailError = error.errorFields.find(field => field.name[0] === 'email');
+        if (emailError) {
+          showErrorMessage("Please ensure you're using a valid corporate email address");
+        } else {
+          showErrorMessage("Please fill all required fields correctly");
+        }
+      } else {
+        showErrorMessage("Please fill all required fields correctly");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }, [adminForm, showErrorMessage]);
 
@@ -208,10 +287,10 @@ const CompanyRegistration = () => {
           last_name: validatedAdminData.last_name,
           email: validatedAdminData.email,
           password: validatedAdminData.password,
+          position: validatedAdminData.position || '',
         },
         companyDetails: {
           companyName: companyData.companyName || currentFormValues.companyName,
-          companyEmail: companyData.companyEmail || currentFormValues.companyEmail,
           companyDomain: companyData.companySlug || currentFormValues.companySlug,
         },
       };
@@ -242,6 +321,7 @@ const CompanyRegistration = () => {
     isSubmitting,
     showErrorMessage,
     showVerificationModal,
+    history
   ]);
 
   // Navigation handler
@@ -249,7 +329,6 @@ const CompanyRegistration = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
-    // Uncomment if navigation is needed: navigate("/");
   }, [currentStep]);
 
   // Custom validator for confirm password - memoized
@@ -310,11 +389,18 @@ const CompanyRegistration = () => {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Email"
+                label="Corporate Email"
                 name="email"
                 rules={VALIDATION_RULES.email}
+                validateFirst
+                hasFeedback
               >
-                <Input prefix={<MailOutlined />} placeholder="Email" />
+                <Input 
+                  prefix={<MailOutlined />} 
+                  placeholder="your.name@company.com"
+                  suffix={isValidatingEmail ? <Spin indicator={<LoadingOutlined spin />} /> : null}
+                  onBlur={(e) => handleEmailValidation(e.target.value)}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -348,10 +434,23 @@ const CompanyRegistration = () => {
               </Form.Item>
             </Col>
           </Row>
+          
+          {/* Email Policy Alert */}
+          <Row gutter={24}>
+            <Col xs={24}>
+              <Alert
+                message="Email Policy"
+                description="We only accept corporate email addresses. Free email providers like Gmail, Yahoo, Outlook, and others are not allowed for company registration."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            </Col>
+          </Row>
         </Form>
       </Card>
     ),
-    [adminForm, validatedAdminData, confirmPasswordValidator]
+    [adminForm, validatedAdminData, confirmPasswordValidator, isValidatingEmail, handleEmailValidation]
   );
 
   const CompanyForm = useMemo(
@@ -366,22 +465,13 @@ const CompanyRegistration = () => {
           initialValues={validatedCompanyData}
         >
           <Row gutter={24}>
-            <Col xs={24} sm={12}>
+            <Col xs={24}>
               <Form.Item
                 label="Company Name"
                 name="companyName"
                 rules={VALIDATION_RULES.companyName}
               >
                 <Input prefix={<BankOutlined />} placeholder="Company Name" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Company Email"
-                name="companyEmail"
-                rules={VALIDATION_RULES.companyEmail}
-              >
-                <Input prefix={<MailOutlined />} placeholder="Company Email" />
               </Form.Item>
             </Col>
           </Row>
@@ -475,7 +565,8 @@ const CompanyRegistration = () => {
                 size="large"
                 onClick={handleAdminNext}
                 className="action-button primary-button"
-                disabled={isSubmitting}
+                loading={isSubmitting}
+                disabled={isSubmitting || isValidatingEmail}
               >
                 NEXT
               </Button>
@@ -497,7 +588,7 @@ const CompanyRegistration = () => {
         </Row>
       </div>
     ),
-    [currentStep, goBack, handleAdminNext, handleCompanySubmit, isSubmitting]
+    [currentStep, goBack, handleAdminNext, handleCompanySubmit, isSubmitting, isValidatingEmail]
   );
 
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);

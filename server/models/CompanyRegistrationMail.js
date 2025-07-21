@@ -10,7 +10,6 @@ const CompanyRegistrationMailSchema = new mongoose.Schema({
   },
   companyDetails: {
     companyName: String,
-    companyEmail: String,
     companyDomain: String,
   },
   verificationToken: String,

@@ -466,6 +466,8 @@ function UserProfile() {
             </>
           )}
 
+          {getRoles(["Admin"]) && <li onClick={ () => history.push(`/${companySlug}/admin/company-management`)}>Company Management</li>}
+
           <li onClick={() => dispatch(userSignOut())}>Logout</li>
         </>
       )}

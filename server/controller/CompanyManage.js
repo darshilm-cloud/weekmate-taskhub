@@ -201,25 +201,10 @@ exports.addCompany = async (req, res) => {
       );
     }
 
-    const { companyEmail, companyName, logo, favicon } = value;
-    console.log(logo, favicon, "ogo,favicon");
-    const existingCompany = await CompanyModel.findOne({
-      $or: [{ companyEmail }, { companyName }]
-    });
-
-    if (existingCompany) {
-      let duplicateField = "";
-      if (existingCompany.companyEmail === companyEmail) {
-        duplicateField = COMPANY_EMAIL_EXIST;
-      } else if (existingCompany.companyName === companyName) {
-        duplicateField = COMPANY_NAME_EXIST;
-      }
-
-      return errorResponse(res, statusCode.BAD_REQUEST, duplicateField);
-    }
+    const { companyName, logo, favicon } = value;
+    
 
     let companyObject = {
-      companyEmail,
       companyName,
       companyLogoUrl: logo,
       companyFavIcoUrl: favicon
@@ -265,7 +250,6 @@ exports.addCompany = async (req, res) => {
         roleName: roleName,
         companyId: saveCompany?._id,
         companyName: saveCompany?.companyName,
-        companyEmail: saveCompany?.companyEmail,
         companyLogoUrl: saveCompany?.companyLogoUrl,
         companyFavIcoUrl: saveCompany?.companyFavIcoUrl,
         deffaultchannels: saveCompany?.deffaultchannels,
@@ -302,9 +286,7 @@ exports.addCompany = async (req, res) => {
 
     // Handle Mongo duplicate key error
     if (error.code === 11000) {
-      if (error.keyPattern?.companyEmail) {
-        message = COMPANY_EMAIL_EXIST;
-      } else if (error.keyPattern?.companyName) {
+      if (error.keyPattern?.companyName) {
         message = COMPANY_NAME_EXIST;
       } else {
         message = `Duplicate entry detected: ${JSON.stringify(error.keyValue)}`;
@@ -344,13 +326,12 @@ exports.editCompany = async (req, res) => {
       );
     }
 
-    const { companyEmail, companyName, logo, favicon, companyDomain } = value;
+    const { companyName, logo, favicon, companyDomain } = value;
 
     // Check for duplicate email, name, or domain
     const existingCompany = await CompanyModel.findOne({
       _id: { $ne: companyId },
       $or: [
-        { companyEmail: companyEmail },
         { companyName: companyName },
         { companyDomain: companyDomain }
       ]
@@ -359,9 +340,7 @@ exports.editCompany = async (req, res) => {
     if (existingCompany) {
       let duplicateField = "";
 
-      if (existingCompany.companyEmail === companyEmail) {
-        duplicateField = COMPANY_EMAIL_EXIST;
-      } else if (existingCompany.companyName === companyName) {
+      if (existingCompany.companyName === companyName) {
         duplicateField = COMPANY_NAME_EXIST;
       } else if (existingCompany.companyDomain === companyDomain) {
         duplicateField = COMPANY_DOMAIN_EXIST;
@@ -378,7 +357,6 @@ exports.editCompany = async (req, res) => {
 
     // Build update object
     const updateObject = {
-      companyEmail,
       companyName,
       companyLogoUrl: logo,
       companyFavIcoUrl: favicon,

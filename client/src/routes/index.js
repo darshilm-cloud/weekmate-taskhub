@@ -12,7 +12,7 @@ import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js
 import { sideBarContentId } from "../constants";
 
 import AdminDashboard from "../pages/AdminDashboard";
-import CompanyRegistration from "../pages/AdminModules/CompanyRegistration";
+import CompanyManagement from "../pages/AdminModules/CompanyManagement";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
 import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
 import Administrator from "../pages/AdminModules/Administrator";
@@ -344,8 +344,8 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
-      path: ":companySlug/admin/company-registartion",
-      component: CompanyRegistration,
+      path: ":companySlug/admin/company-management",
+      component: CompanyManagement,
       roleName: [
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,

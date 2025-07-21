@@ -128,7 +128,6 @@ exports.getAdminList = async (req, res) => {
           loginActivity: 1,
           companyId: { $ifNull: ["$companyDetails._id", ""] },
           companyName: { $ifNull: ["$companyDetails.companyName", ""] },
-          companyEmail: { $ifNull: ["$companyDetails.companyEmail", ""] },
           totalEmp: "$companyDetails.totalEmployeeCount"
         }
       },

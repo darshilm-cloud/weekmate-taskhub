@@ -153,29 +153,17 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Search",
         onClick: () => showModal(),
       },
-      getRoles(["Admin"]) && {
-        key: "Admin_Dashboard",
-        icon: <DashboardOutlined />,
-        label: "Dashboard",
-        onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
-      },
+      // getRoles(["Admin"]) && {
+      //   key: "Admin_Dashboard",
+      //   icon: <DashboardOutlined />,
+      //   label: "Dashboard",
+      //   onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
+      // },
       getRoles(["Super Admin"]) &&  {
         key: "Admin_Administrator",
         icon: <AdminIcon />,
         label: "Admins",
         onClick: () => handleMenuClick("Admin_Administrator", `/admin/Administrator`)
-      },
-      getRoles(["Admin"]) && {
-        key: "Companies_Registration",
-        icon: <AdminIcon />,
-        label: "Companies registration",
-        onClick: () => handleMenuClick("Companies_Registration", `/${companySlug}/admin/company-registartion`)
-      },
-      getRoles(["Admin"]) &&{
-        key: "Admin_Settings",
-        icon: <SettingOutlined />,
-        label: "Settings",
-        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
       },
       !getRoles(["Client"]) &&{
         key: "Dashboard",
@@ -249,6 +237,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <i className="fi fi-rr-receipt"></i>,
         label: "Project Expense",
         onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
+      },
+      getRoles(["Admin"]) &&{
+        key: "Admin_Settings",
+        icon: <SettingOutlined />,
+        label: "Settings",
+        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
       },
     ],
     []

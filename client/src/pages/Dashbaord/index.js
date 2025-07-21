@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import DashboardController from "./DashboardController";
 import {
@@ -10,6 +10,9 @@ import {
   Radio,
   Tooltip,
   Progress,
+  Row,
+  Col,
+  Card,
 } from "antd";
 import { DatePicker } from "antd";
 import { Link } from "react-router-dom";
@@ -20,9 +23,10 @@ import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { removeTitle } from "../../util/nameFilter";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
 import MyAvatar from "../../components/Avatar/MyAvatar";
+import EmployeeIcon from "../../assets/icons/EmployeeIcon";
+import Service from "../../service";
 
-
-const index = () => {
+const Dashbaord = () => {
   const {
     showFiltersProject,
     handleFiltersProject,
@@ -104,7 +108,40 @@ const index = () => {
     totalLoggedProgress,
   } = DashboardController();
 
+  const [totalEmployee, setTotalEmployee] = useState(0);
+
   const companySlug = localStorage.getItem("companyDomain");
+  const userData = JSON.parse(localStorage.getItem("user_data"));
+  const roleName = userData.pms_role_id.role_name;
+
+  const getDashboardData = async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getDashboardData,
+      });
+
+      if (response.data.status == 1) {
+        setTotalEmployee(response.data.data.totalEmployees || 0);
+      }
+    } catch (error) {
+      console.log("Error getting unread thread count:", error);
+    }
+  };
+
+  useEffect(() => {
+    getDashboardData();
+  }, []);
+
+  const dashboardCards = [
+    {
+      title: "Total Employee",
+      value: totalEmployee,
+      icon: <EmployeeIcon />,
+      iconBgColor: "rgba(24, 144, 255, 0.1)",
+      navigateTo: `/${companySlug}/admin/company-employee`,
+    },
+  ];
 
   const hours = totalLoggedProgress?.data2?.total_time
     ? totalLoggedProgress?.data2?.total_time.split(":")[0]
@@ -116,75 +153,99 @@ const index = () => {
 
   return (
     <div className="main-dashboard-wrapper">
-      { console.log(
-        totalLoggedProgress,
-        "totalLoggedProgress",
-        totalLoggedProgress?.data2?.total_time
-      ) }
       <div className="container">
         <div className="profileNameAndImg d-flex">
           <div className="image-and-name-div">
             <div className="profile-img">
               <MyAvatar
-                userName={ fullName }
-                alt={ fullName }
-                src={ empImage }
-                isThumbnail={ false }
+                userName={fullName}
+                alt={fullName}
+                src={empImage}
+                isThumbnail={false}
               />
             </div>
             <div className="profile-name">
               <h2>
-                { timeOfDay }, { firstName } !
+                {timeOfDay}, {firstName} !
               </h2>
             </div>
           </div>
-          {/* <div className="progress-of-logged-hours-background">
-              
-          </div> */}
-          <div className="progress-of-logged-hours-background">
-            <div className="logged-hours-icon">
-              {/* You can replace this with any icon */ }
-              { currentMonth }
-            </div>
-            <div className="logged-hours-content d-flex">
-              <div className="logged-hours-text">
-                <div className="logged-hours-title">
-                  <p>Monthly Logged Hours</p>
-                  <span
-                    className={
-                      totalLoggedProgress?.behindHours ? "red-alert" : ""
-                    }
+
+          {/* <div className="progress-of-logged-hours-background"> */}
+          {/* <Row gutter={[24, 24]} justify="start"> */}
+          {roleName == "Admin" ? (
+            dashboardCards.map((card, index) => (
+              <Col xs={24} sm={12} md={12} lg={8} xl={6} key={index}>
+                <Card
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #f0f0f0",
+                    borderRadius: "8px",
+                    boxShadow:
+                      "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+                    minHeight: "100px",
+                    cursor: card.navigateTo ? "pointer" : "default",
+                  }}
+                  bodyStyle={{
+                    padding: "20px 24px",
+                  }}
+                  onClick={() =>
+                    card.navigateTo && history.push(card.navigateTo)
+                  }
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                    }}
                   >
-                    { hours } Hours / { totalLoggedProgress?.totalWorkingHours }{ " " }
-                    Hours
-                  </span>
-                </div>
-                <div className="progress-bar-container">
-                  {/* <div className="progress-bar"> */ }
-                  {/* <div 
-              className="progress-filled" 
-              
-            /> */}
-                  <Progress
-                    percent={ loggedPercentageValue }
-                    percentPosition={ {
-                      align: "center",
-                      type: "inner",
-                    } }
-                    showInfo={ false }
-                    strokeColor={
-                      totalLoggedProgress?.behindHours ? "#ff0000" : "#28a745"
-                    }
-                  />
-                  {/* </div> */ }
-                </div>
-              </div>
-              { totalLoggedProgress?.behindHours ?
-                <div className="remaining-hours-container">
-                  <span>Remaining Hours : { totalLoggedProgress?.totalBehindHoursTillToday }</span>
-                </div> : "" }
-            </div>
-          </div>
+                    <div
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        borderRadius: "50%",
+                        backgroundColor: card.iconBgColor,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {card.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          color: "#595959",
+                          marginBottom: "4px",
+                          fontWeight: "400",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        {card.title}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "24px",
+                          fontWeight: "600",
+                          color: "#262626",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {card.value}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            ))
+          ) : (
+            <></>
+          )}
+          {/* </Row> */}
+          {/* </div> */}
         </div>
         <div className="profile-input-form-wrapper">
           <form action="" className="profile-form-wrapper">
@@ -195,21 +256,21 @@ const index = () => {
                 type="text"
                 name="meJumpField-inputEl"
                 placeholder="Jump to a project"
-                onClick={ showModal }
+                onClick={showModal}
                 readOnly
               />
             </div>
           </form>
 
           <ProjectListModal
-            projectDetails={ projectDetails }
-            recentList={ recentList }
-            isModalOpen={ isModalOpen }
-            handleCancel={ handleCancel }
-            addVisitedData={ addVisitedData }
-            setIsModalOpen={ setIsModalOpen }
-            form={ form }
-            getProjectListing={ getProjectListing }
+            projectDetails={projectDetails}
+            recentList={recentList}
+            isModalOpen={isModalOpen}
+            handleCancel={handleCancel}
+            addVisitedData={addVisitedData}
+            setIsModalOpen={setIsModalOpen}
+            form={form}
+            getProjectListing={getProjectListing}
           />
         </div>
         <div className="main-dashboard-box-wrapper d-flex">
@@ -228,27 +289,27 @@ const index = () => {
                   <th>
                     <div
                       className="right-project-filter"
-                      onClick={ handleFiltersProject }
+                      onClick={handleFiltersProject}
                     >
                       <i className="fa-solid fa-filter"></i>
                     </div>
                   </th>
                 </tr>
-                { showFiltersProject && (
+                {showFiltersProject && (
                   <tr>
-                    <th colSpan={ 3 }>
+                    <th colSpan={3}>
                       <div className="main-filter-pop">
                         <div
                           className="status-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Status:</p>
                             <Popover
                               trigger="click"
                               placement="bottomRight"
-                              visible={ popOver.projectStatus }
-                              onVisibleChange={ () =>
+                              visible={popOver.projectStatus}
+                              onVisibleChange={() =>
                                 handleVisibleChange("projectStatus", true)
                               }
                               content={
@@ -256,8 +317,8 @@ const index = () => {
                                   <ul>
                                     <li>
                                       <Checkbox
-                                        checked={ projStatus.length === 0 }
-                                        onChange={ () =>
+                                        checked={projStatus.length === 0}
+                                        onChange={() =>
                                           handleFilters(
                                             "",
                                             projStatus,
@@ -265,7 +326,7 @@ const index = () => {
                                           )
                                         }
                                       >
-                                        { " " }
+                                        {" "}
                                         All
                                       </Checkbox>
                                     </li>
@@ -273,7 +334,7 @@ const index = () => {
 
                                   <div>
                                     <ul className="assigness-data">
-                                      { statusList
+                                      {statusList
                                         .sort((a, b) => {
                                           if (a.title === "Archived") return -1;
                                           if (b.title === "Archived") return 1;
@@ -281,48 +342,48 @@ const index = () => {
                                           return 0;
                                         })
                                         ?.map((val, index) => (
-                                          <li key={ index }>
+                                          <li key={index}>
                                             <Checkbox
-                                              onChange={ () =>
+                                              onChange={() =>
                                                 handleFilters(
                                                   val,
                                                   projStatus,
                                                   setProjStatus
                                                 )
                                               }
-                                              checked={ projStatus.includes(
+                                              checked={projStatus.includes(
                                                 val?._id
-                                              ) }
+                                              )}
                                             >
-                                              { val?.title }
+                                              {val?.title}
                                             </Checkbox>
                                           </li>
-                                        )) }
+                                        ))}
                                     </ul>
                                   </div>
                                   <div className="popver-footer-btn">
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myProjects();
                                         setPopOver({
                                           ...popOver,
                                           projectStatus: false,
                                         });
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         // handleCancelProjectStatus()
                                         setPopOver({
                                           ...popOver,
                                           projectStatus: false,
                                         });
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -330,22 +391,22 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rs-check-circle"></i>{ " " }
-                              { projStatus.length == 0 ? "All" : "Selected" }
+                              <i className="fi fi-rs-check-circle"></i>{" "}
+                              {projStatus.length == 0 ? "All" : "Selected"}
                             </Popover>
                           </div>
                         </div>
                         <div
                           className="category-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Category:</p>
                             <Popover
                               trigger="click"
                               placement="bottomRight"
-                              visible={ popOver.projectCategory }
-                              onVisibleChange={ () =>
+                              visible={popOver.projectCategory}
+                              onVisibleChange={() =>
                                 handleVisibleChange("projectCategory", true)
                               }
                               content={
@@ -353,8 +414,8 @@ const index = () => {
                                   <ul>
                                     <li>
                                       <Checkbox
-                                        checked={ category.length === 0 }
-                                        onChange={ () =>
+                                        checked={category.length === 0}
+                                        onChange={() =>
                                           handleFilters(
                                             "",
                                             category,
@@ -362,7 +423,7 @@ const index = () => {
                                           )
                                         }
                                       >
-                                        { " " }
+                                        {" "}
                                         All
                                       </Checkbox>
                                     </li>
@@ -371,55 +432,55 @@ const index = () => {
                                   <div className="search-filter">
                                     <Input
                                       placeholder="Search"
-                                      value={ searchCategory }
-                                      onChange={ handleSearchCategory }
+                                      value={searchCategory}
+                                      onChange={handleSearchCategory}
                                     />
                                   </div>
                                   <ul className="assigness-data">
-                                    { filteredCategoryList?.map((val, index) => (
+                                    {filteredCategoryList?.map((val, index) => (
                                       <>
-                                        <li key={ index }>
+                                        <li key={index}>
                                           <Checkbox
-                                            onChange={ () => {
+                                            onChange={() => {
                                               handleFilters(
                                                 val,
                                                 category,
                                                 setCategory
                                               );
-                                            } }
-                                            checked={ category.includes(
+                                            }}
+                                            checked={category.includes(
                                               val?._id
-                                            ) }
+                                            )}
                                           >
-                                            { val?.project_tech }
+                                            {val?.project_tech}
                                           </Checkbox>
                                         </li>
                                       </>
-                                    )) }
+                                    ))}
                                   </ul>
 
                                   <div className="popver-footer-btn">
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myProjects();
                                         setPopOver({
                                           ...popOver,
                                           projectCategory: false,
                                         });
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         setPopOver({
                                           ...popOver,
                                           projectCategory: false,
                                         });
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -427,48 +488,48 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rr-users"></i>{ " " }
-                              { category.length == 0 ? "All" : "Selected" }
+                              <i className="fi fi-rr-users"></i>{" "}
+                              {category.length == 0 ? "All" : "Selected"}
                             </Popover>
                           </div>
                         </div>
                       </div>
                     </th>
                   </tr>
-                ) }
+                )}
               </thead>
 
-              <tbody className={ showFiltersProject && "showfilter" }>
-                { myProj.length > 0 ? (
+              <tbody className={showFiltersProject && "showfilter"}>
+                {myProj.length > 0 ? (
                   myProj?.map((item, index) => (
-                    <tr key={ index }>
+                    <tr key={index}>
                       <td>
                         <div className="cell-inner">
                           <span className="projectname">
                             <span
-                              onClick={ () => {
+                              onClick={() => {
                                 handleBookmark(item);
-                              } }
-                              style={ { cursor: "pointer" } }
+                              }}
+                              style={{ cursor: "pointer" }}
                             >
-                              { item?.isStarred ? (
-                                <StarFilled style={ { color: "#ffd200" } } />
+                              {item?.isStarred ? (
+                                <StarFilled style={{ color: "#ffd200" }} />
                               ) : (
                                 <StarOutlined />
-                              ) }
-                            </span>{ " " }
+                              )}
+                            </span>{" "}
                             <Link>
                               <span
-                                onClick={ () => getProjectMianTask(item?._id) }
+                                onClick={() => getProjectMianTask(item?._id)}
                               >
-                                { item?.title }
+                                {item?.title}
                               </span>
                             </Link>
                           </span>
 
                           <span className="project-hours-color">
                             <span className="timeago">
-                              { calculateTimeDifference(item?.createdAt) }
+                              {calculateTimeDifference(item?.createdAt)}
                             </span>
                           </span>
                         </div>
@@ -477,9 +538,9 @@ const index = () => {
                         <div className="grid-cell-inner ">
                           <div className="gray">
                             <i>
-                              { getDateFormatted(item?.start_date) }
-                              <i class="fa-solid fa-arrow-right"></i>{ " " }
-                              { getDateFormatted(item?.end_date) }
+                              {getDateFormatted(item?.start_date)}
+                              <i class="fa-solid fa-arrow-right"></i>{" "}
+                              {getDateFormatted(item?.end_date)}
                             </i>
                           </div>
                         </div>
@@ -488,7 +549,7 @@ const index = () => {
                   ))
                 ) : (
                   <div className="no-data-found-dashboard">No Data Found</div>
-                ) }
+                )}
               </tbody>
             </table>
           </div>
@@ -508,26 +569,26 @@ const index = () => {
                   <th>
                     <div
                       className="right-project-filter"
-                      onClick={ () => setTasksFiltrs(!showTasksiltrs) }
+                      onClick={() => setTasksFiltrs(!showTasksiltrs)}
                     >
                       <i className="fa-solid fa-filter"></i>
                     </div>
                   </th>
                 </tr>
-                { showTasksiltrs && (
+                {showTasksiltrs && (
                   <tr>
-                    <th colSpan={ 3 }>
+                    <th colSpan={3}>
                       <div className="main-filter-pop">
                         <div
                           className="status-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Status:</p>
                             <Popover
                               trigger="click"
-                              visible={ popOver.taskStatus }
-                              onVisibleChange={ () =>
+                              visible={popOver.taskStatus}
+                              onVisibleChange={() =>
                                 handleVisibleChange("taskStatus", true)
                               }
                               placement="bottomRight"
@@ -535,10 +596,10 @@ const index = () => {
                                 <div className="right-popover-wrapper">
                                   <ul>
                                     <Radio.Group
-                                      onChange={ (e) => {
+                                      onChange={(e) => {
                                         handleTaskStatus(e.target.value);
-                                      } }
-                                      value={ taskStatus }
+                                      }}
+                                      value={taskStatus}
                                     >
                                       <li>
                                         <Radio value="all"> All</Radio>
@@ -559,24 +620,24 @@ const index = () => {
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myTasks();
                                         handleVisibleChange(
                                           "taskStatus",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange(
                                           "taskStatus",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -584,44 +645,44 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rs-check-circle"></i>{ " " }
-                              { taskStatus === "completed"
+                              <i className="fi fi-rs-check-circle"></i>{" "}
+                              {taskStatus === "completed"
                                 ? "Completed"
                                 : taskStatus === "incompleted"
-                                  ? "Incompleted"
-                                  : "All" }
+                                ? "Incompleted"
+                                : "All"}
                             </Popover>
                           </div>
                         </div>
                         <div
                           className="category-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Projects:</p>
                             <Popover
                               trigger="click"
                               placement="bottom"
-                              visible={ popOver.taskProject }
-                              onVisibleChange={ () =>
+                              visible={popOver.taskProject}
+                              onVisibleChange={() =>
                                 handleVisibleChange("taskProject", true)
                               }
                               content={
                                 <div
                                   className="right-popover-wrapper"
-                                  style={ {
+                                  style={{
                                     width: "100%",
 
                                     maxWidth: "300px",
 
                                     wordBreak: "break-word",
-                                  } }
+                                  }}
                                 >
                                   <ul>
                                     <li>
                                       <Checkbox
-                                        checked={ projects.length === 0 }
-                                        onChange={ () =>
+                                        checked={projects.length === 0}
+                                        onChange={() =>
                                           handleFilters(
                                             "",
                                             projects,
@@ -629,7 +690,7 @@ const index = () => {
                                           )
                                         }
                                       >
-                                        { " " }
+                                        {" "}
                                         All
                                       </Checkbox>
                                     </li>
@@ -637,54 +698,54 @@ const index = () => {
                                   <div className="search-filter">
                                     <Input
                                       placeholder="Search"
-                                      value={ searchTaskProject }
-                                      onChange={ handleSearchTaskProject }
+                                      value={searchTaskProject}
+                                      onChange={handleSearchTaskProject}
                                     />
                                   </div>
                                   <ul className="assigness-data">
-                                    { filteredTaskProjectList?.map(
+                                    {filteredTaskProjectList?.map(
                                       (val, index) => (
-                                        <li key={ index }>
+                                        <li key={index}>
                                           <Checkbox
-                                            onChange={ () =>
+                                            onChange={() =>
                                               handleFilters(
                                                 val,
                                                 projects,
                                                 setProjects
                                               )
                                             }
-                                            checked={ projects.includes(
+                                            checked={projects.includes(
                                               val?._id
-                                            ) }
+                                            )}
                                           >
-                                            { val?.title }
+                                            {val?.title}
                                           </Checkbox>
                                         </li>
                                       )
-                                    ) }
+                                    )}
                                   </ul>
                                   <div className="popver-footer-btn">
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myTasks();
                                         handleVisibleChange(
                                           "taskProject",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange(
                                           "taskProject",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -692,38 +753,38 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rr-users"></i>{ " " }
-                              { projects.length == 0 ? "All" : "Selected" }
+                              <i className="fi fi-rr-users"></i>{" "}
+                              {projects.length == 0 ? "All" : "Selected"}
                             </Popover>
                           </div>
                         </div>
                         <div
                           className="view-data-range-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Date range:</p>
                             <Popover
                               placement="bottom"
                               trigger="click"
-                              visible={ popOver.taskDate }
-                              onVisibleChange={ () =>
+                              visible={popOver.taskDate}
+                              onVisibleChange={() =>
                                 handleVisibleChange("taskDate", true)
                               }
                               content={
                                 <div className="right-popover-wrapper popover-task">
                                   <Form.Item label="Start Date">
                                     <DatePicker
-                                      value={ dates.taskStartDate }
-                                      onChange={ (date) =>
+                                      value={dates.taskStartDate}
+                                      onChange={(date) =>
                                         handleChangeDate("taskStartDate", date)
                                       }
                                     />
                                   </Form.Item>
                                   <Form.Item label="Due Date">
                                     <DatePicker
-                                      value={ dates.taskEndDate }
-                                      onChange={ (date) =>
+                                      value={dates.taskEndDate}
+                                      onChange={(date) =>
                                         handleChangeDate("taskEndDate", date)
                                       }
                                     />
@@ -732,19 +793,19 @@ const index = () => {
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myTasks();
                                         handleVisibleChange("taskDate", false);
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       type="outlined"
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange("taskDate", false);
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -755,7 +816,7 @@ const index = () => {
                               <span className="status-check-icon">
                                 <i className="fa-solid fa-calendar-alt"></i>
                                 <span className="all-status">
-                                  Start: , Due:{ " " }
+                                  Start: , Due:{" "}
                                 </span>
                               </span>
                             </Popover>
@@ -764,7 +825,7 @@ const index = () => {
                       </div>
                     </th>
                   </tr>
-                ) }
+                )}
                 <tr>
                   <th className="table-task-title">
                     <div className="task-title">
@@ -778,32 +839,32 @@ const index = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={ showTasksiltrs ? "showfilter" : "" }>
-                { myTask.length > 0 ? (
+              <tbody className={showTasksiltrs ? "showfilter" : ""}>
+                {myTask.length > 0 ? (
                   myTask?.map((item, index) => (
-                    <tr key={ index }>
+                    <tr key={index}>
                       <td className="task-description custom-border-right">
                         <div className="taskCheckBox d-flex">
                           <div className="tasktitle">
                             <Link
-                              to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}` }
+                              to={`/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}`}
                             >
-                              { item?.title.charAt(0).toUpperCase() +
-                                item?.title.slice(1) }
+                              {item?.title.charAt(0).toUpperCase() +
+                                item?.title.slice(1)}
                             </Link>
                           </div>
                         </div>
                       </td>
-                      <td className="custom-border-right" colSpan={ 2 }>
+                      <td className="custom-border-right" colSpan={2}>
                         <span className="taskdate">
-                          { getDateFormatted(item.due_date) }
+                          {getDateFormatted(item.due_date)}
                         </span>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <div className="no-data-found-dashboard">No Data Found</div>
-                ) }
+                )}
               </tbody>
             </table>
           </div>
@@ -818,16 +879,16 @@ const index = () => {
                           <a href="#">
                             <i class="fa-regular fa-clock"></i>
                           </a>
-                          <span>My logged time</span>{ " " }
+                          <span>My logged time</span>{" "}
                         </div>
-                      </Link>{ " " }
+                      </Link>{" "}
                     </Tooltip>
                   </th>
                   <th></th>
                   <th>
                     <div
                       className="right-project-filter"
-                      onClick={ () =>
+                      onClick={() =>
                         setShowLoggedTimeFiltrs(!showLoggedTimeFiltrs)
                       }
                     >
@@ -835,45 +896,45 @@ const index = () => {
                     </div>
                   </th>
                 </tr>
-                { showLoggedTimeFiltrs && (
+                {showLoggedTimeFiltrs && (
                   <tr>
-                    <th colSpan={ 3 }>
+                    <th colSpan={3}>
                       <div className="main-filter-pop">
                         <div
                           className="category-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Projects:</p>
                             <Popover
                               trigger="click"
                               placement="bottom"
-                              visible={ popOver.timeProject }
-                              onVisibleChange={ () =>
+                              visible={popOver.timeProject}
+                              onVisibleChange={() =>
                                 handleVisibleChange("timeProject", true)
                               }
                               content={
                                 <div
                                   className="right-popover-wrapper"
-                                  style={ {
+                                  style={{
                                     width: "100%",
                                     maxWidth: "300px",
                                     wordBreak: "break-word",
-                                  } }
+                                  }}
                                 >
                                   <ul className="assigness-data">
                                     <li>
                                       <Checkbox
-                                        checked={ projectsTime.length == 0 }
-                                        onChange={ () => {
+                                        checked={projectsTime.length == 0}
+                                        onChange={() => {
                                           handleFilters(
                                             "",
                                             projectsTime,
                                             setprojectsTime
                                           );
-                                        } }
+                                        }}
                                       >
-                                        { " " }
+                                        {" "}
                                         All
                                       </Checkbox>
                                     </li>
@@ -881,54 +942,54 @@ const index = () => {
                                   <div className="search-filter">
                                     <Input
                                       placeholder="Search"
-                                      value={ searchTimeProject }
-                                      onChange={ handleSearchTimeProject }
+                                      value={searchTimeProject}
+                                      onChange={handleSearchTimeProject}
                                     />
                                   </div>
                                   <ul className="assigness-data">
-                                    { filteredTimeProjectList?.map(
+                                    {filteredTimeProjectList?.map(
                                       (val, index) => (
-                                        <li key={ index }>
+                                        <li key={index}>
                                           <Checkbox
-                                            checked={ projectsTime?.includes(
+                                            checked={projectsTime?.includes(
                                               val?._id
-                                            ) }
-                                            onChange={ () => {
+                                            )}
+                                            onChange={() => {
                                               handleFilters(
                                                 val,
                                                 projectsTime,
                                                 setprojectsTime
                                               );
-                                            } }
+                                            }}
                                           >
-                                            { val?.title }
+                                            {val?.title}
                                           </Checkbox>
                                         </li>
                                       )
-                                    ) }
+                                    )}
                                   </ul>
                                   <div className="popver-footer-btn">
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myLoggedTime();
                                         handleVisibleChange(
                                           "timeProject",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange(
                                           "timeProject",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -936,30 +997,30 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rr-users"></i>{ " " }
-                              { projectsTime.length == 0 ? "All" : "Selected" }
+                              <i className="fi fi-rr-users"></i>{" "}
+                              {projectsTime.length == 0 ? "All" : "Selected"}
                             </Popover>
                           </div>
                         </div>
                         <div
                           className="view-data-range-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Date range:</p>
                             <Popover
                               trigger="click"
                               placement="bottom"
-                              visible={ popOver.timeDate }
-                              onVisibleChange={ () =>
+                              visible={popOver.timeDate}
+                              onVisibleChange={() =>
                                 handleVisibleChange("timeDate", true)
                               }
                               content={
                                 <div className="right-popover-wrapper popover-task">
                                   <Form.Item label="Start Date">
                                     <DatePicker
-                                      value={ dates.timeStartDate }
-                                      onChange={ (date) =>
+                                      value={dates.timeStartDate}
+                                      onChange={(date) =>
                                         handleChangeDate("timeStartDate", date)
                                       }
                                     />
@@ -967,8 +1028,8 @@ const index = () => {
 
                                   <Form.Item label="Due Date">
                                     <DatePicker
-                                      value={ dates.timeEndDate }
-                                      onChange={ (date) =>
+                                      value={dates.timeEndDate}
+                                      onChange={(date) =>
                                         handleChangeDate("timeEndDate", date)
                                       }
                                     />
@@ -977,19 +1038,19 @@ const index = () => {
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myLoggedTime();
                                         handleVisibleChange("timeDate", false);
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       type="outlined"
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange("timeDate", false);
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -1000,7 +1061,7 @@ const index = () => {
                               <span className="status-check-icon">
                                 <i className="fa-solid fa-calendar-alt"></i>
                                 <span className="all-status">
-                                  Start: , Due:{ " " }
+                                  Start: , Due:{" "}
                                 </span>
                               </span>
                             </Popover>
@@ -1009,18 +1070,18 @@ const index = () => {
                       </div>
                     </th>
                   </tr>
-                ) }
+                )}
                 <tr>
-                  <th colSpan={ 2 } className="table-task-title">
+                  <th colSpan={2} className="table-task-title">
                     <div className="task-title">
                       <p> Logged by</p>
                     </div>
                   </th>
                   <th
-                    style={ {
+                    style={{
                       borderRight: " 1px solid #a8a8a8",
                       textAlign: "center",
-                    } }
+                    }}
                   >
                     <div className="log-time ">
                       <p>Logged Date</p>
@@ -1033,65 +1094,62 @@ const index = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={ showLoggedTimeFiltrs && "showfilter" }>
-                { myTime.length > 0 ? (
+              <tbody className={showLoggedTimeFiltrs && "showfilter"}>
+                {myTime.length > 0 ? (
                   myTime?.map((item, index) => (
-                    <React.Fragment key={ index }>
+                    <React.Fragment key={index}>
                       <tr>
                         <td>
                           <Link
-                            to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Time` }
+                            to={`/${companySlug}/project/app/${item?.project?._id}?tab=Time`}
                           >
                             <span className="project-time-sheet-title">
-                              { item.project.title }
+                              {item.project.title}
                             </span>
                           </Link>
                         </td>
                       </tr>
 
-                      { item?.logged_data?.map((log, i) => (
-                        <tr
-                          className="clickable-roww"
-                          key={ i }
-                        >
+                      {item?.logged_data?.map((log, i) => (
+                        <tr className="clickable-roww" key={i}>
                           <td className="task-description custom-border-right">
                             <div className="taskCheckBox d-flex">
                               <div className="logtime-user-img">
                                 <MyAvatar
-                                  src={ log?.createdBy?.emp_img }
-                                  alt={ log?.createdBy?.full_name }
-                                  userName={ log?.createdBy?.full_name }
-                                  key={ log?.createdBy?._id }
+                                  src={log?.createdBy?.emp_img}
+                                  alt={log?.createdBy?.full_name}
+                                  userName={log?.createdBy?.full_name}
+                                  key={log?.createdBy?._id}
                                 />
 
                                 <span className="togtime-username">
-                                  { removeTitle(log?.createdBy?.full_name) }
+                                  {removeTitle(log?.createdBy?.full_name)}
                                 </span>
                               </div>
                             </div>
                           </td>
                           <td
-                            style={ {
+                            style={{
                               borderRight: " 1px solid #a8a8a8",
                               textAlign: "center",
-                            } }
+                            }}
                           >
-                            { moment(log?.logged_date).format("DD MMM , YY") }
+                            {moment(log?.logged_date).format("DD MMM , YY")}
                           </td>
                           <td>
                             <div className="time-log">
                               <p>
-                                { log?.logged_hours }h { log?.logged_minutes }m
+                                {log?.logged_hours}h {log?.logged_minutes}m
                               </p>
                             </div>
                           </td>
                         </tr>
-                      )) }
+                      ))}
                     </React.Fragment>
                   ))
                 ) : (
                   <div className="no-data-found-dashboard">No Data Found</div>
-                ) }
+                )}
               </tbody>
             </table>
           </div>
@@ -1111,37 +1169,37 @@ const index = () => {
                   <th>
                     <div
                       className="right-project-filter"
-                      onClick={ () => setShowBugsFiltrs(!showBugsFiltrs) }
+                      onClick={() => setShowBugsFiltrs(!showBugsFiltrs)}
                     >
                       <i className="fa-solid fa-filter"></i>
                     </div>
                   </th>
                 </tr>
-                { showBugsFiltrs && (
+                {showBugsFiltrs && (
                   <tr>
-                    <th colSpan={ 3 }>
+                    <th colSpan={3}>
                       <div className="main-filter-pop">
                         <div
                           className="status-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Status:</p>
                             <Popover
                               trigger="click"
                               placement="bottomRight"
-                              visible={ popOver.bugStatus }
-                              onVisibleChange={ () =>
+                              visible={popOver.bugStatus}
+                              onVisibleChange={() =>
                                 handleVisibleChange("bugStatus", true)
                               }
                               content={
                                 <div className="right-popover-wrapper">
                                   <ul className="assigness-data">
                                     <Radio.Group
-                                      onChange={ (e) => {
+                                      onChange={(e) => {
                                         handleBugStatus(e.target.value);
-                                      } }
-                                      value={ bugStatus }
+                                      }}
+                                      value={bugStatus}
                                     >
                                       <li>
                                         <Radio value="all"> All</Radio>
@@ -1162,18 +1220,18 @@ const index = () => {
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myBugs();
                                         handleVisibleChange("bugStatus", false);
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange("bugStatus", false);
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -1181,42 +1239,42 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rs-check-circle"></i>{ " " }
-                              { bugStatus == "completed"
+                              <i className="fi fi-rs-check-circle"></i>{" "}
+                              {bugStatus == "completed"
                                 ? "Completed"
                                 : bugStatus == "incompleted"
-                                  ? "Incompleted"
-                                  : "All" }
+                                ? "Incompleted"
+                                : "All"}
                             </Popover>
                           </div>
                         </div>
                         <div
                           className="category-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>Projects:</p>
                             <Popover
                               trigger="click"
                               placement="bottom"
-                              visible={ popOver.bugProject }
-                              onVisibleChange={ () =>
+                              visible={popOver.bugProject}
+                              onVisibleChange={() =>
                                 handleVisibleChange("bugProject", true)
                               }
                               content={
                                 <div
                                   className="right-popover-wrapper"
-                                  style={ {
+                                  style={{
                                     width: "100%",
                                     maxWidth: "300px",
                                     wordBreak: "break-word",
-                                  } }
+                                  }}
                                 >
                                   <ul>
                                     <li>
                                       <Checkbox
-                                        checked={ projectsBug.length == 0 }
-                                        onChange={ () =>
+                                        checked={projectsBug.length == 0}
+                                        onChange={() =>
                                           handleFilters(
                                             "",
                                             projectsBug,
@@ -1224,7 +1282,7 @@ const index = () => {
                                           )
                                         }
                                       >
-                                        { " " }
+                                        {" "}
                                         All
                                       </Checkbox>
                                     </li>
@@ -1232,49 +1290,49 @@ const index = () => {
                                   <div className="search-filter">
                                     <Input
                                       placeholder="Search"
-                                      value={ searchBugProject }
-                                      onChange={ handleSearchBugProject }
+                                      value={searchBugProject}
+                                      onChange={handleSearchBugProject}
                                     />
                                   </div>
                                   <ul className="assigness-data">
-                                    { filteredBugProjectList?.map(
+                                    {filteredBugProjectList?.map(
                                       (val, index) => (
-                                        <li key={ index }>
+                                        <li key={index}>
                                           <Checkbox
-                                            onChange={ () =>
+                                            onChange={() =>
                                               handleFilters(
                                                 val,
                                                 projectsBug,
                                                 setProjectsBug
                                               )
                                             }
-                                            checked={ projectsBug.includes(
+                                            checked={projectsBug.includes(
                                               val?._id
-                                            ) }
+                                            )}
                                           >
-                                            { val?.title }
+                                            {val?.title}
                                           </Checkbox>
                                         </li>
                                       )
-                                    ) }
+                                    )}
                                   </ul>
                                   <div className="popver-footer-btn">
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myBugs();
                                         handleVisibleChange(
                                           "bugProject",
                                           false
                                         );
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () =>
+                                      onClick={() =>
                                         handleVisibleChange("bugProject", false)
                                       }
                                     >
@@ -1284,31 +1342,31 @@ const index = () => {
                                 </div>
                               }
                             >
-                              <i className="fi fi-rr-users"></i>{ " " }
-                              { projectsBug.length === 0 ? "All" : "Selected" }
+                              <i className="fi fi-rr-users"></i>{" "}
+                              {projectsBug.length === 0 ? "All" : "Selected"}
                             </Popover>
                           </div>
                         </div>
 
                         <div
                           className="view-data-range-wrapper"
-                          style={ { cursor: "pointer" } }
+                          style={{ cursor: "pointer" }}
                         >
                           <div className="filter-name">
                             <p>View : </p>
                             <Popover
                               placement="bottom"
                               trigger="click"
-                              visible={ popOver.bugDate }
-                              onVisibleChange={ () =>
+                              visible={popOver.bugDate}
+                              onVisibleChange={() =>
                                 handleVisibleChange("bugDate", true)
                               }
                               content={
                                 <div className="right-popover-wrapper popover-task">
                                   <Form.Item label="Start Date">
                                     <DatePicker
-                                      value={ dates.bugStartDate }
-                                      onChange={ (date) =>
+                                      value={dates.bugStartDate}
+                                      onChange={(date) =>
                                         handleChangeDate("bugStartDate", date)
                                       }
                                     />
@@ -1316,8 +1374,8 @@ const index = () => {
 
                                   <Form.Item label="Due Date">
                                     <DatePicker
-                                      value={ dates.bugEndDate }
-                                      onChange={ (date) =>
+                                      value={dates.bugEndDate}
+                                      onChange={(date) =>
                                         handleChangeDate("bugEndDate", date)
                                       }
                                     />
@@ -1326,19 +1384,19 @@ const index = () => {
                                     <Button
                                       type="primary"
                                       className="square-primary-btn ant-btn-primary"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         myBugs();
                                         handleVisibleChange("bugDate", false);
-                                      } }
+                                      }}
                                     >
                                       Apply
                                     </Button>
                                     <Button
                                       type="outlined"
                                       className="square-outline-btn ant-delete"
-                                      onClick={ () => {
+                                      onClick={() => {
                                         handleVisibleChange("bugDate", false);
-                                      } }
+                                      }}
                                     >
                                       Cancel
                                     </Button>
@@ -1349,7 +1407,7 @@ const index = () => {
                               <span className="status-check-icon">
                                 <i className="fa-solid fa-calendar-alt"></i>
                                 <span className="all-status">
-                                  Start: , Due:{ " " }
+                                  Start: , Due:{" "}
                                 </span>
                               </span>
                             </Popover>
@@ -1358,7 +1416,7 @@ const index = () => {
                       </div>
                     </th>
                   </tr>
-                ) }
+                )}
                 <tr>
                   <th className="table-task-title">
                     <div className="task-title">
@@ -1372,42 +1430,41 @@ const index = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={ showBugsFiltrs && "showfilter" }>
-                { myBug?.length > 0 ? (
+              <tbody className={showBugsFiltrs && "showfilter"}>
+                {myBug?.length > 0 ? (
                   myBug?.map((item) => (
                     <tr>
                       <td className="task-description custom-border-right">
                         <div className="taskCheckBox d-flex">
                           <div className="tasktitle">
                             <Link
-                              to={ `/${companySlug}/project/app/${item?.project?._id}?tab=Bugs&bugID=${item?._id}` }
+                              to={`/${companySlug}/project/app/${item?.project?._id}?tab=Bugs&bugID=${item?._id}`}
                             >
                               <span>
-                                { item?.title.charAt(0).toUpperCase() +
-                                  item?.title.slice(1) }
+                                {item?.title.charAt(0).toUpperCase() +
+                                  item?.title.slice(1)}
                               </span>
                             </Link>
                           </div>
                         </div>
                       </td>
-                      <td className="custom-border-right" colSpan={ 2 }>
+                      <td className="custom-border-right" colSpan={2}>
                         <span className="taskdate">
-                          { getDateFormatted(item?.due_date) }
+                          {getDateFormatted(item?.due_date)}
                         </span>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <div className="no-data-found-dashboard">No Data Found</div>
-                ) }
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-
     </div>
   );
 };
 
-export default index;
+export default Dashbaord;

@@ -103,9 +103,8 @@ function SignIn() {
 
         getRoles(["Client"])
           ? (window.location.href = `/${companySlug}/project-list`) :
-          getRoles(["Admin"]) ?
-           (window.location.href = `/${companySlug}/admin/dashboard`) :
           (window.location.href = `/${companySlug}/dashboard`)
+          
 
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
