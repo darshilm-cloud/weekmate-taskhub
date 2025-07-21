@@ -27,10 +27,7 @@ exports.getAdminList = async (req, res) => {
       companyId
     } = req.user || {};
 
-    // Only allow SuperAdmin to create company
-    if (roleName !== CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
-    }
+    console.log(req.user)
 
     const {
       page = 1,
@@ -171,10 +168,6 @@ exports.addAdmin = async (req, res) => {
       companyId
     } = req.user || {};
 
-    // Only allow SuperAdmin to create company
-    if (roleName !== CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
-    }
 
     const { error, value } = validateFormatter(getAddAdminSchema(), req.body);
 
@@ -248,11 +241,6 @@ exports.editAdmin = async (req, res) => {
       companyId
     } = req.user || {};
 
-    // Only allow SuperAdmin to edit admin
-    if (roleName !== CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
-    }
-
     const { error, value } = validateFormatter(getEditAdminSchema(), req.body); // Reuse same schema
 
     if (error) {
@@ -296,30 +284,6 @@ exports.editAdmin = async (req, res) => {
 
     const updatedUser = await existingUser.save();
 
-    // // Prepare update object
-    // const updateData = {
-    //   email,
-    //   first_name: firstName,
-    //   last_name: lastName,
-    // };
-
-    // if (password) {
-    //   const hashedPassword = crypto
-    //     .createHash(HASH_ALGORITHM)
-    //     .update(password)
-    //     .digest("hex");
-
-    //   updateData.password = hashedPassword;
-    // }
-
-    // const updatedUser = await employeeSchema.findByIdAndUpdate(
-    //   { _id: adminId },
-    //   updateData,
-    //   {
-    //     new: true
-    //   }
-    // );
-
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -335,6 +299,7 @@ exports.editAdmin = async (req, res) => {
 // Delete admin API
 exports.deleteAdmin = async (req, res) => {
   try {
+    console.log("RUNN")
     // Get user's data from JWT decode
     const {
       _id: decodedUserId,
@@ -342,17 +307,16 @@ exports.deleteAdmin = async (req, res) => {
       companyId
     } = req.user || {};
 
-    // Only allow SuperAdmin to create company
-    if (roleName !== CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
-    }
-
     const { userId } = req.params;
 
     let userData = await employeeSchema.findById({ _id: newObjectId(userId) });
 
     if (!userData) {
-      return;
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "User not found"
+      );;
     }
 
     userData.isDeleted = true;
@@ -376,10 +340,6 @@ exports.getDashboardData = async (req, res) => {
       companyId
     } = req.user || {};
 
-    if (roleName === CONFIG_JSON.PMS_ROLES.USER) {
-      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
-    }
-
     let totalEmployees = 0;
     let totalAdmins = 0;
 
@@ -398,12 +358,8 @@ exports.getDashboardData = async (req, res) => {
       role_name: "Admin",
       isDeleted: false
     });
-    console.log(
-      "🚀 ~ exports.getDashboardData= ~ adminRoleData:",
-      adminRoleData
-    );
+   
 
-    if (roleName === CONFIG_JSON.PMS_ROLES.SUPER_ADMIN) {
       const [employeeCount, adminCount] = await Promise.all([
         employeeSchema.countDocuments({
           ...commonFilter,
@@ -417,24 +373,10 @@ exports.getDashboardData = async (req, res) => {
 
       totalEmployees = employeeCount;
       totalAdmins = adminCount;
-    } else if (roleName === CONFIG_JSON.PMS_ROLES.ADMIN) {
-      if (!companyId) {
-        return errorResponse(
-          res,
-          statusCode.BAD_REQUEST,
-          "Company ID is required for admin role"
-        );
-      }
-
-      totalEmployees = await employeeSchema.countDocuments({
-        ...commonFilter,
-        companyId
-      });
-    }
 
     const responseData = {
       totalEmployees,
-      ...(roleName === CONFIG_JSON.PMS_ROLES.SUPER_ADMIN && { totalAdmins })
+       totalAdmins
     };
 
     return successResponse(
