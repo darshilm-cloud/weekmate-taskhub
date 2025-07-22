@@ -1175,6 +1175,7 @@ function AssignProject() {
 
               </>
             ) }
+            
             <Popover
               trigger="click"
               placement="bottomRight"
@@ -1250,7 +1251,6 @@ function AssignProject() {
                 </span>
               </Button>
             </Popover>
-
 
             <Popover
               trigger="click"
