@@ -1016,24 +1016,12 @@ function TasksPMS({ flag }) {
         open={ isModalOpenList }
         onCancel={ handleCancelList }
         onOk={ handleOkList }
-        title={ modalMode === "add" ? "Add List" : "Edit List" }
+        title={ modalMode === "add" ? "Add List" : "Ed it List" }
         className="add-task-modal add-list-modal"
-        width={800}
-       
+        width={ 800 }
+
         footer={ [
-          <Form.Item
-            key="checkbox"
-            name="markAsPrivate"
-            valuePropName="checked"
-        
-          >
-            <Checkbox
-              checked={ isPrivate === true ? true : false }
-              onChange={ e => setIsprivate(e.target.checked) }
-            >
-              Mark as Private
-            </Checkbox>
-          </Form.Item>,
+
           <Button
             key="cancel"
             onClick={ handleCancelList }
@@ -1161,7 +1149,7 @@ function TasksPMS({ flag }) {
                         );
 
                         return (
-                          <Col xs={ 24 } sm={ 12 } md={ 8 } lg={ 6 } key={ index }>
+                          <Col xs={ 24 } sm={ 12 } md={ 8 } lg={ 8 } key={ index }>
                             <div className="subscriber-stage-card">
                               {/* Subscriber Info */ }
                               <div className="subscriber-info">
@@ -1228,21 +1216,49 @@ function TasksPMS({ flag }) {
                   </div>
                 </Col>
               ) }
+                  <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+              <Form.Item
+                key="checkbox"
+                name="markAsPrivate"
+                valuePropName="checked"
+
+              >
+                <Checkbox
+                  checked={ isPrivate === true ? true : false }
+                  onChange={ e => setIsprivate(e.target.checked) }
+                >
+                  Mark as Private
+                </Checkbox>
+              </Form.Item>
+                  </Col>
             </Row>
           </Form>
         </div>
       </Modal>
 
       <Modal
-        footer={ null }
+        title="Add Task"
         open={ isModalOpenTaskModal }
-        width={ 520 }
+        width={ 880 }
         onCancel={ handleCancelTaskModal }
         className="add-task-modal model-task-add-details"
+
+        footer={ [
+          <Button key="cancel" className="delete-btn" onClick={ handleCancelTaskModal } size="large">
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            onClick={ () => addform.submit() }
+          >
+            Save
+          </Button>,
+
+        ] }
       >
-        <div className="modal-header">
-          <h1>Add Task</h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form
             form={ addform }
@@ -1250,92 +1266,99 @@ function TasksPMS({ flag }) {
               handleTaskOps(values);
             } }
           >
-            <div className="topic-cancel-wrapper">
-              <Form.Item
-                name="title"
-                rules={ [
-                  {
-                    required: true,
-                    whitespace: true, // Trims whitespace
-                    message: "Please enter a valid title",
-                  },
-                ] }
-              >
-                <Input placeholder="Title" />
-              </Form.Item>
-              <Form.Item colon={ false } name="descriptions">
-                <CKEditor
-                  editor={ Custombuild }
-                  data={ editorData }
-                  onChange={ handleChangeData }
-                  onPaste={ handlePaste }
-                  config={ {
-                    toolbar: [
-                      "heading",
-                      "|",
-                      "bold",
-                      "italic",
-                      "underline",
-                      "|",
-                      "fontColor",
-                      "fontBackgroundColor",
-                      "|",
-                      "link",
-                      "|",
-                      "numberedList",
-                      "bulletedList",
-                      "|",
-                      "alignment:left",
-                      "alignment:center",
-                      "alignment:right",
-                      "|",
-                      "fontSize",
-                      "|",
-                      "print",
-                    ],
-                    fontSize: {
-                      options: [
-                        "default",
-                        1,
-                        2,
-                        3,
-                        4,
-                        5,
-                        6,
-                        7,
-                        8,
-                        9,
-                        10,
-                        11,
-                        12,
-                        13,
-                        14,
-                        15,
-                        16,
-                        17,
-                        18,
-                        19,
-                        20,
-                        21,
-                        22,
-                        23,
-                        24,
-                        25,
-                        26,
-                        27,
-                        28,
-                        29,
-                        30,
-                        31,
-                        32,
+            <Row gutter={ [0, 0] }>
+              {/* Title - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                <Form.Item
+                  name="title"
+                  rules={ [
+                    {
+                      required: true,
+                      whitespace: true, // Trims whitespace
+                      message: "Please enter a valid title",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Title" />
+                </Form.Item>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+
+                <Form.Item colon={ false } name="descriptions">
+                  <CKEditor
+                    editor={ Custombuild }
+                    data={ editorData }
+                    onChange={ handleChangeData }
+                    onPaste={ handlePaste }
+                    config={ {
+                      toolbar: [
+                        "heading",
+                        "|",
+                        "bold",
+                        "italic",
+                        "underline",
+                        "|",
+                        "fontColor",
+                        "fontBackgroundColor",
+                        "|",
+                        "link",
+                        "|",
+                        "numberedList",
+                        "bulletedList",
+                        "|",
+                        "alignment:left",
+                        "alignment:center",
+                        "alignment:right",
+                        "|",
+                        "fontSize",
+                        "|",
+                        "print",
                       ],
-                    },
-                    styles: {
-                      height: "10px",
-                    },
-                  } }
-                />
-              </Form.Item>
+                      fontSize: {
+                        options: [
+                          "default",
+                          1,
+                          2,
+                          3,
+                          4,
+                          5,
+                          6,
+                          7,
+                          8,
+                          9,
+                          10,
+                          11,
+                          12,
+                          13,
+                          14,
+                          15,
+                          16,
+                          17,
+                          18,
+                          19,
+                          20,
+                          21,
+                          22,
+                          23,
+                          24,
+                          25,
+                          26,
+                          27,
+                          28,
+                          29,
+                          30,
+                          31,
+                          32,
+                        ],
+                      },
+                      styles: {
+                        height: "10px",
+                      },
+                    } }
+                  />
+                </Form.Item>
+              </Col>
+
               <Form.Item name="start_date">
                 <div className="table-schedule-wrapper">
                   <ul>
@@ -1503,70 +1526,56 @@ function TasksPMS({ flag }) {
                   </ul>
                 </div>
               </Form.Item>
-            </div>
-            <div className="fileAttachment_container">
-              { fileAttachment.map((file, index) => (
-                <Badge
-                  key={ index }
-                  count={
-                    <CloseCircleOutlined
-                      onClick={ () => removeAttachmentFile(index) }
-                    />
-                  }
-                >
-                  <div className="fileAttachment_Box">
-                    <p className="fileNameTxtellipsis">
-                      { file.name.length > 15
-                        ? `${file.name.slice(0, 15)}.....${file.type}`
-                        : file.name + file.type }
-                    </p>
-                  </div>
-                </Badge>
-              )) }
-            </div>
-            { fileAttachment.length > 0 && (
-              <div className="folder-comment">
-                <Form.Item
-                  label="Folder"
-                  name="folder"
-                  initialValue={
-                    foldersList.length > 0 ? foldersList[0]?._id : undefined
-                  }
-                  rules={ [
-                    {
-                      required: true,
-                    },
-                  ] }
-                >
-                  <Select placeholder="Please Select Folder" showSearch>
-                    { foldersList.map(data => (
-                      <Option
-                        key={ data?._id }
-                        value={ data?._id }
-                        style={ { textTransform: "capitalize" } }
-                      >
-                        { data.name }
-                      </Option>
-                    )) }
-                  </Select>
-                </Form.Item>
+
+              <div className="fileAttachment_container">
+                { fileAttachment.map((file, index) => (
+                  <Badge
+                    key={ index }
+                    count={
+                      <CloseCircleOutlined
+                        onClick={ () => removeAttachmentFile(index) }
+                      />
+                    }
+                  >
+                    <div className="fileAttachment_Box">
+                      <p className="fileNameTxtellipsis">
+                        { file.name.length > 15
+                          ? `${file.name.slice(0, 15)}.....${file.type}`
+                          : file.name + file.type }
+                      </p>
+                    </div>
+                  </Badge>
+                )) }
               </div>
-            ) }
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button
-                  htmlType="submit"
-                  type="primary"
-                  className="square-primary-btn"
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={ handleCancelTaskModal }
-                  className="square-outline-btn ant-delete"
-                >
-                  Cancel
-                </Button>
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                  <Form.Item
+                    label="Folder"
+                    name="folder"
+                    initialValue={
+                      foldersList.length > 0 ? foldersList[0]?._id : undefined
+                    }
+                    rules={ [
+                      {
+                        required: true,
+                      },
+                    ] }
+                  >
+                    <Select placeholder="Please Select Folder" showSearch>
+                      { foldersList.map(data => (
+                        <Option
+                          key={ data?._id }
+                          value={ data?._id }
+                          style={ { textTransform: "capitalize" } }
+                        >
+                          { data.name }
+                        </Option>
+                      )) }
+                    </Select>
+                  </Form.Item>
+                </Col>
+              ) }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 <Tooltip placement="top" title="Attached file">
                   <Button
                     className="link-btn"
@@ -1583,11 +1592,14 @@ function TasksPMS({ flag }) {
                   hidden
                   ref={ attachmentfileRef }
                 />
-              </div>
-            </div>
+              </Col>
+            </Row>
           </Form>
         </div>
       </Modal>
+
+
+
 
       <Modal
         footer={ null }

@@ -158,8 +158,11 @@
 .all-project-main-wrapper .edit-delete {
     justify-content: center;
     cursor: pointer;
-}
 
+}
+.all-project-main-wrapper .edit-delete i{
+    padding: 10px;
+}
 .all-project-main-wrapper .edit-delete [class="fa-solid fa-ellipsis-vertical"] {
     /* display: none; */
 }

@@ -1805,9 +1805,7 @@ button.ant-btn>.fi-ss-link:before {
     margin: 0 -5px;
 }
 
-.overview-modal-wrapper .ant-row .ant-col {
-    padding: 0 5px;
-}
+
 
 /*Add note modal*/
 /* .ant-modal.notes-modal .ant-form-item {
@@ -4969,29 +4967,10 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     color: var(--text-gray-shade2);
 }
 
-.admin-user .ant-modal-content .ant-modal-body {
-    background-color: var(--chat-body-wrapper);
-    padding: 20px;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-radio-wrapper:hover .ant-radio-inner {
-    border-color: #c2c3c5;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    height: 40px;
-    width: 100%;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus,
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus-within,
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:hover {
-    background-color: #fff;
-    border-color: #c2c3c5;
-    color: #3f4350;
-}
+
 
 .admin-user .ant-dropdown .ant-dropdown-arrow {
     display: block;
@@ -5580,6 +5559,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .filter-btn-wrapper .ant-btn .filter-text {
     display: flex;
     gap: 5px;
+    font-size: 12px;
 }
 
 .assignees-popover .ant-checkbox-wrapper,
