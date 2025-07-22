@@ -7499,8 +7499,8 @@ _:-ms-fullscreen .ant-picker-range-wrapper .ant-picker-year-panel .ant-picker-ce
   display: inline-flex;
   align-items: center;
   background: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
+  border: 1px solid #c2c3c5;
+  border-radius: 4px;
   transition: border 0.3s, box-shadow 0.3s;
 }
 
@@ -7685,9 +7685,9 @@ textarea.ant-picker-input>input {
 .ant-picker-large {
   padding: 9px 11px 9px;
 }
-
+.ant-picker-large .ant-picker-input>input::placeholder,
 .ant-picker-large .ant-picker-input>input {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .ant-picker-small {
@@ -40615,10 +40615,6 @@ fieldset[disabled] a.gx-btn {
   }
 }
 
-.ant-form-horizontal .ant-row {
-  margin-left: -15px;
-  margin-right: -15px;
-}
 
 .inout-employee .ant-form-horizontal .ant-row .ant-col {
   padding: 0 15px;
@@ -48826,7 +48822,7 @@ td.ant-table-cell .ant-row.ant-form-item {
 body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector {
   min-width: 105px;
   font-size: 13px;
-  height: 35px;
+  height: 40px;
 }
 
 body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-item {

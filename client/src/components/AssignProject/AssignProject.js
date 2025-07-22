@@ -431,7 +431,7 @@ function AssignProject() {
 
         return (
           <div className="edit-delete">
-            <Popover arrow={false} content={ content } trigger="click" placement="left">
+            <Popover arrow={ false } content={ content } trigger="click" placement="left">
               <i className="fa-solid fa-ellipsis-vertical"></i>
             </Popover>
           </div>
@@ -1472,35 +1472,49 @@ function AssignProject() {
               ...pagination,
             } }
             onChange={ handleTableChange }
-            // scroll={ {
-            //   x: "100%",
-            // } }
+          // scroll={ {
+          //   x: "100%",
+          // } }
           />
         </div>
       </Card>
 
       <Modal
-        footer={ false }
         open={ isModalOpen }
         onOk={ handleOk }
         onCancel={ handleCancel }
+        title={ modalMode === "add" ? "Add Project" : "Edit Project" }
         className="project-add-wrapper"
+        width={800}
+        footer={ [
+          <Button key="cancel" onClick={ handleCancel } className="delete-btn" size="large">
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            onClick={ () => form.submit() }
+          >
+            Save
+          </Button>,
+        ] }
       >
-        <div className="modal-header">
-          <h1>{ modalMode === "add" ? "Add Project" : "Edit Project" }</h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form
             form={ form }
+            layout="vertical"
             onFinish={ (values) => {
               modalMode === "add"
                 ? addProjectDetails(values)
                 : editProjectdetails(data?._id, values);
             } }
           >
-            <div className="topic-cancel-wrapper">
-              <div className="pop-project-task-main-wrapper">
+            <Row gutter={ [0 , 0] }>
+              {/* Project Title - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 <Form.Item
+                  label="Project Title"
                   name="title"
                   rules={ [
                     {
@@ -1514,101 +1528,96 @@ function AssignProject() {
                     },
                   ] }
                 >
-                  <Input placeholder="SO1140/TM/PMS" />
+                  <Input placeholder="SO1140/TM/PMS" size="large" />
                 </Form.Item>
+              </Col>
 
-                <Row>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      name="technology"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please select a technology",
-                        },
-                      ] }
-                      className="assign-project-tech-input"
-                    >
-                      <Select
-                        mode="multiple"
-                        placeholder="Technology"
-                        size="large"
-                        showSearch
-                        filterOption={ (input, option) =>
-                          option.children
-                            ?.toLowerCase()
-                            ?.indexOf(input?.toLowerCase()) >= 0
-                        }
-                        filterSort={ (optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            ?.localeCompare(optionB.children?.toLowerCase())
-                        }
-                        onChange={ handleProjectTech }
-                        value={ projectTech }
-                      >
-                        { technologyList.map((item, index) => (
-                          <>
-                            <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
-                            >
-                              { item.project_tech }
-                            </Option>
-                          </>
-                        )) }
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={ 12 } className="assign-project-tech-input">
-                    <Form.Item
-                      className="poject-type"
-                      name="project_type"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please select a project type",
-                        },
-                      ] }
-                    >
-                      <Select
-                        placeholder="Project Type"
-                        size="large"
-                        showSearch
-                        filterOption={ (input, option) =>
-                          option.children
-                            ?.toLowerCase()
-                            ?.indexOf(input?.toLowerCase()) >= 0
-                        }
-                        filterSort={ (optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            ?.localeCompare(optionB.children?.toLowerCase())
-                        }
-                        onChange={ (value) => setProjectTypeselect(value) }
-                      >
-                        { projectTypeList.map((item, index) => (
-                          <>
-                            <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
-                            >
-                              { item.project_type }
-                            </Option>
-                          </>
-                        )) }
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-
+              {/* Technology and Project Type */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
-                  label="Description"
-                  colon={ false }
-                  name="descriptions"
+                  label="Technology"
+                  name="technology"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select a technology",
+                    },
+                  ] }
                 >
+                  <Select
+                    mode="multiple"
+                    placeholder="Select Technology"
+                    size="large"
+                    showSearch
+                    filterOption={ (input, option) =>
+                      option.children
+                        ?.toLowerCase()
+                        ?.indexOf(input?.toLowerCase()) >= 0
+                    }
+                    filterSort={ (optionA, optionB) =>
+                      optionA.children
+                        ?.toLowerCase()
+                        ?.localeCompare(optionB.children?.toLowerCase())
+                    }
+                    onChange={ handleProjectTech }
+                    value={ projectTech }
+                  >
+                    { technologyList.map((item, index) => (
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
+                      >
+                        { item.project_tech }
+                      </Option>
+                    )) }
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Project Type"
+                  name="project_type"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select a project type",
+                    },
+                  ] }
+                >
+                  <Select
+                    placeholder="Select Project Type"
+                    size="large"
+                    showSearch
+                    filterOption={ (input, option) =>
+                      option.children
+                        ?.toLowerCase()
+                        ?.indexOf(input?.toLowerCase()) >= 0
+                    }
+                    filterSort={ (optionA, optionB) =>
+                      optionA.children
+                        ?.toLowerCase()
+                        ?.localeCompare(optionB.children?.toLowerCase())
+                    }
+                    onChange={ (value) => setProjectTypeselect(value) }
+                  >
+                    { projectTypeList.map((item, index) => (
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
+                      >
+                        { item.project_type }
+                      </Option>
+                    )) }
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Description - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                <Form.Item label="Description" name="descriptions">
                   <CKEditor
                     editor={ Custombuild }
                     data={ editorData }
@@ -1641,38 +1650,9 @@ function AssignProject() {
                       fontSize: {
                         options: [
                           "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
+                          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                          13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                          23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
                         ],
                       },
                       print: {
@@ -1684,21 +1664,23 @@ function AssignProject() {
                     } }
                   />
                 </Form.Item>
+              </Col>
 
+              {/* Account Manager and Project Manager */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
                   label="Account Manager"
-                  colon={ false }
                   name="acc_manager"
                   rules={
                     projectTypeselect === "65b9e9e70f085dbd9bb12797"
-                      ? [] // Not required
-                      : [{ required: true, message: "This field is required!" }] // Required
+                      ? []
+                      : [{ required: true, message: "This field is required!" }]
                   }
                 >
                   <Select
+                    placeholder="Select Account Manager"
                     size="large"
                     showSearch
-                    // optionFilterProp="children"
                     filterOption={ (input, option) =>
                       option.children
                         ?.toLowerCase()
@@ -1711,293 +1693,257 @@ function AssignProject() {
                     }
                   >
                     { accountManagerList.map((item, index) => (
-                      <>
-                        <Option
-                          key={ index }
-                          value={ item._id }
-                          style={ { textTransform: "capitalize" } }
-                        >
-                          { removeTitle(item.full_name) }
-                        </Option>
-                      </>
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
+                      >
+                        { removeTitle(item.full_name) }
+                      </Option>
                     )) }
                   </Select>
                 </Form.Item>
+              </Col>
 
-                <Row>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Associate Workflow"
-                      colon={ false }
-                      name="workFlow"
-                      initialValue={ workflow.find((w) => w.isDefault)?._id }
-                      rules={ [
-                        {
-                          required: true,
-                        },
-                      ] }
-                    >
-                      <Select
-                        size="large"
-                        showSearch
-                        onDropdownVisibleChange={ (open) =>
-                          open && getWorkflow()
-                        }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Project Manager"
+                  name="manager"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select a project manager",
+                    },
+                  ] }
+                >
+                  <Select
+                    placeholder="Select Project Manager"
+                    size="large"
+                    showSearch
+                    filterOption={ (input, option) =>
+                      option.children
+                        ?.toLowerCase()
+                        ?.indexOf(input?.toLowerCase()) >= 0
+                    }
+                    filterSort={ (optionA, optionB) =>
+                      optionA.children
+                        ?.toLowerCase()
+                        ?.localeCompare(optionB.children?.toLowerCase())
+                    }
+                  >
+                    { projectManagerList.map((item, index) => (
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
                       >
-                        { workflow.map((item, index) => (
-                          <>
-                            <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
-                            >
-                              { item.project_workflow }
-                            </Option>
-                          </>
-                        )) }
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Project manager"
-                      colon={ false }
-                      name="manager"
-                      className="subscriber-btn"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please select a project manager",
-                        },
-                      ] }
-                    >
-                      <Select
-                        size="large"
-                        showSearch
-                        // optionFilterProp="children"
-                        filterOption={ (input, option) =>
-                          option.children
-                            ?.toLowerCase()
-                            ?.indexOf(input?.toLowerCase()) >= 0
-                        }
-                        filterSort={ (optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            ?.localeCompare(optionB.children?.toLowerCase())
-                        }
+                        { removeTitle(item.manager_name) }
+                      </Option>
+                    )) }
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Workflow */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Associate Workflow"
+                  name="workFlow"
+                  initialValue={ workflow.find((w) => w.isDefault)?._id }
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select a workflow",
+                    },
+                  ] }
+                >
+                  <Select
+                    placeholder="Select Workflow"
+                    size="large"
+                    showSearch
+                    onDropdownVisibleChange={ (open) => open && getWorkflow() }
+                  >
+                    { workflow.map((item, index) => (
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
                       >
-                        { projectManagerList.map((item, index) => (
-                          <>
-                            <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
-                            >
-                              { removeTitle(item.manager_name) }
-                            </Option>
-                          </>
-                        )) }
-                      </Select>
-                    </Form.Item>
-                  </Col>
+                        { item.project_workflow }
+                      </Option>
+                    )) }
+                  </Select>
+                </Form.Item>
+              </Col>
 
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Assignees"
-                      colon={ false }
-                      name="assignees"
-                      className="subscriber-btn"
-                    >
-                      <Space
-                        direction="vertical"
-                        style={ {
-                          width: "100%",
-                        } }
-                      >
-                        <MultiSelect
-                          onSearch={ handleSearch }
-                          onChange={ handleSelectedItemsChange }
-                          values={
-                            selectedItems &&
-                            selectedItems.map((item) => item._id)
-                          }
-                          listData={ projectAssigneesList }
-                          search={ searchKeyword }
-                        />
-                      </Space>
+              {/* Estimated Hours */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Project Estimated Hours"
+                  name="estimatedHours"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please provide estimated hours",
+                    },
+                  ] }
+                >
+                  <Input
+                    type="number"
+                    min={ 0 }
+                    placeholder="Enter estimated hours"
+                    size="large"
+                  />
+                </Form.Item>
+              </Col>
 
-                      <div className="list-clear-btn">
-                        <Button
-                          className="list-clear-btn ant-delete"
-                          onClick={ handleClearAssignees }
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    </Form.Item>
-                  </Col>
-
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Client"
-                      colon={ false }
-                      name="client"
-                      className="subscriber-btn"
+              {/* Assignees and Client */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item label="Assignees" name="assignees">
+                  <MultiSelect
+                    onSearch={ handleSearch }
+                    onChange={ handleSelectedItemsChange }
+                    values={
+                      selectedItems && selectedItems.map((item) => item._id)
+                    }
+                    listData={ projectAssigneesList }
+                    search={ searchKeyword }
+                  />
+                  <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                    <Button
+                      className="list-clear-btn ant-delete"
+                      onClick={ handleClearAssignees }
+                      size="small"
                     >
-                      <MultiSelect
-                        onSearch={ handleSearch }
-                        onChange={ handleClients }
-                        values={
-                          selectedClient &&
-                          selectedClient.map((item) => item._id)
-                        }
-                        listData={ projectClientList }
-                        search={ searchKeyword }
-                      />
-
-                      <div className="clear-btn">
-                        <Button
-                          className="list-clear-btn ant-delete"
-                          onClick={ handleClearClient }
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    </Form.Item>
-                  </Col>
-
-                  <Col span={ 12 }></Col>
-                </Row>
-                <Row>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Project Estimated Hours"
-                      colon={ false }
-                      name="estimatedHours"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please provide estimated hours",
-                        },
-                      ] }
-                    >
-                      <Input type="number" min={ 0 } />
-                    </Form.Item>
-                  </Col>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Status"
-                      colon={ false }
-                      name="project_status"
-                    >
-                      <Select
-                        size="large"
-                        defaultValue={
-                          projectStatusList.find(
-                            (item) => item.title?.toLowerCase() === "active"
-                          )?._id
-                        }
-                        showSearch
-                        filterOption={ (input, option) =>
-                          option.children
-                            ?.toLowerCase()
-                            ?.indexOf(input?.toLowerCase()) >= 0
-                        }
-                        filterSort={ (optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            ?.localeCompare(optionB.children?.toLowerCase())
-                        }
-                      >
-                        { projectStatusList.map((item, index) => (
-                          <>
-                            <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
-                            >
-                              { item.title }
-                            </Option>
-                          </>
-                        )) }
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="Start Date"
-                      colon={ false }
-                      name="start_date"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please select a start date",
-                        },
-                      ] }
-                    >
-                      <DatePicker
-                        placeholder="Start Date"
-                        onChange={ (date, dateString) => {
-                          onChange(date, dateString, "start_date");
-                          form.setFieldValue({ end_date: "" });
-                        } }
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={ 12 }>
-                    <Form.Item
-                      label="End Date"
-                      colon={ false }
-                      name="end_date"
-                      rules={ [
-                        {
-                          required: true,
-                          message: "Please select an end date",
-                        },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            if (
-                              !value ||
-                              form.getFieldValue("start_date") < value
-                            ) {
-                              return Promise.resolve();
-                            }
-                            return Promise.reject(
-                              new Error(
-                                "End date must be later than start date"
-                              )
-                            );
-                          },
-                        }),
-                      ] }
-                    >
-                      <DatePicker
-                        placeholder="End Date"
-                        onChange={ (date, dateString) =>
-                          onChange(date, dateString, "end_date")
-                        }
-                        disabledDate={ (value) => {
-                          return value < form.getFieldValue("start_date");
-                        } }
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <div className="modal-footer-flex">
-                  <div className="flex-btn">
-                    <Button type="primary" htmlType="submit">
-                      Save
-                    </Button>
-                    <Button className="ant-delete" onClick={ handleCancel }>
-                      Cancel
+                      Clear
                     </Button>
                   </div>
-                
-                </div>
-              </div>
-            </div>
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item label="Client" name="client">
+                  <MultiSelect
+                    onSearch={ handleSearch }
+                    onChange={ handleClients }
+                    values={
+                      selectedClient && selectedClient.map((item) => item._id)
+                    }
+                    listData={ projectClientList }
+                    search={ searchKeyword }
+                  />
+                  <div className="clear-btn" style={ { marginTop: 8 } }>
+                    <Button
+                      className="list-clear-btn ant-delete"
+                      onClick={ handleClearClient }
+                      size="small"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </Form.Item>
+              </Col>
+
+              {/* Status */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item label="Status" name="project_status">
+                  <Select
+                    size="large"
+                    defaultValue={
+                      projectStatusList.find(
+                        (item) => item.title?.toLowerCase() === "active"
+                      )?._id
+                    }
+                    placeholder="Select Status"
+                    showSearch
+                    filterOption={ (input, option) =>
+                      option.children
+                        ?.toLowerCase()
+                        ?.indexOf(input?.toLowerCase()) >= 0
+                    }
+                    filterSort={ (optionA, optionB) =>
+                      optionA.children
+                        ?.toLowerCase()
+                        ?.localeCompare(optionB.children?.toLowerCase())
+                    }
+                  >
+                    { projectStatusList.map((item, index) => (
+                      <Option
+                        key={ index }
+                        value={ item._id }
+                        style={ { textTransform: "capitalize" } }
+                      >
+                        { item.title }
+                      </Option>
+                    )) }
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Dates */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 6 }>
+                <Form.Item
+                  label="Start Date"
+                  name="start_date"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select a start date",
+                    },
+                  ] }
+                >
+                  <DatePicker
+                    placeholder="Select Start Date"
+                    style={ { width: '100%' } }
+                    size="large"
+                    onChange={ (date, dateString) => {
+                      onChange(date, dateString, "start_date");
+                      form.setFieldValue({ end_date: "" });
+                    } }
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 6 }>
+                <Form.Item
+                  label="End Date"
+                  name="end_date"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please select an end date",
+                    },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (
+                          !value ||
+                          form.getFieldValue("start_date") < value
+                        ) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(
+                          new Error("End date must be later than start date")
+                        );
+                      },
+                    }),
+                  ] }
+                >
+                  <DatePicker
+                    placeholder="Select End Date"
+                    style={ { width: '100%' } }
+                    size="large"
+                    onChange={ (date, dateString) =>
+                      onChange(date, dateString, "end_date")
+                    }
+                    disabledDate={ (value) => {
+                      return value < form.getFieldValue("start_date");
+                    } }
+                  />
+                </Form.Item>
+              </Col>
+
+
+            </Row>
           </Form>
         </div>
       </Modal>

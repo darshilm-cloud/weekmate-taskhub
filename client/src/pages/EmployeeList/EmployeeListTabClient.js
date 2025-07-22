@@ -636,166 +636,201 @@ const EmployeeListTabClient = () => {
 
       {/* add edit button modal */ }
       <Modal
-        className="add-and-edit-client"
         open={ addModal }
-        width={ 1000 }
-        footer={ false }
         onOk={ handleOk }
         onCancel={ handleCancel }
+        title={ modalMode === "add" ? "Add Client" : "Edit Client" }
+        className="add-and-edit-client"
+        width={ 800 }
+        footer={ [
+          <Button key="cancel" onClick={ handleCancel } className="delete-btn" size="large">
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            onClick={ () => addemployee.submit() }
+          >
+            { modalMode === "add" ? "Add" : "Save" }
+          </Button>,
+        ] }
       >
-        <div className="modal-header ">
-          <h1>{ modalMode === "add" ? "Add Client" : "Edit Client" }</h1>
-        </div>
-        <div className="filter-pop-wrapper">
-          <Row>
-            <Col span={ 24 }>
-              <Form
-                form={ addemployee }
-                { ...formItemLayout }
-                onFinish={ (values) => {
-                  modalMode === "add" ? addemp(values) : UpdateClient(values);
-                } }
-              >
-                <div className="edit-clint-pop">
-                  <Row>
-                    <Col sm={ 24 } lg={ 12 }>
-                      <div>
-                        <Form.Item
-                          label="First name"
-                          name="first_name"
-                          rules={ [
-                            {
-                              required: true,
-                              message: "Please enter first name",
-                            },
-                          ] }
-                        >
-                          <Input placeholder="Enter First Name" />
-                        </Form.Item>
-                        <Form.Item
-                          label="Phone number"
-                          name="phone_number"
-                          rules={ [
-                            {
-                              len: 10,
-                              message: "Phone number must be 10 digits",
-                            },
-                            {
-                              pattern: /^[0-9]+$/,
-                              message: "Phone number must contain only digits",
-                            },
-                          ] }
-                        >
-                          <Input placeholder="Enter Phone Number" />
-                        </Form.Item>
-                        <Form.Item
-                          label="Email"
-                          name="email"
-                          rules={ [
-                            {
-                              required: true,
-                              message: "Please Enter email",
-                              type: "email",
-                            },
-                          ] }
-                        >
-                          <Input placeholder="Enter Email" />
-                        </Form.Item>
-                        <Form.Item label="Extra Info" name="extra_details">
-                          <TextArea />
-                        </Form.Item>
-                      </div>
-                    </Col>
-                    <Col sm={ 24 } lg={ 12 }>
-                      <div>
-                        <Form.Item
-                          label="Last Name"
-                          name="last_name"
-                          rules={ [
-                            {
-                              required: true,
-                              message: "Please enter last name",
-                            },
-                          ] }
-                        >
-                          <Input placeholder="Enter Last Name" />
-                        </Form.Item>
+        <div className="overview-modal-wrapper">
+          <Form
+            form={ addemployee }
+            layout="vertical"
+            onFinish={ (values) => {
+              modalMode === "add" ? addemp(values) : UpdateClient(values);
+            } }
+          >
+            <Row gutter={ [0, 0] }>
+              {/* First Name and Last Name */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="First Name"
+                  name="first_name"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please enter first name",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter First Name" size="large" />
+                </Form.Item>
+              </Col>
 
-                        <Form.Item
-                          label="Company Name"
-                          name="company_name"
-                          rules={ [
-                            {
-                              required: true,
-                              message: "Please enter company name",
-                            },
-                          ] }
-                        >
-                          <Input placeholder="Enter Company Name" />
-                        </Form.Item>
-                        { modalMode === "add" && (
-                          <Form.Item
-                            className=" client-input-password"
-                            label="Password"
-                            name="plain_password"
-                            rules={ passwordRules }
-                          >
-                            <Input
-                              placeholder="Enter Password"
-                              type={ passwordVisible ? "text" : "password" }
-                              min={ 8 }
-                              autoComplete="off"
-                              suffix={
-                                <Button
-                                  type="link"
-                                  onClick={ togglePasswordVisibility }
-                                  icon={
-                                    passwordVisible ? (
-                                      <EyeInvisibleOutlined />
-                                    ) : (
-                                      <EyeTwoTone />
-                                    )
-                                  }
-                                />
-                              }
-                            />
-                          </Form.Item>
-                        ) }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Last Name"
+                  name="last_name"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please enter last name",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Last Name" size="large" />
+                </Form.Item>
+              </Col>
 
-                        <Form.Item label="Status" name="status">
-                          <Select
-                            onChange={ (e) => console.log(e, "eeee") }
-                            options={ [
-                              {
-                                value: "Active",
-                                label: "Active",
-                              },
-                              {
-                                value: "Not Active",
-                                label: "Not Active",
-                              },
-                            ] }
-                          />
-                        </Form.Item>
-                      </div>
-                    </Col>
-                  </Row>
-                  <div className="add-btn-wrapper">
-                    <Button type="primary" htmlType="submit">
-                      { modalMode === "add" ? "Add" : "Save" }
-                    </Button>
-                    <Button
-                      className="ant-delete"
-                      type="primary"
-                      onClick={ handleCancel }
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </Form>
-            </Col>
-          </Row>
+              {/* Phone Number and Company Name */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Phone Number"
+                  name="phone_number"
+                  rules={ [
+                    {
+                      len: 10,
+                      message: "Phone number must be 10 digits",
+                    },
+                    {
+                      pattern: /^[0-9]+$/,
+                      message: "Phone number must contain only digits",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Phone Number" size="large" />
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Company Name"
+                  name="company_name"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please enter company name",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Company Name" size="large" />
+                </Form.Item>
+              </Col>
+
+              {/* Email and Password/Status */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Email"
+                  name="email"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please Enter email",
+                      type: "email",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Email" size="large" />
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                { modalMode === "add" && (
+                  <Form.Item
+                    label="Password"
+                    name="plain_password"
+                    rules={ passwordRules }
+                  >
+                    <Input
+                      placeholder="Enter Password"
+                      type={ passwordVisible ? "text" : "password" }
+                      min={ 8 }
+                      size="large"
+                      autoComplete="off"
+                      suffix={
+                        <Button
+                          type="link"
+                          onClick={ togglePasswordVisibility }
+                          icon={
+                            passwordVisible ? (
+                              <EyeInvisibleOutlined />
+                            ) : (
+                              <EyeTwoTone />
+                            )
+                          }
+                        />
+                      }
+                    />
+                  </Form.Item>
+                ) }
+
+                { modalMode === "edit" && (
+                  <Form.Item label="Status" name="status">
+                    <Select
+                      placeholder="Select Status"
+                      size="large"
+                      onChange={ (e) => console.log(e, "eeee") }
+                      options={ [
+                        {
+                          value: "Active",
+                          label: "Active",
+                        },
+                        {
+                          value: "Not Active",
+                          label: "Not Active",
+                        },
+                      ] }
+                    />
+                  </Form.Item>
+                ) }
+              </Col>
+
+              {/* Status for Add Mode */ }
+              { modalMode === "add" && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item label="Status" name="status">
+                    <Select
+                      placeholder="Select Status"
+                      size="large"
+                      onChange={ (e) => console.log(e, "eeee") }
+                      options={ [
+                        {
+                          value: "Active",
+                          label: "Active",
+                        },
+                        {
+                          value: "Not Active",
+                          label: "Not Active",
+                        },
+                      ] }
+                    />
+                  </Form.Item>
+                </Col>
+              ) }
+
+              {/* Extra Info - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                <Form.Item label="Extra Info" name="extra_details">
+                  <TextArea placeholder="Enter additional details" size="large" />
+                </Form.Item>
+              </Col>
+
+            </Row>
+          </Form>
         </div>
       </Modal>
 

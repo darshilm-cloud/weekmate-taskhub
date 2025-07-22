@@ -7676,12 +7676,11 @@ textarea.ant-picker-input>input {
   color: #bfbfbf;
 }
 
-.ant-picker-large {
-  padding: 9px 11px 9px;
-}
 
+.ant-picker-large .ant-picker-input>input::placeholder,
 .ant-picker-large .ant-picker-input>input {
-  font-size: 16px;
+  font-size: 14px;
+  border-radius: 4px;
 }
 
 .ant-picker-small {
@@ -40665,10 +40664,6 @@ fieldset[disabled] a.gx-btn {
   }
 }
 
-.ant-form-horizontal .ant-row {
-  margin-left: -15px;
-  margin-right: -15px;
-}
 
 .form-center {
   border-radius: 10px;
@@ -49257,11 +49252,6 @@ td.ant-table-cell .ant-row.ant-form-item {
   margin-top: -35px;
 }
 
-body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector {
-  min-width: 105px;
-  font-size: 13px;
-  height: 35px;
-}
 
 body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-item {
   display: flex;
