@@ -736,7 +736,7 @@
 }
 
 .page-layout .task-wrapper .block-status-content {
-    max-width: 50%;
+    max-width: 100%;
 }
 
 .task-model .task-inner-card .ck.ck-content.ck-editor__editable.ck-rounded-corners {
@@ -859,11 +859,7 @@
 }
 
 /* ---------------------- */
-@media screen and (max-width: 1280px) {
-    .page-layout .task-wrapper .block-status-content {
-        max-width: 60%;
-    }
-}
+
 
 @media screen and (max-width: 1180px) {
     .bugs-task-wrapper .block-status-content {

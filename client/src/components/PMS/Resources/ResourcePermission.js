@@ -1,4 +1,4 @@
-import { Card, Table, Radio, message } from "antd";
+import { Card, Table, Radio, message, Button } from "antd";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Service from "../../../service";
@@ -89,15 +89,19 @@ function ResourcePermission(props) {
   return (
     <div className="taskhub-wrapper">
       <Card
-        title={
+      
+      >
+      <div className="heading-main">
+        <h2>Roles Permission</h2>
           <>
             <Link to={`/${companySlug}/project-users`}>
-              <ArrowLeftOutlined style={{ color: "black" }} />
+            <Button type="primary" icon={<ArrowLeftOutlined/> }>
+              Back
+            </Button>
             </Link>
-            &nbsp; Roles Permission
+      
           </>
-        }
-      >
+      </div>
         <Table
           columns={columns}
           pagination={false}

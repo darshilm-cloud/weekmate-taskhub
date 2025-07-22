@@ -4788,8 +4788,9 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
-    background-color: #0000;
-    border: none;
+    background-color:#fff;
+    padding: 10px 20px;
+ 
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-head {
@@ -4930,7 +4931,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-search-button {
-    height: 35px;
+    height: 40px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined:focus,

@@ -17643,6 +17643,7 @@ textarea.ant-input {
   color: #595959;
   line-height: 34px;
   display: inline-block;
+  height: 40px;
 }
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button:not(.ant-btn-primary).ant-btn-loading::before {
