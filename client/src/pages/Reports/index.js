@@ -516,8 +516,6 @@
 //         </div>
 //       </div>
 
-
-
 //       <div className="project-panel-header">
 //         <div
 //           className="project-runnig-data-wrapper"
@@ -621,8 +619,25 @@
 // export default ProjectsRunning;
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Header } from "antd/lib/layout/layout";
-import { Card, Form, Popover, Select, Space, Table, Button, Dropdown, Menu, Tooltip } from "antd";
-import { DownOutlined, MoreOutlined, ExportOutlined, ReloadOutlined, SortAscendingOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Form,
+  Popover,
+  Select,
+  Space,
+  Table,
+  Button,
+  Dropdown,
+  Menu,
+  Tooltip,
+} from "antd";
+import {
+  DownOutlined,
+  MoreOutlined,
+  ExportOutlined,
+  ReloadOutlined,
+  SortAscendingOutlined,
+} from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
@@ -637,19 +652,21 @@ const { Option } = Select;
 // Constants
 const CHART_COLORS = {
   primary: "#00E396",
-  white: "#fff"
+  white: "#fff",
 };
 
 const BREAKPOINTS = {
-  mobile: 480
+  mobile: 480,
 };
 
 // Memoized components
-const SortIcon = React.memo(({ sortOrder }) => (
-  sortOrder === "asc"
-    ? <i className="fi fi-rr-arrow-small-up"></i>
-    : <i className="fi fi-rr-arrow-small-down"></i>
-));
+const SortIcon = React.memo(({ sortOrder }) =>
+  sortOrder === "asc" ? (
+    <i className="fi fi-rr-arrow-small-up"></i>
+  ) : (
+    <i className="fi fi-rr-arrow-small-down"></i>
+  )
+);
 
 const NoDataFound = React.memo(() => (
   <div className="no-data-found-div">
@@ -695,143 +712,153 @@ const ProjectsRunning = () => {
 
   // Memoized utility functions
   const formatTitle = useCallback((title) => {
-    return title?.replace(/(?:^|\s)([a-z])/g, (match, group1) =>
-      match?.charAt(0) + group1?.toUpperCase()
+    return title?.replace(
+      /(?:^|\s)([a-z])/g,
+      (match, group1) => match?.charAt(0) + group1?.toUpperCase()
     );
   }, []);
 
-  const formatDate = useCallback((date) =>
-    moment(date).format("DD MMM YYYY"), []);
+  const formatDate = useCallback(
+    (date) => moment(date).format("DD MMM YYYY"),
+    []
+  );
 
   // Memoized table columns
-  const columns = useMemo(() => [
-    {
-      title: "Project Name",
-      dataIndex: "title",
-      key: "title",
-      render: (_, record) => {
-        const formattedTitle = formatTitle(record?.title);
-        return (
-          <Link to={ `/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}` }>
-            <div className="project_title_main_div">
-              <span className="project-title-link">{ formattedTitle }</span>
-            </div>
-          </Link>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "Project Name",
+        dataIndex: "title",
+        key: "title",
+        render: (_, record) => {
+          const formattedTitle = formatTitle(record?.title);
+          return (
+            <Link
+              to={`/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}`}
+            >
+              <div className="project_title_main_div">
+                <span className="project-title-link">{formattedTitle}</span>
+              </div>
+            </Link>
+          );
+        },
+        width: 250,
+        sorter: (a, b) => a.title.localeCompare(b.title),
+        ellipsis: true,
       },
-      width: 250,
-      sorter: (a, b) => a.title.localeCompare(b.title),
-      ellipsis: true,
-    },
-    {
-      title: "Project Manager",
-      dataIndex: "managerName",
-      width: 180,
-      key: "managerName",
-      render: (_, record) => (
-        <span className="manager-name">
-          { removeTitle(record.managerName) }
-        </span>
-      ),
-      sorter: (a, b) => a.managerName.localeCompare(b.managerName),
-      ellipsis: true,
-    },
-    {
-      title: "Department",
-      dataIndex: "technologyName",
-      width: 150,
-      sorter: (a, b) => a.technologyName[0].localeCompare(b.technologyName[0]),
-      key: "technologyName",
-      render: (_, record) => (
-        <div className="technology-tags">
-          { record.technologyName.map((tech, index) => (
-            <span key={ index } className="technology-tag">
-              { tech }
-            </span>
-          )) }
-        </div>
-      ),
-      ellipsis: true,
-    },
-    {
-      title: "Project Type",
-      dataIndex: "project_typeName",
-      width: 120,
-      sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
-      key: "projecttypeName",
-      render: (_, record) => (
-        <span className="project-type-badge">
-          { record.project_typeName }
-        </span>
-      ),
-      ellipsis: true,
-    },
-    {
-      title: "Est. Hours",
-      dataIndex: "estimatedHours",
-      width: 100,
-      sorter: (a, b) => a.estimatedHours.localeCompare(b.estimatedHours),
-      key: "estimatedHours",
-      render: (_, record) => (
-        <span className="hours-display estimated-hours">
-          { record.estimatedHours }
-        </span>
-      ),
-      align: 'center',
-    },
-    {
-      title: "Used Hours",
-      dataIndex: "total_logged_time",
-      width: 100,
-      sorter: (a, b) => a.total_logged_time.localeCompare(b.total_logged_time),
-      key: "total_logged_time",
-      render: (_, record) => (
-        <span className="hours-display used-hours">
-          { record.total_logged_time }
-        </span>
-      ),
-      align: 'center',
-    },
-    {
-      title: "Start Date",
-      dataIndex: "start_date",
-      width: 120,
-      sorter: (a, b) => a.start_date.localeCompare(b.start_date),
-      key: "start_date",
-      render: (_, record) => (
-        <span className="date-display">
-          { formatDate(record.start_date) }
-        </span>
-      ),
-      align: 'center',
-    },
-    {
-      title: "End Date",
-      dataIndex: "end_date",
-      width: 120,
-      sorter: (a, b) => a.end_date.localeCompare(b.end_date),
-      key: "end_date",
-      render: (_, record) => (
-        <span className="date-display">
-          { formatDate(record.end_date) }
-        </span>
-      ),
-      align: 'center',
-    },
-  ], [formatTitle, formatDate]);
+      {
+        title: "Project Manager",
+        dataIndex: "managerName",
+        width: 180,
+        key: "managerName",
+        render: (_, record) => (
+          <span className="manager-name">
+            {removeTitle(record.managerName)}
+          </span>
+        ),
+        sorter: (a, b) => a.managerName.localeCompare(b.managerName),
+        ellipsis: true,
+      },
+      {
+        title: "Department",
+        dataIndex: "technologyName",
+        width: 150,
+        sorter: (a, b) =>
+          a.technologyName[0].localeCompare(b.technologyName[0]),
+        key: "technologyName",
+        render: (_, record) => (
+          <div className="technology-tags">
+            {record.technologyName.map((tech, index) => (
+              <span key={index} className="technology-tag">
+                {tech}
+              </span>
+            ))}
+          </div>
+        ),
+        ellipsis: true,
+      },
+      {
+        title: "Project Type",
+        dataIndex: "project_typeName",
+        width: 120,
+        sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
+        key: "projecttypeName",
+        render: (_, record) => (
+          <span className="project-type-badge">{record.project_typeName}</span>
+        ),
+        ellipsis: true,
+      },
+      {
+        title: "Est. Hours",
+        dataIndex: "estimatedHours",
+        width: 100,
+        sorter: (a, b) => a.estimatedHours.localeCompare(b.estimatedHours),
+        key: "estimatedHours",
+        render: (_, record) => (
+          <span className="hours-display estimated-hours">
+            {record.estimatedHours}
+          </span>
+        ),
+        align: "center",
+      },
+      {
+        title: "Used Hours",
+        dataIndex: "total_logged_time",
+        width: 100,
+        sorter: (a, b) =>
+          a.total_logged_time.localeCompare(b.total_logged_time),
+        key: "total_logged_time",
+        render: (_, record) => (
+          <span className="hours-display used-hours">
+            {record.total_logged_time}
+          </span>
+        ),
+        align: "center",
+      },
+      {
+        title: "Start Date",
+        dataIndex: "start_date",
+        width: 120,
+        sorter: (a, b) => a.start_date.localeCompare(b.start_date),
+        key: "start_date",
+        render: (_, record) => (
+          <span className="date-display">{formatDate(record.start_date)}</span>
+        ),
+        align: "center",
+      },
+      {
+        title: "End Date",
+        dataIndex: "end_date",
+        width: 120,
+        sorter: (a, b) => a.end_date.localeCompare(b.end_date),
+        key: "end_date",
+        render: (_, record) => (
+          <span className="date-display">{formatDate(record.end_date)}</span>
+        ),
+        align: "center",
+      },
+    ],
+    [formatTitle, formatDate]
+  );
 
   // Memoized chart data processing
   const processedChartData = useMemo(() => {
     const filteredProjectTypeData = projectTypeData.filter(
-      entry => entry.project_typeName
+      (entry) => entry.project_typeName
     );
 
     return {
       filteredProjectTypeData,
-      projectTypeReportData: filteredProjectTypeData.map(entry => entry.totalProjects),
-      projectTypeLabels: filteredProjectTypeData.map(entry => entry.project_typeName),
-      technologyReportData: technologiesData.map(entry => entry.totalProjects),
-      technologyLabels: technologiesData.map(entry => entry.technologyName)
+      projectTypeReportData: filteredProjectTypeData.map(
+        (entry) => entry.totalProjects
+      ),
+      projectTypeLabels: filteredProjectTypeData.map(
+        (entry) => entry.project_typeName
+      ),
+      technologyReportData: technologiesData.map(
+        (entry) => entry.totalProjects
+      ),
+      technologyLabels: technologiesData.map((entry) => entry.technologyName),
     };
   }, [projectTypeData, technologiesData]);
 
@@ -847,10 +874,17 @@ const ProjectsRunning = () => {
           type: "pie",
         },
         labels: pieechartDataMangerNames || [],
-        colors: ['#00E396', '#008FFB', '#00D9FF', '#FEB019', '#FF4560', '#775DD0'],
+        colors: [
+          "#00E396",
+          "#008FFB",
+          "#00D9FF",
+          "#FEB019",
+          "#FF4560",
+          "#775DD0",
+        ],
         legend: {
-          position: 'bottom',
-          fontSize: '14px',
+          position: "bottom",
+          fontSize: "14px",
         },
         responsive: [
           {
@@ -867,7 +901,11 @@ const ProjectsRunning = () => {
   }, [pieeChartData, pieechartDataMangerNames]);
 
   const horizontalBarChartData = useMemo(() => {
-    const { filteredProjectTypeData, projectTypeReportData, projectTypeLabels } = processedChartData;
+    const {
+      filteredProjectTypeData,
+      projectTypeReportData,
+      projectTypeLabels,
+    } = processedChartData;
 
     if (filteredProjectTypeData.length === 0) return null;
 
@@ -884,7 +922,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: ['#00E396'],
+        colors: ["#00E396"],
         plotOptions: {
           bar: {
             horizontal: true,
@@ -928,7 +966,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: ['#008FFB'],
+        colors: ["#008FFB"],
         plotOptions: {
           bar: {
             horizontal: false,
@@ -955,16 +993,19 @@ const ProjectsRunning = () => {
   }, [processedChartData, technologiesData]);
 
   // Memoized sort options
-  const sortOptions = useMemo(() => [
-    { key: "title", label: "Project Name" },
-    { key: "managerName", label: "Project Manager" },
-    { key: "technologyName", label: "Department" },
-    { key: "project_typeName", label: "Project Type" },
-    { key: "estimatedHours", label: "Estimated Hours" },
-    { key: "total_logged_time", label: "Used Hours" },
-    { key: "start_date", label: "Start Date" },
-    { key: "end_date", label: "End Date" },
-  ], []);
+  const sortOptions = useMemo(
+    () => [
+      { key: "title", label: "Project Name" },
+      { key: "managerName", label: "Project Manager" },
+      { key: "technologyName", label: "Department" },
+      { key: "project_typeName", label: "Project Type" },
+      { key: "estimatedHours", label: "Estimated Hours" },
+      { key: "total_logged_time", label: "Used Hours" },
+      { key: "start_date", label: "Start Date" },
+      { key: "end_date", label: "End Date" },
+    ],
+    []
+  );
 
   // Memoized handlers
   const handleExportClick = useCallback(() => {
@@ -983,125 +1024,133 @@ const ProjectsRunning = () => {
 
   // Effect for chart re-rendering
   useEffect(() => {
-    setChartKey(prevKey => prevKey + 1);
+    setChartKey((prevKey) => prevKey + 1);
   }, [pieeChartData]);
 
   // Render methods
-  const renderFilterSelect = useCallback((
-    name,
-    placeholder,
-    value,
-    onChange,
-    options,
-    valueKey,
-    labelKey,
-    mode = "multiple"
-  ) => (
-    <div className="filter-select-container">
-      <Form.Item name={ name }>
-        <Select
-          placeholder={ placeholder }
-          mode={ mode }
-          showSearch
-          value={ value }
-          onChange={ onChange }
-          className="custom-select"
-          filterOption={ (input, option) =>
-            option.children
-              ?.toLowerCase()
-              .indexOf(input?.toLowerCase()) >= 0
-          }
-          filterSort={ (optionA, optionB) =>
-            optionA.children
-              ?.toLowerCase()
-              .localeCompare(optionB.children?.toLowerCase())
-          }
-        >
-          { options.map((item, index) => (
-            <Option
-              key={ index }
-              value={ item[valueKey] }
-              className="custom-option"
-            >
-              { labelKey === "manager_name" ? removeTitle(item[labelKey]) : item[labelKey] }
-            </Option>
-          )) }
-        </Select>
-      </Form.Item>
-    </div>
-  ), []);
-
-  const renderSortOptions = useCallback(() => (
-    <div className="sort-options-menu">
-      { sortOptions.map(({ key, label }) => (
-        <div
-          key={ key }
-          className={ `sort-option ${selectedSort === key ? 'active' : ''}` }
-          onClick={ () => handleSortSelect(key) }
-        >
-          <span>{ label }</span>
-          { selectedSort === key && <SortIcon sortOrder={ sortOrder } /> }
-        </div>
-      )) }
-    </div>
-  ), [sortOptions, handleSortSelect, selectedSort, sortOrder]);
-
-  const renderChart = useCallback((chartData, type, title) => {
-    if (!chartData) return null;
-
-    return (
-      <div className="chart-container">
-        <div className="chart-header">
-          <h3>{ title }</h3>
-        </div>
-        <div className="chart-content">
-          <ReactApexChart
-            key={ type === "pie" ? chartKey : undefined }
-            options={ chartData.options }
-            series={ chartData.series }
-            type={ type }
-            height={ 350 }
-          />
-        </div>
+  const renderFilterSelect = useCallback(
+    (
+      name,
+      placeholder,
+      value,
+      onChange,
+      options,
+      valueKey,
+      labelKey,
+      mode = "multiple"
+    ) => (
+      <div className="filter-select-container">
+        <Form.Item name={name}>
+          <Select
+            placeholder={placeholder}
+            mode={mode}
+            showSearch
+            value={value}
+            onChange={onChange}
+            className="custom-select"
+            filterOption={(input, option) =>
+              option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
+            }
+            filterSort={(optionA, optionB) =>
+              optionA.children
+                ?.toLowerCase()
+                .localeCompare(optionB.children?.toLowerCase())
+            }
+          >
+            {options.map((item, index) => (
+              <Option
+                key={index}
+                value={item[valueKey]}
+                className="custom-option"
+              >
+                {labelKey === "manager_name"
+                  ? removeTitle(item[labelKey])
+                  : item[labelKey]}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
       </div>
-    );
-  }, [chartKey]);
+    ),
+    []
+  );
+
+  const renderSortOptions = useCallback(
+    () => (
+      <div className="sort-options-menu">
+        {sortOptions.map(({ key, label }) => (
+          <div
+            key={key}
+            className={`sort-option ${selectedSort === key ? "active" : ""}`}
+            onClick={() => handleSortSelect(key)}
+          >
+            <span>{label}</span>
+            {selectedSort === key && <SortIcon sortOrder={sortOrder} />}
+          </div>
+        ))}
+      </div>
+    ),
+    [sortOptions, handleSortSelect, selectedSort, sortOrder]
+  );
+
+  const renderChart = useCallback(
+    (chartData, type, title) => {
+      if (!chartData) return null;
+
+      return (
+        <div className="chart-container">
+          <div className="chart-header">
+            <h3>{title}</h3>
+          </div>
+          <div className="chart-content">
+            <ReactApexChart
+              key={type === "pie" ? chartKey : undefined}
+              options={chartData.options}
+              series={chartData.series}
+              type={type}
+              height={350}
+            />
+          </div>
+        </div>
+      );
+    },
+    [chartKey]
+  );
 
   // Action menu items
   const actionMenuItems = [
     {
-      key: 'sort',
+      key: "sort",
       icon: <SortAscendingOutlined />,
-      label: 'Sort By',
+      label: "Sort By",
       children: sortOptions.map(({ key, label }) => ({
         key,
         label: (
           <div className="sort-menu-item">
-            <span>{ label }</span>
-            { selectedSort === key && <SortIcon sortOrder={ sortOrder } /> }
+            <span>{label}</span>
+            {selectedSort === key && <SortIcon sortOrder={sortOrder} />}
           </div>
         ),
-        onClick: () => handleSortSelect(key)
-      }))
+        onClick: () => handleSortSelect(key),
+      })),
     },
     {
-      key: 'export',
+      key: "export",
       icon: <ExportOutlined />,
-      label: 'Export',
-      onClick: handleExportClick
+      label: "Export",
+      onClick: handleExportClick,
     },
     {
-      key: 'reset',
+      key: "reset",
       icon: <ReloadOutlined />,
-      label: 'Reset',
-      onClick: handleResetClick
-    }
+      label: "Reset",
+      onClick: handleResetClick,
+    },
   ];
 
   return (
-
     <Card className="projects-running-card">
-      {/* Header */ }
+      {/* Header */}
       <div className="page-header">
         <div className="header-content">
           <div className="heading-wrapper">
@@ -1111,116 +1160,112 @@ const ProjectsRunning = () => {
             <div className="header-stats">
               <div className="stat-item">
                 <span className="stat-label">Total Projects</span>
-                <span className="stat-value">{ metaDataOfReports.total }</span>
+                <span className="stat-value">{metaDataOfReports.total}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */ }
+      {/* Filters */}
       <div className="global-search">
         <div className="filters-header">
           <h3>Filters</h3>
         </div>
         <div className="filter-btn-wrapper ">
-          { renderFilterSelect(
+          {renderFilterSelect(
             "technology",
             "Select Department",
             value,
             handleTechnologyChange,
             technologyList,
             "_id",
-            "project_tech",
-            
-          ) }
+            "project_tech"
+          )}
 
-          { renderFilterSelect(
+          {renderFilterSelect(
             "projectManager",
             "Select Project Manager",
             projectManager,
             handleManagerChange,
             projectManagerList,
             "_id",
-            "manager_name",
-            
-          ) }
+            "manager_name"
+          )}
 
-          { renderFilterSelect(
+          {renderFilterSelect(
             "projectype",
             "Select Project Type",
             projectType,
             handleTypeChange,
             projectTypeList,
             "_id",
-            "project_type",
-            
-          ) }
+            "project_type"
+          )}
         </div>
       </div>
 
-      {/* Charts */ }
+      {/* Charts */}
       <div className="charts-section">
         <div className="charts-grid">
-          { renderChart(pieChartData, "pie", "Projects by Manager") }
-          { renderChart(horizontalBarChartData, "bar", "Projects by Type") }
-          { renderChart(verticalBarChartData, "bar", "Projects by Department") }
+          {renderChart(pieChartData, "pie", "Projects by Manager")}
+          {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
+          {renderChart(verticalBarChartData, "bar", "Projects by Department")}
         </div>
       </div>
 
-      {/* Table */ }
-      <div className="table-section">
-        <div className=" table-header">
-          <h3>Projects List</h3>
-          <div className="table-actions">
-            <Dropdown
-              menu={ { items: actionMenuItems } }
-              trigger={ ['click'] }
-              placement="bottomRight"
-            >
-              <Button type="text" icon={ <MoreOutlined /> } />
-            </Dropdown>
-          </div>
-        </div>
-
-        <div className="table-container">
-          {/* Hidden export elements */ }
-          <div style={ { display: 'none' } }>
-            <ReactHTMLTableToExcel
-              id="test-table-xls-button"
-              className="ant-btn-primary"
-              table="table-to-xls"
-              filename="Projects"
-              sheet="tablexls"
-              buttonText="Export XLS"
-            />
-            <div dangerouslySetInnerHTML={ { __html: html["html"] } }></div>
+      {/* Table */}
+      {tableData && tableData.length > 0 ? (
+        <div className="table-section">
+          <div className=" table-header">
+            <h3>Projects List</h3>
+            <div className="table-actions">
+              <Dropdown
+                menu={{ items: actionMenuItems }}
+                trigger={["click"]}
+                placement="bottomRight"
+              >
+                <Button type="text" icon={<MoreOutlined />} />
+              </Dropdown>
+            </div>
           </div>
 
-          { tableData && tableData.length > 0 ? (
+          <div className="table-container">
+            {/* Hidden export elements */}
+            <div style={{ display: "none" }}>
+              <ReactHTMLTableToExcel
+                id="test-table-xls-button"
+                className="ant-btn-primary"
+                table="table-to-xls"
+                filename="Projects"
+                sheet="tablexls"
+                buttonText="Export XLS"
+              />
+              <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
+            </div>
+
             <Table
-              columns={ columns }
-              dataSource={ tableData }
+              columns={columns}
+              dataSource={tableData}
               rowKey="_id"
-              pagination={ {
+              pagination={{
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30", "50"],
                 showTotal: showTotal,
                 showQuickJumper: true,
                 ...pagination,
-              } }
-              onChange={ handleTableChange }
+              }}
+              onChange={handleTableChange}
               size="middle"
-              scroll={ { x: 'max-content' } }
+              scroll={{ x: "max-content" }}
               className="custom-table"
             />
-          ) : (
-            <NoDataFound />
-          ) }
+          </div>
         </div>
-      </div>
+      ) : (
+        <NoDataFound />
+      )}
     </Card>
-
   );
 };
 

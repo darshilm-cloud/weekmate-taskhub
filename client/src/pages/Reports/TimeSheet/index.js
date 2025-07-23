@@ -3,8 +3,26 @@ import ReactApexChart from "react-apexcharts";
 import TimeSheetController from "./TimeSheetController";
 import "./timesheet.css";
 import dayjs from "dayjs";
-import { DatePicker, Select, Table, Card, Button, Dropdown, Menu, Tooltip, Space, Tag } from "antd";
-import { MoreOutlined, ExportOutlined, ReloadOutlined, SortAscendingOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import {
+  DatePicker,
+  Select,
+  Table,
+  Card,
+  Button,
+  Dropdown,
+  Menu,
+  Tooltip,
+  Space,
+  Tag,
+} from "antd";
+import {
+  MoreOutlined,
+  ExportOutlined,
+  ReloadOutlined,
+  SortAscendingOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
 import moment from "moment";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
@@ -19,33 +37,71 @@ dayjs.extend(quarterOfYear);
 const TimeSheet = () => {
   const companySlug = localStorage.getItem("companyDomain");
   const {
-    value, project, projectType, manager, department, setDepartment, user,
-    onRangeChange, isPopoverVisible, setIsPopoverVisible, handleOpenThreeDotMenu,
-    setIssortbyPopUp, sortbyPopUp, rangePresets, selectedRange,
-    handleMouseEnter, handleMouseLeave,
+    value,
+    project,
+    projectType,
+    manager,
+    department,
+    setDepartment,
+    user,
+    onRangeChange,
+    isPopoverVisible,
+    setIsPopoverVisible,
+    handleOpenThreeDotMenu,
+    setIssortbyPopUp,
+    sortbyPopUp,
+    rangePresets,
+    selectedRange,
+    handleMouseEnter,
+    handleMouseLeave,
     // Lists
-    technologyList, projectManagerList, projectTypeList, userEmployeeList,
-    projectList, departmentList,
+    technologyList,
+    projectManagerList,
+    projectTypeList,
+    userEmployeeList,
+    projectList,
+    departmentList,
     // Data
-    getUserEmployeeList, tableData, projectTypeData, departmentData, usersData,
-    pieechartDataMangerNames, pieeChartData, totalLoggedHours,
+    getUserEmployeeList,
+    tableData,
+    projectTypeData,
+    departmentData,
+    usersData,
+    pieechartDataMangerNames,
+    pieeChartData,
+    totalLoggedHours,
     // Handlers
-    handleDepartMentChange, handleTechnologyChange, handleManagerChange,
-    handleProjectChange, handleUserChange, handleTypeChange, handleTableChange,
+    handleDepartMentChange,
+    handleTechnologyChange,
+    handleManagerChange,
+    handleProjectChange,
+    handleUserChange,
+    handleTypeChange,
+    handleTableChange,
     handleSortSelect,
     // Others
-    pagination, html, sortOrder, selectedSort,
-    chartKey, onReset
+    pagination,
+    html,
+    sortOrder,
+    selectedSort,
+    chartKey,
+    onReset,
   } = TimeSheetController();
 
   // Memoized calculations for chart data
   const chartData = useMemo(() => {
-    const projectTypeReportData = projectTypeData.map(entry => entry.totalLoggedHours);
-    const projectTypeReportDatalabelsData = projectTypeData.map(entry => entry.projectType);
+    const projectTypeReportData = projectTypeData.map(
+      (entry) => entry.totalLoggedHours
+    );
+    const projectTypeReportDatalabelsData = projectTypeData.map(
+      (entry) => entry.projectType
+    );
     const departMentData = [];
-    const departMentLogedHours = departmentData.map(entry => entry.totalLoggedHours);
-    const usersDataLabels = usersData.map(entry => removeTitle(entry.user));
-    const usersLogedHours = usersData.map(entry => entry.totalLoggedHours);
+    const departMentLogedHours = departmentData.map(
+      (entry) => entry.totalLoggedHours
+    );
+    const usersDataLabels = usersData.map((entry) => removeTitle(entry.user));
+    const usersLogedHours = usersData.map((entry) => entry.totalLoggedHours);
 
     return {
       projectTypeReportData,
@@ -53,7 +109,7 @@ const TimeSheet = () => {
       departMentData,
       departMentLogedHours,
       usersDataLabels,
-      usersLogedHours
+      usersLogedHours,
     };
   }, [projectTypeData, departmentData, usersData]);
 
@@ -69,14 +125,23 @@ const TimeSheet = () => {
           height: 350,
         },
         labels: pieechartDataMangerNames,
-        colors: ['#00E396', '#008FFB', '#00D9FF', '#FEB019', '#FF4560', '#775DD0', '#546E7A', '#26a69a'],
+        colors: [
+          "#00E396",
+          "#008FFB",
+          "#00D9FF",
+          "#FEB019",
+          "#FF4560",
+          "#775DD0",
+          "#546E7A",
+          "#26a69a",
+        ],
         legend: {
           position: "bottom",
-          fontSize: '14px',
+          fontSize: "14px",
           itemMargin: {
             horizontal: 8,
-            vertical: 4
-          }
+            vertical: 4,
+          },
         },
         tooltip: {
           y: {
@@ -93,12 +158,12 @@ const TimeSheet = () => {
                 height: 300,
               },
               legend: {
-                fontSize: '12px',
+                fontSize: "12px",
                 itemMargin: {
                   horizontal: 4,
-                  vertical: 2
-                }
-              }
+                  vertical: 2,
+                },
+              },
             },
           },
         ],
@@ -122,7 +187,7 @@ const TimeSheet = () => {
           type: "bar",
           height: 350,
         },
-        colors: ['#00E396'],
+        colors: ["#00E396"],
         plotOptions: {
           bar: {
             horizontal: true,
@@ -133,7 +198,7 @@ const TimeSheet = () => {
           enabled: true,
           formatter: function (val) {
             return `${val}h`;
-          }
+          },
         },
         xaxis: {
           categories: chartData.projectTypeReportDatalabelsData,
@@ -147,11 +212,15 @@ const TimeSheet = () => {
             formatter: function (val) {
               return `${val} hours`;
             },
-          }
+          },
         },
       },
     };
-  }, [projectTypeData, chartData.projectTypeReportData, chartData.projectTypeReportDatalabelsData]);
+  }, [
+    projectTypeData,
+    chartData.projectTypeReportData,
+    chartData.projectTypeReportDatalabelsData,
+  ]);
 
   const verticalBarChartConfig = useMemo(() => {
     if (departmentData.length === 0) return null;
@@ -169,7 +238,7 @@ const TimeSheet = () => {
           type: "bar",
           height: 350,
         },
-        colors: ['#008FFB'],
+        colors: ["#008FFB"],
         plotOptions: {
           bar: {
             horizontal: false,
@@ -180,7 +249,7 @@ const TimeSheet = () => {
           enabled: true,
           formatter: function (val) {
             return `${val}h`;
-          }
+          },
         },
         xaxis: {
           categories: chartData.departMentData,
@@ -194,11 +263,15 @@ const TimeSheet = () => {
             formatter: function (val) {
               return `${val} hours`;
             },
-          }
+          },
         },
       },
     };
-  }, [departmentData, chartData.departMentLogedHours, chartData.departMentData]);
+  }, [
+    departmentData,
+    chartData.departMentLogedHours,
+    chartData.departMentData,
+  ]);
 
   const verticalBarChartHoursConfig = useMemo(() => {
     if (usersData.length === 0) return null;
@@ -206,12 +279,36 @@ const TimeSheet = () => {
     // Generate different colors for each user
     const generateColors = (count) => {
       const baseColors = [
-        '#FF4560', '#008FFB', '#00E396', '#FEB019', '#FF6B7A',
-        '#775DD0', '#26a69a', '#546E7A', '#FF9F43', '#EE5A24',
-        '#5f27cd', '#00d2d3', '#ff9ff3', '#54a0ff', '#5f27cd',
-        '#10ac84', '#ee5253', '#0abde3', '#feca57', '#ff6b6b',
-        '#1dd1a1', '#feca57', '#ff9ff3', '#3c6382', '#40739e',
-        '#487eb0', '#8c7ae6', '#f8b500', '#e17055', '#81ecec'
+        "#FF4560",
+        "#008FFB",
+        "#00E396",
+        "#FEB019",
+        "#FF6B7A",
+        "#775DD0",
+        "#26a69a",
+        "#546E7A",
+        "#FF9F43",
+        "#EE5A24",
+        "#5f27cd",
+        "#00d2d3",
+        "#ff9ff3",
+        "#54a0ff",
+        "#5f27cd",
+        "#10ac84",
+        "#ee5253",
+        "#0abde3",
+        "#feca57",
+        "#ff6b6b",
+        "#1dd1a1",
+        "#feca57",
+        "#ff9ff3",
+        "#3c6382",
+        "#40739e",
+        "#487eb0",
+        "#8c7ae6",
+        "#f8b500",
+        "#e17055",
+        "#81ecec",
       ];
 
       // If we have more users than colors, generate additional colors
@@ -255,21 +352,21 @@ const TimeSheet = () => {
           enabled: true,
           style: {
             fontSize: "10px",
-            colors: ['#fff'], // White text on colored bars
-            fontWeight: 'bold'
+            colors: ["#fff"], // White text on colored bars
+            fontWeight: "bold",
           },
           formatter: function (val) {
             return `${val}h`;
-          }
+          },
         },
         xaxis: {
           categories: chartData.usersDataLabels,
           labels: {
             rotate: -45,
             style: {
-              fontSize: '12px'
-            }
-          }
+              fontSize: "12px",
+            },
+          },
         },
         grid: {
           xaxis: { lines: { show: false } },
@@ -283,136 +380,144 @@ const TimeSheet = () => {
             formatter: function (val) {
               return `${val} hours`;
             },
-          }
+          },
         },
       },
     };
   }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels]);
 
   // Memoized table columns - FIXED SORTING ISSUES
-  const columns = useMemo(() => [
-    {
-      title: "User",
-      dataIndex: "user",
-      width: 180,
-      key: "user",
-      render: (text, record) => (
-        <div className="user-cell">
-          <span className="user-name">
-            { removeTitle(record.user) }
-          </span>
-        </div>
-      ),
-      sorter: (a, b) => {
-        const userA = a.user || '';
-        const userB = b.user || '';
-        return userA.localeCompare(userB);
-      },
-      ellipsis: true,
-    },
-    {
-      title: "Project",
-      width: 220,
-      dataIndex: "project",
-      key: "project",
-      render: (text, record) => {
-        const Title = record?.project;
-        const ProjectId = record?.project_id;
-        const formattedTitle = Title?.replace(/(?:^|\s)([a-z])/g, function (match, group1) {
-          return match?.charAt(0) + group1?.toUpperCase();
-        });
-        return (
-          <Link to={ `/${companySlug}/project/app/${ProjectId}?tab=Time` }>
-            <div className="project-cell">
-              <span className="project-title-link">{ formattedTitle }</span>
-            </div>
-          </Link>
-        );
-      },
-      // FIXED: Handle null/undefined values and use proper string comparison
-      sorter: (a, b) => {
-        const projectA = a.project || '';
-        const projectB = b.project || '';
-        return projectA.localeCompare(projectB);
-      },
-      ellipsis: true,
-    },
-    {
-      title: "Description",
-      width: 300,
-      dataIndex: "descriptions",
-      key: "descriptions",
-      render: (text, record) =>
-        text ? (
-          <Tooltip title={ text } placement="topLeft">
-            <div
-              className="description-cell"
-              dangerouslySetInnerHTML={ {
-                __html: text.length > 50
-                  ? text.slice(0, 50).replace(/\n/g, '<br>') + "..."
-                  : text.replace(/\n/g, '<br>'),
-              } }
-            />
-          </Tooltip>
-        ) : (
-          <span className="no-description">-</span>
-        ),
-      // FIXED: Handle empty/null descriptions properly
-      sorter: (a, b) => {
-        const descA = a.descriptions || '';
-        const descB = b.descriptions || '';
-        return descA.localeCompare(descB);
-      },
-      ellipsis: true,
-    },
-    {
-      title: "Date",
-      width: 120,
-      dataIndex: "logged_date",
-      key: "logged_date",
-      render: (text, record) => {
-        const startDate = moment(record.logged_date).format("DD MMM YYYY");
-        return (
-          <div className="date-cell">
-            <CalendarOutlined className="date-icon" />
-            <span className="date-text">{ startDate }</span>
+  const columns = useMemo(
+    () => [
+      {
+        title: "User",
+        dataIndex: "user",
+        width: 180,
+        key: "user",
+        render: (text, record) => (
+          <div className="user-cell">
+            <span className="user-name">{removeTitle(record.user)}</span>
           </div>
-        );
+        ),
+        sorter: (a, b) => {
+          const userA = a.user || "";
+          const userB = b.user || "";
+          return userA.localeCompare(userB);
+        },
+        ellipsis: true,
       },
-      // FIXED: Proper date comparison using Date objects
-      sorter: (a, b) => {
-        const dateA = new Date(a.logged_date);
-        const dateB = new Date(b.logged_date);
-        return dateA - dateB;
+      {
+        title: "Project",
+        width: 220,
+        dataIndex: "project",
+        key: "project",
+        render: (text, record) => {
+          const Title = record?.project;
+          const ProjectId = record?.project_id;
+          const formattedTitle = Title?.replace(
+            /(?:^|\s)([a-z])/g,
+            function (match, group1) {
+              return match?.charAt(0) + group1?.toUpperCase();
+            }
+          );
+          return (
+            <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
+              <div className="project-cell">
+                <span className="project-title-link">{formattedTitle}</span>
+              </div>
+            </Link>
+          );
+        },
+        // FIXED: Handle null/undefined values and use proper string comparison
+        sorter: (a, b) => {
+          const projectA = a.project || "";
+          const projectB = b.project || "";
+          return projectA.localeCompare(projectB);
+        },
+        ellipsis: true,
       },
-      align: 'center',
-    },
-    {
-      title: "Time",
-      width: 100,
-      dataIndex: "logged_time",
-      render: (text, record) => (
-        <div className="time-cell">
-          <ClockCircleOutlined className="time-icon" />
-          <span className="time-hours">{ record.logged_time }</span>
-        </div>
-      ),
-      // FIXED: Sort by actual logged hours (numeric) with proper field reference
-      sorter: (a, b) => {
-        const hoursA = parseFloat(a.logged_hours) || 0;
-        const hoursB = parseFloat(b.logged_hours) || 0;
-        return hoursA - hoursB;
+      {
+        title: "Description",
+        width: 300,
+        dataIndex: "descriptions",
+        key: "descriptions",
+        render: (text, record) =>
+          text ? (
+            <Tooltip title={text} placement="topLeft">
+              <div
+                className="description-cell"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    text.length > 50
+                      ? text.slice(0, 50).replace(/\n/g, "<br>") + "..."
+                      : text.replace(/\n/g, "<br>"),
+                }}
+              />
+            </Tooltip>
+          ) : (
+            <span className="no-description">-</span>
+          ),
+        // FIXED: Handle empty/null descriptions properly
+        sorter: (a, b) => {
+          const descA = a.descriptions || "";
+          const descB = b.descriptions || "";
+          return descA.localeCompare(descB);
+        },
+        ellipsis: true,
       },
-      align: 'center',
-    },
-  ], [companySlug]);
+      {
+        title: "Date",
+        width: 120,
+        dataIndex: "logged_date",
+        key: "logged_date",
+        render: (text, record) => {
+          const startDate = moment(record.logged_date).format("DD MMM YYYY");
+          return (
+            <div className="date-cell">
+              <CalendarOutlined className="date-icon" />
+              <span className="date-text">{startDate}</span>
+            </div>
+          );
+        },
+        // FIXED: Proper date comparison using Date objects
+        sorter: (a, b) => {
+          const dateA = new Date(a.logged_date);
+          const dateB = new Date(b.logged_date);
+          return dateA - dateB;
+        },
+        align: "center",
+      },
+      {
+        title: "Time",
+        width: 100,
+        dataIndex: "logged_time",
+        render: (text, record) => (
+          <div className="time-cell">
+            <ClockCircleOutlined className="time-icon" />
+            <span className="time-hours">{record.logged_time}</span>
+          </div>
+        ),
+        // FIXED: Sort by actual logged hours (numeric) with proper field reference
+        sorter: (a, b) => {
+          const hoursA = parseFloat(a.logged_hours) || 0;
+          const hoursB = parseFloat(b.logged_hours) || 0;
+          return hoursA - hoursB;
+        },
+        align: "center",
+      },
+    ],
+    [companySlug]
+  );
 
   // Memoized handlers
-  const handleDepartmentSelection = useCallback((selectedDepartments) => {
-    handleDepartMentChange();
-    setDepartment(selectedDepartments);
-    getUserEmployeeList(selectedDepartments);
-  }, [handleDepartMentChange, setDepartment, getUserEmployeeList]);
+  const handleDepartmentSelection = useCallback(
+    (selectedDepartments) => {
+      handleDepartMentChange();
+      setDepartment(selectedDepartments);
+      getUserEmployeeList(selectedDepartments);
+    },
+    [handleDepartMentChange, setDepartment, getUserEmployeeList]
+  );
 
   const handleCsvExport = useCallback(() => {
     const csvRef = document.getElementById("test-table-xls-button");
@@ -420,12 +525,17 @@ const TimeSheet = () => {
   }, []);
 
   // Memoized filter options
-  const filterOptions = useMemo(() => ({
-    filterOption: (input, option) =>
-      option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0,
-    filterSort: (optionA, optionB) =>
-      optionA.children?.toLowerCase().localeCompare(optionB.children?.toLowerCase())
-  }), []);
+  const filterOptions = useMemo(
+    () => ({
+      filterOption: (input, option) =>
+        option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0,
+      filterSort: (optionA, optionB) =>
+        optionA.children
+          ?.toLowerCase()
+          .localeCompare(optionB.children?.toLowerCase()),
+    }),
+    []
+  );
 
   const showTotal = useCallback(
     (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
@@ -433,60 +543,68 @@ const TimeSheet = () => {
   );
 
   // Render methods
-  const renderFilterSelect = useCallback((
-    placeholder,
-    value,
-    onChange,
-    options,
-    valueKey,
-    labelKey,
-    mode = "multiple"
-  ) => (
-    <div className="filter-select-container">
-      <Select
-        placeholder={ placeholder }
-        mode={ mode }
-        showSearch
-        value={ value }
-        onChange={ onChange }
-        className="custom-select"
-        { ...filterOptions }
-      >
-        { options.map((item, index) => (
-          <Option
-            key={ index }
-            value={ item[valueKey] }
-            className="custom-option"
-          >
-            { labelKey === "manager_name" ? removeTitle(item[labelKey]) :
-              labelKey === "full_name" ? removeTitle(item[labelKey]) :
-                item[labelKey] }
-          </Option>
-        )) }
-      </Select>
-    </div>
-  ), [filterOptions]);
-
-  const renderChart = useCallback((chartData, type, title) => {
-    if (!chartData) return null;
-
-    return (
-      <div className="chart-container">
-        <div className="chart-header">
-          <h3>{ title }</h3>
-        </div>
-        <div className="chart-content">
-          <ReactApexChart
-            key={ type === "pie" ? chartKey : undefined }
-            options={ chartData.options }
-            series={ chartData.series }
-            type={ type }
-            height={ 350 }
-          />
-        </div>
+  const renderFilterSelect = useCallback(
+    (
+      placeholder,
+      value,
+      onChange,
+      options,
+      valueKey,
+      labelKey,
+      mode = "multiple"
+    ) => (
+      <div className="filter-select-container">
+        <Select
+          placeholder={placeholder}
+          mode={mode}
+          showSearch
+          value={value}
+          onChange={onChange}
+          className="custom-select"
+          {...filterOptions}
+        >
+          {options.map((item, index) => (
+            <Option
+              key={index}
+              value={item[valueKey]}
+              className="custom-option"
+            >
+              {labelKey === "manager_name"
+                ? removeTitle(item[labelKey])
+                : labelKey === "full_name"
+                ? removeTitle(item[labelKey])
+                : item[labelKey]}
+            </Option>
+          ))}
+        </Select>
       </div>
-    );
-  }, [chartKey]);
+    ),
+    [filterOptions]
+  );
+
+  const renderChart = useCallback(
+    (chartData, type, title) => {
+      if (!chartData) return null;
+
+      return (
+        <div className="chart-container">
+          <div className="chart-header">
+            <h3>{title}</h3>
+          </div>
+          <div className="chart-content">
+            <ReactApexChart
+              key={type === "pie" ? chartKey : undefined}
+              options={chartData.options}
+              series={chartData.series}
+              type={type}
+              height={350}
+            />
+          </div>
+        </div>
+      );
+    },
+    [chartKey]
+  );
 
   // Sort options for dropdown
   const sortOptions = [
@@ -500,63 +618,62 @@ const TimeSheet = () => {
   // Action menu items
   const actionMenuItems = [
     {
-      key: 'sort',
+      key: "sort",
       icon: <SortAscendingOutlined />,
-      label: 'Sort By',
+      label: "Sort By",
       children: sortOptions.map(({ key, label }) => ({
         key,
         label: (
           <div className="sort-menu-item">
-            <span>{ label }</span>
-            { selectedSort === key && (
-              sortOrder === "asc"
-                ? <i className="fi fi-rr-arrow-small-up"></i>
-                : <i className="fi fi-rr-arrow-small-down"></i>
-            ) }
+            <span>{label}</span>
+            {selectedSort === key &&
+              (sortOrder === "asc" ? (
+                <i className="fi fi-rr-arrow-small-up"></i>
+              ) : (
+                <i className="fi fi-rr-arrow-small-down"></i>
+              ))}
           </div>
         ),
-        onClick: () => handleSortSelect(key)
-      }))
+        onClick: () => handleSortSelect(key),
+      })),
     },
     {
-      key: 'export',
+      key: "export",
       icon: <ExportOutlined />,
-      label: 'Export',
-      onClick: handleCsvExport
+      label: "Export",
+      onClick: handleCsvExport,
     },
     {
-      key: 'reset',
+      key: "reset",
       icon: <ReloadOutlined />,
-      label: 'Reset',
-      onClick: onReset
-    }
+      label: "Reset",
+      onClick: onReset,
+    },
   ];
 
   return (
-
     <Card className="timesheet-card">
-      {/* Header */ }
+      {/* Header */}
       <div className="page-header">
         <div className="heading-wrapper">
           <div className="heading-main">
             <h2>Timesheet Report</h2>
           </div>
 
-
           <div className="header-btn">
             <div className="stat-item">
               <ClockCircleOutlined className="stat-icon" />
               <div className="stat-content">
                 <span className="stat-label">Total Hours</span>
-                <span className="stat-value">{ totalLoggedHours }</span>
+                <span className="stat-value">{totalLoggedHours}</span>
               </div>
             </div>
             <div className="header-actions">
               <div className="date-picker-container">
                 <RangePicker
-                  value={ selectedRange }
-                  presets={ rangePresets }
-                  onChange={ onRangeChange }
+                  value={selectedRange}
+                  presets={rangePresets}
+                  onChange={onRangeChange}
                   className="custom-date-picker"
                 />
               </div>
@@ -565,13 +682,13 @@ const TimeSheet = () => {
         </div>
       </div>
 
-      {/* Filters */ }
+      {/* Filters */}
       <div className="global-search">
         <div className="filters-header">
           <h3>Filters</h3>
         </div>
         <div className="filter-btn-wrapper ">
-          { renderFilterSelect(
+          {renderFilterSelect(
             "Select Department",
             value,
             handleTechnologyChange,
@@ -579,126 +696,127 @@ const TimeSheet = () => {
             "_id",
             "project_tech",
             { className: "dropdown-button" }
-          ) }
+          )}
 
-          { renderFilterSelect(
+          {renderFilterSelect(
             "Select Project",
             project,
             handleProjectChange,
             projectList,
             "_id",
-            "title",
+            "title"
+          )}
 
-          ) }
-
-          { renderFilterSelect(
+          {renderFilterSelect(
             "Select Project Type",
             projectType,
             handleTypeChange,
             projectTypeList,
             "_id",
             "project_type"
-          ) }
+          )}
 
-          { renderFilterSelect(
+          {renderFilterSelect(
             "Select Manager",
             manager,
             handleManagerChange,
             projectManagerList,
             "_id",
             "manager_name"
-          ) }
+          )}
 
-          { renderFilterSelect(
+          {renderFilterSelect(
             "Select User",
             user,
             handleUserChange,
             userEmployeeList,
             "_id",
             "full_name"
-          ) }
+          )}
         </div>
       </div>
 
-      {/* Charts - Updated Layout */ }
-      <div className="charts-section">
-        <div className="charts-grid">
-     
+      {/* Charts - Updated Layout */}
+      {tableData && tableData.length > 0 && (
+        <div className="charts-section">
+          <div className="charts-grid">
             <div className="chart-container">
-              { renderChart(pieChartConfig, "pie", "Hours by Manager") }
+              {renderChart(pieChartConfig, "pie", "Hours by Manager")}
             </div>
             <div className="chart-container">
-              { renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type") }
+              {renderChart(
+                horizontalBarChartConfig,
+                "bar",
+                "Hours by Project Type"
+              )}
             </div>
-       
 
-        
             <div className="chart-container">
-              { renderChart(verticalBarChartHoursConfig, "bar", "Hours by User") }
+              {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
             </div>
-    
-        </div>
-      </div>
-
-      {/* Table */ }
-      <div className="table-section">
-        <div className="table-header">
-          <h3>Time Entries</h3>
-          <div className="table-actions">
-            <Dropdown
-              menu={ { items: actionMenuItems } }
-              trigger={ ['click'] }
-              placement="bottomRight"
-            >
-              <Button type="text" icon={ <MoreOutlined /> } />
-            </Dropdown>
           </div>
         </div>
+      )}
 
-        <div className="table-container">
-          {/* Hidden export elements */ }
-          <div style={ { display: 'none' } }>
-            <ReactHTMLTableToExcel
-              id="test-table-xls-button"
-              className="ant-btn-primary"
-              table="table-to-xls"
-              filename="Timesheet"
-              sheet="tablexls"
-              buttonText="Export XLS"
-            />
-            <div dangerouslySetInnerHTML={ { __html: html["html"] } } />
+      {/* Table */}
+      {tableData && tableData.length > 0 ? (
+        <div className="table-section">
+          <div className="table-header">
+            <h3>Time Entries</h3>
+            <div className="table-actions">
+              <Dropdown
+                menu={{ items: actionMenuItems }}
+                trigger={["click"]}
+                placement="bottomRight"
+              >
+                <Button type="text" icon={<MoreOutlined />} />
+              </Dropdown>
+            </div>
           </div>
 
-          { tableData && tableData.length > 0 ? (
+          <div className="table-container">
+            {/* Hidden export elements */}
+            <div style={{ display: "none" }}>
+              <ReactHTMLTableToExcel
+                id="test-table-xls-button"
+                className="ant-btn-primary"
+                table="table-to-xls"
+                filename="Timesheet"
+                sheet="tablexls"
+                buttonText="Export XLS"
+              />
+              <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
+            </div>
             <Table
-              columns={ columns }
-              dataSource={ tableData }
-              rowKey={ (record, index) => `${record.user}-${record.project_id}-${index}` }
-              pagination={ {
+              columns={columns}
+              dataSource={tableData}
+              rowKey={(record, index) =>
+                `${record.user}-${record.project_id}-${index}`
+              }
+              pagination={{
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30", "50"],
                 showTotal: showTotal,
                 showQuickJumper: true,
                 ...pagination,
-              } }
-              onChange={ handleTableChange }
+              }}
+              onChange={handleTableChange}
               size="middle"
-              scroll={ { x: 'max-content' } }
+              scroll={{ x: "max-content" }}
               className="custom-table"
             />
-          ) : (
-            <div className="no-data-found">
-              <div className="no-data-content">
-                <ClockCircleOutlined className="no-data-icon" />
-                <h3>No time entries found</h3>
-                <p>Try adjusting your filters or date range</p>
-              </div>
-            </div>
-          ) }
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="no-data-found">
+          <div className="no-data-content">
+            {/* <ClockCircleOutlined className="no-data-icon" /> */}
+            <h3>No time entries found</h3>
+            <p>Try adjusting your filters or date range</p>
+          </div>
+        </div>
+      )}
     </Card>
-
   );
 };
 
