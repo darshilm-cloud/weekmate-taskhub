@@ -639,7 +639,7 @@ function ProgressBoardofProject() {
                     )}
                   </span>
                   <Link
-                    to={`/${companySlug}//project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
+                    to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
                   >
                     <p
                       onClick={() => {

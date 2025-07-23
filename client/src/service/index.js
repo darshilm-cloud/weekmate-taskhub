@@ -510,7 +510,6 @@ export default class Service {
       (response) => response,
       async (error) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.log("from here 1")
           this.logOut();
         }
         return Promise.reject(error);

@@ -21,6 +21,8 @@ import {
   Badge,
   Popconfirm,
   message,
+  Row,
+  Col,
 } from "antd";
 import UtilFunctions from "../../util/UtilFunctions";
 import { Comment } from "@ant-design/compatible";
@@ -53,9 +55,9 @@ const { TextArea } = Input;
 function CommentList({ comments }) {
   return (
     <List
-      dataSource={comments}
+      dataSource={ comments }
       itemLayout="horizontal"
-      renderItem={(props) => <Comment {...props} />}
+      renderItem={ (props) => <Comment { ...props } /> }
     />
   );
 }
@@ -64,9 +66,9 @@ function Editor({ onChange, value }) {
   return (
     <>
       <TextArea
-        rows={1}
-        onChange={onChange}
-        value={value}
+        rows={ 1 }
+        onChange={ onChange }
+        value={ value }
         placeholder="Write a comment"
       />
     </>
@@ -862,30 +864,30 @@ function DiscussionForm() {
           <div className="add-project-wrapper">
             <Button
               type="primary"
-              onClick={showAddTopicModal}
+              onClick={ showAddTopicModal }
               className="add-btn"
             >
               <i className="fi fi-br-plus"></i> Add
             </Button>
             <Search
-              ref={searchRef}
+              ref={ searchRef }
               placeholder="Search..."
-              onSearch={onSearch}
-              style={{ width: 200 }}
+              onSearch={ onSearch }
+              style={ { width: 200 } }
               className="mr2"
             />
           </div>
           <div className="project-update">
             <ul>
-              {discussionTopic?.map((item, index) => {
+              { discussionTopic?.map((item, index) => {
                 return (
                   <li
                     className="design-graph-wrapper"
-                    key={index}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => {
+                    key={ index }
+                    style={ { cursor: "pointer" } }
+                    onClick={ () => {
                       handleSelectToic(item);
-                    }}
+                    } }
                   >
                     <div
                       className={
@@ -895,53 +897,53 @@ function DiscussionForm() {
                       }
                     >
                       <span className="discussion-pin-wrapper">
-                        {(item?.isPinToTop || item?.isPrivate) && (
+                        { (item?.isPinToTop || item?.isPrivate) && (
                           <span className="louckandpin">
-                            {item?.isPinToTop && (
+                            { item?.isPinToTop && (
                               <i className="fi fi-rs-thumbtack"></i>
-                            )}
-                            {item?.isPrivate && (
+                            ) }
+                            { item?.isPrivate && (
                               <i className="fi fi-sr-lock"></i>
-                            )}
+                            ) }
                           </span>
-                        )}
+                        ) }
 
-                        <h6 style={{ textTransform: "capitalize" }}>
-                          {item?.title}
+                        <h6 style={ { textTransform: "capitalize" } }>
+                          { item?.title }
                         </h6>
                       </span>
                       <div></div>
-                      {(item.isEditable || item.isDeletable) && (
+                      { (item.isEditable || item.isDeletable) && (
                         <Dropdown
                           overlay={
                             <Menu>
-                              {item.isEditable && (
+                              { item.isEditable && (
                                 <Menu.Item
                                   key="edit"
-                                  onClick={() => {
+                                  onClick={ () => {
                                     getEditDiscussion(item?._id);
-                                  }}
+                                  } }
                                   icon={
-                                    <EditOutlined style={{ color: "green" }} />
+                                    <EditOutlined style={ { color: "green" } } />
                                   }
                                 >
                                   Edit
                                 </Menu.Item>
-                              )}
-                              {item.isDeletable && (
+                              ) }
+                              { item.isDeletable && (
                                 <Popconfirm
                                   title="Do you want to delete?"
                                   okText="Yes"
                                   cancelText="No"
-                                  onConfirm={() => {
+                                  onConfirm={ () => {
                                     deleteDiscussion(item?._id);
-                                  }}
+                                  } }
                                 >
                                   <Menu.Item
                                     key="delete"
                                     icon={
                                       <DeleteOutlined
-                                        style={{ color: "red" }}
+                                        style={ { color: "red" } }
                                       />
                                     }
                                     className="ant-delete"
@@ -949,43 +951,43 @@ function DiscussionForm() {
                                     Delete
                                   </Menu.Item>
                                 </Popconfirm>
-                              )}
+                              ) }
                             </Menu>
                           }
-                          trigger={["click"]}
+                          trigger={ ["click"] }
                         >
                           <a
-                            style={{ display: "flex", alignItems: "center" }}
-                            onClick={(e) => e.preventDefault()}
+                            style={ { display: "flex", alignItems: "center" } }
+                            onClick={ (e) => e.preventDefault() }
                           >
                             <MoreOutlined />
                           </a>
                         </Dropdown>
-                      )}
-                      {/* </div> */}
+                      ) }
+                      {/* </div> */ }
                     </div>
                   </li>
                 );
-              })}
+              }) }
             </ul>
           </div>
         </div>
         <div className="profilerightbar ">
           <div className="profile-sub-head">
-            <h3 style={{ textTransform: "capitalize" }}>
-              {selectedTopic?.title?.length > 100
+            <h3 style={ { textTransform: "capitalize" } }>
+              { selectedTopic?.title?.length > 100
                 ? `${selectedTopic?.title?.slice(0, 100)}.....`
-                : selectedTopic?.title}
+                : selectedTopic?.title }
             </h3>
             <div className="status-content"></div>
           </div>
 
           <div className="discussion-comment-block">
             <div className="discusstion-main-btn">
-              {discussionTopic.length === 0 && !searchText ? (
+              { discussionTopic.length === 0 && !searchText ? (
                 <div className="discusstion-btn">
-                  <Button type="primary" onClick={showAddTopicModal}>
-                    {" "}
+                  <Button type="primary" onClick={ showAddTopicModal }>
+                    { " " }
                     <PlusCircleOutlined />
                     <span>Add Topic</span>
                   </Button>
@@ -995,150 +997,149 @@ function DiscussionForm() {
                 searchText ? (
                 <div className="no-data-div">No Record Found</div>
               ) : (
-                <>
+                <div>
                   <div className="comment-module">
-                    {discussionComments.length > 0 &&
+                    { discussionComments.length > 0 &&
                       !searchText &&
                       discussionComments?.map((item, index) => (
                         <div
                           className="main-comment-wrapper"
-                          key={index}
-                          id={item?._id}
+                          key={ index }
+                          id={ item?._id }
                         >
                           <div className="main-avatar-wrapper">
                             <MyAvatar
-                              userName={item?.createdBy?.full_name}
-                              key={item?.createdBy?._id}
-                              alt={item?.createdBy?.full_name}
-                              src={item?.createdBy?.emp_img}
+                              userName={ item?.createdBy?.full_name }
+                              key={ item?.createdBy?._id }
+                              alt={ item?.createdBy?.full_name }
+                              src={ item?.createdBy?.emp_img }
                             />
                             <div>
                               <span
-                                style={{
+                                style={ {
                                   color:
                                     userColors[item?.createdBy?.full_name] ||
                                     "#000",
-                                }}
+                                } }
                                 className="discussion-name-edit"
                               >
-                                {removeTitle(item?.createdBy?.full_name)}
+                                { removeTitle(item?.createdBy?.full_name) }
                               </span>
                               <span className="discussion-time">
-                                {calculateTimeDifference(item?.createdAt)}
+                                { calculateTimeDifference(item?.createdAt) }
                               </span>
                             </div>
 
-                            {isCreatedBy(item.createdBy?._id) && (
+                            { isCreatedBy(item.createdBy?._id) && (
                               <div
                                 className="edit-bar"
-                                style={{
+                                style={ {
                                   display: "flex",
                                   justifyContent: "end",
-                                }}
+                                } }
                               >
                                 <Dropdown
-                                  trigger={["click"]}
+                                  trigger={ ["click"] }
                                   overlay={
                                     <Menu>
-                                      {item.isEditable && (
+                                      { item.isEditable && (
                                         <Menu.Item
                                           key="1"
-                                          onClick={() => {
+                                          onClick={ () => {
                                             // setOpenCommentModle(true);
                                             //  setOpenEditDiscussionModel(true)
                                             getDiscussionCommentById(item?._id);
-                                          }}
+                                          } }
                                         >
                                           <EditOutlined
-                                            style={{ color: "green" }}
+                                            style={ { color: "green" } }
                                           />
                                           Edit
                                         </Menu.Item>
-                                      )}
-                                      {item.isDeletable && (
+                                      ) }
+                                      { item.isDeletable && (
                                         <Menu.Item
                                           key="2"
-                                          onClick={() => {
+                                          onClick={ () => {
                                             deleteDiscussionComment(item?._id);
-                                          }}
+                                          } }
                                           className="ant-delete"
                                         >
                                           <DeleteOutlined
-                                            style={{ color: "red" }}
+                                            style={ { color: "red" } }
                                           />
                                           Delete
                                         </Menu.Item>
-                                      )}
+                                      ) }
                                     </Menu>
                                   }
-                                  // onClick={handleDropdownClick2}
+                                // onClick={handleDropdownClick2}
                                 >
-                                  <MoreOutlined style={{ cursor: "pointer" }} />
+                                  <MoreOutlined style={ { cursor: "pointer" } } />
                                 </Dropdown>
                               </div>
-                            )}
+                            ) }
 
                             <div className="comment-sender-name">
-                              {/* <h1>{item?.sender}</h1> */}
+                              {/* <h1>{item?.sender}</h1> */ }
                               <h4>
-                                {/* {formatTimeDifference(item?.createdAt)} */}
+                                {/* {formatTimeDifference(item?.createdAt)} */ }
                               </h4>
                             </div>
                           </div>
                           <div className="comment-wrapper">
-                            {/* <p key={index}>{item?.title}</p> */}
-                            {item?.isDefault ? (
+                            {/* <p key={index}>{item?.title}</p> */ }
+                            { item?.isDefault ? (
                               <i>
                                 <div
-                                  dangerouslySetInnerHTML={{
+                                  dangerouslySetInnerHTML={ {
                                     __html: item?.title.replace(/\n/g, "<br>"),
-                                  }}
+                                  } }
                                 />
                               </i>
                             ) : (
                               <div
-                                dangerouslySetInnerHTML={{
+                                dangerouslySetInnerHTML={ {
                                   __html: item?.title.replace(/\n/g, "<br>"),
-                                }}
+                                } }
                               />
-                            )}
+                            ) }
 
                             <div className="view-attachment">
-                              {item?.attachments.map((file, index) => (
-                                <Badge key={index}>
-                                  {console.log(file.name, "1003")}
+                              { item?.attachments.map((file, index) => (
+                                <Badge key={ index }>
+                                  { console.log(file.name, "1003") }
                                   <div className="fileAttachment_Box attachment-discussion">
                                     <div className="fileAttachment_box-img">
-                                      {fileImageSelect(file?.file_type)}
+                                      { fileImageSelect(file?.file_type) }
                                     </div>
                                     <div
-                                      style={{
+                                      style={ {
                                         display: "flex",
                                         marginBottom: "10px",
                                         width: "100%",
                                         justifyContent: "space-between",
-                                      }}
+                                      } }
                                     >
                                       <a
-                                        style={{ wordBreak: "break-all" }}
-                                        href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
+                                        style={ { wordBreak: "break-all" } }
+                                        href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
                                         rel="noopener noreferrer"
                                         target="_blank"
                                       >
-                                        {file.name.length > 8
-                                          ? `${file.name.slice(0, 8)}...${
-                                              file.file_type
-                                            }`
-                                          : file.name + file.file_type}
+                                        { file.name.length > 8
+                                          ? `${file.name.slice(0, 8)}...${file.file_type
+                                          }`
+                                          : file.name + file.file_type }
                                       </a>
                                     </div>
                                   </div>
                                 </Badge>
-                              ))}
+                              )) }
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )) }
                   </div>
                   <div id="hexaChat" className="comment-mention-textbox">
                     <CkEditorSuperBuild
@@ -1147,28 +1148,28 @@ function DiscussionForm() {
                           ? handleChangeChatEditCkeditor
                           : handleChangeChatCkeditor
                       }
-                      mentionArray={taggedUserList}
+                      mentionArray={ taggedUserList }
                       valueState={
                         openEditDiscussionModel ? editedCommnent : textAreaValue
                       }
-                      placeholder={"Write a comment (Type @ to mention users)"}
+                      placeholder={ "Write a comment (Type @ to mention users)" }
                     />
 
                     <div className="main-btn-wrapper">
-                      {[...commentFile, ...editedFiles].map((file, index) => (
+                      { [...commentFile, ...editedFiles].map((file, index) => (
                         <Badge
-                          key={index}
+                          key={ index }
                           count={
                             <CloseCircleOutlined
-                              onClick={() => removeAttachmentFile1(index, file)}
+                              onClick={ () => removeAttachmentFile1(index, file) }
                             />
                           }
                         >
                           <div className="input-file-name-detail">
-                            <p className="fileNameTxtellipsis">{file.name}</p>
+                            <p className="fileNameTxtellipsis">{ file.name }</p>
                           </div>
                         </Badge>
-                      ))}
+                      )) }
                     </div>
 
                     <div className="mention-field-btn-wrapper">
@@ -1180,31 +1181,31 @@ function DiscussionForm() {
                               ? false
                               : true
                           }
-                          onClick={(values) =>
+                          onClick={ (values) =>
                             handlecomments(values, openEditDiscussionModel)
                           }
                         >
-                          {openEditDiscussionModel ? "Update" : "Add"}
+                          { openEditDiscussionModel ? "Update" : "Add" }
                         </Button>
 
-                        {openEditDiscussionModel && (
+                        { openEditDiscussionModel && (
                           <Button
                             type="primary"
-                            onClick={() => {
+                            onClick={ () => {
                               setOpenEditDiscussionModel(false);
                               setCommentFile([]);
-                            }}
+                            } }
                             className="ant-delete"
                           >
                             Cancel
                           </Button>
-                        )}
+                        ) }
 
                         <Tooltip placement="top" title="Attached file">
                           <Button
-                            style={{ marginLeft: "10px" }}
+                            style={ { marginLeft: "10px" } }
                             className="link-btn"
-                            onClick={() => attachmentfileRef.current.click()}
+                            onClick={ () => attachmentfileRef.current.click() }
                           >
                             <i className="fi fi-ss-link"></i>Attach files
                           </Button>
@@ -1212,34 +1213,34 @@ function DiscussionForm() {
                         <input
                           multiple
                           type="file"
-                          onChange={onFileChange1}
+                          onChange={ onFileChange1 }
                           hidden
-                          ref={attachmentfileRef}
+                          ref={ attachmentfileRef }
                         />
                       </div>
-                      {textAreaValue && (
+                      { textAreaValue && (
                         <div className="mention-input-close-btn">
                           <Button
                             type="ghost"
-                            icon={<CloseOutlined />}
-                            onClick={() => {
+                            icon={ <CloseOutlined /> }
+                            onClick={ () => {
                               setTextAreaValue("");
                               setCommentFile([]);
-                            }}
+                            } }
                           />
                         </div>
-                      )}
-                      {commentFile.length > 0 && !openEditDiscussionModel && (
+                      ) }
+                      { commentFile.length > 0 && !openEditDiscussionModel && (
                         <div>
                           <Form.Item
                             label="Folder"
                             name="folder"
-                            rules={[
+                            rules={ [
                               {
                                 required: true,
                                 message: "Please select the folder",
                               },
-                            ]}
+                            ] }
                           >
                             <Select
                               placeholder="Please Select Folder"
@@ -1249,252 +1250,302 @@ function DiscussionForm() {
                                   ? foldersList[0]._id
                                   : undefined
                               }
-                              onChange={(e) => handleFolderIdChange(e)}
+                              onChange={ (e) => handleFolderIdChange(e) }
                             >
-                              {foldersList.map((data) => {
+                              { foldersList.map((data) => {
                                 return (
                                   <Option
-                                    key={data._id}
-                                    value={data._id}
-                                    style={{ textTransform: "capitalize" }}
+                                    key={ data._id }
+                                    value={ data._id }
+                                    style={ { textTransform: "capitalize" } }
                                   >
-                                    {data.name}
+                                    { data.name }
                                   </Option>
                                 );
-                              })}
+                              }) }
                             </Select>
                           </Form.Item>
                         </div>
-                      )}
+                      ) }
                     </div>
                   </div>
-                </>
-              )}
+                </div>
+              ) }
             </div>
           </div>
         </div>
       </div>
 
-      <Modal
-        width={"600px"}
-        onCancel={() => handleCancelTopic()}
-        open={isModalOpenTopic}
-        footer={null}
+    <Modal
+        open={ isModalOpenTopic }
+        onCancel={ () => handleCancelTopic() }
+        title={ addEditDiscussion === "Add Topic" ? "Add Topic" : "Edit Topic" }
         className="add-task-modal add-list-modal disscusion-pop-wrapper"
+        width={800}
+        footer={ [
+          <Button
+            key="cancel"
+            onClick={ () => handleCancelTopic() }
+            className="delete-btn"
+            size="large"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="square-primary-btn"
+            size="large"
+            onClick={ () => discussionForm.submit() }
+          >
+            { addEditDiscussion === "Add Topic" ? "Save" : "Update" }
+          </Button>,
+        ] }
       >
-        <div className="modal-header">
-          <h1>
-            {addEditDiscussion === "Add Topic" ? "Add Topic" : "Edit Topic"}
-          </h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form
-            form={discussionForm}
-            onFinish={(values) => {
+            form={ discussionForm }
+            layout="vertical"
+            onFinish={ (values) => {
               addEditDiscussion === "Add Topic"
                 ? handleTaskOps(values)
                 : handleTaskOps(values, true);
-            }}
+            } }
           >
-            <div className="topic-cancel-wrapper">
-              <Form.Item
-                name="title"
-                rules={[{ required: true, message: "Please add title" }]}
-              >
-                <Input placeholder="Title" />
-              </Form.Item>
-
-              <Form.Item
-                label="subscribers"
-                name="subscribers"
-                colon={false}
-                className="subscriber-btn"
-              >
-                <MultiSelect
-                  onSearch={handleSearch}
-                  onChange={handleSelectedItemsChange}
-                  values={
-                    selectedItems && selectedItems.map((item) => item._id)
-                  }
-                  listData={subscribersList}
-                  search={searchKeyword}
-                />
-
-                {/* } */}
-                <Button
-                  onClick={() => setSelectedItems([])}
-                  className="list-clear-btn ant-delete"
-                >
-                  Clear
-                </Button>
-              </Form.Item>
-
-              <Form.Item
-                label="client"
-                name="client"
-                colon={false}
-                className="subscriber-btn"
-              >
-                <MultiSelect
-                  onSearch={handleSearch}
-                  onChange={handleSelectedClientsChange}
-                  values={
-                    selectedClients
-                      ? selectedClients.map((item) => item._id)
-                      : []
-                  }
-                  listData={clientsList}
-                  search={searchKeyword}
-                />
-
-                <Button
-                  onClick={() => setSelectedClients([])}
-                  className="list-clear-btn ant-delete"
-                >
-                  Clear
-                </Button>
-              </Form.Item>
-            </div>
-            <div className="fileAttachment_container">
-              {addEditDiscussion === "Add Topic"
-                ? fileAttachment.map((file, index) => (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentFile(index)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <p className="fileNameTxtellipsis">{file.name}</p>
-                      </div>
-                    </Badge>
-                  ))
-                : [...fileAttachment, ...populatedFiles].map((file, index) => (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentFile(index, file)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        {/* <p className="fileNameTxtellipsis">{file.name}</p> */}
-                        <a
-                          className="fileNameTxtellipsis"
-                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          {file?.name?.length > 20
-                            ? file?.name?.substring(0, 20 - 3) + "..."
-                            : file?.name}
-                        </a>
-                      </div>
-                    </Badge>
-                  ))}
-            </div>
-            {fileAttachment.length > 0 && (
-              <div>
+            <Row gutter={ [0, 0] }>
+              {/* Title Field - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 <Form.Item
-                  label="Folder"
-                  initialValue={
-                    foldersList.length > 0 ? foldersList[0]._id : undefined
-                  }
-                  name="folder"
-                  rules={[
-                    {
-                      required: true,
-                    },
-                  ]}
+                  label="Title"
+                  name="title"
+                  rules={ [{ required: true, message: "Please add title" }] }
                 >
-                  <Select placeholder="Please Select Folder" showSearch>
-                    {foldersList.map((data) => (
-                      <Option
-                        key={data._id}
-                        value={data._id}
-                        style={{ textTransform: "capitalize" }}
-                      >
-                        {data.name}
-                      </Option>
-                    ))}
-                  </Select>
+                  <Input placeholder="Enter topic title" size="large" />
                 </Form.Item>
-              </div>
-            )}
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                {addEditDiscussion === "Add Topic" ? (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="square-primary-btn"
-                  >
-                    Save
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="square-primary-btn"
-                  >
-                    Update
-                  </Button>
-                )}
+              </Col>
 
-                <Button
-                  onClick={() => handleCancelTopic()}
-                  className="square-outline-btn ant-delete"
+              {/* Subscribers and Client */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Subscribers"
+                  name="subscribers"
+                  className="subscriber-section"
                 >
-                  Cancel
-                </Button>
-                <Tooltip placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={() => attachmentfileRef.current.click()}
+                  <MultiSelect
+                    onSearch={ handleSearch }
+                    onChange={ handleSelectedItemsChange }
+                    values={
+                      selectedItems && selectedItems.map((item) => item._id)
+                    }
+                    listData={ subscribersList }
+                    search={ searchKeyword }
+                  />
+                  { selectedItems && selectedItems.length > 0 && (
+                    <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                      <Button
+                        onClick={ () => setSelectedItems([]) }
+                        className="list-clear-btn ant-delete"
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  ) }
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Client"
+                  name="client"
+                  className="client-section"
+                >
+                  <MultiSelect
+                    onSearch={ handleSearch }
+                    onChange={ handleSelectedClientsChange }
+                    values={
+                      selectedClients
+                        ? selectedClients.map((item) => item._id)
+                        : []
+                    }
+                    listData={ clientsList }
+                    search={ searchKeyword }
+                  />
+                  { selectedClients && selectedClients.length > 0 && (
+                    <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                      <Button
+                        onClick={ () => setSelectedClients([]) }
+                        className="list-clear-btn ant-delete"
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  ) }
+                </Form.Item>
+              </Col>
+
+              {/* Folder Selection and Attach Files */ }
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item
+                    label="Folder"
+                    name="folder"
+                    initialValue={
+                      foldersList.length > 0 ? foldersList[0]._id : undefined
+                    }
+                    rules={ [
+                      {
+                        required: true,
+                        message: "Please select a folder",
+                      },
+                    ] }
                   >
-                    <i className="fi fi-ss-link"></i>Attach files
-                  </Button>
-                </Tooltip>
-                {/* </Upload> */}
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={onFileChange}
-                  hidden
-                  ref={attachmentfileRef2}
-                />
-              </div>
-              <div className="flex-btn">
-                <div className="pin-btn">
-                  <Form.Item name="pinToTop" valuePropName="checked">
-                    <Checkbox
-                      checked={
-                        editDiscussionTopic?.isPinToTop === true ? true : false
+                    <Select
+                      placeholder="Select Folder"
+                      showSearch
+                      size="large"
+                      filterOption={ (input, option) =>
+                        option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
                       }
-                      valuePropName="checked"
-                    >
-                      Pin to top
-                    </Checkbox>
-                  </Form.Item>
-                </div>
-                <div className="pin-btn">
-                  <Form.Item name="markAsPrivate" valuePropName="checked">
-                    <Checkbox
-                      checked={
-                        editDiscussionTopic?.isPrivate === true ? true : false
+                      filterSort={ (optionA, optionB) =>
+                        optionA.children
+                          ?.toLowerCase()
+                          ?.localeCompare(optionB.children?.toLowerCase())
                       }
-                      valuePropName="checked"
                     >
-                      Mark as Private
-                    </Checkbox>
+                      { foldersList.map((data) => (
+                        <Option
+                          key={ data._id }
+                          value={ data._id }
+                          style={ { textTransform: "capitalize" } }
+                        >
+                          { data.name }
+                        </Option>
+                      )) }
+                    </Select>
                   </Form.Item>
-                </div>
-              </div>
-            </div>
+                </Col>
+              ) }
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item label="Attach Files">
+                  <Tooltip placement="top" title="Attach files">
+                    <Button
+                      className="link-btn"
+                      onClick={ () => attachmentfileRef2.current.click() }
+                      icon={ <i className="fi fi-ss-link"></i> }
+                      size="large"
+                    >
+                      Attach files
+                    </Button>
+                  </Tooltip>
+                </Form.Item>
+              </Col>
+
+              {/* Checkboxes */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  form={ discussionForm }
+                  name="pinToTop"
+                  valuePropName="checked"
+                  style={ { marginBottom: 0 } }
+                >
+                  <Checkbox
+                    checked={ editDiscussionTopic?.isPinToTop === true ? true : false }
+                    valuePropName="checked"
+                  >
+                    Pin to top
+                  </Checkbox>
+                </Form.Item>
+              </Col>
+
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  form={ discussionForm }
+                  name="markAsPrivate"
+                  valuePropName="checked"
+                  style={ { marginBottom: 0 } }
+                >
+                  <Checkbox
+                    checked={ editDiscussionTopic?.isPrivate === true ? true : false }
+                    valuePropName="checked"
+                  >
+                    Mark as Private
+                  </Checkbox>
+                </Form.Item>
+              </Col>
+
+              {/* File Attachments Section - Full width */ }
+              { ((addEditDiscussion === "Add Topic" && fileAttachment.length > 0) ||
+                (addEditDiscussion !== "Add Topic" && (fileAttachment.length > 0 || populatedFiles?.length > 0))) && (
+                  <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                    <div className="file-attachments-section">
+                      <h4 style={ {
+                        marginBottom: 12,
+                        color: '#666',
+                        fontSize: '14px',
+                        fontWeight: 500
+                      } }>
+                        Attached Files
+                      </h4>
+                      <div className="fileAttachment_container">
+                        { addEditDiscussion === "Add Topic"
+                          ? fileAttachment.map((file, index) => (
+                            <Badge
+                              key={ index }
+                              count={
+                                <CloseCircleOutlined
+                                  onClick={ () => removeAttachmentFile(index) }
+                                  style={ { cursor: 'pointer' } }
+                                />
+                              }
+                            >
+                              <div className="fileAttachment_Box">
+                                <p className="fileNameTxtellipsis">{ file.name }</p>
+                              </div>
+                            </Badge>
+                          ))
+                          : [...fileAttachment, ...populatedFiles].map((file, index) => (
+                            <Badge
+                              key={ index }
+                              count={
+                                <CloseCircleOutlined
+                                  onClick={ () => removeAttachmentFile(index, file) }
+                                  style={ { cursor: 'pointer' } }
+                                />
+                              }
+                            >
+                              <div className="fileAttachment_Box">
+                                <a
+                                  className="fileNameTxtellipsis"
+                                  href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
+                                  rel="noopener noreferrer"
+                                  target="_blank"
+                                >
+                                  { file?.name?.length > 20
+                                    ? file?.name?.substring(0, 17) + "..."
+                                    : file?.name }
+                                </a>
+                              </div>
+                            </Badge>
+                          )) }
+                      </div>
+                    </div>
+                  </Col>
+                ) }
+
+            </Row>
+
+            {/* Hidden file input */ }
+            <input
+              multiple
+              type="file"
+              accept="*"
+              onChange={ onFileChange }
+              hidden
+              ref={ attachmentfileRef2 }
+            />
           </Form>
         </div>
       </Modal>

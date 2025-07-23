@@ -332,7 +332,7 @@ const CompanyEmployee = () => {
           <h2>Company Employees</h2>
           <Button
             type="primary"
-            onClick={ () => history.push(`/${companySlug}/admin/company-registartion`) }
+            onClick={ () => history.goBack()}
           >
             Back
           </Button>

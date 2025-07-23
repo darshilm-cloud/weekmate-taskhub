@@ -30,7 +30,7 @@ exports.registerAdminAndCompany = async (req, res) => {
 
     const {
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail, companyDomain },
+      companyDetails: { companyName, companyDomain },
     } = value;
     
 
@@ -64,16 +64,6 @@ exports.registerAdminAndCompany = async (req, res) => {
          "Company domain or slug already exists, please try with different slug or domain"
        );
      }
- 
-    // 🔍 Check if company email already exists in main database
-    const existingCompanyEmail = await CompanyModel.findOne({ companyEmail });
-    if (existingCompanyEmail) {
-      return errorResponse(
-        res,
-        statusCode.CONFLICT,
-        "Company email already exists."
-      );
-    }
 
 
     // 🔍 Check if admin email exists in temporary registrations
@@ -99,7 +89,7 @@ exports.registerAdminAndCompany = async (req, res) => {
     // 💾 Store temporary registration data
     const tempRegistration = await new CompanyRegistrationMail({
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail, companyDomain },
+      companyDetails: { companyName, companyDomain },
       verificationToken,
     }).save();
 
@@ -156,7 +146,7 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
 
     const {
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyEmail, companyDomain }
+      companyDetails: { companyName, companyDomain }
     } = tempRegistration;
 
     // Double-check if user/company was created while token was pending
@@ -166,19 +156,9 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, "Admin email already exists.");
     }
 
-    const existingCompany = await CompanyModel.findOne({
-      $or: [{ companyEmail }]
-    });
-
-    if (existingCompany) {
-      await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
-      return errorResponse(res, statusCode.CONFLICT, "Company name already exists.");
-    }
-
     // ✅ Create company
     const company = await new CompanyModel({
       companyName,
-      companyEmail,
       companyDomain
     }).save();
 
@@ -235,7 +215,6 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
           roleName: "$pms_role.role_name",
           companyId: "$companyDetails._id",
           companyName: "$companyDetails.companyName",
-          companyEmail: "$companyDetails.companyEmail",
         }
       }
     ]);

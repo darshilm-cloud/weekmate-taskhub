@@ -1169,13 +1169,7 @@ ul.tab_menu li.active-tab {
     border-radius: 100%;
 }
 
-.ant-modal-content .ant-modal-title {
-    padding: 16px 24px;
-    color: #545454;
-    background: #fff;
-    border-bottom: 1px solid #e8e8e8;
-    border-radius: 6px 6px 0 0;
-}
+
 
 .gx-app-login-content .form-center .ant-row.css-dev-only-do-not-override-dkbvqv {
     padding: 0;
@@ -1200,9 +1194,8 @@ ul.tab_menu li.active-tab {
 }
 
 .overview-modal-wrapper {
-    padding: 20px;
-    height: 600px;
-    overflow: auto;
+   max-height: 450px;
+    overflow-y: auto;
 }
 
 .modal-header {
@@ -3464,7 +3457,7 @@ span.anticon.anticon-down svg {
 .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners {
     max-height: 100%;
     overflow: auto;
-    height: 650px;
+    height: 220px;
 }
 
 .note-view {
@@ -4592,7 +4585,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     font-size: var(--font-size-14px);
     font-weight: 500;
     height: auto;
-    line-height: 1;
+    line-height: normal;
     overflow: hidden;
     padding: 10px 16px;
     position: relative;
@@ -4934,7 +4927,8 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector,
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined {
     border-color: #c2c3c5;
-    height: 35px;
+    height: 40px;
+    border-radius: 4px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-search-button {
@@ -4969,10 +4963,6 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     padding: 0 10px;
 }
 
-.admin-user .ant-modal-content .ant-modal-header .ant-modal-title {
-    font-weight: 600;
-    background-color: transparent;
-}
 
 .admin-user .ant-modal-content .ant-modal-close {
     color: #939393;
@@ -4990,7 +4980,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 
 .admin-user .ant-modal-content .ant-modal-body .ant-input-outlined {
     border: 1px solid #ccc;
-    height: 35px;
+    border-radius: 4px;
+    height: 40px;
+    width: 100%;
 }
 
 .admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus,

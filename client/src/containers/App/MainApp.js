@@ -25,7 +25,7 @@ import {
 import NoHeaderNotification from "../Topbar/NoHeaderNotification/index";
 import { useRouteMatch } from "react-router-dom";
 import Customizer from "../Customizer";
-
+import "../../assets/css/modal.css"
 const { Content } = Layout;
 
 function MainApp() {

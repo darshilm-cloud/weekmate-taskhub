@@ -180,7 +180,6 @@ const CompanyRegistration = () => {
       if (record) {
         form.setFieldsValue({
           companyName: record.companyName,
-          companyEmail: record.companyEmail || record.email,
           ownerName: record.ownerName,
           companySlug: record.companyDomain,
           logo: `${process.env.REACT_APP_API_URL}${record.companyLogoUrl}`,
@@ -302,7 +301,6 @@ const CompanyRegistration = () => {
 
       const payload = {
         companyName: values.companyName,
-        companyEmail: values.companyEmail,
         companyDomain: values.companySlug,
         logo: logoUrl || "",
         favicon: faviconUrl || "",
@@ -343,7 +341,6 @@ const CompanyRegistration = () => {
           companyDetails: {
             ...localData.companyDetails,
             companyName: updatedCompany?.companyName,
-            companyEmail: updatedCompany?.companyEmail,
             companyLogoUrl: updatedCompany?.companyLogoUrl,
             companyFavIcoUrl: updatedCompany?.companyFavIcoUrl,
             lastActiveChat: lastActiveChat,
@@ -371,7 +368,7 @@ const CompanyRegistration = () => {
           window.location.reload();
         } else {
           localStorage.setItem("companyDomain", latestSlug);
-          window.location.href = `/${latestSlug}/admin/company-registartion`;
+          window.location.href = `/${latestSlug}/admin/company-management`;
         }
         await fetchCompanies();
         setIsModalVisible(false);
@@ -472,12 +469,6 @@ const CompanyRegistration = () => {
         sorter: true,
       },
       {
-        title: "Email",
-        dataIndex: "companyEmail",
-        sorter: true,
-        render: (text, record) => text || record.email,
-      },
-      {
         title: "Total Employees",
         render: (_, record) => record.employeeCount || 0,
       },
@@ -533,10 +524,6 @@ const CompanyRegistration = () => {
   const formRules = useMemo(
     () => ({
       companyName: [{ required: true, message: "Please enter company name" }],
-      companyEmail: [
-        { required: true, message: "Please enter company email" },
-        { type: "email", message: "Invalid email format" },
-      ],
       companySlug: [
         { required: true, message: "Please input company slug!" },
         { min: 3, message: "Slug must be at least 3 characters!" },
@@ -589,7 +576,7 @@ const CompanyRegistration = () => {
   return (
     <Card>
       <div className="heading-wrapper">
-        <h2>Company Registration</h2>
+        <h2>Company Management</h2>
         {totalData === 0 && (
           <div
             style={{
@@ -684,17 +671,6 @@ const CompanyRegistration = () => {
           >
             <Input
               placeholder="Enter company name"
-              disabled={modalData.mode === "view"}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="companyEmail"
-            label="Company Email"
-            rules={formRules.companyEmail}
-          >
-            <Input
-              placeholder="Enter company email"
               disabled={modalData.mode === "view"}
             />
           </Form.Item>

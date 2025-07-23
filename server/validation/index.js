@@ -49,10 +49,6 @@ class Validator {
 
       companyDetails: Joi.object({
         companyName: Joi.string().required().label("Company name is required"),
-        companyEmail: Joi.string().email().required().messages({
-          "string.empty": "Email is required",
-          "string.email": "Invalid email format"
-        }),
         companyDomain: Joi.string().required().label("Company slug is required"),
       }).required()
     });
@@ -123,7 +119,6 @@ class Validator {
 
   getAddCompanySchema = () => {
     return Joi.object({
-      companyEmail: this.emailValidator("Company email is required"),
       companyName: Joi.string().required()
     });
   };

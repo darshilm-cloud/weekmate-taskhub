@@ -16,6 +16,8 @@ import {
   Badge,
   Tooltip,
   ConfigProvider,
+  Row,
+  Col,
 } from "antd";
 import {
   CalendarOutlined,
@@ -31,9 +33,7 @@ import "./style.css";
 import dayjs from "dayjs";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
-import {
-  getSpecificProjectWorkflowStage,
-} from "../../appRedux/reducers/ApiData";
+import { getSpecificProjectWorkflowStage } from "../../appRedux/reducers/ApiData";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import TasksController from "./TasksController";
 import { getRoles, hasPermission } from "../../util/hasPermission";
@@ -180,10 +180,12 @@ function TasksPMS({ flag }) {
     updateSubTaskListInStatus,
     updateSubTaskListInMainTask,
     task_ids,
-    selectedWorkflowStatus, setSelectedWorkflowStatus,
-    selectedMainTask, setSelectedMainTask,
+    selectedWorkflowStatus,
+    setSelectedWorkflowStatus,
+    selectedMainTask,
+    setSelectedMainTask,
     updateTaskDraftStatus,
-    checkTaskDrafts
+    checkTaskDrafts,
   } = TasksController({ flag });
 
   const csvRef = document.getElementById("test-table-xls-button");
@@ -199,23 +201,34 @@ function TasksPMS({ flag }) {
   );
 
   const handleSubmit = () => {
-    if (selectedMainTask && selectedMainTask != "a" && selectedWorkflowStatus == "a") {
-      updateSubTaskListInMainTask(selectedMainTask)
-      setSelectedMainTask("a")
-    } else if (selectedWorkflowStatus && selectedWorkflowStatus != "a" && selectedMainTask == "a") {
-      updateSubTaskListInStatus(selectedWorkflowStatus)
-      setSelectedWorkflowStatus("a")
+    if (
+      selectedMainTask &&
+      selectedMainTask != "a" &&
+      selectedWorkflowStatus == "a"
+    ) {
+      updateSubTaskListInMainTask(selectedMainTask);
+      setSelectedMainTask("a");
+    } else if (
+      selectedWorkflowStatus &&
+      selectedWorkflowStatus != "a" &&
+      selectedMainTask == "a"
+    ) {
+      updateSubTaskListInStatus(selectedWorkflowStatus);
+      setSelectedWorkflowStatus("a");
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
-      updateSubTaskListInMainTask(selectedMainTask)
-      updateSubTaskListInStatus(selectedWorkflowStatus)
-      setSelectedMainTask("a")
-      setSelectedWorkflowStatus("a")
+      updateSubTaskListInMainTask(selectedMainTask);
+      updateSubTaskListInStatus(selectedWorkflowStatus);
+      setSelectedMainTask("a");
+      setSelectedWorkflowStatus("a");
     } else {
-      return
+      return;
     }
   };
 
-  const filteredTasks = useMemo(() => filterTasks(boardTasks, filterSchema), [boardTasks, filterSchema]);
+  const filteredTasks = useMemo(
+    () => filterTasks(boardTasks, filterSchema),
+    [boardTasks, filterSchema]
+  );
 
   return (
     <>
@@ -329,7 +342,7 @@ function TasksPMS({ flag }) {
                             }
                             trigger={["click"]}
                           >
-                            <a onClick={e => e.preventDefault()}>
+                            <a onClick={(e) => e.preventDefault()}>
                               <MoreOutlined className="moreoutline-icon" />
                             </a>
                           </Dropdown>
@@ -342,13 +355,23 @@ function TasksPMS({ flag }) {
           </div>
 
           <div className="profilerightbar">
-            {task_ids?.length > 0 ?
-              <div className={`profile-sub-head ${task_ids?.length > 0 ? "update-task": ""}`}>
+            {task_ids?.length > 0 ? (
+              <div
+                className={`profile-sub-head ${
+                  task_ids?.length > 0 ? "update-task" : ""
+                }`}
+              >
                 <div className="head-box-inner">
                   <div className="update-workflow-status">
-                    <Form onFinish={handleSubmit} className="update-workflow-status-form">
-                      {hasPermission(["task_add"]) &&
-                        <Form.Item name="mainTask" className="update-workflow-status-formitem">
+                    <Form
+                      onFinish={handleSubmit}
+                      className="update-workflow-status-form"
+                    >
+                      {hasPermission(["task_add"]) && (
+                        <Form.Item
+                          name="mainTask"
+                          className="update-workflow-status-formitem"
+                        >
                           <Select
                             defaultValue={selectedMainTask}
                             onChange={(data) => setSelectedMainTask(data)}
@@ -360,7 +383,9 @@ function TasksPMS({ flag }) {
                                 ?.indexOf(input?.toLowerCase()) >= 0
                             }
                           >
-                            <Option key={"a"} disabled>Select list to move task</Option>
+                            <Option key={"a"} disabled>
+                              Select list to move task
+                            </Option>
                             {projectMianTask?.map((item, index) => (
                               <Option
                                 key={index}
@@ -371,41 +396,57 @@ function TasksPMS({ flag }) {
                               </Option>
                             ))}
                           </Select>
-                        </Form.Item>}
-                        <Form.Item name="workflowStatus">
-                          <Select
-                            defaultValue={selectedWorkflowStatus}
-                            onChange={(data) => setSelectedWorkflowStatus(data)}
-                            style={{ width: 210 }}
-                            showSearch
-                            filterOption={(input, option) =>
-                              option.children
-                                ?.toLowerCase()
-                                ?.indexOf(input?.toLowerCase()) >= 0
-                            }
-                          >
-                            <Option key={"a"} disabled>Select stage to move task</Option>
-                            {workflowStatusList?.map((item, index) => (
-                              <Option
-                                key={index}
-                                value={item?._id}
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                {item.title}
-                              </Option>
-                            ))}
-                          </Select>
                         </Form.Item>
+                      )}
+                      <Form.Item name="workflowStatus">
+                        <Select
+                          defaultValue={selectedWorkflowStatus}
+                          onChange={(data) => setSelectedWorkflowStatus(data)}
+                          style={{ width: 210 }}
+                          showSearch
+                          filterOption={(input, option) =>
+                            option.children
+                              ?.toLowerCase()
+                              ?.indexOf(input?.toLowerCase()) >= 0
+                          }
+                        >
+                          <Option key={"a"} disabled>
+                            Select stage to move task
+                          </Option>
+                          {workflowStatusList?.map((item, index) => (
+                            <Option
+                              key={index}
+                              value={item?._id}
+                              style={{ textTransform: "capitalize" }}
+                            >
+                              {item.title}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
                       <Form.Item>
-                        <Button className="ant-btn-primary" type="primary" htmlType="submit" disabled={(selectedMainTask == "a" && selectedWorkflowStatus == "a") ? true : false}>
+                        <Button
+                          className="ant-btn-primary"
+                          type="primary"
+                          htmlType="submit"
+                          disabled={
+                            selectedMainTask == "a" &&
+                            selectedWorkflowStatus == "a"
+                              ? true
+                              : false
+                          }
+                        >
                           Apply
                         </Button>
                       </Form.Item>
                       <Form.Item>
-                      <Button className="ant-delete" type="primary" htmlType="reset"
+                        <Button
+                          className="ant-delete"
+                          type="primary"
+                          htmlType="reset"
                           onClick={() => {
-                            setSelectedMainTask("a")
-                            setSelectedWorkflowStatus("a")
+                            setSelectedMainTask("a");
+                            setSelectedWorkflowStatus("a");
                           }}
                         >
                           Clear
@@ -413,7 +454,9 @@ function TasksPMS({ flag }) {
                       </Form.Item>
                     </Form>
                   </div>
-                </div></div> :
+                </div>
+              </div>
+            ) : (
               <div className="profile-sub-head">
                 <div className="task-sub-header">
                   <div className="head-box-inner">
@@ -441,182 +484,71 @@ function TasksPMS({ flag }) {
                   </div>
 
                   <div className="block-status-content">
-                    <div style={{ cursor: "pointer" }} className="status-content">
-                      <h6>Status:</h6>
-                      <Popover
-                        placement="bottomRight"
-                        content={
-                          <div className="right-popover-wrapper">
-                            <ul>
-                              <li>
-                                <Checkbox
-                                  checked={filterStatus == ""}
-                                  value={""}
-                                  onChange={handleFilterStatus}
-                                >
-                                  {" "}
-                                  All
-                                </Checkbox>
-                              </li>
-                            </ul>
-
-                            <div>
-                              <Search
-                                value={filterStatusSearchInput}
-                                onSearch={val => setFilterStatusSearchInput(val)}
-                                onChange={e =>
-                                  setFilterStatusSearchInput(e.target.value)
-                                }
-                              />
-                            </div>
-                            <ul className="assigness-data">
-                              {boardTasks
-                                ?.filter(item =>
-                                  item.workflowStatus?.title
-                                    .toLowerCase()
-                                    .includes(
-                                      filterStatusSearchInput.toLowerCase()
-                                    )
-                                )
-                                .map((val, index) => (
-                                  <li key={index}>
-                                    <Checkbox
-                                      checked={
-                                        filterStatus == val?.workflowStatus?._id
-                                      }
-                                      value={val?.workflowStatus?._id}
-                                      onChange={handleFilterStatus}
-                                    >
-                                      {" "}
-                                      {val?.workflowStatus?.title}{" "}
-                                    </Checkbox>
-                                  </li>
-                                ))}
-                            </ul>
-                            <div className="popver-footer-btn">
-                              <Button
-                                onClick={() =>
-                                  handleAllFilter(
-                                    "workflowStatusId",
-                                    filterStatus
-                                  )
-                                }
-                                type="primary"
-                                className="square-primary-btn ant-btn-primary"
-                              >
-                                Apply
-                              </Button>
-                              <Button
-                                className="square-outline-btn ant-delete"
-                                onClick={() => {
-                                  setOpenStatus(false);
-                                  setFilterStatusSearchInput("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        }
-                        trigger="click"
-                        open={projectMianTask.length > 0 ? openStatus : false}
-                        onOpenChange={handleOpenChangeStatus}
+                    <div className="filter-btn-wrapper">
+                      <div
+                        style={{ cursor: "pointer" }}
+                        className="status-content"
                       >
-                        <i className="fi fi-rs-check-circle"></i>{" "}
-                        {filterStatus ? getStatusTitleById(filterStatus) : "All"}
-                      </Popover>
-                    </div>
+                        <Popover
+                          placement="bottomRight"
+                          content={
+                            <div className="right-popover-wrapper">
+                              <ul>
+                                <li>
+                                  <Checkbox
+                                    checked={filterStatus == ""}
+                                    value={""}
+                                    onChange={handleFilterStatus}
+                                  >
+                                    {" "}
+                                    All
+                                  </Checkbox>
+                                </li>
+                              </ul>
 
-                    <div style={{ cursor: "pointer" }} className="status-content">
-                      <h6>Assigned:</h6>
-                      <Popover
-                        placement="bottomRight"
-                        content={
-                          <div className="right-popover-wrapper">
-                            <ul>
-                              <div className="filter-search-box">
-                                <ul>
-                                  <li>
-                                    <Checkbox
-                                      checked={filterAssigned.length == 0}
-                                      onChange={() =>
-                                        handleSelectionAssignedFilter("", true)
-                                      }
-                                    >
-                                      {" "}
-                                      All
-                                    </Checkbox>
-                                  </li>
-
-                                  <li>
-                                    <Checkbox
-                                      checked={filterAssigned == "unassigned"}
-                                      onChange={() =>
-                                        handleSelectionAssignedFilter(
-                                          "unassigned"
-                                        )
-                                      }
-                                    >
-                                      {" "}
-                                      Unassigned Tasks
-                                    </Checkbox>
-                                  </li>
-                                </ul>
-                                <div>
-                                  <Search
-                                    value={filterAssignedSearchInput}
-                                    onSearch={val =>
-                                      setFilterAssignedSearchInput(val)
-                                    }
-                                    onChange={e =>
-                                      setFilterAssignedSearchInput(e.target.value)
-                                    }
-                                  />
-                                </div>
+                              <div>
+                                <Search
+                                  value={filterStatusSearchInput}
+                                  onSearch={(val) =>
+                                    setFilterStatusSearchInput(val)
+                                  }
+                                  onChange={(e) =>
+                                    setFilterStatusSearchInput(e.target.value)
+                                  }
+                                />
                               </div>
                               <ul className="assigness-data">
-                                {/* {employeeList */}
-                                {subscribersList
-                                  .filter(item =>
-                                    item?.full_name
+                                {boardTasks
+                                  ?.filter((item) =>
+                                    item.workflowStatus?.title
                                       .toLowerCase()
                                       .includes(
-                                        filterAssignedSearchInput.toLowerCase()
+                                        filterStatusSearchInput.toLowerCase()
                                       )
                                   )
-                                  .map((item, index) => (
-                                    <li
-                                      key={index}
-                                      className={
-                                        filterAssigned.includes(item?._id)
-                                          ? "selected-filter-member"
-                                          : ""
-                                      }
-                                    >
+                                  .map((val, index) => (
+                                    <li key={index}>
                                       <Checkbox
-                                        key={index}
-                                        checked={filterAssigned.includes(
-                                          item?._id
-                                        )}
-                                        onChange={() =>
-                                          handleSelectionAssignedFilter(item?._id)
+                                        checked={
+                                          filterStatus ==
+                                          val?.workflowStatus?._id
                                         }
-                                      />
-                                      <MyAvatar
-                                        userName={item?.full_name}
-                                        key={item?._id}
-                                        alt={item?.full_name}
-                                        src={item.emp_img}
-                                      />
-
-                                      {removeTitle(item.full_name)}
+                                        value={val?.workflowStatus?._id}
+                                        onChange={handleFilterStatus}
+                                      >
+                                        {" "}
+                                        {val?.workflowStatus?.title}{" "}
+                                      </Checkbox>
                                     </li>
                                   ))}
                               </ul>
                               <div className="popver-footer-btn">
                                 <Button
                                   onClick={() =>
-                                    handleAllFilter("assigneeIds", filterAssigned)
+                                    handleAllFilter(
+                                      "workflowStatusId",
+                                      filterStatus
+                                    )
                                   }
                                   type="primary"
                                   className="square-primary-btn ant-btn-primary"
@@ -626,262 +558,426 @@ function TasksPMS({ flag }) {
                                 <Button
                                   className="square-outline-btn ant-delete"
                                   onClick={() => {
-                                    setOpenAssignees(false);
-                                    setFilterAssignedSearchInput("");
+                                    setOpenStatus(false);
+                                    setFilterStatusSearchInput("");
                                   }}
                                 >
                                   Cancel
                                 </Button>
                               </div>
-                            </ul>
-                          </div>
-                        }
-                        trigger="click"
-                        open={openAssignees && projectMianTask.length > 0}
-                        onOpenChange={handleOpenChangeAssignees}
-                      >
-                        <i className="fi fi-rr-users"></i>
-                        {filterAssigned.length == 0
-                          ? "All"
-                          : filterAssigned == "unassigned"
-                            ? "Unassigned Tasks"
-                            : "Selected"}
-                      </Popover>
-                    </div>
-
-                    <div style={{ cursor: "pointer" }} className="status-content">
-                      <h6
-                        onClick={() =>
-                          setIsPopoverVisibleView(!isPopoverVisibleView)
-                        }
-                      >
-                        View:
-                      </h6>
-                      <Popover
-                        placement="bottom"
-                        trigger="click"
-                        content={
-                          <div className="right-popover-wrapper popover-task">
-                            <Form.Item label="Start Date">
-                              <Select
-                                defaultValue="Any"
-                                onChange={handleStartChange}
-                                options={DateOption}
-                              ></Select>
-                              {selectValStartdate && (
-                                <div className="calender-event-block">
-                                  <Form.Item>
-                                    <DatePicker
-                                      onChange={(_, dateString) =>
-                                        handleStartDateRange(0, dateString)
-                                      }
-                                    >
-                                      <CalendarOutlined />
-                                    </DatePicker>
-                                  </Form.Item>
-                                  to
-                                  <Form.Item>
-                                    <DatePicker
-                                      onChange={(_, dateString) =>
-                                        handleStartDateRange(1, dateString)
-                                      }
-                                    >
-                                      <CalendarOutlined />
-                                    </DatePicker>
-                                  </Form.Item>
-                                </div>
-                              )}
-                            </Form.Item>
-
-                            <Form.Item label="Due Date">
-                              <Select
-                                defaultValue="Any"
-                                onChange={handleDueChange}
-                                options={DateOption}
-                              ></Select>
-                              {selectValDuedate && (
-                                <div className="calender-event-block">
-                                  <Form.Item>
-                                    <DatePicker
-                                      onChange={(_, dateString) =>
-                                        handleDueDateRange(0, dateString)
-                                      }
-                                    >
-                                      <CalendarOutlined />
-                                    </DatePicker>
-                                  </Form.Item>
-                                  to
-                                  <Form.Item>
-                                    <DatePicker
-                                      onChange={(_, dateString) =>
-                                        handleDueDateRange(0, dateString)
-                                      }
-                                    >
-                                      <CalendarOutlined />
-                                    </DatePicker>
-                                  </Form.Item>
-                                </div>
-                              )}
-                            </Form.Item>
-                            <div className="popver-footer-btn">
-                              <Button
-                                onClick={() => {
-                                  handleStartDueFilter(
-                                    filterStartDate,
-                                    filterDueDate
-                                  );
-                                }}
-                                type="primary"
-                                className="square-primary-btn ant-btn-primary"
-                              >
-                                Apply
-                              </Button>
-                              <Button
-                                type="outlined"
-                                onClick={() => {
-                                  setIsPopoverVisibleView(false);
-                                  setSelectValDuedate(false);
-                                }}
-                                className="square-outline-btn ant-delete"
-                              >
-                                Cancel
-                              </Button>
                             </div>
-                          </div>
-                        }
-                        visible={
-                          isPopoverVisibleView && projectMianTask.length > 0
-                        }
-                        onVisibleChange={setIsPopoverVisibleView}
-                      >
-                        <span>
-                          <i className="fi fi-rr-calendar-minus"></i>
-                          Start:{" "}
-                          {!Array.isArray(filterStartDate)
-                            ? DateOption.find(val => val.value == filterStartDate)
-                              .label
-                            : "Custom"}
-                          , Due:{" "}
-                          {!Array.isArray(filterDueDate)
-                            ? DateOption.find(val => val.value == filterDueDate)
-                              .label
-                            : "Custom"}
-                        </span>
-                      </Popover>
-                    </div>
-                    <div style={{ cursor: "pointer" }} className="status-content">
-                      <h6>Labels:</h6>
-                      <Popover
-                        placement="bottomRight"
-                        content={
-                          <div className="right-popover-wrapper">
-                            <ul>
-                              <li>
-                                <Checkbox
-                                  checked={filterOnLabels.length == 0}
-                                  onChange={() =>
-                                    handleSelectionlabelFilter("", true)
-                                  }
-                                >
-                                  All
-                                </Checkbox>
-                              </li>
-                              <li>
-                                <Checkbox
-                                  checked={filterOnLabels == "unlabelled"}
-                                  onChange={() =>
-                                    handleSelectionlabelFilter("unlabelled")
-                                  }
-                                >
-                                  Unlabelled Task
-                                </Checkbox>
-                              </li>
-                            </ul>
-                            <div>
-                              <Search
-                                value={filterLabelsSearchInput}
-                                onSearch={val => setFilterLabelsSearchInput(val)}
-                                onChange={e =>
-                                  setFilterLabelsSearchInput(e.target.value)
-                                }
-                              />
-                            </div>
-
-                            <span>
-                              <RightOutlined />
-                              Global Labels
+                          }
+                          trigger="click"
+                          open={projectMianTask.length > 0 ? openStatus : false}
+                          onOpenChange={handleOpenChangeStatus}
+                        >
+                          <Button className="dropdown-button">
+                            <span className="filter-text">
+                              <span>Status:</span>
+                              <span>
+                                {filterStatus
+                                  ? getStatusTitleById(filterStatus)
+                                  : "All"}
+                              </span>
                             </span>
-                            <ul className="assigness-data">
-                              {projectLabels
-                                .filter(item =>
-                                  item.title
-                                    .toLowerCase()
-                                    .includes(
-                                      filterLabelsSearchInput.toLowerCase()
-                                    )
-                                )
-                                .map(item => (
-                                  <li
-                                    onClick={() =>
-                                      handleSelectionlabelFilter(item?._id)
-                                    }
-                                    className={
-                                      filterOnLabels.includes(item?._id)
-                                        ? "selected-filter-member"
-                                        : ""
-                                    }
-                                    key={item?._id}
-                                  >
-                                    <Avatar
-                                      style={{ background: item.color }}
-                                    ></Avatar>{" "}
-                                    {item.title}
-                                  </li>
-                                ))}
-                            </ul>
-                            <div className="popver-footer-btn">
-                              <Button
-                                onClick={() =>
-                                  handleAllFilter("labelIds", filterOnLabels)
-                                }
-                                type="primary"
-                                className="square-primary-btn ant-btn-primary"
-                              >
-                                Apply
-                              </Button>
-                              <Button
-                                className="square-outline-btn ant-delete"
-                                onClick={() => {
-                                  setOpenLabels(false);
-                                  setFilterLabelsSearchInput("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        }
-                        trigger="click"
-                        open={openLabels && projectMianTask.length > 0}
-                        onOpenChange={handleChangeLabels}
-                      >
-                        <i className="fi fi-rr-tags"></i>
-                        {filterOnLabels.length == 0
-                          ? "All"
-                          : filterOnLabels == "unlabelled"
-                            ? "Unlabelled Task"
-                            : "Selected"}
-                      </Popover>
-                    </div>
+                          </Button>
+                        </Popover>
+                      </div>
 
-                    <div className="status-content after-border">
-                      <div className="avtar-group">
-                        <MyAvatarGroup
-                          key={projectId}
-                          customStyle={{ height: "30px", width: "30px" }}
-                          record={projectAssignees?.assignees}
-                          maxPopoverTrigger={"click"}
-                        />
+                      <div
+                        style={{ cursor: "pointer" }}
+                        className="status-content"
+                      >
+                        <Popover
+                          placement="bottomRight"
+                          content={
+                            <div className="right-popover-wrapper">
+                              <ul>
+                                <div className="filter-search-box">
+                                  <ul>
+                                    <li>
+                                      <Checkbox
+                                        checked={filterAssigned.length == 0}
+                                        onChange={() =>
+                                          handleSelectionAssignedFilter(
+                                            "",
+                                            true
+                                          )
+                                        }
+                                      >
+                                        {" "}
+                                        All
+                                      </Checkbox>
+                                    </li>
+
+                                    <li>
+                                      <Checkbox
+                                        checked={filterAssigned == "unassigned"}
+                                        onChange={() =>
+                                          handleSelectionAssignedFilter(
+                                            "unassigned"
+                                          )
+                                        }
+                                      >
+                                        {" "}
+                                        Unassigned Tasks
+                                      </Checkbox>
+                                    </li>
+                                  </ul>
+                                  <div>
+                                    <Search
+                                      value={filterAssignedSearchInput}
+                                      onSearch={(val) =>
+                                        setFilterAssignedSearchInput(val)
+                                      }
+                                      onChange={(e) =>
+                                        setFilterAssignedSearchInput(
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                                <ul className="assigness-data">
+                                  {/* {employeeList */}
+                                  {subscribersList
+                                    .filter((item) =>
+                                      item?.full_name
+                                        .toLowerCase()
+                                        .includes(
+                                          filterAssignedSearchInput.toLowerCase()
+                                        )
+                                    )
+                                    .map((item, index) => (
+                                      <li
+                                        key={index}
+                                        className={
+                                          filterAssigned.includes(item?._id)
+                                            ? "selected-filter-member"
+                                            : ""
+                                        }
+                                      >
+                                        <Checkbox
+                                          key={index}
+                                          checked={filterAssigned.includes(
+                                            item?._id
+                                          )}
+                                          onChange={() =>
+                                            handleSelectionAssignedFilter(
+                                              item?._id
+                                            )
+                                          }
+                                        />
+                                        <MyAvatar
+                                          userName={item?.full_name}
+                                          key={item?._id}
+                                          alt={item?.full_name}
+                                          src={item.emp_img}
+                                        />
+
+                                        {removeTitle(item.full_name)}
+                                      </li>
+                                    ))}
+                                </ul>
+                                <div className="popver-footer-btn">
+                                  <Button
+                                    onClick={() =>
+                                      handleAllFilter(
+                                        "assigneeIds",
+                                        filterAssigned
+                                      )
+                                    }
+                                    type="primary"
+                                    className="square-primary-btn ant-btn-primary"
+                                  >
+                                    Apply
+                                  </Button>
+                                  <Button
+                                    className="square-outline-btn ant-delete"
+                                    onClick={() => {
+                                      setOpenAssignees(false);
+                                      setFilterAssignedSearchInput("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </ul>
+                            </div>
+                          }
+                          trigger="click"
+                          open={openAssignees && projectMianTask.length > 0}
+                          onOpenChange={handleOpenChangeAssignees}
+                        >
+                          <Button className="dropdown-button">
+                            <span className="filter-text">
+                              <span>Assigned:</span>
+                              <span>
+                                {filterAssigned.length == 0
+                                  ? "All"
+                                  : filterAssigned == "unassigned"
+                                  ? "Unassigned Tasks"
+                                  : "Selected"}
+                              </span>
+                            </span>
+                          </Button>
+                        </Popover>
+                      </div>
+
+                      <div
+                        style={{ cursor: "pointer" }}
+                        className="status-content"
+                      >
+                        <Popover
+                          placement="bottom"
+                          trigger="click"
+                          content={
+                            <div className="right-popover-wrapper popover-task">
+                              <Form.Item label="Start Date">
+                                <Select
+                                  defaultValue="Any"
+                                  onChange={handleStartChange}
+                                  options={DateOption}
+                                ></Select>
+                                {selectValStartdate && (
+                                  <div className="calender-event-block">
+                                    <Form.Item>
+                                      <DatePicker
+                                        onChange={(_, dateString) =>
+                                          handleStartDateRange(0, dateString)
+                                        }
+                                      >
+                                        <CalendarOutlined />
+                                      </DatePicker>
+                                    </Form.Item>
+                                    to
+                                    <Form.Item>
+                                      <DatePicker
+                                        onChange={(_, dateString) =>
+                                          handleStartDateRange(1, dateString)
+                                        }
+                                      >
+                                        <CalendarOutlined />
+                                      </DatePicker>
+                                    </Form.Item>
+                                  </div>
+                                )}
+                              </Form.Item>
+
+                              <Form.Item label="Due Date">
+                                <Select
+                                  defaultValue="Any"
+                                  onChange={handleDueChange}
+                                  options={DateOption}
+                                ></Select>
+                                {selectValDuedate && (
+                                  <div className="calender-event-block">
+                                    <Form.Item>
+                                      <DatePicker
+                                        onChange={(_, dateString) =>
+                                          handleDueDateRange(0, dateString)
+                                        }
+                                      >
+                                        <CalendarOutlined />
+                                      </DatePicker>
+                                    </Form.Item>
+                                    to
+                                    <Form.Item>
+                                      <DatePicker
+                                        onChange={(_, dateString) =>
+                                          handleDueDateRange(0, dateString)
+                                        }
+                                      >
+                                        <CalendarOutlined />
+                                      </DatePicker>
+                                    </Form.Item>
+                                  </div>
+                                )}
+                              </Form.Item>
+                              <div className="popver-footer-btn">
+                                <Button
+                                  onClick={() => {
+                                    handleStartDueFilter(
+                                      filterStartDate,
+                                      filterDueDate
+                                    );
+                                  }}
+                                  type="primary"
+                                  className="square-primary-btn ant-btn-primary"
+                                >
+                                  Apply
+                                </Button>
+                                <Button
+                                  type="outlined"
+                                  onClick={() => {
+                                    setIsPopoverVisibleView(false);
+                                    setSelectValDuedate(false);
+                                  }}
+                                  className="square-outline-btn ant-delete"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          }
+                          visible={
+                            isPopoverVisibleView && projectMianTask.length > 0
+                          }
+                          onVisibleChange={setIsPopoverVisibleView}
+                        >
+                          <Button className="dropdown-button">
+                            <span className="filter-text">
+                              <span
+                                onClick={() =>
+                                  setIsPopoverVisibleView(!isPopoverVisibleView)
+                                }
+                              >
+                                View:
+                              </span>
+                              <span>
+                                <i className="fi fi-rr-calendar-minus"></i>
+                                Start:{" "}
+                                {!Array.isArray(filterStartDate)
+                                  ? DateOption.find(
+                                      (val) => val.value == filterStartDate
+                                    ).label
+                                  : "Custom"}
+                                , Due:{" "}
+                                {!Array.isArray(filterDueDate)
+                                  ? DateOption.find(
+                                      (val) => val.value == filterDueDate
+                                    ).label
+                                  : "Custom"}
+                              </span>
+                            </span>
+                          </Button>
+                        </Popover>
+                      </div>
+
+                      <div
+                        style={{ cursor: "pointer" }}
+                        className="status-content"
+                      >
+                        <Popover
+                          placement="bottomRight"
+                          content={
+                            <div className="right-popover-wrapper">
+                              <ul>
+                                <li>
+                                  <Checkbox
+                                    checked={filterOnLabels.length == 0}
+                                    onChange={() =>
+                                      handleSelectionlabelFilter("", true)
+                                    }
+                                  >
+                                    All
+                                  </Checkbox>
+                                </li>
+                                <li>
+                                  <Checkbox
+                                    checked={filterOnLabels == "unlabelled"}
+                                    onChange={() =>
+                                      handleSelectionlabelFilter("unlabelled")
+                                    }
+                                  >
+                                    Unlabelled Task
+                                  </Checkbox>
+                                </li>
+                              </ul>
+                              <div>
+                                <Search
+                                  value={filterLabelsSearchInput}
+                                  onSearch={(val) =>
+                                    setFilterLabelsSearchInput(val)
+                                  }
+                                  onChange={(e) =>
+                                    setFilterLabelsSearchInput(e.target.value)
+                                  }
+                                />
+                              </div>
+
+                              <span>
+                                <RightOutlined />
+                                Global Labels
+                              </span>
+                              <ul className="assigness-data">
+                                {projectLabels
+                                  .filter((item) =>
+                                    item.title
+                                      .toLowerCase()
+                                      .includes(
+                                        filterLabelsSearchInput.toLowerCase()
+                                      )
+                                  )
+                                  .map((item) => (
+                                    <li
+                                      onClick={() =>
+                                        handleSelectionlabelFilter(item?._id)
+                                      }
+                                      className={
+                                        filterOnLabels.includes(item?._id)
+                                          ? "selected-filter-member"
+                                          : ""
+                                      }
+                                      key={item?._id}
+                                    >
+                                      <Avatar
+                                        style={{ background: item.color }}
+                                      ></Avatar>{" "}
+                                      {item.title}
+                                    </li>
+                                  ))}
+                              </ul>
+                              <div className="popver-footer-btn">
+                                <Button
+                                  onClick={() =>
+                                    handleAllFilter("labelIds", filterOnLabels)
+                                  }
+                                  type="primary"
+                                  className="square-primary-btn ant-btn-primary"
+                                >
+                                  Apply
+                                </Button>
+                                <Button
+                                  className="square-outline-btn ant-delete"
+                                  onClick={() => {
+                                    setOpenLabels(false);
+                                    setFilterLabelsSearchInput("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          }
+                          trigger="click"
+                          open={openLabels && projectMianTask.length > 0}
+                          onOpenChange={handleChangeLabels}
+                        >
+                          <Button className="dropdown-button">
+                            <span className="filter-text">
+                              <span>Labels:</span>
+                              <span>
+                                {filterOnLabels.length == 0
+                                  ? "All"
+                                  : filterOnLabels == "unlabelled"
+                                  ? "Unlabelled Task"
+                                  : "Selected"}
+                              </span>
+                            </span>
+                          </Button>
+                        </Popover>
+                      </div>
+
+                      <div className="status-content after-border">
+                        <div className="avtar-group">
+                          <MyAvatarGroup
+                            key={projectId}
+                            customStyle={{ height: "30px", width: "30px" }}
+                            record={projectAssignees?.assignees}
+                            maxPopoverTrigger={"click"}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -897,7 +993,9 @@ function TasksPMS({ flag }) {
                       sheet="tablexls"
                       buttonText="Export XLS"
                     />
-                    <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
+                    <div
+                      dangerouslySetInnerHTML={{ __html: html["html"] }}
+                    ></div>
                   </div>
                   <Popover
                     placement="bottomRight"
@@ -919,11 +1017,11 @@ function TasksPMS({ flag }) {
                               <input
                                 type="file"
                                 size="small"
-                                onChange={e => {
+                                onChange={(e) => {
                                   const file = e.target.files[0];
                                   importCsvFile(file);
                                 }}
-                                onClick={e => (e.target.value = null)}
+                                onClick={(e) => (e.target.value = null)}
                                 style={{ display: "none" }}
                                 ref={importRef}
                                 accept="xlsx, .xls, .csv"
@@ -974,7 +1072,8 @@ function TasksPMS({ flag }) {
                     </div>
                   </Popover>
                 </div>
-              </div>}
+              </div>
+            )}
 
             {projectMianTask.length === 0 && (
               <div className="error-message">
@@ -1011,186 +1110,222 @@ function TasksPMS({ flag }) {
       </div>
 
       <Modal
-        title={null}
         open={isModalOpenList}
-        footer={null}
         onCancel={handleCancelList}
         onOk={handleOkList}
+        title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
+        width={800}
+        footer={[
+          <Form.Item
+            key="checkbox"
+            name="markAsPrivate"
+            valuePropName="checked"
+          >
+            <Checkbox
+              checked={isPrivate === true ? true : false}
+              onChange={(e) => setIsprivate(e.target.checked)}
+            >
+              Mark as Private
+            </Checkbox>
+          </Form.Item>,
+          <Button
+            key="cancel"
+            onClick={handleCancelList}
+            className="delete-btn"
+            size="large"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="square-primary-btn"
+            size="large"
+            onClick={() => listForm.submit()}
+          >
+            Save
+          </Button>,
+        ]}
       >
-        <div className="modal-header">
-          <h1>{modalMode === "add" ? "Add List" : "Edit List"}</h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form
             form={listForm}
+            layout="vertical"
             initialValues={{ isPrivateList: false }}
-            onFinish={values => {
+            onFinish={(values) => {
               modalMode === "add"
                 ? addProjectMainTask(values)
                 : editProjectmainTask(values);
             }}
           >
-            <div className="topic-cancel-wrapper task-list-pop-wrapper">
-              <Form.Item
-                name="title"
-                rules={[
-                  {
-                    required: true,
-                    whitespace: true,
-                    message: "Please enter a valid title",
-                  },
-                ]}
-              >
-                <Input placeholder="Title"></Input>
-              </Form.Item>
-
-              <Form.Item
-                label="subscribers"
-                colon={false}
-                className="subscriber-btn"
-              >
-                <MultiSelect
-                  onSearch={handleSearch}
-                  onChange={handleSubscribersChange}
-                  values={selectSubscriber}
-                  listData={subscribersList}
-                  search={searchKeyword}
-                />
-
-                <Button
-                  className="list-clear-btn ant-delete"
-                  onClick={() => setSelectSubscribers([])}
+            <Row gutter={[0, 0]}>
+              {/* Title Field */}
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <Form.Item
+                  label="Title"
+                  name="title"
+                  rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please enter a valid title",
+                    },
+                  ]}
                 >
-                  Clear
-                </Button>
-              </Form.Item>
-
-              {selectSubscriber.length > 0 && (
-                <div className="list-modal-stages">
-                  {selectSubscriber.map((subscriberId, index) => (
-                    <div key={index} className="subsListContainer">
-                      <div className="list-modal-inner-stage">
-                        <MyAvatar
-                          userName={
-                            subscribersList.find(
-                              item => item?._id === subscriberId
-                            )?.full_name
-                          }
-                          key={
-                            subscribersList.find(
-                              item => item?._id === subscriberId
-                            )?.full_name
-                          }
-                          alt={
-                            subscribersList.find(
-                              item => item?._id === subscriberId
-                            )?.full_name
-                          }
-                          src={
-                            subscribersList.find(
-                              item => item?._id === subscriberId
-                            )?.emp_img
-                          }
-                        />
-                        <p>
-                          {removeTitle(
-                            subscribersList.find(
-                              item => item?._id === subscriberId
-                            )?.full_name
-                          )}
-                        </p>
-                      </div>
-                      <Form.Item name={["subscriber_stages", index]}>
-                        <Select
-                          size="large"
-                          showSearch
-                          filterOption={(input, option) =>
-                            option.children
-                              .toLowerCase()
-                              .indexOf(input.toLowerCase()) >= 0
-                          }
-                          filterSort={(optionA, optionB) =>
-                            optionA.children
-                              .toLowerCase()
-                              .localeCompare(optionB.children.toLowerCase())
-                          }
-                          onDropdownVisibleChange={open =>
-                            open &&
-                            dispatch(getSpecificProjectWorkflowStage(stagesId))
-                          }
-                          defaultValue={defaultStageId}
-                        >
-                          {projectWorkflowStage.map((item, index) => (
-                            <Option
-                              key={index}
-                              value={item?._id}
-                              style={{ textTransform: "capitalize" }}
-                            >
-                              {item.title}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <Form.Item
-                label="client"
-                colon={false}
-                className="subscriber-btn"
-              >
-                <MultiSelect
-                  onSearch={handleSearch}
-                  onChange={handleListClientChange}
-                  values={
-                    selectedListClient
-                      ? selectedListClient.map(item => item?._id)
-                      : []
-                  }
-                  listData={clientsList}
-                  search={searchKeyword}
-                />
-
-                <Button
-                  className="list-clear-btn ant-delete"
-                  onClick={() => setSelectedListClient([])}
-                >
-                  Clear
-                </Button>
-              </Form.Item>
-            </div>
-
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  htmlType="submit"
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={handleCancelList}
-                  className="square-outline-btn ant-delete"
-                >
-                  Cancel
-                </Button>
-              </div>
-              <div>
-                <Form.Item name="markAsPrivate" valuePropName="checked">
-                  <Checkbox
-                    valuePropName="checked"
-                    checked={isPrivate === true ? true : false}
-                    onChange={e => setIsprivate(e.target.checked)}
-                  >
-                    Mark as Private
-                  </Checkbox>
+                  <Input placeholder="Enter title" size="large" />
                 </Form.Item>
-              </div>
-            </div>
+              </Col>
+
+              {/* Subscribers */}
+              <Col xs={24} sm={24} md={12} lg={12}>
+                <Form.Item label="Subscribers" className="subscriber-section">
+                  <MultiSelect
+                    onSearch={handleSearch}
+                    onChange={handleSubscribersChange}
+                    values={selectSubscriber}
+                    listData={subscribersList}
+                    search={searchKeyword}
+                  />
+
+                  {selectSubscriber.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        className="list-clear-btn ant-delete"
+                        onClick={() => setSelectSubscribers([])}
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </Form.Item>
+              </Col>
+
+              {/* Client */}
+              <Col xs={24} sm={24} md={12} lg={12}>
+                <Form.Item label="Client" className="client-section">
+                  <MultiSelect
+                    onSearch={handleSearch}
+                    onChange={handleListClientChange}
+                    values={
+                      selectedListClient
+                        ? selectedListClient.map((item) => item?._id)
+                        : []
+                    }
+                    listData={clientsList}
+                    search={searchKeyword}
+                  />
+
+                  {selectedListClient && selectedListClient.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        className="list-clear-btn ant-delete"
+                        onClick={() => setSelectedListClient([])}
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </Form.Item>
+              </Col>
+
+              {/* Dynamic Subscriber Stages */}
+              {selectSubscriber.length > 0 && (
+                <Col xs={24} sm={24} md={24} lg={24}>
+                  <div className="subscriber-stages-section">
+                    <h4
+                      style={{
+                        marginBottom: 16,
+                        color: "#666",
+                        fontSize: "16px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Assign Stages to Subscribers
+                    </h4>
+                    <Row gutter={[16, 16]}>
+                      {selectSubscriber.map((subscriberId, index) => {
+                        const subscriber = subscribersList.find(
+                          (item) => item?._id === subscriberId
+                        );
+
+                        return (
+                          <Col xs={24} sm={12} md={8} lg={6} key={index}>
+                            <div className="subscriber-stage-card">
+                              {/* Subscriber Info */}
+                              <div className="subscriber-info">
+                                <MyAvatar
+                                  userName={subscriber?.full_name}
+                                  key={subscriber?.full_name}
+                                  alt={subscriber?.full_name}
+                                  src={subscriber?.emp_img}
+                                  size="default"
+                                />
+                                <span className="subscriber-name">
+                                  {removeTitle(subscriber?.full_name)}
+                                </span>
+                              </div>
+
+                              {/* Stage Selection */}
+                              <Form.Item
+                                label="Stage"
+                                name={["subscriber_stages", index]}
+                                className="stage-select-item"
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Please select a stage",
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder="Select Stage"
+                                  showSearch
+                                  filterOption={(input, option) =>
+                                    option.children
+                                      .toLowerCase()
+                                      .indexOf(input.toLowerCase()) >= 0
+                                  }
+                                  filterSort={(optionA, optionB) =>
+                                    optionA.children
+                                      .toLowerCase()
+                                      .localeCompare(
+                                        optionB.children.toLowerCase()
+                                      )
+                                  }
+                                  onDropdownVisibleChange={(open) =>
+                                    open &&
+                                    dispatch(
+                                      getSpecificProjectWorkflowStage(stagesId)
+                                    )
+                                  }
+                                  defaultValue={defaultStageId}
+                                >
+                                  {projectWorkflowStage.map(
+                                    (item, stageIndex) => (
+                                      <Option
+                                        key={stageIndex}
+                                        value={item?._id}
+                                        style={{ textTransform: "capitalize" }}
+                                      >
+                                        {item.title}
+                                      </Option>
+                                    )
+                                  )}
+                                </Select>
+                              </Form.Item>
+                            </div>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                  </div>
+                </Col>
+              )}
+            </Row>
           </Form>
         </div>
       </Modal>
@@ -1208,7 +1343,7 @@ function TasksPMS({ flag }) {
         <div className="overview-modal-wrapper">
           <Form
             form={addform}
-            onFinish={values => {
+            onFinish={(values) => {
               handleTaskOps(values);
             }}
           >
@@ -1325,7 +1460,7 @@ function TasksPMS({ flag }) {
                               addInputTaskData?.end_date &&
                               dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
                             }
-                            disabledDate={current =>
+                            disabledDate={(current) =>
                               current &&
                               current <
                                 dayjs(
@@ -1355,7 +1490,9 @@ function TasksPMS({ flag }) {
                             // showSearch
                             allowClear
                             placeholder="Select"
-                            onChange={value => handleTaskInput("labels", value)}
+                            onChange={(value) =>
+                              handleTaskInput("labels", value)
+                            }
                           >
                             {projectLabels.map((item, index) => (
                               <Option
@@ -1385,7 +1522,7 @@ function TasksPMS({ flag }) {
                             onChange={handleSelectedItemsChange}
                             values={
                               selectedItems
-                                ? selectedItems.map(item => item?._id)
+                                ? selectedItems.map((item) => item?._id)
                                 : []
                             }
                             listData={subscribersList}
@@ -1415,7 +1552,7 @@ function TasksPMS({ flag }) {
                                 min={0}
                                 value={estHrs}
                                 type="number"
-                                onChange={e =>
+                                onChange={(e) =>
                                   handleEstTimeInput("est_hrs", e.target.value)
                                 }
                                 className={`hours_input ${
@@ -1431,7 +1568,7 @@ function TasksPMS({ flag }) {
                                 max={59}
                                 type="number"
                                 value={estMins}
-                                onChange={e => {
+                                onChange={(e) => {
                                   if (e.target.value * 1 > 60)
                                     return e.preventDefault();
                                   handleEstTimeInput(
@@ -1503,7 +1640,7 @@ function TasksPMS({ flag }) {
                   ]}
                 >
                   <Select placeholder="Please Select Folder" showSearch>
-                    {foldersList.map(data => (
+                    {foldersList.map((data) => (
                       <Option
                         key={data?._id}
                         value={data?._id}
@@ -1567,7 +1704,7 @@ function TasksPMS({ flag }) {
         <div className="overview-modal-wrapper task-overview-modal-wrapper">
           <Form
             form={editform}
-            onFinish={values => {
+            onFinish={(values) => {
               handleTaskOps(values, true);
             }}
           >
@@ -1688,7 +1825,7 @@ function TasksPMS({ flag }) {
                             onChange={(date, dateString) =>
                               handleTaskInput("end_date", dateString)
                             }
-                            disabledDate={current =>
+                            disabledDate={(current) =>
                               current &&
                               current <
                                 dayjs(
@@ -1714,9 +1851,11 @@ function TasksPMS({ flag }) {
                             value={addInputTaskData?.labels}
                             showSearch
                             placeholder="Select labels"
-                            onChange={value => handleTaskInput("labels", value)}
+                            onChange={(value) =>
+                              handleTaskInput("labels", value)
+                            }
                           >
-                            {projectLabels.map(item => (
+                            {projectLabels.map((item) => (
                               <Option
                                 key={item?._id}
                                 value={item?._id}
@@ -1743,7 +1882,7 @@ function TasksPMS({ flag }) {
                             onChange={handleSelectedItemsChange}
                             values={
                               selectedItems
-                                ? selectedItems.map(item => item?._id)
+                                ? selectedItems.map((item) => item?._id)
                                 : []
                             }
                             listData={subscribersList}
@@ -1773,7 +1912,7 @@ function TasksPMS({ flag }) {
                                 min={0}
                                 value={estHrs}
                                 type="number"
-                                onChange={e =>
+                                onChange={(e) =>
                                   handleEstTimeInput("est_hrs", e.target.value)
                                 }
                                 className={`hours_input ${
@@ -1789,7 +1928,7 @@ function TasksPMS({ flag }) {
                                 max={59}
                                 type="number"
                                 value={estMins}
-                                onChange={e => {
+                                onChange={(e) => {
                                   if (e.target.value * 1 > 60)
                                     return e.preventDefault();
                                   handleEstTimeInput(
@@ -1852,7 +1991,7 @@ function TasksPMS({ flag }) {
                   ]}
                 >
                   <Select placeholder="Please Select Folder" showSearch>
-                    {foldersList.map(data => (
+                    {foldersList.map((data) => (
                       <Option
                         key={data?._id}
                         value={data?._id}
@@ -1913,13 +2052,9 @@ function TasksPMS({ flag }) {
           <h1>Manage People</h1>
         </div>
         <div className="overview-modal-wrapper">
-          <Form
-          >
+          <Form>
             <div className="topic-cancel-wrapper task-list-pop-wrapper">
-              <Form.Item
-                name="assignees"
-                label="Assignees"
-              >
+              <Form.Item name="assignees" label="Assignees">
                 <MultiSelect
                   mode="multiple"
                   style={{ width: "100%" }}
@@ -1928,10 +2063,7 @@ function TasksPMS({ flag }) {
                 />
               </Form.Item>
 
-              <Form.Item
-                label="Clients"
-                name="clients"
-              >
+              <Form.Item label="Clients" name="clients">
                 <MultiSelect
                   mode="multiple"
                   style={{ width: "100%" }}
