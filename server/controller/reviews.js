@@ -77,6 +77,13 @@ exports.addReview = async (req, res) => {
 //Get Review :
 exports.getReview = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -194,6 +201,7 @@ exports.getReview = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] },
                   ],
                 },
               },
