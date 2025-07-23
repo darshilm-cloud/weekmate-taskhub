@@ -1169,8 +1169,12 @@ ul.tab_menu li.active-tab {
     border-radius: 100%;
 }
 
-
-
+.right-popover-wrapper .ant-form-item{
+  margin-bottom: 10px;
+}
+.ant-input-search .ant-input{
+    height: 40px;
+}
 .gx-app-login-content .form-center .ant-row.css-dev-only-do-not-override-dkbvqv {
     padding: 0;
 }
