@@ -997,7 +997,7 @@ function DiscussionForm() {
                 searchText ? (
                 <div className="no-data-div">No Record Found</div>
               ) : (
-                <div>
+                <>
                   <div className="comment-module">
                     { discussionComments.length > 0 &&
                       !searchText &&
@@ -1207,7 +1207,8 @@ function DiscussionForm() {
                             className="link-btn"
                             onClick={ () => attachmentfileRef.current.click() }
                           >
-                            <i className="fi fi-ss-link"></i>Attach files
+                            <i className="fi fi-ss-link"></i>
+                            Attach files
                           </Button>
                         </Tooltip>
                         <input
@@ -1269,7 +1270,7 @@ function DiscussionForm() {
                       ) }
                     </div>
                   </div>
-                </div>
+                </>
               ) }
             </div>
           </div>
