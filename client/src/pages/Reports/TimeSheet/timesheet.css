@@ -1,1 +1,65 @@
+.timesheet-card .filter-btn-wrapper .filter-select-container .ant-select {
 
+    max-width: 300px;
+}
+
+.timesheet-card .filter-btn-wrapper .filter-select-container .ant-select .ant-select-selector {
+    overflow-x: auto;
+    height: 50px;
+    overflow-y: hidden;
+    min-width: 150px;
+}
+
+.timesheet-card .filter-btn-wrapper .filter-select-container .ant-select .ant-select-selection-overflow {
+    flex-wrap: nowrap;
+}
+
+.timesheet-card .header-btn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.timesheet-card .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Grid layout for charts */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  /* Space between charts */
+  justify-items: center;
+  /* Center charts horizontally */
+  align-items: start;
+  /* Align charts to the top */
+}
+
+/* Styling for individual chart containers */
+.charts-grid>.chart-container {
+  background-color: #ffffff;
+  /* White background for each chart */
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Light shadow for chart containers */
+  width: 100%;
+  /* Ensure charts take full width of grid item */
+  box-sizing: border-box;
+  /* Include padding in width calculation */
+}
+
+.table-section .table-header {
+    padding: 10px;
+    justify-content: space-between;
+    display: flex
+;
+    border-radius: 4px;
+    margin: 10px 0;
+    box-shadow: 0 1px 2px #0000000d;
+    background-color: #fff;
+    flex-wrap: wrap;
+}

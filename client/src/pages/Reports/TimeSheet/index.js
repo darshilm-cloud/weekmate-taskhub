@@ -129,7 +129,7 @@ const TimeSheet = () => {
             borderRadius: 4,
           },
         },
-        dataLabels: { 
+        dataLabels: {
           enabled: true,
           formatter: function (val) {
             return `${val}h`;
@@ -142,7 +142,7 @@ const TimeSheet = () => {
           xaxis: { lines: { show: true } },
           yaxis: { lines: { show: false } },
         },
-        tooltip: { 
+        tooltip: {
           y: {
             formatter: function (val) {
               return `${val} hours`;
@@ -171,12 +171,12 @@ const TimeSheet = () => {
         },
         colors: ['#008FFB'],
         plotOptions: {
-          bar: { 
+          bar: {
             horizontal: false,
             borderRadius: 4,
           },
         },
-        dataLabels: { 
+        dataLabels: {
           enabled: true,
           formatter: function (val) {
             return `${val}h`;
@@ -189,7 +189,7 @@ const TimeSheet = () => {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
         },
-        tooltip: { 
+        tooltip: {
           y: {
             formatter: function (val) {
               return `${val} hours`;
@@ -202,18 +202,18 @@ const TimeSheet = () => {
 
   const verticalBarChartHoursConfig = useMemo(() => {
     if (usersData.length === 0) return null;
-  
+
     // Generate different colors for each user
     const generateColors = (count) => {
       const baseColors = [
-        '#FF4560', '#008FFB', '#00E396', '#FEB019', '#FF6B7A', 
+        '#FF4560', '#008FFB', '#00E396', '#FEB019', '#FF6B7A',
         '#775DD0', '#26a69a', '#546E7A', '#FF9F43', '#EE5A24',
         '#5f27cd', '#00d2d3', '#ff9ff3', '#54a0ff', '#5f27cd',
         '#10ac84', '#ee5253', '#0abde3', '#feca57', '#ff6b6b',
         '#1dd1a1', '#feca57', '#ff9ff3', '#3c6382', '#40739e',
         '#487eb0', '#8c7ae6', '#f8b500', '#e17055', '#81ecec'
       ];
-      
+
       // If we have more users than colors, generate additional colors
       if (count > baseColors.length) {
         const additionalColors = [];
@@ -224,12 +224,12 @@ const TimeSheet = () => {
         }
         return [...baseColors, ...additionalColors];
       }
-      
+
       return baseColors.slice(0, count);
     };
-  
+
     const colors = generateColors(chartData.usersLogedHours.length);
-  
+
     return {
       series: [
         {
@@ -245,7 +245,7 @@ const TimeSheet = () => {
         },
         colors: colors,
         plotOptions: {
-          bar: { 
+          bar: {
             horizontal: false,
             borderRadius: 4,
             distributed: true, // This enables different colors for each bar
@@ -253,7 +253,7 @@ const TimeSheet = () => {
         },
         dataLabels: {
           enabled: true,
-          style: { 
+          style: {
             fontSize: "10px",
             colors: ['#fff'], // White text on colored bars
             fontWeight: 'bold'
@@ -278,7 +278,7 @@ const TimeSheet = () => {
         legend: {
           show: false, // Hide legend since we have distributed colors
         },
-        tooltip: { 
+        tooltip: {
           y: {
             formatter: function (val) {
               return `${val} hours`;
@@ -299,7 +299,7 @@ const TimeSheet = () => {
       render: (text, record) => (
         <div className="user-cell">
           <span className="user-name">
-            {removeTitle(record.user)}
+            { removeTitle(record.user) }
           </span>
         </div>
       ),
@@ -322,9 +322,9 @@ const TimeSheet = () => {
           return match?.charAt(0) + group1?.toUpperCase();
         });
         return (
-          <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
+          <Link to={ `/${companySlug}/project/app/${ProjectId}?tab=Time` }>
             <div className="project-cell">
-              <span className="project-title-link">{formattedTitle}</span>
+              <span className="project-title-link">{ formattedTitle }</span>
             </div>
           </Link>
         );
@@ -344,14 +344,14 @@ const TimeSheet = () => {
       key: "descriptions",
       render: (text, record) =>
         text ? (
-          <Tooltip title={text} placement="topLeft">
+          <Tooltip title={ text } placement="topLeft">
             <div
               className="description-cell"
-              dangerouslySetInnerHTML={{
+              dangerouslySetInnerHTML={ {
                 __html: text.length > 50
                   ? text.slice(0, 50).replace(/\n/g, '<br>') + "..."
                   : text.replace(/\n/g, '<br>'),
-              }}
+              } }
             />
           </Tooltip>
         ) : (
@@ -375,7 +375,7 @@ const TimeSheet = () => {
         return (
           <div className="date-cell">
             <CalendarOutlined className="date-icon" />
-            <span className="date-text">{startDate}</span>
+            <span className="date-text">{ startDate }</span>
           </div>
         );
       },
@@ -394,7 +394,7 @@ const TimeSheet = () => {
       render: (text, record) => (
         <div className="time-cell">
           <ClockCircleOutlined className="time-icon" />
-          <span className="time-hours">{record.logged_time}</span>
+          <span className="time-hours">{ record.logged_time }</span>
         </div>
       ),
       // FIXED: Sort by actual logged hours (numeric) with proper field reference
@@ -444,25 +444,25 @@ const TimeSheet = () => {
   ) => (
     <div className="filter-select-container">
       <Select
-        placeholder={placeholder}
-        mode={mode}
+        placeholder={ placeholder }
+        mode={ mode }
         showSearch
-        value={value}
-        onChange={onChange}
+        value={ value }
+        onChange={ onChange }
         className="custom-select"
-        {...filterOptions}
+        { ...filterOptions }
       >
-        {options.map((item, index) => (
+        { options.map((item, index) => (
           <Option
-            key={index}
-            value={item[valueKey]}
+            key={ index }
+            value={ item[valueKey] }
             className="custom-option"
           >
-            {labelKey === "manager_name" ? removeTitle(item[labelKey]) : 
-             labelKey === "full_name" ? removeTitle(item[labelKey]) : 
-             item[labelKey]}
+            { labelKey === "manager_name" ? removeTitle(item[labelKey]) :
+              labelKey === "full_name" ? removeTitle(item[labelKey]) :
+                item[labelKey] }
           </Option>
-        ))}
+        )) }
       </Select>
     </div>
   ), [filterOptions]);
@@ -473,15 +473,15 @@ const TimeSheet = () => {
     return (
       <div className="chart-container">
         <div className="chart-header">
-          <h3>{title}</h3>
+          <h3>{ title }</h3>
         </div>
         <div className="chart-content">
           <ReactApexChart
-            key={type === "pie" ? chartKey : undefined}
-            options={chartData.options}
-            series={chartData.series}
-            type={type}
-            height={350}
+            key={ type === "pie" ? chartKey : undefined }
+            options={ chartData.options }
+            series={ chartData.series }
+            type={ type }
+            height={ 350 }
           />
         </div>
       </div>
@@ -507,12 +507,12 @@ const TimeSheet = () => {
         key,
         label: (
           <div className="sort-menu-item">
-            <span>{label}</span>
-            {selectedSort === key && (
+            <span>{ label }</span>
+            { selectedSort === key && (
               sortOrder === "asc"
                 ? <i className="fi fi-rr-arrow-small-up"></i>
                 : <i className="fi fi-rr-arrow-small-down"></i>
-            )}
+            ) }
           </div>
         ),
         onClick: () => handleSortSelect(key)
@@ -533,168 +533,172 @@ const TimeSheet = () => {
   ];
 
   return (
-    <div className="timesheet-container">
-      <Card className="timesheet-card">
-        {/* Header */}
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">TimeSheet Report</h1>
+
+    <Card className="timesheet-card">
+      {/* Header */ }
+      <div className="page-header">
+        <div className="heading-wrapper">
+          <div className="heading-main">
+            <h2>TimeSheet Report</h2>
+          </div>
+
+
+          <div className="header-btn">
+            <div className="stat-item">
+              <ClockCircleOutlined className="stat-icon" />
+              <div className="stat-content">
+                <span className="stat-label">Total Hours</span>
+                <span className="stat-value">{ totalLoggedHours }</span>
+              </div>
+            </div>
             <div className="header-actions">
               <div className="date-picker-container">
                 <RangePicker
-                  value={selectedRange}
-                  presets={rangePresets}
-                  onChange={onRangeChange}
+                  value={ selectedRange }
+                  presets={ rangePresets }
+                  onChange={ onRangeChange }
                   className="custom-date-picker"
                 />
               </div>
             </div>
           </div>
-          <div className="header-stats">
-            <div className="stat-item">
-              <ClockCircleOutlined className="stat-icon" />
-              <div className="stat-content">
-                <span className="stat-label">Total Hours</span>
-                <span className="stat-value">{totalLoggedHours}</span>
-              </div>
+        </div>
+      </div>
+
+      {/* Filters */ }
+      <div className="global-search">
+        <div className="filters-header">
+          <h3>Filters</h3>
+        </div>
+        <div className="filter-btn-wrapper ">
+          { renderFilterSelect(
+            "Select Technology",
+            value,
+            handleTechnologyChange,
+            technologyList,
+            "_id",
+            "project_tech",
+            { className: "dropdown-button" }
+          ) }
+
+          { renderFilterSelect(
+            "Select Project",
+            project,
+            handleProjectChange,
+            projectList,
+            "_id",
+            "title",
+
+          ) }
+
+          { renderFilterSelect(
+            "Select Project Type",
+            projectType,
+            handleTypeChange,
+            projectTypeList,
+            "_id",
+            "project_type"
+          ) }
+
+          { renderFilterSelect(
+            "Select Manager",
+            manager,
+            handleManagerChange,
+            projectManagerList,
+            "_id",
+            "manager_name"
+          ) }
+
+          { renderFilterSelect(
+            "Select User",
+            user,
+            handleUserChange,
+            userEmployeeList,
+            "_id",
+            "full_name"
+          ) }
+        </div>
+      </div>
+
+      {/* Charts - Updated Layout */ }
+      <div className="charts-section">
+        <div className="charts-grid">
+     
+            <div className="chart-container">
+              { renderChart(pieChartConfig, "pie", "Hours by Manager") }
             </div>
+            <div className="chart-container">
+              { renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type") }
+            </div>
+       
+
+        
+            <div className="chart-container">
+              { renderChart(verticalBarChartHoursConfig, "bar", "Hours by User") }
+            </div>
+    
+        </div>
+      </div>
+
+      {/* Table */ }
+      <div className="table-section">
+        <div className="table-header">
+          <h3>Time Entries</h3>
+          <div className="table-actions">
+            <Dropdown
+              menu={ { items: actionMenuItems } }
+              trigger={ ['click'] }
+              placement="bottomRight"
+            >
+              <Button type="text" icon={ <MoreOutlined /> } />
+            </Dropdown>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="filters-section">
-          <div className="filters-header">
-            <h3>Filters</h3>
+        <div className="table-container">
+          {/* Hidden export elements */ }
+          <div style={ { display: 'none' } }>
+            <ReactHTMLTableToExcel
+              id="test-table-xls-button"
+              className="ant-btn-primary"
+              table="table-to-xls"
+              filename="Timesheet"
+              sheet="tablexls"
+              buttonText="Export XLS"
+            />
+            <div dangerouslySetInnerHTML={ { __html: html["html"] } } />
           </div>
-          <div className="filters-grid">
-            {renderFilterSelect(
-              "Select Technology",
-              value,
-              handleTechnologyChange,
-              technologyList,
-              "_id",
-              "project_tech"
-            )}
 
-            {renderFilterSelect(
-              "Select Project",
-              project,
-              handleProjectChange,
-              projectList,
-              "_id",
-              "title"
-            )}
-
-            {renderFilterSelect(
-              "Select Project Type",
-              projectType,
-              handleTypeChange,
-              projectTypeList,
-              "_id",
-              "project_type"
-            )}
-
-            {renderFilterSelect(
-              "Select Manager",
-              manager,
-              handleManagerChange,
-              projectManagerList,
-              "_id",
-              "manager_name"
-            )}
-
-            {renderFilterSelect(
-              "Select User",
-              user,
-              handleUserChange,
-              userEmployeeList,
-              "_id",
-              "full_name"
-            )}
-          </div>
+          { tableData && tableData.length > 0 ? (
+            <Table
+              columns={ columns }
+              dataSource={ tableData }
+              rowKey={ (record, index) => `${record.user}-${record.project_id}-${index}` }
+              pagination={ {
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "30", "50"],
+                showTotal: showTotal,
+                showQuickJumper: true,
+                ...pagination,
+              } }
+              onChange={ handleTableChange }
+              size="middle"
+              scroll={ { x: 'max-content' } }
+              className="custom-table"
+            />
+          ) : (
+            <div className="no-data-found">
+              <div className="no-data-content">
+                <ClockCircleOutlined className="no-data-icon" />
+                <h3>No time entries found</h3>
+                <p>Try adjusting your filters or date range</p>
+              </div>
+            </div>
+          ) }
         </div>
+      </div>
+    </Card>
 
-        {/* Charts - Updated Layout */}
-        <div className="charts-section">
-          <div className="charts-grid-custom">
-            {/* First row with two charts */}
-            <div className="charts-row">
-              <div className="chart-half">
-                {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-              </div>
-              <div className="chart-half">
-                {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
-              </div>
-            </div>
-            
-            {/* Second row with full-width chart */}
-            <div className="charts-row">
-              <div className="chart-full">
-                {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="table-section">
-          <div className="table-header">
-            <h3>Time Entries</h3>
-            <div className="table-actions">
-              <Dropdown
-                menu={{ items: actionMenuItems }}
-                trigger={['click']}
-                placement="bottomRight"
-              >
-                <Button type="text" icon={<MoreOutlined />} />
-              </Dropdown>
-            </div>
-          </div>
-
-          <div className="table-container">
-            {/* Hidden export elements */}
-            <div style={{ display: 'none' }}>
-              <ReactHTMLTableToExcel
-                id="test-table-xls-button"
-                className="ant-btn-primary"
-                table="table-to-xls"
-                filename="Timesheet"
-                sheet="tablexls"
-                buttonText="Export XLS"
-              />
-              <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
-            </div>
-
-            {tableData && tableData.length > 0 ? (
-              <Table
-                columns={columns}
-                dataSource={tableData}
-                rowKey={(record, index) => `${record.user}-${record.project_id}-${index}`}
-                pagination={{
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "30", "50"],
-                  showTotal: showTotal,
-                  showQuickJumper: true,
-                  ...pagination,
-                }}
-                onChange={handleTableChange}
-                size="middle"
-                scroll={{ x: 'max-content' }}
-                className="custom-table"
-              />
-            ) : (
-              <div className="no-data-found">
-                <div className="no-data-content">
-                  <ClockCircleOutlined className="no-data-icon" />
-                  <h3>No time entries found</h3>
-                  <p>Try adjusting your filters or date range</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-    </div>
   );
 };
 

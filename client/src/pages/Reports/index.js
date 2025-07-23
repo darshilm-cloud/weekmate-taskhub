@@ -1132,7 +1132,7 @@ const ProjectsRunning = () => {
             technologyList,
             "_id",
             "project_tech",
-            { className: "dropdown-button" }
+            
           ) }
 
           { renderFilterSelect(
@@ -1143,7 +1143,7 @@ const ProjectsRunning = () => {
             projectManagerList,
             "_id",
             "manager_name",
-            { className: "dropdown-button" }
+            
           ) }
 
           { renderFilterSelect(
@@ -1154,7 +1154,7 @@ const ProjectsRunning = () => {
             projectTypeList,
             "_id",
             "project_type",
-            { className: "dropdown-button" }
+            
           ) }
         </div>
       </div>

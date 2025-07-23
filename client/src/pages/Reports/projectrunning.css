@@ -41,13 +41,35 @@
 .stat-value{
   border-radius: 100%;
   padding: 2px;
-  width: 25px;
+
   text-align: center;
   align-content: center;
-  height: 25px;
+
   margin: 0 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: inline-block;
-  background-color: #ffffff;
     box-shadow: 0 1px 2px #0000000d;
+}
+
+
+
+.projects-running-card  .filter-btn-wrapper .filter-select-container .ant-select {
+
+    max-width: 300px;
+}
+
+.projects-running-card  .filter-btn-wrapper .filter-select-container .ant-select .ant-select-selector {
+    overflow-x: auto;
+    height: 50px;
+    overflow-y: hidden;
+    min-width: 150px;
+}
+
+.projects-running-card  .filter-btn-wrapper .filter-select-container .ant-select .ant-select-selection-overflow {
+    flex-wrap: nowrap;
+}
+
+.no-data-found-div h1{
+  text-align: center;
+  color: #bebebe;
 }

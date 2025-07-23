@@ -1219,11 +1219,11 @@ ul.tab_menu li.active-tab {
     overflow: auto;
 }
 
-.topic-cancel-wrapper .ant-col.ant-form-item-label {
+/* .topic-cancel-wrapper .ant-col.ant-form-item-label {
     width: 100%;
     text-align: left;
     font-weight: 500;
-}
+} */
 
 .no-icon-search .ant-input-affix-wrapper .ant-input-suffix {
     display: none;
@@ -1378,7 +1378,9 @@ span.info-btn i {
 .table-schedule-wrapper ul li .table-right {
     padding: 0 16px;
 }
-
+.ant-modal-body .table-schedule-wrapper ul li .table-right{
+    padding: 5px 16px;
+}
 .overview-modal-wrapper .flex-table {
     flex-wrap: nowrap;
 }
@@ -3669,7 +3671,9 @@ span.anticon.anticon-down svg {
 .table-right .flex-table {
     gap: 5px;
 }
-
+ .ant-modal-body .table-right .flex-table > div{
+width: 100%;
+}
 .table-right .flex-table button.ant-btn.css-dev-only-do-not-override-dkbvqv.ant-btn-default {
     margin: 1px;
 }
@@ -3736,10 +3740,7 @@ span.anticon.anticon-down svg {
     width: 3em;
 }
 
-.edit-details-task-model .overview-modal-wrapper .ant-row {
-    margin: 0 -5px;
-    align-items: baseline;
-}
+
 
 .task-wrapper .profileleftbar {
     position: relative;

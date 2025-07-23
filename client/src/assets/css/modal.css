@@ -35,3 +35,8 @@
     border-color: #c2c3c5;
     color: #3f4350;
 }
+
+
+.ant-modal-content .ant-modal-body .ant-form-vertical .ant-form-item{
+    margin-bottom: 15px;
+}
