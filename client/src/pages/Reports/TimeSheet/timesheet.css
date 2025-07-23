@@ -55,13 +55,16 @@
 .table-section .table-header {
     padding: 10px;
     justify-content: space-between;
-    display: flex
-;
+    display: flex;
     border-radius: 4px;
     margin: 10px 0;
     box-shadow: 0 1px 2px #0000000d;
     background-color: #fff;
     flex-wrap: wrap;
+}
+.ant-table-tbody .date-text,
+.ant-table-tbody .time-hours{
+    margin-left: 8px;
 }
 
 .no-data-found-div h1{

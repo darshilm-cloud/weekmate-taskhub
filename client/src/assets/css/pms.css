@@ -696,7 +696,7 @@ ul.tab_menu li.active-tab {
     width: 100%;
     float: right;
     background: #fff;
-    height: calc(100vh - 150px);
+    height: calc(100vh - 155px);
 
 }
 .main-time-sheet-project-wrapper .project-wrapper .peoject-page   .ant-form-item{
@@ -704,7 +704,6 @@ margin-bottom: 15px;
 }
 .full-layout .ant-layout .new-project-overview {
     max-height: 100%;
-    height: 100%;
     overflow: auto;
 }
 
@@ -4305,7 +4304,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     font-size: var(--font-size-14px);
     font-weight: 500;
     height: auto;
-    line-height: 1;
+    line-height: normal;
     overflow: hidden;
     padding: 10px 16px;
     position: relative;

@@ -707,7 +707,7 @@
 .task-detail-panel .main-avatar-wrapper .comment-sender-name {
     display: flex;
     flex-wrap: wrap;
-    padding-left: 15px;
+    padding-left: 8px;
     gap: 10px;
     align-items: center;
 }
