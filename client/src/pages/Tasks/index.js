@@ -1284,368 +1284,350 @@ function TasksPMS({ flag }) {
         </div>
       </Modal>
 
-      <Modal
-        title="Add Task"
-        open={ isModalOpenTaskModal }
-        width={ 880 }
-        onCancel={ handleCancelTaskModal }
-        className="add-task-modal model-task-add-details"
-
-        footer={ [
-          <Button key="cancel" className="delete-btn" onClick={ handleCancelTaskModal } size="large">
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            onClick={ () => addform.submit() }
+ <Modal
+  title="Add Task"
+  open={isModalOpenTaskModal}
+  onCancel={handleCancelTaskModal}
+  className="add-task-modal edit-details-task-model"
+  width="90%"
+  style={{ maxWidth: 1000 }}
+  zIndex={2000}
+  footer={[
+    <Button
+      key="cancel"
+      onClick={handleCancelTaskModal}
+      size="large"
+      className="square-outline-btn ant-delete"
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      type="primary"
+      size="large"
+      className="square-primary-btn"
+      onClick={() => addform.submit()}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <div className="overview-modal-wrapper task-overview-modal-wrapper">
+    <Form
+      form={addform}
+      layout="vertical"
+      onFinish={(values) => {
+        handleTaskOps(values);
+      }}
+    >
+      <Row gutter={[0, 0]}>
+        {/* Task Title - Full width */}
+        <Col xs={24} sm={24} md={24} lg={24}>
+          <Form.Item
+            label="Title"
+            name="title"
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: "Please enter a valid title",
+              },
+            ]}
           >
-            Save
-          </Button>,
+            <Input placeholder="Title" size="large" />
+          </Form.Item>
+        </Col>
 
-        ] }
-      >
-        <div className="overview-modal-wrapper">
-          <Form
-            form={ addform }
-            onFinish={ (values) => {
-              handleTaskOps(values);
-            } }
-          >
-            <Row gutter={ [0, 0] }>
-              {/* Title - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  name="title"
-                  rules={ [
-                    {
-                      required: true,
-                      whitespace: true, // Trims whitespace
-                      message: "Please enter a valid title",
-                    },
-                  ] }
-                >
-                  <Input placeholder="Title" />
-                </Form.Item>
-              </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+        {/* Description - Full width */}
+        <Col xs={24} sm={24} md={24} lg={24}>
+          <Form.Item label="Description" name="descriptions">
+            <CKEditor
+              editor={Custombuild}
+              data={editorData}
+              onChange={handleChangeData}
+              onPaste={handlePaste}
+              config={{
+                toolbar: [
+                  "heading",
+                  "|",
+                  "bold",
+                  "italic",
+                  "underline",
+                  "|",
+                  "fontColor",
+                  "fontBackgroundColor",
+                  "|",
+                  "link",
+                  "|",
+                  "numberedList",
+                  "bulletedList",
+                  "|",
+                  "alignment:left",
+                  "alignment:center",
+                  "alignment:right",
+                  "|",
+                  "fontSize",
+                  "|",
+                  "print",
+                ],
+                fontSize: {
+                  options: [
+                    "default",
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                    13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                    23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+                  ],
+                },
+                styles: {
+                  height: "10px",
+                },
+              }}
+            />
+          </Form.Item>
+        </Col>
 
-                <Form.Item colon={ false } name="descriptions">
-                  <CKEditor
-                    editor={ Custombuild }
-                    data={ editorData }
-                    onChange={ handleChangeData }
-                    onPaste={ handlePaste }
-                    config={ {
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
-                        ],
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    } }
-                  />
-                </Form.Item>
-              </Col>
-
-              <Form.Item name="start_date">
-                <div className="table-schedule-wrapper">
-                  <ul>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-calendar-day"></i>
-                          <DatePicker
-                            value={
-                              addInputTaskData?.start_date &&
-                              dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
-                            }
-                            onChange={ (date, dateString) =>
-                              handleTaskInput("start_date", dateString)
-                            }
-                            placeholder="Start Date"
-                          />
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-calendar-day"></i>
-                          <DatePicker
-                            value={
-                              addInputTaskData?.end_date &&
-                              dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                            }
-                            disabledDate={ (current) =>
-                              current &&
-                              current <
-                              dayjs(
-                                addInputTaskData?.start_date,
-                                "YYYY-MM-DD"
-                              )
-                            }
-                            placeholder="End Date"
-                            onChange={ (date, dateString) =>
-                              handleTaskInput("end_date", dateString)
-                            }
-                          />
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rs-tags"></i>
-                          <span className="schedule-label">Labels</span>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <Select
-                            value={ addInputTaskData?.labels }
-                            // showSearch
-                            allowClear
-                            placeholder="Select"
-                            onChange={ (value) =>
-                              handleTaskInput("labels", value)
-                            }
-                          >
-                            { projectLabels.map((item, index) => (
-                              <Option
-                                key={ item?._id }
-                                value={ item?._id }
-                                style={ { textTransform: "capitalize" } }
-                              >
-                                { item.title }
-                              </Option>
-                            )) }
-                          </Select>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-users"></i>
-                          <span className="schedule-label">Assignees</span>
-                        </div>
-                      </div>
-
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <MultiSelect
-                            onSearch={ handleSearch }
-                            onChange={ handleSelectedItemsChange }
-                            values={
-                              selectedItems
-                                ? selectedItems.map((item) => item?._id)
-                                : []
-                            }
-                            listData={ subscribersList }
-                            search={ searchKeyword }
-                          />
-                        </div>
-                      </div>
-                    </li>
-
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-clock"></i>
-                          <span className="schedule-label">
-                            Estimated Time
-                            { !getRoles(["Client"]) && (
-                              <span style={ { color: "red" } }>*</span>
-                            ) }
-                          </span>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <div className="estimated_time_input_container">
-                            <div className="hours_min_container">
-                              <Input
-                                min={ 0 }
-                                value={ estHrs }
-                                type="number"
-                                onChange={ (e) =>
-                                  handleEstTimeInput("est_hrs", e.target.value)
-                                }
-                                className={ `hours_input ${estHrsError && "error-border"
-                                  }` }
-                                placeholder="Hours"
-                              />
-                              <div style={ { color: "red" } }>{ estHrsError }</div>
-                            </div>
-                            <div className="hours_min_container">
-                              <Input
-                                min={ 0 }
-                                max={ 59 }
-                                type="number"
-                                value={ estMins }
-                                onChange={ (e) => {
-                                  if (e.target.value * 1 > 60)
-                                    return e.preventDefault();
-                                  handleEstTimeInput(
-                                    "est_mins",
-                                    e.target.value
-                                  );
-                                } }
-                                className={ `hours_input ${estMinsError && "error-border"
-                                  }` }
-                                placeholder="Minutes"
-                              />
-                              <div style={ { color: "red" } }>{ estMinsError }</div>
-                            </div>
-                          </div>
-
-                          { !isAlterEstimatedTime && estTime && (
-                            <div className="estimated_setTime_container">
-                              <span
-                                onClick={ () => setIsAlterEstimatedTime(true) }
-                                className="schedule-label"
-                              >
-                                Estimated Time: { estTime }
-                              </span>
-                              <div className="est_time_crossIcon">
-                                <CloseCircleOutlined onClick={ removeEstTIme } />
-                              </div>
-                            </div>
-                          ) }
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </Form.Item>
-
-              <div className="fileAttachment_container">
-                { fileAttachment.map((file, index) => (
-                  <Badge
-                    key={ index }
-                    count={
-                      <CloseCircleOutlined
-                        onClick={ () => removeAttachmentFile(index) }
+        <Form.Item>
+          <Col xs={24} sm={24} md={24} lg={24}>
+            <div className="table-schedule-wrapper">
+              <ul>
+                <li>
+                  <div className="table-left">
+                    <div className="flex-table">
+                      <i className="fi fi-rr-calendar-day"></i>
+                      <DatePicker
+                        value={
+                          addInputTaskData?.start_date &&
+                          dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
+                        }
+                        placeholder="Start Date"
+                        onChange={(date, dateString) =>
+                          handleTaskInput("start_date", dateString)
+                        }
                       />
-                    }
-                  >
-                    <div className="fileAttachment_Box">
-                      <p className="fileNameTxtellipsis">
-                        { file.name.length > 15
-                          ? `${file.name.slice(0, 15)}.....${file.type}`
-                          : file.name + file.type }
-                      </p>
                     </div>
-                  </Badge>
-                )) }
-              </div>
-              { fileAttachment.length > 0 && (
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <Form.Item
-                    label="Folder"
-                    name="folder"
-                    initialValue={
-                      foldersList.length > 0 ? foldersList[0]?._id : undefined
-                    }
-                    rules={ [
-                      {
-                        required: true,
-                      },
-                    ] }
+                  </div>
+                  <div className="table-right">
+                    <div className="flex-table">
+                      <i className="fi fi-rr-calendar-day"></i>
+                      <DatePicker
+                        value={
+                          addInputTaskData?.end_date &&
+                          dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                        }
+                        placeholder="End Date"
+                        onChange={(date, dateString) =>
+                          handleTaskInput("end_date", dateString)
+                        }
+                        disabledDate={(current) =>
+                          current &&
+                          current <
+                          dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
+                        }
+                      />
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="table-left">
+                    <div className="flex-table">
+                      <i className="fi fi-rs-tags"></i>
+                      <span className="schedule-label">Labels</span>
+                    </div>
+                  </div>
+                  <div className="table-right">
+                    <div className="flex-table">
+                      <Select
+                        value={addInputTaskData?.labels}
+                        allowClear
+                        placeholder="Select labels"
+                        onChange={(value) => handleTaskInput("labels", value)}
+                      >
+                        {projectLabels.map((item) => (
+                          <Option
+                            key={item?._id}
+                            value={item?._id}
+                            style={{ textTransform: "capitalize" }}
+                          >
+                            {item.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="table-left">
+                    <div className="flex-table">
+                      <i className="fi fi-rr-users"></i>
+                      <span className="schedule-label">Assignees</span>
+                    </div>
+                  </div>
+                  <div className="table-right">
+                    <div className="flex-table">
+                      <MultiSelect
+                        onSearch={handleSearch}
+                        onChange={handleSelectedItemsChange}
+                        values={
+                          selectedItems
+                            ? selectedItems.map((item) => item?._id)
+                            : []
+                        }
+                        listData={subscribersList}
+                        search={searchKeyword}
+                      />
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="table-left">
+                    <div className="flex-table">
+                      <i className="fi fi-rr-clock"></i>
+                      <span className="schedule-label">
+                        Estimated Time
+                        {!getRoles(["Client"]) && (
+                          <span style={{ color: "red" }}>*</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="table-right">
+                    <div className="flex-table">
+                      <div className="estimated_time_input_container">
+                        <div className="hours_min_container">
+                          <Input
+                            min={0}
+                            value={estHrs}
+                            type="number"
+                            onChange={(e) =>
+                              handleEstTimeInput("est_hrs", e.target.value)
+                            }
+                            className={`hours_input ${
+                              estHrsError && "error-border"
+                            }`}
+                            placeholder="Hours"
+                          />
+                          <div style={{ color: "red" }}>{estHrsError}</div>
+                        </div>
+                        <div className="hours_min_container">
+                          <Input
+                            min={0}
+                            max={59}
+                            type="number"
+                            value={estMins}
+                            onChange={(e) => {
+                              if (e.target.value * 1 > 60)
+                                return e.preventDefault();
+                              handleEstTimeInput("est_mins", e.target.value);
+                            }}
+                            className={`hours_input ${
+                              estMinsError && "error-border"
+                            }`}
+                            placeholder="Minutes"
+                          />
+                          <div style={{ color: "red" }}>{estMinsError}</div>
+                        </div>
+                      </div>
+                      {!isAlterEstimatedTime && estTime && (
+                        <div className="estimated_setTime_container">
+                          <span
+                            onClick={() => setIsAlterEstimatedTime(true)}
+                            className="schedule-label"
+                          >
+                            Estimated Time: {estTime}
+                          </span>
+                          <div className="est_time_crossIcon">
+                            <CloseCircleOutlined onClick={removeEstTIme} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </Col>
+        </Form.Item>
+
+        <Col xs={24} sm={24} md={24} lg={24}>
+          <div className="fileAttachment_container">
+            {fileAttachment.map((file, index) => (
+              <Badge
+                key={index}
+                count={
+                  <CloseCircleOutlined
+                    onClick={() => removeAttachmentFile(index, file)}
+                  />
+                }
+              >
+                <div className="fileAttachment_Box">
+                  <a
+                    className="fileNameTxtellipsis"
+                    href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
+                    rel="noopener noreferrer"
+                    target="_blank"
                   >
-                    <Select placeholder="Please Select Folder" showSearch>
-                      { foldersList.map(data => (
-                        <Option
-                          key={ data?._id }
-                          value={ data?._id }
-                          style={ { textTransform: "capitalize" } }
-                        >
-                          { data.name }
-                        </Option>
-                      )) }
-                    </Select>
-                  </Form.Item>
-                </Col>
-              ) }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Tooltip placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={ () => attachmentfileRef.current.click() }
-                  >
-                    <i className="fi fi-ss-link"></i>Attach files
-                  </Button>
-                </Tooltip>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={ onFileChange }
-                  hidden
-                  ref={ attachmentfileRef }
-                />
-              </Col>
-            </Row>
-          </Form>
-        </div>
-      </Modal>
+                    {file.name.length > 15
+                      ? `${file.name.slice(0, 15)}.....${file.file_type}`
+                      : file.name + file.file_type}
+                  </a>
+                </div>
+              </Badge>
+            ))}
+          </div>
+          {fileAttachment.length > 0 && (
+            <div className="folder-comment">
+              <Form.Item
+                label="Folder"
+                name="folder"
+                initialValue={
+                  foldersList.length > 0 ? foldersList[0]?._id : undefined
+                }
+                rules={[
+                  {
+                    required: true,
+                  },
+                ]}
+              >
+                <Select placeholder="Please Select Folder" showSearch>
+                  {foldersList.map((data) => (
+                    <Option
+                      key={data?._id}
+                      value={data?._id}
+                      style={{ textTransform: "capitalize" }}
+                    >
+                      {data.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
+          )}
+        </Col>
+        <Col xs={24} sm={24} md={12} lg={12}>
+          <Tooltip key="attach" placement="top" title="Attached file">
+            <Button
+              className="link-btn"
+              onClick={() => attachmentfileRef.current.click()}
+              size="large"
+            >
+              <i className="fi fi-ss-link"></i> Attach files
+            </Button>
+          </Tooltip>
+        </Col>
+        <Col xs={24} sm={24} md={12} lg={12}>
+          <input
+            multiple
+            type="file"
+            accept="*"
+            onChange={onFileChange}
+            hidden
+            ref={attachmentfileRef}
+          />
+        </Col>
+      </Row>
+    </Form>
+  </div>
+</Modal>
 
 
 
@@ -1746,6 +1728,8 @@ function TasksPMS({ flag }) {
               </Col>
 
               <Form.Item>
+                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+
                 <div className="table-schedule-wrapper">
                   <ul>
                     <li>
@@ -1898,118 +1882,119 @@ function TasksPMS({ flag }) {
                     </li>
                   </ul>
                 </div>
+                </Col>
               </Form.Item>
-            <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
-            <div className="fileAttachment_container">
-              { fileAttachment?.map((file, index) => (
-                <Badge
-                  key={ index }
-                  count={
-                    <CloseCircleOutlined
-                      onClick={ () => removeAttachmentFile(index, file) }
-                    />
-                  }
-                >
-                  <div className="fileAttachment_Box">
-                    <a
-                      className="fileNameTxtellipsis"
-                      href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
-                      rel="noopener noreferrer"
-                      target="_blank"
+                <div className="fileAttachment_container">
+                  { fileAttachment?.map((file, index) => (
+                    <Badge
+                      key={ index }
+                      count={
+                        <CloseCircleOutlined
+                          onClick={ () => removeAttachmentFile(index, file) }
+                        />
+                      }
                     >
-                      { file.name.length > 15
-                        ? `${file.name.slice(0, 15)}.....${file.file_type}`
-                        : file.name + file.file_type }
-                    </a>
+                      <div className="fileAttachment_Box">
+                        <a
+                          className="fileNameTxtellipsis"
+                          href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          { file.name.length > 15
+                            ? `${file.name.slice(0, 15)}.....${file.file_type}`
+                            : file.name + file.file_type }
+                        </a>
+                      </div>
+                    </Badge>
+                  )) }
+                </div>
+                { fileAttachment.length > 0 && (
+                  <div className="folder-comment">
+                    <Form.Item
+                      label="Folder"
+                      initialValue={
+                        foldersList.length > 0 ? foldersList[0]?._id : undefined
+                      }
+                      name="folder"
+                      rules={ [
+                        {
+                          required: true,
+                        },
+                      ] }
+                    >
+                      <Select placeholder="Please Select Folder" showSearch>
+                        { foldersList.map((data) => (
+                          <Option
+                            key={ data?._id }
+                            value={ data?._id }
+                            style={ { textTransform: "capitalize" } }
+                          >
+                            { data.name }
+                          </Option>
+                        )) }
+                      </Select>
+                    </Form.Item>
                   </div>
-                </Badge>
-              )) }
-            </div>
-            { fileAttachment.length > 0 && (
-              <div className="folder-comment">
-                <Form.Item
-                  label="Folder"
-                  initialValue={
-                    foldersList.length > 0 ? foldersList[0]?._id : undefined
-                  }
-                  name="folder"
-                  rules={ [
-                    {
-                      required: true,
-                    },
-                  ] }
-                >
-                  <Select placeholder="Please Select Folder" showSearch>
-                    { foldersList.map((data) => (
-                      <Option
-                        key={ data?._id }
-                        value={ data?._id }
-                        style={ { textTransform: "capitalize" } }
-                      >
-                        { data.name }
-                      </Option>
-                    )) }
-                  </Select>
-                </Form.Item>
-              </div>
-            ) }
-            </Col>
-
-
-            {/* Folder */ }
-            { fileAttachment.length > 0 && (
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <Form.Item
-                  label="Folder"
-                  name="folder"
-                  initialValue={
-                    foldersList.length > 0 ? foldersList[0]?._id : undefined
-                  }
-                  rules={ [{ required: true }] }
-                >
-                  <Select placeholder="Please Select Folder" size="large" showSearch>
-                    { foldersList.map((data) => (
-                      <Option
-                        key={ data?._id }
-                        value={ data?._id }
-                        style={ { textTransform: "capitalize" } }
-                      >
-                        { data.name }
-                      </Option>
-                    )) }
-                  </Select>
-                </Form.Item>
+                ) }
               </Col>
-            ) }
-            <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-              <Tooltip key="attach" placement="top" title="Attached file">
-                <Button
-                  className="link-btn"
-                  onClick={ () => attachmentfileRef.current.click() }
-                  size="large"
-                >
-                  <i className="fi fi-ss-link"></i> Attach files
-                </Button>
-              </Tooltip>,
-            </Col>
-            <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-              <input
-                multiple
-                type="file"
-                accept="*"
-                onChange={ onFileChange }
-                hidden
-                ref={ attachmentfileRef }
-              />
-            </Col>
+              {/* Folder */ }
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item
+                    label="Folder"
+                    name="folder"
+                    initialValue={
+                      foldersList.length > 0 ? foldersList[0]?._id : undefined
+                    }
+                    rules={ [{ required: true }] }
+                  >
+                    <Select placeholder="Please Select Folder" size="large" showSearch>
+                      { foldersList.map((data) => (
+                        <Option
+                          key={ data?._id }
+                          value={ data?._id }
+                          style={ { textTransform: "capitalize" } }
+                        >
+                          { data.name }
+                        </Option>
+                      )) }
+                    </Select>
+                  </Form.Item>
+                </Col>
+              ) }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-          </Row>
-        </Form>
-      </div>
-    </Modal >
+                <Tooltip key="attach" placement="top" title="Attached file">
+                  <Button
+                    className="link-btn"
+                    onClick={ () => attachmentfileRef.current.click() }
+                    size="large"
+                  >
+                    <i className="fi fi-ss-link"></i> Attach files
+                  </Button>
+                </Tooltip>,
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+                <input
+                  multiple
+                  type="file"
+                  accept="*"
+                  onChange={ onFileChange }
+                  hidden
+                  ref={ attachmentfileRef }
+                />
+              </Col>
+
+            </Row>
+          </Form>
+        </div>
+      </Modal>
 
       <Modal
         open={ ManagePeople }
