@@ -10,8 +10,8 @@ const MyAvatarGroup = ({
   maxPopoverTrigger,
   size = "small",
   customStyle,
-  height = "30px",
-  width = "30px",
+  height = "20px",
+  width = "20px",
 }) => {
   const [isLoading, setIsLoading] = useState(true);
 

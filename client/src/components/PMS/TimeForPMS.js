@@ -1086,6 +1086,7 @@ function TimeForPMS() {
 
   const columns = [
     {
+    
       title: "Logged by",
       dataIndex: "loggedBy",
       render: (text) => (text ? removeTitle(text) : "-"),

@@ -35,7 +35,7 @@ const MyAvatar = ({ userName, src, key, alt, isThumbnail = true }) => {
   }, [src]);
   const managerAvatar = src
     ? avtar_resolution
-    : UtilFunctions.generateAvatarFromName(userName, "30px", "30px");
+    : UtilFunctions.generateAvatarFromName(userName, "25px", "25px");
 
   const avatarContent = isLoading ? (
     <Skeleton.Avatar size="default" shape="circle" active />

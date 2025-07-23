@@ -115,7 +115,8 @@ const EditCommentModal = ({
                   className="link-btn"
                   onClick={() => attachmentfileRef.current.click()}
                 >
-                  <i className="fi fi-ss-link"></i>Attach files
+                  <i className="fi fi-ss-link"></i>
+                  Attach files
                 </Button>
               </Tooltip>
             </div>

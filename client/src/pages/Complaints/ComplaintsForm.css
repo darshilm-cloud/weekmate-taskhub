@@ -103,7 +103,7 @@
 }
 .feedbackForm-card {
     height: auto;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
     position: relative;
 }
 
@@ -298,7 +298,11 @@ ul.assigness-data {
 }
 /* 7-3-2025  end  */
 
-
+.admin-user .ant-layout  .ant-layout-content  .feedback-form-view-detail-form  .feedbackForm-card.ant-card  {
+background-color: #fff;
+padding: 20px;
+    box-shadow: 0 1px 2px #0000000d;
+}
 @media screen and (max-width:992px) {
     .add-complaint-wrapper form.ant-form.ant-form-horizontal {
         width: 100%;

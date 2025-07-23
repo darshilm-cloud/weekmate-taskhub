@@ -387,7 +387,7 @@ const Projectexpences = () => {
                 Apply
               </Button>
               <Button
-                className="square-outline-btn ant-delete"
+                className="square-outline-btn ant-delete delete-btn"
                 onClick={ () => handleVisibleChange("manager", false) }
               >
                 Cancel
@@ -646,7 +646,7 @@ const Projectexpences = () => {
                         Apply
                       </Button>
                       <Button
-                        className="square-outline-btn ant-delete"
+                        className="square-outline-btn ant-delete delete-btn"
                         onClick={ () => handleVisibleChange("need_to_bill_customer", false) }
                       >
                         Cancel

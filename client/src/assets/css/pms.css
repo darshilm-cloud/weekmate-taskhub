@@ -696,10 +696,12 @@ ul.tab_menu li.active-tab {
     width: 100%;
     float: right;
     background: #fff;
-    height: calc(100vh - 123px);
+    height: calc(100vh - 150px);
 
 }
-
+.main-time-sheet-project-wrapper .project-wrapper .peoject-page   .ant-form-item{
+margin-bottom: 15px;
+}
 .full-layout .ant-layout .new-project-overview {
     max-height: 100%;
     height: 100%;
@@ -1473,6 +1475,7 @@ button.ant-btn>.fi-ss-link:before {
     content: "\f6b2";
     position: relative;
     top: 2px;
+    margin-right: 5px;
     color: #358CC0;
 }
 
@@ -3392,13 +3395,7 @@ span.anticon.anticon-down svg {
     overflow-y: auto;
 }
 
-/* add task folder css */
-.edit-details-task-model .folder-comment,
-.model-task-add-details .folder-comment {
-    margin-left: 10px;
-    min-width: 250px;
-    max-width: 250px;
-}
+
 .task-detail-panel.task-model .right-task-detail-panel .folder-comment .ant-form-item{
     margin-bottom: 0;
 
@@ -4411,6 +4408,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     font-weight: 500;
     margin: 0 4px;
     padding: 10px;
+    height: auto;
     line-height: normal;
     transition: all 0.3s ease-in-out;
 }
@@ -4962,10 +4960,6 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     background-color: var(--chat-body-wrapper);
     border: 2px solid var(--ant-modal-border);
     padding: 0;
-}
-
-.admin-user .ant-modal .ant-btn.delete-btn {
-    padding: 0 10px;
 }
 
 
@@ -5578,6 +5572,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     gap: 5px;
     margin: 5px 0;
 
+}
+.project-wrapper .feedback-form{
+    padding: 10px 20px;
 }
 
 @media (max-width: 991px) {

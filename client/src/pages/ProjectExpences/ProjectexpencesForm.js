@@ -35,12 +35,12 @@ const { Text } = Typography;
 const STATIC_ACCOUNTANT_ID = [sideBarContentId2];
 const FORM_ITEM_LAYOUT = {
   labelCol: {
-    xs: { span: 24 },
-    sm: { span: 8 },
+    xs: { span: 24 }
+    
   },
   wrapperCol: {
-    xs: { span: 24 },
-    sm: { span: 16 },
+    xs: { span: 24 }
+   
   },
 };
 
@@ -760,7 +760,7 @@ const ProjectExpensesForm = () => {
                     <Button id="addbutton" type="primary" htmlType="submit">
                       {state.reviewId ? "Update" : "Submit"}
                     </Button>
-                    <Button type="primary" onClick={handleCancel}>
+                    <Button className="delete-btn" onClick={handleCancel}>
                       Cancel
                     </Button>
                   </div>
