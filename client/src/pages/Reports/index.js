@@ -712,9 +712,9 @@ const ProjectsRunning = () => {
       render: (_, record) => {
         const formattedTitle = formatTitle(record?.title);
         return (
-          <Link to={`/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}`}>
+          <Link to={ `/${companySlug}/project/app/${record?._id}?tab=${record?.defaultTab?.name}` }>
             <div className="project_title_main_div">
-              <span className="project-title-link">{formattedTitle}</span>
+              <span className="project-title-link">{ formattedTitle }</span>
             </div>
           </Link>
         );
@@ -730,7 +730,7 @@ const ProjectsRunning = () => {
       key: "managerName",
       render: (_, record) => (
         <span className="manager-name">
-          {removeTitle(record.managerName)}
+          { removeTitle(record.managerName) }
         </span>
       ),
       sorter: (a, b) => a.managerName.localeCompare(b.managerName),
@@ -744,11 +744,11 @@ const ProjectsRunning = () => {
       key: "technologyName",
       render: (_, record) => (
         <div className="technology-tags">
-          {record.technologyName.map((tech, index) => (
-            <span key={index} className="technology-tag">
-              {tech}
+          { record.technologyName.map((tech, index) => (
+            <span key={ index } className="technology-tag">
+              { tech }
             </span>
-          ))}
+          )) }
         </div>
       ),
       ellipsis: true,
@@ -761,7 +761,7 @@ const ProjectsRunning = () => {
       key: "projecttypeName",
       render: (_, record) => (
         <span className="project-type-badge">
-          {record.project_typeName}
+          { record.project_typeName }
         </span>
       ),
       ellipsis: true,
@@ -774,7 +774,7 @@ const ProjectsRunning = () => {
       key: "estimatedHours",
       render: (_, record) => (
         <span className="hours-display estimated-hours">
-          {record.estimatedHours}
+          { record.estimatedHours }
         </span>
       ),
       align: 'center',
@@ -787,7 +787,7 @@ const ProjectsRunning = () => {
       key: "total_logged_time",
       render: (_, record) => (
         <span className="hours-display used-hours">
-          {record.total_logged_time}
+          { record.total_logged_time }
         </span>
       ),
       align: 'center',
@@ -800,7 +800,7 @@ const ProjectsRunning = () => {
       key: "start_date",
       render: (_, record) => (
         <span className="date-display">
-          {formatDate(record.start_date)}
+          { formatDate(record.start_date) }
         </span>
       ),
       align: 'center',
@@ -813,7 +813,7 @@ const ProjectsRunning = () => {
       key: "end_date",
       render: (_, record) => (
         <span className="date-display">
-          {formatDate(record.end_date)}
+          { formatDate(record.end_date) }
         </span>
       ),
       align: 'center',
@@ -886,7 +886,7 @@ const ProjectsRunning = () => {
         },
         colors: ['#00E396'],
         plotOptions: {
-          bar: { 
+          bar: {
             horizontal: true,
             borderRadius: 4,
           },
@@ -930,7 +930,7 @@ const ProjectsRunning = () => {
         },
         colors: ['#008FFB'],
         plotOptions: {
-          bar: { 
+          bar: {
             horizontal: false,
             borderRadius: 4,
           },
@@ -998,34 +998,34 @@ const ProjectsRunning = () => {
     mode = "multiple"
   ) => (
     <div className="filter-select-container">
-      <Form.Item name={name}>
+      <Form.Item name={ name }>
         <Select
-          placeholder={placeholder}
-          mode={mode}
+          placeholder={ placeholder }
+          mode={ mode }
           showSearch
-          value={value}
-          onChange={onChange}
+          value={ value }
+          onChange={ onChange }
           className="custom-select"
-          filterOption={(input, option) =>
+          filterOption={ (input, option) =>
             option.children
               ?.toLowerCase()
               .indexOf(input?.toLowerCase()) >= 0
           }
-          filterSort={(optionA, optionB) =>
+          filterSort={ (optionA, optionB) =>
             optionA.children
               ?.toLowerCase()
               .localeCompare(optionB.children?.toLowerCase())
           }
         >
-          {options.map((item, index) => (
+          { options.map((item, index) => (
             <Option
-              key={index}
-              value={item[valueKey]}
+              key={ index }
+              value={ item[valueKey] }
               className="custom-option"
             >
-              {labelKey === "manager_name" ? removeTitle(item[labelKey]) : item[labelKey]}
+              { labelKey === "manager_name" ? removeTitle(item[labelKey]) : item[labelKey] }
             </Option>
-          ))}
+          )) }
         </Select>
       </Form.Item>
     </div>
@@ -1033,16 +1033,16 @@ const ProjectsRunning = () => {
 
   const renderSortOptions = useCallback(() => (
     <div className="sort-options-menu">
-      {sortOptions.map(({ key, label }) => (
-        <div 
-          key={key} 
-          className={`sort-option ${selectedSort === key ? 'active' : ''}`}
-          onClick={() => handleSortSelect(key)}
+      { sortOptions.map(({ key, label }) => (
+        <div
+          key={ key }
+          className={ `sort-option ${selectedSort === key ? 'active' : ''}` }
+          onClick={ () => handleSortSelect(key) }
         >
-          <span>{label}</span>
-          {selectedSort === key && <SortIcon sortOrder={sortOrder} />}
+          <span>{ label }</span>
+          { selectedSort === key && <SortIcon sortOrder={ sortOrder } /> }
         </div>
-      ))}
+      )) }
     </div>
   ), [sortOptions, handleSortSelect, selectedSort, sortOrder]);
 
@@ -1052,15 +1052,15 @@ const ProjectsRunning = () => {
     return (
       <div className="chart-container">
         <div className="chart-header">
-          <h3>{title}</h3>
+          <h3>{ title }</h3>
         </div>
         <div className="chart-content">
           <ReactApexChart
-            key={type === "pie" ? chartKey : undefined}
-            options={chartData.options}
-            series={chartData.series}
-            type={type}
-            height={350}
+            key={ type === "pie" ? chartKey : undefined }
+            options={ chartData.options }
+            series={ chartData.series }
+            type={ type }
+            height={ 350 }
           />
         </div>
       </div>
@@ -1077,8 +1077,8 @@ const ProjectsRunning = () => {
         key,
         label: (
           <div className="sort-menu-item">
-            <span>{label}</span>
-            {selectedSort === key && <SortIcon sortOrder={sortOrder} />}
+            <span>{ label }</span>
+            { selectedSort === key && <SortIcon sortOrder={ sortOrder } /> }
           </div>
         ),
         onClick: () => handleSortSelect(key)
@@ -1099,121 +1099,128 @@ const ProjectsRunning = () => {
   ];
 
   return (
-    <div className="projects-running-container">
-      <Card className="projects-running-card">
-        {/* Header */}
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">Running Projects</h1>
+
+    <Card className="projects-running-card">
+      {/* Header */ }
+      <div className="page-header">
+        <div className="header-content">
+          <div className="heading-wrapper">
+            <div className="heading-main">
+              <h2>Running Projects</h2>
+            </div>
             <div className="header-stats">
               <div className="stat-item">
                 <span className="stat-label">Total Projects</span>
-                <span className="stat-value">{metaDataOfReports.total}</span>
+                <span className="stat-value">{ metaDataOfReports.total }</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="filters-section">
-          <div className="filters-header">
-            <h3>Filters</h3>
-          </div>
-          <div className="filters-container">
-            {renderFilterSelect(
-              "technology",
-              "Select Technology",
-              value,
-              handleTechnologyChange,
-              technologyList,
-              "_id",
-              "project_tech"
-            )}
+      {/* Filters */ }
+      <div className="global-search">
+        <div className="filters-header">
+          <h3>Filters</h3>
+        </div>
+        <div className="filter-btn-wrapper ">
+          { renderFilterSelect(
+            "technology",
+            "Select Technology",
+            value,
+            handleTechnologyChange,
+            technologyList,
+            "_id",
+            "project_tech",
+            { className: "dropdown-button" }
+          ) }
 
-            {renderFilterSelect(
-              "projectManager",
-              "Select Project Manager",
-              projectManager,
-              handleManagerChange,
-              projectManagerList,
-              "_id",
-              "manager_name"
-            )}
+          { renderFilterSelect(
+            "projectManager",
+            "Select Project Manager",
+            projectManager,
+            handleManagerChange,
+            projectManagerList,
+            "_id",
+            "manager_name",
+            { className: "dropdown-button" }
+          ) }
 
-            {renderFilterSelect(
-              "projectype",
-              "Select Project Type",
-              projectType,
-              handleTypeChange,
-              projectTypeList,
-              "_id",
-              "project_type"
-            )}
+          { renderFilterSelect(
+            "projectype",
+            "Select Project Type",
+            projectType,
+            handleTypeChange,
+            projectTypeList,
+            "_id",
+            "project_type",
+            { className: "dropdown-button" }
+          ) }
+        </div>
+      </div>
+
+      {/* Charts */ }
+      <div className="charts-section">
+        <div className="charts-grid">
+          { renderChart(pieChartData, "pie", "Projects by Manager") }
+          { renderChart(horizontalBarChartData, "bar", "Projects by Type") }
+          { renderChart(verticalBarChartData, "bar", "Projects by Technology") }
+        </div>
+      </div>
+
+      {/* Table */ }
+      <div className="table-section">
+        <div className=" table-header">
+          <h3>Projects List</h3>
+          <div className="table-actions">
+            <Dropdown
+              menu={ { items: actionMenuItems } }
+              trigger={ ['click'] }
+              placement="bottomRight"
+            >
+              <Button type="text" icon={ <MoreOutlined /> } />
+            </Dropdown>
           </div>
         </div>
 
-        {/* Charts */}
-        <div className="charts-section">
-          <div className="charts-grid">
-            {renderChart(pieChartData, "pie", "Projects by Manager")}
-            {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
-            {renderChart(verticalBarChartData, "bar", "Projects by Technology")}
+        <div className="table-container">
+          {/* Hidden export elements */ }
+          <div style={ { display: 'none' } }>
+            <ReactHTMLTableToExcel
+              id="test-table-xls-button"
+              className="ant-btn-primary"
+              table="table-to-xls"
+              filename="Projects"
+              sheet="tablexls"
+              buttonText="Export XLS"
+            />
+            <div dangerouslySetInnerHTML={ { __html: html["html"] } }></div>
           </div>
+
+          { tableData && tableData.length > 0 ? (
+            <Table
+              columns={ columns }
+              dataSource={ tableData }
+              rowKey="_id"
+              pagination={ {
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "30", "50"],
+                showTotal: showTotal,
+                showQuickJumper: true,
+                ...pagination,
+              } }
+              onChange={ handleTableChange }
+              size="middle"
+              scroll={ { x: 'max-content' } }
+              className="custom-table"
+            />
+          ) : (
+            <NoDataFound />
+          ) }
         </div>
+      </div>
+    </Card>
 
-        {/* Table */}
-        <div className="table-section">
-          <div className="table-header">
-            <h3>Projects List</h3>
-            <div className="table-actions">
-              <Dropdown
-                menu={{ items: actionMenuItems }}
-                trigger={['click']}
-                placement="bottomRight"
-              >
-                <Button type="text" icon={<MoreOutlined />} />
-              </Dropdown>
-            </div>
-          </div>
-
-          <div className="table-container">
-            {/* Hidden export elements */}
-            <div style={{ display: 'none' }}>
-              <ReactHTMLTableToExcel
-                id="test-table-xls-button"
-                className="ant-btn-primary"
-                table="table-to-xls"
-                filename="Projects"
-                sheet="tablexls"
-                buttonText="Export XLS"
-              />
-              <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
-            </div>
-
-            {tableData && tableData.length > 0 ? (
-              <Table
-                columns={columns}
-                dataSource={tableData}
-                rowKey="_id"
-                pagination={{
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "30", "50"],
-                  showTotal: showTotal,
-                  showQuickJumper: true,
-                  ...pagination,
-                }}
-                onChange={handleTableChange}
-                size="middle"
-                scroll={{ x: 'max-content' }}
-                className="custom-table"
-              />
-            ) : (
-              <NoDataFound />
-            )}
-          </div>
-        </div>
-      </Card>
-    </div>
   );
 };
 

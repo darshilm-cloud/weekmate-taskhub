@@ -1414,7 +1414,7 @@ span.info-btn i {
     font-size: 14px;
     cursor: pointer;
 }
-
+.global-search .filter-btn-wrapper   .filter-select-container .ant-select-selector .ant-select-selection-search-input::placeholder,
 .flex-table .ant-picker input::placeholder {
     font-size: 14px;
     color: #131313;
@@ -4788,8 +4788,9 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
-    background-color:#fff;
-    padding: 10px 20px;
+    background-color:#0000;
+    padding: 0;
+    border: none;
  
 }
 
@@ -5530,6 +5531,8 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .project-running-reports-fillter  .ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector{
         min-width:180px;
 }
+
+.global-search .filter-btn-wrapper   .filter-select-container .ant-select-selector,
 .project-running-reports-fillter .ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector,
 .filter-btn-wrapper.timesheet .ant-select .ant-select-selector ,
 .filter-btn-wrapper .dropdown-button {
