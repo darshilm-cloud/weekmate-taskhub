@@ -63,3 +63,8 @@
     background-color: #fff;
     flex-wrap: wrap;
 }
+
+.no-data-found-div h1{
+    text-align: center;
+    color: #bebebe;
+  }

@@ -651,6 +651,12 @@ const TimeSheet = () => {
     },
   ];
 
+  const NoDataFound = React.memo(() => (
+    <div className="no-data-found-div">
+      <h1>No data found</h1>
+    </div>
+  ));
+
   return (
     <Card className="timesheet-card">
       {/* Header */}
@@ -808,13 +814,17 @@ const TimeSheet = () => {
           </div>
         </div>
       ) : (
-        <div className="no-data-found">
+        <>
+        {/* <div className="no-data-found">
           <div className="no-data-content">
-            {/* <ClockCircleOutlined className="no-data-icon" /> */}
+            <ClockCircleOutlined className="no-data-icon" />
             <h3>No time entries found</h3>
             <p>Try adjusting your filters or date range</p>
           </div>
-        </div>
+        </div> */}
+        <NoDataFound />
+
+        </>
       )}
     </Card>
   );
