@@ -107,9 +107,9 @@ const TimeSheetController = () => {
     // getDepartmentList();
   }, []);
 
-  // useEffect(() => {
-  //   // getUserEmployeeList();
-  // }, [departmentList]);
+  useEffect(() => {
+    getUserEmployeeList();
+  }, []);
 
   const handleTechnologyChange = (selectedValues) => {
     setValue(selectedValues);
@@ -342,19 +342,13 @@ const TimeSheetController = () => {
   const getUserEmployeeList = async (values) => {
     try {
       dispatch(showAuthLoader());
-      const reqBody = {
-        departments:
-          values && values.length > 0
-            ? values
-            : departmentList.map((department) => department._id),
-      };
+     
       const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getEmployeesDepartmentWise,
-        body: reqBody,
+        methodName: Service.getMethod,
+        api_url: Service.getEmployees,
       });
       dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
+      if (response.data.status == 1) {
         setUserEmployeeList(response.data.data);
       }
     } catch (error) {
@@ -509,7 +503,7 @@ const TimeSheetController = () => {
         api_url: Service.exportTimeSheetReportCSV,
         body: reqBody,
       });
-      if (response?.data && response?.data?.data) {
+      if (response.data.status == 1) {
         setHtml(response.data.data);
       } else {
       }
@@ -526,8 +520,6 @@ const TimeSheetController = () => {
       projectManagerList.length &&
       projectTypeList.length &&
       projectList.length
-      // departmentList.length &&
-      // userEmployeeList.length
     ) {
       const requestParams = {
         ...(selectedRange && {
@@ -536,6 +528,7 @@ const TimeSheetController = () => {
         }),
       };
       getTimeSheetReportsDetails(requestParams);
+      exportTimesheetReportCSV(requestParams)
     }
   }, [
     technologyList,

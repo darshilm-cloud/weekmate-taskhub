@@ -19,6 +19,7 @@ function SignIn() {
   const history = useHistory();
   const { verificationToken, companySlug } = useParams();
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
+  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "Elsner";
   const dispatch = useDispatch();
   const { Title, Text } = Typography;
 
@@ -174,7 +175,7 @@ function SignIn() {
                 </h1>
               </div>
               <div className="gx-app-login-left-content">
-                <h6>Welcome to Elsner TaskHub Portal !</h6>
+                <h6>Welcome to {companyTitle} TaskHub Portal !</h6>
               </div>
 
               <Form

@@ -296,6 +296,7 @@ function App() {
         dispatch(hideAuthLoader());
         setSiteTitle(response?.data?.data?.companyName)
         localStorage.setItem("title", response?.data?.data?.companyName);
+        localStorage.setItem(`title-${companySlug}`, response?.data?.data?.companyName);
         localStorage.setItem(`companyFavIcoUrl-${companySlug}`,  response?.data?.data?.companyFavIcoUrl);
         localStorage.setItem(`companyLogoUrl-${companySlug}`,  response?.data?.data?.companyLogoUrl);
       }

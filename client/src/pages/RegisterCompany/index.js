@@ -436,7 +436,7 @@ const CompanyRegistration = () => {
           </Row>
           
           {/* Email Policy Alert */}
-          <Row gutter={24}>
+          {/* <Row gutter={24}>
             <Col xs={24}>
               <Alert
                 message="Email Policy"
@@ -446,7 +446,7 @@ const CompanyRegistration = () => {
                 style={{ marginBottom: 16 }}
               />
             </Col>
-          </Row>
+          </Row> */}
         </Form>
       </Card>
     ),
