@@ -60,7 +60,7 @@ exports.addReview = async (req, res) => {
     });
     await data.save();
 
-    let emailDetails = await this.getReviewsDetailsForMail(data._id);
+    let emailDetails = await this.getReviewsDetailsForMail(data._id,decodedCompanyId);
     await newReviewsMail(emailDetails, decodedCompanyId)
 
     return successResponse(
@@ -77,6 +77,14 @@ exports.addReview = async (req, res) => {
 //Get Review :
 exports.getReview = async (req, res) => {
   try {
+    
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -123,6 +131,7 @@ exports.getReview = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
+      "project.companyId":newObjectId(decodedCompanyId),
       // For details
       ...(value?.feedback_type ? { feedback_type: value?.feedback_type } : null),
       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : null),
@@ -194,6 +203,7 @@ exports.getReview = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    // { $eq: ["$companyId", newObjectId(decodedCompanyId)] },
                   ],
                 },
               },
@@ -298,6 +308,7 @@ exports.getReview = async (req, res) => {
             manager: 1,
             acc_manager: 1,
             technology: 1,
+            companyId:1
           },
           manager: {
             _id: 1,
@@ -363,7 +374,7 @@ exports.getReview = async (req, res) => {
       !value?._id && metaData
     );
   } catch (error) {
-    console.log("🚀 ~ exports.getProjects= ~ error:", error);
+    console.log("🚀 ~ exports.getReview= ~ error:", error)
     return catchBlockErrorResponse(res, error.message);
   }
 };
@@ -446,7 +457,7 @@ exports.deleteReview = async (req, res) => {
 };
 
 // get complaint details for mail ...
-exports.getReviewsDetailsForMail = async (reviewId) => {
+exports.getReviewsDetailsForMail = async (reviewId,companyId) => {
   try {
     const mainQuery = [
       {
@@ -465,6 +476,7 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    { $eq: ["$companyId", newObjectId(companyId)] },
                   ],
                 },
               },
@@ -558,60 +570,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "acc_managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
         $project: {
@@ -624,18 +582,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
             technology: 1,
           },
           manager: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1,
-          },
-          managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1,
-          },
-          acc_managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,

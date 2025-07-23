@@ -2,7 +2,7 @@ const Joi = require("joi");
 const {
   errorResponse,
   successResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const Project = mongoose.model("projects");
@@ -15,7 +15,7 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -38,7 +38,7 @@ exports.getTrashProjects = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -54,7 +54,7 @@ exports.getTrashProjects = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -66,16 +66,17 @@ exports.getTrashProjects = async (req, res) => {
               { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
               { "manager._id": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
+      companyId: newObjectId(decodedCompanyId),
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -84,12 +85,12 @@ exports.getTrashProjects = async (req, res) => {
         searchDataArr(
           ["title", "manager.full_name", "deletedBy.full_name", "descriptions"],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -105,20 +106,20 @@ exports.getTrashProjects = async (req, res) => {
                     { $eq: ["$_id", "$$manager"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "manager",
-        },
+          as: "manager"
+        }
       },
       {
         $unwind: {
           path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
 
@@ -131,17 +132,17 @@ exports.getTrashProjects = async (req, res) => {
           manager: {
             _id: 1,
             full_name: 1,
-            emp_img: 1,
+            emp_img: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -157,7 +158,7 @@ exports.getTrashProjects = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -187,7 +188,7 @@ exports.getTrashDiscussion = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -203,7 +204,7 @@ exports.getTrashDiscussion = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -211,19 +212,21 @@ exports.getTrashDiscussion = async (req, res) => {
       !(await checkUserIsAdmin(req?.user?._id))
         ? {
             $or: [
-              { "project.createdBy": new mongoose.Types.ObjectId(req.user._id) },
+              {
+                "project.createdBy": new mongoose.Types.ObjectId(req.user._id)
+              },
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -232,12 +235,12 @@ exports.getTrashDiscussion = async (req, res) => {
         searchDataArr(
           ["title", "project.title", "deletedBy.full_name", "descriptions"],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -252,19 +255,20 @@ exports.getTrashDiscussion = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
                     { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
 
@@ -276,17 +280,17 @@ exports.getTrashDiscussion = async (req, res) => {
           descriptions: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -302,7 +306,7 @@ exports.getTrashDiscussion = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -332,7 +336,7 @@ exports.getTrashTasks = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -348,7 +352,7 @@ exports.getTrashTasks = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -360,17 +364,16 @@ exports.getTrashTasks = async (req, res) => {
               { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -382,15 +385,15 @@ exports.getTrashTasks = async (req, res) => {
             "mainTask.title",
             "project.title",
             "deletedBy.full_name",
-            "descriptions",
+            "descriptions"
           ],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -404,20 +407,20 @@ exports.getTrashTasks = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "mainTask",
-        },
+          as: "mainTask"
+        }
       },
       {
         $unwind: {
           path: "$mainTask",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -430,19 +433,21 @@ exports.getTrashTasks = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
                     { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] }
+
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
 
@@ -454,21 +459,21 @@ exports.getTrashTasks = async (req, res) => {
           descriptions: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           mainTask: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -484,7 +489,7 @@ exports.getTrashTasks = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -514,7 +519,7 @@ exports.getTrashBugs = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -530,7 +535,7 @@ exports.getTrashBugs = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -542,17 +547,16 @@ exports.getTrashBugs = async (req, res) => {
               { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -564,15 +568,15 @@ exports.getTrashBugs = async (req, res) => {
             "task.title",
             "project.title",
             "deletedBy.full_name",
-            "descriptions",
+            "descriptions"
           ],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -586,20 +590,20 @@ exports.getTrashBugs = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -612,19 +616,20 @@ exports.getTrashBugs = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
                     { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
 
@@ -636,21 +641,21 @@ exports.getTrashBugs = async (req, res) => {
           descriptions: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           task: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -666,7 +671,7 @@ exports.getTrashBugs = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -696,7 +701,7 @@ exports.getTrashNotes = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -712,7 +717,7 @@ exports.getTrashNotes = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -724,17 +729,16 @@ exports.getTrashNotes = async (req, res) => {
               { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -743,12 +747,12 @@ exports.getTrashNotes = async (req, res) => {
         searchDataArr(
           ["title", "project.title", "deletedBy.full_name", "notesInfo"],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -763,19 +767,20 @@ exports.getTrashNotes = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
                     { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
 
@@ -787,17 +792,17 @@ exports.getTrashNotes = async (req, res) => {
           notesInfo: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -813,7 +818,7 @@ exports.getTrashNotes = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -843,7 +848,7 @@ exports.getTrashLoggedHours = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional(),
+      _id: Joi.string().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -859,7 +864,7 @@ exports.getTrashLoggedHours = async (req, res) => {
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
-      sortBy: value?.sortBy,
+      sortBy: value?.sortBy
     });
 
     // Or filter..
@@ -869,16 +874,16 @@ exports.getTrashLoggedHours = async (req, res) => {
             $or: [
               { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
               { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id)}
-            ],
+              { "deletedBy._id": new mongoose.Types.ObjectId(req.user._id) }
+            ]
           }
-        : {},
+        : {}
     ];
 
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
     };
 
     if (value?.search) {
@@ -890,15 +895,15 @@ exports.getTrashLoggedHours = async (req, res) => {
             "task.title",
             "createdBy.full_name",
             "descriptions",
-            "deletedBy.full_name",
+            "deletedBy.full_name"
           ],
           value?.search
-        ),
+        )
       ];
     }
     matchQuery = {
       ...matchQuery,
-      $and: orFilter,
+      $and: orFilter
     };
 
     const mainQuery = [
@@ -912,20 +917,20 @@ exports.getTrashLoggedHours = async (req, res) => {
                 $expr: {
                   $and: [
                     { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
           ],
-          as: "task",
-        },
+          as: "task"
+        }
       },
       {
         $unwind: {
           path: "$task",
-          preserveNullAndEmptyArrays: true,
-        },
+          preserveNullAndEmptyArrays: true
+        }
       },
       {
         $lookup: {
@@ -938,19 +943,21 @@ exports.getTrashLoggedHours = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$projectId"] },
                     { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
+                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] }
+
+                  ]
+                }
+              }
+            }
           ],
-          as: "project",
-        },
+          as: "project"
+        }
       },
       {
         $unwind: {
           path: "$project",
-          preserveNullAndEmptyArrays: false,
-        },
+          preserveNullAndEmptyArrays: false
+        }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
       ...(await getCreatedUpdatedDeletedByQuery("deletedBy")),
@@ -964,27 +971,27 @@ exports.getTrashLoggedHours = async (req, res) => {
           logged_minutes: 1,
           project: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           task: {
             _id: 1,
-            title: 1,
+            title: 1
           },
           createdBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
           deletedBy: {
             _id: 1,
             full_name: 1,
             emp_img: 1,
-            client_img: 1,
+            client_img: 1
           },
-          deletedAt: 1,
-        },
-      },
+          deletedAt: 1
+        }
+      }
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
@@ -1000,7 +1007,7 @@ exports.getTrashLoggedHours = async (req, res) => {
       pageNo: pagination.page,
       totalPages:
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page,
+      currentPage: pagination.page
     };
 
     return successResponse(
@@ -1030,7 +1037,7 @@ exports.deleteData = async (req, res) => {
       task_ids: Joi.array().optional().default([]),
       bug_ids: Joi.array().optional().default([]),
       note_ids: Joi.array().optional().default([]),
-      logged_time_ids: Joi.array().optional().default([]),
+      logged_time_ids: Joi.array().optional().default([])
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1046,8 +1053,8 @@ exports.deleteData = async (req, res) => {
       await Project.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1055,8 +1062,8 @@ exports.deleteData = async (req, res) => {
       await DiscussionTopic.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1064,8 +1071,8 @@ exports.deleteData = async (req, res) => {
       await ProjectTasks.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1073,8 +1080,8 @@ exports.deleteData = async (req, res) => {
       await ProjectBugs.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1082,8 +1089,8 @@ exports.deleteData = async (req, res) => {
       await Notes.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1091,8 +1098,8 @@ exports.deleteData = async (req, res) => {
       await LoggedHours.deleteMany({
         isDeleted: true,
         _id: {
-          $in: value.logged_time_ids.map((d) => new mongoose.Types.ObjectId(d)),
-        },
+          $in: value.logged_time_ids.map((d) => new mongoose.Types.ObjectId(d))
+        }
       });
     }
 
@@ -1110,14 +1117,14 @@ exports.restoreData = async (req, res) => {
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
-    
+
     const validationSchema = Joi.object({
       project_ids: Joi.array().optional().default([]),
       discussion_ids: Joi.array().optional().default([]),
       task_ids: Joi.array().optional().default([]),
       bug_ids: Joi.array().optional().default([]),
       note_ids: Joi.array().optional().default([]),
-      logged_time_ids: Joi.array().optional().default([]),
+      logged_time_ids: Joi.array().optional().default([])
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1133,7 +1140,7 @@ exports.restoreData = async (req, res) => {
       isDeleted: false,
       deletedBy: null,
       deletedAt: null,
-      deletedByModel: null,
+      deletedByModel: null
     };
 
     if (value?.project_ids && value?.project_ids.length > 0) {
@@ -1141,8 +1148,8 @@ exports.restoreData = async (req, res) => {
         {
           isDeleted: true,
           _id: {
-            $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d)),
-          },
+            $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d))
+          }
         },
         updateObj
       );
@@ -1153,10 +1160,8 @@ exports.restoreData = async (req, res) => {
         {
           isDeleted: true,
           _id: {
-            $in: value.discussion_ids.map(
-              (d) => new mongoose.Types.ObjectId(d)
-            ),
-          },
+            $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d))
+          }
         },
         updateObj
       );
@@ -1167,8 +1172,8 @@ exports.restoreData = async (req, res) => {
         {
           isDeleted: true,
           _id: {
-            $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d)),
-          },
+            $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d))
+          }
         },
         updateObj
       );
@@ -1179,8 +1184,8 @@ exports.restoreData = async (req, res) => {
         {
           isDeleted: true,
           _id: {
-            $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d)),
-          },
+            $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d))
+          }
         },
         updateObj
       );
@@ -1191,8 +1196,8 @@ exports.restoreData = async (req, res) => {
         {
           isDeleted: true,
           _id: {
-            $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d)),
-          },
+            $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d))
+          }
         },
         updateObj
       );
@@ -1205,8 +1210,8 @@ exports.restoreData = async (req, res) => {
           _id: {
             $in: value.logged_time_ids.map(
               (d) => new mongoose.Types.ObjectId(d)
-            ),
-          },
+            )
+          }
         },
         updateObj
       );

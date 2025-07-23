@@ -293,7 +293,7 @@ async function sendVerificationEmail({
     <hr style="margin: 30px 0;" />
 
     <p style="font-size: 12px; color: #999; text-align: center;">
-      &copy; ${new Date().getFullYear()} Econnect. All rights reserved.
+      &copy; ${new Date().getFullYear()} Taskhub. All rights reserved.
     </p>
   </div>
 `;
