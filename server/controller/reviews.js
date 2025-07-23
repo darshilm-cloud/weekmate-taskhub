@@ -60,7 +60,7 @@ exports.addReview = async (req, res) => {
     });
     await data.save();
 
-    let emailDetails = await this.getReviewsDetailsForMail(data._id);
+    let emailDetails = await this.getReviewsDetailsForMail(data._id,decodedCompanyId);
     await newReviewsMail(emailDetails, decodedCompanyId)
 
     return successResponse(
@@ -454,7 +454,7 @@ exports.deleteReview = async (req, res) => {
 };
 
 // get complaint details for mail ...
-exports.getReviewsDetailsForMail = async (reviewId) => {
+exports.getReviewsDetailsForMail = async (reviewId,companyId) => {
   try {
     const mainQuery = [
       {
@@ -473,6 +473,7 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    { $eq: ["$companyId", newObjectId(companyId)] },
                   ],
                 },
               },
@@ -566,60 +567,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager.reporting_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "acc_managers_rm",
-        },
-      },
-      {
-        $unwind: {
-          path: "$acc_managers_rm",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
         $project: {
@@ -632,18 +579,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
             technology: 1,
           },
           manager: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1,
-          },
-          managers_rm: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            email: 1,
-          },
-          acc_managers_rm: {
             _id: 1,
             full_name: 1,
             emp_img: 1,

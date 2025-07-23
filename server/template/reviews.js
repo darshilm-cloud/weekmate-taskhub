@@ -57,9 +57,7 @@ class ReviewsMail {
         process.env.CEO_EMAIL,
         process.env.DIRECTOR_EMAIL,
         data?.manager?.email,
-        data?.acc_manager?.email,
-        data?.managers_rm?.email,
-        data?.acc_managers_rm?.email
+        data?.acc_manager?.email
       ];
       await emailSenderForPMS(companyId, data?.createdBy?.email, mailData, cc);
     } catch (error) {
