@@ -221,7 +221,7 @@ const ProjectTechnologies = () => {
   // Table configuration
   const columns = [
     {
-      title: "Technologies",
+      title: "Departments",
       dataIndex: "project_tech",
       key: "technologies",
       width: 700,
@@ -271,7 +271,7 @@ const ProjectTechnologies = () => {
                   />
                 </Button>
                 <Popconfirm
-                  title="Do you really want to delete this Technology?"
+                  title="Do you really want to delete this Department?"
                   okText="Yes"
                   cancelText="No"
                   onConfirm={() => deleteProjectTechnology(record._id)}
@@ -299,7 +299,7 @@ const ProjectTechnologies = () => {
       <div className="project-technology-container">
      
           <div className="heading-wrapper">
-            <h2>Project Technologies</h2>
+            <h2>Project Departments</h2>
             <Button
               className="addleave-btn"
               type="primary"
@@ -325,14 +325,14 @@ const ProjectTechnologies = () => {
           footer={null}
         >
           <div className="modal-header">
-            <h1>Add Technologies</h1>
+            <h1>Add Departments</h1>
           </div>
           <div className="overview-modal-wrapper">
             <Form form={form} onFinish={addProjectTechnology}>
               <div className="topic-cancel-wrapper">
                 <Form.Item
                   name="project_tech"
-                  label="Project Technologies"
+                  label="Project Departments"
                   rules={[
                     {
                       required: true,

@@ -1243,7 +1243,7 @@ function AssignProject() {
               <Button className="dropdown-button">
                 <span className="filter-text">
 
-                  <span >Technology:</span>
+                  <span >Department:</span>
                   <span>
 
                     { technology.length === 0 ? "All" : "Selected" }
@@ -1529,7 +1529,7 @@ function AssignProject() {
               {/* Technology and Project Type */ }
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
-                  label="Technology"
+                  label="Department"
                   name="technology"
                   rules={ [
                     {
@@ -1540,7 +1540,7 @@ function AssignProject() {
                 >
                   <Select
                     mode="multiple"
-                    placeholder="Select Technology"
+                    placeholder="Select Department"
                     size="large"
                     showSearch
                     filterOption={ (input, option) =>

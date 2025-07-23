@@ -737,7 +737,7 @@ const ProjectsRunning = () => {
       ellipsis: true,
     },
     {
-      title: "Technology",
+      title: "Department",
       dataIndex: "technologyName",
       width: 150,
       sorter: (a, b) => a.technologyName[0].localeCompare(b.technologyName[0]),
@@ -958,7 +958,7 @@ const ProjectsRunning = () => {
   const sortOptions = useMemo(() => [
     { key: "title", label: "Project Name" },
     { key: "managerName", label: "Project Manager" },
-    { key: "technologyName", label: "Technology" },
+    { key: "technologyName", label: "Department" },
     { key: "project_typeName", label: "Project Type" },
     { key: "estimatedHours", label: "Estimated Hours" },
     { key: "total_logged_time", label: "Used Hours" },
@@ -1122,7 +1122,7 @@ const ProjectsRunning = () => {
           <div className="filters-container">
             {renderFilterSelect(
               "technology",
-              "Select Technology",
+              "Select Department",
               value,
               handleTechnologyChange,
               technologyList,
@@ -1157,7 +1157,7 @@ const ProjectsRunning = () => {
           <div className="charts-grid">
             {renderChart(pieChartData, "pie", "Projects by Manager")}
             {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
-            {renderChart(verticalBarChartData, "bar", "Projects by Technology")}
+            {renderChart(verticalBarChartData, "bar", "Projects by Department")}
           </div>
         </div>
 

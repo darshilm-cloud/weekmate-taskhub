@@ -568,7 +568,7 @@ const TimeSheet = () => {
           </div>
           <div className="filters-grid">
             {renderFilterSelect(
-              "Select Technology",
+              "Select Department",
               value,
               handleTechnologyChange,
               technologyList,

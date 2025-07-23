@@ -319,7 +319,7 @@ const Projectexpences = () => {
       >
         <Button className="dropdown-button">
           <span className="filter-text">
-            <span>Technology:</span>
+            <span>Department:</span>
             <span>
               { technology.length === 0 ? "All" : `Selected (${technology.length})` }
             </span>

@@ -493,7 +493,7 @@ function UserProfile() {
           <span className="setting-menu">
             {" "}
             <i className="fi fi-rr-microchip"></i>
-            Technologies
+            Departments
           </span>
         </Link>
       ),

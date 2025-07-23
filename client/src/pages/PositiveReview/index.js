@@ -456,7 +456,7 @@ const PositiveReview = () => {
             { isSuperAdmin && (
               <>
                 <FilterPopover
-                  title="Technology"
+                  title="Department"
                   visible={ popOver.technology }
                   onVisibleChange={ () => handleVisibleChange("technology", true) }
                   searchValue={ searchTechnology }

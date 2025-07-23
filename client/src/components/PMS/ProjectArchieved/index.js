@@ -974,7 +974,7 @@ function ProjectArchieved() {
             >
               <Button className="dropdown-button">
                 <span className="filter-text">
-                  <span>Technology:</span>
+                  <span>Department:</span>
                   <span>
                     { technology.length === 0 ? "All" : `Selected (${technology.length})` }
                   </span>
@@ -1268,7 +1268,7 @@ function ProjectArchieved() {
                           </div>
                         </Col>
                         <Col span={ 12 }>
-                          <Form.Item label="Technology" name="technology">
+                          <Form.Item label="Department" name="technology">
                             <Select
                               size="large"
                               showSearch
@@ -1466,7 +1466,7 @@ function ProjectArchieved() {
                     ] }
                   >
                     <Select
-                      placeholder="Technology"
+                      placeholder="Department"
                       size="large"
                       showSearch
                       filterOption={ (input, option) =>

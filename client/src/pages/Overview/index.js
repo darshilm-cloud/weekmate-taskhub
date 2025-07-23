@@ -338,7 +338,7 @@ const Overview = () => {
                         </Option>
                       ))
                     ) : (
-                      <Option disabled>No Technologies Available</Option>
+                      <Option disabled>No Departments Available</Option>
                     )}
                   </Select>
                 </li>
