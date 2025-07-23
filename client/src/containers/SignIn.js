@@ -19,7 +19,7 @@ function SignIn() {
   const history = useHistory();
   const { verificationToken, companySlug } = useParams();
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
-  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "Elsner";
+  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "";
   const dispatch = useDispatch();
   const { Title, Text } = Typography;
 

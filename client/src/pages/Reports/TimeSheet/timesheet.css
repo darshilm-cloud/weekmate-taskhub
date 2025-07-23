@@ -66,3 +66,8 @@
 .ant-table-tbody .time-hours{
     margin-left: 8px;
 }
+
+.no-data-found-div h1{
+    text-align: center;
+    color: #bebebe;
+  }

@@ -52,15 +52,18 @@ const ProjectsRunningController = () => {
   const handleTechnologyChange = (selectedValues) => {
     setValue(selectedValues);
     getProjectReportsDetails({ technologies: selectedValues });
+    exportCsvProjectReportsDetails({ technologies: selectedValues });
   };
   const handleTypeChange = (selectedValues) => {
     setprojectType(selectedValues);
     getProjectReportsDetails({ types: selectedValues });
+    exportCsvProjectReportsDetails({ types: selectedValues });
   };
 
   const handleManagerChange = (selectedValues) => {
     setProjectManager(selectedValues);
     getProjectReportsDetails({ managers: selectedValues });
+    exportCsvProjectReportsDetails({ managers: selectedValues });
   };
 
   const handleSortSelect = (sortOption) => {
@@ -76,6 +79,7 @@ const ProjectsRunningController = () => {
     setIsPopoverVisible(false);
     setIssortbyPopUp(false); // Close the popover after selecting a sort option
     getProjectReportsDetails({ sort: sortOption, sortBy: newSortOrder }); // Call API with the selected sorting option
+    exportCsvProjectReportsDetails({ sort: sortOption, sortBy: newSortOrder }); // Call API with the selected sorting option
   };
 
   const handleTableChange = (page, sorter) => {
@@ -226,6 +230,42 @@ const ProjectsRunningController = () => {
     }
   };
 
+  const exportCsvProjectReportsDetails = async ({
+    technologies = value,
+    types = projectType,
+    managers = projectManager,
+    sort = selectedSort,
+    sortBy = sortOrder,
+  } = {}) => {
+    try {
+      dispatch(showAuthLoader());
+      const reqBody = {
+        technologies:
+          technologies && technologies.length > 0 ? technologies : [],
+        types: types && types.length > 0 ? types : [],
+        managers: managers && managers.length > 0 ? managers : [],
+        pageNo: pagination.current,
+        limit: pagination.pageSize,
+        sort: sort ? sort : "",
+        sortBy: sortBy,
+        isExport: true,
+      };
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.exportProjectRunningReportCSV,
+        body: reqBody,
+      });
+      if (response?.data && response?.data?.data) {
+        setHtml(response?.data?.data)
+      } 
+      dispatch(hideAuthLoader());
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     getTechnologyList();
     getManager();
@@ -239,6 +279,7 @@ const ProjectsRunningController = () => {
       projectTypeList.length
     ) {
       getProjectReportsDetails({});
+      exportCsvProjectReportsDetails({})
     }
   }, [
     technologyList,
