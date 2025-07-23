@@ -539,7 +539,7 @@ const TimeSheet = () => {
       <div className="page-header">
         <div className="heading-wrapper">
           <div className="heading-main">
-            <h2>TimeSheet Report</h2>
+            <h2>Timesheet Report</h2>
           </div>
 
 
