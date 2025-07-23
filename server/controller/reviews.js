@@ -77,6 +77,7 @@ exports.addReview = async (req, res) => {
 //Get Review :
 exports.getReview = async (req, res) => {
   try {
+    
     // Decode user from token
     const {
       _id: decodedUserId,
@@ -130,6 +131,7 @@ exports.getReview = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
+      "project.companyId":newObjectId(decodedCompanyId),
       // For details
       ...(value?.feedback_type ? { feedback_type: value?.feedback_type } : null),
       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : null),
@@ -201,7 +203,7 @@ exports.getReview = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
-                    { $eq: ["$companyId", newObjectId(decodedCompanyId)] },
+                    // { $eq: ["$companyId", newObjectId(decodedCompanyId)] },
                   ],
                 },
               },
@@ -306,6 +308,7 @@ exports.getReview = async (req, res) => {
             manager: 1,
             acc_manager: 1,
             technology: 1,
+            companyId:1
           },
           manager: {
             _id: 1,
@@ -371,7 +374,7 @@ exports.getReview = async (req, res) => {
       !value?._id && metaData
     );
   } catch (error) {
-    console.log("🚀 ~ exports.getProjects= ~ error:", error);
+    console.log("🚀 ~ exports.getReview= ~ error:", error)
     return catchBlockErrorResponse(res, error.message);
   }
 };
