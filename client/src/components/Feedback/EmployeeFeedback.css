@@ -73,6 +73,7 @@
 .feedback-form-view-detail-form {
     height: 100%;
     overflow: auto;
+    padding: 10px;
 }
 
 .project-details-data .title {

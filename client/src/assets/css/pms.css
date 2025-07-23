@@ -1219,11 +1219,11 @@ ul.tab_menu li.active-tab {
     overflow: auto;
 }
 
-.topic-cancel-wrapper .ant-col.ant-form-item-label {
+/* .topic-cancel-wrapper .ant-col.ant-form-item-label {
     width: 100%;
     text-align: left;
     font-weight: 500;
-}
+} */
 
 .no-icon-search .ant-input-affix-wrapper .ant-input-suffix {
     display: none;
@@ -1378,7 +1378,9 @@ span.info-btn i {
 .table-schedule-wrapper ul li .table-right {
     padding: 0 16px;
 }
-
+.ant-modal-body .table-schedule-wrapper ul li .table-right{
+    padding: 5px 16px;
+}
 .overview-modal-wrapper .flex-table {
     flex-wrap: nowrap;
 }
@@ -1414,7 +1416,7 @@ span.info-btn i {
     font-size: 14px;
     cursor: pointer;
 }
-
+.global-search .filter-btn-wrapper   .filter-select-container .ant-select-selector .ant-select-selection-search-input::placeholder,
 .flex-table .ant-picker input::placeholder {
     font-size: 14px;
     color: #131313;
@@ -1805,9 +1807,7 @@ button.ant-btn>.fi-ss-link:before {
     margin: 0 -5px;
 }
 
-.overview-modal-wrapper .ant-row .ant-col {
-    padding: 0 5px;
-}
+
 
 /*Add note modal*/
 /* .ant-modal.notes-modal .ant-form-item {
@@ -3671,7 +3671,9 @@ span.anticon.anticon-down svg {
 .table-right .flex-table {
     gap: 5px;
 }
-
+ .ant-modal-body .table-right .flex-table > div{
+width: 100%;
+}
 .table-right .flex-table button.ant-btn.css-dev-only-do-not-override-dkbvqv.ant-btn-default {
     margin: 1px;
 }
@@ -3738,10 +3740,7 @@ span.anticon.anticon-down svg {
     width: 3em;
 }
 
-.edit-details-task-model .overview-modal-wrapper .ant-row {
-    margin: 0 -5px;
-    align-items: baseline;
-}
+
 
 .task-wrapper .profileleftbar {
     position: relative;
@@ -4790,8 +4789,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
-    background-color: #0000;
+    background-color:#0000;
+    padding: 0;
     border: none;
+ 
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-head {
@@ -4932,7 +4933,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-search-button {
-    height: 35px;
+    height: 40px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-input-outlined:focus,
@@ -4969,29 +4970,10 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     color: var(--text-gray-shade2);
 }
 
-.admin-user .ant-modal-content .ant-modal-body {
-    background-color: var(--chat-body-wrapper);
-    padding: 20px;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-radio-wrapper:hover .ant-radio-inner {
-    border-color: #c2c3c5;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    height: 40px;
-    width: 100%;
-}
 
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus,
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus-within,
-.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:hover {
-    background-color: #fff;
-    border-color: #c2c3c5;
-    color: #3f4350;
-}
+
 
 .admin-user .ant-dropdown .ant-dropdown-arrow {
     display: block;
@@ -5550,6 +5532,8 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .project-running-reports-fillter  .ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector{
         min-width:180px;
 }
+
+.global-search .filter-btn-wrapper   .filter-select-container .ant-select-selector,
 .project-running-reports-fillter .ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector,
 .filter-btn-wrapper.timesheet .ant-select .ant-select-selector ,
 .filter-btn-wrapper .dropdown-button {
@@ -5580,6 +5564,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .filter-btn-wrapper .ant-btn .filter-text {
     display: flex;
     gap: 5px;
+    font-size: 12px;
 }
 
 .assignees-popover .ant-checkbox-wrapper,

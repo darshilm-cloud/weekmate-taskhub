@@ -12,6 +12,8 @@ import {
   Popconfirm,
   Tooltip,
   Badge,
+  Row,
+  Col,
 } from "antd";
 import UtilFunctions from "../../util/UtilFunctions";
 import {
@@ -1012,119 +1014,128 @@ function NotesPMS() {
 
   return (
     <>
-      {/* -----------Notes Model----------------- */}
+      {/* -----------Notes Model----------------- */ }
       <Modal
-        open={isopenNotes}
-        footer={null}
-        onCancel={handleCancelNote}
+        open={ isopenNotes }
+        onCancel={ handleCancelNote }
+        title={ modelModeNotes === "add" ? "Add Note" : "Edit Note" }
         className="add-task-modal add-list-modal"
+        width="800"
+      
+        footer={ [
+          <Button key="cancel" className="delete-btn" onClick={ handleCancelNote } size="large">
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            onClick={ () => formNotes.submit() }
+          >
+            Add
+          </Button>,
+        ] }
       >
-        <div className="modal-header">
-          <h1>{modelModeNotes === "add" ? "Add Note" : "Edit Note"}</h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form
-            form={formNotes}
-            onFinish={(values) => {
+            form={ formNotes }
+            layout="vertical"
+            onFinish={ (values) => {
               const val = isPrivate;
               modelModeNotes === "add"
                 ? addProjectNotes(values, val)
                 : updateProjectNotes(values, val);
-            }}
+            } }
           >
-            <div className="topic-cancel-wrapper">
-              <Form.Item
-                name="title"
-                rules={[
-                  {
-                    required: true,
-                    whitespace: true,
-                    message: "Please enter a valid title",
-                  },
-                ]}
-              >
-                <Input placeholder="Title" />
-              </Form.Item>
+            <Row gutter={ [0, 0] }>
+              {/* Title - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Title"
+                  name="title"
+                  rules={ [
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please enter a valid title",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Title" size="large" />
+                </Form.Item>
+              </Col>
 
-              <div>
+              {/* Subscribers - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
                   label="Subscribers"
-                  colon={false}
                   name="subscribers"
                   className="subscriber-btn"
                 >
-                  {subscribers && (
+                  { subscribers && (
                     <MultiSelect
-                      onSearch={handleSearch}
-                      onChange={handleSelectedItemsChange}
+                      onSearch={ handleSearch }
+                      onChange={ handleSelectedItemsChange }
                       values={
                         selectedItems && selectedItems.map((item) => item._id)
                       }
-                      listData={subscribers}
-                      search={searchKeyword}
-                      onDropdownVisibleChange={(open) =>
+                      listData={ subscribers }
+                      search={ searchKeyword }
+                      onDropdownVisibleChange={ (open) =>
                         open && getProjectSubscribersList(selectedNotebook._id)
                       }
                     />
-                  )}
+                  ) }
+                  <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                    <Button
+                      className="clearbtn ant-delete"
+                      onClick={ () => {
+                        formNotes.setFieldsValue({
+                          subscribers: [],
+                        });
+                        setSelectedItems([]);
+                        setselectedSubscribers([]);
+                      } }
+                      size="small"
+                    >
+                      Clear
+                    </Button>
+                  </div>
                 </Form.Item>
-                <Button
-                  className="clearbtn ant-delete"
-                  onClick={() => {
-                    formNotes.setFieldsValue({
-                      subscribers: [],
-                    });
-                    setSelectedItems([]);
-                    setselectedSubscribers([]);
-                  }}
+              </Col>
+
+              {/* Client - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                <Form.Item
+                  label="Client"
+                  name="clients"
+                  className="subscriber-btn"
                 >
-                  Clear
-                </Button>
-              </div>
-              <Form.Item
-                label="Client"
-                colon={false}
-                name="clients"
-                className="subscriber-btn"
-              >
-                {clients && (
-                  <MultiSelect
-                    onSearch={handleSearch}
-                    onChange={handleSelectedClientsChange}
-                    listData={clients}
-                    search={searchKeyword}
-                  />
-                )}
-              </Form.Item>
-              <Button
-                className="clearbtn ant-delete"
-                onClick={() => {
-                  formNotes.setFieldsValue({
-                    clients: [],
-                  });
-                  setSelectedClient([]);
-                }}
-              >
-                Clear
-              </Button>
-            </div>
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="square-primary-btn"
-                >
-                  Add
-                </Button>
-                <Button
-                  onClick={handleCancelNote}
-                  className="square-outline-btn ant-delete"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+                  { clients && (
+                    <MultiSelect
+                      onSearch={ handleSearch }
+                      onChange={ handleSelectedClientsChange }
+                      listData={ clients }
+                      search={ searchKeyword }
+                    />
+                  ) }
+                  <div className="clear-btn" style={ { marginTop: 8 } }>
+                    <Button
+                      className="clearbtn ant-delete"
+                      onClick={ () => {
+                        formNotes.setFieldsValue({
+                          clients: [],
+                        });
+                        setSelectedClient([]);
+                      } }
+                      size="small"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
         </div>
       </Modal>
@@ -1134,16 +1145,16 @@ function NotesPMS() {
           <div className="profile-sub-head">
             <div className="add-project-wrapper">
               <Search
-                ref={searchRef}
+                ref={ searchRef }
                 placeholder="Search..."
-                onSearch={onSearch}
-                style={{ width: 200 }}
+                onSearch={ onSearch }
+                style={ { width: 200 } }
                 className="mr2"
               />
             </div>
             <div className="head-box-inner"></div>
             <div className="block-status-content">
-              <div className="status-content" style={{ cursor: "pointer" }}>
+              <div className="status-content" style={ { cursor: "pointer" } }>
                 <h6>Subscribers:</h6>
                 <Popover
                   placement="bottomRight"
@@ -1157,7 +1168,7 @@ function NotesPMS() {
                                 filterSubscribers[0] == "all" ||
                                 filterSubscribers.length === 0
                               }
-                              onChange={() =>
+                              onChange={ () =>
                                 handleSelectionAssignedFilter("all", true)
                               }
                             >
@@ -1166,8 +1177,8 @@ function NotesPMS() {
                           </li>
                           <li>
                             <Checkbox
-                              checked={filterSubscribers[0] == "unassigned"}
-                              onChange={() =>
+                              checked={ filterSubscribers[0] == "unassigned" }
+                              onChange={ () =>
                                 handleSelectionAssignedFilter(
                                   "unassigned",
                                   true
@@ -1179,18 +1190,18 @@ function NotesPMS() {
                           </li>
                           <li>
                             <Search
-                              value={filterSubscribersSearchInput}
-                              onSearch={(val) =>
+                              value={ filterSubscribersSearchInput }
+                              onSearch={ (val) =>
                                 setfilterSubscribersSearchInput(val)
                               }
-                              onChange={(e) =>
+                              onChange={ (e) =>
                                 setfilterSubscribersSearchInput(e.target.value)
                               }
                             />
                           </li>
                         </div>
                         <div className="filter-assignees assigness-data">
-                          {subscribers
+                          { subscribers
                             ?.filter((data) =>
                               data.full_name
                                 ?.toLowerCase()
@@ -1200,7 +1211,7 @@ function NotesPMS() {
                             )
                             .map((item, index) => (
                               <li
-                                key={index}
+                                key={ index }
                                 className={
                                   filterSubscribers.includes(item._id)
                                     ? "selected-filter-member"
@@ -1208,39 +1219,39 @@ function NotesPMS() {
                                 }
                               >
                                 <Checkbox
-                                  key={index}
-                                  checked={filterSubscribers.includes(item._id)}
-                                  onChange={() =>
+                                  key={ index }
+                                  checked={ filterSubscribers.includes(item._id) }
+                                  onChange={ () =>
                                     handleSelectionAssignedFilter(item._id)
                                   }
                                 />
 
                                 <MyAvatar
-                                  key={item._id}
-                                  userName={item?.full_name}
-                                  alt={item?.full_name}
-                                  src={item.emp_img}
+                                  key={ item._id }
+                                  userName={ item?.full_name }
+                                  alt={ item?.full_name }
+                                  src={ item.emp_img }
                                 />
-                                {removeTitle(item.full_name)}
+                                { removeTitle(item.full_name) }
                               </li>
-                            ))}
+                            )) }
                         </div>
                       </ul>
                       <div className="popver-footer-btn">
                         <Button
                           type="primary"
                           className="square-primary-btn ant-btn-primary"
-                          onClick={() => {
+                          onClick={ () => {
                             handleAllFilter();
                             setfilterSubscribersSearchInput("");
-                          }}
+                          } }
                         >
                           Apply
                         </Button>
                         <Button
                           className="square-outline-btn ant-delete"
                           // onClick={() => setOpenSubscribers(false)}
-                          onClick={() => handleCancleFilter()}
+                          onClick={ () => handleCancleFilter() }
                         >
                           Cancel
                         </Button>
@@ -1248,123 +1259,123 @@ function NotesPMS() {
                     </div>
                   }
                   trigger="click"
-                  open={openSubscribers && getDetails.length > 0}
-                  onOpenChange={handleOpenChangeAssignees}
+                  open={ openSubscribers && getDetails.length > 0 }
+                  onOpenChange={ handleOpenChangeAssignees }
                 >
                   <i className="fi fi-rs-check-circle"></i>
-                  {filterSubscribers.length == 0
+                  { filterSubscribers.length == 0
                     ? "All"
                     : filterSubscribers == "unassigned"
-                    ? "Unassigned "
-                    : "Selected"}
+                      ? "Unassigned "
+                      : "Selected" }
                 </Popover>
               </div>
             </div>
           </div>
           <div className="notes">
-            {getDetails.length == 0 && (
+            { getDetails.length == 0 && (
               <div className="error-message">
                 <p>No Data</p>
               </div>
-            )}
+            ) }
 
-            {projectNotebook.length == 0 &&
+            { projectNotebook.length == 0 &&
               (getDetails.length > 0 ? (
                 getDetails?.map((note, index) => {
                   const Title = note.title;
 
                   return (
                     <>
-                      {index == 0 && (
-                        <div onClick={openModelNotes} className="notes-box">
+                      { index == 0 && (
+                        <div onClick={ openModelNotes } className="notes-box">
                           <div
                             className="note-inner-block"
-                            style={{
+                            style={ {
                               justifyContent: "center",
                               cursor: "pointer",
-                            }}
+                            } }
                           >
-                            <h3 style={{ textAlign: "center", width: "100%" }}>
+                            <h3 style={ { textAlign: "center", width: "100%" } }>
                               Add a Note
                             </h3>
                           </div>
                         </div>
-                      )}
-                      <div className="main-notes-wrapper" key={note._id}>
+                      ) }
+                      <div className="main-notes-wrapper" key={ note._id }>
                         <div
                           className="notes-div"
-                          style={{ marginBottom: "0px" }}
+                          style={ { marginBottom: "0px" } }
                         >
                           <div className="notes-box">
                             <div className="note-inner-block">
                               <div className="note-block-head">
                                 <h1
-                                  onClick={() => {
+                                  onClick={ () => {
                                     openModelList(note._id);
                                     setIsOpenTechnicalModal(true);
                                     getComment(note._id);
-                                  }}
-                                  style={{
+                                  } }
+                                  style={ {
                                     textTransform: "capitalize",
                                     cursor: "pointer",
-                                  }}
+                                  } }
                                 >
-                                  {Title.length > 23
+                                  { Title.length > 23
                                     ? `${Title.slice(0, 22)}...`
-                                    : Title}{" "}
-                                  {(commentDrafts[note._id] ||
+                                    : Title }{ " " }
+                                  { (commentDrafts[note._id] ||
                                     commentDrafts[note._id] ||
                                     hasUnsavedChanges[note._id]) && (
-                                    <span style={{ color: "red" }}>Draft</span>
-                                  )}
+                                      <span style={ { color: "red" } }>Draft</span>
+                                    ) }
                                 </h1>
                                 <div
-                                  dangerouslySetInnerHTML={{
+                                  dangerouslySetInnerHTML={ {
                                     __html:
                                       note?.notesInfo.length > 50
                                         ? `${note?.notesInfo.slice(
-                                            0,
-                                            50
-                                          )}........`
+                                          0,
+                                          50
+                                        )}........`
                                         : note?.notesInfo,
-                                  }}
+                                  } }
                                 />
                               </div>
                               <footer>
                                 <div className="notes-item">
                                   <div className="footer-subscribers">
                                     <Avatar.Group
-                                      maxCount={2}
+                                      maxCount={ 2 }
                                       maxPopoverTrigger="click"
                                       size="default"
-                                      maxStyle={{
+                                      maxStyle={ {
                                         color: "#f56a00",
                                         backgroundColor: "#fde3cf",
                                         cursor: "pointer",
-                                      }}
+                                      } }
                                     >
-                                      {note.client_sub.map((client_sub) => (
+                                      { note.client_sub.map((client_sub) => (
                                         <Tooltip
-                                          title={removeTitle(
+                                          title={ removeTitle(
                                             client_sub.full_name
-                                          )}
-                                          key={client_sub._id}
+                                          ) }
+                                          key={ client_sub._id }
                                         >
                                           <MyAvatar
-                                            key={client_sub._id}
-                                            userName={client_sub.full_name}
-                                            alt={client_sub.full_name}
-                                            src={client_sub.emp_img}
+                                            key={ client_sub._id }
+                                            userName={ client_sub.full_name }
+                                            alt={ client_sub.full_name }
+                                            src={ client_sub.emp_img }
                                           />
                                         </Tooltip>
-                                      ))}
+                                      )) }
                                     </Avatar.Group>
                                     {
                                       <PlusOutlined
-                                        onClick={() => {
+                                        onClick={ () => {
                                           openModelList(note._id);
                                           setIsOpenTechnicalModal(true);
-                                        }}
+                                        } }
                                       />
                                     }
                                   </div>
@@ -1372,47 +1383,47 @@ function NotesPMS() {
                                 <div className="time-icon-note">
                                   <div className="note-time">
                                     <p>
-                                      {calculateTimeDifference(note.createdAt)}
+                                      { calculateTimeDifference(note.createdAt) }
                                     </p>
                                   </div>
 
                                   <div className="note-view">
                                     <div
                                       className="note-btn-edit"
-                                      onClick={(e) => {
+                                      onClick={ (e) => {
                                         showEditModalNote(note);
                                         setIopenNotes(true);
-                                      }}
+                                      } }
                                     >
-                                      {isCreatedBy(note?.createdBy) && (
+                                      { isCreatedBy(note?.createdBy) && (
                                         <EditOutlined
-                                          style={{
+                                          style={ {
                                             color: "green",
                                             cursor: "pointer",
                                             marginLeft: "10px",
-                                          }}
+                                          } }
                                         />
-                                      )}
+                                      ) }
                                     </div>
-                                    {isCreatedBy(note?.createdBy) && (
+                                    { isCreatedBy(note?.createdBy) && (
                                       <Popconfirm
                                         title="Do you want to delete?"
                                         okText="Yes"
                                         cancelText="No"
-                                        onConfirm={() => {
+                                        onConfirm={ () => {
                                           deleteProjectNotes(note._id);
-                                        }}
+                                        } }
                                       >
                                         <div className="note-btn-delete">
                                           <AiOutlineDelete
-                                            style={{
+                                            style={ {
                                               color: "red",
                                               cursor: "pointer",
-                                            }}
+                                            } }
                                           />
                                         </div>
                                       </Popconfirm>
-                                    )}
+                                    ) }
                                   </div>
                                 </div>
                               </footer>
@@ -1424,52 +1435,52 @@ function NotesPMS() {
                   );
                 })
               ) : (
-                <div onClick={openModelNotes} className="notes-box">
+                <div onClick={ openModelNotes } className="notes-box">
                   <div
                     className="note-inner-block"
-                    style={{ justifyContent: "center", cursor: "pointer" }}
+                    style={ { justifyContent: "center", cursor: "pointer" } }
                   >
-                    <h3 style={{ textAlign: "center", width: "100%" }}>
+                    <h3 style={ { textAlign: "center", width: "100%" } }>
                       Add a Note
                     </h3>
                   </div>
                 </div>
-              ))}
+              )) }
 
             <Modal
               destroyOnClose
               className="notes-project-modal"
-              width={1000}
-              title={null}
-              open={isOpenTechnicalModal && taggedUserList.length > 0}
-              onOk={showModalTechnical}
-              footer={null}
-              onCancel={() => {
+              width={ 1000 }
+              title={ null }
+              open={ isOpenTechnicalModal && taggedUserList.length > 0 }
+              onOk={ showModalTechnical }
+              footer={ null }
+              onCancel={ () => {
                 dispatch(setData({ stateName: "taggedUserList", data: [] }));
                 setOpenCommentModle(false);
                 setTextAreaValue("");
                 showModalTechnical();
-              }}
+              } }
             >
               <div className="task-detail-panel notes-details-model">
                 <div className="left-task-detail-panel">
                   <div className="project-title">
-                    {isTitleEditing ? (
+                    { isTitleEditing ? (
                       <Input
-                        value={editedTitle}
-                        onChange={(e) => setEditedTitle(e.target.value)}
+                        value={ editedTitle }
+                        onChange={ (e) => setEditedTitle(e.target.value) }
                       />
                     ) : (
                       <h1>
-                        {notesDetails.title?.length > 40
+                        { notesDetails.title?.length > 40
                           ? `${notesDetails.title.slice(0, 39)}...`
-                          : notesDetails.title}
+                          : notesDetails.title }
                       </h1>
-                    )}
+                    ) }
                     <div className="project-edit-block">
                       <Button
-                        onClick={updateNotesModel}
-                        disabled={!editorData.trim()}
+                        onClick={ updateNotesModel }
+                        disabled={ !editorData.trim() }
                         type="primary"
                       >
                         Save
@@ -1479,9 +1490,9 @@ function NotesPMS() {
 
                   <header className="editor-action-icons product-details-icons">
                     <CKEditor
-                      editor={Custombuild}
-                      data={editorData}
-                      config={{
+                      editor={ Custombuild }
+                      data={ editorData }
+                      config={ {
                         toolbar: [
                           "heading",
                           "|",
@@ -1545,190 +1556,189 @@ function NotesPMS() {
                         print: {
                           // Implement print functionality here
                         },
-                      }}
-                      onChange={handleChange}
-                      onPaste={handlePaste}
+                      } }
+                      onChange={ handleChange }
+                      onPaste={ handlePaste }
                     />
                   </header>
                 </div>
                 <div className="right-task-detail-panel">
                   <div className="right-toolbar">
                     <div
-                      className={`right-toolbar-tab ${activeTab.toLowerCase()}`}
+                      className={ `right-toolbar-tab ${activeTab.toLowerCase()}` }
                     >
                       <label
-                        onClick={() => {
+                        onClick={ () => {
                           handleTabChange("comments");
                           getComment(notesDetails._id);
-                        }}
-                        style={{ cursor: "pointer" }}
-                        className={`${activeClass()}`}
+                        } }
+                        style={ { cursor: "pointer" } }
+                        className={ `${activeClass()}` }
                       >
                         Comments
                         <span className="comment-badge">
-                          {comments.length || 0}
+                          { comments.length || 0 }
                         </span>
                       </label>
                       <label
-                        onClick={() => handleTabChange("Subscribers")}
-                        style={{ cursor: "pointer" }}
-                        className={`${activeClass1()}`}
+                        onClick={ () => handleTabChange("Subscribers") }
+                        style={ { cursor: "pointer" } }
+                        className={ `${activeClass1()}` }
                       >
                         Subscribers
                       </label>
                     </div>
                   </div>
                   <div
-                    className={`task-detail-inner ${activeTab.toLowerCase()}`}
+                    className={ `task-detail-inner ${activeTab.toLowerCase()}` }
                   >
-                    {activeTab === "comments" ? (
+                    { activeTab === "comments" ? (
                       <>
                         <div
                           className="comment-list-wrapper"
-                          ref={commentListRef}
+                          ref={ commentListRef }
                         >
-                          {comments && comments.length > 0 ? (
+                          { comments && comments.length > 0 ? (
                             comments?.map((item, index) => (
-                              <div className="main-comment-wrapper" key={index}>
+                              <div className="main-comment-wrapper" key={ index }>
                                 <div className="main-avatar-wrapper">
                                   <MyAvatar
-                                    key={item._id}
-                                    userName={item.sender}
-                                    alt={item.sender}
-                                    src={item.profile_pic}
+                                    key={ item._id }
+                                    userName={ item.sender }
+                                    alt={ item.sender }
+                                    src={ item.profile_pic }
                                   />
-                                  {isCreatedBy(item?.sender_id) && (
+                                  { isCreatedBy(item?.sender_id) && (
                                     <div className="edit-bar">
                                       <Dropdown
-                                        trigger={["click"]}
+                                        trigger={ ["click"] }
                                         overlay={
                                           <Menu>
                                             <Menu.Item
                                               key="1"
-                                              onClick={() => {
+                                              onClick={ () => {
                                                 setOpenCommentModle(true);
                                                 handleEditComment(item._id);
-                                              }}
+                                              } }
                                             >
                                               <EditOutlined
-                                                style={{ color: "green" }}
+                                                style={ { color: "green" } }
                                               />
                                               Edit
                                             </Menu.Item>
                                             <Menu.Item
                                               key="2"
-                                              onClick={() => {
+                                              onClick={ () => {
                                                 deleteComment(item._id);
-                                              }}
+                                              } }
                                               className="ant-delete"
                                             >
                                               <DeleteOutlined
-                                                style={{ color: "red" }}
+                                                style={ { color: "red" } }
                                               />
                                               Delete
                                             </Menu.Item>
                                           </Menu>
                                         }
-                                        onClick={handleDropdownClick2}
+                                        onClick={ handleDropdownClick2 }
                                       >
                                         <MoreOutlined
-                                          style={{ cursor: "pointer" }}
+                                          style={ { cursor: "pointer" } }
                                         />
                                       </Dropdown>
                                     </div>
-                                  )}
+                                  ) }
                                   <div className="comment-sender-name">
                                     <h1
-                                      style={{
+                                      style={ {
                                         color:
                                           userColors[item.sender] || "#000",
-                                      }}
+                                      } }
                                     >
-                                      {removeTitle(item.sender)}
+                                      { removeTitle(item.sender) }
                                     </h1>
                                     <h4>
-                                      {calculateTimeDifference(item.createdAt)}{" "}
+                                      { calculateTimeDifference(item.createdAt) }{ " " }
                                       (
-                                      {moment(item?.createdAt).format(
+                                      { moment(item?.createdAt).format(
                                         "DD-MM-YYYY"
-                                      )}
+                                      ) }
                                       )
                                     </h4>
                                   </div>
                                 </div>
                                 <div className="comment-wrapper">
-                                  <p key={index}>
+                                  <p key={ index }>
                                     <span
-                                      dangerouslySetInnerHTML={{
+                                      dangerouslySetInnerHTML={ {
                                         __html: item?.comment.replace(
                                           /\n/g,
                                           "<br>"
                                         ),
-                                      }}
+                                      } }
                                     ></span>
                                   </p>
                                   <div className="notes-pop-file-wrapper">
-                                    {item?.attachments.map((file, index) => (
-                                      <Badge key={index}>
+                                    { item?.attachments.map((file, index) => (
+                                      <Badge key={ index }>
                                         <div className="fileAttachment_Box">
                                           <div className="fileAttachment_box-img">
-                                            {fileImageSelect(file?.file_type)}
+                                            { fileImageSelect(file?.file_type) }
                                           </div>
                                           <div
-                                            style={{
+                                            style={ {
                                               display: "flex",
                                               marginBottom: "10px",
                                               width: "100%",
                                               justifyContent: "space-between",
-                                            }}
+                                            } }
                                           >
                                             <a
                                               className="fileNameTxtellipsis"
-                                              href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
+                                              href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
                                               rel="noopener noreferrer"
                                               target="_blank"
                                             >
-                                              {file.name.length > 15
+                                              { file.name.length > 15
                                                 ? `${file.name.slice(
-                                                    0,
-                                                    15
-                                                  )}.....${
-                                                    file.file_type || file.type
-                                                  }`
+                                                  0,
+                                                  15
+                                                )}.....${file.file_type || file.type
+                                                }`
                                                 : file.name + file.file_type ||
-                                                  file.type}
+                                                file.type }
                                             </a>
                                           </div>
                                         </div>
                                       </Badge>
-                                    ))}
+                                    )) }
                                   </div>
                                 </div>
                               </div>
                             ))
                           ) : (
                             <div className="notes-no-comments">No Comments</div>
-                          )}
+                          ) }
                         </div>
                         <div className="comment-textarea">
                           <AddComment
-                            editFlagObj={{
+                            editFlagObj={ {
                               flag: openCommentModel,
                               setFn: setOpenCommentModle,
                               submitFn: handleComments,
-                            }}
-                            populatedFiles={populatedFiles}
-                            setPopulatedFiles={setPopulatedFiles}
-                            deleteFileData={deleteFileData}
-                            setDeleteFileData={setDeleteFileData}
-                            addComment={addComments} 
-                            id={notesId} 
-                            setTextAreaValue={setTextAreaValue} 
-                            isTextAreaFocused={isTextAreaFocused} 
-                            setIsTextAreaFocused={setIsTextAreaFocused}
-                            textAreaValue={textAreaValue}
-                            userList={taggedUserList}
-                            onDraftChange={handleCommentDraftChange}
+                            } }
+                            populatedFiles={ populatedFiles }
+                            setPopulatedFiles={ setPopulatedFiles }
+                            deleteFileData={ deleteFileData }
+                            setDeleteFileData={ setDeleteFileData }
+                            addComment={ addComments }
+                            id={ notesId }
+                            setTextAreaValue={ setTextAreaValue }
+                            isTextAreaFocused={ isTextAreaFocused }
+                            setIsTextAreaFocused={ setIsTextAreaFocused }
+                            textAreaValue={ textAreaValue }
+                            userList={ taggedUserList }
+                            onDraftChange={ handleCommentDraftChange }
                           />
                         </div>
                       </>
@@ -1738,18 +1748,18 @@ function NotesPMS() {
                           <div className="project-search">
                             <Search
                               placeholder="Search..."
-                              onSearch={(val) => {
+                              onSearch={ (val) => {
                                 setfilterSubscribersSearch(val);
                                 setfilterSubscribersSearch1(val);
-                              }}
+                              } }
                               className="mr2"
-                              suffix={null}
-                              style={{
+                              suffix={ null }
+                              style={ {
                                 width: 200,
-                              }}
+                              } }
                             />
                             <h3>
-                              {managePeopleVisible ? (
+                              { managePeopleVisible ? (
                                 allSubscribers
                                   ?.filter((data) =>
                                     data.full_name
@@ -1759,40 +1769,40 @@ function NotesPMS() {
                                       )
                                   )
                                   .map((subscriber) => (
-                                    <div key={subscriber._id}>
+                                    <div key={ subscriber._id }>
                                       <Checkbox
-                                        onChange={() =>
+                                        onChange={ () =>
                                           handleCheckboxChange(subscriber._id)
                                         }
-                                        checked={manageSubscribers.includes(
+                                        checked={ manageSubscribers.includes(
                                           subscriber._id
-                                        )}
-                                        value={manageSubscribers}
+                                        ) }
+                                        value={ manageSubscribers }
                                       />
                                       <div
-                                        style={{
+                                        style={ {
                                           display: "flex",
                                           flexDirection: "row",
                                           marginLeft: "10px",
-                                        }}
+                                        } }
                                       >
                                         <MyAvatar
-                                          userName={subscriber.full_name}
-                                          key={subscriber._id}
-                                          alt={subscriber.full_name}
-                                          src={subscriber.emp_img}
+                                          userName={ subscriber.full_name }
+                                          key={ subscriber._id }
+                                          alt={ subscriber.full_name }
+                                          src={ subscriber.emp_img }
                                         />
 
                                         <h3>
-                                          {removeTitle(subscriber.full_name)}
+                                          { removeTitle(subscriber.full_name) }
                                         </h3>
                                       </div>
                                     </div>
                                   ))
                               ) : (
                                 <>
-                                  {notesDetails.subscribers &&
-                                  notesDetails.subscribers.length > 0 ? (
+                                  { notesDetails.subscribers &&
+                                    notesDetails.subscribers.length > 0 ? (
                                     notesDetails.subscribers
                                       ?.filter((data) =>
                                         data.full_name
@@ -1802,67 +1812,67 @@ function NotesPMS() {
                                           )
                                       )
                                       .map((subscriber) => (
-                                        <div key={subscriber._id}>
+                                        <div key={ subscriber._id }>
                                           <MyAvatar
-                                            userName={subscriber.full_name}
-                                            key={subscriber._id}
-                                            alt={subscriber.full_name}
-                                            src={subscriber.emp_img}
+                                            userName={ subscriber.full_name }
+                                            key={ subscriber._id }
+                                            alt={ subscriber.full_name }
+                                            src={ subscriber.emp_img }
                                           />
                                           <h3 className="subscriber-name">
                                             <div className="model-subscribers">
-                                              {removeTitle(
+                                              { removeTitle(
                                                 subscriber.full_name
-                                              )}
+                                              ) }
                                             </div>
                                           </h3>
                                         </div>
                                       ))
                                   ) : (
                                     <p>Add People to view Subscribers</p>
-                                  )}
+                                  ) }
                                 </>
-                              )}
+                              ) }
                             </h3>
                           </div>
                         </div>
                         <div className="task-tab-btn">
-                          {!managePeopleVisible && IsEdit && (
+                          { !managePeopleVisible && IsEdit && (
                             <Button
                               type="primary"
-                              onClick={() => {
+                              onClick={ () => {
                                 getProjectSubscribersList();
                                 setManagePeopleVisible(true);
-                              }}
+                              } }
                             >
                               <span>
                                 <UsergroupAddOutlined />
                               </span>
                               Manage People
                             </Button>
-                          )}
-                          {managePeopleVisible && (
+                          ) }
+                          { managePeopleVisible && (
                             <div className="manage-btn">
                               <Button
                                 type="primary"
-                                onClick={handleUpdateSubscribers}
+                                onClick={ handleUpdateSubscribers }
                               >
                                 Update
                               </Button>
                               <Button
-                                onClick={() => {
+                                onClick={ () => {
                                   setManagePeopleVisible(false);
                                   openModelList(tempSubID);
-                                }}
+                                } }
                                 className="ant-delete"
                               >
                                 Cancel
                               </Button>
                             </div>
-                          )}
+                          ) }
                         </div>
                       </>
-                    )}
+                    ) }
                   </div>
                 </div>
               </div>
@@ -1872,21 +1882,21 @@ function NotesPMS() {
       </div>
 
       <EditCommentModal
-        open={false}
-        cancel={handleCommentModel}
-        formName={formComment}
-        onFinish={handleComments}
-        Mentionvalue={commentVal}
-        onChange={setCommentVal}
-        onSelect={handleSelect}
-        fileAttachment={fileAttachment}
-        populatedFiles={populatedFiles}
-        removeAttachmentFile={removeAttachmentFile}
-        attachmentfileRef={attachmentfileRef}
-        foldersList={foldersList}
-        onFileChange={onFileChange}
-        setIsTextAreaFocused={setIsTextAreaFocused}
-        userList={taggedUserList}
+        open={ false }
+        cancel={ handleCommentModel }
+        formName={ formComment }
+        onFinish={ handleComments }
+        Mentionvalue={ commentVal }
+        onChange={ setCommentVal }
+        onSelect={ handleSelect }
+        fileAttachment={ fileAttachment }
+        populatedFiles={ populatedFiles }
+        removeAttachmentFile={ removeAttachmentFile }
+        attachmentfileRef={ attachmentfileRef }
+        foldersList={ foldersList }
+        onFileChange={ onFileChange }
+        setIsTextAreaFocused={ setIsTextAreaFocused }
+        userList={ taggedUserList }
       />
     </>
   );

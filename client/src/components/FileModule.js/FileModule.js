@@ -1600,218 +1600,218 @@ function FileModule() {
       </Modal>
 
       {/*                               upload modal                                      */ }
-<Modal
-  open={isopenModelUpload}
-  onCancel={handleCancelUpload}
-  title="Upload Files"
-  width={800}
-  footer={[
-    <Button
-      key="cancel"
-      onClick={handleCancelUpload}
-      className="delete-btn"
-      size="large"
-    >
-      Cancel
-    </Button>,
-    <Button
-      key="submit"
-      type="primary"
-      className="square-primary-btn"
-      size="large"
-      onClick={() => fileForm.submit()}
-    >
-      Ok
-    </Button>,
-  ]}
->
-  <div className="overview-modal-wrapper">
-    <Form
-      form={fileForm}
-      layout="vertical"
-      onFinish={(values) => handleTaskOps(values)}
-    >
-      <Row gutter={[0, 0]}>
-        {/* File Upload Section - Full width */}
-        <Col xs={24} sm={24} md={24} lg={24}>
-          <Form.Item label="Upload Files">
-            <div
-              onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              style={{
-                border: "2px dashed #cccccc",
-                padding: "15px 10px",
-                textAlign: "center",
-                minHeight: "80px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              <p 
-                onClick={() => attachmentfileRef.current.click()}
-                style={{
-                  margin: 0,
-                  cursor: "pointer",
-                  fontSize: "14px"
-                }}
-              >
-                Drag and Drop Files here
-              </p>
-            </div>
-            <Button
-              className="link-btn"
-              onClick={() => attachmentfileRef.current.click()}
-              icon={<UploadOutlined />}
-              size="large"
-              style={{ marginTop: "8px", width: "100%" }}
-            >
-              Browse Files
-            </Button>
-          </Form.Item>
-        </Col>
-
-        {/* File Attachments Section - Full width */}
-        {fileAttachment.length > 0 && (
-          <Col xs={24} sm={24} md={24} lg={24}>
-            <div className="file-attachments-section">
-              <h4
-                style={{
-                  marginBottom: 12,
-                  color: "#666",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                }}
-              >
-                Attached Files
-              </h4>
-              <div className="fileAttachment_container" style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "8px"
-              }}>
-                {fileAttachment.map((file, index) => (
-                  <Badge
-                    key={index}
-                    count={
-                      <CloseCircleOutlined
-                        onClick={() => removeAttachmentFile(index)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    }
+      <Modal
+        open={ isopenModelUpload }
+        onCancel={ handleCancelUpload }
+        title="Upload Files"
+        width={ 800 }
+        footer={ [
+          <Button
+            key="cancel"
+            onClick={ handleCancelUpload }
+            className="delete-btn"
+            size="large"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="square-primary-btn"
+            size="large"
+            onClick={ () => fileForm.submit() }
+          >
+            Ok
+          </Button>,
+        ] }
+      >
+        <div className="overview-modal-wrapper">
+          <Form
+            form={ fileForm }
+            layout="vertical"
+            onFinish={ (values) => handleTaskOps(values) }
+          >
+            <Row gutter={ [0, 0] }>
+              {/* File Upload Section - Full width */ }
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                <Form.Item label="Upload Files">
+                  <div
+                    onDragEnter={ handleDragEnter }
+                    onDragOver={ handleDragOver }
+                    onDragLeave={ handleDragLeave }
+                    onDrop={ handleDrop }
+                    style={ {
+                      border: "2px dashed #cccccc",
+                      padding: "15px 10px",
+                      textAlign: "center",
+                      minHeight: "80px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    } }
                   >
-                    <div className="fileAttachment_Box">
-                      <p className="fileNameTxtellipsis">{file.name}</p>
+                    <p
+                      onClick={ () => attachmentfileRef.current.click() }
+                      style={ {
+                        margin: 0,
+                        cursor: "pointer",
+                        fontSize: "14px"
+                      } }
+                    >
+                      Drag and Drop Files here
+                    </p>
+                  </div>
+                  <Button
+                    className="link-btn"
+                    onClick={ () => attachmentfileRef.current.click() }
+                    icon={ <UploadOutlined /> }
+                    size="large"
+                    style={ { marginTop: "8px", width: "100%" } }
+                  >
+                    Browse Files
+                  </Button>
+                </Form.Item>
+              </Col>
+
+              {/* File Attachments Section - Full width */ }
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                  <div className="file-attachments-section">
+                    <h4
+                      style={ {
+                        marginBottom: 12,
+                        color: "#666",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                      } }
+                    >
+                      Attached Files
+                    </h4>
+                    <div className="fileAttachment_container" style={ {
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px"
+                    } }>
+                      { fileAttachment.map((file, index) => (
+                        <Badge
+                          key={ index }
+                          count={
+                            <CloseCircleOutlined
+                              onClick={ () => removeAttachmentFile(index) }
+                              style={ { cursor: "pointer" } }
+                            />
+                          }
+                        >
+                          <div className="fileAttachment_Box">
+                            <p className="fileNameTxtellipsis">{ file.name }</p>
+                          </div>
+                        </Badge>
+                      )) }
                     </div>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </Col>
-        )}
+                  </div>
+                </Col>
+              ) }
 
-        {/* Subscribers Section - Half width */}
-        {fileAttachment.length > 0 && (
-          <Col xs={24} sm={24} md={12} lg={12}>
-            <Form.Item label="Subscribers" name="subscribers" className="subscriber-section">
-              <MultiSelect
-                onSearch={handleSearch}
-                onChange={handleSelectedItemsChange}
-                values={selectedItems ? selectedItems.map((item) => item._id) : []}
-                listData={subscribersList}
-                search={searchKeyword}
-              />
-              {selectedItems && selectedItems.length > 0 && (
-                <div className="list-clear-btn" style={{ marginTop: 8 }}>
-                  <Button
-                    onClick={() => setSelectedItems([])}
-                    className="list-clear-btn ant-delete"
-                    size="small"
+              {/* Subscribers Section - Half width */ }
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item label="Subscribers" name="subscribers" className="subscriber-section">
+                    <MultiSelect
+                      onSearch={ handleSearch }
+                      onChange={ handleSelectedItemsChange }
+                      values={ selectedItems ? selectedItems.map((item) => item._id) : [] }
+                      listData={ subscribersList }
+                      search={ searchKeyword }
+                    />
+                    { selectedItems && selectedItems.length > 0 && (
+                      <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                        <Button
+                          onClick={ () => setSelectedItems([]) }
+                          className="list-clear-btn ant-delete"
+                          size="small"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    ) }
+                  </Form.Item>
+                </Col>
+              ) }
+
+              {/* Client Section - Half width */ }
+              { fileAttachment.length > 0 && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item label="Client" name="client" className="client-section">
+                    <MultiSelect
+                      onSearch={ handleSearch }
+                      onChange={ handleSelectedClientsChange }
+                      values={ selectedClient ? selectedClient.map((item) => item._id) : [] }
+                      listData={ clientsList }
+                      search={ searchKeyword }
+                    />
+                    { selectedClient && selectedClient.length > 0 && (
+                      <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                        <Button
+                          onClick={ () => setSelectedClient([]) }
+                          className="list-clear-btn ant-delete"
+                          size="small"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    ) }
+                  </Form.Item>
+                </Col>
+              ) }
+
+              {/* Folder Selection - Full width on mobile */ }
+              { fileAttachment.length > 0 && allFiles === "active" && (
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+                  <Form.Item
+                    label="Folder"
+                    name="folder_name"
+                    rules={ [{ required: true, message: "Please select a folder" }] }
                   >
-                    Clear
-                  </Button>
-                </div>
-              )}
-            </Form.Item>
-          </Col>
-        )}
+                    <Select
+                      placeholder="Select Folder"
+                      showSearch
+                      size="large"
+                      filterOption={ (input, option) =>
+                        option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
+                      }
+                      filterSort={ (optionA, optionB) =>
+                        optionA.children
+                          ?.toLowerCase()
+                          ?.localeCompare(optionB.children?.toLowerCase())
+                      }
+                    >
+                      { folderList?.map((item, index) => (
+                        <Option
+                          key={ index }
+                          value={ item?._id }
+                          style={ { textTransform: "capitalize" } }
+                        >
+                          { item?.name }
+                        </Option>
+                      )) }
+                    </Select>
+                  </Form.Item>
+                </Col>
+              ) }
+            </Row>
 
-        {/* Client Section - Half width */}
-        {fileAttachment.length > 0 && (
-          <Col xs={24} sm={24} md={12} lg={12}>
-            <Form.Item label="Client" name="client" className="client-section">
-              <MultiSelect
-                onSearch={handleSearch}
-                onChange={handleSelectedClientsChange}
-                values={selectedClient ? selectedClient.map((item) => item._id) : []}
-                listData={clientsList}
-                search={searchKeyword}
-              />
-              {selectedClient && selectedClient.length > 0 && (
-                <div className="list-clear-btn" style={{ marginTop: 8 }}>
-                  <Button
-                    onClick={() => setSelectedClient([])}
-                    className="list-clear-btn ant-delete"
-                    size="small"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              )}
-            </Form.Item>
-          </Col>
-        )}
-
-        {/* Folder Selection - Full width on mobile */}
-        {fileAttachment.length > 0 && allFiles === "active" && (
-          <Col xs={24} sm={24} md={12} lg={12}>
-            <Form.Item
-              label="Folder"
-              name="folder_name"
-              rules={[{ required: true, message: "Please select a folder" }]}
-            >
-              <Select
-                placeholder="Select Folder"
-                showSearch
-                size="large"
-                filterOption={(input, option) =>
-                  option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
-                }
-                filterSort={(optionA, optionB) =>
-                  optionA.children
-                    ?.toLowerCase()
-                    ?.localeCompare(optionB.children?.toLowerCase())
-                }
-              >
-                {folderList?.map((item, index) => (
-                  <Option
-                    key={index}
-                    value={item?._id}
-                    style={{ textTransform: "capitalize" }}
-                  >
-                    {item?.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        )}
-      </Row>
-
-      {/* Hidden file input */}
-      <input
-        multiple
-        type="file"
-        accept="*"
-        onChange={onFileChange}
-        hidden
-        ref={attachmentfileRef}
-      />
-    </Form>
-  </div>
-</Modal>
+            {/* Hidden file input */ }
+            <input
+              multiple
+              type="file"
+              accept="*"
+              onChange={ onFileChange }
+              hidden
+              ref={ attachmentfileRef }
+            />
+          </Form>
+        </div>
+      </Modal>
 
       {/*        folder  model               */ }
       <Modal
