@@ -1289,9 +1289,7 @@ function TasksPMS({ flag }) {
         open={ isModalOpenTaskModal }
         onCancel={ handleCancelTaskModal }
         className="add-task-modal edit-details-task-model"
-        width="90%"
-        style={ { maxWidth: 1000 } }
-        zIndex={ 2000 }
+        width={ 800 }
         footer={ [
           <Button
             key="cancel"
@@ -1572,8 +1570,8 @@ function TasksPMS({ flag }) {
                     </Badge>
                   )) }
                 </div>
-                </Col>
-                 <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 { fileAttachment.length > 0 && (
                   <div className="folder-comment">
                     <Form.Item
@@ -1602,8 +1600,8 @@ function TasksPMS({ flag }) {
                     </Form.Item>
                   </div>
                 ) }
-                </Col>
-   
+              </Col>
+
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Tooltip key="attach" placement="top" title="Attached file">
                   <Button
@@ -1912,8 +1910,8 @@ function TasksPMS({ flag }) {
                     </Badge>
                   )) }
                 </div>
-                </Col>
-                   <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 { fileAttachment.length > 0 && (
                   <div className="folder-comment">
                     <Form.Item

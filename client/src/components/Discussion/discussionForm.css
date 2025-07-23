@@ -62,7 +62,7 @@
 .discussion-module .profileleftbar .project-update {
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: calc(100vh - 240px);
+    max-height: calc(100vh - 270px);
     height: 100%;
     padding-right: 5px;
 }
