@@ -47,6 +47,7 @@ import Unauthorised from "../../components/Unauthorised/Unauthorised";
 import Service from "../../service";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
+import {isEmpty} from "lodash"
 
 
 function RestrictedRoute({
@@ -187,8 +188,8 @@ function App() {
     link.className = "gx-style";
     document.body.appendChild(link);
 
-    if(!companySlug){
-      let slug = extractSlug(location.pathname)
+    let slug = extractSlug(location.pathname)
+    if(slug){
       setCompanySlug(slug)
     }
   }, []);
@@ -292,7 +293,7 @@ function App() {
         api_url: `${Service.getCompanyDetails}?slug=${companySlug}`,
         methodName: Service.getMethod
       });
-      if (response.data.status == 1) {
+      if (response.data.status == 1 && !isEmpty(response.data.data)) {
         dispatch(hideAuthLoader());
         setSiteTitle(response?.data?.data?.companyName)
         localStorage.setItem("title", response?.data?.data?.companyName);

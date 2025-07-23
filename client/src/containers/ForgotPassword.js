@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
 function ForgetPassword() {
   let { companySlug : companySlugTemp } = useParams();
   const companySlug = localStorage.getItem("companyDomain") || companySlugTemp;
-  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "Elsner";
+  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "";
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   
   const handleSubmit = async values => {
