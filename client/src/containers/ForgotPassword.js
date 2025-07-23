@@ -3,9 +3,13 @@ import { Button, Input, message, Form } from "antd";
 import Service from "../service";
 import { Link } from "react-router-dom";
 import TaskHub from "../assets/images/taskhubicon.svg"
+import { useParams } from "react-router-dom";
+
 
 function ForgetPassword() {
-  const companySlug = localStorage.getItem("companyDomain");
+  let { companySlug : companySlugTemp } = useParams();
+  const companySlug = localStorage.getItem("companyDomain") || companySlugTemp;
+  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "Elsner";
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   
   const handleSubmit = async values => {
@@ -41,7 +45,7 @@ function ForgetPassword() {
                   <h1>Trouble Logging in?</h1>
                 </div>
                 <div className="gx-app-login-left-content">
-                  <h6>Welcome to Elsner TaskHub Portal !</h6>
+                  <h6>Welcome to {companyTitle} TaskHub Portal !</h6>
 
                 </div>
                 <Form

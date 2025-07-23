@@ -288,9 +288,8 @@ const TimeSheet = () => {
       },
     };
   }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels]);
-  
 
-  // Memoized table columns
+  // Memoized table columns - FIXED SORTING ISSUES
   const columns = useMemo(() => [
     {
       title: "User",
@@ -304,7 +303,11 @@ const TimeSheet = () => {
           </span>
         </div>
       ),
-      sorter: (a, b) => a.user.localeCompare(b.user),
+      sorter: (a, b) => {
+        const userA = a.user || '';
+        const userB = b.user || '';
+        return userA.localeCompare(userB);
+      },
       ellipsis: true,
     },
     {
@@ -326,7 +329,12 @@ const TimeSheet = () => {
           </Link>
         );
       },
-      sorter: (a, b) => a.project.localeCompare(b.project),
+      // FIXED: Handle null/undefined values and use proper string comparison
+      sorter: (a, b) => {
+        const projectA = a.project || '';
+        const projectB = b.project || '';
+        return projectA.localeCompare(projectB);
+      },
       ellipsis: true,
     },
     {
@@ -349,7 +357,12 @@ const TimeSheet = () => {
         ) : (
           <span className="no-description">-</span>
         ),
-      sorter: (a, b) => a.descriptions.localeCompare(b.descriptions),
+      // FIXED: Handle empty/null descriptions properly
+      sorter: (a, b) => {
+        const descA = a.descriptions || '';
+        const descB = b.descriptions || '';
+        return descA.localeCompare(descB);
+      },
       ellipsis: true,
     },
     {
@@ -366,7 +379,12 @@ const TimeSheet = () => {
           </div>
         );
       },
-      sorter: (a, b) => a.logged_date - b.logged_date,
+      // FIXED: Proper date comparison using Date objects
+      sorter: (a, b) => {
+        const dateA = new Date(a.logged_date);
+        const dateB = new Date(b.logged_date);
+        return dateA - dateB;
+      },
       align: 'center',
     },
     {
@@ -379,10 +397,15 @@ const TimeSheet = () => {
           <span className="time-hours">{record.logged_time}</span>
         </div>
       ),
-      sorter: (a, b) => a.logged_hours - b.logged_hours,
+      // FIXED: Sort by actual logged hours (numeric) with proper field reference
+      sorter: (a, b) => {
+        const hoursA = parseFloat(a.logged_hours) || 0;
+        const hoursB = parseFloat(b.logged_hours) || 0;
+        return hoursA - hoursB;
+      },
       align: 'center',
     },
-  ], []);
+  ], [companySlug]);
 
   // Memoized handlers
   const handleDepartmentSelection = useCallback((selectedDepartments) => {

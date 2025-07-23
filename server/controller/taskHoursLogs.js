@@ -2207,9 +2207,9 @@ exports.getTimesheetsReports = async (req, res) => {
         $project: {
           _id: 1,
           employee_id: 1,
-          user_code: {
-            $ifNull: [{ $first: "$employee.emp_code" }, ""]
-          },
+          // user_code: {
+          //   $ifNull: [{ $first: "$employee.emp_code" }, ""]
+          // },
           user: {
             $ifNull: [{ $first: "$employee.full_name" }, ""]
           },
