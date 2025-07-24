@@ -75,11 +75,11 @@ const ComplaintDetailsForm = () => {
   const formItemLayout = {
     labelCol: {
       xs: { span: 24 },
-      sm: { span: 8 },
+
     },
     wrapperCol: {
       xs: { span: 24 },
-      sm: { span: 16 },
+    
     },
   };
 
@@ -375,7 +375,7 @@ const ComplaintDetailsForm = () => {
             >
               <div className="employee-main-information complaint-status-form-inner mb2">
                 <Row>
-                  <Col sm={ 24 } lg={ 12 } xl={ 10 } className="feedback-detail-views">
+                  <Col sm={ 24 } lg={ 12 } className="feedback-detail-views">
                     <div className="employee-info-1">
                       <Form.Item
                         name="status"
@@ -446,7 +446,7 @@ const ComplaintDetailsForm = () => {
                       </Form.Item>
                     </div>
                   </Col>
-                  <Col sm={ 24 } lg={ 12 } xl={ 9 } className="feedback-detail-views">
+                  <Col sm={ 24 } lg={ 12 } className="feedback-detail-views">
                     <div className="employee-info">
                       <Form.Item
                         name="corrective_action"
