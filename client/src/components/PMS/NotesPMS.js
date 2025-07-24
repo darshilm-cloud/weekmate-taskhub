@@ -1021,7 +1021,7 @@ function NotesPMS() {
         title={ modelModeNotes === "add" ? "Add Note" : "Edit Note" }
         className="add-task-modal add-list-modal"
         width="800"
-      
+
         footer={ [
           <Button key="cancel" className="delete-btn" onClick={ handleCancelNote } size="large">
             Cancel
@@ -1154,122 +1154,131 @@ function NotesPMS() {
             </div>
             <div className="head-box-inner"></div>
             <div className="block-status-content">
-              <div className="status-content" style={ { cursor: "pointer" } }>
-                <h6>Subscribers:</h6>
-                <Popover
-                  placement="bottomRight"
-                  content={
-                    <div className="right-popover-wrapper">
-                      <ul>
-                        <div className="filter-search-box">
-                          <li>
-                            <Checkbox
-                              checked={
-                                filterSubscribers[0] == "all" ||
-                                filterSubscribers.length === 0
-                              }
-                              onChange={ () =>
-                                handleSelectionAssignedFilter("all", true)
-                              }
-                            >
-                              All
-                            </Checkbox>
-                          </li>
-                          <li>
-                            <Checkbox
-                              checked={ filterSubscribers[0] == "unassigned" }
-                              onChange={ () =>
-                                handleSelectionAssignedFilter(
-                                  "unassigned",
-                                  true
-                                )
-                              }
-                            >
-                              Unassigned Tasks
-                            </Checkbox>
-                          </li>
-                          <li>
-                            <Search
-                              value={ filterSubscribersSearchInput }
-                              onSearch={ (val) =>
-                                setfilterSubscribersSearchInput(val)
-                              }
-                              onChange={ (e) =>
-                                setfilterSubscribersSearchInput(e.target.value)
-                              }
-                            />
-                          </li>
-                        </div>
-                        <div className="filter-assignees assigness-data">
-                          { subscribers
-                            ?.filter((data) =>
-                              data.full_name
-                                ?.toLowerCase()
-                                .includes(
-                                  filterSubscribersSearchInput.toLowerCase()
-                                )
-                            )
-                            .map((item, index) => (
-                              <li
-                                key={ index }
-                                className={
-                                  filterSubscribers.includes(item._id)
-                                    ? "selected-filter-member"
-                                    : ""
+              <div className="filter-btn-wrapper">
+                <div className="status-content" style={ { cursor: "pointer" } }>
+
+                  <Popover
+                    placement="bottomRight"
+                    content={
+                      <div className="right-popover-wrapper">
+                        <ul>
+                          <div className="filter-search-box">
+                            <li>
+                              <Checkbox
+                                checked={
+                                  filterSubscribers[0] == "all" ||
+                                  filterSubscribers.length === 0
+                                }
+                                onChange={ () =>
+                                  handleSelectionAssignedFilter("all", true)
                                 }
                               >
-                                <Checkbox
+                                All
+                              </Checkbox>
+                            </li>
+                            <li>
+                              <Checkbox
+                                checked={ filterSubscribers[0] == "unassigned" }
+                                onChange={ () =>
+                                  handleSelectionAssignedFilter(
+                                    "unassigned",
+                                    true
+                                  )
+                                }
+                              >
+                                Unassigned Tasks
+                              </Checkbox>
+                            </li>
+                            <li>
+                              <Search
+                                value={ filterSubscribersSearchInput }
+                                onSearch={ (val) =>
+                                  setfilterSubscribersSearchInput(val)
+                                }
+                                onChange={ (e) =>
+                                  setfilterSubscribersSearchInput(e.target.value)
+                                }
+                              />
+                            </li>
+                          </div>
+                          <div className="filter-assignees assigness-data">
+                            { subscribers
+                              ?.filter((data) =>
+                                data.full_name
+                                  ?.toLowerCase()
+                                  .includes(
+                                    filterSubscribersSearchInput.toLowerCase()
+                                  )
+                              )
+                              .map((item, index) => (
+                                <li
                                   key={ index }
-                                  checked={ filterSubscribers.includes(item._id) }
-                                  onChange={ () =>
-                                    handleSelectionAssignedFilter(item._id)
+                                  className={
+                                    filterSubscribers.includes(item._id)
+                                      ? "selected-filter-member"
+                                      : ""
                                   }
-                                />
+                                >
+                                  <Checkbox
+                                    key={ index }
+                                    checked={ filterSubscribers.includes(item._id) }
+                                    onChange={ () =>
+                                      handleSelectionAssignedFilter(item._id)
+                                    }
+                                  />
 
-                                <MyAvatar
-                                  key={ item._id }
-                                  userName={ item?.full_name }
-                                  alt={ item?.full_name }
-                                  src={ item.emp_img }
-                                />
-                                { removeTitle(item.full_name) }
-                              </li>
-                            )) }
+                                  <MyAvatar
+                                    key={ item._id }
+                                    userName={ item?.full_name }
+                                    alt={ item?.full_name }
+                                    src={ item.emp_img }
+                                  />
+                                  { removeTitle(item.full_name) }
+                                </li>
+                              )) }
+                          </div>
+                        </ul>
+                        <div className="popver-footer-btn">
+                          <Button
+                            type="primary"
+                            className="square-primary-btn ant-btn-primary"
+                            onClick={ () => {
+                              handleAllFilter();
+                              setfilterSubscribersSearchInput("");
+                            } }
+                          >
+                            Apply
+                          </Button>
+                          <Button
+                            className="square-outline-btn ant-delete"
+                            // onClick={() => setOpenSubscribers(false)}
+                            onClick={ () => handleCancleFilter() }
+                          >
+                            Cancel
+                          </Button>
                         </div>
-                      </ul>
-                      <div className="popver-footer-btn">
-                        <Button
-                          type="primary"
-                          className="square-primary-btn ant-btn-primary"
-                          onClick={ () => {
-                            handleAllFilter();
-                            setfilterSubscribersSearchInput("");
-                          } }
-                        >
-                          Apply
-                        </Button>
-                        <Button
-                          className="square-outline-btn ant-delete"
-                          // onClick={() => setOpenSubscribers(false)}
-                          onClick={ () => handleCancleFilter() }
-                        >
-                          Cancel
-                        </Button>
                       </div>
-                    </div>
-                  }
-                  trigger="click"
-                  open={ openSubscribers && getDetails.length > 0 }
-                  onOpenChange={ handleOpenChangeAssignees }
-                >
-                  <i className="fi fi-rs-check-circle"></i>
-                  { filterSubscribers.length == 0
-                    ? "All"
-                    : filterSubscribers == "unassigned"
-                      ? "Unassigned "
-                      : "Selected" }
-                </Popover>
+                    }
+                    trigger="click"
+                    open={ openSubscribers && getDetails.length > 0 }
+                    onOpenChange={ handleOpenChangeAssignees }
+                  >
+                    <Button className="dropdown-button">
+                      <span className="filter-text">
+                        <span> Subscribers: </span>
+
+                        { filterSubscribers.length == 0
+                          ? "All"
+                          : filterSubscribers == "unassigned"
+                            ? "Unassigned "
+                            : "Selected" }
+                      </span>
+                    </Button>
+                  </Popover>
+                </div>
               </div>
+
+
             </div>
           </div>
           <div className="notes">

@@ -1054,7 +1054,12 @@ margin-bottom: 15px;
     gap: 10px;
     margin-bottom: 0px;
 }
-
+.profile-sub-head  .task-sub-header .filter-btn-wrapper {
+    gap: 8px;
+}
+.profile-sub-head  .task-sub-header .filter-btn-wrapper .filter-text span{
+    font-size: 12px;
+}
 .profile-sub-head h3 {
     margin: 0;
     color: #131313;

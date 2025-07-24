@@ -195,8 +195,8 @@ const BugsPMS = () => {
                         <Dropdown overlay={ menu } trigger={ ["click"] }>
                           <div className="dropdown-trigger">
                             { selectedView === "table"
-                              ? "Table View"
-                              : "Board View" }
+                              ? ""
+                              : "" }
                             <i className="fa-solid fa-table"></i>
                           </div>
                         </Dropdown>
@@ -206,10 +206,339 @@ const BugsPMS = () => {
                 </div>
 
                 <div className="block-status-content">
-                  <div className="status-content">
-                    <div style={ { cursor: "pointer" } }>
-                      <h6>Status:</h6>
+                  <div className="filter-btn-wrapper">
 
+                    <div className="status-content">
+                      <div style={ { cursor: "pointer" } }>
+                
+
+                        <Popover
+                          placement="bottomRight"
+                          content={
+                            <div className="right-popover-wrapper">
+                              <ul>
+                                <li>
+                                  <Checkbox
+                                    checked={ filterStatus == "" }
+                                    onChange={ handleFilterStatus }
+                                  >
+                                    { " " }
+                                    All
+                                  </Checkbox>
+                                </li>
+                              </ul>
+                              <div>
+                                <Search
+                                  value={ filterStatusSearchInput }
+                                  onSearch={ (val) =>
+                                    setFilterStatusSearchInput(val)
+                                  }
+                                  onChange={ (e) =>
+                                    setFilterStatusSearchInput(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <ul className="assigness-data">
+                                { boardTasksBugs
+                                  ?.filter((item) =>
+                                    item?.title
+                                      ?.toLowerCase()
+                                      .includes(
+                                        filterStatusSearchInput?.toLowerCase()
+                                      )
+                                  )
+                                  .map((val, index) => (
+                                    <li key={ index }>
+                                      <Checkbox
+                                        checked={ filterStatus == val?._id }
+                                        value={ val?._id }
+                                        onChange={ handleFilterStatus }
+                                      >
+                                        { " " }
+                                        { val?.title }{ " " }
+                                      </Checkbox>
+                                    </li>
+                                  )) }
+                              </ul>
+                              <div className="popver-footer-btn">
+                                <Button
+                                  onClick={ () =>
+                                    handleAllFilter("Status", filterStatus)
+                                  }
+                                  type="primary"
+                                  className="square-primary-btn ant-btn-primary"
+                                >
+                                  Apply
+                                </Button>
+                                <Button
+                                  className="square-outline-btn ant-delete"
+                                  onClick={ () => {
+                                    setOpenStatus(false);
+                                    setFilterStatusSearchInput("");
+                                  } }
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          }
+                          trigger="click"
+                          open={ boardTasksBugs.length > 0 ? openStatus : false }
+                          onOpenChange={ handleOpenChangeStatus }
+                        >
+                          <Button className="dropdown-button">
+                            <span className="filter-text">
+                              <span>Status:</span>
+
+                              { filterStatus
+                                ? getStatusTitleById(filterStatus)
+                                : "All" }
+                            </span>
+                          </Button>
+                        </Popover>
+                      </div>
+                    </div>
+
+                    <div style={ { cursor: "pointer" } } className="status-content">
+             
+                      <Popover
+                        placement="bottomRight"
+                        content={
+                          <div className="right-popover-wrapper">
+                            <ul>
+                              <div className="filter-search-box">
+                                <li>
+                                  <Checkbox
+                                    checked={ filterAssigned.length == 0 }
+                                    onChange={ () =>
+                                      handleSelectionAssignedFilter("", true)
+                                    }
+                                  >
+                                    { " " }
+                                    All
+                                  </Checkbox>
+                                </li>
+                                <li>
+                                  <Checkbox
+                                    checked={ filterAssigned == "unassigned" }
+                                    onChange={ () =>
+                                      handleSelectionAssignedFilter("unassigned")
+                                    }
+                                  >
+                                    { " " }
+                                    Unassigned Tasks
+                                  </Checkbox>
+                                </li>
+
+                                <li>
+                                  <Search
+                                    value={ filterAssignedSearchInput }
+                                    onSearch={ (val) =>
+                                      setFilterAssignedSearchInput(val)
+                                    }
+                                    onChange={ (e) =>
+                                      setFilterAssignedSearchInput(e.target.value)
+                                    }
+                                  />
+                                </li>
+                              </div>
+                              <div className="filter-assignees assigness-data">
+                                {/* {employeeList */ }
+                                { subscribersList
+                                  .filter((item) =>
+                                    item.full_name
+                                      ?.toLowerCase()
+                                      .includes(
+                                        filterAssignedSearchInput?.toLowerCase()
+                                      )
+                                  )
+                                  .map((item, index) => (
+                                    <li
+                                      key={ index }
+                                      className={
+                                        filterAssigned.includes(item._id)
+                                          ? "selected-filter-member"
+                                          : ""
+                                      }
+                                    >
+                                      <Checkbox
+                                        key={ index }
+                                        checked={ filterAssigned.includes(
+                                          item._id
+                                        ) }
+                                        onChange={ () =>
+                                          handleSelectionAssignedFilter(item._id)
+                                        }
+                                      />
+                                      <MyAvatar
+                                        userName={ item?.full_name }
+                                        key={ item?._id }
+                                        alt={ item?.full_name }
+                                        src={ item.emp_img }
+                                      />
+
+                                      { removeTitle(item.full_name) }
+                                    </li>
+                                  )) }
+                              </div>
+                              <div className="popver-footer-btn">
+                                <Button
+                                  onClick={ () =>
+                                    handleAllFilter("assigneeIds", filterAssigned)
+                                  }
+                                  type="primary"
+                                  className="square-primary-btn ant-btn-primary"
+                                >
+                                  Apply
+                                </Button>
+                                <Button
+                                  className="square-outline-btn ant-delete"
+                                  onClick={ () => {
+                                    setOpenAssignees(false);
+                                    setFilterAssignedSearchInput("");
+                                  } }
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </ul>
+                          </div>
+                        }
+                        trigger="click"
+                        open={ openAssignees && boardTasksBugs.length > 0 }
+                        onOpenChange={ handleOpenChangeAssignees }
+                      >
+                        <Button className="dropdown-button">
+
+
+                          <span className="filter-text">
+                            <span>Assigned:</span>
+                            { filterAssigned.length == 0
+                              ? "All"
+                              : filterAssigned == "unassigned"
+                                ? "Unassigned Tasks"
+                                : "Selected" }
+                          </span>
+                        </Button>
+                      </Popover>
+                    </div>
+
+                    <div style={ { cursor: "pointer" } } className="status-content">
+                  
+                      <Popover
+                        placement="bottom"
+                        trigger="click"
+                        content={
+                          <div className="right-popover-wrapper popover-task">
+                            <Form.Item label="Start Date">
+                              <Select
+                                defaultValue="Any"
+                                onChange={ handleStartChange }
+                                options={ DateOption }
+                              ></Select>
+                              { selectValStartdate && (
+                                <div className="calender-event-block">
+                                  <Form.Item>
+                                    <DatePicker
+                                      onChange={ (_, dateString) =>
+                                        handleStartDateRange(0, dateString)
+                                      }
+                                    >
+                                      <CalendarOutlined />
+                                    </DatePicker>
+                                  </Form.Item>
+                                  to
+                                  <Form.Item>
+                                    <DatePicker
+                                      onChange={ (_, dateString) =>
+                                        handleStartDateRange(1, dateString)
+                                      }
+                                    >
+                                      <CalendarOutlined />
+                                    </DatePicker>
+                                  </Form.Item>
+                                </div>
+                              ) }
+                            </Form.Item>
+
+                            <Form.Item label="Due Date">
+                              <Select
+                                defaultValue="Any"
+                                onChange={ handleDueChange }
+                                options={ DateOption }
+                              ></Select>
+                              { selectValDuedate && (
+                                <div className="calender-event-block">
+                                  <Form.Item>
+                                    <DatePicker
+                                      onChange={ (_, dateString) =>
+                                        handleDueDateRange(0, dateString)
+                                      }
+                                    >
+                                      <CalendarOutlined />
+                                    </DatePicker>
+                                  </Form.Item>
+                                  to
+                                  <Form.Item>
+                                    <DatePicker
+                                      onChange={ (_, dateString) =>
+                                        handleDueDateRange(0, dateString)
+                                      }
+                                    >
+                                      <CalendarOutlined />
+                                    </DatePicker>
+                                  </Form.Item>
+                                </div>
+                              ) }
+                            </Form.Item>
+                            <div className="popver-footer-btn">
+                              <Button
+                                onClick={ () => {
+                                  handleStartDueFilter(
+                                    filterStartDate,
+                                    filterDueDate
+                                  );
+                                } }
+                                type="primary"
+                                className="square-primary-btn ant-btn-primary"
+                              >
+                                Apply
+                              </Button>
+                              <Button
+                                type="outlined"
+                                onClick={ () => {
+                                  setIsPopoverVisibleView(false);
+                                  setSelectValDuedate(false);
+                                } }
+                                className="square-outline-btn ant-delete"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        }
+                        open={ isPopoverVisibleView && boardTasksBugs.length > 0 }
+                        onVisibleChange={ setIsPopoverVisibleView }
+                      >
+                        <Button className="dropdown-button">
+                          <span className="filter-text">
+                            <span>Status:</span>
+                            { !Array.isArray(filterStartDate)
+                              ? DateOption.find(
+                                (val) => val.value == filterStartDate
+                              ).label
+                              : "Custom" }
+                            , Due:{ " " }
+                            { !Array.isArray(filterDueDate)
+                              ? DateOption.find((val) => val.value == filterDueDate)
+                                .label
+                              : "Custom" }
+                          </span>
+                        </Button>
+                      </Popover>
+                    </div>
+                    <div style={ { cursor: "pointer" } } className="status-content">
+       
                       <Popover
                         placement="bottomRight"
                         content={
@@ -217,51 +546,72 @@ const BugsPMS = () => {
                             <ul>
                               <li>
                                 <Checkbox
-                                  checked={ filterStatus == "" }
-                                  onChange={ handleFilterStatus }
+                                  checked={ filterOnLabels.length == 0 }
+                                  onChange={ () =>
+                                    handleSelectionlabelFilter("", true)
+                                  }
                                 >
-                                  { " " }
                                   All
                                 </Checkbox>
                               </li>
+                              <li>
+                                <Checkbox
+                                  checked={ filterOnLabels == "unlabelled" }
+                                  onChange={ () =>
+                                    handleSelectionlabelFilter("unlabelled")
+                                  }
+                                >
+                                  Unlabelled bug
+                                </Checkbox>
+                              </li>
+                              <li>
+                                <Search
+                                  value={ filterLabelsSearchInput }
+                                  onSearch={ (val) =>
+                                    setFilterLabelsSearchInput(val)
+                                  }
+                                  onChange={ (e) =>
+                                    setFilterLabelsSearchInput(e.target.value)
+                                  }
+                                />
+                              </li>
                             </ul>
-                            <div>
-                              <Search
-                                value={ filterStatusSearchInput }
-                                onSearch={ (val) =>
-                                  setFilterStatusSearchInput(val)
-                                }
-                                onChange={ (e) =>
-                                  setFilterStatusSearchInput(e.target.value)
-                                }
-                              />
-                            </div>
-                            <ul className="assigness-data">
-                              { boardTasksBugs
-                                ?.filter((item) =>
-                                  item?.title
+                            <span>
+                              <RightOutlined />
+                              Global Labels
+                            </span>
+                            <ul>
+                              { projectLabels
+                                .filter((item) =>
+                                  item.title
                                     ?.toLowerCase()
                                     .includes(
-                                      filterStatusSearchInput?.toLowerCase()
+                                      filterLabelsSearchInput?.toLowerCase()
                                     )
                                 )
-                                .map((val, index) => (
-                                  <li key={ index }>
-                                    <Checkbox
-                                      checked={ filterStatus == val?._id }
-                                      value={ val?._id }
-                                      onChange={ handleFilterStatus }
-                                    >
-                                      { " " }
-                                      { val?.title }{ " " }
-                                    </Checkbox>
+                                .map((item) => (
+                                  <li
+                                    onClick={ () =>
+                                      handleSelectionlabelFilter(item._id)
+                                    }
+                                    className={
+                                      filterOnLabels.includes(item._id)
+                                        ? "selected-filter-member"
+                                        : ""
+                                    }
+                                    key={ item._id }
+                                  >
+                                    <Avatar
+                                      style={ { background: item.color } }
+                                    ></Avatar>{ " " }
+                                    { item.title }
                                   </li>
                                 )) }
                             </ul>
                             <div className="popver-footer-btn">
                               <Button
                                 onClick={ () =>
-                                  handleAllFilter("Status", filterStatus)
+                                  handleAllFilter("labelIds", filterOnLabels)
                                 }
                                 type="primary"
                                 className="square-primary-btn ant-btn-primary"
@@ -271,8 +621,8 @@ const BugsPMS = () => {
                               <Button
                                 className="square-outline-btn ant-delete"
                                 onClick={ () => {
-                                  setOpenStatus(false);
-                                  setFilterStatusSearchInput("");
+                                  setOpenLabels(false);
+                                  setFilterLabelsSearchInput("");
                                 } }
                               >
                                 Cancel
@@ -281,438 +631,103 @@ const BugsPMS = () => {
                           </div>
                         }
                         trigger="click"
-                        open={ boardTasksBugs.length > 0 ? openStatus : false }
-                        onOpenChange={ handleOpenChangeStatus }
+                        open={ openLabels && boardTasksBugs.length > 0 }
+                        onOpenChange={ handleChangeLabels }
                       >
-                        <i className="fi fi-rs-check-circle"></i>{ " " }
-                        { filterStatus
-                          ? getStatusTitleById(filterStatus)
-                          : "All" }
+                        <Button className="dropdown-button">
+
+                          <span className="filter-text">
+                            <span>Labels:</span>
+                            { filterOnLabels.length == 0
+                              ? "All"
+                              : filterOnLabels == "unlabelled"
+                                ? "Unlabelled Task"
+                                : "Selected" }
+                          </span>
+                        </Button>
                       </Popover>
                     </div>
-                  </div>
 
-                  <div style={ { cursor: "pointer" } } className="status-content">
-                    <h6>Assigned:</h6>
-                    <Popover
-                      placement="bottomRight"
-                      content={
-                        <div className="right-popover-wrapper">
-                          <ul>
-                            <div className="filter-search-box">
-                              <li>
-                                <Checkbox
-                                  checked={ filterAssigned.length == 0 }
-                                  onChange={ () =>
-                                    handleSelectionAssignedFilter("", true)
-                                  }
-                                >
-                                  { " " }
-                                  All
-                                </Checkbox>
-                              </li>
-                              <li>
-                                <Checkbox
-                                  checked={ filterAssigned == "unassigned" }
-                                  onChange={ () =>
-                                    handleSelectionAssignedFilter("unassigned")
-                                  }
-                                >
-                                  { " " }
-                                  Unassigned Tasks
-                                </Checkbox>
-                              </li>
+                    <div style={ { cursor: "pointer" } }>
+                      <div hidden>
+                        <ReactHTMLTableToExcel
+                          id="test-table-xls-button"
+                          className="ant-btn-primary"
+                          table="table-to-xls"
+                          filename="ProjectTasks"
+                          sheet="tablexls"
+                          buttonText="Export XLS"
+                        />
+                        <div
+                          dangerouslySetInnerHTML={ { __html: html["html"] } }
+                        ></div>
+                      </div>
 
-                              <li>
-                                <Search
-                                  value={ filterAssignedSearchInput }
-                                  onSearch={ (val) =>
-                                    setFilterAssignedSearchInput(val)
-                                  }
-                                  onChange={ (e) =>
-                                    setFilterAssignedSearchInput(e.target.value)
-                                  }
-                                />
-                              </li>
-                            </div>
-                            <div className="filter-assignees assigness-data">
-                              {/* {employeeList */ }
-                              { subscribersList
-                                .filter((item) =>
-                                  item.full_name
-                                    ?.toLowerCase()
-                                    .includes(
-                                      filterAssignedSearchInput?.toLowerCase()
-                                    )
-                                )
-                                .map((item, index) => (
-                                  <li
-                                    key={ index }
-                                    className={
-                                      filterAssigned.includes(item._id)
-                                        ? "selected-filter-member"
-                                        : ""
-                                    }
-                                  >
-                                    <Checkbox
-                                      key={ index }
-                                      checked={ filterAssigned.includes(
-                                        item._id
-                                      ) }
-                                      onChange={ () =>
-                                        handleSelectionAssignedFilter(item._id)
-                                      }
-                                    />
-                                    <MyAvatar
-                                      userName={ item?.full_name }
-                                      key={ item?._id }
-                                      alt={ item?.full_name }
-                                      src={ item.emp_img }
-                                    />
-
-                                    { removeTitle(item.full_name) }
-                                  </li>
-                                )) }
-                            </div>
-                            <div className="popver-footer-btn">
-                              <Button
-                                onClick={ () =>
-                                  handleAllFilter("assigneeIds", filterAssigned)
-                                }
-                                type="primary"
-                                className="square-primary-btn ant-btn-primary"
-                              >
-                                Apply
-                              </Button>
-                              <Button
-                                className="square-outline-btn ant-delete"
-                                onClick={ () => {
-                                  setOpenAssignees(false);
-                                  setFilterAssignedSearchInput("");
-                                } }
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </ul>
-                        </div>
-                      }
-                      trigger="click"
-                      open={ openAssignees && boardTasksBugs.length > 0 }
-                      onOpenChange={ handleOpenChangeAssignees }
-                    >
-                      <i className="fi fi-rr-users"></i>
-                      { filterAssigned.length == 0
-                        ? "All"
-                        : filterAssigned == "unassigned"
-                          ? "Unassigned Tasks"
-                          : "Selected" }
-                    </Popover>
-                  </div>
-
-                  <div style={ { cursor: "pointer" } } className="status-content">
-                    <h6
-                      onClick={ () =>
-                        setIsPopoverVisibleView(!isPopoverVisibleView)
-                      }
-                    >
-                      Date Range:
-                    </h6>
-                    <Popover
-                      placement="bottom"
-                      trigger="click"
-                      content={
-                        <div className="right-popover-wrapper popover-task">
-                          <Form.Item label="Start Date">
-                            <Select
-                              defaultValue="Any"
-                              onChange={ handleStartChange }
-                              options={ DateOption }
-                            ></Select>
-                            { selectValStartdate && (
-                              <div className="calender-event-block">
-                                <Form.Item>
-                                  <DatePicker
-                                    onChange={ (_, dateString) =>
-                                      handleStartDateRange(0, dateString)
-                                    }
-                                  >
-                                    <CalendarOutlined />
-                                  </DatePicker>
-                                </Form.Item>
-                                to
-                                <Form.Item>
-                                  <DatePicker
-                                    onChange={ (_, dateString) =>
-                                      handleStartDateRange(1, dateString)
-                                    }
-                                  >
-                                    <CalendarOutlined />
-                                  </DatePicker>
-                                </Form.Item>
+                      <Popover
+                        placement="bottomRight"
+                        content={
+                          <div className="task-elipse-pop">
+                            { hasPermission(["bug_add"]) && (
+                              <div className="status-content">
+                                <h6>Sample CSV:</h6>
+                                <i
+                                  onClick={ () => exportSampleCSVfile() }
+                                  style={ { color: "#358CC0", fontSize: "16px" } }
+                                  className="fi fi-rr-file-download"
+                                ></i>
                               </div>
                             ) }
-                          </Form.Item>
+                            <input
+                              className="employee-inoutbtn"
+                              type="file"
+                              size="small"
+                              onChange={ (e) => {
+                                const file = e.target.files[0];
+                                importCsvFile(file);
+                              } }
+                              onClick={ (e) => (e.target.value = null) }
+                              style={ {
+                                display: "none",
+                              } }
+                              ref={ importRef }
+                              accept="xlsx, .xls, .csv"
+                            />
 
-                          <Form.Item label="Due Date">
-                            <Select
-                              defaultValue="Any"
-                              onChange={ handleDueChange }
-                              options={ DateOption }
-                            ></Select>
-                            { selectValDuedate && (
-                              <div className="calender-event-block">
-                                <Form.Item>
-                                  <DatePicker
-                                    onChange={ (_, dateString) =>
-                                      handleDueDateRange(0, dateString)
-                                    }
-                                  >
-                                    <CalendarOutlined />
-                                  </DatePicker>
-                                </Form.Item>
-                                to
-                                <Form.Item>
-                                  <DatePicker
-                                    onChange={ (_, dateString) =>
-                                      handleDueDateRange(0, dateString)
-                                    }
-                                  >
-                                    <CalendarOutlined />
-                                  </DatePicker>
-                                </Form.Item>
+                            { hasPermission(["bug_add"]) && (
+                              <div className="status-content">
+                                <h6>Import CSV:</h6>
+
+                                <i
+                                  style={ { color: "#358CC0", fontSize: "16px" } }
+                                  onClick={ () => importRef.current.click() }
+                                  className="fi fi-rr-file-import"
+                                ></i>
                               </div>
                             ) }
-                          </Form.Item>
-                          <div className="popver-footer-btn">
-                            <Button
-                              onClick={ () => {
-                                handleStartDueFilter(
-                                  filterStartDate,
-                                  filterDueDate
-                                );
-                              } }
-                              type="primary"
-                              className="square-primary-btn ant-btn-primary"
-                            >
-                              Apply
-                            </Button>
-                            <Button
-                              type="outlined"
-                              onClick={ () => {
-                                setIsPopoverVisibleView(false);
-                                setSelectValDuedate(false);
-                              } }
-                              className="square-outline-btn ant-delete"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      }
-                      open={ isPopoverVisibleView && boardTasksBugs.length > 0 }
-                      onVisibleChange={ setIsPopoverVisibleView }
-                    >
-                      <span>
-                        <i className="fi fi-rr-calendar-minus"></i>
-                        Start:{ " " }
-                        { !Array.isArray(filterStartDate)
-                          ? DateOption.find(
-                            (val) => val.value == filterStartDate
-                          ).label
-                          : "Custom" }
-                        , Due:{ " " }
-                        { !Array.isArray(filterDueDate)
-                          ? DateOption.find((val) => val.value == filterDueDate)
-                            .label
-                          : "Custom" }
-                      </span>
-                    </Popover>
-                  </div>
-                  <div style={ { cursor: "pointer" } } className="status-content">
-                    <h6>Labels:</h6>
-                    <Popover
-                      placement="bottomRight"
-                      content={
-                        <div className="right-popover-wrapper">
-                          <ul>
-                            <li>
-                              <Checkbox
-                                checked={ filterOnLabels.length == 0 }
-                                onChange={ () =>
-                                  handleSelectionlabelFilter("", true)
-                                }
-                              >
-                                All
-                              </Checkbox>
-                            </li>
-                            <li>
-                              <Checkbox
-                                checked={ filterOnLabels == "unlabelled" }
-                                onChange={ () =>
-                                  handleSelectionlabelFilter("unlabelled")
-                                }
-                              >
-                                Unlabelled bug
-                              </Checkbox>
-                            </li>
-                            <li>
-                              <Search
-                                value={ filterLabelsSearchInput }
-                                onSearch={ (val) =>
-                                  setFilterLabelsSearchInput(val)
-                                }
-                                onChange={ (e) =>
-                                  setFilterLabelsSearchInput(e.target.value)
-                                }
-                              />
-                            </li>
-                          </ul>
-                          <span>
-                            <RightOutlined />
-                            Global Labels
-                          </span>
-                          <ul>
-                            { projectLabels
-                              .filter((item) =>
-                                item.title
-                                  ?.toLowerCase()
-                                  .includes(
-                                    filterLabelsSearchInput?.toLowerCase()
-                                  )
-                              )
-                              .map((item) => (
-                                <li
-                                  onClick={ () =>
-                                    handleSelectionlabelFilter(item._id)
-                                  }
-                                  className={
-                                    filterOnLabels.includes(item._id)
-                                      ? "selected-filter-member"
-                                      : ""
-                                  }
-                                  key={ item._id }
-                                >
-                                  <Avatar
-                                    style={ { background: item.color } }
-                                  ></Avatar>{ " " }
-                                  { item.title }
-                                </li>
-                              )) }
-                          </ul>
-                          <div className="popver-footer-btn">
-                            <Button
-                              onClick={ () =>
-                                handleAllFilter("labelIds", filterOnLabels)
-                              }
-                              type="primary"
-                              className="square-primary-btn ant-btn-primary"
-                            >
-                              Apply
-                            </Button>
-                            <Button
-                              className="square-outline-btn ant-delete"
-                              onClick={ () => {
-                                setOpenLabels(false);
-                                setFilterLabelsSearchInput("");
-                              } }
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      }
-                      trigger="click"
-                      open={ openLabels && boardTasksBugs.length > 0 }
-                      onOpenChange={ handleChangeLabels }
-                    >
-                      <i className="fi fi-rr-tags"></i>
-                      { filterOnLabels.length == 0
-                        ? "All"
-                        : filterOnLabels == "unlabelled"
-                          ? "Unlabelled Task"
-                          : "Selected" }
-                    </Popover>
-                  </div>
-
-                  <div style={ { cursor: "pointer" } }>
-                    <div hidden>
-                      <ReactHTMLTableToExcel
-                        id="test-table-xls-button"
-                        className="ant-btn-primary"
-                        table="table-to-xls"
-                        filename="ProjectTasks"
-                        sheet="tablexls"
-                        buttonText="Export XLS"
-                      />
-                      <div
-                        dangerouslySetInnerHTML={ { __html: html["html"] } }
-                      ></div>
-                    </div>
-
-                    <Popover
-                      placement="bottomRight"
-                      content={
-                        <div className="task-elipse-pop">
-                          { hasPermission(["bug_add"]) && (
                             <div className="status-content">
-                              <h6>Sample CSV:</h6>
+                              <h6>Repeated Bug CSV:</h6>
+
                               <i
-                                onClick={ () => exportSampleCSVfile() }
+                                onClick={ () => {
+                                  csvRef.click();
+                                } }
                                 style={ { color: "#358CC0", fontSize: "16px" } }
                                 className="fi fi-rr-file-download"
                               ></i>
                             </div>
-                          ) }
-                          <input
-                            className="employee-inoutbtn"
-                            type="file"
-                            size="small"
-                            onChange={ (e) => {
-                              const file = e.target.files[0];
-                              importCsvFile(file);
-                            } }
-                            onClick={ (e) => (e.target.value = null) }
-                            style={ {
-                              display: "none",
-                            } }
-                            ref={ importRef }
-                            accept="xlsx, .xls, .csv"
-                          />
-
-                          { hasPermission(["bug_add"]) && (
-                            <div className="status-content">
-                              <h6>Import CSV:</h6>
-
-                              <i
-                                style={ { color: "#358CC0", fontSize: "16px" } }
-                                onClick={ () => importRef.current.click() }
-                                className="fi fi-rr-file-import"
-                              ></i>
-                            </div>
-                          ) }
-                          <div className="status-content">
-                            <h6>Repeated Bug CSV:</h6>
-
-                            <i
-                              onClick={ () => {
-                                csvRef.click();
-                              } }
-                              style={ { color: "#358CC0", fontSize: "16px" } }
-                              className="fi fi-rr-file-download"
-                            ></i>
                           </div>
+                        }
+                        trigger="click"
+                      >
+                        <div style={ { cursor: "pointer" } }>
+                          <label>
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                          </label>
                         </div>
-                      }
-                      trigger="click"
-                    >
-                      <div style={ { cursor: "pointer" } }>
-                        <label>
-                          <i class="fa-solid fa-ellipsis-vertical"></i>
-                        </label>
-                      </div>
-                    </Popover>
+                      </Popover>
+                    </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1028,7 +1043,7 @@ const BugsPMS = () => {
         onCancel={ handleCancelTaskModal }
         title="Add Task Bug"
         className="add-task-modal edit-details-task-model"
-      width={800}
+        width={ 800 }
         footer={ [
           <Button
             key="cancel"

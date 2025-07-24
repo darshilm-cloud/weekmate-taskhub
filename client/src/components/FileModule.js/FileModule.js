@@ -977,59 +977,66 @@ function FileModule() {
               </h3>
               <div className="thumb-view"></div>
               <div className="block-status-content">
-                <div style={ { cursor: "pointer" } } className="status-content">
-                  <h6
-                    onClick={ () =>
-                      setIsPopoverVisibleStatus(!isPopoverVisibleStatus)
-                    }
-                  >
-                    Sort by:
-                  </h6>
-                  <Popover
-                    placement="bottom"
-                    trigger="click"
-                    content={ content2 }
-                    visible={ isPopoverVisibleStatus }
-                    onVisibleChange={ setIsPopoverVisibleStatus }
-                  >
-                    <CheckCircleOutlined />
-                    <span>
-                      { radioStatusValue === "createdAt"
-                        ? "Date"
-                        : radioStatusValue === "name"
-                          ? "Name"
-                          : radioStatusValue === "file_type"
-                            ? "Type"
-                            : "Date" }{ " " }
-                    </span>
-                  </Popover>
+                <div className="filter-btn-wrapper">
+
+                  <div style={ { cursor: "pointer" } } className="status-content">
+
+                    <Popover
+                      placement="bottom"
+                      trigger="click"
+                      content={ content2 }
+                      visible={ isPopoverVisibleStatus }
+                      onVisibleChange={ setIsPopoverVisibleStatus }
+                    >
+                      <Button className="dropdown-button">
+                        <span className="filter-text">
+                          <span>  Sort by:</span>
+
+                          <span>
+                            { radioStatusValue === "createdAt"
+                              ? "Date"
+                              : radioStatusValue === "name"
+                                ? "Name"
+                                : radioStatusValue === "file_type"
+                                  ? "Type"
+                                  : "Date" }{ " " }
+                          </span>
+                        </span>
+                      </Button>
+
+                    </Popover>
+                  </div>
+
+                  <div style={ { cursor: "pointer" } } className="status-content">
+
+                    <Popover
+                      placement="bottom"
+                      trigger="click"
+                      content={ content3 }
+                      visible={ isPopoverVisibleOrder }
+                      onVisibleChange={ setIsPopoverVisibleOrder }
+                    >
+                      <Button className="dropdown-button">
+                        <span className="filter-text">
+                         <span> Order by:</span>
+
+                      
+                          <span>
+                            { radioStatusValueOrder === "asc"
+                              ? "Asc"
+                              : radioStatusValueOrder === "desc"
+                                ? "Desc"
+                                : "Desc" }
+                          </span>
+                        </span>
+                      </Button>
+
+                    </Popover>
+                  </div>
                 </div>
 
-                <div style={ { cursor: "pointer" } } className="status-content">
-                  <h6
-                    onClick={ () =>
-                      setIsPopoverVisibleOrder(!isPopoverVisibleOrder)
-                    }
-                  >
-                    Order by:
-                  </h6>
-                  <Popover
-                    placement="bottom"
-                    trigger="click"
-                    content={ content3 }
-                    visible={ isPopoverVisibleOrder }
-                    onVisibleChange={ setIsPopoverVisibleOrder }
-                  >
-                    <CheckCircleOutlined />
-                    <span>
-                      { radioStatusValueOrder === "asc"
-                        ? "Asc"
-                        : radioStatusValueOrder === "desc"
-                          ? "Desc"
-                          : "Desc" }
-                    </span>
-                  </Popover>
-                </div>
+
+
               </div>
             </div>
 

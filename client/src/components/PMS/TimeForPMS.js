@@ -968,7 +968,7 @@ function TimeForPMS() {
 
     return (
       <div
-        style={{
+        style={ {
           ...avatarStyle,
           width: "24px",
           height: "24px",
@@ -976,9 +976,9 @@ function TimeForPMS() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-        }}
+        } }
       >
-        {initials}
+        { initials }
       </div>
     );
   };
@@ -1086,7 +1086,7 @@ function TimeForPMS() {
 
   const columns = [
     {
-    
+
       title: "Logged by",
       dataIndex: "loggedBy",
       render: (text) => (text ? removeTitle(text) : "-"),
@@ -1128,47 +1128,47 @@ function TimeForPMS() {
       render: (text, record) => (
         <>
           <div
-            style={{
+            style={ {
               display: "flex",
               flexDirection: "row",
               justifyContent: "center",
               alignItems: "center",
               gap: "20px",
-            }}
+            } }
           >
             <EyeOutlined
-              onClick={() => {
+              onClick={ () => {
                 handleRowClick(record);
                 setSelectedId(record._id);
-              }} // Call a function to handle storing _id
-              style={{ cursor: "pointer" }}
+              } } // Call a function to handle storing _id
+              style={ { cursor: "pointer" } }
             />
             <EditOutlined
-              style={{ color: "green" }}
-              onClick={() => {
+              style={ { color: "green" } }
+              onClick={ () => {
                 setSelectedId(record._id);
                 handleRowClick(record);
                 setOnEditClick(true);
-              }}
+              } }
             />
 
             <Popconfirm
               icon={
                 <QuestionCircleOutlined
-                  style={{
+                  style={ {
                     color: "red",
-                  }}
+                  } }
                 />
               }
               title="Are you sure to delete this Logged Hours?"
-              onConfirm={() => {
+              onConfirm={ () => {
                 setSelectedId(record._id);
                 deleteTime2(record._id);
-              }}
+              } }
               okText="Yes"
               cancelText="No"
             >
-              <DeleteOutlined style={{ color: "red" }} />
+              <DeleteOutlined style={ { color: "red" } } />
             </Popconfirm>
           </div>
         </>
@@ -1196,14 +1196,14 @@ function TimeForPMS() {
     if (selectedRow) {
       return (
         <div>
-          <p>{selectedRow.logged_by}</p>
-          <p>{selectedRow.time_logged}</p>
-          <p>{selectedRow.Date}</p>
-          <p>{selectedRow.Description}</p>
-          <p>{selectedRow.tasklist}</p>
-          <p>{selectedRow.task}</p>
-          <p>{selectedRow.manager}</p>
-          <p>{selectedRow.actions}</p>
+          <p>{ selectedRow.logged_by }</p>
+          <p>{ selectedRow.time_logged }</p>
+          <p>{ selectedRow.Date }</p>
+          <p>{ selectedRow.Description }</p>
+          <p>{ selectedRow.tasklist }</p>
+          <p>{ selectedRow.task }</p>
+          <p>{ selectedRow.manager }</p>
+          <p>{ selectedRow.actions }</p>
         </div>
       );
     }
@@ -1230,47 +1230,47 @@ function TimeForPMS() {
     <div className="right-popover-wrapper time-module-date-range">
       <h4>Date Range</h4>
       <Checkbox
-        onClick={() => setDataCustom(false)}
-        onChange={onChange}
-        checked={radioValue == "all"}
+        onClick={ () => setDataCustom(false) }
+        onChange={ onChange }
+        checked={ radioValue == "all" }
         value="all"
       >
         All
       </Checkbox>
       <Checkbox
-        onClick={() => setDataCustom(false)}
-        onChange={onChange}
-        checked={radioValue == "last_week"}
+        onClick={ () => setDataCustom(false) }
+        onChange={ onChange }
+        checked={ radioValue == "last_week" }
         value="last_week"
       >
         Last Week
       </Checkbox>
       <Checkbox
-        onClick={() => setDataCustom(false)}
-        onChange={onChange}
-        checked={radioValue == "last_2_week"}
+        onClick={ () => setDataCustom(false) }
+        onChange={ onChange }
+        checked={ radioValue == "last_2_week" }
         value="last_2_week"
       >
         Last 2 Week
       </Checkbox>
       <Checkbox
-        onClick={() => setDataCustom(false)}
-        onChange={onChange}
-        checked={radioValue == "last_month"}
+        onClick={ () => setDataCustom(false) }
+        onChange={ onChange }
+        checked={ radioValue == "last_month" }
         value="last_month"
       >
         Last Month
       </Checkbox>
       <Checkbox
-        onClick={() => setDataCustom(true)}
-        onChange={onChange}
-        checked={radioValue == "Custom"}
+        onClick={ () => setDataCustom(true) }
+        onChange={ onChange }
+        checked={ radioValue == "Custom" }
         value="Custom"
       >
         Custom
       </Checkbox>
-      {dataCustom && (
-        <div style={{ display: "flex", marginTop: "10px", gap: "15px" }}>
+      { dataCustom && (
+        <div style={ { display: "flex", marginTop: "10px", gap: "15px" } }>
           <div>
             <label>Start</label>
             &nbsp;&nbsp;&nbsp;&nbsp;
@@ -1279,7 +1279,7 @@ function TimeForPMS() {
                 addInputStartDate?.start_date &&
                 dayjs(addInputStartDate?.start_date, "YYYY-MM-DD")
               }
-              onChange={(date, dateString) =>
+              onChange={ (date, dateString) =>
                 handleTaskStartDate("start_date", dateString)
               }
             >
@@ -1294,7 +1294,7 @@ function TimeForPMS() {
                 addInputEndDate?.end_date &&
                 dayjs(addInputEndDate?.end_date, "YYYY-MM-DD")
               }
-              onChange={(date, dateString) =>
+              onChange={ (date, dateString) =>
                 handleTaskEndDate("end_date", dateString)
               }
             >
@@ -1302,12 +1302,12 @@ function TimeForPMS() {
             </DatePicker>
           </div>
         </div>
-      )}
+      ) }
 
-      {/* </Radio.Group> */}
+      {/* </Radio.Group> */ }
       <div className="popver-footer-btn">
         <Button
-          onClick={() => getTimesheetById()}
+          onClick={ () => getTimesheetById() }
           type="primary"
           className="square-primary-btn ant-btn-primary"
         >
@@ -1315,7 +1315,7 @@ function TimeForPMS() {
         </Button>
         <Button
           type="outlined"
-          onClick={() => setIsPopoverVisibleData(false)}
+          onClick={ () => setIsPopoverVisibleData(false) }
           className="square-outline-btn ant-delete"
         >
           Cancel
@@ -1325,35 +1325,35 @@ function TimeForPMS() {
   );
 
   const user = (
-    <div className=" time-module-user-pop" style={{ maxWidth: "min-content" }}>
+    <div className=" time-module-user-pop" style={ { maxWidth: "min-content" } }>
       <h4>User</h4>
       <Checkbox
-        checked={users.length === 0}
-        onChange={() => {
+        checked={ users.length === 0 }
+        onChange={ () => {
           handleCheckboxChange("", false);
-        }}
+        } }
       >
         All
       </Checkbox>
-      <Input.Search placeholder="Search" onChange={handleSearch} />
+      <Input.Search placeholder="Search" onChange={ handleSearch } />
       <div className="assigness-data">
-        {filteredSubscribers.map((item) => (
+        { filteredSubscribers.map((item) => (
           <Checkbox
-            key={item._id}
-            value={item.full_name}
-            checked={users.includes(item._id)}
-            onChange={(e) => handleCheckboxChange(item._id, e.target.checked)}
+            key={ item._id }
+            value={ item.full_name }
+            checked={ users.includes(item._id) }
+            onChange={ (e) => handleCheckboxChange(item._id, e.target.checked) }
           >
-            {removeTitle(item.full_name)}
+            { removeTitle(item.full_name) }
           </Checkbox>
-        ))}
+        )) }
       </div>
       <div className="user-btn-wrapper">
         <Button
-          onClick={() => {
+          onClick={ () => {
             getTimesheetById();
             setPopoverVisible(false);
-          }}
+          } }
           type="primary"
           className="square-primary-btn ant-btn-primary"
         >
@@ -1361,9 +1361,9 @@ function TimeForPMS() {
         </Button>
         <Button
           type="outlined"
-          onClick={() => {
+          onClick={ () => {
             setPopoverVisible(false);
-          }}
+          } }
           className="square-outline-btn ant-delete"
         >
           Cancel
@@ -1376,15 +1376,15 @@ function TimeForPMS() {
     <div className="right-popover-wrapper">
       <h4>Order by</h4>
       <Checkbox
-        onChange={onChange3}
-        checked={radioOrderbyValue == "asc"}
+        onChange={ onChange3 }
+        checked={ radioOrderbyValue == "asc" }
         value="asc"
       >
         Asc
       </Checkbox>
       <Checkbox
-        onChange={onChange3}
-        checked={radioOrderbyValue == "desc"}
+        onChange={ onChange3 }
+        checked={ radioOrderbyValue == "desc" }
         value="desc"
       >
         Desc
@@ -1392,7 +1392,7 @@ function TimeForPMS() {
 
       <div className="popver-footer-btn">
         <Button
-          onClick={() => getTimesheetById()}
+          onClick={ () => getTimesheetById() }
           type="primary"
           className="square-primary-btn ant-btn-primary"
         >
@@ -1400,7 +1400,7 @@ function TimeForPMS() {
         </Button>
         <Button
           type="outlined"
-          onClick={() => setIsPopoverVisibleOrder(false)}
+          onClick={ () => setIsPopoverVisibleOrder(false) }
           className="square-outline-btn ant-delete"
         >
           Cancel
@@ -1410,11 +1410,11 @@ function TimeForPMS() {
   );
 
   const content6 = (
-    <div style={{ cursor: "pointer" }} className="export-wrapper">
+    <div style={ { cursor: "pointer" } } className="export-wrapper">
       <p
-        onClick={() => {
+        onClick={ () => {
           csvRef.click();
-        }}
+        } }
       >
         <i class="fi fi-rr-download"></i>
         Export as csv
@@ -1427,27 +1427,27 @@ function TimeForPMS() {
       <h4>Summary</h4>
       <ul>
         <li>
-          <h4>{summaryData?.projectEstimatedhours}</h4>
+          <h4>{ summaryData?.projectEstimatedhours }</h4>
           <p>Estimated Time</p>
         </li>
         <li>
-          <h4>{summaryData?.totalHours}</h4>
+          <h4>{ summaryData?.totalHours }</h4>
           <p>Total Logged Time</p>
         </li>
         <li>
-          <h4>{summaryData?.billedHours}</h4>
+          <h4>{ summaryData?.billedHours }</h4>
           <p>Billed Time</p>
         </li>
         <li>
-          <h4>{summaryData?.voidHours}</h4>
+          <h4>{ summaryData?.voidHours }</h4>
           <p>Void Time</p>
         </li>
         <li>
-          <h4>{summaryData?.billableHours}</h4>
+          <h4>{ summaryData?.billableHours }</h4>
           <p>Billable Time</p>
         </li>
         <li>
-          <h4>{summaryData?.nonBillableHours}</h4>
+          <h4>{ summaryData?.nonBillableHours }</h4>
           <p>None Billable Time</p>
         </li>
       </ul>
@@ -1485,11 +1485,11 @@ function TimeForPMS() {
   };
 
   const menu = (
-    <Menu onClick={handleMenuClick}>
-      <Menu.Item onClick={showModalTime} key="1">
+    <Menu onClick={ handleMenuClick }>
+      <Menu.Item onClick={ showModalTime } key="1">
         <span>Time</span>
       </Menu.Item>
-      <Menu.Item onClick={showModalTimesheet} key="2">
+      <Menu.Item onClick={ showModalTimesheet } key="2">
         <span>Timesheet</span>
       </Menu.Item>
     </Menu>
@@ -1516,18 +1516,18 @@ function TimeForPMS() {
 
   const ModalMenu = (
     <Menu>
-      {!onEditClick && (
-        <Menu.Item onClick={() => setOnEditClick(true)}>
-          <EditOutlined style={{ color: "green" }} /> <span>Edit</span>
+      { !onEditClick && (
+        <Menu.Item onClick={ () => setOnEditClick(true) }>
+          <EditOutlined style={ { color: "green" } } /> <span>Edit</span>
         </Menu.Item>
-      )}
+      ) }
 
       <Menu.Item
         className="ant-delete"
-        style={{ cursor: "pointer" }}
-        onClick={deleteTime}
+        style={ { cursor: "pointer" } }
+        onClick={ deleteTime }
       >
-        <DeleteOutlined style={{ color: "red" }} /> <span>Delete</span>
+        <DeleteOutlined style={ { color: "red" } } /> <span>Delete</span>
       </Menu.Item>
     </Menu>
   );
@@ -1535,66 +1535,66 @@ function TimeForPMS() {
   return (
     <>
       <AddTimeModal
-        openModal={isModalOpenTime}
-        cancelModal={closeAddTimesheetmodal}
-        formName={form}
-        onFinish={handleSubmit}
-        taskdropdown={taskdropdown}
-        addInputTaskData={addInputTaskData}
-        handleTaskInput={handleTaskInput}
-        estHrs={estHrs}
-        handleEstTimeInput={handleEstTimeInput}
-        estHrsError={estHrsError}
-        estMins={estMins}
-        estMinsError={estMinsError}
-        handleChangedescription={handleChange}
-        editorData={editorData}
-        handlePaste={handlePaste}
+        openModal={ isModalOpenTime }
+        cancelModal={ closeAddTimesheetmodal }
+        formName={ form }
+        onFinish={ handleSubmit }
+        taskdropdown={ taskdropdown }
+        addInputTaskData={ addInputTaskData }
+        handleTaskInput={ handleTaskInput }
+        estHrs={ estHrs }
+        handleEstTimeInput={ handleEstTimeInput }
+        estHrsError={ estHrsError }
+        estMins={ estMins }
+        estMinsError={ estMinsError }
+        handleChangedescription={ handleChange }
+        editorData={ editorData }
+        handlePaste={ handlePaste }
         type="timesheet"
-        handleBuglist={handleBuglist}
-        buglistdropdown={buglistdropdown}
+        handleBuglist={ handleBuglist }
+        buglistdropdown={ buglistdropdown }
       />
 
       <Modal
-        open={isModalOpenTimesheet}
-        width={481}
-        onCancel={handleModalOpenTimesheet}
-        title={null}
-        footer={null}
+        open={ isModalOpenTimesheet }
+        width={ 481 }
+        onCancel={ handleModalOpenTimesheet }
+        title={ null }
+        footer={ null }
         className="add-task-modal"
       >
         <div className="modal-header">
           <h1>
-            {addEditTimesheet === "Add Timesheet"
+            { addEditTimesheet === "Add Timesheet"
               ? "Add Timesheet"
-              : "Edit Timesheet"}
+              : "Edit Timesheet" }
           </h1>
         </div>
         <div className="overview-modal-wrapper">
           <Form
-            form={form1}
-            onFinish={(values) => {
+            form={ form1 }
+            onFinish={ (values) => {
               addEditTimesheet === "Add Timesheet"
                 ? handleSubmit1(values)
                 : updateTimesheet(values);
-            }}
+            } }
           >
             <Form.Item
               name="title"
-              rules={[
+              rules={ [
                 {
                   required: true,
                   whitespace: true,
                   message: "Please enter a valid title",
                 },
-              ]}
+              ] }
             >
-              <Input style={{ width: "440px" }} />
+              <Input style={ { width: "440px" } } />
             </Form.Item>
 
-            <div style={{ marginTop: "10px" }} className="modal-footer-flex">
+            <div style={ { marginTop: "10px" } } className="modal-footer-flex">
               <div className="flex-btn">
-                {addEditTimesheet === "Add Timesheet" ? (
+                { addEditTimesheet === "Add Timesheet" ? (
                   <Button
                     type="primary"
                     htmlType="submit"
@@ -1610,10 +1610,10 @@ function TimeForPMS() {
                   >
                     Update
                   </Button>
-                )}
+                ) }
                 <Button
                   type="Outlined"
-                  onClick={() => setIsModalOpenTimesheet(false)}
+                  onClick={ () => setIsModalOpenTimesheet(false) }
                   className="square-outline-btn ant-delete"
                 >
                   Cancel
@@ -1625,11 +1625,11 @@ function TimeForPMS() {
       </Modal>
 
       <Modal
-        open={isModalOpenStartTimer}
-        width={600}
-        onCancel={() => setIsModalOpenStartTimer(false)}
-        title={null}
-        footer={null}
+        open={ isModalOpenStartTimer }
+        width={ 600 }
+        onCancel={ () => setIsModalOpenStartTimer(false) }
+        title={ null }
+        footer={ null }
         className="timer-modal"
       >
         <div className="modal-header">
@@ -1640,7 +1640,7 @@ function TimeForPMS() {
               Start a timer
             </Button>
             <span className="info-btn">
-              {/* <i className="fi fi-rr-info"></i> */}
+              {/* <i className="fi fi-rr-info"></i> */ }
             </span>
           </div>
         </div>
@@ -1662,7 +1662,7 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
+              <Dropdown trigger={ ["click"] } overlay={ Item }>
                 <MoreOutlined />
               </Dropdown>
             </div>
@@ -1684,7 +1684,7 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
+              <Dropdown trigger={ ["click"] } overlay={ Item }>
                 <MoreOutlined />
               </Dropdown>
             </div>
@@ -1706,7 +1706,7 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
+              <Dropdown trigger={ ["click"] } overlay={ Item }>
                 <MoreOutlined />
               </Dropdown>
             </div>
@@ -1717,12 +1717,12 @@ function TimeForPMS() {
       <div className="task-panel-wrapper task-time-wrapper times-wrapper">
         <div className="profileleftbar time-wrapper-left">
           <div className="add-project-wrapper">
-            <Button className="add-btn" onClick={showModalTime}>
+            <Button className="add-btn" onClick={ showModalTime }>
               <i className="fi fi-br-plus"></i> Add
             </Button>
           </div>
-          <ul className="sidebar-menu-links" style={{ listStyleType: "none" }}>
-            {timesheetList.map((item, index) => {
+          <ul className="sidebar-menu-links" style={ { listStyleType: "none" } }>
+            { timesheetList.map((item, index) => {
               const timeSheet = item?.title;
               const formattedTitle = timeSheet?.replace(
                 /(?:^|\s)([a-z])/g,
@@ -1732,129 +1732,138 @@ function TimeForPMS() {
               );
               return (
                 <li
-                  key={index}
-                  onClick={() => handleTimeSheetSelection(item)}
-                  className={selectedTimesheet?._id == item._id && "active"}
+                  key={ index }
+                  onClick={ () => handleTimeSheetSelection(item) }
+                  className={ selectedTimesheet?._id == item._id && "active" }
                 >
-                  <div>{formattedTitle}</div>
+                  <div>{ formattedTitle }</div>
                   <div className="time-module-hour-bar">
-                    <small>{getTotalTime(timesheetdropdownById)}</small>
+                    <small>{ getTotalTime(timesheetdropdownById) }</small>
                   </div>
                 </li>
               );
-            })}
+            }) }
           </ul>
         </div>
         <div className="profilerightbar time-wrapper-right">
           <div className="profile-sub-head">
             <div
-              style={{
+              style={ {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 gap: "30px",
-              }}
+              } }
             >
               <h3>Logged time details</h3>
             </div>
             <div className="block-status-content">
-              {selectedRowKeys.length > 0 && (
+
+            <div className="filter-btn-wrapper">
+
+              { selectedRowKeys.length > 0 && (
                 <div
-                  style={{ color: "red", cursor: "pointer" }}
-                  onClick={deleteMultipleTimesheet}
+                  style={ { color: "red", cursor: "pointer" } }
+                  onClick={ deleteMultipleTimesheet }
                   className="status-content"
                 >
-                  <DeleteOutlined style={{ fontSize: "20px" }} />
+                  <DeleteOutlined style={ { fontSize: "20px" } } />
                 </div>
-              )}
-              {!getRoles(["User"]) && (
+              ) }
+              { !getRoles(["User"]) && (
                 <div className="time-module-all-users">
                   <ConfigProvider>
-                    <h6>Users: </h6>
+
                     <Popover
                       placement="bottom"
                       trigger="click"
-                      content={user}
-                      visible={popOver}
-                      onVisibleChange={(visible) => setPopoverVisible(visible)}
+                      content={ user }
+                      visible={ popOver }
+                      onVisibleChange={ (visible) => setPopoverVisible(visible) }
                     >
-                      <i className="fi fi-rr-users"></i>{" "}
-                      {users.length == 0 ? "All" : "Selected"}
+                      <Button className="dropdown-button">
+                        <span className="filter-text">
+                          <span>Users:</span>
+                        { " " }
+                          { users.length == 0 ? "All" : "Selected" }
+                        </span>
+                      </Button>
                     </Popover>
                   </ConfigProvider>
                 </div>
-              )}
-              {selectedRowKeys.length <= 0 ? (
+              ) }
+              { selectedRowKeys.length <= 0 ? (
                 <>
-                  <div style={{ cursor: "pointer" }} className="status-content">
+                  <div style={ { cursor: "pointer" } } className="status-content">
                     <ConfigProvider>
-                      <h6
-                        onClick={() =>
-                          setIsPopoverVisibleData(!isPopoverVisibleData)
-                        }
-                      >
-                        Date Range:
-                      </h6>
+
                       <Popover
                         placement="bottom"
                         trigger="click"
-                        content={content1}
+                        content={ content1 }
                         visible={
                           isPopoverVisibleData && timesheetList.length > 0
                         }
-                        onVisibleChange={setIsPopoverVisibleData}
+                        onVisibleChange={ setIsPopoverVisibleData }
                       >
-                        <CalendarTwoTone />
-                        {radioValue === "last_week"
-                          ? "Last Week"
-                          : radioValue === "last_2_week"
-                          ? "Last 2 Week"
-                          : radioValue === "last_month"
-                          ? "Last Month"
-                          : radioValue === "Custom"
-                          ? "Custom"
-                          : "All"}
+                        
+
+                        <Button className="dropdown-button">
+                          <span className="filter-text">
+                            <span>Date Range:</span>
+
+                            { radioValue === "last_week"
+                              ? "Last Week"
+                              : radioValue === "last_2_week"
+                                ? "Last 2 Week"
+                                : radioValue === "last_month"
+                                  ? "Last Month"
+                                  : radioValue === "Custom"
+                                    ? "Custom"
+                                    : "All" }
+                          </span>
+                        </Button>
                       </Popover>
                     </ConfigProvider>
                   </div>
                   <div
-                    style={{ cursor: "pointer" }}
+                    style={ { cursor: "pointer" } }
                     className="status-content rotate-block"
                   >
                     <ConfigProvider>
-                      <h6
-                        onClick={() =>
-                          setIsPopoverVisibleOrder(!isPopoverVisibleOrder)
-                        }
-                      >
-                        Order by:
-                      </h6>
+                 
                       <Popover
                         placement="bottom"
                         trigger="click"
-                        content={content5}
+                        content={ content5 }
                         visible={
                           isPopoverVisibleOrder && timesheetList.length > 0
                         }
-                        onVisibleChange={setIsPopoverVisibleOrder}
+                        onVisibleChange={ setIsPopoverVisibleOrder }
                       >
-                        <AiOutlineSwap />
-                        {radioOrderbyValue === "asc"
-                          ? "Asc"
-                          : radioOrderbyValue === "desc"
-                          ? "Desc"
-                          : "All"}
+                        <Button className="dropdown-button">
+                          <span className="filter-text">
+                            <span> Order by:</span>
+                         
+                            { radioOrderbyValue === "asc"
+                              ? "Asc"
+                              : radioOrderbyValue === "desc"
+                                ? "Desc"
+                                : "All" }
+                          </span>
+                        </Button>
                       </Popover>
                     </ConfigProvider>
                   </div>
                 </>
               ) : (
-                <div onClick={clearCheckbox} style={{ cursor: "pointer" }}>
+                <div onClick={ clearCheckbox } style={ { cursor: "pointer" } }>
                   <CloseCircleOutlined
-                    style={{ fontSize: "20px", color: "red" }}
+                    style={ { fontSize: "20px", color: "red" } }
                   />
                 </div>
-              )}
+              ) }
+            </div>
 
               <div hidden>
                 <ReactHTMLTableToExcel
@@ -1865,7 +1874,7 @@ function TimeForPMS() {
                   sheet="tablexls"
                   buttonText="Export XLS"
                 />
-                <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
+                <div dangerouslySetInnerHTML={ { __html: html["html"] } }></div>
               </div>
               <div className="time-inner-item">
                 <div className="status-content">
@@ -1873,16 +1882,16 @@ function TimeForPMS() {
                     <Popover
                       placement="bottom"
                       trigger="click"
-                      content={content6}
-                      visible={isPopoverVisibleMore}
-                      onVisibleChange={setIsPopoverVisibleMore}
+                      content={ content6 }
+                      visible={ isPopoverVisibleMore }
+                      onVisibleChange={ setIsPopoverVisibleMore }
                     >
-                      <h6 style={{ cursor: "pointer" }} className="font">
+                      <h6 style={ { cursor: "pointer" } } className="font">
                         <span>
                           <MoreOutlined
-                            onClick={() => {
+                            onClick={ () => {
                               setIsPopoverVisibleMore(!isPopoverVisibleMore);
-                            }}
+                            } }
                           />
                         </span>
                       </h6>
@@ -1894,17 +1903,17 @@ function TimeForPMS() {
                     <Popover
                       placement="bottom"
                       trigger="click"
-                      content={content7}
-                      visible={isPopoverVisibleInfo}
-                      onVisibleChange={setIsPopoverVisibleInfo}
+                      content={ content7 }
+                      visible={ isPopoverVisibleInfo }
+                      onVisibleChange={ setIsPopoverVisibleInfo }
                     >
                       <h6
                         className="font"
-                        onClick={() =>
+                        onClick={ () =>
                           setIsPopoverVisibleInfo(!isPopoverVisibleInfo)
                         }
                       >
-                        <span>{/* <InfoCircleOutlined /> */}</span>
+                        <span>{/* <InfoCircleOutlined /> */ }</span>
                       </h6>
                     </Popover>
                   </ConfigProvider>
@@ -1916,21 +1925,21 @@ function TimeForPMS() {
           <Table
             className="time-block-table"
             rowClassName="pointer-row"
-            rowSelection={rowSelection}
-            columns={columns}
-            dataSource={timesheetdropdownById}
-            pagination={false}
+            rowSelection={ rowSelection }
+            columns={ columns }
+            dataSource={ timesheetdropdownById }
+            pagination={ false }
           />
         </div>
       </div>
 
-      {modalVisible && modalData && (
+      { modalVisible && modalData && (
         <Modal
           destroyOnClose
-          title={null}
+          title={ null }
           key="unique"
-          open={modalVisible && taggedUserList.length > 0}
-          onCancel={() => {
+          open={ modalVisible && taggedUserList.length > 0 }
+          onCancel={ () => {
             dispatch(setData({ stateName: "taggedUserList", data: [] }));
             handleModalClose();
             setOpenCommentModle(false);
@@ -1942,33 +1951,33 @@ function TimeForPMS() {
               pathname: window.location.pathname,
               search: searchParams.toString(),
             });
-          }}
-          footer={null}
-          width={1000}
+          } }
+          footer={ null }
+          width={ 1000 }
           className="log-time-modal time-for-pms-modal"
         >
           <Form
             name="edit_form"
-            initialValues={{
+            initialValues={ {
               Hours: modalData?.logged_hours || "",
               Minutes: modalData?.logged_minutes || "",
               descriptions: modalData?.descriptions || "",
-            }}
-            form={form2}
-            onFinish={handleSubmit2}
+            } }
+            form={ form2 }
+            onFinish={ handleSubmit2 }
           >
             <div
               className="overview-modal-wrapper task-detail-panel "
-              style={{ maxHeight: "850px" }}
+              style={ { maxHeight: "850px" } }
             >
               <div className="timesheet-logged-details-left-panel">
                 <div className="modal-header">
-                  {!onEditClick ? (
-                    <h1>Logged Time Details ({dayAndMonth})</h1>
+                  { !onEditClick ? (
+                    <h1>Logged Time Details ({ dayAndMonth })</h1>
                   ) : (
-                    <h1>Edit Logged Time Details ({dayAndMonth})</h1>
-                  )}
-                  <Dropdown trigger={["click"]} overlay={ModalMenu}>
+                    <h1>Edit Logged Time Details ({ dayAndMonth })</h1>
+                  ) }
+                  <Dropdown trigger={ ["click"] } overlay={ ModalMenu }>
                     <MoreOutlined />
                   </Dropdown>
                 </div>
@@ -1976,10 +1985,10 @@ function TimeForPMS() {
                   <div className="d-flex align-center logtime-left-wrapper  myChngLft">
                     <span className="loggtime-avatar">
                       <Avatar
-                        key={modalData._id}
+                        key={ modalData._id }
                         src={
                           modalData.loggedBy_img &&
-                          modalData.loggedBy_img !== ""
+                            modalData.loggedBy_img !== ""
                             ? `${Service.HRMS_Base_URL}/uploads/emp_images/${modalData.loggedBy_img}`
                             : generateAvatarFromName1(modalData?.loggedBy)
                         }
@@ -1987,38 +1996,38 @@ function TimeForPMS() {
                     </span>
                     <div className="logged-by-name-title">
                       <p>Logged by</p>
-                      <h4>{removeTitle(modalData?.loggedBy)}</h4>
+                      <h4>{ removeTitle(modalData?.loggedBy) }</h4>
                     </div>
                   </div>
                   <div className="logtime-right-wrapper myChngRght">
-                    {!onEditClick ? (
+                    { !onEditClick ? (
                       <h4>
-                        {modalData?.logged_hours}h {modalData?.logged_minutes}m
+                        { modalData?.logged_hours }h { modalData?.logged_minutes }m
                       </h4>
                     ) : (
                       <div
-                        style={{
+                        style={ {
                           display: "flex",
                           rowGap: "5px",
                           flexWrap: "wrap",
                           width: "100%",
-                        }}
+                        } }
                       >
                         <div
-                          style={{
+                          style={ {
                             display: "flex",
                             width: "100%",
                             justifyContent: "space-between",
                             alignItems: "baseline",
-                          }}
+                          } }
                           className="timeforpms"
                         >
                           <Form.Item
-                            colon={false}
+                            colon={ false }
                             label="Time Logged:"
                             name="Hours"
-                            style={{ width: "100%" }}
-                            rules={[
+                            style={ { width: "100%" } }
+                            rules={ [
                               {
                                 validator: (_, value) => {
                                   if (
@@ -2034,12 +2043,12 @@ function TimeForPMS() {
                                   );
                                 },
                               },
-                            ]}
+                            ] }
                           >
                             <Input
                               type="text"
                               placeholder="Hours"
-                              onChange={(e) => {
+                              onChange={ (e) => {
                                 const { value } = e.target;
                                 if (
                                   /^\d*$/.test(value) &&
@@ -2050,15 +2059,15 @@ function TimeForPMS() {
                                 } else {
                                   e.preventDefault();
                                 }
-                              }}
+                              } }
                             />
                           </Form.Item>
 
                           <Form.Item
-                            colon={false}
+                            colon={ false }
                             label="Minutes Logged:"
                             name="Minutes"
-                            rules={[
+                            rules={ [
                               {
                                 validator: (_, value) => {
                                   if (
@@ -2074,12 +2083,12 @@ function TimeForPMS() {
                                   );
                                 },
                               },
-                            ]}
+                            ] }
                           >
                             <Input
                               type="text"
                               placeholder="Minutes"
-                              onChange={(e) => {
+                              onChange={ (e) => {
                                 const { value } = e.target;
                                 // Ensure the value is numeric and within range 0-59
                                 if (
@@ -2091,63 +2100,63 @@ function TimeForPMS() {
                                 } else {
                                   e.preventDefault();
                                 }
-                              }}
+                              } }
                             />
                           </Form.Item>
                         </div>
 
                         <Form.Item
                           label="Logged Date"
-                          style={{
+                          style={ {
                             width: "100%",
                             marginTop: "-15px",
-                          }}
+                          } }
                           name="dateUpdate"
                         >
                           <DatePicker
-                            style={{
+                            style={ {
                               width: "100%",
-                            }}
+                            } }
                             placeholder="When"
                             value={
                               modalData?.logged_date &&
                               dayjs(modalData?.logged_date, "YYYY-MM-DD")
                             }
-                            onChange={(date, dateString) =>
+                            onChange={ (date, dateString) =>
                               handleTaskInput(
                                 "start_date",
                                 dayjs(dateString, "YYYY-MM-DD")
                               )
                             }
-                            disabledDate={(current) => {
+                            disabledDate={ (current) => {
                               return current && current > dayjs().endOf("day");
-                            }}
+                            } }
                             format="DD-MM-YYYY"
                           >
                             <i className="fi fi-rr-calendar-day"></i>
                           </DatePicker>
                         </Form.Item>
                       </div>
-                    )}
+                    ) }
                   </div>
                 </div>
                 <div className="d-flex align-start">
-                  {!onEditClick ? (
+                  { !onEditClick ? (
                     <p
                       className="logged-time-text-wrapper "
-                      dangerouslySetInnerHTML={{
+                      dangerouslySetInnerHTML={ {
                         __html: modalData?.descriptions.replace(/\n/g, "<br>"),
-                      }}
+                      } }
                     ></p>
                   ) : (
                     <div className="description-loggedtime-details">
                       <Form.Item name="descriptions">
                         <CKEditor
-                          editor={Custombuild}
-                          data={editModalDescription}
-                          onChange={handleChangeData}
-                          onPaste={handlePasteData}
-                          config={{
+                          editor={ Custombuild }
+                          data={ editModalDescription }
+                          onChange={ handleChangeData }
+                          onPaste={ handlePasteData }
+                          config={ {
                             toolbar: [
                               "heading",
                               "|",
@@ -2215,26 +2224,26 @@ function TimeForPMS() {
                             styles: {
                               height: "10px",
                             },
-                          }}
+                          } }
                         />
                       </Form.Item>
                     </div>
-                  )}
+                  ) }
                 </div>
                 <div className="d-flex project-bg align-center">
                   <h5>Project</h5>
                   <span className="bg-label project-bg-label">
-                    {modalData?.project}
+                    { modalData?.project }
                   </span>
                 </div>
                 <div className="d-flex align-center">
                   <h5>Timesheet</h5>
-                  <p>{modalData?.timesheet}'s Timesheet</p>
+                  <p>{ modalData?.timesheet }'s Timesheet</p>
                 </div>
-                {onEditClick && (
+                { onEditClick && (
                   <div className="update-logged-time-button">
                     <Button
-                      style={{ width: 250 }}
+                      style={ { width: 250 } }
                       htmlType="submit"
                       type="primary"
                       className="square-primary-btn"
@@ -2242,29 +2251,29 @@ function TimeForPMS() {
                       Update Logged Time Details
                     </Button>
                   </div>
-                )}
+                ) }
 
-                {selectedRow && (
+                { selectedRow && (
                   <div>
-                    <p>{selectedRow.logged_by}</p>
-                    <p>{selectedRow.time_logged}</p>
-                    <p>{selectedRow.Date}</p>
+                    <p>{ selectedRow.logged_by }</p>
+                    <p>{ selectedRow.time_logged }</p>
+                    <p>{ selectedRow.Date }</p>
                     <p
-                      dangerouslySetInnerHTML={{
+                      dangerouslySetInnerHTML={ {
                         __html: selectedRow.Description.replace(/\n/g, "<br>"),
-                      }}
+                      } }
                     ></p>
                   </div>
-                )}
+                ) }
               </div>
 
               <div className="right-task-detail-panel">
                 <div className="right-toolbar">
                   <div className="right-toolbar-tab">
-                    <label style={{ cursor: "pointer" }}>
+                    <label style={ { cursor: "pointer" } }>
                       Comments
                       <span className="comment-badge">
-                        {comments.length || 0}
+                        { comments.length || 0 }
                       </span>
                     </label>
                   </div>
@@ -2272,59 +2281,59 @@ function TimeForPMS() {
 
                 <div className="task-history-inner  task-detail-inner comments">
                   <div class="comment-list-wrapper">
-                    {comments && comments.length > 0 ? (
+                    { comments && comments.length > 0 ? (
                       comments?.map((item, index) => {
                         const commentValue = item.comment;
 
                         return (
-                          <div className="main-comment-wrapper" key={index}>
+                          <div className="main-comment-wrapper" key={ index }>
                             <div className="main-avatar-wrapper">
                               <MyAvatar
-                                src={item.profile_pic}
-                                userName={item.sender}
-                                alt={item.sender}
-                                key={item.sender}
+                                src={ item.profile_pic }
+                                userName={ item.sender }
+                                alt={ item.sender }
+                                key={ item.sender }
                               />
                               <div className="comment-sender-name">
                                 <h1
-                                  style={{
+                                  style={ {
                                     color: useUserColors[item.sender] || "#000",
-                                  }}
+                                  } }
                                 >
-                                  {removeTitle(item.sender)}
+                                  { removeTitle(item.sender) }
                                 </h1>
                                 <h4>
-                                  {calculateTimeDifference(item.createdAt)}
+                                  { calculateTimeDifference(item.createdAt) }
                                 </h4>
                               </div>
 
-                              {isCreatedBy(item?.sender_id) && (
+                              { isCreatedBy(item?.sender_id) && (
                                 <div className="edit-bar">
                                   <Dropdown
-                                    trigger={["click"]}
+                                    trigger={ ["click"] }
                                     overlay={
                                       <Menu>
                                         <Menu.Item
                                           key="1"
-                                          onClick={() => {
+                                          onClick={ () => {
                                             setOpenCommentModle(true);
                                             handleEditComment(item._id);
-                                          }}
+                                          } }
                                         >
                                           <EditOutlined
-                                            style={{ color: "green" }}
+                                            style={ { color: "green" } }
                                           />
                                           Edit
                                         </Menu.Item>
                                         <Menu.Item
                                           key="2"
-                                          onClick={() => {
+                                          onClick={ () => {
                                             deleteComment(item._id);
-                                          }}
+                                          } }
                                           className="ant-delete"
                                         >
                                           <DeleteOutlined
-                                            style={{ color: "red" }}
+                                            style={ { color: "red" } }
                                           />
                                           Delete
                                         </Menu.Item>
@@ -2332,60 +2341,60 @@ function TimeForPMS() {
                                     }
                                   >
                                     <MoreOutlined
-                                      style={{ cursor: "pointer" }}
+                                      style={ { cursor: "pointer" } }
                                     />
                                   </Dropdown>
                                 </div>
-                              )}
+                              ) }
                             </div>
                             <div className="comment-wrapper">
-                              <p key={index}>
+                              <p key={ index }>
                                 <span
-                                  dangerouslySetInnerHTML={{
+                                  dangerouslySetInnerHTML={ {
                                     __html: item?.comment.replace(
                                       /\n/g,
                                       "<br>"
                                     ),
-                                  }}
+                                  } }
                                 ></span>
                               </p>
                               <div className="task-all-file-wrapper">
-                                {item?.attachments.map((file, index) => (
-                                  <Badge key={index}>
+                                { item?.attachments.map((file, index) => (
+                                  <Badge key={ index }>
                                     <div className="fileAttachment_Box">
                                       <div className="fileAttachment_box-img">
-                                        {fileImageSelect(file?.file_type)}
+                                        { fileImageSelect(file?.file_type) }
                                       </div>
                                       <div
-                                        style={{
+                                        style={ {
                                           display: "flex",
                                           marginBottom: "10px",
                                           width: "100%",
                                           justifyContent: "space-between",
-                                        }}
+                                        } }
                                       >
                                         <p
-                                          style={{ margin: "0px 10px" }}
+                                          style={ { margin: "0px 10px" } }
                                           className="fileNameTxtellipsis"
                                         >
                                           <a
                                             className="fileNameTxtellipsis"
-                                            href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
+                                            href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
                                             rel="noopener noreferrer"
                                             target="_blank"
                                           >
-                                            {file.name.length > 15
+                                            { file.name.length > 15
                                               ? `${file.name.slice(
-                                                  0,
-                                                  15
-                                                )}.....${file.file_type}`
-                                              : file.name + file.file_type}
+                                                0,
+                                                15
+                                              )}.....${file.file_type}`
+                                              : file.name + file.file_type }
                                           </a>
                                         </p>
                                       </div>
                                     </div>
                                   </Badge>
-                                ))}
+                                )) }
                               </div>
                             </div>
                           </div>
@@ -2393,50 +2402,50 @@ function TimeForPMS() {
                       })
                     ) : (
                       <div className="task-no-comments">No comments</div>
-                    )}
+                    ) }
                   </div>
                   <AddComment
-                    editFlagObj={{
+                    editFlagObj={ {
                       flag: openCommentModel,
                       setFn: setOpenCommentModle,
                       submitFn: handleComments,
-                    }}
-                    populatedFiles={populatedFiles}
-                    setPopulatedFiles={setPopulatedFiles}
-                    deleteFileData={deleteFileData}
-                    setDeleteFileData={setDeleteFileData}
-                    addComment={addComments} // Function to handle adding comments
-                    id={selectedId} // Task ID
-                    setTextAreaValue={setTextAreaValue} // Function to set text area value
-                    isTextAreaFocused={isTextAreaFocused} // Boolean for text area focus state
-                    setIsTextAreaFocused={setIsTextAreaFocused} // Function to set focus state
-                    textAreaValue={textAreaValue}
-                    userList={taggedUserList}
+                    } }
+                    populatedFiles={ populatedFiles }
+                    setPopulatedFiles={ setPopulatedFiles }
+                    deleteFileData={ deleteFileData }
+                    setDeleteFileData={ setDeleteFileData }
+                    addComment={ addComments } // Function to handle adding comments
+                    id={ selectedId } // Task ID
+                    setTextAreaValue={ setTextAreaValue } // Function to set text area value
+                    isTextAreaFocused={ isTextAreaFocused } // Boolean for text area focus state
+                    setIsTextAreaFocused={ setIsTextAreaFocused } // Function to set focus state
+                    textAreaValue={ textAreaValue }
+                    userList={ taggedUserList }
                   />
                 </div>
               </div>
             </div>
           </Form>
         </Modal>
-      )}
+      ) }
 
       <EditCommentModal
-        open={false}
-        cancel={handleCancelCommentModel}
-        formName={formComment}
-        onFinish={handleComments}
-        Mentionvalue={commentVal}
-        onChange={setCommentVal}
-        onSelect={handleSelect}
-        fileAttachment={fileAttachment}
-        populatedFiles={populatedFiles}
-        removeAttachmentFile={removeAttachmentFile}
-        attachmentfileRef={attachmentfileRef}
-        foldersList={foldersList}
-        onFileChange={onFileChange}
-        setIsTextAreaFocused={setIsTextAreaFocused}
-        userList={taggedUserList}
-        setOpenCommentModle={setOpenCommentModle}
+        open={ false }
+        cancel={ handleCancelCommentModel }
+        formName={ formComment }
+        onFinish={ handleComments }
+        Mentionvalue={ commentVal }
+        onChange={ setCommentVal }
+        onSelect={ handleSelect }
+        fileAttachment={ fileAttachment }
+        populatedFiles={ populatedFiles }
+        removeAttachmentFile={ removeAttachmentFile }
+        attachmentfileRef={ attachmentfileRef }
+        foldersList={ foldersList }
+        onFileChange={ onFileChange }
+        setIsTextAreaFocused={ setIsTextAreaFocused }
+        userList={ taggedUserList }
+        setOpenCommentModle={ setOpenCommentModle }
       />
     </>
   );
