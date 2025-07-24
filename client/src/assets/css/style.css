@@ -9883,6 +9883,7 @@ textarea.ant-picker-input>input {
   list-style: none;
   font-feature-settings: "tnum";
   vertical-align: top;
+  margin-bottom: 15px;
 }
 
 .ant-form-item-with-help {

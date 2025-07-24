@@ -690,6 +690,7 @@ ul.tab_menu li.active-tab {
     border-radius: 16px;
     overflow: hidden;
 }
+.ant-layout .task-time-wrapper,
 
 .project-wrapper {
     display: flex;
@@ -2046,11 +2047,11 @@ header.editor-action-icons .action-icon-block svg {
     width: 100%;
 }
 
-.ant-layout .task-time-wrapper {
+/* .ant-layout .task-time-wrapper {
     display: flex;
     flex-wrap: wrap;
     height: 100%;
-}
+} */
 
 section.drag_container {
     height: 100%;
@@ -2077,7 +2078,7 @@ section.drag_container {
 
 .profileleftbar.time-wrapper-left ul {
     padding: 0;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 250px);
     overflow-y: auto;
 }
 
