@@ -8,6 +8,7 @@
 
 .peoject-page .block-status-content .status-content {
     align-items: flex-start;
+    justify-content: center;
 }
 
 .add-project-wrapper i.fi.fi-ss-angle-small-down {
