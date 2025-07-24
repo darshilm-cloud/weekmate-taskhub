@@ -436,8 +436,10 @@ const BugsKanbanController = ({
 
   const handleCancel = () => {
     if (bugID) {
+      setSelectedBugId(null);
       const searchParams = new URLSearchParams(window.location.search);
       searchParams.delete("bugID", bugID);
+      console.log(searchParams.toString(),"searchParams")
       history.push({
         pathname: window.location.pathname,
         search: searchParams.toString(),
