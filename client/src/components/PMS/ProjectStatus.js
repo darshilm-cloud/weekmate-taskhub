@@ -8,6 +8,8 @@ import {
   Input,
   Modal,
   Popconfirm,
+  Row,
+  Col,
 } from "antd";
 import {
   EditOutlined,
@@ -296,45 +298,61 @@ function ProjectStatus() {
             </div>
         
           <Modal
-            open={isModalOpen}
-            onOk={handleOk}
-            onCancel={handleCancel}
-            footer={false}
-          >
-            <div className="modal-header">
-              <h1>Add Project Status</h1>
-            </div>
-            <div className="overview-modal-wrapper">
-              <Form form={addProjectStatus} onFinish={handleOk}>
-                <div className="topic-cancel-wrapper">
-                  <Form.Item
-                    name="title"
-                    label="Project Status"
-                    rules={[
-                      {
-                        required: true,
-                        whitespace: true,
-                        message: "Please enter a valid title",
-                      },
-                    ]}
-                  >
-                    <Input
-                      autoComplete="off"
-                      onChange={e => setProjectStatus(e.target.value)}
-                    />
-                  </Form.Item>
-                  <div className="modal-footer-flex">
-                    <div className="flex-btn">
-                      <Button type="primary" htmlType="submit">
-                        Save
-                      </Button>
-                      <Button onClick={handleCancel} className="ant-delete">Cancel</Button>
-                    </div>
-                  </div>
-                </div>
-              </Form>
-            </div>
-          </Modal>
+      open={isModalOpen}
+      onCancel={handleCancel}
+      title="Add Project Status"
+      className="project-add-wrapper edit-details-task-model"
+      width={600}
+      footer={[
+        <Button
+          key="cancel"
+          onClick={handleCancel}
+          size="large"
+          className="square-outline-btn ant-delete"
+        >
+          Cancel
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          size="large"
+          className="square-primary-btn"
+          onClick={() => addProjectStatus.submit()}
+        >
+          Save
+        </Button>,
+      ]}
+    >
+      <div className="overview-modal-wrapper task-overview-modal-wrapper">
+        <Form
+          form={addProjectStatus}
+          layout="vertical"
+          onFinish={handleOk}
+        >
+          <Row gutter={[0, 0]}>
+            <Col xs={24} sm={24} md={24} lg={24}>
+              <Form.Item
+                name="title"
+                label="Project Status"
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter a valid title",
+                  },
+                ]}
+              >
+                <Input
+                  autoComplete="off"
+                  onChange={(e) => setProjectStatus(e.target.value)}
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </div>
+    </Modal>
 
           <div className="block-table-content">
             <Table

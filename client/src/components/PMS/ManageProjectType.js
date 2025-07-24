@@ -8,6 +8,8 @@ import {
   Form,
   message,
   Popconfirm,
+  Col,
+  Row,
 } from "antd";
 import {
   CloseCircleTwoTone,
@@ -54,15 +56,15 @@ function ManageProjectType() {
         const position = record?.project_type;
         return record?._id == editid ? (
           <span
-            onChange={(value) => {
+            onChange={ (value) => {
               handlechange(value);
-            }}
-            style={{ textTransform: "capitalize" }}
+            } }
+            style={ { textTransform: "capitalize" } }
           >
-            <Input defaultValue={position} />
+            <Input defaultValue={ position } />
           </span>
         ) : (
-          <span style={{ textTransform: "capitalize" }}>{position}</span>
+          <span style={ { textTransform: "capitalize" } }>{ position }</span>
         );
       },
     },
@@ -73,7 +75,7 @@ function ManageProjectType() {
       width: 700,
       render: (text, record) => {
         const slug = record?.slug;
-        return  <span style={{ textTransform: "capitalize" }}>{slug}</span>
+        return <span style={ { textTransform: "capitalize" } }>{ slug }</span>
       },
     },
     {
@@ -82,50 +84,50 @@ function ManageProjectType() {
       width: 200,
       render: (text, record) => (
         <div className="edit-delete">
-          {flag == true && editid == record?._id ? (
+          { flag == true && editid == record?._id ? (
             <>
               <Button type="link edit">
                 <SaveTwoTone
-                  style={{ fontSize: "18px" }}
-                  onClick={() => {
+                  style={ { fontSize: "18px" } }
+                  onClick={ () => {
                     handleEditProjectName(record?._id);
                     setFlag(false);
                     setEditid("");
-                  }}
+                  } }
                 />
               </Button>
               <Button
                 type="link delete"
                 title="View"
-                onClick={() => setEditid("")}
+                onClick={ () => setEditid("") }
               >
-                <CloseCircleTwoTone style={{ fontSize: "18px" }} />
+                <CloseCircleTwoTone style={ { fontSize: "18px" } } />
               </Button>
             </>
           ) : (
             <>
               <Button type="link edit">
                 <EditOutlined
-                  style={{ fontSize: "18px" }}
-                  onClick={() => {
+                  style={ { fontSize: "18px" } }
+                  onClick={ () => {
                     // handleEdit(record?._id);
                     setEditid(record._id);
                     setFlag(true);
-                  }}
+                  } }
                 />
               </Button>
               <Popconfirm
                 title="Do you really want to delete this project Type?"
                 okText="Yes"
                 cancelText="No"
-                onConfirm={() => handleDeleteProjectName(record._id)}
+                onConfirm={ () => handleDeleteProjectName(record._id) }
               >
                 <Button type="link delete">
-                  <AiOutlineDelete style={{ fontSize: "18px" }} />
+                  <AiOutlineDelete style={ { fontSize: "18px" } } />
                 </Button>
               </Popconfirm>
             </>
-          )}
+          ) }
         </div>
       ),
     },
@@ -294,7 +296,7 @@ function ManageProjectType() {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
+        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
       </label>
     );
   };
@@ -307,77 +309,91 @@ function ManageProjectType() {
     <>
       <Card className="employee-card">
         <div className="project-type-container">
-         
-            <div className="heading-wrapper">
-              <h2>Project Type</h2>
-          
-              <Button onClick={showModal} type="primary">
-                + Add
-              </Button>
-            </div>
-            <div className="global-search">
-              <Search
-                ref={searchRef}
-                placeholder="Search..."
-                onSearch={onSearch}
-                onKeyUp={resetSearchFilter}
-                style={{ width: 200 }}
-              />
-            </div>
-       
+
+          <div className="heading-wrapper">
+            <h2>Project Type</h2>
+
+            <Button onClick={ showModal } type="primary">
+              + Add
+            </Button>
+          </div>
+          <div className="global-search">
+            <Search
+              ref={ searchRef }
+              placeholder="Search..."
+              onSearch={ onSearch }
+              onKeyUp={ resetSearchFilter }
+              style={ { width: 200 } }
+            />
+          </div>
+
           <div className="block-table-content">
             <Table
-              columns={columns}
-              pagination={{
+              columns={ columns }
+              pagination={ {
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30"],
                 ...pagination,
-              }}
-              footer={getFooterDetails}
-              onChange={handleTableChange}
-              dataSource={projectList}
+              } }
+              footer={ getFooterDetails }
+              onChange={ handleTableChange }
+              dataSource={ projectList }
             />
           </div>
 
           <Modal
-            open={isModalOpen}
-            onOk={handleOk}
-            onCancel={handleCancel}
-            footer={false}
+            open={ isModalOpen }
+            onCancel={ handleCancel }
+            title="Add Project Type"
+            className="project-add-wrapper edit-details-task-model"
+            width={ 600 }
+            footer={ [
+              <Button
+                key="cancel"
+                onClick={ handleCancel }
+                size="large"
+                className="square-outline-btn ant-delete"
+              >
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                size="large"
+                className="square-primary-btn"
+                onClick={ () => addprojectform.submit() }
+              >
+                Save
+              </Button>,
+            ] }
           >
-            <div className="modal-header">
-              <h1>Add Project Type</h1>
-            </div>
-            <div className="overview-modal-wrapper">
-              <Form form={addprojectform} onFinish={handleOk}>
-                <div className="topic-cancel-wrapper">
-                  <Form.Item
-                    name="project_type"
-                    label="Project type"
-                    rules={[
-                      {
-                        required: true,
-                        whitespace: true,
-                        message: "Please enter a valid title",
-                      },
-                    ]}
-                  >
-                    <Input
-                      autoComplete="off"
-                      onChange={(e) => setprojectname(e.target.value)}
-                    />
-                  </Form.Item>
-                  <div className="modal-footer-flex">
-                    <div className="flex-btn">
-                      <Button type="primary" htmlType="submit">
-                        Save
-                      </Button>
-                      <Button className="ant-delete" onClick={handleCancel}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+            <div className="overview-modal-wrapper task-overview-modal-wrapper">
+              <Form
+                form={ addprojectform }
+                layout="vertical"
+                onFinish={ handleOk }
+              >
+                <Row gutter={ [0, 0] }>
+                  <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                    <Form.Item
+                      name="project_type"
+                      label="Project Type"
+                      rules={ [
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "Please enter a valid title",
+                        },
+                      ] }
+                    >
+                      <Input
+                        autoComplete="off"
+                        onChange={ (e) => setprojectname(e.target.value) }
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </Form>
             </div>
           </Modal>

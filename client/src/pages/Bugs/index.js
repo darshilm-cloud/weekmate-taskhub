@@ -1794,7 +1794,7 @@ const BugsPMS = () => {
                 ) }
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              <Col xs={ 24 } sm={ 24 } >
                 <Tooltip key="attach" placement="top" title="Attached file">
                   <Button
                     className="link-btn"

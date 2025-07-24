@@ -8,7 +8,9 @@ import {
   Input,
   Modal,
   Popconfirm,
-  Spin
+  Spin,
+  Row,
+  Col
 } from "antd";
 import {
   EditOutlined,
@@ -219,26 +221,26 @@ function ProjectLabels() {
         record._id === editingId ? (
           <Input
             type="color"
-            value={selectedColor}
-            onChange={(e) => setSelectedColor(e.target.value)}
+            value={ selectedColor }
+            onChange={ (e) => setSelectedColor(e.target.value) }
           />
         ) : (
           <div
-            style={{
+            style={ {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-            }}
+            } }
           >
             <div
-              style={{
+              style={ {
                 backgroundColor: color || "#000000",
                 width: "80%",
                 height: "18px",
                 border: "1px solid #d9d9d9",
                 borderRadius: "2px",
-              }}
+              } }
             />
           </div>
         ),
@@ -250,13 +252,13 @@ function ProjectLabels() {
       render: (title, record) =>
         record._id === editingId ? (
           <Input
-            value={editingLabel}
-            onChange={(e) => setEditingLabel(e.target.value)}
-            style={{ width: 200 }}
-            onPressEnter={() => handleEditLabel(record._id)}
+            value={ editingLabel }
+            onChange={ (e) => setEditingLabel(e.target.value) }
+            style={ { width: 200 } }
+            onPressEnter={ () => handleEditLabel(record._id) }
           />
         ) : (
-          <span style={{ textTransform: "capitalize" }}>{title}</span>
+          <span style={ { textTransform: "capitalize" } }>{ title }</span>
         ),
     },
     {
@@ -264,46 +266,46 @@ function ProjectLabels() {
       dataIndex: "action",
       width: 150,
       render: (_, record) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          {editingId === record._id ? (
+        <div style={ { display: "flex", gap: "8px" } }>
+          { editingId === record._id ? (
             <>
               <Button
                 type="link"
-                onClick={() => handleEditLabel(record._id)}
-                icon={<SaveTwoTone style={{ fontSize: "18px" }} />}
+                onClick={ () => handleEditLabel(record._id) }
+                icon={ <SaveTwoTone style={ { fontSize: "18px" } } /> }
               />
               <Button
                 type="link"
-                onClick={cancelEdit}
-                icon={<CloseCircleTwoTone style={{ fontSize: "18px" }} />}
+                onClick={ cancelEdit }
+                icon={ <CloseCircleTwoTone style={ { fontSize: "18px" } } /> }
               />
             </>
           ) : (
             <>
               <Button
                 type="link"
-                onClick={() => startEdit(record)}
+                onClick={ () => startEdit(record) }
                 icon={
-                  <EditOutlined style={{ color: "green", fontSize: "18px" }} />
+                  <EditOutlined style={ { color: "green", fontSize: "18px" } } />
                 }
               />
               <Popconfirm
                 title="Do you really want to delete this Label?"
                 okText="Yes"
                 cancelText="No"
-                onConfirm={() => handleDeleteLabel(record._id)}
+                onConfirm={ () => handleDeleteLabel(record._id) }
               >
                 <Button
                   type="link"
                   icon={
                     <AiOutlineDelete
-                      style={{ color: "red", fontSize: "18px" }}
+                      style={ { color: "red", fontSize: "18px" } }
                     />
                   }
                 />
               </Popconfirm>
             </>
-          )}
+          ) }
         </div>
       ),
     },
@@ -436,7 +438,7 @@ function ProjectLabels() {
       <div className="project-labels-container">
         <div className="heading-wrapper">
           <h2>Project Labels</h2>
-          <Button className="addleave-btn" onClick={showModal} type="primary">
+          <Button className="addleave-btn" onClick={ showModal } type="primary">
             + Add
           </Button>
         </div>
@@ -444,71 +446,94 @@ function ProjectLabels() {
         <div className="global-search">
           <Search
             placeholder="Search..."
-            onSearch={onSearch}
-            style={{ width: 200 }}
+            onSearch={ onSearch }
+            style={ { width: 200 } }
             allowClear
           />
         </div>
 
         <Modal
-          open={isModalOpen}
-          onCancel={handleModalClose}
-          footer={null}
+          open={ isModalOpen }
+          onCancel={ handleModalClose }
           title="Add Task Labels"
+          className="project-add-wrapper edit-details-task-model"
+          width={ 600 }
+          footer={ [
+            <Button
+              key="cancel"
+              onClick={ handleModalClose }
+              size="large"
+              className="square-outline-btn ant-delete"
+            >
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              size="large"
+              className="square-primary-btn"
+              onClick={ () => form.submit() }
+            >
+              Save
+            </Button>,
+          ] }
         >
-          <Form form={form} onFinish={handleAddLabel} layout="vertical">
-            <Form.Item
-              label="Color"
-              rules={[{ required: true, message: "Please select a color" }]}
+          <div className="overview-modal-wrapper task-overview-modal-wrapper">
+            <Form
+              form={ form }
+              layout="vertical"
+              onFinish={ handleAddLabel }
             >
-              <Input
-                type="color"
-                value={selectedColor}
-                onChange={(e) => setSelectedColor(e.target.value)}
-                style={{ width: 100, height: 40 }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="title"
-              label="Task Label"
-              rules={[
-                { required: true, message: "Please enter a task label" },
-                { whitespace: true, message: "Task label cannot be empty" },
-              ]}
-            >
-              <Input autoComplete="off" placeholder="Enter label name" />
-            </Form.Item>
-
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button type="primary" htmlType="submit">
-                  Save
-                </Button>
-                <Button onClick={handleModalClose} className="ant-delete">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </Form>
+              <Row gutter={ [0, 0] }>
+                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                  <Form.Item
+                    label="Color"
+                    rules={ [{ required: true, message: "Please select a color" }] }
+                  >
+                    <Input
+                      type="color"
+                      value={ selectedColor }
+                      onChange={ (e) => setSelectedColor(e.target.value) }
+                      style={ { width: 100, height: 40 } }
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                  <Form.Item
+                    name="title"
+                    label="Task Label"
+                    rules={ [
+                      { required: true, message: "Please enter a task label" },
+                      { whitespace: true, message: "Task label cannot be empty" },
+                    ] }
+                  >
+                    <Input
+                      autoComplete="off"
+                      placeholder="Enter label name"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Form>
+          </div>
         </Modal>
-
         <div className="block-table-content">
           <Table
-            columns={columns}
-            dataSource={projectlabelListing}
+            columns={ columns }
+            dataSource={ projectlabelListing }
             rowKey="_id"
-            pagination={{
+            pagination={ {
               showSizeChanger: true,
               pageSizeOptions: ["10", "20", "30"],
               showTotal: (total) => `Total ${total} records`,
               ...pagination,
-            }}
-            onChange={handleTableChange}
-            loading={{
+            } }
+            onChange={ handleTableChange }
+            loading={ {
               spinning: isTableLoading,
               indicator: <Spin size="large" />
-            }}
+            } }
           />
         </div>
       </div>
