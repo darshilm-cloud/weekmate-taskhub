@@ -166,7 +166,7 @@ exports.addUser = async (req, res) => {
       );
     }
 
-    const { email, firstName, lastName, password, companyId } = value;
+    const { email, firstName, lastName, password, companyId, pmsRoleId } = value;
 
     // Check for user email and username exist
     let isEmailExists = await employeeSchema.findOne({
@@ -177,10 +177,10 @@ exports.addUser = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
     }
 
-    const roleData = await PMSRoles.findOne({
-      role_name: "User",
-      isDeleted: false
-    });
+    // const roleData = await PMSRoles.findOne({
+    //   role_name: "User",
+    //   isDeleted: false
+    // });
 
     // Add user according company
     let employeeObject = {
@@ -189,7 +189,7 @@ exports.addUser = async (req, res) => {
       last_name: lastName,
       full_name: `${firstName} ${lastName}`,
       password,
-      pms_role_id: roleData._id,
+      pms_role_id: pmsRoleId,
       companyId: newObjectId(companyId)
     };
 
@@ -363,7 +363,7 @@ exports.editUser = async (req, res) => {
 
     const { userId } = req.params;
 
-    const { email, firstName, lastName, companyId, isActivate } = value;
+    const { email, firstName, lastName, companyId, isActivate,pmsRoleId } = value;
 
     // Create an update object with only the fields that are present in the req
     const updateFields = {};
@@ -375,7 +375,7 @@ exports.editUser = async (req, res) => {
       updateFields.full_name = `${firstName} ${lastName}`;
     if (companyId !== undefined) updateFields.companyId = companyId;
     if (isActivate !== undefined) updateFields.isActivate = isActivate;
-
+    if (pmsRoleId !== undefined) updateFields.pms_role_id=pmsRoleId;
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 

@@ -139,7 +139,7 @@ const Dashbaord = () => {
       value: totalEmployee,
       icon: <EmployeeIcon />,
       iconBgColor: "rgba(24, 144, 255, 0.1)",
-      navigateTo: `/${companySlug}/admin/company-employee`,
+      navigateTo: `/${companySlug}/project-users`,
     },
   ];
 

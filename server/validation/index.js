@@ -100,6 +100,7 @@ class Validator {
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
       companyId: Joi.string().required("Company ID is required"),
+      pmsRoleId: Joi.string().required("Role is required"),
     });
   };
 
@@ -113,7 +114,8 @@ class Validator {
       companyId: Joi.string().required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      isActivate: Joi.boolean().required()
+      isActivate: Joi.boolean().required(),
+      pmsRoleId: Joi.string().required("Role is required"),
     });
   };
 

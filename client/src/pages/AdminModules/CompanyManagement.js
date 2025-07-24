@@ -487,7 +487,7 @@ const CompanyRegistration = () => {
                 className="view-btn"
                 icon={<UserOutlined />}
                 onClick={() =>
-                  history.push(`/${companySlug}/admin/company-employee`)
+                  history.push(`/${companySlug}/project-users`)
                 }
               />
             </Tooltip>

@@ -27,7 +27,6 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 
 const CompanyEmployee = () => {
-  const companySlug = localStorage.getItem("companyDomain");
 
   const history = useHistory();
   const [form] = Form.useForm();

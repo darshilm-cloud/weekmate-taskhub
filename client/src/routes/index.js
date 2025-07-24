@@ -367,18 +367,18 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.TL,
       ],
     },
-    {
-      path: ":companySlug/admin/company-employee",
-      component: CompanyEmployee,
-      roleName: [
-        config.PMS_ROLES.ADMIN,
-        config.PMS_ROLES.USER,
-        config.PMS_ROLES.CLIENT,
-        config.PMS_ROLES.PC,
-        config.PMS_ROLES.AM,
-        config.PMS_ROLES.TL,
-      ],
-    },
+    // {
+    //   path: ":companySlug/admin/company-employee",
+    //   component: CompanyEmployee,
+    //   roleName: [
+    //     config.PMS_ROLES.ADMIN,
+    //     config.PMS_ROLES.USER,
+    //     config.PMS_ROLES.CLIENT,
+    //     config.PMS_ROLES.PC,
+    //     config.PMS_ROLES.AM,
+    //     config.PMS_ROLES.TL,
+    //   ],
+    // },
     {
       path: "admin/Administrator",
       component: Administrator,

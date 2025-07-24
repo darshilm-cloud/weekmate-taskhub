@@ -46,7 +46,8 @@ exports.getEmployees = async (req, res) => {
         .optional()
         .valid("csv", "xlsx")
         .insensitive()
-        .default("csv")
+        .default("csv"),
+      includeDeactivated: Joi.boolean().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -68,7 +69,6 @@ exports.getEmployees = async (req, res) => {
     let matchQuery = {
       isDeleted: false,
       isSoftDeleted: false,
-      isActivate: true,
       companyId: newObjectId(decodedCompanyId),
       // Apply filters..
       ...(value.first_name && { first_name: value.first_name }),
@@ -78,6 +78,11 @@ exports.getEmployees = async (req, res) => {
         "pms_role._id": new mongoose.Types.ObjectId(value.pms_role_id)
       })
     };
+
+    // Add isActivate condition based on includeDeactivated parameter
+    if (!value.includeDeactivated) {
+      matchQuery.isActivate = true;
+    }
 
     if (value.search) {
       matchQuery = {
@@ -120,6 +125,7 @@ exports.getEmployees = async (req, res) => {
         $project: {
           _id: "$_id",
           first_name: { $ifNull: ["$first_name", ""] },
+          isActivate:  { $ifNull: ["$isActivate", ""] },
           last_name: { $ifNull: ["$last_name", ""] },
           full_name: { $ifNull: ["$full_name", ""] },
           phone_number: { $ifNull: ["$phone_number", ""] },
