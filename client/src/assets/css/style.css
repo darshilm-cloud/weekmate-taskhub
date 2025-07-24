@@ -37920,7 +37920,11 @@ h6,
 
 .ant-menu-submenu>.ant-menu {
   background-color: #fff;
-  border-radius: 0;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+        border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    
 }
 
 .ant-menu-submenu>.ant-menu.ant-menu-sub .ant-menu-item {

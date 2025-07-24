@@ -8,6 +8,8 @@ import {
   message,
   Modal,
   Card,
+  Row,
+  Col,
 } from "antd";
 import { AiOutlineDelete } from "react-icons/ai";
 import Search from "antd/lib/input/Search";
@@ -52,16 +54,16 @@ function Workflows() {
         const position = record?.project_workflow?.trim();
         return record?._id == editid ? (
           <span
-            onChange={(value) => {
+            onChange={ (value) => {
               handlechange(value);
-            }}
-            style={{ textTransform: "capitalize" }}
+            } }
+            style={ { textTransform: "capitalize" } }
           >
-            <Input defaultValue={position} />
+            <Input defaultValue={ position } />
           </span>
         ) : (
-          <Link to={`/${companySlug}/workflows-tasks/${record?._id}`}>
-            <span style={{ textTransform: "capitalize" }}>{position}</span>
+          <Link to={ `/${companySlug}/workflows-tasks/${record?._id}` }>
+            <span style={ { textTransform: "capitalize" } }>{ position }</span>
           </Link>
         );
       },
@@ -73,54 +75,54 @@ function Workflows() {
       width: 200,
       render: (text, record, index) => (
         <div className="edit-delete">
-          {flag == true && editid == record?._id ? (
+          { flag == true && editid == record?._id ? (
             <>
               <Button type="link edit">
                 <SaveTwoTone
                   twoToneColor="green"
-                  onClick={() => {
+                  onClick={ () => {
                     handleEdit(record?._id);
                     setFlag(false);
                     setEditid("");
-                  }}
+                  } }
                 />
               </Button>
               <Button
                 type="link delete"
                 title="View"
-                onClick={() => setEditid("")}
+                onClick={ () => setEditid("") }
               >
-                <CloseCircleTwoTone style={{ fontSize: "18px" }} />
+                <CloseCircleTwoTone style={ { fontSize: "18px" } } />
               </Button>
             </>
           ) : (
             <>
-              {(!Object.keys(record).includes("isDefault") ||
+              { (!Object.keys(record).includes("isDefault") ||
                 record?.isDefault == false) && (
-                <>
-                  <Button type="link edit">
-                    <EditOutlined
-                      twoToneColor="green"
-                      onClick={() => {
-                        setEditid(record._id);
-                        setFlag(true);
-                      }}
-                    />
-                  </Button>
-                  <Popconfirm
-                    title="Do you really want to delete this Workflow?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={() => handleDeleteWorkflow(record._id)}
-                  >
-                    <Button type="link delete">
-                      <AiOutlineDelete />
+                  <>
+                    <Button type="link edit">
+                      <EditOutlined
+                        twoToneColor="green"
+                        onClick={ () => {
+                          setEditid(record._id);
+                          setFlag(true);
+                        } }
+                      />
                     </Button>
-                  </Popconfirm>
-                </>
-              )}
+                    <Popconfirm
+                      title="Do you really want to delete this Workflow?"
+                      okText="Yes"
+                      cancelText="No"
+                      onConfirm={ () => handleDeleteWorkflow(record._id) }
+                    >
+                      <Button type="link delete">
+                        <AiOutlineDelete />
+                      </Button>
+                    </Popconfirm>
+                  </>
+                ) }
             </>
-          )}
+          ) }
         </div>
       ),
     },
@@ -285,7 +287,7 @@ function Workflows() {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
+        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
       </label>
     );
   };
@@ -302,78 +304,90 @@ function Workflows() {
     <>
       <Card className="employee-card">
         <div className="workflow-container">
-         
-            <div className="heading-wrapper">
-              <h2>Workflow</h2>
-              <Button
-                className="addleave-btn"
-                type="primary"
-                onClick={showModal}
-              >
-                + Add
-              </Button>
-            </div>
-            <div className="global-search">
-              <Search
-                ref={searchRef}
-                placeholder="Search..."
-                onSearch={onSearch}
-                style={{ width: 200 }}
-                className="mr2"
-              />
-            </div>
+
+          <div className="heading-wrapper">
+            <h2>Workflow</h2>
+            <Button
+              className="addleave-btn"
+              type="primary"
+              onClick={ showModal }
+            >
+              + Add
+            </Button>
+          </div>
+          <div className="global-search">
+            <Search
+              ref={ searchRef }
+              placeholder="Search..."
+              onSearch={ onSearch }
+              style={ { width: 200 } }
+              className="mr2"
+            />
+          </div>
 
 
           <div className="block-table-content">
             <Table
-              columns={columns}
-              pagination={{
+              columns={ columns }
+              pagination={ {
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30"],
                 ...pagination,
-              }}
-              footer={getFooterDetails}
-              onChange={handleTableChange}
-              dataSource={workflowList}
+              } }
+              footer={ getFooterDetails }
+              onChange={ handleTableChange }
+              dataSource={ workflowList }
             />
           </div>
-
           <Modal
-            open={isModalOpen}
-            onOk={handleOk}
-            onCancel={handleCancel}
-            footer={false}
+            open={ isModalOpen }
+            onCancel={ handleCancel }
+            title="Add Workflow"
+            className="project-add-wrapper edit-details-task-model"
+            width={ 600 }
+            footer={ [
+              <Button
+                key="cancel"
+                onClick={ handleCancel }
+                size="large"
+                className="square-outline-btn ant-delete"
+              >
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                size="large"
+                className="square-primary-btn"
+                onClick={ () => addform.submit() }
+              >
+                Save
+              </Button>,
+            ] }
           >
-            <div className="modal-header">
-              <h1>Add Workflow</h1>
-            </div>
-            <div className="overview-modal-wrapper">
-              <Form form={addform} onFinish={addWorkflowDetails}>
-                <div className="topic-cancel-wrapper">
-                  <Form.Item
-                    name="project_workflow"
-                    label="Add WorkFlow"
-                    rules={[
-                      {
-                        required: true,
-                        whitespace: true,
-                        message: "Please enter a valid title",
-                      },
-                    ]}
-                  >
-                    <Input autoComplete="off" />
-                  </Form.Item>
-                  <div className="modal-footer-flex">
-                    <div className="flex-btn">
-                      <Button type="primary" htmlType="submit">
-                        Save
-                      </Button>
-                      <Button onClick={handleCancel} className="ant-delete">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+            <div className="overview-modal-wrapper task-overview-modal-wrapper">
+              <Form
+                form={ addform }
+                layout="vertical"
+                onFinish={ addWorkflowDetails }
+              >
+                <Row gutter={ [0, 0] }>
+                  <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+                    <Form.Item
+                      name="project_workflow"
+                      label="Add WorkFlow"
+                      rules={ [
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "Please enter a valid title",
+                        },
+                      ] }
+                    >
+                      <Input autoComplete="off" size="large" />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </Form>
             </div>
           </Modal>

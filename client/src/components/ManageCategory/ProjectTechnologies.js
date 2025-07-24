@@ -8,6 +8,8 @@ import {
   Input,
   Modal,
   Popconfirm,
+  Col,
+  Row,
 } from "antd";
 import {
   EditOutlined,
@@ -171,7 +173,7 @@ const ProjectTechnologies = () => {
 
       if (response?.data?.status) {
         message.success(response.data.message);
-        
+
         // Handle pagination when deleting last item on page
         if (projectList.length === 1 && pagination.current > 1) {
           setPagination(prev => ({
@@ -179,7 +181,7 @@ const ProjectTechnologies = () => {
             current: prev.current - 1,
           }));
         }
-        
+
         getProjectTechList();
       } else {
         message.error(response?.data?.message || "Failed to delete technology");
@@ -227,16 +229,16 @@ const ProjectTechnologies = () => {
       width: 700,
       render: (text, record) => {
         const isCurrentlyEditing = isEditing && editingId === record._id;
-        
+
         return isCurrentlyEditing ? (
           <Input
-            defaultValue={record.project_tech}
-            onChange={handleEditTextChange}
-            onPressEnter={() => updateProjectTechnology(record._id)}
+            defaultValue={ record.project_tech }
+            onChange={ handleEditTextChange }
+            onPressEnter={ () => updateProjectTechnology(record._id) }
           />
         ) : (
-          <span style={{ textTransform: "capitalize" }}>
-            {record.project_tech}
+          <span style={ { textTransform: "capitalize" } }>
+            { record.project_tech }
           </span>
         );
       },
@@ -247,41 +249,41 @@ const ProjectTechnologies = () => {
       width: 200,
       render: (_, record) => {
         const isCurrentlyEditing = isEditing && editingId === record._id;
-        
+
         return (
           <div className="edit-delete">
-            {isCurrentlyEditing ? (
+            { isCurrentlyEditing ? (
               <>
                 <Button type="link" className="edit">
                   <SaveTwoTone
-                    style={{ fontSize: "18px" }}
-                    onClick={() => updateProjectTechnology(record._id)}
+                    style={ { fontSize: "18px" } }
+                    onClick={ () => updateProjectTechnology(record._id) }
                   />
                 </Button>
-                <Button type="link" className="delete" onClick={handleCancelEdit}>
-                  <CloseCircleTwoTone style={{ fontSize: "18px" }} />
+                <Button type="link" className="delete" onClick={ handleCancelEdit }>
+                  <CloseCircleTwoTone style={ { fontSize: "18px" } } />
                 </Button>
               </>
             ) : (
               <>
                 <Button type="link" className="edit">
                   <EditOutlined
-                    style={{ fontSize: "18px" }}
-                    onClick={() => handleStartEdit(record)}
+                    style={ { fontSize: "18px" } }
+                    onClick={ () => handleStartEdit(record) }
                   />
                 </Button>
                 <Popconfirm
                   title="Do you really want to delete this Department?"
                   okText="Yes"
                   cancelText="No"
-                  onConfirm={() => deleteProjectTechnology(record._id)}
+                  onConfirm={ () => deleteProjectTechnology(record._id) }
                 >
                   <Button type="link" className="delete">
-                    <AiOutlineDelete style={{ fontSize: "18px" }} />
+                    <AiOutlineDelete style={ { fontSize: "18px" } } />
                   </Button>
                 </Popconfirm>
               </>
-            )}
+            ) }
           </div>
         );
       },
@@ -290,92 +292,107 @@ const ProjectTechnologies = () => {
 
   const tableFooter = useCallback(() => (
     <label>
-      Total Records Count is {pagination.total}
+      Total Records Count is { pagination.total }
     </label>
   ), [pagination.total]);
 
   return (
     <Card className="employee-card">
       <div className="project-technology-container">
-     
-          <div className="heading-wrapper">
-            <h2>Project Departments</h2>
-            <Button
-              className="addleave-btn"
-              type="primary"
-              onClick={() => setIsModalOpen(true)}
-            >
-              + Add
-            </Button>
-          </div>
-          <div className="global-search">
-            <Input.Search
-              ref={searchRef}
-              placeholder="Search..."
-              onSearch={handleSearch}
-              onKeyUp={resetSearchFilter}
-              style={{ width: 200 }}
-            />
-          </div>
-        </div>
 
-        <Modal
-          open={isModalOpen}
-          onCancel={handleModalClose}
-          footer={null}
-        >
-          <div className="modal-header">
-            <h1>Add Departments</h1>
-          </div>
-          <div className="overview-modal-wrapper">
-            <Form form={form} onFinish={addProjectTechnology}>
-              <div className="topic-cancel-wrapper">
+        <div className="heading-wrapper">
+          <h2>Project Departments</h2>
+          <Button
+            className="addleave-btn"
+            type="primary"
+            onClick={ () => setIsModalOpen(true) }
+          >
+            + Add
+          </Button>
+        </div>
+        <div className="global-search">
+          <Input.Search
+            ref={ searchRef }
+            placeholder="Search..."
+            onSearch={ handleSearch }
+            onKeyUp={ resetSearchFilter }
+            style={ { width: 200 } }
+          />
+        </div>
+      </div>
+
+      <Modal
+        open={ isModalOpen }
+        onCancel={ handleModalClose }
+        title="Add Departments"
+        className="project-add-wrapper edit-details-task-model"
+        width={ 600 }
+        footer={ [
+          <Button
+            key="cancel"
+            onClick={ handleModalClose }
+            size="large"
+            className="square-outline-btn ant-delete"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            className="square-primary-btn"
+            onClick={ () => form.submit() }
+          >
+            Save
+          </Button>,
+        ] }
+      >
+        <div className="overview-modal-wrapper task-overview-modal-wrapper">
+          <Form
+            form={ form }
+            layout="vertical"
+            onFinish={ addProjectTechnology }
+          >
+            <Row gutter={ [0, 0] }>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 <Form.Item
                   name="project_tech"
                   label="Project Departments"
-                  rules={[
+                  rules={ [
                     {
                       required: true,
                       whitespace: true,
                       message: "Please enter a valid title",
                     },
-                  ]}
+                  ] }
                 >
                   <Input
                     autoComplete="off"
-                    onChange={(e) => setProjectTech(e.target.value)}
+                    onChange={ (e) => setProjectTech(e.target.value) }
+                    size="large"
                   />
                 </Form.Item>
-                <div className="modal-footer-flex">
-                  <div className="flex-btn">
-                    <Button type="primary" htmlType="submit">
-                      Save
-                    </Button>
-                    <Button onClick={handleModalClose} className="ant-delete">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Form>
-          </div>
-        </Modal>
-
-        <div className="block-table-content">
-          <Table
-            columns={columns}
-            dataSource={projectList}
-            rowKey="_id"
-            footer={tableFooter}
-            pagination={{
-              showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
-              ...pagination,
-            }}
-            onChange={handleTableChange}
-          />
+              </Col>
+            </Row>
+          </Form>
         </div>
-      
+      </Modal>
+
+      <div className="block-table-content">
+        <Table
+          columns={ columns }
+          dataSource={ projectList }
+          rowKey="_id"
+          footer={ tableFooter }
+          pagination={ {
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "30"],
+            ...pagination,
+          } }
+          onChange={ handleTableChange }
+        />
+      </div>
+
     </Card>
   );
 };
