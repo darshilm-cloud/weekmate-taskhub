@@ -22,7 +22,7 @@
   /* Popover Content */
   .filter-popover-content {
     display: flex;
-    min-height: 400px;
+    min-height: 330px;
     border-radius: 12px;
   }
   
@@ -70,7 +70,7 @@
   }
   
   .filter-content-inner {
-    padding: 24px;
+    padding: 16px;
     min-width: 320px;
   }
   
@@ -94,7 +94,7 @@
   
   /* Search Input */
   .filter-search {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
   
   .filter-search .ant-input {
@@ -111,7 +111,7 @@
   
   /* Options Container */
   .filter-options {
-    max-height: 250px;
+    max-height: 190px;
     overflow-y: auto;
     padding-right: 8px;
   }
@@ -159,7 +159,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px;
+    padding: 5px 10px;
     margin-bottom: 10px;
     border-radius: 8px;
     cursor: pointer;
@@ -178,7 +178,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px;
+    padding: 5px 10px;
     margin-bottom: 6px;
     border-radius: 8px;
     cursor: pointer;
@@ -211,7 +211,7 @@
   .filter-actions {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #e5e7eb;
   }
@@ -292,7 +292,7 @@
     }
     
     .filter-content-inner {
-      padding: 16px;
+  
       min-width: auto;
     }
   }
@@ -438,10 +438,13 @@
   }
    .filter-popover-content .filter-btn,
   .filter-popover-content .ant-btn.delete-btn{
-padding: 5px 10px;
+      padding: 5px 10px;
   }
 
     .filter-popover-content .ant-radio-wrapper{
     display: flex;
     align-items: center;
+  }
+  .filter-popover-content .ant-row{
+    margin: 0;
   }
