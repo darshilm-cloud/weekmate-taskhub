@@ -187,6 +187,7 @@ function TasksPMS({ flag }) {
     setSelectedMainTask,
     updateTaskDraftStatus,
     checkTaskDrafts,
+    resetAllFilters
   } = TasksController({ flag });
 
   const csvRef = document.getElementById("test-table-xls-button");
@@ -514,6 +515,8 @@ function TasksPMS({ flag }) {
   handleStartDueFilter={handleStartDueFilter}
   filterStartDate={filterStartDate}
   filterDueDate={filterDueDate}
+
+  handleResetAllFilters={resetAllFilters}
                     />
 
                     <div className="status-content after-border">

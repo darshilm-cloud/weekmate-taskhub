@@ -133,76 +133,74 @@ const FilterUI = ({
     { key: "dates", label: "Dates" },
   ];
 
+  const renderStatusFilter = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Filter by Status</h4>
+  
+      <div className="filter-search">
+        <Search
+          placeholder="Search status"
+          value={filterStatusSearchInput}
+          onSearch={(val) => setFilterStatusSearchInput(val)}
+          onChange={(e) => setFilterStatusSearchInput(e.target.value)}
+          size="small"
+        />
+      </div>
+  
+      <div className="filter-options">
+        <Radio.Group
+          value={filterStatus}
+          onChange={handleFilterStatus}
+          style={{ width: "100%" }}
+        >
+          {boardTasks
+            ?.filter((item) =>
+              item.workflowStatus?.title
+                .toLowerCase()
+                .includes(filterStatusSearchInput.toLowerCase())
+            )
+            .map((val, index) => (
+              <div
+                key={index}
+                className={`filter-option-item ${
+                  filterStatus === val?.workflowStatus?._id ? "selected" : ""
+                }`}
+              >
+                <Radio value={val?.workflowStatus?._id}>
+                  {val?.workflowStatus?.title}
+                </Radio>
+              </div>
+            ))}
+        </Radio.Group>
+      </div>
+  
+      <div className="filter-actions">
+        <Button
+          onClick={() => handleAllFilter("workflowStatusId", filterStatus)}
+          size="small"
+          className="filter-btn"
+        >
+          Apply Filter
+        </Button>
+        <Button
+          size="small"
+          className="delete-btn"
+          onClick={() => {
+            handleResetAllFilters("status")
+            setFilterStatusSearchInput("");
+          }}
+        >
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+  
+
   const renderFilterContent = () => {
     switch (selectedFilterType) {
       case "status":
-        return (
-          <div className="filter-content-inner">
-            <h4 className="filter-title">Filter by Status</h4>
-
-            <div className="filter-search">
-              <Search
-                placeholder="Search status"
-                value={ filterStatusSearchInput }
-                onSearch={ (val) => setFilterStatusSearchInput(val) }
-                onChange={ (e) => setFilterStatusSearchInput(e.target.value) }
-                size="small"
-              />
-            </div>
-
-            <div className="filter-options">
-              <Radio.Group
-                value={ filterStatus }
-                onChange={ handleFilterStatus }
-                style={ { width: '100%' } }
-              >
-
-                { boardTasks
-                  ?.filter((item) =>
-                    item.workflowStatus?.title
-                      .toLowerCase()
-                      .includes(filterStatusSearchInput.toLowerCase())
-                  )
-                  .map((val, index) => (
-                    <div
-                      key={ index }
-                      className={ `filter-option-item ${filterStatus === val?.workflowStatus?._id
-                        ? "selected"
-                        : ""
-                        }` }
-                    >
-                      <Radio value={ val?.workflowStatus?._id }>
-                        { val?.workflowStatus?.title }
-                      </Radio>
-                    </div>
-                  )) }
-              </Radio.Group>
-            </div>
-
-            <div className="filter-actions">
-              <Button
-                onClick={ () =>
-                  handleAllFilter("workflowStatusId", filterStatus)
-                }
-
-                size="small"
-                className="filter-btn"
-              >
-                Apply Filter
-              </Button>
-              <Button
-                size="small"
-                className="delete-btn"
-                onClick={ () => {
-                  setSelectedFilterType(null);
-                  setFilterStatusSearchInput("");
-                } }
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        );
+        return renderStatusFilter();
 
       case "assignee":
         return (
@@ -230,12 +228,7 @@ const FilterUI = ({
                     checked={ filterAssigned === "unassigned" }
                     onChange={ () => handleSelectionAssignedFilter("unassigned") }
                   />
-                  <Avatar
-                    icon={ <QuestionCircleOutlined /> }
-                    size="small"
-                    style={ { backgroundColor: '#d9d9d9', color: '#666' } }
-                    className="filter-avatar"
-                  />
+                 
                   <span>Unassigned Tasks</span>
                 </div>
               ) }
@@ -280,11 +273,11 @@ const FilterUI = ({
                 size="small"
                 className="delete-btn"
                 onClick={ () => {
-                  setSelectedFilterType(null);
+                  handleResetAllFilters("assignee")
                   setFilterAssignedSearchInput("");
                 } }
               >
-                Cancel
+                Reset
               </Button>
             </div>
           </div>
@@ -364,11 +357,11 @@ const FilterUI = ({
                 size="small"
                 className="delete-btn"
                 onClick={ () => {
-                  setSelectedFilterType(null);
+                  handleResetAllFilters("labels")
                   setFilterLabelsSearchInput("");
                 } }
               >
-                Cancel
+                Reset
               </Button>
             </div>
           </div>
@@ -480,24 +473,18 @@ const FilterUI = ({
                 size="small"
                 className="delete-btn"
                 onClick={ () => {
-                  setSelectedFilterType(null);
+                  handleResetAllFilters("date")
                   setSelectValDuedate(false);
                 } }
               >
-                Cancel
+                Reset
               </Button>
             </div>
           </div>
         );
 
       default:
-        return (
-          <div className="filter-content-inner">
-            <div className="filter-empty-state">
-              Select a filter from the left to configure it
-            </div>
-          </div>
-        );
+        return renderStatusFilter();
     }
   };
 
@@ -516,7 +503,7 @@ const FilterUI = ({
               className="delete-btn"
               title=" Reset all filters"
             >
-              Reset ({ activeFiltersCount })
+              Reset All ({ activeFiltersCount })
             </Button>
           ) }
         </div>
@@ -549,10 +536,11 @@ const FilterUI = ({
         placement="bottomLeft"
         overlayStyle={ { maxWidth: "none" } }
       >
-        <Button icon={ <FilterOutlined /> } className="filter-btn">
+         <Button icon={ <FilterOutlined /> } className="filter-btn">
           Filter
           <Badge
             count={ activeFiltersCount }
+            hidden={!activeFiltersCount}
             size="small"
             offset={ [10, 0] }
             color="#1890ff"

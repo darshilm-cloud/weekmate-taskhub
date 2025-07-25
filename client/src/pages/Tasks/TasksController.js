@@ -1640,6 +1640,32 @@ const TasksController = ({ flag }) => {
     }
   };
 
+  const resetAllFilters = (type) => {
+      switch (type) {
+        case "status":
+          setFilterStatus("");
+          break;
+        case "assignee":
+          setFilterAssigned([]);
+          break;
+        case "labels":
+          setFilterOnLabels("");
+          break;
+        case "date":
+          setFilterStartDate("");
+          setFilterDueDate("");
+          break;
+        default:
+          setFilterStatus("");
+          setFilterAssigned([]);
+          setFilterOnLabels("");
+          setFilterStartDate("");
+          setFilterDueDate("");
+          break;
+      }
+  };
+  
+
   useEffect(() => {
     getProjectByID();
     getProjectMianTask();
@@ -1843,6 +1869,7 @@ const TasksController = ({ flag }) => {
     selectedWorkflowStatus,
     setSelectedWorkflowStatus,
     updateTaskDraftStatus,
+    resetAllFilters
   };
 };
 
