@@ -24,8 +24,6 @@
     display: flex;
     min-height: 400px;
     border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
   
   /* Left Sidebar */
@@ -33,7 +31,9 @@
     width: 220px;
     border-right: 1px solid #e5e7eb;
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-    padding: 8px 0;
+    padding: 8px;
+    border-top-left-radius: 8px;
+     border-bottom-left-radius: 8px;
   }
   
   .filter-menu-item {
@@ -50,15 +50,12 @@
     margin: 2px 0;
   }
   
-  .filter-menu-item:hover {
-    background-color: #f3f4f6;
-    color: #1f2937;
-  }
+  .filter-menu-item:hover ,
   
   .filter-menu-item.active {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    border-left-color: #3b82f6;
-    color: #1d4ed8;
+    background:#e0f2fe;
+       border-left-color: #bae6fd;
+    color:#0369a1;
     font-weight: 600;
   }
   
@@ -91,7 +88,7 @@
     content: '';
     width: 4px;
     height: 20px;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background:#8bd0fd;
     border-radius: 2px;
   }
   
@@ -102,6 +99,7 @@
   
   .filter-search .ant-input {
     border-radius: 8px;
+    height: 40px;
     border: 1px solid #d1d5db;
     transition: all 0.3s ease;
   }
@@ -149,10 +147,11 @@
     background-color: #f8fafc;
     border-color: #e5e7eb;
   }
-  
+  .label-item.selected,
+  .assignee-item.selected,
   .filter-option-item.selected {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    border-color: #93c5fd;
+    background: #e0f2fe;
+    border-color: #bae6fd;
   }
   
   /* Assignee Item */
@@ -161,6 +160,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px;
+    margin-bottom: 10px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -172,10 +172,6 @@
     border-color: #e5e7eb;
   }
   
-  .assignee-item.selected {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    border-color: #93c5fd;
-  }
   
   /* Label Item */
   .label-item {
@@ -194,13 +190,9 @@
   .label-item:hover {
     background-color: #f8fafc;
     border-color: #e5e7eb;
-    transform: translateX(2px);
+
   }
-  
-  .label-item.selected {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    border-color: #93c5fd;
-  }
+
   
   /* Global Labels Header */
   .global-labels-header {
@@ -429,7 +421,7 @@
   
   .filter-sidebar-title {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
   }
   
@@ -444,4 +436,12 @@
     color: #ff7875;
     background-color: #fff2f0;
   }
-  
+   .filter-popover-content .filter-btn,
+  .filter-popover-content .ant-btn.delete-btn{
+padding: 5px 10px;
+  }
+
+    .filter-popover-content .ant-radio-wrapper{
+    display: flex;
+    align-items: center;
+  }

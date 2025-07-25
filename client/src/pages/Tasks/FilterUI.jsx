@@ -27,12 +27,12 @@ const { Search } = Input;
 
 const MyAvatar = ({ userName, src, alt }) => (
   <Avatar
-    src={src}
-    icon={!src && <UserOutlined />}
+    src={ src }
+    icon={ !src && <UserOutlined /> }
     size="small"
     className="filter-avatar"
   >
-    {!src && userName?.charAt(0)?.toUpperCase()}
+    { !src && userName?.charAt(0)?.toUpperCase() }
   </Avatar>
 );
 
@@ -74,34 +74,34 @@ const FilterUI = ({
   // Calculate the number of active filters
   const getActiveFiltersCount = () => {
     let count = 0;
-    
+
     // Status filter
     if (filterStatus && filterStatus !== null) {
       count++;
     }
-    
+
     // Assignee filter
     if (filterAssigned && Array.isArray(filterAssigned) && filterAssigned.length > 0) {
       count++;
     } else if (filterAssigned === "unassigned") {
       count++;
     }
-    
+
     // Labels filter
     if (filterOnLabels && Array.isArray(filterOnLabels) && filterOnLabels.length > 0) {
       count++;
     }
-    
+
     // Date filters (start date)
     if (filterStartDate && filterStartDate !== null && filterStartDate !== "Any") {
       count++;
     }
-    
+
     // Date filters (due date)
     if (filterDueDate && filterDueDate !== null && filterDueDate !== "Any") {
       count++;
     }
-    
+
     return count;
   };
 
@@ -116,7 +116,7 @@ const FilterUI = ({
     if (handleResetAllFilters) {
       handleResetAllFilters();
     }
-    
+
     // Reset local states
     setFilterStatusSearchInput("");
     setFilterAssignedSearchInput("");
@@ -127,7 +127,7 @@ const FilterUI = ({
   };
 
   const filterMenuItems = [
-    { key: "status", label: "Status"},
+    { key: "status", label: "Status" },
     { key: "assignee", label: "Assignee" },
     { key: "labels", label: "Labels" },
     { key: "dates", label: "Dates" },
@@ -143,21 +143,21 @@ const FilterUI = ({
             <div className="filter-search">
               <Search
                 placeholder="Search status"
-                value={filterStatusSearchInput}
-                onSearch={(val) => setFilterStatusSearchInput(val)}
-                onChange={(e) => setFilterStatusSearchInput(e.target.value)}
+                value={ filterStatusSearchInput }
+                onSearch={ (val) => setFilterStatusSearchInput(val) }
+                onChange={ (e) => setFilterStatusSearchInput(e.target.value) }
                 size="small"
               />
             </div>
 
             <div className="filter-options">
-              <Radio.Group 
-                value={filterStatus} 
-                onChange={handleFilterStatus}
-                style={{ width: '100%' }}
+              <Radio.Group
+                value={ filterStatus }
+                onChange={ handleFilterStatus }
+                style={ { width: '100%' } }
               >
-                
-                {boardTasks
+
+                { boardTasks
                   ?.filter((item) =>
                     item.workflowStatus?.title
                       .toLowerCase()
@@ -165,39 +165,38 @@ const FilterUI = ({
                   )
                   .map((val, index) => (
                     <div
-                      key={index}
-                      className={`filter-option-item ${
-                        filterStatus === val?.workflowStatus?._id
-                          ? "selected"
-                          : ""
-                      }`}
+                      key={ index }
+                      className={ `filter-option-item ${filterStatus === val?.workflowStatus?._id
+                        ? "selected"
+                        : ""
+                        }` }
                     >
-                      <Radio value={val?.workflowStatus?._id}>
-                        {val?.workflowStatus?.title}
+                      <Radio value={ val?.workflowStatus?._id }>
+                        { val?.workflowStatus?.title }
                       </Radio>
                     </div>
-                  ))}
+                  )) }
               </Radio.Group>
             </div>
 
             <div className="filter-actions">
               <Button
-                onClick={() =>
+                onClick={ () =>
                   handleAllFilter("workflowStatusId", filterStatus)
                 }
-                type="primary"
+
                 size="small"
-                className="filter-apply-btn"
+                className="filter-btn"
               >
                 Apply Filter
               </Button>
               <Button
                 size="small"
-                className="filter-cancel-btn"
-                onClick={() => {
+                className="delete-btn"
+                onClick={ () => {
                   setSelectedFilterType(null);
                   setFilterStatusSearchInput("");
-                }}
+                } }
               >
                 Cancel
               </Button>
@@ -213,37 +212,36 @@ const FilterUI = ({
             <div className="filter-search">
               <Search
                 placeholder="Search assignee"
-                value={filterAssignedSearchInput}
-                onSearch={(val) => setFilterAssignedSearchInput(val)}
-                onChange={(e) => setFilterAssignedSearchInput(e.target.value)}
+                value={ filterAssignedSearchInput }
+                onSearch={ (val) => setFilterAssignedSearchInput(val) }
+                onChange={ (e) => setFilterAssignedSearchInput(e.target.value) }
                 size="small"
               />
             </div>
 
             <div className="filter-options">
-              {/* Unassigned Tasks - styled like other assignee items */}
-              {("unassigned tasks").includes(filterAssignedSearchInput.toLowerCase()) && (
+              {/* Unassigned Tasks - styled like other assignee items */ }
+              { ("unassigned tasks").includes(filterAssignedSearchInput.toLowerCase()) && (
                 <div
-                  className={`assignee-item ${
-                    filterAssigned === "unassigned" ? "selected" : ""
-                  }`}
+                  className={ `assignee-item ${filterAssigned === "unassigned" ? "selected" : ""
+                    }` }
                 >
                   <Checkbox
-                    checked={filterAssigned === "unassigned"}
-                    onChange={() => handleSelectionAssignedFilter("unassigned")}
+                    checked={ filterAssigned === "unassigned" }
+                    onChange={ () => handleSelectionAssignedFilter("unassigned") }
                   />
                   <Avatar
-                    icon={<QuestionCircleOutlined />}
+                    icon={ <QuestionCircleOutlined /> }
                     size="small"
-                    style={{ backgroundColor: '#d9d9d9', color: '#666' }}
+                    style={ { backgroundColor: '#d9d9d9', color: '#666' } }
                     className="filter-avatar"
                   />
                   <span>Unassigned Tasks</span>
                 </div>
-              )}
+              ) }
 
-              {/* Regular assignees */}
-              {subscribersList
+              {/* Regular assignees */ }
+              { subscribersList
                 .filter((item) =>
                   item?.full_name
                     .toLowerCase()
@@ -251,41 +249,40 @@ const FilterUI = ({
                 )
                 .map((item, index) => (
                   <div
-                    key={index}
-                    className={`assignee-item ${
-                      filterAssigned.includes(item?._id) ? "selected" : ""
-                    }`}
+                    key={ index }
+                    className={ `assignee-item ${filterAssigned.includes(item?._id) ? "selected" : ""
+                      }` }
                   >
                     <Checkbox
-                      checked={filterAssigned.includes(item?._id)}
-                      onChange={() => handleSelectionAssignedFilter(item?._id)}
+                      checked={ filterAssigned.includes(item?._id) }
+                      onChange={ () => handleSelectionAssignedFilter(item?._id) }
                     />
                     <MyAvatar
-                      userName={item?.full_name}
-                      alt={item?.full_name}
-                      src={item.emp_img}
+                      userName={ item?.full_name }
+                      alt={ item?.full_name }
+                      src={ item.emp_img }
                     />
-                    <span>{item.full_name}</span>
+                    <span>{ item.full_name }</span>
                   </div>
-                ))}
+                )) }
             </div>
 
             <div className="filter-actions">
               <Button
-                onClick={() => handleAllFilter("assigneeIds", filterAssigned)}
-                type="primary"
+                onClick={ () => handleAllFilter("assigneeIds", filterAssigned) }
+
                 size="small"
-                className="filter-apply-btn"
+                className="filter-btn"
               >
                 Apply Filter
               </Button>
               <Button
                 size="small"
-                className="filter-cancel-btn"
-                onClick={() => {
+                className="delete-btn"
+                onClick={ () => {
                   setSelectedFilterType(null);
                   setFilterAssignedSearchInput("");
-                }}
+                } }
               >
                 Cancel
               </Button>
@@ -301,36 +298,35 @@ const FilterUI = ({
             <div className="filter-search">
               <Search
                 placeholder="Search labels"
-                value={filterLabelsSearchInput}
-                onSearch={(val) => setFilterLabelsSearchInput(val)}
-                onChange={(e) => setFilterLabelsSearchInput(e.target.value)}
+                value={ filterLabelsSearchInput }
+                onSearch={ (val) => setFilterLabelsSearchInput(val) }
+                onChange={ (e) => setFilterLabelsSearchInput(e.target.value) }
                 size="small"
               />
             </div>
 
             <div className="filter-options">
-              {/* Unlabelled Task - styled like other label items */}
-              {("unlabelled task").includes(filterLabelsSearchInput.toLowerCase()) && (
+              {/* Unlabelled Task - styled like other label items */ }
+              { ("unlabelled task").includes(filterLabelsSearchInput.toLowerCase()) && (
                 <div
-                  className={`label-item ${
-                    filterOnLabels.includes("unlabelled") ? "selected" : ""
-                  }`}
+                  className={ `label-item ${filterOnLabels.includes("unlabelled") ? "selected" : ""
+                    }` }
                 >
                   <Checkbox
-                    checked={filterOnLabels.includes("unlabelled")}
-                    onChange={() => handleSelectionlabelFilter("unlabelled")}
+                    checked={ filterOnLabels.includes("unlabelled") }
+                    onChange={ () => handleSelectionlabelFilter("unlabelled") }
                   />
                   <Avatar
-                    icon={<TagOutlined />}
+                    icon={ <TagOutlined /> }
                     size="small"
-                    style={{ backgroundColor: '#f5f5f5', color: '#999' }}
+                    style={ { backgroundColor: '#f5f5f5', color: '#999' } }
                   />
                   <span>Unlabelled Task</span>
                 </div>
-              )}
+              ) }
 
-              {/* Regular labels */}
-              {projectLabels
+              {/* Regular labels */ }
+              { projectLabels
                 .filter((item) =>
                   item.title
                     .toLowerCase()
@@ -338,40 +334,39 @@ const FilterUI = ({
                 )
                 .map((item) => (
                   <div
-                    key={item._id}
-                    className={`label-item ${
-                      filterOnLabels.includes(item._id) ? "selected" : ""
-                    }`}
+                    key={ item._id }
+                    className={ `label-item ${filterOnLabels.includes(item._id) ? "selected" : ""
+                      }` }
                   >
                     <Checkbox
-                      checked={filterOnLabels.includes(item._id)}
-                      onChange={() => handleSelectionlabelFilter(item._id)}
+                      checked={ filterOnLabels.includes(item._id) }
+                      onChange={ () => handleSelectionlabelFilter(item._id) }
                     />
                     <Avatar
                       size="small"
-                      style={{ backgroundColor: item.color }}
+                      style={ { backgroundColor: item.color } }
                     />
-                    <span>{item.title}</span>
+                    <span>{ item.title }</span>
                   </div>
-                ))}
+                )) }
             </div>
 
             <div className="filter-actions">
               <Button
-                onClick={() => handleAllFilter("labelIds", filterOnLabels)}
-                type="primary"
+                onClick={ () => handleAllFilter("labelIds", filterOnLabels) }
+
                 size="small"
-                className="filter-apply-btn"
+                className="filter-btn"
               >
                 Apply Filter
               </Button>
               <Button
                 size="small"
-                className="filter-cancel-btn"
-                onClick={() => {
+                className="delete-btn"
+                onClick={ () => {
                   setSelectedFilterType(null);
                   setFilterLabelsSearchInput("");
-                }}
+                } }
               >
                 Cancel
               </Button>
@@ -390,32 +385,32 @@ const FilterUI = ({
                 <Select
                   className="date-select"
                   defaultValue="Any"
-                  onChange={handleStartChange}
-                  options={DateOption}
+                  onChange={ handleStartChange }
+                  options={ DateOption }
                 />
-                {selectValStartdate && (
+                { selectValStartdate && (
                   <div className="calendar-event-block">
                     <Form.Item>
                       <DatePicker
                         placeholder="From date"
-                        onChange={(_, dateString) =>
+                        onChange={ (_, dateString) =>
                           handleStartDateRange(0, dateString)
                         }
-                        suffixIcon={<CalendarOutlined />}
+                        suffixIcon={ <CalendarOutlined /> }
                       />
                     </Form.Item>
                     <span className="calendar-separator">to</span>
                     <Form.Item>
                       <DatePicker
                         placeholder="To date"
-                        onChange={(_, dateString) =>
+                        onChange={ (_, dateString) =>
                           handleStartDateRange(1, dateString)
                         }
-                        suffixIcon={<CalendarOutlined />}
+                        suffixIcon={ <CalendarOutlined /> }
                       />
                     </Form.Item>
                   </div>
-                )}
+                ) }
               </Form.Item>
             </div>
 
@@ -425,69 +420,69 @@ const FilterUI = ({
                 <Select
                   className="date-select"
                   defaultValue="Any"
-                  onChange={handleDueChange}
-                  options={DateOption}
+                  onChange={ handleDueChange }
+                  options={ DateOption }
                 />
-                {selectValDuedate && (
+                { selectValDuedate && (
                   <div className="calendar-event-block">
                     <Form.Item>
                       <DatePicker
                         placeholder="From date"
-                        onChange={(_, dateString) =>
+                        onChange={ (_, dateString) =>
                           handleDueDateRange(0, dateString)
                         }
-                        suffixIcon={<CalendarOutlined />}
+                        suffixIcon={ <CalendarOutlined /> }
                       />
                     </Form.Item>
                     <span className="calendar-separator">to</span>
                     <Form.Item>
                       <DatePicker
                         placeholder="To date"
-                        onChange={(_, dateString) =>
+                        onChange={ (_, dateString) =>
                           handleDueDateRange(1, dateString)
                         }
-                        suffixIcon={<CalendarOutlined />}
+                        suffixIcon={ <CalendarOutlined /> }
                       />
                     </Form.Item>
                   </div>
-                )}
+                ) }
               </Form.Item>
             </div>
 
             <div className="view-filter-summary">
               <CalendarOutlined className="view-filter-icon" />
               <span>
-                <span className="date-range-display">Start:</span>{" "}
-                {!Array.isArray(filterStartDate)
+                <span className="date-range-display">Start:</span>{ " " }
+                { !Array.isArray(filterStartDate)
                   ? DateOption?.find((val) => val.value === filterStartDate)
-                      ?.label || "Any"
-                  : "Custom"}
-                , <span className="date-range-display">Due:</span>{" "}
-                {!Array.isArray(filterDueDate)
+                    ?.label || "Any"
+                  : "Custom" }
+                , <span className="date-range-display">Due:</span>{ " " }
+                { !Array.isArray(filterDueDate)
                   ? DateOption?.find((val) => val.value === filterDueDate)
-                      ?.label || "Any"
-                  : "Custom"}
+                    ?.label || "Any"
+                  : "Custom" }
               </span>
             </div>
 
             <div className="filter-actions">
               <Button
-                onClick={() => {
+                onClick={ () => {
                   handleStartDueFilter(filterStartDate, filterDueDate);
-                }}
-                type="primary"
+                } }
+
                 size="small"
-                className="filter-apply-btn"
+                className="filter-btn"
               >
                 Apply Filter
               </Button>
               <Button
                 size="small"
-                className="filter-cancel-btn"
-                onClick={() => {
+                className="delete-btn"
+                onClick={ () => {
                   setSelectedFilterType(null);
                   setSelectValDuedate(false);
-                }}
+                } }
               >
                 Cancel
               </Button>
@@ -509,62 +504,61 @@ const FilterUI = ({
   const filterContent = (
     <div className="filter-popover-content">
       <div className="filter-sidebar">
-        {/* Filter Header with Reset Button */}
+        {/* Filter Header with Reset Button */ }
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
+          { activeFiltersCount > 0 && (
             <Button
               size="small"
               type="text"
-              icon={<ClearOutlined />}
-              onClick={handleResetFilters}
-              className="reset-filters-btn"
-              title="Reset all filters"
+
+              onClick={ handleResetFilters }
+              className="delete-btn"
+              title=" Reset all filters"
             >
-              Reset ({activeFiltersCount})
+              Reset ({ activeFiltersCount })
             </Button>
-          )}
+          ) }
         </div>
-        
-        <Divider style={{ margin: '8px 0' }} />
-        
-        {filterMenuItems.map((item) => (
+
+        <Divider style={ { margin: '8px 0' } } />
+
+        { filterMenuItems.map((item) => (
           <div
-            key={item.key}
-            onClick={() => handleFilterTypeSelect(item.key)}
-            className={`filter-menu-item ${
-              selectedFilterType === item.key ? "active" : ""
-            }`}
+            key={ item.key }
+            onClick={ () => handleFilterTypeSelect(item.key) }
+            className={ `filter-menu-item ${selectedFilterType === item.key ? "active" : ""
+              }` }
           >
-            <span>{item.label}</span>
+            <span>{ item.label }</span>
           </div>
-        ))}
+        )) }
       </div>
 
-      <div className="filter-content">{renderFilterContent()}</div>
+      <div className="filter-content">{ renderFilterContent() }</div>
     </div>
   );
 
   return (
     <div className="filter-container">
       <Popover
-        content={filterContent}
+        content={ filterContent }
         trigger="click"
-        open={isFilterOpen}
-        onOpenChange={setIsFilterOpen}
+        open={ isFilterOpen }
+        onOpenChange={ setIsFilterOpen }
         placement="bottomLeft"
-        overlayStyle={{ maxWidth: "none" }}
+        overlayStyle={ { maxWidth: "none" } }
       >
-        <Badge 
-          count={activeFiltersCount} 
-          size="small"
-          offset={[10, 0]}
-          color="#1890ff"
-        >
-          <Button icon={<FilterOutlined />} className="filter-button">
-            Filter
-          </Button>
-        </Badge>
+        <Button icon={ <FilterOutlined /> } className="filter-btn">
+          Filter
+          <Badge
+            count={ activeFiltersCount }
+            size="small"
+            offset={ [10, 0] }
+            color="#1890ff"
+          >
+          </Badge>
+        </Button>
       </Popover>
     </div>
   );
