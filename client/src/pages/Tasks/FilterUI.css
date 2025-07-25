@@ -1,0 +1,447 @@
+/* Container Styles */
+
+  /* Filter Button */
+  .filter-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .filter-button:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  /* Popover Content */
+  .filter-popover-content {
+    display: flex;
+    min-height: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Left Sidebar */
+  .filter-sidebar {
+    width: 220px;
+    border-right: 1px solid #e5e7eb;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 8px 0;
+  }
+  
+  .filter-menu-item {
+    padding: 14px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4b5563;
+    border-left: 3px solid transparent;
+    margin: 2px 0;
+  }
+  
+  .filter-menu-item:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+  }
+  
+  .filter-menu-item.active {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left-color: #3b82f6;
+    color: #1d4ed8;
+    font-weight: 600;
+  }
+  
+  .filter-menu-icon {
+    font-size: 16px;
+  }
+  
+  /* Right Content Area */
+  .filter-content {
+    flex: 1;
+    background-color: white;
+  }
+  
+  .filter-content-inner {
+    padding: 24px;
+    min-width: 320px;
+  }
+  
+  .filter-title {
+    margin: 0 0 20px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .filter-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 2px;
+  }
+  
+  /* Search Input */
+  .filter-search {
+    margin-bottom: 16px;
+  }
+  
+  .filter-search .ant-input {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-search .ant-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  /* Options Container */
+  .filter-options {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  
+  .filter-options::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .filter-options::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  .filter-options::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .filter-options::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* Filter Option Items */
+  .filter-option-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  
+  .filter-option-item:hover {
+    background-color: #f8fafc;
+    border-color: #e5e7eb;
+  }
+  
+  .filter-option-item.selected {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #93c5fd;
+  }
+  
+  /* Assignee Item */
+  .assignee-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  
+  .assignee-item:hover {
+    background-color: #f8fafc;
+    border-color: #e5e7eb;
+  }
+  
+  .assignee-item.selected {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #93c5fd;
+  }
+  
+  /* Label Item */
+  .label-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-weight: 500;
+  }
+  
+  .label-item:hover {
+    background-color: #f8fafc;
+    border-color: #e5e7eb;
+    transform: translateX(2px);
+  }
+  
+  .label-item.selected {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #93c5fd;
+  }
+  
+  /* Global Labels Header */
+  .global-labels-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Action Buttons */
+  .filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .filter-apply-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-apply-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  
+  .filter-cancel-btn {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-cancel-btn:hover {
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+  }
+  
+  /* Empty State */
+  .filter-empty-state {
+    padding: 60px 40px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .filter-empty-state::before {
+    content: '🔍';
+    display: block;
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  
+  /* Checkbox Customization */
+  .filter-option-item .ant-checkbox-wrapper {
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .filter-option-item .ant-checkbox-wrapper:hover .ant-checkbox-inner {
+    border-color: #3b82f6;
+  }
+  
+  .filter-option-item .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+  
+  /* Avatar Styling */
+  .filter-avatar {
+    margin-right: 8px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .filter-popover-content {
+      flex-direction: column;
+      min-height: auto;
+    }
+    
+    .filter-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .filter-content-inner {
+      padding: 16px;
+      min-width: auto;
+    }
+  }
+  
+  /* Animation for smooth transitions */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .filter-popover-content {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+
+  /* Add these new styles to your existing FilterUI.css */
+
+/* Date Filter Styles */
+.date-filter-section {
+    margin-bottom: 20px;
+  }
+  
+  .date-filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    display: block;
+  }
+  
+  .date-select {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .date-select .ant-select-selector {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s ease;
+  }
+  
+  .date-select .ant-select-selector:hover {
+    border-color: #3b82f6;
+  }
+  
+  .date-select .ant-select-focused .ant-select-selector {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .calendar-event-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .calendar-event-block .ant-form-item {
+    margin-bottom: 0;
+    flex: 1;
+  }
+  
+  .calendar-event-block .ant-picker {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+  }
+  
+  .calendar-event-block .ant-picker:hover {
+    border-color: #3b82f6;
+  }
+  
+  .calendar-separator {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  /* View Filter Summary */
+  .view-filter-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 6px;
+    border: 1px solid #bae6fd;
+    margin-top: 12px;
+  }
+  
+  .view-filter-icon {
+    color: #0ea5e9;
+    font-size: 14px;
+  }
+  
+  .date-range-display {
+    font-weight: 600;
+    color: #0c4a6e;
+  }
+  
+
+  .filter-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+  }
+  
+  .filter-sidebar-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .reset-filters-btn,
+  .external-reset-btn {
+    color: #ff4d4f;
+    font-size: 12px;
+  }
+  
+  .reset-filters-btn:hover,
+  .external-reset-btn:hover {
+    color: #ff7875;
+    background-color: #fff2f0;
+  }
+  
