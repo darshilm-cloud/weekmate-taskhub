@@ -1,6 +1,31 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Button, Menu, Checkbox, Modal, DatePicker, Input, Popover, Form, Select, Dropdown, Progress, Popconfirm, Badge, Tooltip, ConfigProvider, Row, Col, message } from "antd";
-import { EditOutlined, MoreOutlined, DeleteOutlined, CloseCircleOutlined, CopyOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Menu,
+  Checkbox,
+  Modal,
+  DatePicker,
+  Input,
+  Popover,
+  Form,
+  Select,
+  Dropdown,
+  Progress,
+  Popconfirm,
+  Badge,
+  Tooltip,
+  ConfigProvider,
+  Row,
+  Col,
+  message,
+} from "antd";
+import {
+  EditOutlined,
+  MoreOutlined,
+  DeleteOutlined,
+  CloseCircleOutlined,
+  CopyOutlined,
+} from "@ant-design/icons";
 import { useParams, useLocation, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -12,7 +37,14 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions/Auth";
 import { moveWorkFlowTaskHandler } from "../../appRedux/actions/Common";
-import { getFolderList, getLables, getEmployeeList, getSpecificProjectWorkflowStage, getSubscribersList, getClientList } from "../../appRedux/reducers/ApiData";
+import {
+  getFolderList,
+  getLables,
+  getEmployeeList,
+  getSpecificProjectWorkflowStage,
+  getSubscribersList,
+  getClientList,
+} from "../../appRedux/reducers/ApiData";
 import { socketEvents } from "../../settings/socketEventName";
 import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
@@ -30,7 +62,6 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
-
 
 const TasksPMS = ({ flag }) => {
   const location = useLocation();
@@ -64,8 +95,6 @@ const TasksPMS = ({ flag }) => {
   const [openStatus, setOpenStatus] = useState(false);
   const [openAssignees, setOpenAssignees] = useState(false);
   const [openLabels, setOpenLabels] = useState(false);
-  const [selectValStartdate, setSelectValStartdate] = useState(false);
-  const [selectValDuedate, setSelectValDuedate] = useState(false);
   const [isPopoverVisibleView, setIsPopoverVisibleView] = useState(false);
   const [selectedsassignees, setSelectedsassignees] = useState([]);
   const [selectedClient, setSelectdclients] = useState([]);
@@ -77,20 +106,10 @@ const TasksPMS = ({ flag }) => {
   });
   const [showSelectTask, setShowSelectTask] = useState(false);
   const [showSelectClient, setShowSelectClient] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterStartDate, setFilterStartDate] = useState("");
-  const [filterStartDateRange, setFilterStartDateRange] = useState(["", ""]);
-  const [filterDueDateRange, setFilterDueDateRange] = useState(["", ""]);
-  const [filterDueDate, setFilterDueDate] = useState("");
   const [filterSchema, setFilterSchema] = useState({
     tasks: {},
   });
-  const [filterStatusSearchInput, setFilterStatusSearchInput] = useState("");
-  const [filterAssignedSearchInput, setFilterAssignedSearchInput] =
-    useState("");
-  const [filterAssigned, setFilterAssigned] = useState([]);
-  const [filterOnLabels, setFilterOnLabels] = useState("");
-  const [filterLabelsSearchInput, setFilterLabelsSearchInput] = useState("");
+
   const [deleteFileData, setDeleteFileData] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [stagesId, setStagesId] = useState("");
@@ -305,16 +324,6 @@ const TasksPMS = ({ flag }) => {
     } catch (error) {
       console.log(error);
       dispatch(hideAuthLoader());
-    }
-  };
-
-  const handleFilterStatus = (e) => {
-    const status = e.target.value;
-    const checked = e.target.checked;
-    if (status && checked) {
-      setFilterStatus(status);
-    } else {
-      setFilterStatus("");
     }
   };
 
@@ -862,146 +871,6 @@ const TasksPMS = ({ flag }) => {
     </Menu>
   );
 
-  const handleStartChange = (value) => {
-    if (value === "Custom") {
-      setSelectValStartdate(true);
-    } else {
-      setSelectValStartdate(false);
-      if (value.includes("[")) {
-        setFilterStartDate(eval(value));
-        return;
-      }
-      setFilterStartDate(value);
-    }
-  };
-
-  const handleDueChange = (value) => {
-    if (value === "Custom") {
-      setSelectValDuedate(true);
-    } else {
-      setSelectValDuedate(false);
-      if (value.includes("[")) {
-        setFilterDueDate(eval(value));
-        return;
-      }
-      setFilterDueDate(value);
-    }
-  };
-
-  const DateOption = [
-    {
-      key: "1",
-      value: "",
-      label: "Any",
-    },
-    {
-      key: "2",
-      value: moment().format("YYYY-MM-DD"),
-      label: "Today",
-    },
-    {
-      key: "3",
-      value: `[
-            "${moment().startOf("week").format("YYYY-MM-DD")}",
-            "${moment().endOf("week").format("YYYY-MM-DD")}"
-          ]`,
-      label: "This week",
-    },
-    {
-      key: "4",
-      value: `[
-            "${moment().startOf("month").format("YYYY-MM-DD")}", 
-            "${moment().endOf("month").format("YYYY-MM-DD")}", 
-          ]`,
-      label: "This month",
-    },
-    {
-      key: "5",
-      value: moment().subtract(1, "day").format("YYYY-MM-DD"),
-      label: "Yesterday",
-    },
-    {
-      key: "6",
-      value: `[
-            "${moment()
-              .subtract(1, "week")
-              .startOf("week")
-              .format("YYYY-MM-DD")}",
-           "${moment().subtract(1, "week").endOf("week").format("YYYY-MM-DD")}"
-          ]`,
-      label: "Last week",
-    },
-    {
-      key: "7",
-      value: `[
-           "${moment()
-             .subtract(1, "month")
-             .startOf("month")
-             .format("YYYY-MM-DD")}",
-            "${moment()
-              .subtract(1, "month")
-              .endOf("month")
-              .format("YYYY-MM-DD")}"
-          ]`,
-      label: "Last month",
-    },
-    {
-      key: "8",
-      value: "next7days",
-      label: "Next 7 days",
-    },
-    {
-      key: "9",
-      value: "next30days",
-      label: "Next 30 days",
-    },
-    {
-      key: "10",
-      value: null,
-      label: "No date",
-    },
-    {
-      key: "11",
-      value: "Custom",
-      label: "Custom",
-    },
-  ];
-
-  function validateArray(arr) {
-    return arr.every((item) => typeof item === "string" && item.trim() !== "");
-  }
-
-  const handleStartDueFilter = (startDate, dueDate) => {
-    if (Array.isArray(startDate)) {
-      if (startDate.length < 2 && validateArray(startDate)) {
-        return message.error("please select both Dates");
-      }
-    }
-    if (Array.isArray(dueDate) && validateArray(dueDate)) {
-      if (dueDate.length < 2) {
-        return message.error("please select both Dates");
-      }
-    }
-    setFilterSchema({
-      ...filterSchema,
-      tasks: { ...filterSchema.tasks, startDate, dueDate },
-    });
-    getBoardTasks(selectedTask._id);
-    setIsPopoverVisibleView(false);
-  };
-
-  const handleStartDateRange = (position, value) => {
-    filterStartDateRange.splice(position, 1, value);
-    setFilterStartDateRange([...filterStartDateRange]);
-    setFilterStartDate([...filterStartDateRange]);
-  };
-
-  const handleDueDateRange = (position, value) => {
-    filterDueDateRange?.splice(position, 1, value);
-    setFilterDueDateRange([...filterDueDateRange]);
-    setFilterDueDate([...filterDueDateRange]);
-  };
-
   const getListWorkflowStatus = async () => {
     try {
       dispatch(showAuthLoader());
@@ -1350,136 +1219,162 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const filterTasks = (data, filters) => {
-    console.log("Filtering tasks with:", filters);
-    return data.map((project) => {
-      let matchedProject = true;
+  const matchesLabelFilter = (task, labelFilter) => {
+    if (!labelFilter) return true;
 
-      // Status filter
-      if (filters.workflowStatusId) {
-        if (Array.isArray(filters.workflowStatusId)) {
-          matchedProject = filters.workflowStatusId.includes(
-            project.workflowStatus?._id
-          );
-        } else {
-          matchedProject =
-            project.workflowStatus?._id === filters.workflowStatusId;
+    if (labelFilter === "unlabelled") {
+      return !task.task_labels || task.task_labels.length === 0;
+    }
+
+    if (Array.isArray(labelFilter) && labelFilter.length > 0) {
+      if (!task.task_labels || task.task_labels.length === 0) return false;
+
+      return task.task_labels.some((label) => labelFilter.includes(label._id));
+    }
+
+    return true;
+  };
+
+  const filterTasks = (boardTasks, filterSchema) => {
+    if (!boardTasks || boardTasks.length === 0) {
+      return [];
+    }
+
+    if (
+      !filterSchema ||
+      (!filterSchema.workflowStatusId &&
+        (!filterSchema.tasks || Object.keys(filterSchema.tasks).length === 0))
+    ) {
+      return boardTasks;
+    }
+
+    const { workflowStatusId, tasks: taskFilters = {} } = filterSchema;
+    const { assigneeIds, labelIds, startDate, dueDate, title } = taskFilters;
+
+    // Helper function to check if a date matches the filter criteria
+    const matchesDateFilter = (taskDate, filterValue) => {
+      if (!filterValue || filterValue === "") return true;
+
+      const taskMoment = moment(taskDate);
+
+      // Handle special date values
+      if (filterValue === "nodate") {
+        return !taskDate;
+      }
+
+      if (filterValue === "next7days") {
+        const today = moment().startOf("day");
+        const next7Days = moment().add(7, "days").endOf("day");
+        return taskMoment.isBetween(today, next7Days, null, "[]");
+      }
+
+      if (filterValue === "next30days") {
+        const today = moment().startOf("day");
+        const next30Days = moment().add(30, "days").endOf("day");
+        return taskMoment.isBetween(today, next30Days, null, "[]");
+      }
+
+      // Handle array (date range)
+      if (Array.isArray(filterValue) && filterValue.length === 2) {
+        const [startDate, endDate] = filterValue;
+        if (startDate && endDate) {
+          const startMoment = moment(startDate).startOf("day");
+          const endMoment = moment(endDate).endOf("day");
+          return taskMoment.isBetween(startMoment, endMoment, null, "[]");
         }
       }
 
-      // Task-level filters
-      if (matchedProject && filters.tasks) {
-        project.tasks = project.tasks.filter((task) => {
-          let matchedTask = true;
-
-          // Assignee filter
-          if (filters.tasks.assigneeIds === "unassigned") {
-            matchedTask = task.assignees.length === 0;
-          } else if (filters.tasks.assigneeIds?.length > 0) {
-            matchedTask = task.assignees.some((assignee) =>
-              filters.tasks.assigneeIds.includes(assignee._id)
-            );
-          }
-
-          // Label filter
-          if (matchedTask && filters.tasks.labelIds === "unlabelled") {
-            matchedTask = task.task_labels.length === 0;
-          } else if (matchedTask && filters.tasks.labelIds?.length > 0) {
-            matchedTask = task.task_labels.some((label) =>
-              filters.tasks.labelIds.includes(label._id)
-            );
-          }
-
-          // Start date filter
-          if (matchedTask && filters.tasks.startDate) {
-            if (!task.start_date) {
-              matchedTask = false;
-            } else if (filters.tasks.startDate === "next7days") {
-              matchedTask = moment(task.start_date).isBetween(
-                moment(),
-                moment().add(7, "days"),
-                null,
-                "[]"
-              );
-            } else if (filters.tasks.startDate === "next30days") {
-              matchedTask = moment(task.start_date).isBetween(
-                moment(),
-                moment().add(30, "days"),
-                null,
-                "[]"
-              );
-            } else if (Array.isArray(filters.tasks.startDate)) {
-              matchedTask = moment(task.start_date).isBetween(
-                moment(filters.tasks.startDate[0]),
-                moment(filters.tasks.startDate[1]),
-                null,
-                "[]"
-              );
-            } else {
-              matchedTask = moment(task.start_date).isSame(
-                moment(filters.tasks.startDate),
-                "day"
-              );
-            }
-          } else if (matchedTask && filters.tasks.startDate === null) {
-            matchedTask = task.start_date === null;
-          }
-
-          // Due date filter
-          if (matchedTask && filters.tasks.dueDate) {
-            if (!task.due_date) {
-              matchedTask = false;
-            } else if (filters.tasks.dueDate === "next7days") {
-              matchedTask = moment(task.due_date).isBetween(
-                moment(),
-                moment().add(7, "days"),
-                null,
-                "[]"
-              );
-            } else if (filters.tasks.dueDate === "next30days") {
-              matchedTask = moment(task.due_date).isBetween(
-                moment(),
-                moment().add(30, "days"),
-                null,
-                "[]"
-              );
-            } else if (Array.isArray(filters.tasks.dueDate)) {
-              matchedTask = moment(task.due_date).isBetween(
-                moment(filters.tasks.dueDate[0]),
-                moment(filters.tasks.dueDate[1]),
-                null,
-                "[]"
-              );
-            } else {
-              matchedTask = moment(task.due_date).isSame(
-                moment(filters.tasks.dueDate),
-                "day"
-              );
-            }
-          } else if (matchedTask && filters.tasks.dueDate === null) {
-            matchedTask = task.due_date === null;
-          }
-
-          // Title filter
-          if (
-            matchedTask &&
-            filters.tasks.title &&
-            filters.tasks.title !== ""
-          ) {
-            matchedTask = task.title
-              .toLowerCase()
-              .includes(filters.tasks.title.toLowerCase());
-          }
-
-          return matchedTask;
-        });
-        matchedProject = project.tasks.length > 0;
+      // Handle single date
+      if (typeof filterValue === "string") {
+        const filterMoment = moment(filterValue);
+        return taskMoment.isSame(filterMoment, "day");
       }
 
-      if (!matchedProject) {
-        return { ...project, tasks: [] };
+      return true;
+    };
+
+    // Helper function to check if a task matches assignee filter
+    const matchesAssigneeFilter = (task, assigneeFilter) => {
+      if (!assigneeFilter) return true;
+
+      if (assigneeFilter === "unassigned") {
+        return !task.assignees || task.assignees.length === 0;
       }
-      return project;
+
+      if (Array.isArray(assigneeFilter) && assigneeFilter.length > 0) {
+        if (!task.assignees || task.assignees.length === 0) return false;
+
+        return task.assignees.some((assignee) =>
+          assigneeFilter.includes(assignee._id)
+        );
+      }
+
+      return true;
+    };
+
+    // Helper function to check if a task matches title filter
+    const matchesTitleFilter = (task, titleFilter) => {
+      if (!titleFilter || titleFilter.trim() === "") return true;
+
+      return task.title
+        ?.toLowerCase()
+        .includes(titleFilter.toLowerCase().trim());
+    };
+
+    // Filter boards by workflow status if specified
+    let filteredBoards = boardTasks;
+    if (workflowStatusId) {
+      filteredBoards = boardTasks.filter(
+        (board) =>
+          board.workflowStatus && board.workflowStatus._id === workflowStatusId
+      );
+    }
+
+    // If no task-level filters are applied, return the status-filtered boards
+    if (!assigneeIds && !labelIds && !startDate && !dueDate && !title) {
+      return filteredBoards;
+    }
+
+    // Apply task-level filters
+    return filteredBoards.map((board) => {
+      if (!board.tasks || board.tasks.length === 0) {
+        return board;
+      }
+
+      const filteredTasks = board.tasks.filter((task) => {
+        // Check title filter
+        if (!matchesTitleFilter(task, title)) {
+          return false;
+        }
+
+        // Check assignee filter
+        if (!matchesAssigneeFilter(task, assigneeIds)) {
+          return false;
+        }
+
+        // Check label filter
+        if (!matchesLabelFilter(task, labelIds)) {
+          return false;
+        }
+
+        // Check start date filter
+        if (!matchesDateFilter(task.start_date, startDate)) {
+          return false;
+        }
+
+        // Check due date filter
+        if (!matchesDateFilter(task.due_date, dueDate)) {
+          return false;
+        }
+
+        return true;
+      });
+
+      return {
+        ...board,
+        tasks: filteredTasks,
+        total_task: filteredTasks.length,
+      };
     });
   };
 
@@ -1489,55 +1384,6 @@ const TasksPMS = ({ flag }) => {
       taskCount: `${data?.totalDoneTasks}/${data?.totalTasks}`,
       percent,
     };
-  };
-
-  const handleAllFilter = (property, value) => {
-    if (property == "workflowStatusId") {
-      setFilterSchema({ ...filterSchema, [property]: value });
-      if (value == "") {
-        setFilterSchema({ tasks: { ...filterSchema.tasks } });
-      }
-    } else {
-      setFilterSchema({
-        ...filterSchema,
-        tasks: { ...filterSchema.tasks, [property]: value },
-      });
-    }
-    setFilterLabelsSearchInput("");
-    setFilterStatusSearchInput("");
-    setFilterAssignedSearchInput("");
-    getBoardTasks(selectedTask._id);
-    setOpenStatus(false);
-    setOpenAssignees(false);
-    setOpenLabels(false);
-  };
-
-  const handleSelectionAssignedFilter = (value, removeAll) => {
-    if (removeAll) {
-      return setFilterAssigned([]);
-    }
-    if (value == "unassigned") {
-      return setFilterAssigned("unassigned");
-    }
-    setFilterAssigned((prevFilterAssigned) =>
-      prevFilterAssigned.includes(value)
-        ? prevFilterAssigned.filter((item) => item !== value)
-        : [...prevFilterAssigned, value]
-    );
-  };
-
-  const handleSelectionlabelFilter = (value, removeAll) => {
-    if (removeAll) {
-      return setFilterOnLabels([]);
-    }
-    if (value == "unlabelled") {
-      return setFilterOnLabels("unlabelled");
-    }
-    setFilterOnLabels((prevfilterOnLabels) =>
-      prevfilterOnLabels.includes(value)
-        ? prevfilterOnLabels.filter((item) => item !== value)
-        : [...prevfilterOnLabels, value]
-    );
   };
 
   const exportSampleCSVfile = () => {
@@ -1935,44 +1781,10 @@ const TasksPMS = ({ flag }) => {
 
                   <div className="block-status-content">
                     <FilterUI
-                      filterStatusSearchInput={filterStatusSearchInput}
-                      setFilterStatusSearchInput={setFilterStatusSearchInput}
                       boardTasks={boardTasks}
-                      filterStatus={filterStatus}
-                      handleFilterStatus={handleFilterStatus}
-                      handleAllFilter={handleAllFilter}
-                      filterAssigned={filterAssigned}
-                      handleSelectionAssignedFilter={
-                        handleSelectionAssignedFilter
-                      }
-                      filterAssignedSearchInput={filterAssignedSearchInput}
-                      setFilterAssignedSearchInput={
-                        setFilterAssignedSearchInput
-                      }
                       subscribersList={subscribersList}
-                      filterOnLabels={filterOnLabels}
-                      handleSelectionlabelFilter={handleSelectionlabelFilter}
-                      filterLabelsSearchInput={filterLabelsSearchInput}
-                      setFilterLabelsSearchInput={setFilterLabelsSearchInput}
                       projectLabels={projectLabels}
-                      DateOption={DateOption}
-                      handleStartChange={handleStartChange}
-                      handleDueChange={handleDueChange}
-                      selectValStartdate={selectValStartdate}
-                      selectValDuedate={selectValDuedate}
-                      setSelectValDuedate={setSelectValDuedate}
-                      handleStartDateRange={handleStartDateRange}
-                      handleDueDateRange={handleDueDateRange}
-                      handleStartDueFilter={handleStartDueFilter}
-                      filterStartDate={filterStartDate}
-                      filterDueDate={filterDueDate}
-                      setFilterSchema={setFilterSchema}
-
-                      setFilterStatus={setFilterStatus}
-                      setFilterAssigned={setFilterAssigned}
-                      setFilterOnLabels={setFilterOnLabels}
-                      setFilterStartDate={setFilterStartDate}
-                      setFilterDueDate={setFilterDueDate}
+                      onConfigUpdate={(config) => setFilterSchema(config)}
                     />
 
                     <div className="status-content after-border">
@@ -3254,6 +3066,6 @@ const TasksPMS = ({ flag }) => {
       </Modal>
     </>
   );
-}
+};
 
 export default TasksPMS;

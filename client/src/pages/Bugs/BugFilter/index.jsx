@@ -3,7 +3,6 @@ import {
   Button,
   Popover,
   Checkbox,
-  Radio,
   Input,
   Avatar,
   Select,
@@ -17,7 +16,7 @@ import {
   FilterOutlined,
   UserOutlined,
   CalendarOutlined,
-  TagOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import "./FilterUI.css";
 import moment from "moment";
@@ -26,10 +25,11 @@ const { Search } = Input;
 
 // Constants
 const FILTER_TYPES = {
-  STATUS: "status",
+  BUG_STATUS: "bugStatus",
   ASSIGNEE: "assignee",
   LABELS: "labels",
   DATES: "dates",
+  TITLE: "title",
 };
 
 const DATE_OPTIONS = [
@@ -63,7 +63,7 @@ const DATE_OPTIONS = [
 ];
 
 const FILTER_MENU_ITEMS = [
-  { key: FILTER_TYPES.STATUS, label: "Status" },
+  { key: FILTER_TYPES.BUG_STATUS, label: "Bug Status" },
   { key: FILTER_TYPES.ASSIGNEE, label: "Assignee" },
   { key: FILTER_TYPES.LABELS, label: "Labels" },
   { key: FILTER_TYPES.DATES, label: "Dates" },
@@ -95,43 +95,24 @@ const parseDateValue = (value) => {
   return value;
 };
 
-// Helper function to get all unique statuses from boardTasks
-const getUniqueStatuses = (boardTasks) => {
-  const statusMap = new Map();
-  boardTasks.forEach(board => {
-    if (board.workflowStatus) {
-      statusMap.set(board.workflowStatus._id, board.workflowStatus);
-    }
+const BugFilter = ({ 
+  boardTasksBugs = [], 
+  projectLabels = [], 
+  subscribersList = [], 
+  onConfigUpdate 
+}) => {
+  // Main filter schema state - Initialize without undefined properties
+  const [filterSchema, setFilterSchema] = useState({ 
+    bugs: {}
   });
-  return Array.from(statusMap.values());
-};
-
-// Helper function to get all unique assignees from tasks
-const getUniqueAssignees = (boardTasks, subscribersList) => {
-  const assigneeIds = new Set();
-  
-  boardTasks.forEach(board => {
-    board.tasks?.forEach(task => {
-      task.assignees?.forEach(assignee => {
-        assigneeIds.add(assignee._id);
-      });
-    });
-  });
-  
-  return subscribersList.filter(user => assigneeIds.has(user._id));
-};
-
-const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], onConfigUpdate }) => {
-  // Main filter schema state
-  const [filterSchema, setFilterSchema] = useState({ tasks: {} });
   
   // UI state
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilterType, setActiveFilterType] = useState(FILTER_TYPES.STATUS);
+  const [activeFilterType, setActiveFilterType] = useState(FILTER_TYPES.BUG_STATUS);
   
-  // Status filter state
-  const [statusSearchQuery, setStatusSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  // Bug Status filter state
+  const [bugStatusSearchQuery, setBugStatusSearchQuery] = useState("");
+  const [selectedBugStatus, setSelectedBugStatus] = useState("");
   
   // Assignee filter state
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
@@ -151,19 +132,22 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
   const [dueDateSelectValue, setDueDateSelectValue] = useState("");
   const [customDueDateRange, setCustomDueDateRange] = useState(["", ""]);
 
+  // Title search state
+  const [titleSearch, setTitleSearch] = useState("");
+
   // Memoized filtered data
-  const filteredStatuses = useMemo(() => {
-    return boardTasks?.filter((task) =>
-      task.workflowStatus?.title
-        .toLowerCase()
-        .includes(statusSearchQuery.toLowerCase())
+  const filteredBugStatuses = useMemo(() => {
+    return boardTasksBugs?.filter((task) =>
+      task?.title
+        ?.toLowerCase()
+        .includes(bugStatusSearchQuery.toLowerCase())
     ) || [];
-  }, [boardTasks, statusSearchQuery]);
+  }, [boardTasksBugs, bugStatusSearchQuery]);
 
   const filteredAssignees = useMemo(() => {
     return subscribersList.filter((user) =>
       user?.full_name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(assigneeSearchQuery.toLowerCase())
     );
   }, [subscribersList, assigneeSearchQuery]);
@@ -178,22 +162,23 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     
-    if (selectedStatus) count++;
+    if (selectedBugStatus) count++;
     if (Array.isArray(selectedAssignees) && selectedAssignees.length > 0) count++;
     if (selectedAssignees === "unassigned") count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
     if (selectedLabels === "unlabelled") count++;
     if (selectedStartDate && selectedStartDate !== "") count++;
     if (selectedDueDate && selectedDueDate !== "") count++;
+    if (titleSearch && titleSearch.trim() !== "") count++;
     
     return count;
-  }, [selectedStatus, selectedAssignees, selectedLabels, selectedStartDate, selectedDueDate]);
+  }, [selectedBugStatus, selectedAssignees, selectedLabels, selectedStartDate, selectedDueDate, titleSearch]);
 
   // Event Handlers
-  const handleStatusChange = (e) => {
+  const handleBugStatusChange = (e) => {
     const status = e.target.value;
     const isChecked = e.target.checked;
-    setSelectedStatus(isChecked ? status : "");
+    setSelectedBugStatus(isChecked ? status : "");
   };
 
   const handleAssigneeSelection = (userId, shouldRemoveAll = false) => {
@@ -276,89 +261,120 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
     setSelectedDueDate(newRange);
   };
 
-  const applyFilter = (property, value) => {
-    if (property === "workflowStatusId") {
-      setFilterSchema(prev => ({ 
-        ...prev, 
-        [property]: value || undefined,
-      }));
-    } else {
-      setFilterSchema(prev => ({
-        ...prev,
-        tasks: { 
-          ...prev.tasks, 
-          [property]: value || undefined 
-        },
-      }));
-    }
+  const handleTitleSearchChange = (e) => {
+    setTitleSearch(e.target.value);
   };
 
-  const applyDateFilters = (startDate, dueDate) => {
-    // Validation for custom date ranges
-    if (Array.isArray(startDate) && validateArray(startDate) && startDate.length < 2) {
+  // Apply filter functions - Only include properties with valid values
+  const applyBugStatusFilter = () => {
+    setFilterSchema(prev => ({ 
+      ...prev, 
+      ...(selectedBugStatus ? { Status: selectedBugStatus } : {})
+    }));
+  };
+
+  const applyAssigneeFilter = () => {
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: { 
+        ...prev.bugs, 
+        ...(selectedAssignees.length > 0 ? { assigneeIds: selectedAssignees } : {})
+      }
+    }));
+  };
+
+  const applyLabelsFilter = () => {
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: { 
+        ...prev.bugs, 
+        ...(selectedLabels.length > 0 ? { labelIds: selectedLabels } : {})
+      }
+    }));
+  };
+
+  const applyDateFilters = () => {
+    if (Array.isArray(selectedStartDate) && validateArray(selectedStartDate) && selectedStartDate.length < 2) {
       message.error("Please select both start dates");
       return;
     }
     
-    if (Array.isArray(dueDate) && validateArray(dueDate) && dueDate.length < 2) {
+    if (Array.isArray(selectedDueDate) && validateArray(selectedDueDate) && selectedDueDate.length < 2) {
       message.error("Please select both due dates");
       return;
     }
     
     setFilterSchema(prev => ({
       ...prev,
-      tasks: { 
-        ...prev.tasks, 
-        startDate: startDate || undefined, 
-        dueDate: dueDate || undefined 
-      },
+      bugs: { 
+        ...prev.bugs, 
+        ...(selectedStartDate ? { startDate: selectedStartDate } : {}), 
+        ...(selectedDueDate ? { dueDate: selectedDueDate } : {})
+      }
+    }));
+  };
+
+  const applyTitleFilter = () => {
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: { 
+        ...prev.bugs, 
+        ...(titleSearch.trim() ? { title: titleSearch.trim() } : {})
+      }
     }));
   };
 
   const resetAllFilters = () => {
-    // Reset filter schema
-    setFilterSchema({ tasks: {} });
-    
-    // Reset all filter states
-    setSelectedStatus("");
+    setFilterSchema({ bugs: {} });
+    setSelectedBugStatus("");
     setSelectedAssignees([]);
     setSelectedLabels([]);
     setSelectedStartDate("");
     setSelectedDueDate("");
     setStartDateSelectValue("");
     setDueDateSelectValue("");
-    
-    // Reset search queries
-    setStatusSearchQuery("");
+    setBugStatusSearchQuery("");
     setAssigneeSearchQuery("");
     setLabelsSearchQuery("");
-    
-    // Reset custom date states
+    setTitleSearch("");
     setIsCustomStartDate(false);
     setIsCustomDueDate(false);
     setCustomStartDateRange(["", ""]);
     setCustomDueDateRange(["", ""]);
-    
-    // Close popover
     setIsPopoverOpen(false);
   };
 
-  const resetStatusFilter = () => {
-    setSelectedStatus("");
-    setStatusSearchQuery("");
-    applyFilter("workflowStatusId", "");
+  const resetBugStatusFilter = () => {
+    setSelectedBugStatus("");
+    setBugStatusSearchQuery("");
+    setFilterSchema(prev => {
+      const { Status, ...rest } = prev;
+      return rest;
+    });
   };
 
   const resetAssigneeFilter = () => {
     setSelectedAssignees([]);
     setAssigneeSearchQuery("");
-    applyFilter("assigneeIds", []);
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: {
+        ...prev.bugs,
+        assigneeIds: undefined
+      }
+    }));
   };
 
   const resetLabelsFilter = () => {
     setSelectedLabels([]);
     setLabelsSearchQuery("");
-    applyFilter("labelIds", "");
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: {
+        ...prev.bugs,
+        labelIds: undefined
+      }
+    }));
   };
 
   const resetDateFilters = () => {
@@ -370,47 +386,51 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
     setIsCustomStartDate(false);
     setCustomStartDateRange(["", ""]);
     setCustomDueDateRange(["", ""]);
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: {
+        ...prev.bugs,
+        startDate: undefined,
+        dueDate: undefined
+      }
+    }));
   };
 
   // Render Methods
-  const renderStatusFilter = () => (
+  const renderBugStatusFilter = () => (
     <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Status</h4>
+      <h4 className="filter-title">Filter by Bug Status</h4>
       
       <div className="filter-search">
         <Search
-          placeholder="Search status"
-          value={statusSearchQuery}
-          onSearch={setStatusSearchQuery}
-          onChange={(e) => setStatusSearchQuery(e.target.value)}
+          placeholder="Search bug status"
+          value={bugStatusSearchQuery}
+          onSearch={setBugStatusSearchQuery}
+          onChange={(e) => setBugStatusSearchQuery(e.target.value)}
           size="small"
         />
       </div>
       
       <div className="filter-options">
-        <Radio.Group
-          value={selectedStatus}
-          onChange={handleStatusChange}
-          style={{ width: "100%" }}
-        >
-          {filteredStatuses.map((task, index) => (
-            <div
-              key={index}
-              className={`filter-option-item ${
-                selectedStatus === task?.workflowStatus?._id ? "selected" : ""
-              }`}
+        {filteredBugStatuses.map((task, index) => (
+          <div
+            key={index}
+            className={`filter-option-item ${selectedBugStatus === task?._id ? "selected" : ""}`}
+          >
+            <Checkbox
+              checked={selectedBugStatus === task?._id}
+              value={task?._id}
+              onChange={handleBugStatusChange}
             >
-              <Radio value={task?.workflowStatus?._id}>
-                {task?.workflowStatus?.title}
-              </Radio>
-            </div>
-          ))}
-        </Radio.Group>
+              {task?.title}
+            </Checkbox>
+          </div>
+        ))}
       </div>
       
       <div className="filter-actions">
         <Button
-          onClick={() => applyFilter("workflowStatusId", selectedStatus)}
+          onClick={applyBugStatusFilter}
           size="small"
           className="filter-btn"
         >
@@ -419,7 +439,7 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
         <Button
           size="small"
           className="delete-btn"
-          onClick={resetStatusFilter}
+          onClick={resetBugStatusFilter}
         >
           Reset
         </Button>
@@ -442,22 +462,14 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
       </div>
       
       <div className="filter-options">
-        {/* Unassigned Tasks Option */}
-        {"unassigned tasks".includes(assigneeSearchQuery.toLowerCase()) && (
-          <div
-            className={`assignee-item ${
-              selectedAssignees === "unassigned" ? "selected" : ""
-            }`}
+        <div className={`assignee-item ${selectedAssignees === "unassigned" ? "selected" : ""}`}>
+          <Checkbox
+            checked={selectedAssignees === "unassigned"}
+            onChange={() => handleAssigneeSelection("unassigned")}
           >
-            <Checkbox
-              checked={selectedAssignees === "unassigned"}
-              onChange={() => handleAssigneeSelection("unassigned")}
-            />
-            <span>Unassigned Tasks</span>
-          </div>
-        )}
-        
-        {/* Regular Assignees */}
+            Unassigned Bugs
+          </Checkbox>
+        </div>
         {filteredAssignees.map((user, index) => (
           <div
             key={index}
@@ -483,7 +495,7 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
       
       <div className="filter-actions">
         <Button
-          onClick={() => applyFilter("assigneeIds", selectedAssignees)}
+          onClick={applyAssigneeFilter}
           size="small"
           className="filter-btn"
         >
@@ -515,29 +527,15 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
       </div>
       
       <div className="filter-options">
-        {/* Unlabelled Tasks Option */}
-        {"unlabelled task".includes(labelsSearchQuery.toLowerCase()) && (
-          <div
-            className={`label-item ${
-              Array.isArray(selectedLabels) && selectedLabels.includes("unlabelled") 
-                ? "selected" 
-                : ""
-            }`}
+        <div className={`label-item ${selectedLabels === "unlabelled" ? "selected" : ""}`}>
+          <Checkbox
+            checked={selectedLabels === "unlabelled"}
+            onChange={() => handleLabelSelection("unlabelled")}
           >
-            <Checkbox
-              checked={Array.isArray(selectedLabels) && selectedLabels.includes("unlabelled")}
-              onChange={() => handleLabelSelection("unlabelled")}
-            />
-            <Avatar
-              icon={<TagOutlined />}
-              size="small"
-              style={{ backgroundColor: "#f5f5f5", color: "#999" }}
-            />
-            <span>Unlabelled Task</span>
-          </div>
-        )}
-        
-        {/* Regular Labels */}
+            Unlabelled Bug
+          </Checkbox>
+        </div>
+       
         {filteredLabels.map((label) => (
           <div
             key={label._id}
@@ -562,7 +560,7 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
       
       <div className="filter-actions">
         <Button
-          onClick={() => applyFilter("labelIds", selectedLabels)}
+          onClick={applyLabelsFilter}
           size="small"
           className="filter-btn"
         >
@@ -591,7 +589,6 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
         <h4 className="filter-title">Filter by Dates</h4>
         
         <div className="filter-options">
-          {/* Start Date Section */}
           <div className="date-filter-section">
             <Form.Item>
               <label className="date-filter-label">Start Date</label>
@@ -623,7 +620,6 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
             </Form.Item>
           </div>
           
-          {/* Due Date Section */}
           <div className="date-filter-section">
             <Form.Item>
               <label className="date-filter-label">Due Date</label>
@@ -655,7 +651,6 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
             </Form.Item>
           </div>
           
-          {/* Date Summary */}
           <div className="view-filter-summary">
             <CalendarOutlined className="view-filter-icon" />
             <span>
@@ -667,7 +662,7 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
         
         <div className="filter-actions">
           <Button
-            onClick={() => applyDateFilters(selectedStartDate, selectedDueDate)}
+            onClick={applyDateFilters}
             size="small"
             className="filter-btn"
           >
@@ -687,8 +682,8 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
 
   const renderFilterContent = () => {
     switch (activeFilterType) {
-      case FILTER_TYPES.STATUS:
-        return renderStatusFilter();
+      case FILTER_TYPES.BUG_STATUS:
+        return renderBugStatusFilter();
       case FILTER_TYPES.ASSIGNEE:
         return renderAssigneeFilter();
       case FILTER_TYPES.LABELS:
@@ -696,14 +691,13 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
       case FILTER_TYPES.DATES:
         return renderDatesFilter();
       default:
-        return renderStatusFilter();
+        return renderBugStatusFilter();
     }
   };
 
   const popoverContent = (
     <div className="filter-popover-content">
       <div className="filter-sidebar">
-        {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
           {activeFiltersCount > 0 && (
@@ -721,14 +715,11 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
         
         <Divider style={{ margin: "8px 0" }} />
         
-        {/* Filter Menu Items */}
         {FILTER_MENU_ITEMS.map((item) => (
           <div
             key={item.key}
             onClick={() => setActiveFilterType(item.key)}
-            className={`filter-menu-item ${
-              activeFilterType === item.key ? "active" : ""
-            }`}
+            className={`filter-menu-item ${activeFilterType === item.key ? "active" : ""}`}
           >
             <span>{item.label}</span>
           </div>
@@ -770,4 +761,4 @@ const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], o
   );
 };
 
-export default FilterUI;
+export default BugFilter;

@@ -1402,7 +1402,8 @@ const BugsController = () => {
     handleChangeTableView,
     isPopoverVisibleTableView,
     setIsPopoverVisibleTableView,
-    selectedView,setSelectedView
+    selectedView,setSelectedView,
+    setFilterSchema
   };
 };
 
