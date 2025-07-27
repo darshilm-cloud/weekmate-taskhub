@@ -1,0 +1,123 @@
+.company-loading {
+    display: flex;
+    justify-content: center;
+    padding: 80px 0;
+  }
+  
+  /* ===== Card wrapper ===== */
+  .company-profile-card {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  
+  /* ===== Header row ===== */
+  .company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  
+  .company-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  /* ===== Info grid ===== */
+  .info-cards .info-card {
+    padding: 16px;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+  
+  .info-label {
+    font-size: 11px;
+    color: #8c8c8c;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  
+  .info-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #262626;
+  }
+  
+  /* ===== Assets ===== */
+  .company-assets {
+    margin-top: 48px;
+  }
+  
+  .company-assets h3 {
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .asset-card {
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+  }
+  
+  .asset-preview {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+  
+  .asset-image {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  
+  .asset-placeholder {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+  
+  /* ===== Modal – pending previews ===== */
+  .pending-preview {
+    margin-top: 16px;
+  }
+  
+  .preview-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .preview-item span {
+    margin-right: 8px;
+    font-size: 13px;
+  }
+  
+  .preview-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    margin-right: 8px;
+    background: #f5f5f5;
+  }
+  
+  .preview-item .anticon-close {
+    color: #ff4d4f;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .preview-item .anticon-close:hover {
+    color: #ff7875;
+  }
+  

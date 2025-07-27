@@ -37,7 +37,7 @@
   }
   
   .filter-menu-item {
-    padding: 14px 18px;
+    padding: 5px 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -136,8 +136,8 @@
   
   /* Filter Option Items */
   .filter-option-item {
-    margin-bottom: 10px;
-    padding: 8px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
     border-radius: 8px;
     transition: all 0.2s ease;
     border: 1px solid transparent;
@@ -160,7 +160,7 @@
     align-items: center;
     gap: 8px;
     padding: 5px 10px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -260,8 +260,12 @@
   .filter-option-item .ant-checkbox-wrapper {
     font-weight: 500;
     color: #374151;
+    padding: 0;
   }
-  
+  .filter-content-inner .ant-checkbox-wrapper{
+    line-height: normal;
+    padding: 0;
+  }
   .filter-option-item .ant-checkbox-wrapper:hover .ant-checkbox-inner {
     border-color: #3b82f6;
   }
@@ -318,7 +322,7 @@
 
 /* Date Filter Styles */
 .date-filter-section {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   
   .date-filter-label {
@@ -447,4 +451,10 @@
   }
   .filter-popover-content .ant-row{
     margin: 0;
+  }
+
+  .filter-btn{
+    display: flex;
+    gap: 5px;
+    align-items: center;
   }

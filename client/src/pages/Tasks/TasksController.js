@@ -1388,36 +1388,47 @@ const TasksController = ({ flag }) => {
   };
 
   const filterTasks = (data, filters) => {
+    console.log("Filtering tasks with:", filters);
     return data.map((project) => {
-      let matchedProject = false;
-      if (filters.workflowStatusId || filters.workflowStatusId === "") {
-        matchedProject =
-          project.workflowStatus._id === filters.workflowStatusId;
-      } else {
-        matchedProject = true;
+      let matchedProject = true;
+  
+      // Status filter
+      if (filters.workflowStatusId) {
+        if (Array.isArray(filters.workflowStatusId)) {
+          matchedProject = filters.workflowStatusId.includes(project.workflowStatus?._id);
+        } else {
+          matchedProject = project.workflowStatus?._id === filters.workflowStatusId;
+        }
       }
-
+  
+      // Task-level filters
       if (matchedProject && filters.tasks) {
         project.tasks = project.tasks.filter((task) => {
           let matchedTask = true;
-          if (filters.tasks.status || filters.tasks.status === "") {
-            matchedTask = task.status === filters.tasks.status;
-          }
-
-          if (matchedTask && filters.tasks.assigneeIds === "unassigned") {
+  
+          // Assignee filter
+          if (filters.tasks.assigneeIds === "unassigned") {
             matchedTask = task.assignees.length === 0;
-          } else if (
-            matchedTask &&
-            filters.tasks.assigneeIds &&
-            filters.tasks.assigneeIds.length > 0
-          ) {
+          } else if (filters.tasks.assigneeIds?.length > 0) {
             matchedTask = task.assignees.some((assignee) =>
               filters.tasks.assigneeIds.includes(assignee._id)
             );
           }
-
+  
+          // Label filter
+          if (matchedTask && filters.tasks.labelIds === "unlabelled") {
+            matchedTask = task.task_labels.length === 0;
+          } else if (matchedTask && filters.tasks.labelIds?.length > 0) {
+            matchedTask = task.task_labels.some((label) =>
+              filters.tasks.labelIds.includes(label._id)
+            );
+          }
+  
+          // Start date filter
           if (matchedTask && filters.tasks.startDate) {
-            if (filters.tasks.startDate === "next7days") {
+            if (!task.start_date) {
+              matchedTask = false;
+            } else if (filters.tasks.startDate === "next7days") {
               matchedTask = moment(task.start_date).isBetween(
                 moment(),
                 moment().add(7, "days"),
@@ -1444,12 +1455,15 @@ const TasksController = ({ flag }) => {
                 "day"
               );
             }
-          } else if (filters.tasks.startDate === null) {
+          } else if (matchedTask && filters.tasks.startDate === null) {
             matchedTask = task.start_date === null;
           }
-
+  
+          // Due date filter
           if (matchedTask && filters.tasks.dueDate) {
-            if (filters.tasks.dueDate === "next7days") {
+            if (!task.due_date) {
+              matchedTask = false;
+            } else if (filters.tasks.dueDate === "next7days") {
               matchedTask = moment(task.due_date).isBetween(
                 moment(),
                 moment().add(7, "days"),
@@ -1476,35 +1490,22 @@ const TasksController = ({ flag }) => {
                 "day"
               );
             }
-          } else if (filters.tasks.dueDate === null) {
+          } else if (matchedTask && filters.tasks.dueDate === null) {
             matchedTask = task.due_date === null;
           }
-
-          if (matchedTask && filters.tasks.labelIds === "unlabelled") {
-            matchedTask = task.task_labels.length === 0;
-          } else if (
-            matchedTask &&
-            filters.tasks.labelIds &&
-            filters.tasks.labelIds.length > 0
-          ) {
-            matchedTask = task.task_labels.some((label) =>
-              filters.tasks.labelIds.includes(label._id)
-            );
-          }
-          if (
-            matchedTask &&
-            filters.tasks.title &&
-            filters.tasks.title !== ""
-          ) {
+  
+          // Title filter
+          if (matchedTask && filters.tasks.title && filters.tasks.title !== "") {
             matchedTask = task.title
               .toLowerCase()
               .includes(filters.tasks.title.toLowerCase());
           }
+  
           return matchedTask;
         });
         matchedProject = project.tasks.length > 0;
       }
-
+  
       if (!matchedProject) {
         return { ...project, tasks: [] };
       }
@@ -1638,33 +1639,7 @@ const TasksController = ({ flag }) => {
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const resetAllFilters = (type) => {
-      switch (type) {
-        case "status":
-          setFilterStatus("");
-          break;
-        case "assignee":
-          setFilterAssigned([]);
-          break;
-        case "labels":
-          setFilterOnLabels("");
-          break;
-        case "date":
-          setFilterStartDate("");
-          setFilterDueDate("");
-          break;
-        default:
-          setFilterStatus("");
-          setFilterAssigned([]);
-          setFilterOnLabels("");
-          setFilterStartDate("");
-          setFilterDueDate("");
-          break;
-      }
-  };
-  
+  };  
 
   useEffect(() => {
     getProjectByID();
@@ -1869,7 +1844,7 @@ const TasksController = ({ flag }) => {
     selectedWorkflowStatus,
     setSelectedWorkflowStatus,
     updateTaskDraftStatus,
-    resetAllFilters
+    setFilterSchema
   };
 };
 
