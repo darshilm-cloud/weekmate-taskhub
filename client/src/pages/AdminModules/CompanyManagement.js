@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Card,
   Row,
@@ -10,21 +10,20 @@ import {
   Upload,
   message,
   Spin,
-  Popconfirm,
-} from 'antd';
+} from "antd";
 import {
   EditOutlined,
   UploadOutlined,
   CloseOutlined,
   LinkOutlined,
-} from '@ant-design/icons';
-import moment from 'moment';
-import Service from '../../service';
+} from "@ant-design/icons";
+import moment from "moment";
+import Service from "../../service";
 import { useHistory } from "react-router-dom";
-import './CompanyProfile.css';
+import "./CompanyProfile.css";
 
 // Constants
-const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const ALLOWED_FILE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 // Utility functions
 const getLocalStorageItem = (key) => {
@@ -49,74 +48,104 @@ const setLocalStorageItem = (key, value) => {
 const InfoCard = ({ label, value }) => (
   <div className="info-card">
     <div className="info-label">{label}</div>
-    <div className="info-value">{value || '-'}</div>
+    <div className="info-value">{value || "-"}</div>
   </div>
 );
 
-const AssetCard = ({ title, imageUrl, placeholder, onUpload, onRemove, disabled, pendingFile }) => (
-  <div className="asset-card">
-    <div className="asset-preview">
-      {imageUrl ? (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img
-            src={`${process.env.REACT_APP_API_URL}/public/${imageUrl}`}
-            alt={title}
-            className="asset-image"
-          />
-          {!disabled && (
-            <Button
-              type="text"
-              danger
-              size="small"
-              icon={<CloseOutlined />}
-              onClick={onRemove}
-              style={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                background: '#ff4d4f',
-                color: 'white',
-                borderRadius: '50%',
-                width: 20,
-                height: 20,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-              }}
+const AssetCard = ({
+  title,
+  imageUrl,
+  placeholder,
+  onUpload,
+  onRemove,
+  disabled,
+  pendingFile,
+}) => {
+  // Create preview URL for pending file
+  const previewUrl = useMemo(() => {
+    if (pendingFile) {
+      return URL.createObjectURL(pendingFile);
+    }
+    return null;
+  }, [pendingFile]);
+
+  // Cleanup URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Determine which image to show: pending file preview, existing image, or placeholder
+  const displayImageUrl = previewUrl || imageUrl;
+
+  return (
+    <div className="asset-card">
+      <div className="asset-preview">
+        {displayImageUrl ? (
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <img
+              src={
+                previewUrl ||
+                (imageUrl &&
+                  `${process.env.REACT_APP_API_URL}/public/${imageUrl}`)
+              }
+              alt={title}
+              className="asset-image"
             />
-          )}
-        </div>
-      ) : (
-        <div className="asset-placeholder">{placeholder}</div>
-      )}
-      {pendingFile && (
-        <div style={{ marginTop: 8, fontSize: 12, color: '#1890ff' }}>
-          File selected: {pendingFile.name}
-        </div>
+            {!disabled && (
+              <Button
+                type="text"
+                danger
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={onRemove}
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -8,
+                  background: "#ff4d4f",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: 20,
+                  height: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                }}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="asset-placeholder">{placeholder}</div>
+        )}
+      </div>
+
+      {!disabled && (
+        <Upload
+          showUploadList={false}
+          maxCount={1}
+          beforeUpload={(file) => {
+            if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+              message.error("Only PNG, JPG and WEBP files are allowed!");
+              return Upload.LIST_IGNORE;
+            }
+            onUpload(file);
+            return Upload.LIST_IGNORE;
+          }}
+          accept=".png,.jpg,.jpeg,.webp"
+        >
+          <Button icon={<UploadOutlined />}>
+            {displayImageUrl ? "Replace" : "Upload"} {title}
+          </Button>
+        </Upload>
       )}
     </div>
-    {!disabled && (
-      <Upload
-        showUploadList={false}
-        maxCount={1}
-        beforeUpload={(file) => {
-          if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-            message.error('Only PNG, JPG and WEBP files are allowed!');
-            return Upload.LIST_IGNORE;
-          }
-          onUpload(file);
-          return Upload.LIST_IGNORE;
-        }}
-        accept=".png,.jpg,.jpeg,.webp"
-      >
-        <Button icon={<UploadOutlined />}>
-          {imageUrl ? 'Replace' : 'Upload'} {title}
-        </Button>
-      </Upload>
-    )}
-  </div>
-);
+  );
+};
 
 export default function CompanyManagement() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -132,8 +161,8 @@ export default function CompanyManagement() {
   // File states
   const [pendingLogo, setPendingLogo] = useState(null);
   const [pendingFavicon, setPendingFavicon] = useState(null);
-  const [tempLogoUrl, setTempLogoUrl] = useState('');
-  const [tempFaviconUrl, setTempFaviconUrl] = useState('');
+  const [tempLogoUrl, setTempLogoUrl] = useState("");
+  const [tempFaviconUrl, setTempFaviconUrl] = useState("");
 
   // Memoized values
   const localData = useMemo(() => getLocalStorageItem("user_data") || {}, []);
@@ -157,14 +186,20 @@ export default function CompanyManagement() {
       if (res?.data.status === 1) {
         const first = res.data.data?.[0];
         setCompany(first || null);
-        
+
         // Update localStorage with latest company data
         if (first) {
-          setLocalStorageItem(`companyLogoUrl-${companySlug}`, first.companyLogoUrl);
-          setLocalStorageItem(`companyFavIcoUrl-${companySlug}`, first.companyFavIcoUrl);
+          setLocalStorageItem(
+            `companyLogoUrl-${companySlug}`,
+            first.companyLogoUrl
+          );
+          setLocalStorageItem(
+            `companyFavIcoUrl-${companySlug}`,
+            first.companyFavIcoUrl
+          );
         }
       } else {
-        message.error('Failed to fetch company');
+        message.error("Failed to fetch company");
       }
     } catch (e) {
       handleApiError(e);
@@ -215,18 +250,18 @@ export default function CompanyManagement() {
 
   // Handle file removal
   const handleLogoRemove = useCallback(() => {
-    setTempLogoUrl('');
+    setTempLogoUrl("");
     setPendingLogo(null);
     if (isModalVisible) {
-      form.setFieldsValue({ logo: '' });
+      form.setFieldsValue({ logo: "" });
     }
   }, [form, isModalVisible]);
 
   const handleFaviconRemove = useCallback(() => {
-    setTempFaviconUrl('');
+    setTempFaviconUrl("");
     setPendingFavicon(null);
     if (isModalVisible) {
-      form.setFieldsValue({ favicon: '' });
+      form.setFieldsValue({ favicon: "" });
     }
   }, [form, isModalVisible]);
 
@@ -242,9 +277,9 @@ export default function CompanyManagement() {
     });
 
     // Set current images
-    setTempLogoUrl(company.companyLogoUrl || '');
-    setTempFaviconUrl(company.companyFavIcoUrl || '');
-    
+    setTempLogoUrl(company.companyLogoUrl || "");
+    setTempFaviconUrl(company.companyFavIcoUrl || "");
+
     // Reset pending files
     setPendingLogo(null);
     setPendingFavicon(null);
@@ -253,12 +288,12 @@ export default function CompanyManagement() {
   const handleModalClose = useCallback(() => {
     setIsModalVisible(false);
     form.resetFields();
-    
+
     // Reset all file states
     setPendingLogo(null);
     setPendingFavicon(null);
-    setTempLogoUrl('');
-    setTempFaviconUrl('');
+    setTempLogoUrl("");
+    setTempFaviconUrl("");
   }, [form]);
 
   // Save handler
@@ -312,11 +347,8 @@ export default function CompanyManagement() {
         message.success("Company updated successfully");
 
         const updatedCompany = response.data.data.updatedCompany;
-        const {
-          lastActiveChat,
-          companyId,
-          fileUploadSize,
-        } = response.data.data;
+        const { lastActiveChat, companyId, fileUploadSize } =
+          response.data.data;
 
         // Update localStorage
         const updatedLocalData = {
@@ -349,8 +381,9 @@ export default function CompanyManagement() {
           window.location.href = `/${values.companySlug}/admin/company-management`;
         } else {
           // Refresh company data
-          await fetchCompany();
           setIsModalVisible(false);
+          window.location.reload()
+          // await fetchCompany();
         }
       } else {
         message.error("Failed to save company");
@@ -422,7 +455,10 @@ export default function CompanyManagement() {
 
   if (loading && !company) {
     return (
-      <div className="company-loading" style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="company-loading"
+        style={{ textAlign: "center", padding: "50px" }}
+      >
         <Spin size="large" />
       </div>
     );
@@ -459,7 +495,9 @@ export default function CompanyManagement() {
         <Col xs={24} sm={12}>
           <InfoCard
             label="CREATED AT"
-            value={company ? moment(company.createdAt).format('MMM DD, YYYY') : ''}
+            value={
+              company ? moment(company.createdAt).format("MMM DD, YYYY") : ""
+            }
           />
         </Col>
       </Row>
@@ -468,24 +506,30 @@ export default function CompanyManagement() {
         <h3>Company Assets</h3>
         <Row gutter={[24, 24]}>
           <Col xs={24} sm={12}>
-            <AssetCard
-              title="Logo"
-              imageUrl={company?.companyLogoUrl}
-              placeholder="No logo"
-              disabled={true} // Assets are read-only in main view
-              onUpload={handleLogoUpload}
-              onRemove={handleLogoRemove}
-            />
+            <div className="asset-container">
+              <div className="asset-label">COMPANY LOGO</div>
+              <AssetCard
+                title="Logo"
+                imageUrl={company?.companyLogoUrl}
+                placeholder="No logo"
+                disabled={true} // Assets are read-only in main view
+                onUpload={handleLogoUpload}
+                onRemove={handleLogoRemove}
+              />
+            </div>
           </Col>
           <Col xs={24} sm={12}>
-            <AssetCard
-              title="Favicon"
-              imageUrl={company?.companyFavIcoUrl}
-              placeholder="No favicon"
-              disabled={true} // Assets are read-only in main view
-              onUpload={handleFaviconUpload}
-              onRemove={handleFaviconRemove}
-            />
+            <div className="asset-container">
+              <div className="asset-label">COMPANY FAVICON</div>
+              <AssetCard
+                title="Favicon"
+                imageUrl={company?.companyFavIcoUrl}
+                placeholder="No favicon"
+                disabled={true} // Assets are read-only in main view
+                onUpload={handleFaviconUpload}
+                onRemove={handleFaviconRemove}
+              />
+            </div>
           </Col>
         </Row>
       </div>
@@ -529,17 +573,7 @@ export default function CompanyManagement() {
             rules={formRules.companySlug}
             extra="This will be used to create your company's unique domain. Only lowercase letters, numbers, and hyphens are allowed."
           >
-            <Input
-              prefix={<LinkOutlined />}
-              placeholder="my-company"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="ownerName"
-            label="Owner Name"
-          >
-            <Input placeholder="Enter owner name" />
+            <Input prefix={<LinkOutlined />} placeholder="my-company" />
           </Form.Item>
 
           <Row gutter={24}>
