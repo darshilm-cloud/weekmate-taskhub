@@ -95,32 +95,6 @@ const parseDateValue = (value) => {
   return value;
 };
 
-// Helper function to get all unique statuses from boardTasks
-const getUniqueStatuses = (boardTasks) => {
-  const statusMap = new Map();
-  boardTasks.forEach(board => {
-    if (board.workflowStatus) {
-      statusMap.set(board.workflowStatus._id, board.workflowStatus);
-    }
-  });
-  return Array.from(statusMap.values());
-};
-
-// Helper function to get all unique assignees from tasks
-const getUniqueAssignees = (boardTasks, subscribersList) => {
-  const assigneeIds = new Set();
-  
-  boardTasks.forEach(board => {
-    board.tasks?.forEach(task => {
-      task.assignees?.forEach(assignee => {
-        assigneeIds.add(assignee._id);
-      });
-    });
-  });
-  
-  return subscribersList.filter(user => assigneeIds.has(user._id));
-};
-
 const FilterUI = ({ boardTasks = [], projectLabels = [], subscribersList = [], onConfigUpdate }) => {
   // Main filter schema state
   const [filterSchema, setFilterSchema] = useState({ tasks: {} });

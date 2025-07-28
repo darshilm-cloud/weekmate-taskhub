@@ -1,4 +1,14 @@
-import { Button, Card, Checkbox, Input, Modal, Popconfirm, Popover, Radio, Table } from "antd";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Input,
+  Modal,
+  Popconfirm,
+  Popover,
+  Radio,
+  Table,
+} from "antd";
 import React, { memo, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import PositiveReviewController from "./PositiveReviewController";
@@ -6,8 +16,15 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import { getRoles } from "../../util/hasPermission";
 import moment from "moment";
-import "../Complaints/ComplaintsForm.css"
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import "../Complaints/ComplaintsForm.css";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  QuestionCircleOutlined,
+} from "@ant-design/icons";
+import PositiveReviewFilter from "./PositiveReviewFilter";
 
 // Constants moved outside component to prevent recreation
 const FEEDBACK_TYPES = [
@@ -16,7 +33,7 @@ const FEEDBACK_TYPES = [
   { value: "Video Testimonial", label: "Video Testimonial" },
   { value: "Text Testimonial", label: "Text Testimonial" },
   { value: "Feedback", label: "Feedback" },
-  { value: "Zoho Partner Profile", label: "Zoho Partner Profile" }
+  { value: "Zoho Partner Profile", label: "Zoho Partner Profile" },
 ];
 
 const PAGINATION_OPTIONS = ["10", "20", "30"];
@@ -27,165 +44,163 @@ const SUPER_ADMIN_ROLES = ["Admin"];
 const companySlug = localStorage.getItem("companyDomain");
 
 // Memoized components for better performance
-const FilterPopover = memo(({
-  title,
-  visible,
-  onVisibleChange,
-  searchValue,
-  onSearchChange,
-  selectedItems,
-  allItems,
-  onFilterChange,
-  onApply,
-  onCancel,
-  renderItem,
-  icon
-}) => (
-  <Popover
-    trigger="click"
-    visible={ visible }
-    onVisibleChange={ onVisibleChange }
-    placement="bottomRight"
-    content={
-      <div className="right-popover-wrapper">
-        <ul className="assigness-data">
-          <li>
-            <Checkbox
-              checked={ selectedItems.length === 0 }
-              onChange={ () => onFilterChange("") }
-            >
-              All
-            </Checkbox>
-          </li>
-        </ul>
-        <div className="search-filter">
-          <Input
-            placeholder="Search"
-            value={ searchValue }
-            onChange={ onSearchChange }
-          />
-        </div>
-        <div>
+const FilterPopover = memo(
+  ({
+    title,
+    visible,
+    onVisibleChange,
+    searchValue,
+    onSearchChange,
+    selectedItems,
+    allItems,
+    onFilterChange,
+    onApply,
+    onCancel,
+    renderItem,
+    icon,
+  }) => (
+    <Popover
+      trigger="click"
+      visible={visible}
+      onVisibleChange={onVisibleChange}
+      placement="bottomRight"
+      content={
+        <div className="right-popover-wrapper">
           <ul className="assigness-data">
-            { allItems.map(renderItem) }
+            <li>
+              <Checkbox
+                checked={selectedItems.length === 0}
+                onChange={() => onFilterChange("")}
+              >
+                All
+              </Checkbox>
+            </li>
           </ul>
+          <div className="search-filter">
+            <Input
+              placeholder="Search"
+              value={searchValue}
+              onChange={onSearchChange}
+            />
+          </div>
+          <div>
+            <ul className="assigness-data">{allItems.map(renderItem)}</ul>
+          </div>
+          <div className="popver-footer-btn">
+            <Button
+              type="primary"
+              className="square-primary-btn ant-btn-primary"
+              onClick={onApply}
+            >
+              Apply
+            </Button>
+            <Button
+              className="square-outline-btn ant-delete"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
-        <div className="popver-footer-btn">
-          <Button
-            type="primary"
-            className="square-primary-btn ant-btn-primary"
-            onClick={ onApply }
-          >
-            Apply
-          </Button>
-          <Button
-            className="square-outline-btn ant-delete"
-            onClick={ onCancel }
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    }
-  >
-    <Button className="dropdown-button">
-      <span className="filter-text">
-        <span>{ title }:</span>
-        <span>
-          { selectedItems.length === 0 ? "All" : `Selected (${selectedItems.length})` }
+      }
+    >
+      <Button className="dropdown-button">
+        <span className="filter-text">
+          <span>{title}:</span>
+          <span>
+            {selectedItems.length === 0
+              ? "All"
+              : `Selected (${selectedItems.length})`}
+          </span>
         </span>
-      </span>
-    </Button>
-  </Popover>
-));
+      </Button>
+    </Popover>
+  )
+);
 
-const FeedbackTypeFilter = memo(({
-  visible,
-  onVisibleChange,
-  feedBackTypeFilter,
-  onFilterChange,
-  onApply,
-  onCancel
-}) => (
-  <Popover
-    trigger="click"
-    visible={ visible }
-    onVisibleChange={ onVisibleChange }
-    placement="bottomRight"
-    content={
-      <div className="right-popover-wrapper">
-        <ul className="assigness-data">
-          <Radio.Group
-            onChange={ onFilterChange }
-            value={ feedBackTypeFilter }
-          >
-            { FEEDBACK_TYPES.map(({ value, label }) => (
-              <li key={ value }>
-                <Radio value={ value }>{ label }</Radio>
-              </li>
-            )) }
-          </Radio.Group>
-        </ul>
-        <div className="popver-footer-btn">
-          <Button
-            type="primary"
-            className="square-primary-btn ant-btn-primary"
-            onClick={ onApply }
-          >
-            Apply
-          </Button>
-          <Button
-            className="square-outline-btn ant-delete"
-            onClick={ onCancel }
-          >
-            Cancel
-          </Button>
+const FeedbackTypeFilter = memo(
+  ({
+    visible,
+    onVisibleChange,
+    feedBackTypeFilter,
+    onFilterChange,
+    onApply,
+    onCancel,
+  }) => (
+    <Popover
+      trigger="click"
+      visible={visible}
+      onVisibleChange={onVisibleChange}
+      placement="bottomRight"
+      content={
+        <div className="right-popover-wrapper">
+          <ul className="assigness-data">
+            <Radio.Group onChange={onFilterChange} value={feedBackTypeFilter}>
+              {FEEDBACK_TYPES.map(({ value, label }) => (
+                <li key={value}>
+                  <Radio value={value}>{label}</Radio>
+                </li>
+              ))}
+            </Radio.Group>
+          </ul>
+          <div className="popver-footer-btn">
+            <Button
+              type="primary"
+              className="square-primary-btn ant-btn-primary"
+              onClick={onApply}
+            >
+              Apply
+            </Button>
+            <Button
+              className="square-outline-btn ant-delete"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
-      </div>
-    }
-  >
-    <Button className="dropdown-button">
-      <span className="filter-text">
-        <span>Feedback Type:</span>
-        <span>
-          { feedBackTypeFilter === ""
-            ? "All"
-            : FEEDBACK_TYPES.find(type => type.value === feedBackTypeFilter)?.label || "Selected" }
+      }
+    >
+      <Button className="dropdown-button">
+        <span className="filter-text">
+          <span>Feedback Type:</span>
+          <span>
+            {feedBackTypeFilter === ""
+              ? "All"
+              : FEEDBACK_TYPES.find((type) => type.value === feedBackTypeFilter)
+                  ?.label || "Selected"}
+          </span>
         </span>
-      </span>
-    </Button>
-  </Popover>
-));
+      </Button>
+    </Popover>
+  )
+);
 
-const ActionButtons = memo(({
-  record,
-  onView,
-  onDelete
-}) => (
+const ActionButtons = memo(({ record, onView, onDelete }) => (
   <div
-    style={ {
+    style={{
       display: "flex",
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
       gap: "20px",
-    } }
+    }}
   >
     <EyeOutlined
-      onClick={ () => onView(record._id) }
-      style={ { cursor: "pointer" } }
+      onClick={() => onView(record._id)}
+      style={{ cursor: "pointer" }}
     />
-    <Link to={ `/${companySlug}/edit/positiveReviewForm/${record._id}` }>
-      <EditOutlined style={ { color: "green" } } />
+    <Link to={`/${companySlug}/edit/positiveReviewForm/${record._id}`}>
+      <EditOutlined style={{ color: "green" }} />
     </Link>
     <Popconfirm
-      icon={ <QuestionCircleOutlined style={ { color: "red" } } /> }
+      icon={<QuestionCircleOutlined style={{ color: "red" }} />}
       title="Are you sure to delete this Feedback?"
-      onConfirm={ () => onDelete(record._id) }
+      onConfirm={() => onDelete(record._id)}
       okText="Yes"
       cancelText="No"
     >
-      <DeleteOutlined style={ { color: "red" } } />
+      <DeleteOutlined style={{ color: "red" }} />
     </Popconfirm>
   </div>
 ));
@@ -227,7 +242,7 @@ const PositiveReview = () => {
     getReviewById,
     feedBackDetails,
     setFeedBackDetails,
-    deleteReview
+    deleteReview,
   } = PositiveReviewController();
 
   // Memoized permission checks
@@ -236,121 +251,154 @@ const PositiveReview = () => {
   const isSuperAdmin = useMemo(() => getRoles(SUPER_ADMIN_ROLES), []);
 
   // Memoized callbacks
-  const handleViewReview = useCallback((id) => {
-    getReviewById(id);
-    if (feedBackDetails) {
-      setIsModalOpenTopic(true);
-    }
-  }, [getReviewById, feedBackDetails, setIsModalOpenTopic]);
+  const handleViewReview = useCallback(
+    (id) => {
+      getReviewById(id);
+      if (feedBackDetails) {
+        setIsModalOpenTopic(true);
+      }
+    },
+    [getReviewById, feedBackDetails, setIsModalOpenTopic]
+  );
 
-  const handleDeleteReview = useCallback((id) => {
-    deleteReview(id);
-  }, [deleteReview]);
+  const handleDeleteReview = useCallback(
+    (id) => {
+      deleteReview(id);
+    },
+    [deleteReview]
+  );
 
   const handleModalClose = useCallback(() => {
     setIsModalOpenTopic(false);
     setFeedBackDetails([]);
   }, [setIsModalOpenTopic, setFeedBackDetails]);
 
-  const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
+  const showTotal = useCallback(
+    (total) => `Total Records Count is ${total}`,
+    []
+  );
 
   // Memoized filter handlers
-  const handleProjectFilter = useCallback((item) => {
-    handleFilters(item, selectedProject, setSelectedProject);
-  }, [handleFilters, selectedProject, setSelectedProject]);
+  const handleProjectFilter = useCallback(
+    (item) => {
+      handleFilters(item, selectedProject, setSelectedProject);
+    },
+    [handleFilters, selectedProject, setSelectedProject]
+  );
 
-  const handleTechnologyFilter = useCallback((item) => {
-    handleFilters(item, technology, setTechnology);
-  }, [handleFilters, technology, setTechnology]);
+  const handleTechnologyFilter = useCallback(
+    (item) => {
+      handleFilters(item, technology, setTechnology);
+    },
+    [handleFilters, technology, setTechnology]
+  );
 
-  const handleManagerFilter = useCallback((item) => {
-    handleFilters(item, manager, setManager);
-  }, [handleFilters, manager, setManager]);
+  const handleManagerFilter = useCallback(
+    (item) => {
+      handleFilters(item, manager, setManager);
+    },
+    [handleFilters, manager, setManager]
+  );
 
-  const handleAccountManagerFilter = useCallback((item) => {
-    handleFilters(item, accontManager, setAccountManager);
-  }, [handleFilters, accontManager, setAccountManager]);
+  const handleAccountManagerFilter = useCallback(
+    (item) => {
+      handleFilters(item, accontManager, setAccountManager);
+    },
+    [handleFilters, accontManager, setAccountManager]
+  );
 
   // Memoized apply handlers
   const handleApplyProject = useCallback(() => {
     getReviewList();
-    setPopOver(prev => ({ ...prev, project: false }));
+    setPopOver((prev) => ({ ...prev, project: false }));
   }, [getReviewList, setPopOver]);
 
   const handleApplyTechnology = useCallback(() => {
     getReviewList();
-    setPopOver(prev => ({ ...prev, technology: false }));
+    setPopOver((prev) => ({ ...prev, technology: false }));
   }, [getReviewList, setPopOver]);
 
   const handleApplyManager = useCallback(() => {
     getReviewList();
-    setPopOver(prev => ({ ...prev, manager: false }));
+    setPopOver((prev) => ({ ...prev, manager: false }));
   }, [getReviewList, setPopOver]);
 
   const handleApplyAccountManager = useCallback(() => {
     getReviewList();
-    setPopOver(prev => ({ ...prev, accontManager: false }));
+    setPopOver((prev) => ({ ...prev, accontManager: false }));
   }, [getReviewList, setPopOver]);
 
   const handleApplyFeedbackType = useCallback(() => {
     getReviewList();
-    setPopOver(prev => ({ ...prev, feedBackType: false }));
+    setPopOver((prev) => ({ ...prev, feedBackType: false }));
   }, [getReviewList, setPopOver]);
 
   // Memoized render functions
-  const renderProjectItem = useCallback((item) => (
-    <li key={ item._id }>
-      <Checkbox
-        onChange={ () => handleProjectFilter(item) }
-        checked={ selectedProject.includes(item._id) }
-      >
-        <span>{ item?.title }</span>
-      </Checkbox>
-    </li>
-  ), [handleProjectFilter, selectedProject]);
+  const renderProjectItem = useCallback(
+    (item) => (
+      <li key={item._id}>
+        <Checkbox
+          onChange={() => handleProjectFilter(item)}
+          checked={selectedProject.includes(item._id)}
+        >
+          <span>{item?.title}</span>
+        </Checkbox>
+      </li>
+    ),
+    [handleProjectFilter, selectedProject]
+  );
 
-  const renderTechnologyItem = useCallback((item) => (
-    <li key={ item._id }>
-      <Checkbox
-        onChange={ () => handleTechnologyFilter(item) }
-        checked={ technology.includes(item._id) }
-      >
-        { item.project_tech }
-      </Checkbox>
-    </li>
-  ), [handleTechnologyFilter, technology]);
+  const renderTechnologyItem = useCallback(
+    (item) => (
+      <li key={item._id}>
+        <Checkbox
+          onChange={() => handleTechnologyFilter(item)}
+          checked={technology.includes(item._id)}
+        >
+          {item.project_tech}
+        </Checkbox>
+      </li>
+    ),
+    [handleTechnologyFilter, technology]
+  );
 
-  const renderManagerItem = useCallback((item) => (
-    <li key={ item._id }>
-      <Checkbox
-        onChange={ () => handleManagerFilter(item) }
-        checked={ manager.includes(item._id) }
-      >
-        <MyAvatar
-          userName={ item?.manager_name || "-" }
-          src={ item?.emp_img }
-          alt={ item?.manager_name }
-        />
-        <span>{ removeTitle(item?.manager_name) }</span>
-      </Checkbox>
-    </li>
-  ), [handleManagerFilter, manager]);
+  const renderManagerItem = useCallback(
+    (item) => (
+      <li key={item._id}>
+        <Checkbox
+          onChange={() => handleManagerFilter(item)}
+          checked={manager.includes(item._id)}
+        >
+          <MyAvatar
+            userName={item?.manager_name || "-"}
+            src={item?.emp_img}
+            alt={item?.manager_name}
+          />
+          <span>{removeTitle(item?.manager_name)}</span>
+        </Checkbox>
+      </li>
+    ),
+    [handleManagerFilter, manager]
+  );
 
-  const renderAccountManagerItem = useCallback((item) => (
-    <li key={ item._id }>
-      <Checkbox
-        onChange={ () => handleAccountManagerFilter(item) }
-        checked={ accontManager?.includes(item._id) }
-      >
-        <MyAvatar
-          userName={ item?.manager_name || "-" }
-          src={ item?.emp_img }
-          alt={ item?.manager_name }
-        />
-        <span>{ removeTitle(item?.manager_name) }</span>
-      </Checkbox>
-    </li>
-  ), [handleAccountManagerFilter, accontManager]);
+  const renderAccountManagerItem = useCallback(
+    (item) => (
+      <li key={item._id}>
+        <Checkbox
+          onChange={() => handleAccountManagerFilter(item)}
+          checked={accontManager?.includes(item._id)}
+        >
+          <MyAvatar
+            userName={item?.manager_name || "-"}
+            src={item?.emp_img}
+            alt={item?.manager_name}
+          />
+          <span>{removeTitle(item?.manager_name)}</span>
+        </Checkbox>
+      </li>
+    ),
+    [handleAccountManagerFilter, accontManager]
+  );
 
   // Memoized table columns
   const columns = useMemo(() => {
@@ -379,7 +427,7 @@ const PositiveReview = () => {
         title: "Date",
         render: (text) => {
           const createdDate = moment(text.createdAt).format("DD MMM YYYY");
-          return <span>{ createdDate || "-" }</span>;
+          return <span>{createdDate || "-"}</span>;
         },
       },
       {
@@ -388,7 +436,7 @@ const PositiveReview = () => {
       },
       {
         title: "NDA signed by client",
-        render: (text) => text?.client_nda_sign === true ? "YES" : "NO",
+        render: (text) => (text?.client_nda_sign === true ? "YES" : "NO"),
       },
     ];
 
@@ -397,9 +445,9 @@ const PositiveReview = () => {
         title: "Actions",
         render: (text, record) => (
           <ActionButtons
-            record={ record }
-            onView={ handleViewReview }
-            onDelete={ handleDeleteReview }
+            record={record}
+            onView={handleViewReview}
+            onDelete={handleDeleteReview}
           />
         ),
       });
@@ -409,124 +457,128 @@ const PositiveReview = () => {
   }, [userHasAccess, handleViewReview, handleDeleteReview]);
 
   // Memoized pagination config
-  const paginationConfig = useMemo(() => ({
-    showSizeChanger: true,
-    pageSizeOptions: PAGINATION_OPTIONS,
-    showTotal: showTotal,
-    ...pagination,
-  }), [pagination, showTotal]);
+  const paginationConfig = useMemo(
+    () => ({
+      showSizeChanger: true,
+      pageSizeOptions: PAGINATION_OPTIONS,
+      showTotal: showTotal,
+      ...pagination,
+    }),
+    [pagination, showTotal]
+  );
+
+
+  const filterConfigs = [
+    {
+      key: "project",
+      label: "Project",
+      filterType: "checkbox",
+      searchValue: searchProject,
+      onSearchChange: handleSearchProjects,
+      selectedItems: selectedProject,
+      allItems: filteredProjectsList,
+      onFilterChange: handleProjectFilter,
+      onApply: handleApplyProject,
+      onReset: () => handleProjectFilter(""),
+      renderItem: renderProjectItem,
+      hasSearch: true,
+    },
+    ...(isSuperAdmin ? [
+      {
+        key: "technology",
+        label: "Department",
+        filterType: "checkbox",
+        searchValue: searchTechnology,
+        onSearchChange: handleSearchTechnology,
+        selectedItems: technology,
+        allItems: filteredTechnologyList,
+        onFilterChange: handleTechnologyFilter,
+        onApply: handleApplyTechnology,
+        onReset: () => handleTechnologyFilter(""),
+        renderItem: renderTechnologyItem,
+        hasSearch: true,
+      },
+      {
+        key: "manager",
+        label: "Manager",
+        filterType: "checkbox",
+        searchValue: searchManager,
+        onSearchChange: handleSearchManager,
+        selectedItems: manager,
+        allItems: filteredManagerList,
+        onFilterChange: handleManagerFilter,
+        onApply: handleApplyManager,
+        onReset: () => handleManagerFilter(""),
+        renderItem: renderManagerItem,
+        hasSearch: true,
+      },
+      {
+        key: "accountManager",
+        label: "Account Manager",
+        filterType: "checkbox",
+        searchValue: searchAccountManager,
+        onSearchChange: handleSearchAccountManager,
+        selectedItems: accontManager,
+        allItems: filteredAccManagerList,
+        onFilterChange: handleAccountManagerFilter,
+        onApply: handleApplyAccountManager,
+        onReset: () => handleAccountManagerFilter(""),
+        renderItem: renderAccountManagerItem,
+        hasSearch: true,
+      },
+    ] : []),
+    {
+      key: "feedbackType",
+      label: "Feedback Type",
+      filterType: "radio",
+      selectedValue: feedBackTypeFilter,
+      options: FEEDBACK_TYPES,
+      onFilterChange: handleFeedBackTypeFilter,
+      onApply: handleApplyFeedbackType,
+      onReset: () => handleFeedBackTypeFilter({ target: { value: "" } }),
+      hasSearch: false,
+    },
+  ];
+  
 
   return (
     <div className="ant-project-task all-project-main-wrapper positive-feedback-review">
       <Card>
-
-
         <div class="heading-wrapper">
           <h2>Positive Reviews</h2>
-          { canAddReview && (
-            <Link to={ `/${companySlug}/add/positiveReviewForm` }>
+          {canAddReview && (
+            <Link to={`/${companySlug}/add/positiveReviewForm`}>
               <Button
-                icon={ <PlusOutlined /> }
+                icon={<PlusOutlined />}
                 type="primary"
                 className="square-primary-btn"
               >
                 Add Review
               </Button>
             </Link>
-          ) }
+          )}
         </div>
 
         <div className="global-search">
           <div className="filter-btn-wrapper">
-            <FilterPopover
-              title="Project"
-              visible={ popOver.project }
-              onVisibleChange={ () => handleVisibleChange("project", true) }
-              searchValue={ searchProject }
-              onSearchChange={ handleSearchProjects }
-              selectedItems={ selectedProject }
-              allItems={ filteredProjectsList }
-              onFilterChange={ handleProjectFilter }
-              onApply={ handleApplyProject }
-              onCancel={ () => setPopOver(prev => ({ ...prev, project: false })) }
-              renderItem={ renderProjectItem }
-              icon={ <i className="fa-solid fa-list-check"></i> }
-            />
-
-            { isSuperAdmin && (
-              <>
-                <FilterPopover
-                  title="Department"
-                  visible={ popOver.technology }
-                  onVisibleChange={ () => handleVisibleChange("technology", true) }
-                  searchValue={ searchTechnology }
-                  onSearchChange={ handleSearchTechnology }
-                  selectedItems={ technology }
-                  allItems={ filteredTechnologyList }
-                  onFilterChange={ handleTechnologyFilter }
-                  onApply={ handleApplyTechnology }
-                  onCancel={ () => handleVisibleChange("technology", false) }
-                  renderItem={ renderTechnologyItem }
-                  icon={ <i className="fas fa-briefcase"></i> }
-                />
-
-                <FilterPopover
-                  title="Manager"
-                  visible={ popOver.manager }
-                  onVisibleChange={ () => handleVisibleChange("manager", true) }
-                  searchValue={ searchManager }
-                  onSearchChange={ handleSearchManager }
-                  selectedItems={ manager }
-                  allItems={ filteredManagerList }
-                  onFilterChange={ handleManagerFilter }
-                  onApply={ handleApplyManager }
-                  onCancel={ () => setPopOver(prev => ({ ...prev, manager: false })) }
-                  renderItem={ renderManagerItem }
-                  icon={ <i className="fi fi-rr-users"></i> }
-                />
-
-                <FilterPopover
-                  title="Account Manager"
-                  visible={ popOver.accontManager }
-                  onVisibleChange={ () => handleVisibleChange("accontManager", true) }
-                  searchValue={ searchAccountManager }
-                  onSearchChange={ handleSearchAccountManager }
-                  selectedItems={ accontManager }
-                  allItems={ filteredAccManagerList }
-                  onFilterChange={ handleAccountManagerFilter }
-                  onApply={ handleApplyAccountManager }
-                  onCancel={ () => setPopOver(prev => ({ ...prev, accontManager: false })) }
-                  renderItem={ renderAccountManagerItem }
-                  icon={ <i className="fi fi-rr-users"></i> }
-                />
-              </>
-            ) }
-
-            <FeedbackTypeFilter
-              visible={ popOver.feedBackType }
-              onVisibleChange={ () => handleVisibleChange("feedBackType", true) }
-              feedBackTypeFilter={ feedBackTypeFilter }
-              onFilterChange={ handleFeedBackTypeFilter }
-              onApply={ handleApplyFeedbackType }
-              onCancel={ () => setPopOver(prev => ({ ...prev, feedBackType: false })) }
-            />
+            <PositiveReviewFilter filterConfigs={filterConfigs} />
           </div>
         </div>
 
         <Table
-          pagination={ paginationConfig }
-          columns={ columns }
-          onChange={ handleTableChange }
-          dataSource={ reviewList }
+          pagination={paginationConfig}
+          columns={columns}
+          onChange={handleTableChange}
+          dataSource={reviewList}
         />
       </Card>
 
       <Modal
         width="600px"
         destroyOnClose
-        onCancel={ handleModalClose }
-        open={ isModalOpenTopic }
-        footer={ null }
+        onCancel={handleModalClose}
+        open={isModalOpenTopic}
+        footer={null}
         className="add-task-modal add-list-modal show-feedback-detail-modal disscusion-pop-wrapper"
       >
         <div className="modal-header">
@@ -534,7 +586,7 @@ const PositiveReview = () => {
         </div>
         <div
           className="overview-modal-wrapper"
-          dangerouslySetInnerHTML={ { __html: feedBackDetails?.feedback } }
+          dangerouslySetInnerHTML={{ __html: feedBackDetails?.feedback }}
         />
       </Modal>
     </div>
@@ -542,4 +594,3 @@ const PositiveReview = () => {
 };
 
 export default memo(PositiveReview);
-
