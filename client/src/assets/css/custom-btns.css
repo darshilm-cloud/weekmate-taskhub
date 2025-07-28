@@ -202,6 +202,8 @@
     border: 1px solid #bae6fd !important;
     border-radius: 3px;
     padding: 7px 16px;
+    display: flex;
+    align-items: center;
 }
 .ant-delete,
 .ant-layout .ant-layout-content .ant-reject,
