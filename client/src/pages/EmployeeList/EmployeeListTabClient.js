@@ -19,6 +19,7 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
+import EmployeeFilterComponent from "./EmployeeFilterComponent";
 
 const EmployeeListTabClient = () => {
   const [formData] = Form.useForm();
@@ -329,8 +330,8 @@ const EmployeeListTabClient = () => {
       render: (text, record) => {
         const full_name = record.full_name;
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { removeTitle(full_name) }
+          <span style={{ textTransform: "capitalize" }}>
+            {removeTitle(full_name)}
           </span>
         );
       },
@@ -341,7 +342,7 @@ const EmployeeListTabClient = () => {
       key: "email",
       width: 200,
       render: (_, record) => {
-        return <span>{ record.email }</span>;
+        return <span>{record.email}</span>;
       },
     },
     {
@@ -351,8 +352,8 @@ const EmployeeListTabClient = () => {
       width: 300,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.company_name }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.company_name}
           </span>
         );
       },
@@ -365,8 +366,8 @@ const EmployeeListTabClient = () => {
       width: 200,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.phone_number }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.phone_number}
           </span>
         );
         // }
@@ -380,8 +381,8 @@ const EmployeeListTabClient = () => {
       render: (text, record) => {
         return record?._id == editid ? (
           <Select
-            defaultValue={ record.isActivate ? "Active" : "Not Active" }
-            options={ [
+            defaultValue={record.isActivate ? "Active" : "Not Active"}
+            options={[
               {
                 value: true,
                 label: "Active",
@@ -390,11 +391,11 @@ const EmployeeListTabClient = () => {
                 value: false,
                 label: "Not Active",
               },
-            ] }
+            ]}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.isActivate ? "Active" : "Not Active" }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.isActivate ? "Active" : "Not Active"}
           </span>
         );
       },
@@ -406,19 +407,19 @@ const EmployeeListTabClient = () => {
       render: (text, record, index) => (
         <div
           className="action-edit-btn"
-          style={ {
+          style={{
             display: "flex",
             flexwrap: "wrap",
-          } }
+          }}
         >
           <Button type="link edit">
             <EditOutlined
               className="edit-btn"
-              style={ { color: "green" } }
-              onClick={ () => {
+              style={{ color: "green" }}
+              onClick={() => {
                 showModal(record._id);
                 setModalMode("Edit");
-              } }
+              }}
             />
           </Button>
 
@@ -427,9 +428,9 @@ const EmployeeListTabClient = () => {
             okText="Yes"
             cancelText="No"
             // onConfirm={() => deleteProject(record?._id)}
-            onConfirm={ () => handleDelete(record) }
+            onConfirm={() => handleDelete(record)}
           >
-            <DeleteOutlined className="edit-btn" style={ { color: "red" } } />
+            <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
           </Popconfirm>
         </div>
       ),
@@ -440,7 +441,7 @@ const EmployeeListTabClient = () => {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
+        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
       </label>
     );
   };
@@ -581,31 +582,36 @@ const EmployeeListTabClient = () => {
     <>
       <div className="profile-sub-head global-search clint-module">
         <div className="head-box-inner">
-
           <Search
-            ref={ searchRef }
+            ref={searchRef}
             placeholder="Search..."
             className="client-search-bar"
-            onSearch={ onSearch }
-            onChange={ (e) => {
+            onSearch={onSearch}
+            onChange={(e) => {
               setPagination({ ...pagination, current: 1 });
-            } }
-            onKeyUp={ resetSearchFilter }
+            }}
+            onKeyUp={resetSearchFilter}
           />
           <div className="filter-btn-wrapper">
-            <Button onClick={ openAddModal } type="primary" className="btn">
+            <Button onClick={openAddModal} type="primary" className="btn">
               <i className="fi fi-rr-plus-small"></i> Add
             </Button>
-            <Button onClick={ openFilterModel } className="filter-btn">
-              Filter
-            </Button>
+
+            <EmployeeFilterComponent
+              formData={formData}
+              filterEmp={filterEmp}
+              onReset={onReset}
+              handleCancel={handleCancel}
+              client={client}
+              formItemLayout={formItemLayout}
+            />
             <Button
               className="ant-delete"
-              onClick={ () => {
+              onClick={() => {
                 formData.resetFields();
                 setFilterData(null);
-              } }
-              disabled={ filterData != null ? false : true }
+              }}
+              disabled={filterData != null ? false : true}
             >
               Clear Filter
             </Button>
@@ -613,8 +619,8 @@ const EmployeeListTabClient = () => {
             <Button
               className="mr2 export-btn"
               id="exportButton"
-              disabled={ pagination.total != 0 ? false : true }
-              onClick={ exportCSV }
+              disabled={pagination.total != 0 ? false : true}
+              onClick={exportCSV}
             >
               Export CSV
             </Button>
@@ -623,85 +629,90 @@ const EmployeeListTabClient = () => {
       </div>
       <div className="block-table-content client-table-block">
         <Table
-          columns={ columns1 }
-          pagination={ {
+          columns={columns1}
+          pagination={{
             showSizeChanger: true,
             ...pagination,
-          } }
-          footer={ getFooterDetails }
-          onChange={ handleTableChange }
-          dataSource={ clientList }
+          }}
+          footer={getFooterDetails}
+          onChange={handleTableChange}
+          dataSource={clientList}
         />
       </div>
 
-      {/* add edit button modal */ }
+      {/* add edit button modal */}
       <Modal
-        open={ addModal }
-        onOk={ handleOk }
-        onCancel={ handleCancel }
-        title={ modalMode === "add" ? "Add Client" : "Edit Client" }
+        open={addModal}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        title={modalMode === "add" ? "Add Client" : "Edit Client"}
         className="add-and-edit-client"
-        width={ 800 }
-        footer={ [
-          <Button key="cancel" onClick={ handleCancel } className="delete-btn" size="large">
+        width={800}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleCancel}
+            className="delete-btn"
+            size="large"
+          >
             Cancel
           </Button>,
           <Button
             key="submit"
             type="primary"
             size="large"
-            onClick={ () => addemployee.submit() }
+            onClick={() => addemployee.submit()}
           >
-            { modalMode === "add" ? "Add" : "Save" }
+            {modalMode === "add" ? "Add" : "Save"}
           </Button>,
-        ] }
+        ]}
       >
         <div className="overview-modal-wrapper">
           <Form
-            form={ addemployee }
+            form={addemployee}
             layout="vertical"
-            onFinish={ (values) => {
+            onFinish={(values) => {
               modalMode === "add" ? addemp(values) : UpdateClient(values);
-            } }
+            }}
           >
-            <Row gutter={ [0, 0] }>
-              {/* First Name and Last Name */ }
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+            <Row gutter={[0, 0]}>
+              {/* First Name and Last Name */}
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="First Name"
                   name="first_name"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please enter first name",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter First Name" size="large" />
                 </Form.Item>
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Last Name"
                   name="last_name"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please enter last name",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Last Name" size="large" />
                 </Form.Item>
               </Col>
 
-              {/* Phone Number and Company Name */ }
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Phone Number and Company Name */}
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Phone Number"
                   name="phone_number"
-                  rules={ [
+                  rules={[
                     {
                       len: 10,
                       message: "Phone number must be 10 digits",
@@ -710,61 +721,61 @@ const EmployeeListTabClient = () => {
                       pattern: /^[0-9]+$/,
                       message: "Phone number must contain only digits",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Phone Number" size="large" />
                 </Form.Item>
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Company Name"
                   name="company_name"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please enter company name",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Company Name" size="large" />
                 </Form.Item>
               </Col>
 
-              {/* Email and Password/Status */ }
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Email and Password/Status */}
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Email"
                   name="email"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please Enter email",
                       type: "email",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Email" size="large" />
                 </Form.Item>
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                { modalMode === "add" && (
+              <Col xs={24} sm={24} md={12} lg={12}>
+                {modalMode === "add" && (
                   <Form.Item
                     label="Password"
                     name="plain_password"
-                    rules={ passwordRules }
+                    rules={passwordRules}
                   >
                     <Input
                       placeholder="Enter Password"
-                      type={ passwordVisible ? "text" : "password" }
-                      min={ 8 }
+                      type={passwordVisible ? "text" : "password"}
+                      min={8}
                       size="large"
                       autoComplete="off"
                       suffix={
                         <Button
                           type="link"
-                          onClick={ togglePasswordVisibility }
+                          onClick={togglePasswordVisibility}
                           icon={
                             passwordVisible ? (
                               <EyeInvisibleOutlined />
@@ -776,15 +787,15 @@ const EmployeeListTabClient = () => {
                       }
                     />
                   </Form.Item>
-                ) }
+                )}
 
-                { modalMode === "edit" && (
+                {modalMode === "edit" && (
                   <Form.Item label="Status" name="status">
                     <Select
                       placeholder="Select Status"
                       size="large"
-                      onChange={ (e) => console.log(e, "eeee") }
-                      options={ [
+                      onChange={(e) => console.log(e, "eeee")}
+                      options={[
                         {
                           value: "Active",
                           label: "Active",
@@ -793,21 +804,21 @@ const EmployeeListTabClient = () => {
                           value: "Not Active",
                           label: "Not Active",
                         },
-                      ] }
+                      ]}
                     />
                   </Form.Item>
-                ) }
+                )}
               </Col>
 
-              {/* Status for Add Mode */ }
-              { modalMode === "add" && (
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Status for Add Mode */}
+              {modalMode === "add" && (
+                <Col xs={24} sm={24} md={12} lg={12}>
                   <Form.Item label="Status" name="status">
                     <Select
                       placeholder="Select Status"
                       size="large"
-                      onChange={ (e) => console.log(e, "eeee") }
-                      options={ [
+                      onChange={(e) => console.log(e, "eeee")}
+                      options={[
                         {
                           value: "Active",
                           label: "Active",
@@ -816,80 +827,82 @@ const EmployeeListTabClient = () => {
                           value: "Not Active",
                           label: "Not Active",
                         },
-                      ] }
+                      ]}
                     />
                   </Form.Item>
                 </Col>
-              ) }
+              )}
 
-              {/* Extra Info - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+              {/* Extra Info - Full width */}
+              <Col xs={24} sm={24} md={24} lg={24}>
                 <Form.Item label="Extra Info" name="extra_details">
-                  <TextArea placeholder="Enter additional details" size="large" />
+                  <TextArea
+                    placeholder="Enter additional details"
+                    size="large"
+                  />
                 </Form.Item>
               </Col>
-
             </Row>
           </Form>
         </div>
       </Modal>
 
-      {/* filter modal */ }
+      {/* filter modal */}
       <Modal
         title="Filter"
-        width={ 1000 }
-        open={ isFilterModalOpen }
-        footer={ false }
-        onOk={ handleOk }
-        onCancel={ handleCancel }
+        width={1000}
+        open={isFilterModalOpen}
+        footer={false}
+        onOk={handleOk}
+        onCancel={handleCancel}
       >
         <div className="filter-pop-wrapper">
           <Row>
-            <Col span={ 24 }>
-              <Form form={ formData } { ...formItemLayout } onFinish={ filterEmp }>
+            <Col span={24}>
+              <Form form={formData} {...formItemLayout} onFinish={filterEmp}>
                 <div className="inout-employee">
                   <Row>
-                    <Col sm={ 24 } lg={ 12 }>
+                    <Col sm={24} lg={12}>
                       <div>
                         <Form.Item label="Clients" name="client">
                           <Select
                             size="large"
                             showSearch
-                            filterOption={ (input, option) =>
+                            filterOption={(input, option) =>
                               option?.children
                                 .toLowerCase()
                                 .indexOf(input.toLowerCase()) >= 0
                             }
-                            filterSort={ (optionA, optionB) =>
+                            filterSort={(optionA, optionB) =>
                               optionA?.children
                                 .toLowerCase()
                                 .localeCompare(optionB?.children?.toLowerCase())
                             }
-                            onChange={ (e) => {
+                            onChange={(e) => {
                               let data = client.filter((val) => val._id == e);
                               formData.setFieldsValue({
                                 client: data[0]?._id,
                               });
-                            } }
+                            }}
                           >
-                            { client.map((item, index) => (
+                            {client.map((item, index) => (
                               <option
-                                key={ index }
-                                value={ item?._id }
-                                style={ { textTransform: "capitalize" } }
+                                key={index}
+                                value={item?._id}
+                                style={{ textTransform: "capitalize" }}
                               >
-                                { item?.full_name }
+                                {item?.full_name}
                               </option>
-                            )) }
+                            ))}
                           </Select>
                         </Form.Item>
                       </div>
                     </Col>
-                    <Col sm={ 24 } lg={ 12 }>
+                    <Col sm={24} lg={12}>
                       <div>
                         <Form.Item label="Status" name="status">
                           <Select
-                            options={ [
+                            options={[
                               {
                                 value: "Active",
                                 label: "Active",
@@ -898,7 +911,7 @@ const EmployeeListTabClient = () => {
                                 value: "Not Active",
                                 label: "Not Active",
                               },
-                            ] }
+                            ]}
                           />
                         </Form.Item>
                       </div>
@@ -912,17 +925,17 @@ const EmployeeListTabClient = () => {
                     >
                       Apply
                     </Button>
-                    <Button type="primary" onClick={ onReset }>
+                    <Button type="primary" onClick={onReset}>
                       Reset
                     </Button>
                     <Button
                       type="primary"
-                      onClick={ handleCancel }
+                      onClick={handleCancel}
                       className="ant-delete"
                     >
                       Cancel
                     </Button>
-                  </div>{ " " }
+                  </div>{" "}
                 </div>
               </Form>
             </Col>
