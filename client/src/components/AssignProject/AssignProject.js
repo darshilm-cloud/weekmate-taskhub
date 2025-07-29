@@ -44,6 +44,7 @@ import MultiSelect from "../CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import AssignProjectFilter from "./AssignProjectFilter";
+import SortByComponent from "./SortByComponent";
 
 function AssignProject() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -531,11 +532,11 @@ function AssignProject() {
     try {
       dispatch(showAuthLoader());
       const assignees = selectedItems?.map((item) => item._id) || [];
-      const clients = selectedClient?.map((item) => item._id) || []; //clients
+      const clients = selectedClient?.map((item) => item._id) || [];
       const reqBody = {
         title: values.title.trim(),
         assignees: assignees,
-        pms_clients: clients, //clients
+        pms_clients: clients,
         start_date: values.start_date,
         end_date: values.end_date,
         estimatedHours:
@@ -554,9 +555,10 @@ function AssignProject() {
         descriptions: editorData,
         technology: values.technology,
       };
+
       form.setFieldsValue({
         assignees: assignees,
-        clients: clients, //clients
+        clients: clients,
       });
 
       let moduleprefix = "project";
@@ -933,7 +935,8 @@ function AssignProject() {
         message.success(response?.data?.message);
         setIsModalOpen(false);
         setData(response?.data?.data);
-        //Filter new assignees & clients:
+
+        // Filter new assignees & clients:
         let filterAssignees = assignees.filter(
           (id) => !newFilteredAssignees.some((user) => user._id === id)
         );
@@ -949,14 +952,12 @@ function AssignProject() {
         });
 
         if (editProjectId) {
-          history.push(`/${companySlug}/project/app/${editProjectId}`);
+          history.push(`/project/app/${editProjectId}`);
         }
       } else {
         message.error(response?.data?.message);
       }
       getProjectListing();
-      //  else {
-      // }
     } catch (error) {
       console.log(error);
     }
@@ -1057,6 +1058,11 @@ function AssignProject() {
               handleFilters={handleFilters}
               getProjectListing={getProjectListing}
             />
+            <SortByComponent
+              sortOption={sortOption}
+              handleSortFilter={handleSortFilter}
+              getProjectListing={getProjectListing}
+            />
           </div>
         </div>
 
@@ -1100,6 +1106,7 @@ function AssignProject() {
             Save
           </Button>,
         ]}
+        destroyOnClose
       >
         <div className="overview-modal-wrapper task-overview-modal-wrapper">
           <Form
@@ -1202,6 +1209,9 @@ function AssignProject() {
                           32,
                         ],
                       },
+                      print: {
+                        // Implement print functionality here
+                      },
                       styles: {
                         height: "10px",
                       },
@@ -1223,15 +1233,26 @@ function AssignProject() {
                         </div>
                         <div className="table-right">
                           <div className="flex-table">
-                            <DatePicker
-                              placeholder="Select Start Date"
-                              style={{ width: "100%" }}
-                              size="large"
-                              onChange={(date, dateString) => {
-                                onChange(date, dateString, "start_date");
-                                form.setFieldValue("end_date", "");
-                              }}
-                            />
+                            <Form.Item
+                              name="start_date"
+                              rules={[
+                                {
+                                  required: true,
+                                  message: "Please select a start date",
+                                },
+                              ]}
+                              style={{ marginBottom: 0, width: "100%" }}
+                            >
+                              <DatePicker
+                                placeholder="Select Start Date"
+                                style={{ width: "100%" }}
+                                size="large"
+                                onChange={(date, dateString) => {
+                                  onChange(date, dateString, "start_date");
+                                  form.setFieldValue("end_date", "");
+                                }}
+                              />
+                            </Form.Item>
                           </div>
                         </div>
                       </li>
@@ -1244,17 +1265,45 @@ function AssignProject() {
                         </div>
                         <div className="table-right">
                           <div className="flex-table">
-                            <DatePicker
-                              placeholder="Select End Date"
-                              style={{ width: "100%" }}
-                              size="large"
-                              onChange={(date, dateString) =>
-                                onChange(date, dateString, "end_date")
-                              }
-                              disabledDate={(value) => {
-                                return value < form.getFieldValue("start_date");
-                              }}
-                            />
+                            <Form.Item
+                              name="end_date"
+                              rules={[
+                                {
+                                  required: true,
+                                  message: "Please select an end date",
+                                },
+                                ({ getFieldValue }) => ({
+                                  validator(_, value) {
+                                    if (
+                                      !value ||
+                                      form.getFieldValue("start_date") < value
+                                    ) {
+                                      return Promise.resolve();
+                                    }
+                                    return Promise.reject(
+                                      new Error(
+                                        "End date must be later than start date"
+                                      )
+                                    );
+                                  },
+                                }),
+                              ]}
+                              style={{ marginBottom: 0, width: "100%" }}
+                            >
+                              <DatePicker
+                                placeholder="Select End Date"
+                                style={{ width: "100%" }}
+                                size="large"
+                                onChange={(date, dateString) =>
+                                  onChange(date, dateString, "end_date")
+                                }
+                                disabledDate={(value) => {
+                                  return (
+                                    value < form.getFieldValue("start_date")
+                                  );
+                                }}
+                              />
+                            </Form.Item>
                           </div>
                         </div>
                       </li>
@@ -1262,41 +1311,52 @@ function AssignProject() {
                         <div className="table-left">
                           <div className="flex-table">
                             <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Department</span>
+                            <span className="schedule-label">Technology</span>
                           </div>
                         </div>
                         <div className="table-right">
                           <div className="flex-table">
-                            <Select
-                              mode="multiple"
-                              placeholder="Select Department"
-                              size="large"
-                              showSearch
-                              filterOption={(input, option) =>
-                                option.children
-                                  ?.toLowerCase()
-                                  ?.indexOf(input?.toLowerCase()) >= 0
-                              }
-                              filterSort={(optionA, optionB) =>
-                                optionA.children
-                                  ?.toLowerCase()
-                                  ?.localeCompare(
-                                    optionB.children?.toLowerCase()
-                                  )
-                              }
-                              onChange={handleProjectTech}
-                              value={projectTech}
+                            <Form.Item
+                              name="technology"
+                              rules={[
+                                {
+                                  required: true,
+                                  message: "Please select a technology",
+                                },
+                              ]}
+                              style={{ marginBottom: 0, width: "100%" }}
                             >
-                              {technologyList.map((item, index) => (
-                                <Option
-                                  key={index}
-                                  value={item._id}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {item.project_tech}
-                                </Option>
-                              ))}
-                            </Select>
+                              <Select
+                                mode="multiple"
+                                placeholder="Select Technology"
+                                size="large"
+                                showSearch
+                                filterOption={(input, option) =>
+                                  option.children
+                                    ?.toLowerCase()
+                                    ?.indexOf(input?.toLowerCase()) >= 0
+                                }
+                                filterSort={(optionA, optionB) =>
+                                  optionA.children
+                                    ?.toLowerCase()
+                                    ?.localeCompare(
+                                      optionB.children?.toLowerCase()
+                                    )
+                                }
+                                onChange={handleProjectTech}
+                                value={projectTech}
+                              >
+                                {technologyList.map((item, index) => (
+                                  <Option
+                                    key={index}
+                                    value={item._id}
+                                    style={{ textTransform: "capitalize" }}
+                                  >
+                                    {item.project_tech}
+                                  </Option>
+                                ))}
+                              </Select>
+                            </Form.Item>
                           </div>
                         </div>
                       </li>
@@ -1309,28 +1369,33 @@ function AssignProject() {
                         </div>
                         <div className="table-right">
                           <div className="flex-table">
-                            <MultiSelect
-                              onSearch={handleSearch}
-                              onChange={handleSelectedItemsChange}
-                              values={
-                                selectedItems &&
-                                selectedItems.map((item) => item._id)
-                              }
-                              listData={projectAssigneesList}
-                              search={searchKeyword}
-                            />
-                            <div
-                              className="list-clear-btn"
-                              style={{ marginTop: 8 }}
+                            <Form.Item
+                              name="assignees"
+                              style={{ marginBottom: 0, width: "100%" }}
                             >
-                              <Button
-                                className="list-clear-btn ant-delete"
-                                onClick={handleClearAssignees}
-                                size="small"
+                              <MultiSelect
+                                onSearch={handleSearch}
+                                onChange={handleSelectedItemsChange}
+                                values={
+                                  selectedItems &&
+                                  selectedItems.map((item) => item._id)
+                                }
+                                listData={projectAssigneesList}
+                                search={searchKeyword}
+                              />
+                              <div
+                                className="list-clear-btn"
+                                style={{ marginTop: 8 }}
                               >
-                                Clear
-                              </Button>
-                            </div>
+                                <Button
+                                  className="list-clear-btn ant-delete"
+                                  onClick={handleClearAssignees}
+                                  size="small"
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                            </Form.Item>
                           </div>
                         </div>
                       </li>
@@ -1345,12 +1410,23 @@ function AssignProject() {
                         </div>
                         <div className="table-right">
                           <div className="flex-table">
-                            <Input
-                              type="number"
-                              min={0}
-                              placeholder="Enter estimated hours"
-                              size="large"
-                            />
+                            <Form.Item
+                              name="estimatedHours"
+                              rules={[
+                                {
+                                  required: true,
+                                  message: "Please provide estimated hours",
+                                },
+                              ]}
+                              style={{ marginBottom: 0, width: "100%" }}
+                            >
+                              <Input
+                                type="number"
+                                min={0}
+                                placeholder="Enter estimated hours"
+                                size="large"
+                              />
+                            </Form.Item>
                           </div>
                         </div>
                       </li>

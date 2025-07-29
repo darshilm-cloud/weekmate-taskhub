@@ -27,6 +27,9 @@ const EmployeeListTabClient = () => {
   const Search = Input.Search;
   const searchRef = useRef();
 
+  // Add ref for filter component
+  const filterComponentRef = useRef();
+
   //search , sort , pagination
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -69,7 +72,6 @@ const EmployeeListTabClient = () => {
       const full_name = `${values.first_name} ${values.last_name}`;
 
       const reqBody = {
-        // intial_name: values.intial_name,
         first_name: values.first_name,
         last_name: values.last_name,
         full_name: full_name,
@@ -99,11 +101,8 @@ const EmployeeListTabClient = () => {
 
   //add client api
   const addemp = async (values) => {
-    const fullName =
-      // `${values.intial_name}
-      `${values.first_name} ${values.last_name}`;
+    const fullName = `${values.first_name} ${values.last_name}`;
     const reqBody = {
-      // intial_name: values.intial_name,
       last_name: values.last_name,
       first_name: values.first_name,
       company_name: values.company_name,
@@ -123,12 +122,12 @@ const EmployeeListTabClient = () => {
       if (response.data.statusCode !== 201) {
         return message.error(response.data.message);
       }
+      message.success("Client added successfully!");
     } catch (error) {
       console.log(error);
     }
     setaddModal(false);
     addemployee.setFieldsValue({
-      // intial_name: "",
       first_name: "",
       last_name: "",
       email: "",
@@ -138,6 +137,7 @@ const EmployeeListTabClient = () => {
       extra_details: "",
       status: null,
     });
+    getClientList();
   };
 
   //cancel
@@ -145,7 +145,6 @@ const EmployeeListTabClient = () => {
     setIsFilterModalOpen(false);
     setaddModal(false);
     addemployee.setFieldsValue({
-      // intial_name: "",
       first_name: "",
       last_name: "",
       email: "",
@@ -175,6 +174,7 @@ const EmployeeListTabClient = () => {
       if (response.data.statusCode == 200) {
         setdelete(response.data);
         message.success(response.data.message);
+        getClientList();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }
@@ -187,6 +187,7 @@ const EmployeeListTabClient = () => {
   const openFilterModel = () => {
     setIsFilterModalOpen(true);
   };
+
   //add button modal
   const openAddModal = () => {
     addemployee.setFieldsValue({
@@ -358,7 +359,6 @@ const EmployeeListTabClient = () => {
         );
       },
     },
-
     {
       title: "Contact Number",
       dataIndex: "contact_number",
@@ -370,7 +370,6 @@ const EmployeeListTabClient = () => {
             {record.phone_number}
           </span>
         );
-        // }
       },
     },
     {
@@ -427,7 +426,6 @@ const EmployeeListTabClient = () => {
             title="Do you want to delete?"
             okText="Yes"
             cancelText="No"
-            // onConfirm={() => deleteProject(record?._id)}
             onConfirm={() => handleDelete(record)}
           >
             <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
@@ -445,6 +443,7 @@ const EmployeeListTabClient = () => {
       </label>
     );
   };
+
   //pagination
   const handleTableChange = (page, filters, sorter) => {
     setPagination({ ...pagination, ...page });
@@ -566,16 +565,50 @@ const EmployeeListTabClient = () => {
     setPagination({ ...pagination, current: 1 });
   };
 
-  //fiter modal onFinish function
+  //filter modal onFinish function
   const filterEmp = async (values) => {
+    console.log("Filter applied with values:", values);
     setFilterData(values);
     setIsFilterModalOpen(false);
+    setPagination({ ...pagination, current: 1 });
   };
 
-  //reset of filter form
+  //reset of filter form - FIXED VERSION
   const onReset = () => {
+    console.log("Parent onReset called");
+
+    // Reset form data
     formData.resetFields();
+
+    // Reset filter data
     setFilterData(null);
+
+    // Reset pagination to first page
+    setPagination({ ...pagination, current: 1 });
+
+    // Reset filter component using ref
+    if (filterComponentRef.current) {
+      filterComponentRef.current.resetFilters();
+    }
+  };
+
+  // Clear all filters function
+  const clearAllFilters = () => {
+    console.log("Clear Filter button clicked");
+
+    // Reset form data
+    formData.resetFields();
+
+    // Reset filter data
+    setFilterData(null);
+
+    // Reset pagination
+    setPagination({ ...pagination, current: 1 });
+
+    // Reset filter component
+    if (filterComponentRef.current) {
+      filterComponentRef.current.resetFilters();
+    }
   };
 
   return (
@@ -598,6 +631,7 @@ const EmployeeListTabClient = () => {
             </Button>
 
             <EmployeeFilterComponent
+              ref={filterComponentRef} // Add ref here
               formData={formData}
               filterEmp={filterEmp}
               onReset={onReset}
@@ -605,13 +639,11 @@ const EmployeeListTabClient = () => {
               client={client}
               formItemLayout={formItemLayout}
             />
+
             <Button
               className="ant-delete"
-              onClick={() => {
-                formData.resetFields();
-                setFilterData(null);
-              }}
-              disabled={filterData != null ? false : true}
+              onClick={clearAllFilters}
+              disabled={filterData == null}
             >
               Clear Filter
             </Button>
@@ -619,7 +651,7 @@ const EmployeeListTabClient = () => {
             <Button
               className="mr2 export-btn"
               id="exportButton"
-              disabled={pagination.total != 0 ? false : true}
+              disabled={pagination.total == 0}
               onClick={exportCSV}
             >
               Export CSV
@@ -627,6 +659,7 @@ const EmployeeListTabClient = () => {
           </div>
         </div>
       </div>
+
       <div className="block-table-content client-table-block">
         <Table
           columns={columns1}
@@ -935,7 +968,7 @@ const EmployeeListTabClient = () => {
                     >
                       Cancel
                     </Button>
-                  </div>{" "}
+                  </div>
                 </div>
               </Form>
             </Col>
