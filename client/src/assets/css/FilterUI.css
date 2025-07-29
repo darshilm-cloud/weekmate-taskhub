@@ -47,7 +47,7 @@
     font-weight: 500;
     color: #4b5563;
     border-left: 3px solid transparent;
-    margin: 2px 0;
+    margin: 8px 0;
   }
   
   .filter-menu-item:hover ,
@@ -459,6 +459,31 @@
     align-items: center;
   }
 
+  .radio-option {
+    margin-bottom: 8px;
+    padding: 4px 0;
+  }
+  
+  .radio-option:last-child {
+    margin-bottom: 0;
+  }
+  
+  .sort-btn {
+    background: #f0f8ff;
+    border: 1px solid #91d5ff;
+    color: #1890ff;
+  }
+  
+  .sort-btn:hover {
+    background: #e6f7ff;
+    border-color: #40a9ff;
+  }
+  
+  .sort-btn.ant-btn:focus {
+    background: #e6f7ff;
+    border-color: #40a9ff;
+  }
+  
   .radio-option {
     margin-bottom: 8px;
     padding: 4px 0;
