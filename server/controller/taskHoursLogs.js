@@ -1570,17 +1570,11 @@ exports.exportTimesheetCSV = async (req, res) => {
       );
     }
 
-    const [isAdmin,isManager,isAccManager] = await Promise.all([
+    const [isAdmin, isManager, isAccManager] = await Promise.all([
       checkUserIsAdmin(req.user._id),
-      checkLoginUserIsProjectManager(
-        value.project_id,
-        req.user._id
-      ),
-      checkLoginUserIsProjectAccountManager(
-        value.project_id,
-        req.user._id
-      )
-    ])
+      checkLoginUserIsProjectManager(value.project_id, req.user._id),
+      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+    ]);
 
     let pagination = getPagination({
       pageLimit: value.limit,
@@ -1908,8 +1902,8 @@ exports.exportTimesheetCSV = async (req, res) => {
 // Timesheets reports details for graphs
 exports.getTimesheetsReports = async (req, res) => {
   try {
-     // Decode user from token
-     const {
+    // Decode user from token
+    const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
@@ -2066,7 +2060,7 @@ exports.getTimesheetsReports = async (req, res) => {
                       ]
                     },
                     {
-                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2096,7 +2090,7 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$isSoftDeleted", false] },
                     { $eq: ["$isActivate", true] },
                     {
-                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2118,7 +2112,7 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $in: ["$_id", "$$technology"] },
                     { $eq: ["$isDeleted", false] },
                     {
-                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2140,7 +2134,7 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$_id", "$$projecttypes"] },
                     { $eq: ["$isDeleted", false] },
                     {
-                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2164,7 +2158,7 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $eq: ["$isSoftDeleted", false] },
                     { $eq: ["$isActivate", true] },
                     {
-                      $eq:["$companyId",newObjectId(decodedCompanyId)]
+                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
                     }
                   ]
                 }
@@ -2654,6 +2648,7 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
       // sort: Joi.string().default("_id"),
       // sortBy: Joi.string().default("desc"),
       orderBy: Joi.string().optional().allow("").default("desc"),
+      employee_id: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       task_id: Joi.string().required()
     });
@@ -2672,6 +2667,12 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
       project_id: new mongoose.Types.ObjectId(value.project_id),
       task_id: new mongoose.Types.ObjectId(value.task_id)
     };
+    if (value?.employee_id) {
+      matchQuery = {
+        ...matchQuery,
+        employee_id: newObjectId(value?.employee_id)
+      };
+    }
     // const pagination = getPagination({
     //   pageLimit: value.limit,
     //   pageNum: value.pageNo,
