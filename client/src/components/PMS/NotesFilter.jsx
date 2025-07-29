@@ -163,11 +163,6 @@ const SubscribersFilterComponent = ({
     </div>
   );
 
-  // Don't render if no data available
-  if (!getDetails || getDetails.length === 0) {
-    return null;
-  }
-
   const popoverContent = (
     <div className="filter-popover-content">
       <div className="filter-sidebar">

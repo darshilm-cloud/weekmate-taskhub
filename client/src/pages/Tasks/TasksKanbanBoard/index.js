@@ -304,7 +304,7 @@ const TaskList = ({
   };
   const isDisabled =
   taskDetails?.task_status?.isDefault ||
-  projectDetails.projectHoursExceeded;
+  (projectDetails.projectHoursExceeded && !getRoles(["Client"]));
   return (
     <>
       <div className="container project-task-section">
@@ -1097,7 +1097,7 @@ const TaskList = ({
               </div>
               <div className="task-editbtn">
                 {hasPermission(["task_edit"]) &&
-                  (projectDetails.projectHoursExceeded ? (
+                  ((projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
                     <Tooltip title="Project hours exceeded" placement="top">
                       <EditOutlined
                         style={{ color: "gray", cursor: "not-allowed" }}

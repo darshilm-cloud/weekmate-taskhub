@@ -870,7 +870,7 @@ const TasksPMS = ({ flag }) => {
 
   const yourMenu = (
     <Menu onClick={handleMenuClick}>
-      {projectDetails.projectHoursExceeded ? (
+      {(projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
         <Tooltip title="Project hours exceeded" placement="top">
           <Menu.Item disabled onClick={showModalTaskModal} key="1">
             Task
@@ -1937,6 +1937,7 @@ const TasksPMS = ({ flag }) => {
                 selectedTask={selectedTask}
                 deleteTasks={deleteTasks}
                 getProjectMianTask={getProjectMianTask}
+                projectDetails={projectDetails}
               />
             )}
           </div>
