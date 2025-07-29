@@ -283,7 +283,6 @@ function AddComment({
       />
 
       <div className="fileAttachment_container">
-        {console.log(populatedFiles, "populatedFiles")}
         {[...fileAttachment, ...(populatedFiles ? populatedFiles : [])]?.map(
           (file, index) => (
             <Badge

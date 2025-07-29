@@ -134,7 +134,7 @@ const TasksPMS = ({ flag }) => {
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [projectAssignees, setProjectAssignees] = useState([]);
+  const [projectDetails, setProjectDetails] = useState({});
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyTaskListData, setCopyTaskListData] = useState({
     title: "",
@@ -232,11 +232,17 @@ const TasksPMS = ({ flag }) => {
   const handleChangeData = (_, editor) => {
     const data = editor.getData();
     setEditorData(data);
+    addform.setFieldsValue({
+      descriptions: data
+    });
   };
 
   const handleChnageDescription = useCallback((_, editor) => {
     const data = editor.getData();
     seteditModalDescription(data);
+    editform.setFieldsValue({
+      descriptions: data
+    });
   }, []);
 
   const handlePaste = (event, editor) => {
@@ -314,7 +320,7 @@ const TasksPMS = ({ flag }) => {
         },
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setProjectAssignees(response.data.data);
+        setProjectDetails(response.data.data);
         setStagesId(response.data.data?.workFlow?._id);
         dispatch(hideAuthLoader());
       } else {
@@ -656,6 +662,7 @@ const TasksPMS = ({ flag }) => {
           }))
         );
         setBoardTasks(enrichedData);
+        getProjectByID()
       } else {
         message.error(response.data.message);
       }
@@ -860,16 +867,26 @@ const TasksPMS = ({ flag }) => {
     setModalMode("add");
   };
 
+
   const yourMenu = (
     <Menu onClick={handleMenuClick}>
-      <Menu.Item onClick={showModalTaskModal} key="1">
-        Task
-      </Menu.Item>
+      {projectDetails.projectHoursExceeded ? (
+        <Tooltip title="Project hours exceeded" placement="top">
+          <Menu.Item disabled onClick={showModalTaskModal} key="1">
+            Task
+          </Menu.Item>
+        </Tooltip>
+      ) : (
+        <Menu.Item onClick={showModalTaskModal} key="1">
+          Task
+        </Menu.Item>
+      )}
       <Menu.Item onClick={openEditList} key="2">
         List
       </Menu.Item>
     </Menu>
   );
+  
 
   const getListWorkflowStatus = async () => {
     try {
@@ -1792,7 +1809,7 @@ const TasksPMS = ({ flag }) => {
                         <MyAvatarGroup
                           key={projectId}
                           customStyle={{ height: "30px", width: "30px" }}
-                          record={projectAssignees?.assignees}
+                          record={projectDetails?.assignees}
                           maxPopoverTrigger={"click"}
                         />
                       </div>
@@ -1909,6 +1926,7 @@ const TasksPMS = ({ flag }) => {
                 selectedTask={selectedTask}
                 deleteTasks={deleteTasks}
                 getProjectMianTask={getProjectMianTask}
+                projectDetails={projectDetails}
               />
             ) : (
               <TasksTableView
@@ -2202,7 +2220,13 @@ const TasksPMS = ({ flag }) => {
 
               {/* Description - Full width */}
               <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Description" name="descriptions">
+                <Form.Item label="Description" name="descriptions" rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please enter a descriptions",
+                    },
+                  ]}>
                   <CKEditor
                     editor={Custombuild}
                     data={editorData}
@@ -2597,7 +2621,13 @@ const TasksPMS = ({ flag }) => {
 
               {/* Description - Full width */}
               <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Description" name="descriptions">
+                <Form.Item label="Description" name="descriptions"  rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please enter a description",
+                    },
+                  ]}>
                   <CKEditor
                     editor={Custombuild}
                     data={editModalDescription}

@@ -389,6 +389,29 @@ function AssignProject() {
         );
       },
     },
+    {
+      title: "Progress",
+      dataIndex: "completionPercentage",
+      key: "progress",
+      width: 100,
+      render: (text, record) => {
+        const percentage = record?.completionPercentage || 0;
+        let color;
+        if (percentage >= 70) {
+          color = "green"; // High progress
+        } else if (percentage >= 30) {
+          color = "orange"; // Medium progress
+        } else {
+          color = "red"; // Low progress
+        }
+  
+        return (
+          <span style={{ color: color }}>
+            {percentage}% 
+          </span>
+        );
+      },
+    },
   ];
 
   if (hasPermission(["project_edit"])) {

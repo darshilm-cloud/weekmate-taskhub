@@ -14,6 +14,7 @@ import {
   CopyOutlined,
   LinkOutlined,
   FieldTimeOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import {
@@ -69,6 +70,7 @@ const TaskList = ({
   getBoardTasks,
   updateTasks,
   updateTaskDraftStatus,
+  projectDetails,
 }) => {
   const companySlug = localStorage.getItem("companyDomain");
   const {
@@ -282,6 +284,27 @@ const TaskList = ({
     }));
   };
 
+  const handleDownloadFile = async (file) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/public/${file?.path}`
+      );
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.name + file.file_type;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  };
+  const isDisabled =
+  taskDetails?.task_status?.isDefault ||
+  projectDetails.projectHoursExceeded;
   return (
     <>
       <div className="container project-task-section">
@@ -614,22 +637,47 @@ const TaskList = ({
                                   <Dropdown
                                     overlay={
                                       <Menu>
-                                        {hasPermission(["task_edit"]) && (
-                                          <Menu.Item
-                                            onClick={() => {
-                                              getTaskByIdDetails(task._id, {
-                                                editFlag: true,
-                                                boardID:
-                                                  boardData?.workflowStatus._id,
-                                              });
-                                            }}
-                                          >
-                                            <EditOutlined
-                                              style={{ color: "green" }}
-                                            />{" "}
-                                            Edit
-                                          </Menu.Item>
-                                        )}
+                                        {hasPermission(["task_edit"]) ? (
+                                          projectDetails?.projectHoursExceeded ? (
+                                            <Tooltip
+                                              title="Project hours exceeded"
+                                              placement="top"
+                                            >
+                                              <Menu.Item
+                                                disabled
+                                                onClick={() => {
+                                                  getTaskByIdDetails(task._id, {
+                                                    editFlag: true,
+                                                    boardID:
+                                                      boardData?.workflowStatus
+                                                        ._id,
+                                                  });
+                                                }}
+                                              >
+                                                <EditOutlined
+                                                  style={{ color: "green" }}
+                                                />{" "}
+                                                Edit
+                                              </Menu.Item>
+                                            </Tooltip>
+                                          ) : (
+                                            <Menu.Item
+                                              onClick={() => {
+                                                getTaskByIdDetails(task._id, {
+                                                  editFlag: true,
+                                                  boardID:
+                                                    boardData?.workflowStatus
+                                                      ._id,
+                                                });
+                                              }}
+                                            >
+                                              <EditOutlined
+                                                style={{ color: "green" }}
+                                              />{" "}
+                                              Edit
+                                            </Menu.Item>
+                                          )
+                                        ) : null}
 
                                         {hasPermission(["task_delete"]) && (
                                           <Popconfirm
@@ -1048,17 +1096,28 @@ const TaskList = ({
                 <span>{taskDetails?.taskId}</span>
               </div>
               <div className="task-editbtn">
-                {hasPermission(["task_edit"]) && (
-                  <EditOutlined
-                    style={{ color: "green" }}
-                    onClick={() => {
-                      getTaskByIdDetails(taskDetails?._id, {
-                        editFlag: true,
-                        boardID: tempBoard?.workflowStatus._id,
-                      });
-                    }}
-                  />
-                )}
+                {hasPermission(["task_edit"]) &&
+                  (projectDetails.projectHoursExceeded ? (
+                    <Tooltip title="Project hours exceeded" placement="top">
+                      <EditOutlined
+                        style={{ color: "gray", cursor: "not-allowed" }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      />
+                    </Tooltip>
+                  ) : (
+                    <EditOutlined
+                      style={{ color: "green" }}
+                      onClick={() => {
+                        getTaskByIdDetails(taskDetails?._id, {
+                          editFlag: true,
+                          boardID: tempBoard?.workflowStatus._id,
+                        });
+                      }}
+                    />
+                  ))}
 
                 {hasPermission(["task_delete"]) && (
                   <Popconfirm
@@ -1499,18 +1558,29 @@ const TaskList = ({
                                     content={
                                       <>
                                         <div
-                                          onClick={popOver}
-                                          style={{ cursor: "pointer" }}
+                                          onClick={
+                                            isDisabled ? undefined : popOver
+                                          }
+                                          style={{
+                                            cursor: isDisabled
+                                              ? "not-allowed"
+                                              : "pointer",
+                                            opacity: isDisabled ? 0.5 : 1,
+                                            pointerEvents: isDisabled
+                                              ? "none"
+                                              : "auto",
+                                          }}
                                         >
                                           <p>
-                                            {" "}
                                             <EditOutlined
                                               style={{
                                                 marginRight: "20px",
                                                 marginBottom: "10px",
-                                                color: "green",
+                                                color: isDisabled
+                                                  ? "gray"
+                                                  : "green",
                                               }}
-                                            />{" "}
+                                            />
                                             Track Manually
                                           </p>
                                         </div>
@@ -1950,10 +2020,14 @@ const TaskList = ({
                                           marginBottom: "10px",
                                           width: "100%",
                                           justifyContent: "space-between",
+                                          alignItems: "center",
                                         }}
                                       >
                                         <p
-                                          style={{ margin: "0px 10px" }}
+                                          style={{
+                                            margin: "0px 10px",
+                                            flex: 1,
+                                          }}
                                           className="fileNameTxtellipsis"
                                         >
                                           <a
@@ -1970,6 +2044,18 @@ const TaskList = ({
                                               : file.name + file.file_type}
                                           </a>
                                         </p>
+                                        <Button
+                                          type="text"
+                                          size="small"
+                                          icon={<DownloadOutlined />}
+                                          onClick={() =>
+                                            handleDownloadFile(file)
+                                          }
+                                          style={{
+                                            minWidth: "auto",
+                                            padding: "4px 8px",
+                                          }}
+                                        />
                                       </div>
                                     </div>
                                   </Badge>
@@ -2311,6 +2397,7 @@ const TaskList = ({
         getBoardTasks={getBoardTasks}
         onCancel={handleCancelLoggedTime}
         selectedTask={selectedTask}
+        taskDetails={taskDetails}
       />
 
       <ManagePeopleModal

@@ -9,6 +9,7 @@ import {
   Avatar,
   Input,
   Button,
+  Select,
 } from "antd";
 import MyAvatar from "../Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
@@ -38,6 +39,7 @@ const LoggedTimeDetail = ({
   getTaskByIdDetails,
   getBoardTasks,
   selectedTask,
+  taskDetails,
 }) => {
   const dispatch = useDispatch();
   const [form2] = Form.useForm();
@@ -531,7 +533,7 @@ const LoggedTimeDetail = ({
           </Form>
         </Modal>
       )}
-      
+
       <Modal
         className="task-logged-details-wrapper"
         open={isVisibleTime}
@@ -542,6 +544,39 @@ const LoggedTimeDetail = ({
       >
         <div className="modal-header ">
           <h1>Logged Time detail</h1>
+        </div>
+
+        <div
+          className="filter-section"
+          style={{ margin: "12px 0" , padding: "0 16px" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <label style={{ minWidth: "fit-content", fontWeight: 500 }}>
+              Filter by Employee:
+            </label>
+            <Select
+              placeholder="Select an employee"
+              style={{ minWidth: 200, flex: 1 }}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              onChange={(value) => {
+                getTimeLogged(taskId,value)
+              }}
+              options={[
+                { value: '', label: 'All' },
+                ...(taskDetails?.assignees || []).map((emp) => ({
+                  value: emp._id, 
+                  label: emp.name,
+                })),
+              ]}
+            />
+          </div>
         </div>
 
         <div className="modal-body loggedtimedetails-wrapper">

@@ -478,13 +478,16 @@ useEffect(() => {
     }
   };
 
-  const getTimeLogged = async (taskId) => {
+  const getTimeLogged = async (taskId,empFilter) => {
     dispatch(showAuthLoader());
     try {
       let reqBody = {
         project_id: selectedTask?.project?._id,
         task_id: taskId,
       };
+      if(empFilter){
+        reqBody.employee_id = empFilter
+      }
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.taskLoggedHours,
