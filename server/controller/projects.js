@@ -770,13 +770,38 @@ exports.getProjects = async (req, res) => {
     // check project have project id or not...
     await this.addProjectRandomId(data);
 
+    const updatedData = await Promise.all(
+      data.map(async (project) => {
+        // Get all tasks for this project
+        let allTasks = await ProjectTasks.find({ project_id: project._id }).populate("task_status");
+        
+        // Filter tasks with "Done" status
+        let doneTasks = allTasks.filter(task => 
+          task.task_status && task.task_status.title === "Done"
+        );
+        
+        // Calculate completion percentage
+        let completionPercentage = allTasks.length > 0 
+          ? Math.round((doneTasks.length / allTasks.length) * 100) 
+          : 0;
+        
+        // Return project with additional completion data
+        return {
+          ...project, // Convert mongoose document to plain object if needed
+          totalTasks: allTasks.length,
+          doneTasks: doneTasks.length,
+          completionPercentage: completionPercentage
+        };
+      })
+    );    
+
     // cacheStore(cacheKey, value._id ? data[0] : data, !value._id && metaData);
 
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.LISTING,
-      value?._id ? data[0] : data,
+      value?._id ? updatedData[0] : updatedData,
       !value?._id && metaData
     );
   } catch (error) {
