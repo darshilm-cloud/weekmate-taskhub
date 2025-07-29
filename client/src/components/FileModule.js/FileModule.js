@@ -47,6 +47,7 @@ import MultiSelect from "../CustomSelect/MultiSelect";
 import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
+import FileSortComponent from "./FileSortComponent";
 
 function FileModule() {
   const { emitEvent } = useSocketAction();
@@ -151,10 +152,10 @@ function FileModule() {
 
   const yourMenu = (
     <Menu>
-      <Menu.Item onClick={ openUploadModel } key="1">
+      <Menu.Item onClick={openUploadModel} key="1">
         Upload Files
       </Menu.Item>
-      <Menu.Item onClick={ openFolderModel } key="2">
+      <Menu.Item onClick={openFolderModel} key="2">
         Folder
       </Menu.Item>
     </Menu>
@@ -486,8 +487,8 @@ function FileModule() {
   };
   // upload file function end
 
-  const handlemenuClick = (e) => { };
-  const handlemenuClickEdit = (e) => { };
+  const handlemenuClick = (e) => {};
+  const handlemenuClickEdit = (e) => {};
 
   // rename file function start
   const renameFile = async (values) => {
@@ -725,25 +726,25 @@ function FileModule() {
 
   const content2 = (
     <div className="right-popover-wrapper">
-      {/* <ul> */ }
+      {/* <ul> */}
       <h4>Sort By</h4>
       <Checkbox
-        onChange={ onChange1 }
-        checked={ radioStatusValue == "createdAt" }
+        onChange={onChange1}
+        checked={radioStatusValue == "createdAt"}
         value="createdAt"
       >
         Date
       </Checkbox>
       <Checkbox
-        onChange={ onChange1 }
-        checked={ radioStatusValue == "name" }
+        onChange={onChange1}
+        checked={radioStatusValue == "name"}
         value="name"
       >
         Name
       </Checkbox>
       <Checkbox
-        onChange={ onChange1 }
-        checked={ radioStatusValue == "file_type" }
+        onChange={onChange1}
+        checked={radioStatusValue == "file_type"}
         value="file_type"
       >
         Type
@@ -762,7 +763,7 @@ function FileModule() {
         </Button>
         <Button
           className="square-outline-btn ant-delete"
-          onClick={ () => setIsPopoverVisibleStatus(false) }
+          onClick={() => setIsPopoverVisibleStatus(false)}
         >
           Cancel
         </Button>
@@ -774,15 +775,15 @@ function FileModule() {
     <div className="right-popover-wrapper">
       <h4>Order by</h4>
       <Checkbox
-        onChange={ onChange2 }
-        checked={ radioStatusValueOrder == "asc" }
+        onChange={onChange2}
+        checked={radioStatusValueOrder == "asc"}
         value="asc"
       >
         Asc
       </Checkbox>
       <Checkbox
-        onChange={ onChange2 }
-        checked={ radioStatusValueOrder == "desc" }
+        onChange={onChange2}
+        checked={radioStatusValueOrder == "desc"}
         value="desc"
       >
         Desc
@@ -801,12 +802,12 @@ function FileModule() {
         </Button>
         <Button
           className="square-outline-btn ant-delete"
-          onClick={ () => setIsPopoverVisibleOrder(false) }
+          onClick={() => setIsPopoverVisibleOrder(false)}
         >
           Cancel
         </Button>
       </div>
-      {/* </ul> */ }
+      {/* </ul> */}
     </div>
   );
 
@@ -839,29 +840,29 @@ function FileModule() {
         <div className="peoject-page">
           <div className="profileleftbar">
             <div className="add-project-wrapper">
-              <Dropdown trigger={ ["click"] } overlay={ yourMenu }>
+              <Dropdown trigger={["click"]} overlay={yourMenu}>
                 <Button className="add-btn">
                   <i className="fi fi-br-plus"></i> Add
                   <i className="fi fi-ss-angle-small-down"></i>
                 </Button>
               </Dropdown>
               <Search
-                ref={ searchRef }
+                ref={searchRef}
                 placeholder="Search..."
-                style={ {
+                style={{
                   width: 200,
                   "& .ant-input-wrapper": {
                     "& .ant-input-group-addon": {
                       display: "none",
                     },
                   },
-                } }
-                onSearch={ onSearch }
+                }}
+                onSearch={onSearch}
               />
             </div>
 
-            <ul style={ { listStyle: "none" } }>
-              { folderList?.map((item, index) => {
+            <ul style={{ listStyle: "none" }}>
+              {folderList?.map((item, index) => {
                 const project_title = item?.name;
                 const formattedTitle = project_title?.replace(
                   /(?:^|\s)([a-z])/g,
@@ -871,8 +872,8 @@ function FileModule() {
                 );
                 return (
                   <li
-                    onClick={ () => handleSelectTask(item) }
-                    key={ index }
+                    onClick={() => handleSelectTask(item)}
+                    key={index}
                     className="project-list"
                   >
                     <div
@@ -887,73 +888,73 @@ function FileModule() {
                         {/* {item?.name.length > 20
                             ? `${item?.name.slice(0, 10)}...`
                             : item?.name} */}
-                        { formattedTitle }
+                        {formattedTitle}
                       </span>
-                      { item?.isDefault === false && (
+                      {item?.isDefault === false && (
                         <div className="toogle-action">
-                          { item.isEditable ||
+                          {item.isEditable ||
                             (item.isDeletable && (
                               <Dropdown
                                 overlay={
-                                  <Menu onClick={ handlemenuClick }>
-                                    { item.isEditable && (
+                                  <Menu onClick={handlemenuClick}>
+                                    {item.isEditable && (
                                       <Menu.Item
                                         key="edit"
-                                        onClick={ () => getEditFolder(item?._id) }
+                                        onClick={() => getEditFolder(item?._id)}
                                         icon={
                                           <EditOutlined
-                                            style={ { color: "green" } }
+                                            style={{ color: "green" }}
                                           />
                                         }
                                       >
                                         Edit
                                       </Menu.Item>
-                                    ) }
-                                    { item.isDeletable && (
+                                    )}
+                                    {item.isDeletable && (
                                       <Popconfirm
                                         title="Do you want to delete?"
                                         okText="Yes"
                                         cancelText="No"
-                                        onConfirm={ () => {
+                                        onConfirm={() => {
                                           deleteFolder(item?._id);
-                                        } }
+                                        }}
                                       >
                                         <Menu.Item
                                           key="delete"
                                           className="ant-delete"
                                           icon={
                                             <DeleteOutlined
-                                              style={ { color: "red" } }
+                                              style={{ color: "red" }}
                                             />
                                           }
                                         >
                                           Delete
                                         </Menu.Item>
                                       </Popconfirm>
-                                    ) }
+                                    )}
                                   </Menu>
                                 }
-                                trigger={ ["click"] }
+                                trigger={["click"]}
                               >
                                 <a
-                                  style={ {
+                                  style={{
                                     display: "flex",
                                     alignItems: "center",
-                                  } }
-                                  onClick={ (e) => e.preventDefault() }
+                                  }}
+                                  onClick={(e) => e.preventDefault()}
                                 >
                                   <MoreOutlined />
                                 </a>
                               </Dropdown>
-                            )) }
+                            ))}
                         </div>
-                      ) }
+                      )}
                     </div>
                   </li>
                 );
-              }) }
+              })}
 
-              <li onClick={ getAllFileList } className="project-list">
+              <li onClick={getAllFileList} className="project-list">
                 <span
                   className={
                     allFiles == "active"
@@ -970,152 +971,112 @@ function FileModule() {
           <div className="profilerightbar">
             <div className="profile-sub-head">
               <h3>
-                { " " }
-                { formattedTitle?.length > 100
+                {" "}
+                {formattedTitle?.length > 100
                   ? `${formattedTitle?.slice(0, 100)}.....`
-                  : formattedTitle }
+                  : formattedTitle}
               </h3>
               <div className="thumb-view"></div>
               <div className="block-status-content">
                 <div className="filter-btn-wrapper">
-
-                  <div style={ { cursor: "pointer" } } className="status-content">
-
-                    <Popover
-                      placement="bottom"
-                      trigger="click"
-                      content={ content2 }
-                      visible={ isPopoverVisibleStatus }
-                      onVisibleChange={ setIsPopoverVisibleStatus }
-                    >
-                      <Button className="dropdown-button">
-                        <span className="filter-text">
-                          <span>  Sort by:</span>
-
-                          <span>
-                            { radioStatusValue === "createdAt"
-                              ? "Date"
-                              : radioStatusValue === "name"
-                                ? "Name"
-                                : radioStatusValue === "file_type"
-                                  ? "Type"
-                                  : "Date" }{ " " }
-                          </span>
-                        </span>
-                      </Button>
-
-                    </Popover>
-                  </div>
-
-                  <div style={ { cursor: "pointer" } } className="status-content">
-
-                    <Popover
-                      placement="bottom"
-                      trigger="click"
-                      content={ content3 }
-                      visible={ isPopoverVisibleOrder }
-                      onVisibleChange={ setIsPopoverVisibleOrder }
-                    >
-                      <Button className="dropdown-button">
-                        <span className="filter-text">
-                         <span> Order by:</span>
-
-                      
-                          <span>
-                            { radioStatusValueOrder === "asc"
-                              ? "Asc"
-                              : radioStatusValueOrder === "desc"
-                                ? "Desc"
-                                : "Desc" }
-                          </span>
-                        </span>
-                      </Button>
-
-                    </Popover>
-                  </div>
+                  <FileSortComponent
+                    // Sort props
+                    radioStatusValue={radioStatusValue}
+                    onChange1={onChange1}
+                    // Order props
+                    radioStatusValueOrder={radioStatusValueOrder}
+                    onChange2={onChange2}
+                    // Common props
+                    allFiles={allFiles}
+                    getAllFileList={getAllFileList}
+                    getEditFolderOneId={getEditFolderOneId}
+                    selectedFolder={selectedFolder}
+                    isPopoverVisibleStatus={isPopoverVisibleStatus}
+                    setIsPopoverVisibleStatus={setIsPopoverVisibleStatus}
+                    isPopoverVisibleOrder={isPopoverVisibleOrder}
+                    setIsPopoverVisibleOrder={setIsPopoverVisibleOrder}
+                  />
                 </div>
-
-
-
               </div>
             </div>
 
             <div className="upload-file-main-wrapper">
-              { editFolderDataById?.length > 0 && (
+              {editFolderDataById?.length > 0 && (
                 <div className="upload-file-left">
-                  { editFolderDataById.map((file, index) => {
+                  {editFolderDataById.map((file, index) => {
                     return (
-                      <Badge key={ index }>
+                      <Badge key={index}>
                         <a
-                          onClick={ () => getFileById1(file?._id) }
-                          href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
+                          onClick={() => getFileById1(file?._id)}
+                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
                           rel="noopener noreferrer"
                           target="_blank"
                         >
                           <div className="fileAttachment_Box">
                             <div className="fileAttachment_box-img">
-                              { fileImageSelect(file?.file_type) }
+                              {fileImageSelect(file?.file_type)}
                             </div>
                             <div
-                              style={ {
+                              style={{
                                 display: "flex",
                                 paddingBottom: "10px",
                                 width: "100%",
                                 justifyContent: "space-between",
-                              } }
+                              }}
                             >
                               <p className="fileNameTxtellipsis">
-                                { file.name.length > 12
-                                  ? `${file.name.slice(0, 15)}.....${file.file_type
-                                  }`
-                                  : file.name + file.file_type }
+                                {file.name.length > 12
+                                  ? `${file.name.slice(0, 15)}.....${
+                                      file.file_type
+                                    }`
+                                  : file.name + file.file_type}
                               </p>
                               <div>
                                 <Dropdown
                                   overlay={
-                                    <Menu onClick={ handlemenuClickEdit }>
-                                      { file.isEditable && (
+                                    <Menu onClick={handlemenuClickEdit}>
+                                      {file.isEditable && (
                                         <Menu.Item
                                           key="edit"
-                                          onClick={ () => getFileById(file?._id) }
+                                          onClick={() => getFileById(file?._id)}
                                           icon={
                                             <EditOutlined
-                                              style={ { color: "green" } }
+                                              style={{ color: "green" }}
                                             />
                                           }
                                         >
                                           Rename
                                         </Menu.Item>
-                                      ) }
-                                      { file.isDeletable && (
+                                      )}
+                                      {file.isDeletable && (
                                         <Popconfirm
                                           title="Do you want to delete?"
                                           okText="Yes"
                                           cancelText="No"
-                                          onConfirm={ () => {
+                                          onConfirm={() => {
                                             deleteFile(file?._id);
-                                          } }
+                                          }}
                                         >
                                           <Menu.Item
                                             key="delete"
                                             className="ant-delete"
                                             icon={
                                               <DeleteOutlined
-                                                style={ { color: "red" } }
+                                                style={{ color: "red" }}
                                               />
                                             }
                                           >
                                             Delete
                                           </Menu.Item>
                                         </Popconfirm>
-                                      ) }
+                                      )}
 
                                       <Menu.Item
                                         key="properties"
-                                        onClick={ () => getFileById1(file?._id) }
+                                        onClick={() => getFileById1(file?._id)}
                                         icon={
                                           <EyeOutlined
-                                            style={ { color: "#187CB7" } }
+                                            style={{ color: "#187CB7" }}
                                           />
                                         }
                                       >
@@ -1123,14 +1084,14 @@ function FileModule() {
                                       </Menu.Item>
                                     </Menu>
                                   }
-                                  trigger={ ["click"] }
+                                  trigger={["click"]}
                                 >
                                   <a
-                                    style={ {
+                                    style={{
                                       display: "flex",
                                       alignItems: "center",
-                                    } }
-                                    onClick={ (e) => e.preventDefault() }
+                                    }}
+                                    onClick={(e) => e.preventDefault()}
                                   >
                                     <MoreOutlined />
                                   </a>
@@ -1141,32 +1102,32 @@ function FileModule() {
                         </a>
                       </Badge>
                     );
-                  }) }
+                  })}
                 </div>
-              ) }
-              {/* } */ }
-              { }
-              { editFolderDataById?.length <= 0 && (
+              )}
+              {/* } */}
+              {}
+              {editFolderDataById?.length <= 0 && (
                 <div className="upload-file-wrapper">
                   <FolderOpenOutlined />
                   <p>
                     Upload design docs spreadsheets etc..organize them in
-                    folders and proof files for review and feedback.{ " " }
-                    <a href="#"> Learn how it works</a>{ " " }
+                    folders and proof files for review and feedback.{" "}
+                    <a href="#"> Learn how it works</a>{" "}
                   </p>
-                  <Button onClick={ () => setIsOpenModelUpload(true) }>
-                    { " " }
+                  <Button onClick={() => setIsOpenModelUpload(true)}>
+                    {" "}
                     <PlusOutlined />
                     <span>Upload Files</span>
                   </Button>
                 </div>
-              ) }
+              )}
               <Modal
-                open={ isModalOpenFile }
-                width={ 481 }
-                onCancel={ handleModalCloseFile }
-                title={ null }
-                footer={ null }
+                open={isModalOpenFile}
+                width={481}
+                onCancel={handleModalCloseFile}
+                title={null}
+                footer={null}
                 className="add-task-modal"
               >
                 <div className="modal-header">
@@ -1175,24 +1136,24 @@ function FileModule() {
                 </div>
                 <div className="overview-modal-wrapper">
                   <Form
-                    form={ editFileForm }
-                    onFinish={ (values) => renameFile(values) }
+                    form={editFileForm}
+                    onFinish={(values) => renameFile(values)}
                   >
                     <Form.Item
                       name="name"
-                      rules={ [
+                      rules={[
                         {
                           required: true,
                           whitespace: true,
                           message: "Please enter a valid file name",
                         },
-                      ] }
+                      ]}
                     >
-                      <Input style={ { width: "440px" } } />
+                      <Input style={{ width: "440px" }} />
                     </Form.Item>
 
                     <div
-                      style={ { marginTop: "10px" } }
+                      style={{ marginTop: "10px" }}
                       className="modal-footer-flex"
                     >
                       <div className="flex-btn">
@@ -1205,7 +1166,7 @@ function FileModule() {
                         </Button>
                         <Button
                           type="Outlined"
-                          onClick={ handleModalCloseFile }
+                          onClick={handleModalCloseFile}
                           className="square-outline-btn ant-delete"
                         >
                           Cancel
@@ -1216,27 +1177,28 @@ function FileModule() {
                 </div>
               </Modal>
 
-              { editFolderDataById?.length > 0 &&
+              {editFolderDataById?.length > 0 &&
                 editFileName &&
                 Object.keys(editFileName)?.length == 0 && (
                   <div className="setDefaultError">
                     <p>Select a file to view its properties</p>
                   </div>
-                ) }
-              { editFolderDataById?.length > 0 &&
+                )}
+              {editFolderDataById?.length > 0 &&
                 editFileName &&
                 Object.keys(editFileName)?.length != 0 && (
                   <div className="project-file-side-bar">
                     <div className="project-flie-img-wrapper">
                       <div className="project-file-img">
-                        { fileImageSelect(editFileName?.file_type) }
+                        {fileImageSelect(editFileName?.file_type)}
                       </div>
                       <div className="project-file-img-text">
-                        { editFileName?.name?.length > 15
-                          ? `${editFileName?.name.slice(0, 15)}.....${editFileName.file_type
-                          }`
-                          : editFileName?.name + editFileName?.file_type }
-                        {/* <p>{editFileName?.name}</p> */ }
+                        {editFileName?.name?.length > 15
+                          ? `${editFileName?.name.slice(0, 15)}.....${
+                              editFileName.file_type
+                            }`
+                          : editFileName?.name + editFileName?.file_type}
+                        {/* <p>{editFileName?.name}</p> */}
                       </div>
                     </div>
 
@@ -1252,7 +1214,7 @@ function FileModule() {
                             <p>Type</p>
                           </div>
                           <div className="setFileDetailsFlex">
-                            <p>{ editFileName?.file_type }</p>
+                            <p>{editFileName?.file_type}</p>
                           </div>
                         </div>
                         <div className="properties-tyeps">
@@ -1260,7 +1222,7 @@ function FileModule() {
                             <p>Section</p>
                           </div>
                           <div className="setFileDetailsFlex">
-                            <p>{ editFileName?.file_section }</p>
+                            <p>{editFileName?.file_section}</p>
                           </div>
                         </div>
                         <div className="properties-tyeps">
@@ -1268,9 +1230,9 @@ function FileModule() {
                             <p>Updated</p>
                           </div>
                           <div className="setFileDetailsFlex">
-                            { moment(editFileName?.updatedAt).format(
+                            {moment(editFileName?.updatedAt).format(
                               "DD MMMM, YYYY, hh:mm A"
-                            ) }
+                            )}
                           </div>
                         </div>
                         <div className="properties-tyeps">
@@ -1278,9 +1240,9 @@ function FileModule() {
                             <p>Date</p>
                           </div>
                           <div className="setFileDetailsFlex">
-                            { moment(editFileName?.createdAt).format(
+                            {moment(editFileName?.createdAt).format(
                               "DD MMMM, YYYY, hh:mm A"
-                            ) }
+                            )}
                           </div>
                         </div>
                         <div className="properties-tyeps">
@@ -1288,7 +1250,7 @@ function FileModule() {
                             <p>Folder</p>
                           </div>
                           <div className="setFileDetailsFlex">
-                            <p>{ editFileName?.folder?.name }</p>
+                            <p>{editFileName?.folder?.name}</p>
                           </div>
                         </div>
                         <div className="properties-tyeps">
@@ -1297,7 +1259,7 @@ function FileModule() {
                           </div>
                           <div className="setFileDetailsFlex">
                             <p>
-                              { removeTitle(editFileName?.createdBy?.full_name) }
+                              {removeTitle(editFileName?.createdBy?.full_name)}
                             </p>
                           </div>
                         </div>
@@ -1308,43 +1270,43 @@ function FileModule() {
                           <div className="setFileDetailsFlex">
                             <div className="subscribers-list-wrapper">
                               <Avatar.Group
-                                maxCount={ 3 }
+                                maxCount={3}
                                 maxPopoverTrigger="click"
                                 size="default"
-                                maxStyle={ {
+                                maxStyle={{
                                   color: "#f56a00",
                                   backgroundColor: "#fde3cf",
                                   cursor: "pointer",
-                                } }
+                                }}
                               >
-                                { subscribers.map((item, index) => (
+                                {subscribers.map((item, index) => (
                                   <>
                                     <p className="subscribers-list">
                                       <Tooltip
-                                        title={ removeTitle(item.full_name) }
-                                        key={ item._id }
+                                        title={removeTitle(item.full_name)}
+                                        key={item._id}
                                       >
                                         <MyAvatar
-                                          key={ item._id }
-                                          userName={ item?.full_name }
-                                          alt={ item?.full_name }
-                                          src={ item.emp_img }
+                                          key={item._id}
+                                          userName={item?.full_name}
+                                          alt={item?.full_name}
+                                          src={item.emp_img}
                                         />
                                       </Tooltip>
                                     </p>
                                   </>
-                                )) }
+                                ))}
                               </Avatar.Group>
                             </div>
 
                             <div className="icon-plus">
-                              { " " }
+                              {" "}
                               <i
-                                onClick={ () => {
+                                onClick={() => {
                                   setIsOpenModelSubscribers(true);
-                                } }
+                                }}
                                 className="fi fi-br-plus"
-                              ></i>{ " " }
+                              ></i>{" "}
                             </div>
                           </div>
                         </div>
@@ -1355,64 +1317,64 @@ function FileModule() {
                           <div className="setFileDetailsFlex">
                             <div className="subscribers-list-wrapper">
                               <Avatar.Group
-                                maxCount={ 3 }
+                                maxCount={3}
                                 maxPopoverTrigger="click"
                                 size="default"
-                                maxStyle={ {
+                                maxStyle={{
                                   color: "#f56a00",
                                   backgroundColor: "#fde3cf",
                                   cursor: "pointer",
-                                } }
+                                }}
                               >
-                                { pms_clients?.map((item, index) => (
+                                {pms_clients?.map((item, index) => (
                                   <>
                                     <p className="subscribers-list">
                                       <Tooltip
-                                        title={ removeTitle(item?.full_name) }
-                                        key={ item._id }
+                                        title={removeTitle(item?.full_name)}
+                                        key={item._id}
                                       >
                                         <MyAvatar
-                                          userName={ item.full_name }
-                                          alt={ item.full_name }
-                                          key={ item._id }
-                                          src={ item.emp_img }
+                                          userName={item.full_name}
+                                          alt={item.full_name}
+                                          key={item._id}
+                                          src={item.emp_img}
                                         />
                                       </Tooltip>
                                     </p>
                                   </>
-                                )) }
+                                ))}
                               </Avatar.Group>
                             </div>
                             <div className="icon-plus">
-                              { " " }
+                              {" "}
                               <i
-                                onClick={ () => {
+                                onClick={() => {
                                   setIsOpenModalClients(true);
-                                } }
+                                }}
                                 className="fi fi-br-plus"
-                              ></i>{ " " }
+                              ></i>{" "}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                ) }
+                )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Subscriber modal */ }
+      {/* Subscriber modal */}
       <Modal
-        open={ isopenModelSubscribers }
-        footer={ null }
-        onCancel={ handleCancelSubscribers }
+        open={isopenModelSubscribers}
+        footer={null}
+        onCancel={handleCancelSubscribers}
         className="add-task-modal add-list-modal"
       >
         <div className="modal-header">
           <h1>Subscribers</h1>
-          {/* <QuestionCircleOutlined /> */ }
+          {/* <QuestionCircleOutlined /> */}
         </div>
 
         <div className="overview-modal-wrapper">
@@ -1420,96 +1382,96 @@ function FileModule() {
             <div className="project-comments-block">
               <div className="project-search">
                 <h3>
-                  { managePeopleVisible ? (
+                  {managePeopleVisible ? (
                     subscribersList
                       ?.filter((data) => data.full_name?.toLowerCase())
                       .map((subscriber) => (
-                        <div key={ subscriber._id }>
+                        <div key={subscriber._id}>
                           <Checkbox
-                            onChange={ () =>
+                            onChange={() =>
                               handleCheckboxChange(subscriber._id)
                             }
-                            checked={ manageSubscribers.includes(subscriber._id) }
-                            value={ manageSubscribers }
+                            checked={manageSubscribers.includes(subscriber._id)}
+                            value={manageSubscribers}
                           />
                           <div
-                            style={ {
+                            style={{
                               display: "flex",
                               flexDirection: "row",
                               marginLeft: "10px",
-                            } }
+                            }}
                           >
                             <MyAvatar
-                              userName={ subscriber.full_name }
-                              alt={ subscriber.full_name }
-                              key={ subscriber._id }
-                              src={ subscriber.emp_img }
+                              userName={subscriber.full_name}
+                              alt={subscriber.full_name}
+                              key={subscriber._id}
+                              src={subscriber.emp_img}
                             />
 
-                            <h3>{ removeTitle(subscriber.full_name) }</h3>
+                            <h3>{removeTitle(subscriber.full_name)}</h3>
                           </div>
                         </div>
                       ))
                   ) : (
                     <>
-                      { subscribers?.map((item, index) => (
+                      {subscribers?.map((item, index) => (
                         <>
                           <p>
                             <MyAvatar
-                              userName={ item.full_name }
-                              alt={ item.full_name }
-                              key={ item._id }
-                              src={ item.emp_img }
+                              userName={item.full_name}
+                              alt={item.full_name}
+                              key={item._id}
+                              src={item.emp_img}
                             />
-                            { item?.full_name }
+                            {item?.full_name}
                           </p>
                         </>
-                      )) }
+                      ))}
                     </>
-                  ) }
+                  )}
                 </h3>
               </div>
             </div>
             <div className="task-tab-btn">
-              { !managePeopleVisible && IsEdit && (
+              {!managePeopleVisible && IsEdit && (
                 <Button
                   type="primary"
-                  onClick={ () => {
+                  onClick={() => {
                     getSubscribersList();
                     setManagePeopleVisible(true);
-                  } }
+                  }}
                 >
                   <span>
                     <UsergroupAddOutlined />
                   </span>
                   Manage People
                 </Button>
-              ) }
-              { managePeopleVisible && (
+              )}
+              {managePeopleVisible && (
                 <div className="manage-btn">
-                  <Button type="primary" onClick={ handleUpdateSubscribers }>
+                  <Button type="primary" onClick={handleUpdateSubscribers}>
                     Update
                   </Button>
                   <Button
-                    onClick={ () => {
+                    onClick={() => {
                       setManagePeopleVisible(false);
                       getFileById1(tempFileID);
-                    } }
+                    }}
                     className="ant-delete"
                   >
                     Cancel
                   </Button>
                 </div>
-              ) }
+              )}
             </div>
           </>
         </div>
       </Modal>
 
       <Modal
-        open={ isOpenModalClients }
-        footer={ null }
-        onCancel={ handleCancelClients }
+        open={isOpenModalClients}
+        footer={null}
+        onCancel={handleCancelClients}
         className="add-task-modal add-list-modal"
       >
         <div className="modal-header">
@@ -1521,101 +1483,101 @@ function FileModule() {
             <div className="project-comments-block">
               <div className="project-search">
                 <h3>
-                  { manageClientVisible ? (
+                  {manageClientVisible ? (
                     clientsList
                       ?.filter((data) => data.full_name?.toLowerCase())
 
                       .map((client) => (
-                        <div key={ client._id }>
+                        <div key={client._id}>
                           <Checkbox
-                            onChange={ () => handleCheckboxClient(client._id) }
-                            checked={ manageClients.includes(client._id) }
-                            value={ manageClients }
+                            onChange={() => handleCheckboxClient(client._id)}
+                            checked={manageClients.includes(client._id)}
+                            value={manageClients}
                           />
                           <div
-                            style={ {
+                            style={{
                               display: "flex",
                               flexDirection: "row",
                               marginLeft: "10px",
-                            } }
+                            }}
                           >
                             <MyAvatar
-                              userName={ client.full_name }
-                              alt={ client.full_name }
-                              key={ client._id }
-                              src={ client.emp_img }
+                              userName={client.full_name}
+                              alt={client.full_name}
+                              key={client._id}
+                              src={client.emp_img}
                             />
-                            <h3>{ removeTitle(client.full_name) }</h3>
+                            <h3>{removeTitle(client.full_name)}</h3>
                           </div>
                         </div>
                       ))
                   ) : (
                     <>
-                      { pms_clients?.map((item, index) => (
+                      {pms_clients?.map((item, index) => (
                         <>
                           <p>
                             <MyAvatar
-                              userName={ item.full_name }
-                              alt={ item.full_name }
-                              key={ item._id }
-                              src={ item.emp_img }
+                              userName={item.full_name}
+                              alt={item.full_name}
+                              key={item._id}
+                              src={item.emp_img}
                             />
-                            { removeTitle(item?.full_name) }
+                            {removeTitle(item?.full_name)}
                           </p>
                         </>
-                      )) }
+                      ))}
                     </>
-                  ) }
+                  )}
                 </h3>
               </div>
             </div>
             <div className="task-tab-btn">
-              { !manageClientVisible && IsEdit && (
+              {!manageClientVisible && IsEdit && (
                 <Button
                   type="primary"
-                  onClick={ () => {
+                  onClick={() => {
                     // getClientList();
                     getClientList();
                     setManageClientVisible(true);
-                  } }
+                  }}
                 >
                   <span>
                     <UsergroupAddOutlined />
                   </span>
                   Manage Client
                 </Button>
-              ) }
-              { manageClientVisible && (
+              )}
+              {manageClientVisible && (
                 <div className="manage-btn">
-                  <Button type="primary" onClick={ handleUpdateClients }>
+                  <Button type="primary" onClick={handleUpdateClients}>
                     Update
                   </Button>
                   <Button
-                    onClick={ () => {
+                    onClick={() => {
                       setManageClientVisible(false);
                       getFileById1(tempFileID);
-                    } }
+                    }}
                     className="ant-delete"
                   >
                     Cancel
                   </Button>
                 </div>
-              ) }
+              )}
             </div>
           </>
         </div>
       </Modal>
 
-      {/*                               upload modal                                      */ }
+      {/*                               upload modal                                      */}
       <Modal
-        open={ isopenModelUpload }
-        onCancel={ handleCancelUpload }
+        open={isopenModelUpload}
+        onCancel={handleCancelUpload}
         title="Upload Files"
-        width={ 800 }
-        footer={ [
+        width={800}
+        footer={[
           <Button
             key="cancel"
-            onClick={ handleCancelUpload }
+            onClick={handleCancelUpload}
             className="delete-btn"
             size="large"
           >
@@ -1626,233 +1588,256 @@ function FileModule() {
             type="primary"
             className="square-primary-btn"
             size="large"
-            onClick={ () => fileForm.submit() }
+            onClick={() => fileForm.submit()}
           >
             Ok
           </Button>,
-        ] }
+        ]}
       >
         <div className="overview-modal-wrapper">
           <Form
-            form={ fileForm }
+            form={fileForm}
             layout="vertical"
-            onFinish={ (values) => handleTaskOps(values) }
+            onFinish={(values) => handleTaskOps(values)}
           >
-            <Row gutter={ [0, 0] }>
-              {/* File Upload Section - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+            <Row gutter={[0, 0]}>
+              {/* File Upload Section - Full width */}
+              <Col xs={24} sm={24} md={24} lg={24}>
                 <Form.Item label="Upload Files">
                   <div
-                    onDragEnter={ handleDragEnter }
-                    onDragOver={ handleDragOver }
-                    onDragLeave={ handleDragLeave }
-                    onDrop={ handleDrop }
-                    style={ {
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    style={{
                       border: "2px dashed #cccccc",
                       padding: "15px 10px",
                       textAlign: "center",
                       minHeight: "80px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center"
-                    } }
+                      justifyContent: "center",
+                    }}
                   >
                     <p
-                      onClick={ () => attachmentfileRef.current.click() }
-                      style={ {
+                      onClick={() => attachmentfileRef.current.click()}
+                      style={{
                         margin: 0,
                         cursor: "pointer",
-                        fontSize: "14px"
-                      } }
+                        fontSize: "14px",
+                      }}
                     >
                       Drag and Drop Files here
                     </p>
                   </div>
                   <Button
                     className="link-btn"
-                    onClick={ () => attachmentfileRef.current.click() }
-                    icon={ <UploadOutlined /> }
+                    onClick={() => attachmentfileRef.current.click()}
+                    icon={<UploadOutlined />}
                     size="large"
-                    style={ { marginTop: "8px", width: "100%" } }
+                    style={{ marginTop: "8px", width: "100%" }}
                   >
                     Browse Files
                   </Button>
                 </Form.Item>
               </Col>
 
-              {/* File Attachments Section - Full width */ }
-              { fileAttachment.length > 0 && (
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+              {/* File Attachments Section - Full width */}
+              {fileAttachment.length > 0 && (
+                <Col xs={24} sm={24} md={24} lg={24}>
                   <div className="file-attachments-section">
                     <h4
-                      style={ {
+                      style={{
                         marginBottom: 12,
                         color: "#666",
                         fontSize: "14px",
                         fontWeight: 500,
-                      } }
+                      }}
                     >
                       Attached Files
                     </h4>
-                    <div className="fileAttachment_container" style={ {
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "8px"
-                    } }>
-                      { fileAttachment.map((file, index) => (
+                    <div
+                      className="fileAttachment_container"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                      }}
+                    >
+                      {fileAttachment.map((file, index) => (
                         <Badge
-                          key={ index }
+                          key={index}
                           count={
                             <CloseCircleOutlined
-                              onClick={ () => removeAttachmentFile(index) }
-                              style={ { cursor: "pointer" } }
+                              onClick={() => removeAttachmentFile(index)}
+                              style={{ cursor: "pointer" }}
                             />
                           }
                         >
                           <div className="fileAttachment_Box">
-                            <p className="fileNameTxtellipsis">{ file.name }</p>
+                            <p className="fileNameTxtellipsis">{file.name}</p>
                           </div>
                         </Badge>
-                      )) }
+                      ))}
                     </div>
                   </div>
                 </Col>
-              ) }
+              )}
 
-              {/* Subscribers Section - Half width */ }
-              { fileAttachment.length > 0 && (
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                  <Form.Item label="Subscribers" name="subscribers" className="subscriber-section">
+              {/* Subscribers Section - Half width */}
+              {fileAttachment.length > 0 && (
+                <Col xs={24} sm={24} md={12} lg={12}>
+                  <Form.Item
+                    label="Subscribers"
+                    name="subscribers"
+                    className="subscriber-section"
+                  >
                     <MultiSelect
-                      onSearch={ handleSearch }
-                      onChange={ handleSelectedItemsChange }
-                      values={ selectedItems ? selectedItems.map((item) => item._id) : [] }
-                      listData={ subscribersList }
-                      search={ searchKeyword }
+                      onSearch={handleSearch}
+                      onChange={handleSelectedItemsChange}
+                      values={
+                        selectedItems
+                          ? selectedItems.map((item) => item._id)
+                          : []
+                      }
+                      listData={subscribersList}
+                      search={searchKeyword}
                     />
-                    { selectedItems && selectedItems.length > 0 && (
-                      <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                    {selectedItems && selectedItems.length > 0 && (
+                      <div className="list-clear-btn" style={{ marginTop: 8 }}>
                         <Button
-                          onClick={ () => setSelectedItems([]) }
+                          onClick={() => setSelectedItems([])}
                           className="list-clear-btn ant-delete"
                           size="small"
                         >
                           Clear
                         </Button>
                       </div>
-                    ) }
+                    )}
                   </Form.Item>
                 </Col>
-              ) }
+              )}
 
-              {/* Client Section - Half width */ }
-              { fileAttachment.length > 0 && (
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                  <Form.Item label="Client" name="client" className="client-section">
+              {/* Client Section - Half width */}
+              {fileAttachment.length > 0 && (
+                <Col xs={24} sm={24} md={12} lg={12}>
+                  <Form.Item
+                    label="Client"
+                    name="client"
+                    className="client-section"
+                  >
                     <MultiSelect
-                      onSearch={ handleSearch }
-                      onChange={ handleSelectedClientsChange }
-                      values={ selectedClient ? selectedClient.map((item) => item._id) : [] }
-                      listData={ clientsList }
-                      search={ searchKeyword }
+                      onSearch={handleSearch}
+                      onChange={handleSelectedClientsChange}
+                      values={
+                        selectedClient
+                          ? selectedClient.map((item) => item._id)
+                          : []
+                      }
+                      listData={clientsList}
+                      search={searchKeyword}
                     />
-                    { selectedClient && selectedClient.length > 0 && (
-                      <div className="list-clear-btn" style={ { marginTop: 8 } }>
+                    {selectedClient && selectedClient.length > 0 && (
+                      <div className="list-clear-btn" style={{ marginTop: 8 }}>
                         <Button
-                          onClick={ () => setSelectedClient([]) }
+                          onClick={() => setSelectedClient([])}
                           className="list-clear-btn ant-delete"
                           size="small"
                         >
                           Clear
                         </Button>
                       </div>
-                    ) }
+                    )}
                   </Form.Item>
                 </Col>
-              ) }
+              )}
 
-              {/* Folder Selection - Full width on mobile */ }
-              { fileAttachment.length > 0 && allFiles === "active" && (
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Folder Selection - Full width on mobile */}
+              {fileAttachment.length > 0 && allFiles === "active" && (
+                <Col xs={24} sm={24} md={12} lg={12}>
                   <Form.Item
                     label="Folder"
                     name="folder_name"
-                    rules={ [{ required: true, message: "Please select a folder" }] }
+                    rules={[
+                      { required: true, message: "Please select a folder" },
+                    ]}
                   >
                     <Select
                       placeholder="Select Folder"
                       showSearch
                       size="large"
-                      filterOption={ (input, option) =>
-                        option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
+                      filterOption={(input, option) =>
+                        option.children
+                          ?.toLowerCase()
+                          .indexOf(input?.toLowerCase()) >= 0
                       }
-                      filterSort={ (optionA, optionB) =>
+                      filterSort={(optionA, optionB) =>
                         optionA.children
                           ?.toLowerCase()
                           ?.localeCompare(optionB.children?.toLowerCase())
                       }
                     >
-                      { folderList?.map((item, index) => (
+                      {folderList?.map((item, index) => (
                         <Option
-                          key={ index }
-                          value={ item?._id }
-                          style={ { textTransform: "capitalize" } }
+                          key={index}
+                          value={item?._id}
+                          style={{ textTransform: "capitalize" }}
                         >
-                          { item?.name }
+                          {item?.name}
                         </Option>
-                      )) }
+                      ))}
                     </Select>
                   </Form.Item>
                 </Col>
-              ) }
+              )}
             </Row>
 
-            {/* Hidden file input */ }
+            {/* Hidden file input */}
             <input
               multiple
               type="file"
               accept="*"
-              onChange={ onFileChange }
+              onChange={onFileChange}
               hidden
-              ref={ attachmentfileRef }
+              ref={attachmentfileRef}
             />
           </Form>
         </div>
       </Modal>
 
-      {/*        folder  model               */ }
+      {/*        folder  model               */}
       <Modal
-        open={ isopenModelFolder }
-        footer={ null }
-        onCancel={ handleCancelFolder }
+        open={isopenModelFolder}
+        footer={null}
+        onCancel={handleCancelFolder}
         className="add-task-modal add-list-modal"
       >
         <div className="modal-header">
           <h1>
-            { addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder" }
+            {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
           </h1>
         </div>
 
         <div className="overview-modal-wrapper">
           <Form
-            form={ addFolderForm }
-            onFinish={ (values) => {
+            form={addFolderForm}
+            onFinish={(values) => {
               addEditFolder === "Add Folder"
                 ? handleSubmit(values)
                 : updateFolder(values);
-            } }
+            }}
           >
             <div className="topic-cancel-wrapper">
               <Form.Item
                 name="title"
-                rules={ [{ required: true, message: "Please add a title" }] }
+                rules={[{ required: true, message: "Please add a title" }]}
               >
                 <Input placeholder="Title" />
               </Form.Item>
             </div>
             <div className="modal-footer-flex">
               <div className="flex-btn">
-                { addEditFolder === "Add Folder" ? (
+                {addEditFolder === "Add Folder" ? (
                   <Button
                     type="primary"
                     htmlType="submit"
@@ -1868,10 +1853,10 @@ function FileModule() {
                   >
                     Update
                   </Button>
-                ) }
+                )}
 
                 <Button
-                  onClick={ handleCancelFolder }
+                  onClick={handleCancelFolder}
                   className="square-outline-btn ant-delete"
                 >
                   Cancel

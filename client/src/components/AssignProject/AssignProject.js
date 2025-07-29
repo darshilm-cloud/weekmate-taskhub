@@ -44,6 +44,7 @@ import MultiSelect from "../CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import AssignProjectFilter from "./AssignProjectFilter";
+import SortByComponent from "./SortByComponent";
 
 function AssignProject() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -1055,6 +1056,11 @@ function AssignProject() {
               getRoles={getRoles}
               // Common props
               handleFilters={handleFilters}
+              getProjectListing={getProjectListing}
+            />
+            <SortByComponent
+              sortOption={sortOption}
+              handleSortFilter={handleSortFilter}
               getProjectListing={getProjectListing}
             />
           </div>
