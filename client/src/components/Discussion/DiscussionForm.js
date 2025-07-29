@@ -865,7 +865,7 @@ function DiscussionForm() {
             <Button
               type="primary"
               onClick={ showAddTopicModal }
-              className="add-btn"
+              className="add-btn ant-btn-primary"
             >
               <i className="fi fi-br-plus"></i> Add
             </Button>

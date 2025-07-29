@@ -177,7 +177,7 @@ const BugsPMS = () => {
                   { hasPermission(["bug_add"]) && (
                     <Button
                       onClick={ () => showModalTaskModal() }
-                      className="add-task"
+                      className=" add-btn"
                     >
                       <PlusOutlined />
                       Add Task Bug

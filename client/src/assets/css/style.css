@@ -3107,12 +3107,7 @@ html {
   content: "";
 }
 
-.ant-btn-primary:hover,
-.ant-btn-primary:focus {
-  color: #ffffff !important;
-  background-color:#002742 !important;
-  border-color: #002742 !important;
-}
+
 
 .ant-btn-primary.disabled,
 .ant-btn-primary:disabled {

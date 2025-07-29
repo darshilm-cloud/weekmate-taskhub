@@ -1536,7 +1536,7 @@ const TasksPMS = ({ flag }) => {
             <div className="add-project-wrapper">
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button className="add-btn">
+                  <Button className="add-btn ant-btn-primary">
                     <i className="fi fi-br-plus"></i> Add
                     <i className="fi fi-ss-angle-small-down"></i>
                   </Button>

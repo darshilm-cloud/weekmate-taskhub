@@ -1717,7 +1717,7 @@ function TimeForPMS() {
       <div className="task-panel-wrapper task-time-wrapper times-wrapper">
         <div className="profileleftbar time-wrapper-left">
           <div className="add-project-wrapper">
-            <Button className="add-btn" onClick={showModalTime}>
+            <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
               <i className="fi fi-br-plus"></i> Add
             </Button>
           </div>
