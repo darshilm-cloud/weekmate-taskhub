@@ -14,6 +14,8 @@ const BugsWorkflowStatus = mongoose.model("bugsworkflowstatus");
 const ProjectWorkFlow = mongoose.model("projectworkflows");
 const ProjectTech = mongoose.model("projecttechs");
 const ProjectStar = mongoose.model("star_project");
+const LoggedHours = mongoose.model("projecttaskhourlogs");
+
 const {
   getPagination,
   getTotalCountQuery,
@@ -772,29 +774,52 @@ exports.getProjects = async (req, res) => {
 
     const updatedData = await Promise.all(
       data.map(async (project) => {
-        // Get all tasks for this project
-        let allTasks = await ProjectTasks.find({ project_id: project._id }).populate("task_status");
-        
-        // Filter tasks with "Done" status
-        let doneTasks = allTasks.filter(task => 
-          task.task_status && task.task_status.title === "Done"
-        );
-        
-        // Calculate completion percentage
-        let completionPercentage = allTasks.length > 0 
-          ? Math.round((doneTasks.length / allTasks.length) * 100) 
+        const projectId = project._id;
+    
+        // 1. Fetch tasks for the project with lean() for speed
+        const allTasks = await ProjectTasks.find({ project_id: projectId })
+          .populate("task_status", "title") // only fetch 'title' field from task_status
+          .lean();
+    
+        // 2. Filter tasks with status "Done"
+        const doneTasks = allTasks.filter(task => task.task_status?.title === "Done");
+    
+        // 3. Calculate task completion percentage
+        const completionPercentage = allTasks.length > 0
+          ? Math.round((doneTasks.length / allTasks.length) * 100)
           : 0;
-        
-        // Return project with additional completion data
+    
+        // 4. Fetch total logged time (lean + only required fields)
+        const loggedHoursData = await LoggedHours.find({
+          project_id: projectId,
+          isDeleted: false
+        }).select("logged_hours logged_minutes").lean();
+    
+        const totalMinutes = loggedHoursData.reduce((acc, entry) => {
+          const hours = parseInt(entry.logged_hours || '0', 10);
+          const minutes = parseInt(entry.logged_minutes || '0', 10);
+          return acc + (hours * 60) + minutes;
+        }, 0);
+    
+        const finalHours = totalMinutes / 60;
+    
+        // 5. Compare against estimated hours
+        const estimated = parseFloat(project.estimatedHours || '0');
+        const projectHoursExceeded = finalHours > estimated;
+    
+        // 6. Return enriched project object
         return {
-          ...project, // Convert mongoose document to plain object if needed
+          ...(typeof project.toObject === "function" ? project.toObject() : project),
           totalTasks: allTasks.length,
           doneTasks: doneTasks.length,
-          completionPercentage: completionPercentage
+          completionPercentage,
+          projectHoursExceeded
         };
       })
-    );    
-
+    );
+    
+    // console.log("🚀 ~ Final updatedData:", updatedData);
+    
     // cacheStore(cacheKey, value._id ? data[0] : data, !value._id && metaData);
 
     return successResponse(
