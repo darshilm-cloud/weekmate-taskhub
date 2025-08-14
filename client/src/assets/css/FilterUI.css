@@ -408,7 +408,9 @@
     font-weight: 600;
     color: #0c4a6e;
   }
-  
+  .main-project-wrapper  .filter-container{
+    justify-content: end;
+  }
 
   .filter-container {
     display: flex;
