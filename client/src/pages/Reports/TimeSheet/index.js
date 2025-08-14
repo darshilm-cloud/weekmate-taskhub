@@ -1,19 +1,14 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import TimeSheetController from "./TimeSheetController";
 import "./timesheet.css";
 import dayjs from "dayjs";
 import {
   DatePicker,
-  Select,
   Table,
   Card,
   Button,
   Dropdown,
-  Menu,
   Tooltip,
-  Space,
-  Tag,
 } from "antd";
 import {
   MoreOutlined,
@@ -28,67 +23,294 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { removeTitle } from "../../../util/nameFilter";
-
-const { RangePicker } = DatePicker;
-const { Option } = Select;
+import Service from "../../../service";
+import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
+import { useDispatch } from "react-redux";
+import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
 
 dayjs.extend(quarterOfYear);
+const { RangePicker } = DatePicker;
 
 const TimeSheet = () => {
   const companySlug = localStorage.getItem("companyDomain");
-  const {
-    value,
-    project,
-    projectType,
-    manager,
-    department,
-    setDepartment,
-    user,
-    onRangeChange,
-    isPopoverVisible,
-    setIsPopoverVisible,
-    handleOpenThreeDotMenu,
-    setIssortbyPopUp,
-    sortbyPopUp,
-    rangePresets,
-    selectedRange,
-    handleMouseEnter,
-    handleMouseLeave,
-    // Lists
-    technologyList,
-    projectManagerList,
-    projectTypeList,
-    userEmployeeList,
-    projectList,
-    departmentList,
-    // Data
-    getUserEmployeeList,
-    tableData,
-    projectTypeData,
-    departmentData,
-    usersData,
-    pieechartDataMangerNames,
-    pieeChartData,
-    totalLoggedHours,
-    // Handlers
-    handleDepartMentChange,
-    handleTechnologyChange,
-    handleManagerChange,
-    handleProjectChange,
-    handleUserChange,
-    handleTypeChange,
-    handleTableChange,
-    handleSortSelect,
-    // Others
-    pagination,
-    html,
-    sortOrder,
-    selectedSort,
-    chartKey,
-    onReset,
-  } = TimeSheetController();
+  const dispatch = useDispatch();
 
-  // Memoized calculations for chart data
+  const rangePresets = [
+    {
+      label: "This month",
+      value: [dayjs().startOf("month"), dayjs().endOf("month")],
+    },
+    {
+      label: "This month to date",
+      value: [dayjs().startOf("month"), dayjs()],
+    },
+    {
+      label: "Last month",
+      value: [
+        dayjs().subtract(1, "month").startOf("month"),
+        dayjs().subtract(1, "month").endOf("month"),
+      ],
+    },
+    {
+      label: "This quarter",
+      value: [dayjs().startOf("quarter"), dayjs().endOf("quarter")],
+    },
+    {
+      label: "This quarter to date",
+      value: [dayjs().startOf("quarter"), dayjs()],
+    },
+    {
+      label: "Last quarter",
+      value: [
+        dayjs().startOf("quarter").subtract(1, "quarter"),
+        dayjs().startOf("quarter").subtract(1, "day"),
+      ],
+    },
+    {
+      label: "This year",
+      value: [dayjs().startOf("year"), dayjs().endOf("year")],
+    },
+  ];
+
+  const defaultSelectedRange = rangePresets.find(
+    (preset) => preset.label === "This month to date"
+  ).value;
+
+  const [technologies, setTechnologies] = useState([]);
+  const [projectTypes, setProjectTypes] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [tableData, setTableData] = useState([]);
+  const [pieechartDataMangerNames, setPieChartDataMangerNames] = useState([]);
+  const [pieeChartData, setPieChartData] = useState([]);
+  const [projectTypeData, setProjectTyeData] = useState([]);
+  const [usersData, setUsersData] = useState([]);
+  const [totalLoggedHours, setTotalLoggedHours] = useState("");
+  const [selectedSort, setSelectedSort] = useState("logged_date");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  const [html, setHtml] = useState([]);
+  const [chartKey, setChartKey] = useState(0);
+  const [selectedRange, setSelectedRange] = useState(defaultSelectedRange);
+
+  const getTimeSheetReportsDetails = useCallback(
+    async ({
+      technologies: tech = technologies,
+      types = projectTypes,
+      managers: mgr = managers,
+      projects: proj = projects,
+      departments: dept = departments,
+      users: usr = users,
+      sort = selectedSort,
+      sortBy = sortOrder,
+      startDate = selectedRange && selectedRange[0],
+      endDate = selectedRange && selectedRange[1],
+    } = {}) => {
+      try {
+        dispatch(showAuthLoader());
+        const reqBody = {
+          startDate: startDate
+            ? startDate.format("YYYY-MM-DD")
+            : dayjs().startOf("month").format("YYYY-MM-DD"),
+          endDate: endDate
+            ? endDate.format("YYYY-MM-DD")
+            : dayjs().format("YYYY-MM-DD"),
+          technologies: tech && tech.length > 0 ? tech : [],
+          types: types && types.length > 0 ? types : [],
+          managers: mgr && mgr.length > 0 ? mgr : [],
+          projects: proj && proj.length > 0 ? proj : [],
+          departments: dept && dept.length > 0 ? dept : [],
+          users: usr && usr.length > 0 ? usr : [],
+          pageNo: pagination.current,
+          limit: pagination.pageSize,
+          sort: sort || "",
+          sortBy: sortBy,
+          isExport: false,
+        };
+
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTimeSheetReportsDetails,
+          body: reqBody,
+        });
+        if (response?.data && response?.data?.data) {
+          setTableData(response.data.data.data);
+          setPieChartDataMangerNames(
+            response.data.data.manager.map((item) => removeTitle(item.projectManager))
+          );
+          setPieChartData(
+            response.data.data.manager.map((item) => item.totalLoggedHours)
+          );
+          setProjectTyeData(response.data.data.type);
+          setUsersData(response.data.data.user);
+          setTotalLoggedHours(response.data.data.totalHours);
+          setPagination((prev) => ({
+            ...prev,
+            total: response.data.metadata.total || 0,
+          }));
+        } else {
+          setTableData([]);
+          setPagination((prev) => ({ ...prev, total: 0 }));
+        }
+        dispatch(hideAuthLoader());
+      } catch (error) {
+        dispatch(hideAuthLoader());
+        console.error(error);
+        setTableData([]);
+        setPagination((prev) => ({ ...prev, total: 0 }));
+      }
+    },
+    [dispatch, pagination.current, pagination.pageSize, selectedSort, sortOrder, technologies, projectTypes, managers, projects, departments, users, selectedRange]
+  );
+
+  const exportTimesheetReportCSV = useCallback(
+    async ({
+      technologies: tech = technologies,
+      types = projectTypes,
+      managers: mgr = managers,
+      projects: proj = projects,
+      departments: dept = departments,
+      users: usr = users,
+      sort = selectedSort,
+      sortBy = sortOrder,
+      startDate = selectedRange && selectedRange[0],
+      endDate = selectedRange && selectedRange[1],
+    } = {}) => {
+      try {
+        dispatch(showAuthLoader());
+        const reqBody = {
+          startDate: startDate
+            ? startDate.format("YYYY-MM-DD")
+            : dayjs().startOf("month").format("YYYY-MM-DD"),
+          endDate: endDate
+            ? endDate.format("YYYY-MM-DD")
+            : dayjs().format("YYYY-MM-DD"),
+          technologies: tech && tech.length > 0 ? tech : [],
+          types: types && types.length > 0 ? types : [],
+          managers: mgr && mgr.length > 0 ? mgr : [],
+          projects: proj && proj.length > 0 ? proj : [],
+          departments: dept && dept.length > 0 ? dept : [],
+          users: usr && usr.length > 0 ? usr : [],
+          pageNo: pagination.current,
+          limit: pagination.pageSize,
+          sort: sort || "",
+          sortBy: sortBy,
+          isExport: true,
+        };
+
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.exportTimeSheetReportCSV,
+          body: reqBody,
+        });
+        if (response?.data && response?.data?.data) {
+          setHtml(response.data.data);
+        }
+        dispatch(hideAuthLoader());
+      } catch (error) {
+        dispatch(hideAuthLoader());
+        console.error(error);
+      }
+    },
+    [dispatch, pagination.current, pagination.pageSize, selectedSort, sortOrder, technologies, projectTypes, managers, projects, departments, users, selectedRange]
+  );
+
+  const onFilterChange = useCallback(
+    (skipParams, selectedFilters) => {
+      if (skipParams.includes("skipAll")) {
+        setTechnologies([]);
+        setProjectTypes([]);
+        setManagers([]);
+        setProjects([]);
+        setDepartments([]);
+        setUsers([]);
+        setPagination({ ...pagination, current: 1 });
+      } else {
+        if (skipParams.includes("skipTechnology")) setTechnologies([]);
+        if (skipParams.includes("skipProjectType")) setProjectTypes([]);
+        if (skipParams.includes("skipManager")) setManagers([]);
+        if (skipParams.includes("skipProject")) setProjects([]);
+        if (skipParams.includes("skipDepartment")) setDepartments([]);
+        if (skipParams.includes("skipUser")) setUsers([]);
+      }
+
+      if (selectedFilters) {
+        setTechnologies(selectedFilters.technology || []);
+        setProjectTypes(selectedFilters.projectType || []);
+        setManagers(selectedFilters.manager || []);
+        setProjects(selectedFilters.project || []);
+        setDepartments(selectedFilters.department || []);
+        setUsers(selectedFilters.user || []);
+        setPagination({ ...pagination, current: 1 });
+      }
+
+      // getTimeSheetReportsDetails();
+      exportTimesheetReportCSV();
+    },
+    [pagination, getTimeSheetReportsDetails, exportTimesheetReportCSV]
+  );
+
+  useEffect(() => {
+    getTimeSheetReportsDetails();
+  }, [getTimeSheetReportsDetails]);
+
+  useEffect(() => {
+    setChartKey((prevKey) => prevKey + 1);
+  }, [pieeChartData]);
+
+  const onRangeChange = useCallback(
+    (dates) => {
+      setSelectedRange(dates);
+      getTimeSheetReportsDetails({
+        startDate: dates && dates[0],
+        endDate: dates && dates[1],
+      });
+      exportTimesheetReportCSV({
+        startDate: dates && dates[0],
+        endDate: dates && dates[1],
+      });
+    },
+    [getTimeSheetReportsDetails, exportTimesheetReportCSV]
+  );
+
+  const handleSortSelect = useCallback(
+    (sortOption) => {
+      const newSortOrder =
+        sortOption === selectedSort
+          ? sortOrder === "asc"
+            ? "desc"
+            : "asc"
+          : "asc";
+      setSelectedSort(sortOption);
+      setSortOrder(newSortOrder);
+      getTimeSheetReportsDetails({ sort: sortOption, sortBy: newSortOrder });
+      exportTimesheetReportCSV({ sort: sortOption, sortBy: newSortOrder });
+    },
+    [selectedSort, sortOrder, getTimeSheetReportsDetails, exportTimesheetReportCSV]
+  );
+
+  const handleTableChange = useCallback(
+    (page, _, sorter) => {
+      let sortField = null;
+      let sortOrder = null;
+      if (sorter && sorter.field && sorter.order) {
+        sortField = sorter.field;
+        sortOrder = sorter.order === "ascend" ? "asc" : "desc";
+        setSelectedSort(sortField);
+        setSortOrder(sortOrder);
+        getTimeSheetReportsDetails({ sort: sortField, sortBy: sortOrder });
+        exportTimesheetReportCSV({ sort: sortField, sortBy: sortOrder });
+      }
+      setPagination({ ...pagination, ...page });
+    },
+    [pagination, getTimeSheetReportsDetails, exportTimesheetReportCSV]
+  );
+
   const chartData = useMemo(() => {
     const projectTypeReportData = projectTypeData.map(
       (entry) => entry.totalLoggedHours
@@ -96,24 +318,17 @@ const TimeSheet = () => {
     const projectTypeReportDatalabelsData = projectTypeData.map(
       (entry) => entry.projectType
     );
-    const departMentData = [];
-    const departMentLogedHours = departmentData.map(
-      (entry) => entry.totalLoggedHours
-    );
     const usersDataLabels = usersData.map((entry) => removeTitle(entry.user));
     const usersLogedHours = usersData.map((entry) => entry.totalLoggedHours);
 
     return {
       projectTypeReportData,
       projectTypeReportDatalabelsData,
-      departMentData,
-      departMentLogedHours,
       usersDataLabels,
       usersLogedHours,
     };
-  }, [projectTypeData, departmentData, usersData]);
+  }, [projectTypeData, usersData]);
 
-  // Memoized chart configurations
   const pieChartConfig = useMemo(() => {
     if (pieeChartData.length === 0) return null;
 
@@ -222,61 +437,9 @@ const TimeSheet = () => {
     chartData.projectTypeReportDatalabelsData,
   ]);
 
-  const verticalBarChartConfig = useMemo(() => {
-    if (departmentData.length === 0) return null;
-
-    return {
-      series: [
-        {
-          name: "Hours",
-          data: chartData.departMentLogedHours,
-        },
-      ],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 350,
-        },
-        colors: ["#008FFB"],
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            borderRadius: 4,
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          formatter: function (val) {
-            return `${val}h`;
-          },
-        },
-        xaxis: {
-          categories: chartData.departMentData,
-        },
-        grid: {
-          xaxis: { lines: { show: false } },
-          yaxis: { lines: { show: true } },
-        },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return `${val} hours`;
-            },
-          },
-        },
-      },
-    };
-  }, [
-    departmentData,
-    chartData.departMentLogedHours,
-    chartData.departMentData,
-  ]);
-
   const verticalBarChartHoursConfig = useMemo(() => {
     if (usersData.length === 0) return null;
 
-    // Generate different colors for each user
     const generateColors = (count) => {
       const baseColors = [
         "#FF4560",
@@ -311,12 +474,10 @@ const TimeSheet = () => {
         "#81ecec",
       ];
 
-      // If we have more users than colors, generate additional colors
       if (count > baseColors.length) {
         const additionalColors = [];
         for (let i = baseColors.length; i < count; i++) {
-          // Generate random colors for additional bars
-          const hue = (i * 137.508) % 360; // Golden angle approximation for better color distribution
+          const hue = (i * 137.508) % 360;
           additionalColors.push(`hsl(${hue}, 70%, 60%)`);
         }
         return [...baseColors, ...additionalColors];
@@ -345,14 +506,14 @@ const TimeSheet = () => {
           bar: {
             horizontal: false,
             borderRadius: 4,
-            distributed: true, // This enables different colors for each bar
+            distributed: true,
           },
         },
         dataLabels: {
           enabled: true,
           style: {
             fontSize: "10px",
-            colors: ["#fff"], // White text on colored bars
+            colors: ["#fff"],
             fontWeight: "bold",
           },
           formatter: function (val) {
@@ -373,7 +534,7 @@ const TimeSheet = () => {
           yaxis: { lines: { show: true } },
         },
         legend: {
-          show: false, // Hide legend since we have distributed colors
+          show: false,
         },
         tooltip: {
           y: {
@@ -386,7 +547,6 @@ const TimeSheet = () => {
     };
   }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels]);
 
-  // Memoized table columns - FIXED SORTING ISSUES
   const columns = useMemo(
     () => [
       {
@@ -428,7 +588,6 @@ const TimeSheet = () => {
             </Link>
           );
         },
-        // FIXED: Handle null/undefined values and use proper string comparison
         sorter: (a, b) => {
           const projectA = a.project || "";
           const projectB = b.project || "";
@@ -457,7 +616,6 @@ const TimeSheet = () => {
           ) : (
             <span className="no-description">-</span>
           ),
-        // FIXED: Handle empty/null descriptions properly
         sorter: (a, b) => {
           const descA = a.descriptions || "";
           const descB = b.descriptions || "";
@@ -479,7 +637,6 @@ const TimeSheet = () => {
             </div>
           );
         },
-        // FIXED: Proper date comparison using Date objects
         sorter: (a, b) => {
           const dateA = new Date(a.logged_date);
           const dateB = new Date(b.logged_date);
@@ -497,7 +654,6 @@ const TimeSheet = () => {
             <span className="time-hours">{record.logged_time}</span>
           </div>
         ),
-        // FIXED: Sort by actual logged hours (numeric) with proper field reference
         sorter: (a, b) => {
           const hoursA = parseFloat(a.logged_hours) || 0;
           const hoursB = parseFloat(b.logged_hours) || 0;
@@ -509,77 +665,14 @@ const TimeSheet = () => {
     [companySlug]
   );
 
-  // Memoized handlers
-  const handleDepartmentSelection = useCallback(
-    (selectedDepartments) => {
-      handleDepartMentChange();
-      setDepartment(selectedDepartments);
-      getUserEmployeeList(selectedDepartments);
-    },
-    [handleDepartMentChange, setDepartment, getUserEmployeeList]
-  );
-
   const handleCsvExport = useCallback(() => {
     const csvRef = document.getElementById("test-table-xls-button");
     csvRef?.click();
   }, []);
 
-  // Memoized filter options
-  const filterOptions = useMemo(
-    () => ({
-      filterOption: (input, option) =>
-        option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0,
-      filterSort: (optionA, optionB) =>
-        optionA.children
-          ?.toLowerCase()
-          .localeCompare(optionB.children?.toLowerCase()),
-    }),
-    []
-  );
-
   const showTotal = useCallback(
     (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
     []
-  );
-
-  // Render methods
-  const renderFilterSelect = useCallback(
-    (
-      placeholder,
-      value,
-      onChange,
-      options,
-      valueKey,
-      labelKey,
-      mode = "multiple"
-    ) => (
-      <div className="filter-select-container">
-        <Select
-          placeholder={placeholder}
-          mode={mode}
-          showSearch
-          value={value}
-          onChange={onChange}
-          className="custom-select"
-          {...filterOptions}
-        >
-          {options.map((item, index) => (
-            <Option
-              key={index}
-              value={item[valueKey]}
-              className="custom-option"
-            >
-              {labelKey === "manager_name"
-                ? removeTitle(item[labelKey])
-                : labelKey === "full_name"
-                ? removeTitle(item[labelKey])
-                : item[labelKey]}
-            </Option>
-          ))}
-        </Select>
-      </div>
-    ),
-    [filterOptions]
   );
 
   const renderChart = useCallback(
@@ -606,7 +699,6 @@ const TimeSheet = () => {
     [chartKey]
   );
 
-  // Sort options for dropdown
   const sortOptions = [
     { key: "user", label: "User" },
     { key: "project", label: "Project" },
@@ -615,7 +707,6 @@ const TimeSheet = () => {
     { key: "logged_time", label: "Hours" },
   ];
 
-  // Action menu items
   const actionMenuItems = [
     {
       key: "sort",
@@ -647,7 +738,19 @@ const TimeSheet = () => {
       key: "reset",
       icon: <ReloadOutlined />,
       label: "Reset",
-      onClick: onReset,
+      onClick: () => {
+        setTechnologies([]);
+        setProjectTypes([]);
+        setManagers([]);
+        setProjects([]);
+        setDepartments([]);
+        setUsers([]);
+        setSelectedSort("logged_date");
+        setSortOrder("asc");
+        setPagination({ ...pagination, current: 1 });
+        getTimeSheetReportsDetails({ sort: "logged_date", sortBy: "asc" });
+        exportTimesheetReportCSV({ sort: "logged_date", sortBy: "asc" });
+      },
     },
   ];
 
@@ -659,13 +762,11 @@ const TimeSheet = () => {
 
   return (
     <Card className="timesheet-card">
-      {/* Header */}
       <div className="page-header">
         <div className="heading-wrapper">
           <div className="heading-main">
             <h2>Timesheet Report</h2>
           </div>
-
           <div className="header-btn">
             <div className="stat-item">
               <ClockCircleOutlined className="stat-icon" />
@@ -688,83 +789,26 @@ const TimeSheet = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="global-search">
         <div className="filters-header">
           <h3>Filters</h3>
         </div>
-        <div className="filter-btn-wrapper ">
-          {renderFilterSelect(
-            "Select Department",
-            value,
-            handleTechnologyChange,
-            technologyList,
-            "_id",
-            "project_tech",
-            { className: "dropdown-button" }
-          )}
-
-          {renderFilterSelect(
-            "Select Project",
-            project,
-            handleProjectChange,
-            projectList,
-            "_id",
-            "title"
-          )}
-
-          {renderFilterSelect(
-            "Select Project Type",
-            projectType,
-            handleTypeChange,
-            projectTypeList,
-            "_id",
-            "project_type"
-          )}
-
-          {renderFilterSelect(
-            "Select Manager",
-            manager,
-            handleManagerChange,
-            projectManagerList,
-            "_id",
-            "manager_name"
-          )}
-
-          {renderFilterSelect(
-            "Select User",
-            user,
-            handleUserChange,
-            userEmployeeList,
-            "_id",
-            "full_name"
-          )}
+        <div className="filter-btn-wrapper">
+          <TimeSheetFilterComponent onFilterChange={onFilterChange} />
         </div>
       </div>
 
-      {/* Charts - Updated Layout */}
       {tableData && tableData.length > 0 && (
         <div className="charts-section">
           <div className="charts-grid">
-            <div className="chart-container">
-              {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-            </div>
-            <div className="chart-container">
-              {renderChart(
-                horizontalBarChartConfig,
-                "bar",
-                "Hours by Project Type"
-              )}
-            </div>
-
-            <div className="chart-container">
-              {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
-            </div>
+            {renderChart(pieChartConfig, "pie", "Hours by Manager")}
+            {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
+            {/* {renderChart(verticalBarChartConfig, "bar", "Hours by Department")} */}
+            {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
           </div>
         </div>
       )}
 
-      {/* Table */}
       {tableData && tableData.length > 0 ? (
         <div className="table-section">
           <div className="table-header">
@@ -781,7 +825,6 @@ const TimeSheet = () => {
           </div>
 
           <div className="table-container">
-            {/* Hidden export elements */}
             <div style={{ display: "none" }}>
               <ReactHTMLTableToExcel
                 id="test-table-xls-button"
@@ -814,20 +857,10 @@ const TimeSheet = () => {
           </div>
         </div>
       ) : (
-        <>
-        {/* <div className="no-data-found">
-          <div className="no-data-content">
-            <ClockCircleOutlined className="no-data-icon" />
-            <h3>No time entries found</h3>
-            <p>Try adjusting your filters or date range</p>
-          </div>
-        </div> */}
         <NoDataFound />
-
-        </>
       )}
     </Card>
   );
 };
 
-export default TimeSheet;
+export default React.memo(TimeSheet);

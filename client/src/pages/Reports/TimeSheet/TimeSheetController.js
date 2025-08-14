@@ -104,12 +104,12 @@ const TimeSheetController = () => {
     getProjectType();
 
     getProjectList();
-    // getDepartmentList();
+    getDepartmentList();
   }, []);
 
   useEffect(() => {
     getUserEmployeeList();
-  }, []);
+  }, [departmentList]);
 
   const handleTechnologyChange = (selectedValues) => {
     setValue(selectedValues);
@@ -342,13 +342,19 @@ const TimeSheetController = () => {
   const getUserEmployeeList = async (values) => {
     try {
       dispatch(showAuthLoader());
-     
+      const reqBody = {
+        departments:
+          values && values.length > 0
+            ? values
+            : departmentList.map((department) => department._id),
+      };
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getEmployees,
+        methodName: Service.postMethod,
+        api_url: Service.getEmployeesDepartmentWise,
+        body: reqBody,
       });
       dispatch(hideAuthLoader());
-      if (response.data.status == 1) {
+      if (response?.data && response?.data?.data) {
         setUserEmployeeList(response.data.data);
       }
     } catch (error) {
@@ -442,7 +448,7 @@ const TimeSheetController = () => {
           (item) => item.totalLoggedHours
         );
         setProjectTyeData(response.data.data.type);
-        // setDepartmentData(response.data.data.department);
+        setDepartmentData(response.data.data.department);
         setUsersData(response.data.data.user);
         setPieChartDataMangerNames(labels);
         setPieChartData(totalHours);
@@ -503,7 +509,7 @@ const TimeSheetController = () => {
         api_url: Service.exportTimeSheetReportCSV,
         body: reqBody,
       });
-      if (response.data.status == 1) {
+      if (response?.data && response?.data?.data) {
         setHtml(response.data.data);
       } else {
       }
@@ -519,7 +525,9 @@ const TimeSheetController = () => {
       technologyList.length &&
       projectManagerList.length &&
       projectTypeList.length &&
-      projectList.length
+      projectList.length &&
+      departmentList.length &&
+      userEmployeeList.length
     ) {
       const requestParams = {
         ...(selectedRange && {
@@ -528,7 +536,6 @@ const TimeSheetController = () => {
         }),
       };
       getTimeSheetReportsDetails(requestParams);
-      exportTimesheetReportCSV(requestParams)
     }
   }, [
     technologyList,

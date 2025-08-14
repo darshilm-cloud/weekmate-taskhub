@@ -138,16 +138,53 @@ exports.getProjects = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
-    const data = await Project.aggregate([
+    const validationSchema = Joi.object({
+      page: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(''),
+    });
+
+    const { error, value } = validationSchema.validate(req.query);
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const { page, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = page && page > 0 ? parseInt(page, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+
+    // Base match conditions
+    const baseMatch = {
+      isDeleted: false,
+      companyId: newObjectId(decodedCompanyId)
+    };
+
+    // Add search condition if provided
+    let searchMatch = {};
+    if (search && search.trim()) {
+      searchMatch = {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { projectId: { $regex: search, $options: "i" } },
+          { descriptions: { $regex: search, $options: "i" } }
+        ]
+      };
+    }
+
+    // Build main aggregation query
+    const mainQuery = [
       {
-        $match: {
-          isDeleted: false,
-          companyId: newObjectId(decodedCompanyId)
-        }
+        $match: baseMatch
       },
       {
         $lookup: {
-          from: "projectstatuses", // or whatever your project_status collection name is
+          from: "projectstatuses",
           localField: "project_status",
           foreignField: "_id",
           as: "project_status"
@@ -158,23 +195,53 @@ exports.getProjects = async (req, res) => {
       },
       {
         $match: {
-          "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+          "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+          ...searchMatch // Add search conditions after lookup
         }
       },
       {
         $project: {
           _id: 1,
           title: 1,
+          projectId: 1,
+          descriptions: 1,
           project_status: 1
         }
       },
       {
         $sort: {
-          resource_name: 1
+          title: 1 // Changed from resource_name to title
         }
       }
-    ]);
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+    ];
+
+    // Get total count for pagination metadata
+    const countQuery = [...mainQuery];
+    countQuery.push({ $count: "total" });
+    const countResult = await Project.aggregate(countQuery);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add pagination if both page and limit are provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push(
+        { $skip: skip },
+        { $limit: limitNum }
+      );
+    }
+
+    const data = await Project.aggregate(mainQuery);
+
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
