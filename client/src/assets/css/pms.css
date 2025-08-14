@@ -4858,11 +4858,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     z-index: 100;
 }
 
-.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .ant-table-content {
-    height: 100%;
-    max-height: calc(100vh - 170px);
-    overflow: auto;
-}
+
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-table-container table {
     border-collapse: collapse;
@@ -5280,10 +5276,8 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     z-index: 100;
 }
 
-[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .ant-table-content {
-    height: 100%;
-    max-height: calc(100vh - 270px);
-    overflow: auto;
+.user-module-wrapper .ant-card-body {
+overflow: unset;
 }
 
 [data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-content .ant-table-container table {
