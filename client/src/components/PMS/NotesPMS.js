@@ -685,13 +685,13 @@ function NotesPMS() {
       });
     }
   };
-  const handleAllFilter = () => {
+  const handleAllFilter = (reset) => {
     if (filterSubscribers === "all") {
       getNotesById(selectedNotebook._id, "all");
     } else if (filterSubscribers === "unassigned") {
       getNotesById(selectedNotebook._id, "unassigned");
     } else {
-      getNotesById(selectedNotebook._id, filterSubscribers);
+      getNotesById(selectedNotebook._id, reset ? [] : filterSubscribers);
     }
     setfilterSubscribersSearchInput("");
     setOpenSubscribers(false);
