@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   }, []);
 
   const dashboardCards = [
-    ...(roleName === "Super Admin"
+    ...(roleName === "Admin"
       ? [
           {
             title: "Total Admin",

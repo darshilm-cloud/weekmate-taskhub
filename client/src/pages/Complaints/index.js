@@ -139,7 +139,7 @@ const Complaints = () => {
     }
   };
 
-  const userHasAccess = useMemo(() => getRoles(["Super Admin", "PC", "TL", "AM"]), []);
+  const userHasAccess = useMemo(() => getRoles(["Admin", "PC", "TL", "AM"]), []);
 
   const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
 

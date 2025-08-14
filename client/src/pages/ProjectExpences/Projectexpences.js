@@ -34,9 +34,9 @@ const { Text } = Typography;
 
 // Constants
 const USER_ROLES = {
-  ADMIN_ROLES: ["Super Admin", "PC", "TL", "Admin", "AM", "User"],
-  EXPENSE_ACCESS_ROLES: ["Admin", "PC", "Super Admin", "AM", "TL"],
-  SUPER_ADMIN: ["Super Admin"],
+  ADMIN_ROLES: ["Admin", "PC", "TL", "Admin", "AM", "User"],
+  EXPENSE_ACCESS_ROLES: ["Admin", "PC", "Admin", "AM", "TL"],
+  SUPER_ADMIN: ["Admin"],
   CLIENT_USER_ID: sideBarContentId2
 };
 

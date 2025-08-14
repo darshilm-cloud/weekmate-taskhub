@@ -151,7 +151,7 @@ const createFilterMenuItems = (getRoles) => {
     },
   ];
 
-  if (getRoles(["Super Admin"])) {
+  if (getRoles(["Admin"])) {
     return [
       ...baseItems,
       {
@@ -614,7 +614,7 @@ const GenericFilterComponent = ({ onFilterChange }) => {
       ((activeFilter === FILTER_TYPES.DEPARTMENT ||
         activeFilter === FILTER_TYPES.MANAGER ||
         activeFilter === FILTER_TYPES.ACCOUNT_MANAGER) &&
-        !getRoles(["Super Admin"]))
+        !getRoles(["Admin"]))
     ) {
       return (
         <FeedbackTypeFilter
@@ -699,7 +699,7 @@ const GenericFilterComponent = ({ onFilterChange }) => {
                 (item.key === FILTER_TYPES.DEPARTMENT ||
                   item.key === FILTER_TYPES.MANAGER ||
                   item.key === FILTER_TYPES.ACCOUNT_MANAGER) &&
-                !getRoles(["Super Admin"])
+                !getRoles(["Admin"])
               )
                 return;
               setActiveFilter(item.key);

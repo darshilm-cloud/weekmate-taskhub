@@ -85,7 +85,7 @@ const getMenuItems = (getRoles) => {
       label: FILTER_CONFIG[FILTER_TYPES.ASSIGNEES].label,
     },
   ];
-  if (getRoles(["Admin", "Super Admin"])) {
+  if (getRoles(["Admin"])) {
     items.unshift(
       {
         key: FILTER_TYPES.ACCOUNT_MANAGER,
@@ -193,7 +193,7 @@ const FilterSection = ({
 const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(
-    getRoles(["Admin", "Super Admin"])
+    getRoles(["Admin"])
       ? FILTER_TYPES.ACCOUNT_MANAGER
       : FILTER_TYPES.TECHNOLOGY
   );
@@ -501,7 +501,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
       !config ||
       ((activeFilter === FILTER_TYPES.ACCOUNT_MANAGER ||
         activeFilter === FILTER_TYPES.MANAGER) &&
-        !getRoles(["Admin", "Super Admin"]))
+        !getRoles(["Admin"]))
     ) {
       return (
         <FilterSection
@@ -568,7 +568,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
                 <div
                   key={item.key}
                   onClick={() =>
-                    getRoles(["Admin", "Super Admin"]) ||
+                    getRoles(["Admin"]) ||
                     ![
                       FILTER_TYPES.ACCOUNT_MANAGER,
                       FILTER_TYPES.MANAGER,

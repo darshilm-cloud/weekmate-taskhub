@@ -159,7 +159,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       //   label: "Dashboard",
       //   onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
       // },
-      getRoles(["Super Admin"]) &&  {
+      getRoles(["Admin"]) &&  {
         key: "Admin_Administrator",
         icon: <AdminIcon />,
         label: "Admins",

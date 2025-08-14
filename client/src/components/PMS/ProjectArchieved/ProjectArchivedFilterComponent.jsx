@@ -84,7 +84,7 @@ const getMenuItems = (getRoles) => {
     { key: FILTER_TYPES.ASSIGNEES, label: FILTER_CONFIG[FILTER_TYPES.ASSIGNEES].label },
     { key: FILTER_TYPES.SORT_BY, label: FILTER_CONFIG[FILTER_TYPES.SORT_BY].label },
   ];
-  if (getRoles(["Admin", "Super Admin"])) {
+  if (getRoles(["Admin"])) {
     items.splice(1, 0, {
       key: FILTER_TYPES.MANAGER,
       label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
@@ -405,6 +405,38 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     }
   }, [activeFilter, filterData, pagination, fetchFilterData, initialLoadComplete]);
 
+  // Add this useEffect to move selected items to top when switching filters
+  useEffect(() => {
+    if (
+      activeFilter &&
+      initialLoadComplete[activeFilter] &&
+      activeFilter !== FILTER_TYPES.SORT_BY
+    ) {
+      const selectedIds = selectedFilters[activeFilter];
+      if (selectedIds && Array.isArray(selectedIds) && selectedIds.length > 0) {
+        setFilterData((prev) => {
+          const items = [...prev[activeFilter]];
+          const selectedItems = [];
+          const unselectedItems = [];
+
+          // Separate selected and unselected items
+          items.forEach((item) => {
+            if (selectedIds.includes(item._id)) {
+              selectedItems.push(item);
+            } else {
+              unselectedItems.push(item);
+            }
+          });
+
+          // Put selected items at the top, followed by unselected items
+          const reorderedItems = [...selectedItems, ...unselectedItems];
+
+          return { ...prev, [activeFilter]: reorderedItems };
+        });
+      }
+    }
+  }, [activeFilter, initialLoadComplete, isPopoverOpen]);
+
   useEffect(() => {
     return () => Object.values(debouncedSearch).forEach((fn) => fn.cancel());
   }, [debouncedSearch]);
@@ -427,7 +459,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     const config = FILTER_CONFIG[activeFilter];
     if (
       !config ||
-      (activeFilter === FILTER_TYPES.MANAGER && !getRoles(["Admin", "Super Admin"]))
+      (activeFilter === FILTER_TYPES.MANAGER && !getRoles(["Admin"]))
     ) {
       return (
         <FilterSection
@@ -493,7 +525,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
                 <div
                   key={item.key}
                   onClick={() =>
-                    getRoles(["Admin", "Super Admin"]) ||
+                    getRoles(["Admin"]) ||
                     item.key !== FILTER_TYPES.MANAGER
                       ? setActiveFilter(item.key)
                       : null
@@ -501,6 +533,11 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
                   className={`filter-menu-item ${activeFilter === item.key ? "active" : ""}`}
                 >
                   <span>{item.label}</span>
+                  {(item.key === FILTER_TYPES.SORT_BY
+                    ? selectedFilters[item.key] !== "createdAt"
+                    : !_.isEmpty(selectedFilters[item.key])) && (
+                    <Badge size="small" color="#1890ff" />
+                  )}
                 </div>
               ))}
             </div>

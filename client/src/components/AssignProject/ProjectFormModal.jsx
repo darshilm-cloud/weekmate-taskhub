@@ -711,7 +711,7 @@ const ProjectFormModal = ({
                     name="estimatedHours"
                     rules={[{ required: true, message: "Please provide estimated hours" }]}
                   >
-                    <Input disabled={modalMode !== "add" ? !getRoles(["Admin", "Super Admin"]) : false} type="number" min={0} />
+                    <Input disabled={modalMode !== "add" ? !getRoles(["Admin"]) : false} type="number" min={0} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
