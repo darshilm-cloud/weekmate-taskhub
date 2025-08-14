@@ -19,53 +19,75 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
-import EmployeeFilterComponent from "./EmployeeFilterComponent";
+import ClientFilterComponent from "./ClientFilterComponent";
 
 const EmployeeListTabClient = () => {
-  const [formData] = Form.useForm();
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
 
-  // Add ref for filter component
-  const filterComponentRef = useRef();
-
-  //search , sort , pagination
+  // Search, sort, pagination
   const [seachEnabled, setSearchEnabled] = useState(false);
+  const [isListLoading, setisListLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [sortBy, setSortBy] = useState("desc");
+  const [sortBy, setSortBy] = useState({sortBy:"desc"});
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  //check
+  // Check
   let [editid, setEditid] = useState();
-  const [client, setClient] = useState([]);
 
-  //client listing
+  // Client listing
   const [clientList, setClientList] = useState([]);
 
-  //setting prefilled values in edit form
+  // Setting prefilled values in edit form
   const [prefilled, setPrefilled] = useState({});
 
-  //filter data form
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  //setting filter data
-  let [filterData, setFilterData] = useState(null);
+  // ✅ Updated: Replace filterData with appliedFilters to match ClientFilterComponent format
+  const [appliedFilters, setAppliedFilters] = useState({
+    client: "",
+    status: ""
+  });
 
-  //add edit form
+  // Add edit form
   const [addemployee] = Form.useForm();
   const [addModal, setaddModal] = useState(false);
 
-  //set the modal mode
+  // Set the modal mode
   const [modalMode, setModalMode] = useState("add");
 
-  //set delete api response
+  // Set delete api response
   const [deletedata, setdelete] = useState();
 
-  //update client api
+  // ✅ NEW: Handle filter changes from ClientFilterComponent
+  const handleFilterChange = (filterValues) => {
+    console.log('Filters applied:', filterValues);
+    setAppliedFilters(filterValues);
+    // Reset pagination to first page when filters change
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  // ✅ Updated: Clear all filters function
+  const clearAllFilters = () => {
+    console.log("Clear Filter button clicked");
+    
+    // Reset applied filters
+    setAppliedFilters({
+      client: "",
+      status: ""
+    });
+    
+    // Reset pagination
+    setPagination({ ...pagination, current: 1 });
+    
+    // Note: The ClientFilterComponent manages its own internal state
+    // When filters are cleared, it will call handleFilterChange with empty values
+  };
+
+  // Update client api
   const UpdateClient = async (values) => {
     const params = prefilled._id;
     try {
@@ -99,7 +121,7 @@ const EmployeeListTabClient = () => {
     getClientList();
   };
 
-  //add client api
+  // Add client api
   const addemp = async (values) => {
     const fullName = `${values.first_name} ${values.last_name}`;
     const reqBody = {
@@ -122,7 +144,6 @@ const EmployeeListTabClient = () => {
       if (response.data.statusCode !== 201) {
         return message.error(response.data.message);
       }
-      message.success("Client added successfully!");
     } catch (error) {
       console.log(error);
     }
@@ -137,12 +158,10 @@ const EmployeeListTabClient = () => {
       extra_details: "",
       status: null,
     });
-    getClientList();
   };
 
-  //cancel
+  // Cancel
   const handleCancel = () => {
-    setIsFilterModalOpen(false);
     setaddModal(false);
     addemployee.setFieldsValue({
       first_name: "",
@@ -156,13 +175,12 @@ const EmployeeListTabClient = () => {
     });
   };
 
-  //ok
+  // Ok
   const handleOk = () => {
-    setIsFilterModalOpen(true);
     setaddModal(false);
   };
 
-  //delete client api
+  // Delete client api
   const handleDelete = async (record) => {
     const params = record._id;
 
@@ -174,7 +192,6 @@ const EmployeeListTabClient = () => {
       if (response.data.statusCode == 200) {
         setdelete(response.data);
         message.success(response.data.message);
-        getClientList();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }
@@ -183,12 +200,7 @@ const EmployeeListTabClient = () => {
     }
   };
 
-  //filter button modal
-  const openFilterModel = () => {
-    setIsFilterModalOpen(true);
-  };
-
-  //add button modal
+  // Add button modal
   const openAddModal = () => {
     addemployee.setFieldsValue({
       first_name: "",
@@ -203,6 +215,7 @@ const EmployeeListTabClient = () => {
     setModalMode("add");
   };
 
+  // ✅ Updated: Export CSV with new filter format
   const exportCSV = async () => {
     try {
       const reqBody = {
@@ -219,10 +232,15 @@ const EmployeeListTabClient = () => {
         reqBody.search = searchText;
         setSearchEnabled(true);
       }
-      if (filterData) {
-        reqBody.isActivate = filterData.status == "Active" ? true : false;
-        reqBody.user_id = filterData.client;
+      
+      // ✅ Updated: Use appliedFilters instead of filterData
+      if (appliedFilters.status) {
+        reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
       }
+      if (appliedFilters.client) {
+        reqBody.user_id = appliedFilters.client;
+      }
+      
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -321,7 +339,7 @@ const EmployeeListTabClient = () => {
     },
   };
 
-  //columns
+  // Columns (no changes needed here)
   const columns1 = [
     {
       title: "Name",
@@ -331,8 +349,8 @@ const EmployeeListTabClient = () => {
       render: (text, record) => {
         const full_name = record.full_name;
         return (
-          <span style={{ textTransform: "capitalize" }}>
-            {removeTitle(full_name)}
+          <span style={ { textTransform: "capitalize" } }>
+            { removeTitle(full_name) }
           </span>
         );
       },
@@ -343,7 +361,7 @@ const EmployeeListTabClient = () => {
       key: "email",
       width: 200,
       render: (_, record) => {
-        return <span>{record.email}</span>;
+        return <span>{ record.email }</span>;
       },
     },
     {
@@ -353,8 +371,8 @@ const EmployeeListTabClient = () => {
       width: 300,
       render: (_, record) => {
         return (
-          <span style={{ textTransform: "capitalize" }}>
-            {record.company_name}
+          <span style={ { textTransform: "capitalize" } }>
+            { record.company_name }
           </span>
         );
       },
@@ -366,8 +384,8 @@ const EmployeeListTabClient = () => {
       width: 200,
       render: (_, record) => {
         return (
-          <span style={{ textTransform: "capitalize" }}>
-            {record.phone_number}
+          <span style={ { textTransform: "capitalize" } }>
+            { record.phone_number }
           </span>
         );
       },
@@ -380,8 +398,8 @@ const EmployeeListTabClient = () => {
       render: (text, record) => {
         return record?._id == editid ? (
           <Select
-            defaultValue={record.isActivate ? "Active" : "Not Active"}
-            options={[
+            defaultValue={ record.isActivate ? "Active" : "Not Active" }
+            options={ [
               {
                 value: true,
                 label: "Active",
@@ -390,11 +408,11 @@ const EmployeeListTabClient = () => {
                 value: false,
                 label: "Not Active",
               },
-            ]}
+            ] }
           />
         ) : (
-          <span style={{ textTransform: "capitalize" }}>
-            {record.isActivate ? "Active" : "Not Active"}
+          <span style={ { textTransform: "capitalize" } }>
+            { record.isActivate ? "Active" : "Not Active" }
           </span>
         );
       },
@@ -406,19 +424,19 @@ const EmployeeListTabClient = () => {
       render: (text, record, index) => (
         <div
           className="action-edit-btn"
-          style={{
+          style={ {
             display: "flex",
             flexwrap: "wrap",
-          }}
+          } }
         >
           <Button type="link edit">
             <EditOutlined
               className="edit-btn"
-              style={{ color: "green" }}
-              onClick={() => {
+              style={ { color: "green" } }
+              onClick={ () => {
                 showModal(record._id);
                 setModalMode("Edit");
-              }}
+              } }
             />
           </Button>
 
@@ -428,23 +446,23 @@ const EmployeeListTabClient = () => {
             cancelText="No"
             onConfirm={() => handleDelete(record)}
           >
-            <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
+            <DeleteOutlined className="edit-btn" style={ { color: "red" } } />
           </Popconfirm>
         </div>
       ),
     },
   ];
 
-  //footer details
+  // Footer details
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
+        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
       </label>
     );
   };
 
-  //pagination
+  // Pagination
   const handleTableChange = (page, filters, sorter) => {
     setPagination({ ...pagination, ...page });
     const { field, order } = sorter;
@@ -455,9 +473,10 @@ const EmployeeListTabClient = () => {
     });
   };
 
-  //client listing
+  // ✅ Updated: Client listing with new filter format
   const getClientList = async () => {
     try {
+      setisListLoading(true);
       const reqBody = {
         pageNo: pagination.current,
         limit: pagination.pageSize,
@@ -474,12 +493,14 @@ const EmployeeListTabClient = () => {
         setSearchEnabled(true);
       }
 
-      if (filterData) {
-        reqBody.user_id = filterData.client;
+      // ✅ Updated: Use appliedFilters instead of filterData
+      if (appliedFilters.client) {
+        reqBody.user_id = appliedFilters.client;
       }
-      if (filterData?.status) {
-        reqBody.isActivate = filterData.status == "Active" ? true : false;
+      if (appliedFilters.status) {
+        reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
       }
+      
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -498,37 +519,16 @@ const EmployeeListTabClient = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally{
+      setisListLoading(false);
     }
   };
 
-  //emp dropdown
-  const getMasterClient = async () => {
-    const reqBody = {
-      isDropdown: false,
-    };
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getclient,
-        body: reqBody,
-      });
-
-      if (response?.data && response?.data?.data) {
-        setClient(response.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getMasterClient();
-  }, [addModal]);
-
+  // ✅ Updated: useEffect dependency changed from filterData to appliedFilters
   useEffect(() => {
     getClientList();
   }, [
-    filterData,
+    appliedFilters, // Changed from filterData to appliedFilters
     searchText,
     sortBy.sort,
     sortBy.sortBy,
@@ -565,187 +565,125 @@ const EmployeeListTabClient = () => {
     setPagination({ ...pagination, current: 1 });
   };
 
-  //filter modal onFinish function
-  const filterEmp = async (values) => {
-    console.log("Filter applied with values:", values);
-    setFilterData(values);
-    setIsFilterModalOpen(false);
-    setPagination({ ...pagination, current: 1 });
-  };
-
-  //reset of filter form - FIXED VERSION
-  const onReset = () => {
-    console.log("Parent onReset called");
-
-    // Reset form data
-    formData.resetFields();
-
-    // Reset filter data
-    setFilterData(null);
-
-    // Reset pagination to first page
-    setPagination({ ...pagination, current: 1 });
-
-    // Reset filter component using ref
-    if (filterComponentRef.current) {
-      filterComponentRef.current.resetFilters();
-    }
-  };
-
-  // Clear all filters function
-  const clearAllFilters = () => {
-    console.log("Clear Filter button clicked");
-
-    // Reset form data
-    formData.resetFields();
-
-    // Reset filter data
-    setFilterData(null);
-
-    // Reset pagination
-    setPagination({ ...pagination, current: 1 });
-
-    // Reset filter component
-    if (filterComponentRef.current) {
-      filterComponentRef.current.resetFilters();
-    }
+  // ✅ Helper function to check if any filters are applied
+  const hasActiveFilters = () => {
+    return appliedFilters.client !== "" || appliedFilters.status !== "";
   };
 
   return (
     <>
-      <div className="profile-sub-head global-search clint-module">
-        <div className="head-box-inner">
+    
+        <div className="global-search">
           <Search
-            ref={searchRef}
+            ref={ searchRef }
             placeholder="Search..."
             className="client-search-bar"
-            onSearch={onSearch}
-            onChange={(e) => {
+            onSearch={ onSearch }
+            onChange={ (e) => {
               setPagination({ ...pagination, current: 1 });
-            }}
-            onKeyUp={resetSearchFilter}
+            } }
+            onKeyUp={ resetSearchFilter }
+        style={{width:"200px"}}
           />
           <div className="filter-btn-wrapper">
             <Button onClick={openAddModal} type="primary" className="btn">
               <i className="fi fi-rr-plus-small"></i> Add
             </Button>
-
-            <EmployeeFilterComponent
-              ref={filterComponentRef} // Add ref here
-              formData={formData}
-              filterEmp={filterEmp}
-              onReset={onReset}
-              handleCancel={handleCancel}
-              client={client}
-              formItemLayout={formItemLayout}
+            
+            {/* ✅ Updated: Connect ClientFilterComponent properly */}
+            <ClientFilterComponent
+              onFilterChange={handleFilterChange}
             />
-
-            <Button
+            
+            {/* ✅ Updated: Clear Filter button now uses hasActiveFilters */}
+            {/* <Button
               className="ant-delete"
               onClick={clearAllFilters}
-              disabled={filterData == null}
+              disabled={!hasActiveFilters()}
             >
               Clear Filter
-            </Button>
+            </Button> */}
 
             <Button
               className="mr2 export-btn"
               id="exportButton"
-              disabled={pagination.total == 0}
+       
+              disabled={pagination.total != 0 ? false : true}
               onClick={exportCSV}
             >
               Export CSV
             </Button>
           </div>
         </div>
-      </div>
-
+    
+      
       <div className="block-table-content client-table-block">
         <Table
           columns={columns1}
+          loading={isListLoading}
           pagination={{
             showSizeChanger: true,
             ...pagination,
-          }}
-          footer={getFooterDetails}
-          onChange={handleTableChange}
-          dataSource={clientList}
+          } }
+          footer={ getFooterDetails }
+          onChange={ handleTableChange }
+          dataSource={ clientList }
         />
       </div>
 
-      {/* add edit button modal */}
+      {/* Add edit button modal */}
       <Modal
-        open={addModal}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        title={modalMode === "add" ? "Add Client" : "Edit Client"}
         className="add-and-edit-client"
-        width={800}
-        footer={[
+        title={ modalMode === "add" ? "Add Client" : "Edit Client" }
+        open={ addModal }
+        width={ 800 }
+        footer={ [
+          <Button type="primary" htmlType="submit">
+            { modalMode === "add" ? "Add" : "Save" }
+          </Button>,
           <Button
-            key="cancel"
-            onClick={handleCancel}
-            className="delete-btn"
-            size="large"
+            className="ant-delete"
+            type="primary"
+            onClick={ handleCancel }
           >
             Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            onClick={() => addemployee.submit()}
-          >
-            {modalMode === "add" ? "Add" : "Save"}
-          </Button>,
-        ]}
+          </Button>
+        ] }
+        onOk={ handleOk }
+        onCancel={ handleCancel }
       >
-        <div className="overview-modal-wrapper">
+
+        <div className="overview-modal-wrapper ">
+
           <Form
-            form={addemployee}
-            layout="vertical"
-            onFinish={(values) => {
+            form={ addemployee }
+   layout="vertical"
+            onFinish={ (values) => {
               modalMode === "add" ? addemp(values) : UpdateClient(values);
-            }}
+            } }
           >
-            <Row gutter={[0, 0]}>
-              {/* First Name and Last Name */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+
+             <Row gutter={ [0, 0] }>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
-                  label="First Name"
+                  label="First name"
                   name="first_name"
-                  rules={[
+                  rules={ [
                     {
                       required: true,
                       message: "Please enter first name",
                     },
-                  ]}
+                  ] }
                 >
-                  <Input placeholder="Enter First Name" size="large" />
+                  <Input placeholder="Enter First Name" />
                 </Form.Item>
               </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
-                  label="Last Name"
-                  name="last_name"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter last name",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Enter Last Name" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Phone Number and Company Name */}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  label="Phone Number"
+                  label="Phone number"
                   name="phone_number"
-                  rules={[
+                  rules={ [
                     {
                       len: 10,
                       message: "Phone number must be 10 digits",
@@ -754,61 +692,100 @@ const EmployeeListTabClient = () => {
                       pattern: /^[0-9]+$/,
                       message: "Phone number must contain only digits",
                     },
-                  ]}
+                  ] }
                 >
-                  <Input placeholder="Enter Phone Number" size="large" />
+                  <Input placeholder="Enter Phone Number" />
                 </Form.Item>
               </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  label="Company Name"
-                  name="company_name"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter company name",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Enter Company Name" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Email and Password/Status */}
-              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Email"
                   name="email"
-                  rules={[
+                  rules={ [
                     {
                       required: true,
                       message: "Please Enter email",
                       type: "email",
                     },
-                  ]}
+                  ] }
                 >
-                  <Input placeholder="Enter Email" size="large" />
+                  <Input placeholder="Enter Email" />
+                </Form.Item>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+
+                <Form.Item label="Extra Info" name="extra_details">
+                  <TextArea />
                 </Form.Item>
               </Col>
 
-              <Col xs={24} sm={24} md={12} lg={12}>
-                {modalMode === "add" && (
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+                <Form.Item
+                  label="Last Name"
+                  name="last_name"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please enter last name",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Last Name" />
+                </Form.Item>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+                <Form.Item
+                  label="Company Name"
+                  name="company_name"
+                  rules={ [
+                    {
+                      required: true,
+                      message: "Please enter company name",
+                    },
+                  ] }
+                >
+                  <Input placeholder="Enter Company Name" />
+                </Form.Item>
+              </Col>
+                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+                <Form.Item label="Status" name="status">
+                  <Select
+                    onChange={ (e) => console.log(e, "eeee") }
+                    options={ [
+                      {
+                        value: "Active",
+                        label: "Active",
+                      },
+                      {
+                        value: "Not Active",
+                        label: "Not Active",
+                      },
+                    ] }
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+
+                { modalMode === "add" && (
                   <Form.Item
+                    className=" client-input-password"
                     label="Password"
                     name="plain_password"
-                    rules={passwordRules}
+                    rules={ passwordRules }
                   >
                     <Input
                       placeholder="Enter Password"
-                      type={passwordVisible ? "text" : "password"}
-                      min={8}
-                      size="large"
+                      type={ passwordVisible ? "text" : "password" }
+                      min={ 8 }
                       autoComplete="off"
                       suffix={
                         <Button
                           type="link"
-                          onClick={togglePasswordVisibility}
+                          onClick={ togglePasswordVisibility }
                           icon={
                             passwordVisible ? (
                               <EyeInvisibleOutlined />
@@ -820,159 +797,13 @@ const EmployeeListTabClient = () => {
                       }
                     />
                   </Form.Item>
-                )}
-
-                {modalMode === "edit" && (
-                  <Form.Item label="Status" name="status">
-                    <Select
-                      placeholder="Select Status"
-                      size="large"
-                      onChange={(e) => console.log(e, "eeee")}
-                      options={[
-                        {
-                          value: "Active",
-                          label: "Active",
-                        },
-                        {
-                          value: "Not Active",
-                          label: "Not Active",
-                        },
-                      ]}
-                    />
-                  </Form.Item>
-                )}
+                ) }
               </Col>
-
-              {/* Status for Add Mode */}
-              {modalMode === "add" && (
-                <Col xs={24} sm={24} md={12} lg={12}>
-                  <Form.Item label="Status" name="status">
-                    <Select
-                      placeholder="Select Status"
-                      size="large"
-                      onChange={(e) => console.log(e, "eeee")}
-                      options={[
-                        {
-                          value: "Active",
-                          label: "Active",
-                        },
-                        {
-                          value: "Not Active",
-                          label: "Not Active",
-                        },
-                      ]}
-                    />
-                  </Form.Item>
-                </Col>
-              )}
-
-              {/* Extra Info - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Extra Info" name="extra_details">
-                  <TextArea
-                    placeholder="Enter additional details"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
+            
             </Row>
-          </Form>
-        </div>
-      </Modal>
 
-      {/* filter modal */}
-      <Modal
-        title="Filter"
-        width={1000}
-        open={isFilterModalOpen}
-        footer={false}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <div className="filter-pop-wrapper">
-          <Row>
-            <Col span={24}>
-              <Form form={formData} {...formItemLayout} onFinish={filterEmp}>
-                <div className="inout-employee">
-                  <Row>
-                    <Col sm={24} lg={12}>
-                      <div>
-                        <Form.Item label="Clients" name="client">
-                          <Select
-                            size="large"
-                            showSearch
-                            filterOption={(input, option) =>
-                              option?.children
-                                .toLowerCase()
-                                .indexOf(input.toLowerCase()) >= 0
-                            }
-                            filterSort={(optionA, optionB) =>
-                              optionA?.children
-                                .toLowerCase()
-                                .localeCompare(optionB?.children?.toLowerCase())
-                            }
-                            onChange={(e) => {
-                              let data = client.filter((val) => val._id == e);
-                              formData.setFieldsValue({
-                                client: data[0]?._id,
-                              });
-                            }}
-                          >
-                            {client.map((item, index) => (
-                              <option
-                                key={index}
-                                value={item?._id}
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                {item?.full_name}
-                              </option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-                      </div>
-                    </Col>
-                    <Col sm={24} lg={12}>
-                      <div>
-                        <Form.Item label="Status" name="status">
-                          <Select
-                            options={[
-                              {
-                                value: "Active",
-                                label: "Active",
-                              },
-                              {
-                                value: "Not Active",
-                                label: "Not Active",
-                              },
-                            ]}
-                          />
-                        </Form.Item>
-                      </div>
-                    </Col>
-                  </Row>
-                  <div className="filter-btn-wrapper">
-                    <Button
-                      className="ant-btn-primary"
-                      type="primary"
-                      htmlType="submit"
-                    >
-                      Apply
-                    </Button>
-                    <Button type="primary" onClick={onReset}>
-                      Reset
-                    </Button>
-                    <Button
-                      type="primary"
-                      onClick={handleCancel}
-                      className="ant-delete"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </Form>
-            </Col>
-          </Row>
+          </Form>
+
         </div>
       </Modal>
     </>

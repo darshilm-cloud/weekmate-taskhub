@@ -23,7 +23,7 @@
 }
 
 .user-module-wrapper .ant-card-body {
-    height: calc(100vh - 80px);
+    height: calc(100vh - 70px);
     max-height: calc(100vh - 70px);
 }
 

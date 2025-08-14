@@ -1,475 +1,595 @@
-import React, { useState, useMemo, useEffect } from "react";
-import {
-  Button,
-  Popover,
-  Checkbox,
-  Radio,
-  Input,
-  Avatar,
-  Form,
-  Badge,
-  Divider,
-  message,
-} from "antd";
-import { FilterOutlined, UserOutlined } from "@ant-design/icons";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { Button, Popover, Checkbox, Input, Badge, Divider, Spin } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
+import InfiniteScroll from "react-infinite-scroll-component";
+import _ from "lodash";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
+import Service from "../../service";
+import { isEmpty } from "lodash";
 
 const { Search } = Input;
 
-// Constants
+// Filter types
 const FILTER_TYPES = {
-  ACCOUNTMANAGER: "account_manager",
+  ACCOUNT_MANAGER: "account_manager",
   MANAGER: "manager",
   TECHNOLOGY: "technology",
-  PROJECTTYPE: "project_type",
-  ASSIGNEES: "assignees"
+  PROJECT_TYPE: "project_type",
+  ASSIGNEES: "assignees",
 };
 
-// Create dynamic filter menu items based on role
-const createFilterMenuItems = (getRoles) => {
-  const baseItems = [
-    { key: FILTER_TYPES.TECHNOLOGY, label: "Department" },
-    { key: FILTER_TYPES.PROJECTTYPE, label: "Project Type" },
-    { key: FILTER_TYPES.ASSIGNEES, label: "Assignees" },
+// API and pagination config
+const FILTER_CONFIG = {
+  [FILTER_TYPES.ACCOUNT_MANAGER]: {
+    api: Service.getAccountManager,
+    method: Service.getMethod,
+    limit: 20,
+    label: "Account Manager",
+    getName: (item) => removeTitle(item?.full_name),
+    skipParam: "skipAccountManager",
+    searchKey: "acc_manager",
+  },
+  [FILTER_TYPES.MANAGER]: {
+    api: Service.getProjectManager,
+    method: Service.getMethod,
+    limit: 20,
+    label: "Project Manager",
+    getName: (item) => removeTitle(item?.manager_name),
+    skipParam: "skipManager",
+    searchKey: "manager",
+  },
+  [FILTER_TYPES.TECHNOLOGY]: {
+    api: Service.getprojectTech,
+    method: Service.postMethod,
+    limit: 20,
+    body: { sortBy: "desc", isDropdown: false },
+    label: "Department",
+    getName: (item) => item.project_tech,
+    skipParam: "skipTechnology",
+    searchKey: "technology",
+  },
+  [FILTER_TYPES.PROJECT_TYPE]: {
+    api: Service.getProjectListing,
+    method: Service.postMethod,
+    limit: 20,
+    label: "Project Type",
+    getName: (item) => item?.project_type,
+    skipParam: "skipProjectType",
+    searchKey: "projectType",
+  },
+  [FILTER_TYPES.ASSIGNEES]: {
+    api: Service.getEmployees,
+    method: Service.getMethod,
+    limit: 20,
+    label: "Assignees",
+    getName: (item) => removeTitle(item?.full_name),
+    skipParam: "skipAssignees",
+    searchKey: "assignees",
+  },
+};
+
+// Filter menu items based on roles
+const getMenuItems = (getRoles) => {
+  const items = [
+    {
+      key: FILTER_TYPES.TECHNOLOGY,
+      label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label,
+    },
+    {
+      key: FILTER_TYPES.PROJECT_TYPE,
+      label: FILTER_CONFIG[FILTER_TYPES.PROJECT_TYPE].label,
+    },
+    {
+      key: FILTER_TYPES.ASSIGNEES,
+      label: FILTER_CONFIG[FILTER_TYPES.ASSIGNEES].label,
+    },
   ];
-
-  // Add admin-only filters at the beginning
-  if (getRoles(["Admin"])) {
-    return [
-      { key: FILTER_TYPES.ACCOUNTMANAGER, label: "Account Manager" },
-      { key: FILTER_TYPES.MANAGER, label: "Project Manager" },
-      ...baseItems
-    ];
+  if (getRoles(["Admin", "Super Admin"])) {
+    items.unshift(
+      {
+        key: FILTER_TYPES.ACCOUNT_MANAGER,
+        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      },
+      {
+        key: FILTER_TYPES.MANAGER,
+        label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
+      }
+    );
   }
-
-  return baseItems;
+  return items;
 };
 
-const AssignProjectFilter = ({
-  // Account Manager props
-  filteredAccManagerList,
-  searchAccManager,
-  handleSearchAccManager,
-  acc_manager,
-  setAccManager,
-  
-  // Manager props
-  filteredManagerList,
-  searchManager,
-  handleSearchManager,
-  manager,
-  setManager,
-  
-  // Technology props
-  filteredTechnologyList,
-  searchTechnology,
-  handleSearchTechnology,
-  technology,
-  setTechnology,
-  
-  // Project Type props
-  projectTypeList,
-  projectType,
-  setProjectType,
-  
-  // Assignees props
-  filteredAssigneesList,
-  searchAssignees,
-  handleSearchTermAssignees,
-  assignees,
-  setAssignees,
-  
-  // Role check function
-  getRoles,
-  
-  // Common props
-  handleFilters,
-  getProjectListing,
-}) => {
-  // Create dynamic menu items based on role
-  const FILTER_MENU_ITEMS = useMemo(() => createFilterMenuItems(getRoles), [getRoles]);
-  
-  // UI state
+// FilterSection component
+const FilterSection = ({
+  config,
+  items,
+  selectedItems,
+  pagination,
+  searchTerm,
+  onSearch,
+  onSelect,
+  onLoadMore,
+  onApply,
+  onReset,
+  isInitialLoadComplete,
+}) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">{config.label}</h4>
+    <div className="filter-search">
+      <Search
+        placeholder={`Search ${config.label.toLowerCase()}...`}
+        value={searchTerm}
+        onChange={(e) => onSearch(e.target.value)}
+        size="small"
+        loading={pagination.loading && pagination.page === 1}
+      />
+    </div>
+    <InfiniteScroll
+      dataLength={items.length}
+      next={onLoadMore}
+      hasMore={isInitialLoadComplete && pagination.hasMore}
+      loader={
+        pagination.loading && pagination.page > 1 ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "16px 0",
+              alignItems: "center",
+            }}
+          >
+            <Spin size="small" margin={{ margin: 0 }} />
+            <span
+              style={{ marginLeft: "8px", fontSize: "12px", color: "#666" }}
+            >
+              Loading more...
+            </span>
+          </div>
+        ) : null
+      }
+      height={180}
+      style={{ paddingRight: "8px" }}
+      scrollThreshold={0.9} // Increased to prevent premature fetches
+    >
+      {items.map((item) => (
+        <div
+          key={item._id || item.project_tech || item.project_type}
+          className={`assignee-item ${
+            selectedItems.includes(item._id) ? "selected" : ""
+          }`}
+        >
+          <Checkbox
+            checked={selectedItems.includes(item._id)}
+            onChange={() => onSelect(item)}
+          />
+          <span>{config.getName(item)}</span>
+        </div>
+      ))}
+      {items.length === 0 && !pagination.loading && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "16px 0",
+            fontSize: "12px",
+            color: "#999",
+          }}
+        >
+          {searchTerm ? "No items found" : "No items available"}
+        </div>
+      )}
+    </InfiniteScroll>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
+const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilterType, setActiveFilterType] = useState(() => {
-    return getRoles(["Admin"]) ? FILTER_TYPES.ACCOUNTMANAGER : FILTER_TYPES.TECHNOLOGY;
+  const [activeFilter, setActiveFilter] = useState(
+    getRoles(["Admin", "Super Admin"])
+      ? FILTER_TYPES.ACCOUNT_MANAGER
+      : FILTER_TYPES.TECHNOLOGY
+  );
+  const [filterData, setFilterData] = useState({
+    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+    [FILTER_TYPES.MANAGER]: [],
+    [FILTER_TYPES.TECHNOLOGY]: [],
+    [FILTER_TYPES.PROJECT_TYPE]: [],
+    [FILTER_TYPES.ASSIGNEES]: [],
+  });
+  const [selectedFilters, setSelectedFilters] = useState({
+    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+    [FILTER_TYPES.MANAGER]: [],
+    [FILTER_TYPES.TECHNOLOGY]: [],
+    [FILTER_TYPES.PROJECT_TYPE]: [],
+    [FILTER_TYPES.ASSIGNEES]: [],
+  });
+  const [searchTerms, setSearchTerms] = useState({
+    [FILTER_TYPES.ACCOUNT_MANAGER]: "",
+    [FILTER_TYPES.MANAGER]: "",
+    [FILTER_TYPES.TECHNOLOGY]: "",
+    [FILTER_TYPES.PROJECT_TYPE]: "",
+    [FILTER_TYPES.ASSIGNEES]: "",
+  });
+  const [pagination, setPagination] = useState({
+    [FILTER_TYPES.ACCOUNT_MANAGER]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.MANAGER]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.TECHNOLOGY]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.PROJECT_TYPE]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.ASSIGNEES]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+  });
+  const [initialLoadComplete, setInitialLoadComplete] = useState({
+    [FILTER_TYPES.ACCOUNT_MANAGER]: false,
+    [FILTER_TYPES.MANAGER]: false,
+    [FILTER_TYPES.TECHNOLOGY]: false,
+    [FILTER_TYPES.PROJECT_TYPE]: false,
+    [FILTER_TYPES.ASSIGNEES]: false,
   });
 
-  // Active filters count calculation with conditional checks
   const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    
-    // Only count admin filters if user has admin role
-    if (getRoles(["Admin"])) {
-      if (Array.isArray(acc_manager) && acc_manager.length > 0) count++;
-      if (Array.isArray(manager) && manager.length > 0) count++;
+    return Object.values(selectedFilters).reduce(
+      (count, filters) => count + (filters.length > 0 ? 1 : 0),
+      0
+    );
+  }, [selectedFilters]);
+
+  const fetchFilterData = useCallback(
+    async (filterType, page = 1, search = "", reset = false) => {
+      const config = FILTER_CONFIG[filterType];
+      if (
+        !config ||
+        pagination[filterType].loading ||
+        (!reset && !pagination[filterType].hasMore)
+      )
+        return;
+
+      setPagination((prev) => ({
+        ...prev,
+        [filterType]: { ...prev[filterType], loading: true },
+      }));
+
+      try {
+        const apiUrl =
+          config.method === Service.getMethod
+            ? `${config.api}?page=${page}&limit=${config.limit}&search=${search}`
+            : config.api;
+        const body =
+          config.method === Service.postMethod
+            ? { ...config.body, pageNo: page, limit: config.limit, search }
+            : {};
+
+        const response = await Service.makeAPICall({
+          methodName: config.method,
+          api_url: apiUrl,
+          body,
+        });
+
+        const newData = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : Array.isArray(response?.data)
+          ? response.data
+          : [];
+        const metadata = response?.data?.metadata || {
+          total: newData.length,
+          totalPages: 1,
+        };
+
+        setFilterData((prev) => ({
+          ...prev,
+          [filterType]: reset ? newData : [...prev[filterType], ...newData],
+        }));
+
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: {
+            ...prev[filterType],
+            page,
+            total: metadata.total || newData.length,
+            hasMore:
+              newData.length > 0 &&
+              page < (metadata.totalPages || 1) &&
+              newData.length >= config.limit,
+            loading: false,
+          },
+        }));
+
+        if (page === 1) {
+          setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+        }
+      } catch (error) {
+        console.error(`Error fetching ${filterType}:`, error);
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: { ...prev[filterType], loading: false, hasMore: false },
+        }));
+        if (page === 1) {
+          setFilterData((prev) => ({ ...prev, [filterType]: [] }));
+          setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+        }
+      }
+    },
+    [pagination]
+  );
+
+  const debouncedSearch = useMemo(() => {
+    const functions = {};
+    Object.keys(FILTER_TYPES).forEach((key) => {
+      functions[FILTER_TYPES[key]] = _.debounce((value) => {
+        setPagination((prev) => ({
+          ...prev,
+          [FILTER_TYPES[key]]: {
+            ...prev[FILTER_TYPES[key]],
+            page: 1,
+            hasMore: true,
+          },
+        }));
+        setFilterData((prev) => ({ ...prev, [FILTER_TYPES[key]]: [] }));
+        setInitialLoadComplete((prev) => ({
+          ...prev,
+          [FILTER_TYPES[key]]: false,
+        }));
+        fetchFilterData(FILTER_TYPES[key], 1, value, true);
+      }, 300);
+    });
+    return functions;
+  }, [fetchFilterData]);
+
+  const handleSearch = useCallback(
+    (filterType, rawValue) => {
+      const value = rawValue ?? "";
+      const trimmed = value.trim();
+
+      setSearchTerms((prev) => ({ ...prev, [filterType]: value }));
+
+      const debouncedFn = debouncedSearch[filterType];
+      debouncedFn.cancel?.();
+
+      if (!trimmed) {
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: {
+            ...prev[filterType],
+            page: 1,
+            hasMore: true,
+            loading: false,
+          },
+        }));
+        setFilterData((prev) => ({ ...prev, [filterType]: [] }));
+        setInitialLoadComplete((prev) => ({ ...prev, [filterType]: false }));
+        fetchFilterData(filterType, 1, "", true);
+      } else {
+        debouncedFn(trimmed);
+      }
+    },
+    [debouncedSearch, fetchFilterData]
+  );
+
+  const handleLoadMore = useCallback(
+    (filterType) => {
+      if (
+        pagination[filterType].hasMore &&
+        !pagination[filterType].loading &&
+        initialLoadComplete[filterType]
+      ) {
+        fetchFilterData(
+          filterType,
+          pagination[filterType].page + 1,
+          searchTerms[filterType],
+          false
+        );
+      }
+    },
+    [pagination, searchTerms, fetchFilterData, initialLoadComplete]
+  );
+
+  const handleFilterSelection = useCallback((item, filterType) => {
+    setSelectedFilters((prev) => {
+      const current = prev[filterType];
+      const updated = current.includes(item._id)
+        ? current.filter((id) => id !== item._id)
+        : [...current, item._id];
+      return { ...prev, [filterType]: updated };
+    });
+  }, []);
+
+  const resetFilter = useCallback((filterType) => {
+    setSelectedFilters((prev) => ({ ...prev, [filterType]: [] }));
+    onFilterChange(FILTER_CONFIG[filterType].skipParam);
+  }, []);
+
+  const resetAllFilters = useCallback(() => {
+    setSelectedFilters({
+      [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+      [FILTER_TYPES.MANAGER]: [],
+      [FILTER_TYPES.TECHNOLOGY]: [],
+      [FILTER_TYPES.PROJECT_TYPE]: [],
+      [FILTER_TYPES.ASSIGNEES]: [],
+    });
+    onFilterChange(["skipAll"]);
+    setIsPopoverOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (
+      filterData[activeFilter].length === 0 &&
+      !pagination[activeFilter].loading &&
+      pagination[activeFilter].hasMore &&
+      !initialLoadComplete[activeFilter]
+    ) {
+      fetchFilterData(activeFilter, 1, "", true);
     }
-    
-    // Always count these filters
-    if (Array.isArray(technology) && technology.length > 0) count++;
-    if (Array.isArray(projectType) && projectType.length > 0) count++;
-    if (Array.isArray(assignees) && assignees.length > 0) count++;
-    
-    return count;
-  }, [acc_manager, manager, technology, projectType, assignees, getRoles]);
+  }, [
+    activeFilter,
+    filterData,
+    pagination,
+    fetchFilterData,
+    initialLoadComplete,
+  ]);
 
-  const resetAllFilters = () => {
-    setAccManager([])
-    setManager([])
-    setTechnology([])
-    setProjectType([])
-    setAssignees([])
-    getProjectListing("skipAll");
-  };
+  // Add this useEffect after your existing useEffects, around line 380
+  useEffect(() => {
+    if (activeFilter && initialLoadComplete[activeFilter]) {
+      const selectedIds = selectedFilters[activeFilter];
+      if (selectedIds && selectedIds.length > 0) {
+        setFilterData((prev) => {
+          const items = [...prev[activeFilter]];
+          const selectedItems = [];
+          const unselectedItems = [];
 
-  // Render Methods
-  const renderAccountManagerFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Account Manager</h4>
+          // Separate selected and unselected items
+          items.forEach((item) => {
+            if (selectedIds.includes(item._id)) {
+              selectedItems.push(item);
+            } else {
+              unselectedItems.push(item);
+            }
+          });
 
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchAccManager}
-          onSearch={handleSearchAccManager}
-          onChange={handleSearchAccManager}
-          size="small"
-        />
-      </div>
+          // Put selected items at the top, followed by unselected items
+          const reorderedItems = [...selectedItems, ...unselectedItems];
 
-      <div className="filter-options">
-        {filteredAccManagerList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              acc_manager.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={acc_manager.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, acc_manager, setAccManager);
-              }}
-            />
+          return { ...prev, [activeFilter]: reorderedItems };
+        });
+      }
+    }
+  }, [activeFilter, initialLoadComplete, isPopoverOpen]);
 
-            <span>{removeTitle(item?.full_name)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getProjectListing();
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            getProjectListing("skipAccountManager");
-            handleFilters("", acc_manager, setAccManager);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderManagerFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Project Manager</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchManager}
-          onSearch={handleSearchManager}
-          onChange={handleSearchManager}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredManagerList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              manager.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={manager.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, manager, setManager);
-              }}
-            />
-
-            <span>{removeTitle(item?.manager_name)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getProjectListing();
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            getProjectListing("skipManager");
-            handleFilters("", manager, setManager);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderTechnologyFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Department</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchTechnology}
-          onSearch={handleSearchTechnology}
-          onChange={handleSearchTechnology}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredTechnologyList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              technology.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={technology.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, technology, setTechnology);
-              }}
-            />
-
-            <span>{item.project_tech}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getProjectListing();
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            getProjectListing("skipTechnology");
-            handleFilters("", technology, setTechnology);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderProjectTypeFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Project Type</h4>
-
-      <div className="filter-options">
-        {projectTypeList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              projectType.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={projectType.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, projectType, setProjectType);
-              }}
-            />
-
-            <span>{item?.project_type}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getProjectListing();
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            getProjectListing("skipProjectType");
-            handleFilters("", projectType, setProjectType);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderAssigneesFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Assignees</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchAssignees}
-          onSearch={handleSearchTermAssignees}
-          onChange={handleSearchTermAssignees}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredAssigneesList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              assignees.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={assignees.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, assignees, setAssignees);
-              }}
-            />
-
-            <span>{removeTitle(item?.full_name)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getProjectListing();
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            getProjectListing("skipAssignees");
-            handleFilters("", assignees, setAssignees);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    return () => Object.values(debouncedSearch).forEach((fn) => fn.cancel());
+  }, [debouncedSearch]);
 
   const renderFilterContent = () => {
-    switch (activeFilterType) {
-      case FILTER_TYPES.ACCOUNTMANAGER:
-        return getRoles(["Admin"]) ? renderAccountManagerFilter() : renderTechnologyFilter();
-      case FILTER_TYPES.MANAGER:
-        return getRoles(["Admin"]) ? renderManagerFilter() : renderTechnologyFilter();
-      case FILTER_TYPES.TECHNOLOGY:
-        return renderTechnologyFilter();
-      case FILTER_TYPES.PROJECTTYPE:
-        return renderProjectTypeFilter();
-      case FILTER_TYPES.ASSIGNEES:
-        return renderAssigneesFilter();
-      default:
-        return getRoles(["Admin"]) ? renderAccountManagerFilter() : renderTechnologyFilter();
+    const config = FILTER_CONFIG[activeFilter];
+    if (
+      !config ||
+      ((activeFilter === FILTER_TYPES.ACCOUNT_MANAGER ||
+        activeFilter === FILTER_TYPES.MANAGER) &&
+        !getRoles(["Admin", "Super Admin"]))
+    ) {
+      return (
+        <FilterSection
+          config={FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY]}
+          items={filterData[FILTER_TYPES.TECHNOLOGY]}
+          selectedItems={selectedFilters[FILTER_TYPES.TECHNOLOGY]}
+          pagination={pagination[FILTER_TYPES.TECHNOLOGY]}
+          searchTerm={searchTerms[FILTER_TYPES.TECHNOLOGY]}
+          onSearch={(value) => handleSearch(FILTER_TYPES.TECHNOLOGY, value)}
+          onSelect={(item) =>
+            handleFilterSelection(item, FILTER_TYPES.TECHNOLOGY)
+          }
+          onLoadMore={() => handleLoadMore(FILTER_TYPES.TECHNOLOGY)}
+          onApply={() => {
+            onFilterChange([], selectedFilters);
+            setIsPopoverOpen(false);
+          }}
+          onReset={() => resetFilter(FILTER_TYPES.TECHNOLOGY)}
+          isInitialLoadComplete={initialLoadComplete[FILTER_TYPES.TECHNOLOGY]}
+        />
+      );
     }
+    return (
+      <FilterSection
+        config={config}
+        items={filterData[activeFilter]}
+        selectedItems={selectedFilters[activeFilter]}
+        pagination={pagination[activeFilter]}
+        searchTerm={searchTerms[activeFilter]}
+        onSearch={(value) => handleSearch(activeFilter, value)}
+        onSelect={(item) => handleFilterSelection(item, activeFilter)}
+        onLoadMore={() => handleLoadMore(activeFilter)}
+        onApply={() => {
+          onFilterChange([], selectedFilters);
+          setIsPopoverOpen(false);
+        }}
+        onReset={() => resetFilter(activeFilter)}
+        isInitialLoadComplete={initialLoadComplete[activeFilter]}
+      />
+    );
   };
-
-  const popoverContent = (
-    <div className="filter-popover-content">
-      <div className="filter-sidebar">
-        {/* Filter Header */}
-        <div className="filter-header">
-          <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
-            <Button
-              size="small"
-              type="text"
-              onClick={resetAllFilters}
-              className="delete-btn"
-              title="Reset all filters"
-            >
-              Reset All ({activeFiltersCount})
-            </Button>
-          )}
-        </div>
-        <Divider style={{ margin: "8px 0" }} />
-        {/* Filter Menu Items */}
-        {FILTER_MENU_ITEMS.map((item) => (
-          <div
-            key={item.key}
-            onClick={() => {
-              // Additional safety check before setting active filter
-              if (
-                (item.key === FILTER_TYPES.ACCOUNTMANAGER || item.key === FILTER_TYPES.MANAGER) && 
-                !getRoles(["Admin"])
-              ) {
-                return; // Don't allow switching to admin-only filters
-              }
-              setActiveFilterType(item.key);
-            }}
-            className={`filter-menu-item ${
-              activeFilterType === item.key ? "active" : ""
-            }`}
-          >
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-      <div className="filter-content">{renderFilterContent()}</div>
-    </div>
-  );
 
   return (
     <div className="filter-container">
       <Popover
-        content={popoverContent}
+        content={
+          <div className="filter-popover-content">
+            <div className="filter-sidebar">
+              <div className="filter-header">
+                <h4 className="filter-sidebar-title">Filters</h4>
+                {activeFiltersCount > 0 && (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={resetAllFilters}
+                    className="delete-btn"
+                  >
+                    Reset All ({activeFiltersCount})
+                  </Button>
+                )}
+              </div>
+              <Divider style={{ margin: "8px 0" }} />
+              {getMenuItems(getRoles).map((item) => (
+                <div
+                  key={item.key}
+                  onClick={() =>
+                    getRoles(["Admin", "Super Admin"]) ||
+                    ![
+                      FILTER_TYPES.ACCOUNT_MANAGER,
+                      FILTER_TYPES.MANAGER,
+                    ].includes(item.key)
+                      ? setActiveFilter(item.key)
+                      : null
+                  }
+                  className={`filter-menu-item ${
+                    activeFilter === item.key ? "active" : ""
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {!isEmpty(selectedFilters[item.key]) && (
+                    <Badge size="small" color="#1890ff" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="filter-content">{renderFilterContent()}</div>
+          </div>
+        }
         trigger="click"
         open={isPopoverOpen}
         onOpenChange={setIsPopoverOpen}

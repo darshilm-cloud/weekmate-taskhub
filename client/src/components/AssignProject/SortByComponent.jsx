@@ -26,6 +26,9 @@ const SortByComponent = ({
   // UI state
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState(SORT_TYPES.SORTBY);
+  
+  // Local state to track the temporarily selected sort option (before applying)
+  const [tempSortOption, setTempSortOption] = useState(sortOption);
 
   // Active sort indicator (always 1 since there's always a sort option selected)
   const activeSortCount = useMemo(() => {
@@ -35,7 +38,23 @@ const SortByComponent = ({
 
   const resetSort = () => {
     handleSortFilter("createdAt"); // Reset to default
+    setTempSortOption("createdAt"); // Reset temp state as well
   };
+
+  const applySort = () => {
+    handleSortFilter(tempSortOption);
+    getProjectListing();
+    setIsPopoverOpen(false);
+  };
+
+  const handleTempSortChange = (value) => {
+    setTempSortOption(value);
+  };
+
+  // Update tempSortOption when sortOption prop changes
+  React.useEffect(() => {
+    setTempSortOption(sortOption);
+  }, [sortOption]);
 
   // Get display label for current sort option
   const getCurrentSortLabel = () => {
@@ -50,8 +69,8 @@ const SortByComponent = ({
 
       <div className="filter-options">
         <Radio.Group
-          onChange={(e) => handleSortFilter(e.target.value)}
-          value={sortOption}
+          onChange={(e) => handleTempSortChange(e.target.value)}
+          value={tempSortOption}
         >
           {SORT_OPTIONS.map(({ value, label }) => (
             <div key={value} className="radio-option">
@@ -63,10 +82,7 @@ const SortByComponent = ({
 
       <div className="filter-actions">
         <Button
-          onClick={() => {
-            getProjectListing();
-            setIsPopoverOpen(false);
-          }}
+          onClick={applySort}
           size="small"
           className="filter-btn"
         >
@@ -140,7 +156,7 @@ const SortByComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<SortAscendingOutlined />} className="sort-btn">
+        <Button icon={<SortAscendingOutlined />} className="sort-btn filter-btn">
           Sort
           <Badge
             count={activeSortCount}

@@ -1406,18 +1406,22 @@ exports.getBugsWorkFlow = async (req, res) => {
 
 exports.getPMSClient = async (req, res) => {
   try {
-      // Decode user from token
-      const {
-        _id: decodedUserId,
-        pms_role_id: { _id: roleId, role_name: roleName } = {},
-        companyId: decodedCompanyId
-      } = req.user || {};
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
 
     const validationSchema = Joi.object({
       client_id: Joi.string().optional().default(null),
       isDropdown: Joi.boolean().optional().default(false),
-      project_id: Joi.string().optional().default(null)
+      project_id: Joi.string().optional().default(null),
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(''),
     });
+
     const { error, value } = validationSchema.validate(req.body);
 
     if (error) {
@@ -1427,52 +1431,110 @@ exports.getPMSClient = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const { client_id, isDropdown, project_id, pageNo, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+
+    // Get project clients if project_id is provided
     let projectClient = [];
-    if (value?.project_id) {
-      const project = await Project.findById(value?.project_id);
+    if (project_id) {
+      const project = await Project.findById(project_id);
       projectClient = project ? project.pms_clients : [];
     }
 
+    // Base match conditions
+    const baseMatch = {
+      isDeleted: false,
+      isSoftDeleted: false,
+      companyId: newObjectId(decodedCompanyId),
+      ...(isDropdown === true ? { isActivate: true } : {}),
+      ...(client_id && {
+        _id: new mongoose.Types.ObjectId(client_id),
+      }),
+      ...(project_id && {
+        _id: {
+          $in: projectClient,
+        },
+      }),
+    };
+
+    // Add search condition if provided
+    if (search && search.trim()) {
+      baseMatch.$or = [
+        { full_name: { $regex: search, $options: "i" } },
+        { first_name: { $regex: search, $options: "i" } },
+        { last_name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { company_name: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Get total count for this filter
+    const countQuery = [
+      {
+        $match: baseMatch
+      },
+      {
+        $count: "total"
+      }
+    ];
+
+    const countResult = await PMSClients.aggregate(countQuery);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Main aggregation query
     const mainQuery = [
       {
-        $match: {
-          isDeleted: false,
-          isSoftDeleted: false,
-          companyId:newObjectId(decodedCompanyId),
-          ...(value?.isDropdown == true ? { isActivate: true } : {}),
-          ...(value?.client_id && {
-            _id: new mongoose.Types.ObjectId(value.client_id)
-          }),
-          ...(value?.project_id && {
-            _id: {
-              $in: projectClient
-            }
-          })
-        }
+        $match: baseMatch,
       },
       {
         $sort: {
-          first_name: 1
-        }
+          first_name: 1,
+        },
       },
       {
         $project: {
           _id: 1,
           full_name: 1,
+          first_name: 1,
+          last_name: 1,
           email: 1,
-          client_img: 1
-        }
-      }
+          client_img: 1,
+          company_name: 1,
+        },
+      },
     ];
+
+    // Add pagination if both page and limit are provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push(
+        { $skip: skip },
+        { $limit: limitNum }
+      );
+    }
 
     const data = await PMSClients.aggregate(mainQuery);
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     console.log("🚀 ~ exports.getPMSClient= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 exports.getTaskWiseBugs = async (req, res) => {
   try {
@@ -1692,8 +1754,12 @@ exports.getAccMgrs = async (req, res) => {
     } = req.user || {};
 
     const validationSchema = Joi.object({
-      emp_id: Joi.string().optional().default(null)
+      emp_id: Joi.string().optional().default(null),
+      page: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(""),
     });
+    
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
       return errorResponse(
@@ -1702,6 +1768,36 @@ exports.getAccMgrs = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const { emp_id, page, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = page && page > 0 ? page : null;
+    const limitNum = limit && limit > 0 ? limit : null;
+
+    // Build match conditions
+    const matchConditions = {
+      isDeleted: false,
+      isSoftDeleted: false,
+      isActivate: true,
+      "pmsroles.role_name": configRoles.PMS_ROLES.AM,
+      companyId: newObjectId(decodedCompanyId),
+      ...(emp_id && {
+        _id: newObjectId(emp_id)
+      })
+    };
+
+    // Add search condition if provided
+    if (search) {
+      matchConditions.$or = [
+        { full_name: { $regex: search, $options: "i" } },
+        { first_name: { $regex: search, $options: "i" } },
+        { last_name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { emp_code: { $regex: search, $options: "i" } }
+      ];
+    }
+
     const mainQuery = [
       {
         $lookup: {
@@ -1729,16 +1825,7 @@ exports.getAccMgrs = async (req, res) => {
         }
       },
       {
-        $match: {
-          isDeleted: false,
-          isSoftDeleted: false,
-          isActivate: true,
-          "pmsroles.role_name": configRoles.PMS_ROLES.AM,
-          companyId: newObjectId(decodedCompanyId),
-          ...(value?.emp_id && {
-            _id: newObjectId(value.emp_id)
-          })
-        }
+        $match: matchConditions
       },
       {
         $sort: {
@@ -1755,11 +1842,34 @@ exports.getAccMgrs = async (req, res) => {
       }
     ];
 
+    // Get total count for pagination metadata
+    const countQuery = [...mainQuery];
+    countQuery.push({ $count: "total" });
+    const countResult = await Employee.aggregate(countQuery);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Apply pagination if provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push({ $skip: skip });
+      mainQuery.push({ $limit: limitNum });
+    }
+
     const data = await Employee.aggregate(mainQuery);
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     console.error("Error 152 master.js / controller :", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
+

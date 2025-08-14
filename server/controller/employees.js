@@ -290,20 +290,75 @@ exports.getEmployeesForDropdown = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
-    let data = await Employees.find({
+    // Validation schema for query parameters
+    const validationSchema = Joi.object({
+      page: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(""),
+    });
+    
+    const { error, value } = validationSchema.validate(req.query);
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const { page, limit, search } = value;
+
+    // Build filter object
+    const filter = {
       companyId: newObjectId(decodedCompanyId),
       isDeleted: false,
       isSoftDeleted: false,
-      isActivate: true
-    })
+      isActivate: true,
+    };
+
+    // Add search condition if provided
+    if (search) {
+      filter.$or = [
+        { full_name: { $regex: search, $options: "i" } },
+        { first_name: { $regex: search, $options: "i" } },
+        { last_name: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Convert page and limit to integers with default values
+    const pageNum = page && page > 0 ? page : null;
+    const limitNum = limit && limit > 0 ? limit : null;
+
+    // Get total count for this filter
+    const totalDocuments = await Employees.countDocuments(filter);
+
+    let query = Employees.find(filter)
       .select("_id full_name first_name last_name emp_img")
       .sort({ full_name: 1 });
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+    // Apply pagination if provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      query = query.skip(skip).limit(limitNum);
+    }
+
+    const data = await query;
+
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 // manager list For dropdown...
 exports.getReportingManagerForDropdown = async (req, res) => {
@@ -315,6 +370,33 @@ exports.getReportingManagerForDropdown = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
+    // Validation schema for query parameters
+    const validationSchema = Joi.object({
+      page: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(""),
+    });
+    
+    const { error, value } = validationSchema.validate(req.query);
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const { page, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = page && page > 0 ? page : null;
+    const limitNum = limit && limit > 0 ? limit : null;
+
+    // Build search condition
+    const searchCondition = search 
+      ? { full_name: { $regex: search, $options: "i" } }
+      : {};
+
     // TL, PC AND MANAGER..
     let query = [
       {
@@ -322,7 +404,8 @@ exports.getReportingManagerForDropdown = async (req, res) => {
           companyId: newObjectId(decodedCompanyId),
           isDeleted: false,
           isSoftDeleted: false,
-          isActivate: true
+          isActivate: true,
+          ...searchCondition // Add search condition
         }
       },
       {
@@ -361,19 +444,45 @@ exports.getReportingManagerForDropdown = async (req, res) => {
       }
     ];
 
+    // Get total count before applying pagination
+    const countQuery = [...query];
+    countQuery.push({
+      $count: "total"
+    });
+
+    const countResult = await Employees.aggregate(countQuery);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Apply pagination if provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      query.push({ $skip: skip });
+      query.push({ $limit: limitNum });
+    }
+
     let data = await Employees.aggregate(query);
+
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
 
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.LISTING,
       data || [],
-      {}
+      meta
     );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 exports.getEmployeesForDropdownDeptwise = async (req, res) => {
   try {
