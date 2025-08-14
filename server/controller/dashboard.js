@@ -307,9 +307,9 @@ exports.getMyProjects = async (req, res) => {
     // Apply complaints filter if needed (after aggregation to maintain count accuracy)
     if (isComplaints && isComplaints !== undefined) {
       const filteredData = data.filter((ele) => {
-        if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
-          return ele;
-        }
+        // if ([].includes(ele?.project_types?.slug)) {
+        //   return ele;
+        // }
       });
       
       // If complaints filter is applied after pagination, we need to recalculate total
@@ -330,7 +330,7 @@ exports.getMyProjects = async (req, res) => {
         totalDocuments = complaintsFilteredCount;
       }
       
-      data = filteredData;
+      data = data;
     }
 
     // check project have project id or not...
