@@ -48,7 +48,9 @@ p {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-box-shadow: 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 1px 2px #0000000d;
+        -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
+    box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
+
 }
 
 .progress-of-logged-hours-background .progress-bar-container .ant-progress-bg-inner {
@@ -83,12 +85,12 @@ box-shadow: 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 1px 2p
 .profile-form-wrapper input {
     width: 100%;
     font-size: 15px;
-    padding: 12px 12px 12px 12px;
+ padding: 15px;
+    border-radius: 8px;
     -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
     box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
     border: none;
     border-radius: 5px;
-    
 }
 
 .profile-input-setting-wrapper {
@@ -146,14 +148,13 @@ span.profile-setting a {
     background-color: #fff;
     padding: 3px;
     border-radius: 10px;
-    box-shadow: 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 0 #00000012, 0 1px 2px #0000000d;
+box-shadow: 0 0 0px 19px #0000, 0 0 #0000, 0 0 20px #0000, 0 0 #0000, 0 1px 2px 1px #0000000d;
     height: 375px;
     overflow: hidden;
 }
-
 input#meJumpField-inputEl:focus-visible {
-    outline: 2px solid #1048711a;
-    box-shadow: 0px 0px 9px -3px;
+outline: 1px solid #4fb5ff1a;
+    box-shadow: 0px 0px 2px 0px
 }
 
 .main-dashboard-wrapper .right-project-filter {

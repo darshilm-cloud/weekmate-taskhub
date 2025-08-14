@@ -151,7 +151,8 @@ exports.getProjectExpenses = async (req, res) => {
       acc_manager_id: Joi.array().items(Joi.string()).optional(),
       priority: Joi.string().optional(),
       status: Joi.string().optional(),
-      need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional()
+      need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
+      createdBy: Joi.array().items(Joi.string()).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -202,7 +203,7 @@ exports.getProjectExpenses = async (req, res) => {
         $or: [
           { "manager._id": new mongoose.Types.ObjectId(userId) },
           { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-          { createdBy: new mongoose.Types.ObjectId(userId) },
+          { "createdBy": new mongoose.Types.ObjectId(userId) },
           { "project.assignees": new mongoose.Types.ObjectId(userId) }
         ]
       };
@@ -233,7 +234,10 @@ exports.getProjectExpenses = async (req, res) => {
         "project._id": {
           $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s))
         }
-      })
+      }),
+      ...(value.createdBy?.length && {
+        "createdBy": { $in: value.createdBy.map((id) => new mongoose.Types.ObjectId(id)) },
+      }),
     };
 
     // Handling `need_to_bill_customer` filter

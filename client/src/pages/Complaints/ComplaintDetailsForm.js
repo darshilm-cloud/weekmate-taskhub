@@ -75,11 +75,11 @@ const ComplaintDetailsForm = () => {
   const formItemLayout = {
     labelCol: {
       xs: { span: 24 },
-
+      sm: { span: 8 },
     },
     wrapperCol: {
       xs: { span: 24 },
-    
+      sm: { span: 16 },
     },
   };
 
@@ -300,306 +300,300 @@ const ComplaintDetailsForm = () => {
 
   return (
     <div className="feedback-form-view-detail-form">
-      <Card className="feedbackForm-card">
-
-        <div className="heading-wrapper">
-          <div className="heading-main">
-            <h2>Complaint Details</h2>
-          </div>
-        </div>
-        <div className="project-details ">
+      <Card title="Complaint Details" className="feedbackForm-card">
+        <div className="project-details">
           <div className="project-details-data">
             <span className="title">Project : </span>
             <span className="title-value">
-              { complaintsData?.project?.title }
+              {complaintsData?.project?.title}
             </span>
           </div>
 
           <div className="project-details-data">
             <span className="title">Client Name : </span>
-            <span className="title-value">{ complaintsData?.client_name }</span>
+            <span className="title-value">{complaintsData?.client_name}</span>
           </div>
 
           <div className="project-details-data">
             <span className="title">Project Manager : </span>
             <span className="title-value">
-              { complaintsData?.manager?.full_name }
+              {complaintsData?.manager?.full_name}
             </span>
           </div>
 
           <div className="project-details-data">
             <span className="title">Account Manager : </span>
             <span className="title-value">
-              { complaintsData?.acc_manager?.full_name }
+              {complaintsData?.acc_manager?.full_name}
             </span>
           </div>
 
           <div className="project-details-data">
             <span className="title">Date : </span>
             <span className="title-value">
-              { " " }
-              { moment(complaintsData?.createdAt).format("DD-MM-YYYY") }
+              {" "}
+              {moment(complaintsData?.createdAt).format("DD-MM-YYYY")}
             </span>
           </div>
         </div>
-        </Card>
-        <Card title="Complaint Status" className="feedbackForm-card">
-          { complaintsStatusData.length > 0 && !isEdit ? (
-            <span
-              onClick={ () => handleChangeEditStatus() }
-              className="edit-complaint-status-btn"
-            >
-              Edit
-            </span>
-          ) : complaintsStatusData.length > 0 ? (
-            <span
-              onClick={ () => handleChangeEditStatus() }
-              className="edit-complaint-status-btn ant-delete"
-            >
-              Cancel
-            </span>
-          ) : (
-            ""
-          ) }
-          <div className="Complaint-status-form">
-            <Form
-              form={ form }
-              noValidate
-              onValuesChange={ (value) => {
-                handleFormChange(value);
-                handleStatusChange(value);
-              } }
-              { ...formItemLayout }
-              className="complaint-details-form"
-              onFinish={ handleSubmit }
-            >
-              <div className="employee-main-information complaint-status-form-inner mb2">
-                <Row>
-                  <Col sm={ 24 } lg={ 12 } className="feedback-detail-views">
-                    <div className="employee-info-1">
-                      <Form.Item
-                        name="status"
-                        label="Status"
-                        rules={ [
-                          {
-                            required: true,
-                            message: "Please add status",
-                          },
-                        ] }
-                      >
-                        { complaintsStatusData.length > 0 && !isEdit ? (
-                          valueToLable(complaintsStatusData[0]?.status)
-                        ) : (
-                          <Select
-                            defaultValue="open"
-                            onChange={ () => {
-                              setResolvedStatus(false);
-                            } }
-                            options={ [
-                              {
-                                value: "open",
-                                label: "Open",
-                              },
-                              {
-                                value: "in_progress",
-                                label: "In Progress",
-                              },
-                              {
-                                value: "client_review",
-                                label: "Client Review",
-                              },
-                              {
-                                value: "resolved",
-                                label: "Resolved",
-                              },
-                              {
-                                value: "reopened",
-                                label: "Reopen",
-                              },
-                              {
-                                value: "customer_lost",
-                                label: "Customer Lost",
-                              },
-                            ] }
-                          />
-                        ) }
-                      </Form.Item>
-
-                      <Form.Item
-                        name="root_cause"
-                        label="Root Cause"
-                        rules={ [
-                          {
-                            required: true,
-                            message: "Please add root cause",
-                          },
-                        ] }
-                      >
-                        { complaintsStatusData.length > 0 && !isEdit ? (
-                          complaintsStatusData[0]?.root_cause
-                        ) : (
-                          <TextArea
-                            rows={ 4 }
-                            placeholder="Enter your root cause details"
-                          />
-                        ) }
-                      </Form.Item>
-                    </div>
-                  </Col>
-                  <Col sm={ 24 } lg={ 12 } className="feedback-detail-views">
-                    <div className="employee-info">
-                      <Form.Item
-                        name="corrective_action"
-                        label="Corrective Action"
-                        rules={ [
-                          {
-                            required: isActionRequired,
-                            message:
-                              "Corrective Action is required for selected status",
-                          },
-                        ] }
-                      >
-                        { complaintsStatusData.length > 0 && !isEdit ? (
-                          complaintsStatusData[0]?.corrective_action
-                        ) : (
-                          <TextArea rows={ 4 } />
-                        ) }
-                      </Form.Item>
-
-                      <Form.Item
-                        name="immediate_action"
-                        label="Immediate Action"
-                        rules={ [
-                          {
-                            required: isActionRequired,
-                            message:
-                              "Immediate Action is required for selected status",
-                          },
-                        ] }
-                      >
-                        { complaintsStatusData.length > 0 && !isEdit ? (
-                          complaintsStatusData[0]?.immediate_action
-                        ) : (
-                          <TextArea rows={ 4 } />
-                        ) }
-                      </Form.Item>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-              { complaintsStatusData.length > 0 && !isEdit ? (
-                ""
-              ) : (
-                <Form.Item className="feedback-details-submit-button-form">
-                  <div className="feedback-details-submit-button">
-                    { selectedStatus === "resolved" ? (
-                      <Popconfirm
-                        icon={
-                          <QuestionCircleOutlined
-                            style={ {
-                              color: "red",
-                            } }
-                          />
-                        }
-                        title="Are you sure, you want to update the status of the complaint to Resolved? As the feedback mail will be sent to client."
-                        onConfirm={ handleConfirm }
-                        onCancel={ handleCancel }
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <Button id="addbutton" type="primary">
-                          { complaintsStatusData.length > 0 ? "Update" : "Submit" }
-                        </Button>
-                      </Popconfirm>
-                    ) : (
-                      <Button id="addbutton" type="primary" htmlType="submit">
-                        { complaintsStatusData.length > 0 ? "Update" : "Submit" }
-                      </Button>
-                    ) }
-                    <Button
-                      type="primary"
-                      className="ant-delete"
-                      onClick={ () => {
-                        form.resetFields();
-                      } }
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </Form.Item>
-              ) }
-            </Form>
-          </div>
-        </Card>
-        <Card title="Complaint Comments" className="feedbackForm-card">
-          <div className="ticket-comment">
-            <Card className="atttachment">
-              <Form
-                form={ commentForm }
-                noValidate
-                { ...formItemLayout }
-                onFinish={ handleSubmitForComment }
-              >
-                <Row>
-                  <Col span={ 24 } md={ 12 }>
-                    <div className="inout-header mb2 text-left">
-                      <h2>Complaint Comments</h2>
-                    </div>
+      </Card>
+      <Card title="Complaint Status" className="feedbackForm-card">
+        {complaintsStatusData.length > 0 && !isEdit ? (
+          <span
+            onClick={() => handleChangeEditStatus()}
+            className="edit-complaint-status-btn"
+          >
+            Edit
+          </span>
+        ) : complaintsStatusData.length > 0 ? (
+          <span
+            onClick={() => handleChangeEditStatus()}
+            className="edit-complaint-status-btn ant-delete"
+          >
+            Cancel
+          </span>
+        ) : (
+          ""
+        )}
+        <div className="Complaint-status-form">
+          <Form
+            form={form}
+            noValidate
+            onValuesChange={(value) => {
+              handleFormChange(value);
+              handleStatusChange(value);
+            }}
+            {...formItemLayout}
+            className="complaint-details-form"
+            onFinish={handleSubmit}
+          >
+            <div className="employee-main-information complaint-status-form-inner mb2">
+              <Row>
+                <Col sm={24} lg={12} xl={10} className="feedback-detail-views">
+                  <div className="employee-info-1">
                     <Form.Item
-                      label="Comments"
-                      name="comments"
-                      className="left-title"
-                      rules={ [
+                      name="status"
+                      label="Status"
+                      rules={[
                         {
                           required: true,
-                          message: "Please add your comment",
+                          message: "Please add status",
                         },
-                      ] }
+                      ]}
                     >
-                      <TextArea rows={ 3 } />
+                      {complaintsStatusData.length > 0 && !isEdit ? (
+                        valueToLable(complaintsStatusData[0]?.status)
+                      ) : (
+                        <Select
+                          defaultValue="open"
+                          onChange={() => {
+                            setResolvedStatus(false);
+                          }}
+                          options={[
+                            {
+                              value: "open",
+                              label: "Open",
+                            },
+                            {
+                              value: "in_progress",
+                              label: "In Progress",
+                            },
+                            {
+                              value: "client_review",
+                              label: "Client Review",
+                            },
+                            {
+                              value: "resolved",
+                              label: "Resolved",
+                            },
+                            {
+                              value: "reopened",
+                              label: "Reopen",
+                            },
+                            {
+                              value: "customer_lost",
+                              label: "Customer Lost",
+                            },
+                          ]}
+                        />
+                      )}
                     </Form.Item>
-                    { !isEditComment ? (
-                      <Form.Item label="Document" name="document">
-                        <Upload
-                          name="document"
-                          listType="text"
-                          beforeUpload={ () => false }
-                          maxCount={ 1 }
-                          onChange={ onFileChange }
-                        >
-                          <Button icon={ <UploadOutlined /> }>
-                            Upload Document
-                          </Button>
-                        </Upload>
-                      </Form.Item>
-                    ) : (
-                      ""
-                    ) }
 
-                    <Form.Item className="feedback-details-submit-button-form">
-                      <div className="feedback-details-submit-button">
-                        <Button id="addbutton" type="primary" htmlType="submit">
-                          { isEditComment ? "Update" : "Submit" }
-                        </Button>
-                        <Button
-                          className="ant-delete"
-                          type="primary"
-                          onClick={ () => form.resetFields() }
-                        >
-                          Clear
-                        </Button>
-                      </div>
+                    <Form.Item
+                      name="root_cause"
+                      label="Root Cause"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please add root cause",
+                        },
+                      ]}
+                    >
+                      {complaintsStatusData.length > 0 && !isEdit ? (
+                        complaintsStatusData[0]?.root_cause
+                      ) : (
+                        <TextArea
+                          rows={4}
+                          placeholder="Enter your root cause details"
+                        />
+                      )}
                     </Form.Item>
-                  </Col>
-                  <Col span={ 24 } md={ 12 }>
-                    <div className="ticket-history">
-                      <div className="inout-header mb2 text-left">
-                        <h2>Comments History</h2>
-                      </div>
-                      <div>
-                        <div className="scroll450">
-                          { complaintComments?.length > 0
-                            ? complaintComments?.map((item) => {
+                  </div>
+                </Col>
+                <Col sm={24} lg={12} xl={9} className="feedback-detail-views">
+                  <div className="employee-info">
+                    <Form.Item
+                      name="corrective_action"
+                      label="Corrective Action"
+                      rules={[
+                        {
+                          required: isActionRequired,
+                          message:
+                            "Corrective Action is required for selected status",
+                        },
+                      ]}
+                    >
+                      {complaintsStatusData.length > 0 && !isEdit ? (
+                        complaintsStatusData[0]?.corrective_action
+                      ) : (
+                        <TextArea rows={4} />
+                      )}
+                    </Form.Item>
+
+                    <Form.Item
+                      name="immediate_action"
+                      label="Immediate Action"
+                      rules={[
+                        {
+                          required: isActionRequired,
+                          message:
+                            "Immediate Action is required for selected status",
+                        },
+                      ]}
+                    >
+                      {complaintsStatusData.length > 0 && !isEdit ? (
+                        complaintsStatusData[0]?.immediate_action
+                      ) : (
+                        <TextArea rows={4} />
+                      )}
+                    </Form.Item>
+                  </div>
+                </Col>
+              </Row>
+            </div>
+            {complaintsStatusData.length > 0 && !isEdit ? (
+              ""
+            ) : (
+              <Form.Item className="feedback-details-submit-button-form">
+                <div className="feedback-details-submit-button">
+                  {selectedStatus === "resolved" ? (
+                    <Popconfirm
+                      icon={
+                        <QuestionCircleOutlined
+                          style={{
+                            color: "red",
+                          }}
+                        />
+                      }
+                      title="Are you sure, you want to update the status of the complaint to Resolved? As the feedback mail will be sent to client."
+                      onConfirm={handleConfirm}
+                      onCancel={handleCancel}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button id="addbutton" type="primary">
+                        {complaintsStatusData.length > 0 ? "Update" : "Submit"}
+                      </Button>
+                    </Popconfirm>
+                  ) : (
+                    <Button id="addbutton" type="primary" htmlType="submit">
+                      {complaintsStatusData.length > 0 ? "Update" : "Submit"}
+                    </Button>
+                  )}
+                  <Button
+                    type="primary"
+                    className="ant-delete"
+                    onClick={() => {
+                      form.resetFields();
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </Form.Item>
+            )}
+          </Form>
+        </div>
+      </Card>
+      <Card title="Complaint Comments" className="feedbackForm-card">
+        <div className="ticket-comment">
+          <Card className="atttachment">
+            <Form
+              form={commentForm}
+              noValidate
+              {...formItemLayout}
+              onFinish={handleSubmitForComment}
+            >
+              <Row>
+                <Col span={24} md={12}>
+                  <div className="inout-header mb2 text-left">
+                    <h2>Complaint Comments</h2>
+                  </div>
+                  <Form.Item
+                    label="Comments"
+                    name="comments"
+                    className="left-title"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please add your comment",
+                      },
+                    ]}
+                  >
+                    <TextArea rows={3} />
+                  </Form.Item>
+                  {!isEditComment ? (
+                    <Form.Item label="Document" name="document">
+                      <Upload
+                        name="document"
+                        listType="text"
+                        beforeUpload={() => false}
+                        maxCount={1}
+                        onChange={onFileChange}
+                      >
+                        <Button icon={<UploadOutlined />}>
+                          Upload Document
+                        </Button>
+                      </Upload>
+                    </Form.Item>
+                  ) : (
+                    ""
+                  )}
+
+                  <Form.Item className="feedback-details-submit-button-form">
+                    <div className="feedback-details-submit-button">
+                      <Button id="addbutton" type="primary" htmlType="submit">
+                        {isEditComment ? "Update" : "Submit"}
+                      </Button>
+                      <Button
+                        className="ant-delete"
+                        type="primary"
+                        onClick={() => form.resetFields()}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </Form.Item>
+                </Col>
+                <Col span={24} md={12}>
+                  <div className="ticket-history">
+                    <div className="inout-header mb2 text-left">
+                      <h2>Comments History</h2>
+                    </div>
+                    <div>
+                      <div className="scroll450">
+                        {complaintComments?.length > 0
+                          ? complaintComments?.map((item) => {
                               return (
                                 <div className="ticket-wrapper">
                                   <div className="ticket-user">
@@ -607,38 +601,38 @@ const ComplaintDetailsForm = () => {
                                       userName={
                                         item?.createdBy?.full_name || "-"
                                       }
-                                      src={ item?.createdBy?.emp_img }
-                                      key={ item?.createdBy?._id }
-                                      alt={ item?.createdBy?.full_name }
+                                      src={item?.createdBy?.emp_img}
+                                      key={item?.createdBy?._id}
+                                      alt={item?.createdBy?.full_name}
                                     />
                                     <h4 className="comment-user-name">
-                                      { item?.createdBy?.full_name }
+                                      {item?.createdBy?.full_name}
                                     </h4>
-                                    { loggedinUserId == item?.createdBy?._id ? (
+                                    {loggedinUserId == item?.createdBy?._id ? (
                                       <div className="comment-actions">
                                         <div
-                                          onClick={ () => {
+                                          onClick={() => {
                                             setIsEditComment(true);
                                             editComment(
                                               item?._id,
                                               item?.comment
                                             );
-                                          } }
+                                          }}
                                         >
                                           Edit
                                         </div>
                                         <Popconfirm
                                           icon={
                                             <QuestionCircleOutlined
-                                              style={ {
+                                              style={{
                                                 color: "red",
-                                              } }
+                                              }}
                                             />
                                           }
                                           title="Are you sure to delete this Comment?"
-                                          onConfirm={ () => {
+                                          onConfirm={() => {
                                             deleteComment(item._id);
-                                          } }
+                                          }}
                                           okText="Yes"
                                           cancelText="No"
                                         >
@@ -647,7 +641,7 @@ const ComplaintDetailsForm = () => {
                                       </div>
                                     ) : (
                                       ""
-                                    ) }
+                                    )}
                                   </div>
                                   <div className="complaint-ticket-description">
                                     <div className="ticket-desc-head">
@@ -655,10 +649,10 @@ const ComplaintDetailsForm = () => {
                                     </div>
                                     <div className="ticket-desc-body">
                                       <div className="complaint-comment-item">
-                                        { item.comment }
+                                        {item.comment}
                                       </div>
                                       <p className="attatch-complaint-item">
-                                        { item.attachments.length > 0 ? (
+                                        {item.attachments.length > 0 ? (
                                           <>
                                             Attachment:
                                             <a
@@ -670,29 +664,28 @@ const ComplaintDetailsForm = () => {
                                               target="_blank"
                                               rel="noopener noreferrer"
                                             >
-                                              { item.attachments[0].name }
+                                              {item.attachments[0].name}
                                             </a>
                                           </>
                                         ) : (
                                           ""
-                                        ) }
+                                        )}
                                       </p>
                                     </div>
                                   </div>
                                 </div>
                               );
                             })
-                            : "No Comments Found!" }
-                        </div>
+                          : "No Comments Found!"}
                       </div>
                     </div>
-                  </Col>
-                </Row>
-              </Form>
-            </Card>
-          </div>
-        </Card>
-      
+                  </div>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+        </div>
+      </Card>
     </div>
   );
 };

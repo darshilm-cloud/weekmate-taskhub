@@ -22,7 +22,6 @@ import { QuestionCircleOutlined } from "@ant-design/icons";
 
 const ComplaintsForm = () => {
   const companySlug = localStorage.getItem("companyDomain");
-
   const { complaint_id } = useParams();
   const [form] = Form.useForm();
   const { Option } = Select;
@@ -44,11 +43,11 @@ const ComplaintsForm = () => {
   const formItemLayout = {
     labelCol: {
       xs: { span: 24 },
-
+      sm: { span: 8 },
     },
     wrapperCol: {
       xs: { span: 24 },
-
+      sm: { span: 16 },
     },
   };
 
@@ -176,8 +175,8 @@ const ComplaintsForm = () => {
       <div className="main-time-sheet-project-wrapper">
         <Header className="main-header">
           <div className="project-name">
-            <h3 style={ { textTransform: "capitalize" } }>
-              { complaintId ? "Edit" : "Add" } Complaint
+            <h3 style={{ textTransform: "capitalize" }}>
+              {complaintId ? "Edit" : "Add"} Complaint
             </h3>
           </div>
         </Header>
@@ -186,61 +185,61 @@ const ComplaintsForm = () => {
             <div className="header">
               <div className="project-running-reports-fillter-wrapper feedback-form add-complaint-wrapper">
                 <Form
-                  form={ form }
+                  form={form}
                   noValidate
-                  { ...formItemLayout }
-                  onFinish={ handleSubmit }
-                  onValuesChange={ handleFormChange }
+                  {...formItemLayout}
+                  onFinish={handleSubmit}
+                  onValuesChange={handleFormChange}
                 >
                   <Row>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         name="project"
                         label="Project"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please Select Project !",
                           },
-                        ] }
+                        ]}
                       >
                         <Select
                           placeholder="Project"
                           showSearch
-                          filterOption={ (input, option) =>
+                          filterOption={(input, option) =>
                             option.children
                               ?.toLowerCase()
                               .indexOf(input?.toLowerCase()) >= 0
                           }
-                          filterSort={ (optionA, optionB) =>
+                          filterSort={(optionA, optionB) =>
                             optionA.children
                               ?.toLowerCase()
                               .localeCompare(optionB.children?.toLowerCase())
                           }
-                          onChange={ (e) => getProjectDetails(e) }
+                          onChange={(e) => getProjectDetails(e)}
                         >
-                          { projects.map((item, index) => (
+                          {projects.map((item, index) => (
                             <Option
-                              key={ index }
-                              value={ item._id }
-                              style={ { textTransform: "capitalize" } }
+                              key={index}
+                              value={item._id}
+                              style={{ textTransform: "capitalize" }}
                             >
-                              { item?.title }
+                              {item?.title}
                             </Option>
-                          )) }
+                          ))}
                         </Select>
                       </Form.Item>
                     </Col>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         name="project_manager"
                         label="Project Manager"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please enter Project Manager name !",
                           },
-                        ] }
+                        ]}
                       >
                         <Input
                           placeholder="Enter Project Manager name"
@@ -250,16 +249,16 @@ const ComplaintsForm = () => {
                     </Col>
                   </Row>
                   <Row>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         name="account_manager"
                         label="Account Manager"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please Select Account Manager !",
                           },
-                        ] }
+                        ]}
                       >
                         <Input
                           placeholder="Enter Account Manager name"
@@ -269,16 +268,16 @@ const ComplaintsForm = () => {
                       <Form.Item
                         label="Reason"
                         name="reason"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please enter Reason !",
                           },
-                        ] }
+                        ]}
                       >
                         <Select
                           defaultValue="--select--"
-                          options={ [
+                          options={[
                             {
                               value: "Project Delays and Missed Deadlines",
                               label: "Project Delays and Missed Deadlines",
@@ -332,32 +331,32 @@ const ComplaintsForm = () => {
                               value: "Downtime or Performance Issue",
                               label: "Downtime or Performance Issue",
                             },
-                          ] }
+                          ]}
                         />
                       </Form.Item>
                     </Col>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         label="Client Name"
                         name="client_name"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please enter client name !",
                           },
-                        ] }
+                        ]}
                       >
                         <Input placeholder="Enter client name" />
                       </Form.Item>
                       <Form.Item
                         label="Client Email"
                         name="client_email"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please enter client email !",
                           },
-                        ] }
+                        ]}
                       >
                         <Input placeholder="Enter client email" />
                       </Form.Item>
@@ -365,34 +364,34 @@ const ComplaintsForm = () => {
                   </Row>
 
                   <Row>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         label="Complaint"
                         name="Complaint"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please enter your Complaint !",
                           },
-                        ] }
+                        ]}
                       >
-                        <TextArea rows={ 4 } placeholder="Enter your Complaint" />
+                        <TextArea rows={4} placeholder="Enter your Complaint" />
                       </Form.Item>
                     </Col>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         name="priority"
                         label="Priority"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please select priority !",
                           },
-                        ] }
+                        ]}
                       >
                         <Select
                           defaultValue="--select--"
-                          options={ [
+                          options={[
                             {
                               value: "critical",
                               label: "Critical",
@@ -410,26 +409,26 @@ const ComplaintsForm = () => {
                               value: "low",
                               label: "Low",
                             },
-                          ] }
+                          ]}
                         />
                       </Form.Item>
                     </Col>
                   </Row>
                   <Row>
-                    <Col sm={ 24 } md={ 12 }>
+                    <Col sm={24} md={12}>
                       <Form.Item
                         name="escalation_level"
                         label="Escalation Level"
-                        rules={ [
+                        rules={[
                           {
                             required: true,
                             message: "Please Escalation level !",
                           },
-                        ] }
+                        ]}
                       >
                         <Select
                           defaultValue="--select--"
-                          options={ [
+                          options={[
                             {
                               value: "level1",
                               label: "Level 1 (Director)",
@@ -438,26 +437,26 @@ const ComplaintsForm = () => {
                               value: "level2",
                               label: "Level 2 (CEO)",
                             },
-                          ] }
+                          ]}
                         />
                       </Form.Item>
                     </Col>
-                    { !complaintId ? (
-                      <Col sm={ 24 } md={ 12 }>
+                    {!complaintId ? (
+                      <Col sm={24} md={12}>
                         <Form.Item
                           name="status"
                           label="Status"
                           initialValue="open"
-                          rules={ [
+                          rules={[
                             {
                               required: true,
                               message: "Please select status !",
                             },
-                          ] }
+                          ]}
                         >
                           <Select
                             defaultValue="open"
-                            options={ [
+                            options={[
                               {
                                 value: "open",
                                 label: "Open",
@@ -482,46 +481,42 @@ const ComplaintsForm = () => {
                                 value: "customer_lost",
                                 label: "Customer Lost",
                               },
-                            ] }
+                            ]}
                           />
                         </Form.Item>
                       </Col>
                     ) : (
                       ""
-                    ) }
+                    )}
                   </Row>
-                  <Row>
-                    <Col sm={ 24 } >
 
-                      <Form.Item>
-                        <div className="feedback-submit-button-form">
-                          { selectedStatus === "resolved" ? (
-                            <Popconfirm
-                              icon={
-                                <QuestionCircleOutlined
-                                  style={ {
-                                    color: "red",
-                                  } }
-                                />
-                              }
-                              title="Are you sure, you want to update the status of the complaint to Client Review? As the feedback mail will be sent to client."
-                              onConfirm={ () => form.submit() }
-                              okText="Yes"
-                              cancelText="No"
-                            >
-                              <Button id="addbutton" type="primary">
-                                { complaintId ? "Update" : "Submit" }
-                              </Button>
-                            </Popconfirm>
-                          ) : (
-                            <Button id="addbutton" type="primary" htmlType="submit">
-                              { complaintId ? "Update" : "Submit" }
-                            </Button>
-                          ) }
-                        </div>
-                      </Form.Item>
-                    </Col>
-                  </Row>
+                  <Form.Item>
+                    <div className="feedback-submit-button-form">
+                      {selectedStatus === "resolved" ? (
+                        <Popconfirm
+                          icon={
+                            <QuestionCircleOutlined
+                              style={{
+                                color: "red",
+                              }}
+                            />
+                          }
+                          title="Are you sure, you want to update the status of the complaint to Client Review? As the feedback mail will be sent to client."
+                          onConfirm={() => form.submit()}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <Button id="addbutton" type="primary">
+                            {complaintId ? "Update" : "Submit"}
+                          </Button>
+                        </Popconfirm>
+                      ) : (
+                        <Button id="addbutton" type="primary" htmlType="submit">
+                          {complaintId ? "Update" : "Submit"}
+                        </Button>
+                      )}
+                    </div>
+                  </Form.Item>
                 </Form>
               </div>
             </div>

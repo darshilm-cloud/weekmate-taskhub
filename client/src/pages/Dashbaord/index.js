@@ -1,118 +1,526 @@
 import React, { useState, useEffect } from "react";
 import "./dashboard.css";
-import DashboardController from "./DashboardController";
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  Popover,
-  Radio,
-  Tooltip,
-  Progress,
-  Row,
-  Col,
-  Card,
-} from "antd";
-import { DatePicker } from "antd";
+import { Col, Tooltip, Form, Card } from "antd";
+import EmployeeIcon from "../../assets/icons/EmployeeIcon";
 import { Link } from "react-router-dom";
-import { StarFilled } from "@ant-design/icons";
-import { StarOutlined } from "@ant-design/icons";
+import { StarFilled, StarOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { removeTitle } from "../../util/nameFilter";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
 import MyAvatar from "../../components/Avatar/MyAvatar";
-import EmployeeIcon from "../../assets/icons/EmployeeIcon";
 import Service from "../../service";
+import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import { useDispatch } from "react-redux";
+import { useHistory } from "react-router-dom";
+import { generateCacheKey } from "../../util/generateCacheKey";
+import ProjectFilterComponent from "./ProjectFilterComponent";
+import TaskFilterComponent from "./TaskFilterComponent";
+import BugFilterComponent from "./BugFilterComponent";
+import TimeFilterComponent from "./TimeFilterComponent";
+import dayjs from "dayjs";
 
-const Dashbaord = () => {
-  const {
-    showFiltersProject,
-    handleFiltersProject,
-    handleCategory,
-    handleStatus,
-    handleProjects,
-    handleTaskStatus,
-    handleBugStatus,
-    statusList,
-    categoryList,
-    timeOfDay,
-    firstName,
-    empImage,
-    fullName,
-    showLoggedTimeFiltrs,
-    setShowLoggedTimeFiltrs,
-    showTasksiltrs,
-    setTasksFiltrs,
-    showBugsFiltrs,
-    setShowBugsFiltrs,
-    isModalOpen,
-    setIsModalOpen,
-    onSearch,
-    projectDetails,
-    handleCancel,
-    form,
-    showModal,
-    myProj,
-    myTask,
-    myBug,
-    myTime,
-    myProjects,
-    myTasks,
-    myBugs,
-    myLoggedTime,
-    getDateFormatted,
-    handleCancelProjectCategory,
-    handleCancelProjectStatus,
-    formatTimeDifference,
-    handleCancelTaskProject,
-    taskStatus,
-    bugStatus,
-    setPopOver,
-    popOver,
-    handleVisibleChange,
-    handleChangeDate,
-    dates,
-    projStatus,
-    setProjStatus,
-    category,
-    setCategory,
-    projects,
-    setProjects,
-    projectsTime,
-    setprojectsTime,
-    projectsBug,
-    setProjectsBug,
-    searchCategory,
-    handleSearchCategory,
-    filteredCategoryList,
-    searchTaskProject,
-    handleSearchTaskProject,
-    filteredTaskProjectList,
-    filteredTimeProjectList,
-    filteredBugProjectList,
-    handleSearchTimeProject,
-    handleSearchBugProject,
-    searchTimeProject,
-    searchBugProject,
-    handleFilters,
-    handleBookmark,
-    listId,
-    history,
-    getProjectMianTask,
-    addVisitedData,
-    recentList,
-    getProjectListing,
-    currentMonth,
-    totalLoggedProgress,
-  } = DashboardController();
-
-  const [totalEmployee, setTotalEmployee] = useState(0);
-
-  const companySlug = localStorage.getItem("companyDomain");
+const Dashboard = () => {
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;
+
+  const dispatch = useDispatch();
+  const companySlug = localStorage.getItem("companyDomain");
+  
+  const history = useHistory();
+  const [firstName, setFirstName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [empImage, setEmpImage] = useState("");
+  const [timeOfDay, setTimeOfDay] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+  const [projectDetails, setProjectDetails] = useState([]);
+  const [projectList, setProjectList] = useState([]);
+  const [myProj, setMyProj] = useState([]);
+  const [myTask, setMyTask] = useState([]);
+  const [myBug, setMyBug] = useState([]);
+  const [myTime, setMyTime] = useState([]);
+  const [currentMonth, setCurrentMonth] = useState("");
+  const [totalLoggedProgress, setTotalLoggedProgress] = useState(null);
+  const [recentList, setRecentList] = useState([]);
+  // Project filter states
+  const [projStatus, setProjStatus] = useState([]);
+  const [category, setCategory] = useState([]);
+  // Task filter states
+  const [taskProjects, setTaskProjects] = useState([]);
+  const [taskStatus, setTaskStatus] = useState("all");
+  const [taskDates, setTaskDates] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  // Bug filter states
+  const [bugProjects, setBugProjects] = useState([]);
+  const [bugStatus, setBugStatus] = useState("all");
+  const [bugDates, setBugDates] = useState({ startDate: null, endDate: null });
+  // Time filter states
+  const [timeProjects, setTimeProjects] = useState([]);
+  const [timeDates, setTimeDates] = useState({
+    startDate: null,
+    endDate: null,
+  });
+
+  // Add flags to track initial load to prevent unnecessary API calls on mount
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [totalEmployee, setTotalEmployee] = useState(0);
+
+  useEffect(() => {
+    const date = new Date();
+    const month = date.toLocaleString("default", { month: "long" });
+    setCurrentMonth(month);
+  }, []);
+
+  useEffect(() => {
+    const getCurrentTimeOfDay = () => {
+      const currentHour = new Date().getHours();
+      if (currentHour >= 6 && currentHour < 12) {
+        setTimeOfDay("Good Morning");
+      } else if (currentHour >= 12 && currentHour < 18) {
+        setTimeOfDay("Good Afternoon");
+      } else if (currentHour >= 18 && currentHour < 21) {
+        setTimeOfDay("Good Evening");
+      } else {
+        setTimeOfDay("Good Night");
+      }
+    };
+    const getUserData = () => {
+      const userDataJSON = localStorage.getItem("user_data");
+      if (userDataJSON) {
+        const userData = JSON.parse(userDataJSON);
+        if (userData && userData.first_name) {
+          setFirstName(userData.first_name);
+        }
+        if (userData && userData.emp_img) {
+          setEmpImage(userData.emp_img);
+        }
+        if (userData && userData.full_name) {
+          setFullName(userData.full_name);
+        }
+      }
+    };
+    getCurrentTimeOfDay();
+    getUserData();
+    const interval = setInterval(getCurrentTimeOfDay, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // useEffect to trigger myProjects when project filter states change
+  useEffect(() => {
+    if (!isInitialLoad) {
+      myProjects();
+    }
+  }, [projStatus, category]);
+
+  // useEffect to trigger myTasks when task filter states change
+  useEffect(() => {
+    if (!isInitialLoad) {
+      myTasks();
+    }
+  }, [taskProjects, taskStatus, taskDates]);
+
+  // useEffect to trigger myBugs when bug filter states change
+  useEffect(() => {
+    if (!isInitialLoad) {
+      myBugs();
+    }
+  }, [bugProjects, bugStatus, bugDates]);
+
+  // useEffect to trigger myLoggedTime when time filter states change
+  useEffect(() => {
+    if (!isInitialLoad) {
+      myLoggedTime();
+    }
+  }, [timeProjects, timeDates]);
+
+  const handleBookmark = async (item) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        api_url: `${Service.bookmarked}/${item?._id}`,
+        methodName: Service.putMethod,
+        body: { isStarred: !item.isStarred },
+      });
+      if (response?.data) {
+        dispatch(hideAuthLoader());
+        myProjects();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  const getDateFormatted = (date) => {
+    if (date === null || date === "") {
+      return "-";
+    } else {
+      const dateObj = new Date(date);
+      const day = dateObj.getDate();
+      const month = dateObj.toLocaleString("en-US", { month: "short" });
+      const year = dateObj.getFullYear().toString().substr(2);
+      return `${day} ${month}, ${year}`;
+    }
+  };
+
+  const getProjectListing = async (searchText) => {
+    try {
+      dispatch(showAuthLoader());
+      const defaultPayload = {
+        pageNo: 1,
+        limit: 5,
+        search: searchText || "",
+        sortBy: "desc",
+        filterBy: "all",
+        isSearch: true,
+      };
+      const reqBody = { ...defaultPayload };
+      if (searchText && searchText !== "") {
+        reqBody.search = searchText;
+      }
+      let Key = generateCacheKey("project", reqBody);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectdetails,
+        body: reqBody,
+        options: { cachekey: Key },
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setProjectDetails(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getProjectList = async () => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getProjectList,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setProjectList(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getVisitedData = async () => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getrecentVisited,
+      });
+      if (response?.data && response?.data?.statusCode == 200) {
+        dispatch(hideAuthLoader());
+        setRecentList(response?.data?.data);
+      }
+    } catch (error) {
+      console.log("get project error");
+    }
+  };
+
+  const getLoggedHoursProgress = async () => {
+    try {
+      dispatch(showAuthLoader());
+      const date = new Date();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear();
+      const reqBody = { month, year: year.toString() };
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getLoggedHoursProgress,
+        body: reqBody,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setTotalLoggedProgress(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const myProjects = async () => {
+    try {
+      dispatch(showAuthLoader());
+      let reqBody = {};
+      if (category && category.length > 0) {
+        reqBody = { ...reqBody, category };
+      }
+      if (projStatus && projStatus.length > 0) {
+        reqBody = { ...reqBody, project_status: projStatus };
+      }
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.myProjects,
+        body: reqBody,
+      });
+      if (response?.data && response?.data?.data) {
+        dispatch(hideAuthLoader());
+        setMyProj(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error, "myProject error");
+    }
+  };
+
+  const myTasks = async () => {
+    try {
+      dispatch(showAuthLoader());
+      let reqBody = {};
+      if (taskProjects && taskProjects.length > 0) {
+        reqBody = { ...reqBody, project_id: taskProjects };
+      }
+      if (taskStatus && taskStatus !== "all") {
+        reqBody = { ...reqBody, status: taskStatus };
+      }
+
+      if (taskDates.startDate) {
+        reqBody.start_date = dayjs(taskDates.startDate).format("YYYY-MM-DD");
+      }
+      if (taskDates.endDate) {
+        reqBody.end_date = dayjs(taskDates.endDate).format("YYYY-MM-DD");
+      }
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.myTasks,
+        body: reqBody,
+      });
+      if (response?.data && response?.data?.data) {
+        dispatch(hideAuthLoader());
+        setMyTask(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error, "myTask error");
+    }
+  };
+
+  const myBugs = async () => {
+    try {
+      dispatch(showAuthLoader());
+      let reqBody = {};
+      if (bugStatus && bugStatus !== "all") {
+        reqBody = { ...reqBody, status: bugStatus };
+      }
+      if (bugProjects && bugProjects.length > 0) {
+        reqBody = { ...reqBody, project_id: bugProjects };
+      }
+      if (bugDates.startDate) {
+        reqBody.start_date = dayjs(bugDates.startDate).format("YYYY-MM-DD");
+      }
+      if (bugDates.endDate) {
+        reqBody.end_date = dayjs(bugDates.endDate).format("YYYY-MM-DD");
+      }
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.myBugs,
+        body: reqBody,
+      });
+      if (response?.data && response?.data?.data) {
+        dispatch(hideAuthLoader());
+        setMyBug(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error, "myBug error");
+    }
+  };
+
+  const myLoggedTime = async () => {
+    try {
+      dispatch(showAuthLoader());
+      const now = new Date();
+      const start_date = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      ).toISOString();
+      const end_date = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      ).toISOString();
+      let reqBody = {
+        start_date: moment(start_date).format("YYYY-MM-DD"),
+        end_date: moment(end_date).format("YYYY-MM-DD"),
+      };
+      if (timeProjects && timeProjects.length > 0) {
+        reqBody = { ...reqBody, project_id: timeProjects };
+      }
+
+      if (timeDates.startDate) {
+        reqBody.start_date = dayjs(timeDates.startDate).format("YYYY-MM-DD");
+      }
+      if (timeDates.endDate) {
+        reqBody.end_date = dayjs(timeDates.endDate).format("YYYY-MM-DD");
+      }
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.myLoggedTime,
+        body: reqBody,
+      });
+      if (response?.data && response?.data?.data) {
+        dispatch(hideAuthLoader());
+        setMyTime(response?.data?.data);
+      }
+    } catch (error) {
+      console.log(error, "myLoggedTime error");
+    }
+  };
+
+  const getProjectMianTask = async (projectId) => {
+    try {
+      dispatch(showAuthLoader());
+      const reqBody = { project_id: projectId };
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectMianTask,
+        body: reqBody,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data?.data.length > 0) {
+        const taskId = response.data.data[0]._id;
+        if (taskId) {
+          history.push(`/${companySlug}/project/app/${projectId}?tab=Tasks&listID=${taskId}`);
+        }
+      } else {
+        history.push(`/${companySlug}/project/app/${projectId}?tab=Tasks`);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addVisitedData = async (projectId) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addrecentVisited,
+        body: { project_id: projectId },
+      });
+      if (response?.data && response?.data?.statusCode == 200) {
+        dispatch(hideAuthLoader());
+      }
+    } catch (error) {
+      console.log("add project error");
+    }
+  };
+
+  const showModal = async () => {
+    setIsModalOpen(true);
+    getProjectListing();
+    getVisitedData();
+  };
+
+  // Updated filter change handlers - now only update state, API calls happen in useEffect
+  const onProjectFilterChange = (skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setProjStatus([]);
+      setCategory([]);
+    } else {
+      if (skipParams.includes("skipStatus")) setProjStatus([]);
+      if (skipParams.includes("skipCategory")) setCategory([]);
+    }
+    if (selectedFilters) {
+      setProjStatus(selectedFilters.status || []);
+      setCategory(selectedFilters.category || []);
+    }
+    // Removed myProjects() call - will be handled by useEffect
+  };
+
+  const onTaskFilterChange = (skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setTaskProjects([]);
+      setTaskStatus("all");
+      setTaskDates({ startDate: null, endDate: null });
+    } else {
+      if (skipParams.includes("skipProject")) setTaskProjects([]);
+      if (skipParams.includes("skipStatus")) setTaskStatus("all");
+      if (skipParams.includes("skipDate"))
+        setTaskDates({ startDate: null, endDate: null });
+    }
+    if (selectedFilters) {
+      setTaskProjects(selectedFilters.project || []);
+      setTaskStatus(selectedFilters.status || "all");
+      setTaskDates(selectedFilters.dates || { startDate: null, endDate: null });
+    }
+    // Removed myTasks() call - will be handled by useEffect
+  };
+
+  const onBugFilterChange = (skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setBugProjects([]);
+      setBugStatus("all");
+      setBugDates({ startDate: null, endDate: null });
+    } else {
+      if (skipParams.includes("skipProject")) setBugProjects([]);
+      if (skipParams.includes("skipStatus")) setBugStatus("all");
+      if (skipParams.includes("skipDate"))
+        setBugDates({ startDate: null, endDate: null });
+    }
+    if (selectedFilters) {
+      setBugProjects(selectedFilters.project || []);
+      setBugStatus(selectedFilters.status || "all");
+      setBugDates(selectedFilters.dates || { startDate: null, endDate: null });
+    }
+    // Removed myBugs() call - will be handled by useEffect
+  };
+
+  const onTimeFilterChange = (skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setTimeProjects([]);
+      setTimeDates({ startDate: null, endDate: null });
+    } else {
+      if (skipParams.includes("skipProject")) setTimeProjects([]);
+      if (skipParams.includes("skipDate"))
+        setTimeDates({ startDate: null, endDate: null });
+    }
+    if (selectedFilters) {
+      setTimeProjects(selectedFilters.project || []);
+      setTimeDates(selectedFilters.dates || { startDate: null, endDate: null });
+    }
+    // Removed myLoggedTime() call - will be handled by useEffect
+  };
+
+  useEffect(() => {
+    getProjectListing();
+    getProjectList();
+    getLoggedHoursProgress();
+    myProjects();
+    myTasks();
+    myBugs();
+    myLoggedTime();
+
+    // Set initial load flag to false after first API calls complete
+    setIsInitialLoad(false);
+  }, []);
+
+  const hours = totalLoggedProgress?.data2?.total_time
+    ? totalLoggedProgress?.data2?.total_time.split(":")[0]
+    : "0";
+  const loggedPercentageValue = parseFloat(
+    totalLoggedProgress?.loggedPercentage
+  );
 
   const getDashboardData = async () => {
     try {
@@ -143,14 +551,6 @@ const Dashbaord = () => {
     },
   ];
 
-  const hours = totalLoggedProgress?.data2?.total_time
-    ? totalLoggedProgress?.data2?.total_time.split(":")[0]
-    : "0";
-
-  const loggedPercentageValue = parseFloat(
-    totalLoggedProgress?.loggedPercentage
-  );
-
   return (
     <div className="main-dashboard-wrapper">
       <div className="container">
@@ -171,8 +571,6 @@ const Dashbaord = () => {
             </div>
           </div>
 
-          {/* <div className="progress-of-logged-hours-background"> */}
-          {/* <Row gutter={[24, 24]} justify="start"> */}
           {roleName == "Admin" ? (
             dashboardCards.map((card, index) => (
               <Col xs={24} sm={12} md={12} lg={8} xl={6} key={index}>
@@ -244,8 +642,45 @@ const Dashbaord = () => {
           ) : (
             <></>
           )}
-          {/* </Row> */}
-          {/* </div> */}
+
+          {/* <div className="progress-of-logged-hours-background">
+            <div className="logged-hours-icon">{currentMonth}</div>
+            <div className="logged-hours-content d-flex">
+              <div className="logged-hours-text">
+                <div className="logged-hours-title">
+                  <p>Monthly Logged Hours</p>
+                  <span
+                    className={
+                      totalLoggedProgress?.behindHours ? "red-alert" : ""
+                    }
+                  >
+                    {hours} Hours / {totalLoggedProgress?.totalWorkingHours}{" "}
+                    Hours
+                  </span>
+                </div>
+                <div className="progress-bar-container">
+                  <Progress
+                    percent={loggedPercentageValue}
+                    percentPosition={{ align: "center", type: "inner" }}
+                    showInfo={false}
+                    strokeColor={
+                      totalLoggedProgress?.behindHours ? "#ff0000" : "#28a745"
+                    }
+                  />
+                </div>
+              </div>
+              {totalLoggedProgress?.behindHours ? (
+                <div className="remaining-hours-container">
+                  <span>
+                    Remaining Hours:{" "}
+                    {totalLoggedProgress?.totalBehindHoursTillToday}
+                  </span>
+                </div>
+              ) : (
+                ""
+              )}
+            </div>
+          </div> */}
         </div>
         <div className="profile-input-form-wrapper">
           <form action="" className="profile-form-wrapper">
@@ -261,17 +696,6 @@ const Dashbaord = () => {
               />
             </div>
           </form>
-
-          <ProjectListModal
-            projectDetails={projectDetails}
-            recentList={recentList}
-            isModalOpen={isModalOpen}
-            handleCancel={handleCancel}
-            addVisitedData={addVisitedData}
-            setIsModalOpen={setIsModalOpen}
-            form={form}
-            getProjectListing={getProjectListing}
-          />
         </div>
         <div className="main-dashboard-box-wrapper d-flex">
           <div className="main-project-wrapper">
@@ -287,219 +711,13 @@ const Dashbaord = () => {
                     </div>
                   </th>
                   <th>
-                    <div
-                      className="right-project-filter"
-                      onClick={handleFiltersProject}
-                    >
-                      <i className="fa-solid fa-filter"></i>
-                    </div>
+                    <ProjectFilterComponent
+                      onFilterChange={onProjectFilterChange}
+                    />
                   </th>
                 </tr>
-                {showFiltersProject && (
-                  <tr>
-                    <th colSpan={3}>
-                      <div className="main-filter-pop">
-                        <div
-                          className="status-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Status:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottomRight"
-                              visible={popOver.projectStatus}
-                              onVisibleChange={() =>
-                                handleVisibleChange("projectStatus", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper">
-                                  <ul>
-                                    <li>
-                                      <Checkbox
-                                        checked={projStatus.length === 0}
-                                        onChange={() =>
-                                          handleFilters(
-                                            "",
-                                            projStatus,
-                                            setProjStatus
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        All
-                                      </Checkbox>
-                                    </li>
-                                  </ul>
-
-                                  <div>
-                                    <ul className="assigness-data">
-                                      {statusList
-                                        .sort((a, b) => {
-                                          if (a.title === "Archived") return -1;
-                                          if (b.title === "Archived") return 1;
-
-                                          return 0;
-                                        })
-                                        ?.map((val, index) => (
-                                          <li key={index}>
-                                            <Checkbox
-                                              onChange={() =>
-                                                handleFilters(
-                                                  val,
-                                                  projStatus,
-                                                  setProjStatus
-                                                )
-                                              }
-                                              checked={projStatus.includes(
-                                                val?._id
-                                              )}
-                                            >
-                                              {val?.title}
-                                            </Checkbox>
-                                          </li>
-                                        ))}
-                                    </ul>
-                                  </div>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myProjects();
-                                        setPopOver({
-                                          ...popOver,
-                                          projectStatus: false,
-                                        });
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        // handleCancelProjectStatus()
-                                        setPopOver({
-                                          ...popOver,
-                                          projectStatus: false,
-                                        });
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rs-check-circle"></i>{" "}
-                              {projStatus.length == 0 ? "All" : "Selected"}
-                            </Popover>
-                          </div>
-                        </div>
-                        <div
-                          className="category-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Category:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottomRight"
-                              visible={popOver.projectCategory}
-                              onVisibleChange={() =>
-                                handleVisibleChange("projectCategory", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper">
-                                  <ul>
-                                    <li>
-                                      <Checkbox
-                                        checked={category.length === 0}
-                                        onChange={() =>
-                                          handleFilters(
-                                            "",
-                                            category,
-                                            setCategory
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        All
-                                      </Checkbox>
-                                    </li>
-                                  </ul>
-
-                                  <div className="search-filter">
-                                    <Input
-                                      placeholder="Search"
-                                      value={searchCategory}
-                                      onChange={handleSearchCategory}
-                                    />
-                                  </div>
-                                  <ul className="assigness-data">
-                                    {filteredCategoryList?.map((val, index) => (
-                                      <>
-                                        <li key={index}>
-                                          <Checkbox
-                                            onChange={() => {
-                                              handleFilters(
-                                                val,
-                                                category,
-                                                setCategory
-                                              );
-                                            }}
-                                            checked={category.includes(
-                                              val?._id
-                                            )}
-                                          >
-                                            {val?.project_tech}
-                                          </Checkbox>
-                                        </li>
-                                      </>
-                                    ))}
-                                  </ul>
-
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myProjects();
-                                        setPopOver({
-                                          ...popOver,
-                                          projectCategory: false,
-                                        });
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        setPopOver({
-                                          ...popOver,
-                                          projectCategory: false,
-                                        });
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rr-users"></i>{" "}
-                              {category.length == 0 ? "All" : "Selected"}
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-                    </th>
-                  </tr>
-                )}
               </thead>
-
-              <tbody className={showFiltersProject && "showfilter"}>
+              <tbody>
                 {myProj.length > 0 ? (
                   myProj?.map((item, index) => (
                     <tr key={index}>
@@ -507,9 +725,7 @@ const Dashbaord = () => {
                         <div className="cell-inner">
                           <span className="projectname">
                             <span
-                              onClick={() => {
-                                handleBookmark(item);
-                              }}
+                              onClick={() => handleBookmark(item)}
                               style={{ cursor: "pointer" }}
                             >
                               {item?.isStarred ? (
@@ -526,7 +742,6 @@ const Dashbaord = () => {
                               </span>
                             </Link>
                           </span>
-
                           <span className="project-hours-color">
                             <span className="timeago">
                               {calculateTimeDifference(item?.createdAt)}
@@ -535,11 +750,11 @@ const Dashbaord = () => {
                         </div>
                       </td>
                       <td>
-                        <div className="grid-cell-inner ">
+                        <div className="grid-cell-inner">
                           <div className="gray">
                             <i>
                               {getDateFormatted(item?.start_date)}
-                              <i class="fa-solid fa-arrow-right"></i>{" "}
+                              <i className="fa-solid fa-arrow-right"></i>{" "}
                               {getDateFormatted(item?.end_date)}
                             </i>
                           </div>
@@ -560,276 +775,20 @@ const Dashbaord = () => {
                   <th>
                     <div className="folder-project-wrpper d-flex">
                       <a href="#">
-                        <i class="fa-solid fa-list-check"></i>
+                        <i className="fa-solid fa-list-check"></i>
                       </a>
                       <span>My tasks</span>
                     </div>
                   </th>
                   <th></th>
                   <th>
-                    <div
-                      className="right-project-filter"
-                      onClick={() => setTasksFiltrs(!showTasksiltrs)}
-                    >
-                      <i className="fa-solid fa-filter"></i>
-                    </div>
+                    <TaskFilterComponent onFilterChange={onTaskFilterChange} />
                   </th>
                 </tr>
-                {showTasksiltrs && (
-                  <tr>
-                    <th colSpan={3}>
-                      <div className="main-filter-pop">
-                        <div
-                          className="status-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Status:</p>
-                            <Popover
-                              trigger="click"
-                              visible={popOver.taskStatus}
-                              onVisibleChange={() =>
-                                handleVisibleChange("taskStatus", true)
-                              }
-                              placement="bottomRight"
-                              content={
-                                <div className="right-popover-wrapper">
-                                  <ul>
-                                    <Radio.Group
-                                      onChange={(e) => {
-                                        handleTaskStatus(e.target.value);
-                                      }}
-                                      value={taskStatus}
-                                    >
-                                      <li>
-                                        <Radio value="all"> All</Radio>
-                                      </li>
-                                      <li>
-                                        <Radio value="completed">
-                                          Completed
-                                        </Radio>
-                                      </li>
-                                      <li>
-                                        <Radio value="incompleted">
-                                          InCompleted
-                                        </Radio>
-                                      </li>
-                                    </Radio.Group>
-                                  </ul>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myTasks();
-                                        handleVisibleChange(
-                                          "taskStatus",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange(
-                                          "taskStatus",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rs-check-circle"></i>{" "}
-                              {taskStatus === "completed"
-                                ? "Completed"
-                                : taskStatus === "incompleted"
-                                ? "Incompleted"
-                                : "All"}
-                            </Popover>
-                          </div>
-                        </div>
-                        <div
-                          className="category-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Projects:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottom"
-                              visible={popOver.taskProject}
-                              onVisibleChange={() =>
-                                handleVisibleChange("taskProject", true)
-                              }
-                              content={
-                                <div
-                                  className="right-popover-wrapper"
-                                  style={{
-                                    width: "100%",
-
-                                    maxWidth: "300px",
-
-                                    wordBreak: "break-word",
-                                  }}
-                                >
-                                  <ul>
-                                    <li>
-                                      <Checkbox
-                                        checked={projects.length === 0}
-                                        onChange={() =>
-                                          handleFilters(
-                                            "",
-                                            projects,
-                                            setProjects
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        All
-                                      </Checkbox>
-                                    </li>
-                                  </ul>
-                                  <div className="search-filter">
-                                    <Input
-                                      placeholder="Search"
-                                      value={searchTaskProject}
-                                      onChange={handleSearchTaskProject}
-                                    />
-                                  </div>
-                                  <ul className="assigness-data">
-                                    {filteredTaskProjectList?.map(
-                                      (val, index) => (
-                                        <li key={index}>
-                                          <Checkbox
-                                            onChange={() =>
-                                              handleFilters(
-                                                val,
-                                                projects,
-                                                setProjects
-                                              )
-                                            }
-                                            checked={projects.includes(
-                                              val?._id
-                                            )}
-                                          >
-                                            {val?.title}
-                                          </Checkbox>
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myTasks();
-                                        handleVisibleChange(
-                                          "taskProject",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange(
-                                          "taskProject",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rr-users"></i>{" "}
-                              {projects.length == 0 ? "All" : "Selected"}
-                            </Popover>
-                          </div>
-                        </div>
-                        <div
-                          className="view-data-range-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Date range:</p>
-                            <Popover
-                              placement="bottom"
-                              trigger="click"
-                              visible={popOver.taskDate}
-                              onVisibleChange={() =>
-                                handleVisibleChange("taskDate", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper popover-task">
-                                  <Form.Item label="Start Date">
-                                    <DatePicker
-                                      value={dates.taskStartDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("taskStartDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-                                  <Form.Item label="Due Date">
-                                    <DatePicker
-                                      value={dates.taskEndDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("taskEndDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myTasks();
-                                        handleVisibleChange("taskDate", false);
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      type="outlined"
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange("taskDate", false);
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <span className="status-check-icon">
-                                <i className="fa-solid fa-calendar-alt"></i>
-                                <span className="all-status">
-                                  Start: , Due:{" "}
-                                </span>
-                              </span>
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-                    </th>
-                  </tr>
-                )}
                 <tr>
                   <th className="table-task-title">
                     <div className="task-title">
-                      <p> Title</p>
+                      <p>Title</p>
                     </div>
                   </th>
                   <th>
@@ -839,7 +798,7 @@ const Dashbaord = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={showTasksiltrs ? "showfilter" : ""}>
+              <tbody>
                 {myTask.length > 0 ? (
                   myTask?.map((item, index) => (
                     <tr key={index}>
@@ -874,216 +833,34 @@ const Dashbaord = () => {
                 <tr>
                   <th>
                     <Tooltip title="See your logged time data here!">
-                      <Link to={`/${companySlug}/my-log-time`}>
+                      <Link to="my-log-time">
                         <div className="folder-project-wrpper d-flex">
                           <a href="#">
-                            <i class="fa-regular fa-clock"></i>
+                            <i className="fa-regular fa-clock"></i>
                           </a>
-                          <span>My logged time</span>{" "}
+                          <span>My logged time</span>
                         </div>
-                      </Link>{" "}
+                      </Link>
                     </Tooltip>
                   </th>
                   <th></th>
                   <th>
-                    <div
-                      className="right-project-filter"
-                      onClick={() =>
-                        setShowLoggedTimeFiltrs(!showLoggedTimeFiltrs)
-                      }
-                    >
-                      <i className="fa-solid fa-filter"></i>
-                    </div>
+                    <TimeFilterComponent onFilterChange={onTimeFilterChange} />
                   </th>
                 </tr>
-                {showLoggedTimeFiltrs && (
-                  <tr>
-                    <th colSpan={3}>
-                      <div className="main-filter-pop">
-                        <div
-                          className="category-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Projects:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottom"
-                              visible={popOver.timeProject}
-                              onVisibleChange={() =>
-                                handleVisibleChange("timeProject", true)
-                              }
-                              content={
-                                <div
-                                  className="right-popover-wrapper"
-                                  style={{
-                                    width: "100%",
-                                    maxWidth: "300px",
-                                    wordBreak: "break-word",
-                                  }}
-                                >
-                                  <ul className="assigness-data">
-                                    <li>
-                                      <Checkbox
-                                        checked={projectsTime.length == 0}
-                                        onChange={() => {
-                                          handleFilters(
-                                            "",
-                                            projectsTime,
-                                            setprojectsTime
-                                          );
-                                        }}
-                                      >
-                                        {" "}
-                                        All
-                                      </Checkbox>
-                                    </li>
-                                  </ul>
-                                  <div className="search-filter">
-                                    <Input
-                                      placeholder="Search"
-                                      value={searchTimeProject}
-                                      onChange={handleSearchTimeProject}
-                                    />
-                                  </div>
-                                  <ul className="assigness-data">
-                                    {filteredTimeProjectList?.map(
-                                      (val, index) => (
-                                        <li key={index}>
-                                          <Checkbox
-                                            checked={projectsTime?.includes(
-                                              val?._id
-                                            )}
-                                            onChange={() => {
-                                              handleFilters(
-                                                val,
-                                                projectsTime,
-                                                setprojectsTime
-                                              );
-                                            }}
-                                          >
-                                            {val?.title}
-                                          </Checkbox>
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myLoggedTime();
-                                        handleVisibleChange(
-                                          "timeProject",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange(
-                                          "timeProject",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rr-users"></i>{" "}
-                              {projectsTime.length == 0 ? "All" : "Selected"}
-                            </Popover>
-                          </div>
-                        </div>
-                        <div
-                          className="view-data-range-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Date range:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottom"
-                              visible={popOver.timeDate}
-                              onVisibleChange={() =>
-                                handleVisibleChange("timeDate", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper popover-task">
-                                  <Form.Item label="Start Date">
-                                    <DatePicker
-                                      value={dates.timeStartDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("timeStartDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-
-                                  <Form.Item label="Due Date">
-                                    <DatePicker
-                                      value={dates.timeEndDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("timeEndDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myLoggedTime();
-                                        handleVisibleChange("timeDate", false);
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      type="outlined"
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange("timeDate", false);
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <span className="status-check-icon">
-                                <i className="fa-solid fa-calendar-alt"></i>
-                                <span className="all-status">
-                                  Start: , Due:{" "}
-                                </span>
-                              </span>
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-                    </th>
-                  </tr>
-                )}
                 <tr>
                   <th colSpan={2} className="table-task-title">
                     <div className="task-title">
-                      <p> Logged by</p>
+                      <p>Logged by</p>
                     </div>
                   </th>
                   <th
                     style={{
-                      borderRight: " 1px solid #a8a8a8",
+                      borderRight: "1px solid #a8a8a8",
                       textAlign: "center",
                     }}
                   >
-                    <div className="log-time ">
+                    <div className="log-time">
                       <p>Logged Date</p>
                     </div>
                   </th>
@@ -1094,7 +871,7 @@ const Dashbaord = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={showLoggedTimeFiltrs && "showfilter"}>
+              <tbody>
                 {myTime.length > 0 ? (
                   myTime?.map((item, index) => (
                     <React.Fragment key={index}>
@@ -1109,7 +886,6 @@ const Dashbaord = () => {
                           </Link>
                         </td>
                       </tr>
-
                       {item?.logged_data?.map((log, i) => (
                         <tr className="clickable-roww" key={i}>
                           <td className="task-description custom-border-right">
@@ -1121,7 +897,6 @@ const Dashbaord = () => {
                                   userName={log?.createdBy?.full_name}
                                   key={log?.createdBy?._id}
                                 />
-
                                 <span className="togtime-username">
                                   {removeTitle(log?.createdBy?.full_name)}
                                 </span>
@@ -1130,7 +905,7 @@ const Dashbaord = () => {
                           </td>
                           <td
                             style={{
-                              borderRight: " 1px solid #a8a8a8",
+                              borderRight: "1px solid #a8a8a8",
                               textAlign: "center",
                             }}
                           >
@@ -1160,267 +935,20 @@ const Dashbaord = () => {
                   <th>
                     <div className="folder-project-wrpper d-flex">
                       <a href="#">
-                        <i class="fa-solid fa-list-check"></i>
+                        <i className="fa-solid fa-list-check"></i>
                       </a>
                       <span>Bugs</span>
                     </div>
                   </th>
                   <th></th>
                   <th>
-                    <div
-                      className="right-project-filter"
-                      onClick={() => setShowBugsFiltrs(!showBugsFiltrs)}
-                    >
-                      <i className="fa-solid fa-filter"></i>
-                    </div>
+                    <BugFilterComponent onFilterChange={onBugFilterChange} />
                   </th>
                 </tr>
-                {showBugsFiltrs && (
-                  <tr>
-                    <th colSpan={3}>
-                      <div className="main-filter-pop">
-                        <div
-                          className="status-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Status:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottomRight"
-                              visible={popOver.bugStatus}
-                              onVisibleChange={() =>
-                                handleVisibleChange("bugStatus", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper">
-                                  <ul className="assigness-data">
-                                    <Radio.Group
-                                      onChange={(e) => {
-                                        handleBugStatus(e.target.value);
-                                      }}
-                                      value={bugStatus}
-                                    >
-                                      <li>
-                                        <Radio value="all"> All</Radio>
-                                      </li>
-                                      <li>
-                                        <Radio value="completed">
-                                          Completed
-                                        </Radio>
-                                      </li>
-                                      <li>
-                                        <Radio value="incompleted">
-                                          InCompleted
-                                        </Radio>
-                                      </li>
-                                    </Radio.Group>
-                                  </ul>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myBugs();
-                                        handleVisibleChange("bugStatus", false);
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange("bugStatus", false);
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rs-check-circle"></i>{" "}
-                              {bugStatus == "completed"
-                                ? "Completed"
-                                : bugStatus == "incompleted"
-                                ? "Incompleted"
-                                : "All"}
-                            </Popover>
-                          </div>
-                        </div>
-                        <div
-                          className="category-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>Projects:</p>
-                            <Popover
-                              trigger="click"
-                              placement="bottom"
-                              visible={popOver.bugProject}
-                              onVisibleChange={() =>
-                                handleVisibleChange("bugProject", true)
-                              }
-                              content={
-                                <div
-                                  className="right-popover-wrapper"
-                                  style={{
-                                    width: "100%",
-                                    maxWidth: "300px",
-                                    wordBreak: "break-word",
-                                  }}
-                                >
-                                  <ul>
-                                    <li>
-                                      <Checkbox
-                                        checked={projectsBug.length == 0}
-                                        onChange={() =>
-                                          handleFilters(
-                                            "",
-                                            projectsBug,
-                                            setProjectsBug
-                                          )
-                                        }
-                                      >
-                                        {" "}
-                                        All
-                                      </Checkbox>
-                                    </li>
-                                  </ul>
-                                  <div className="search-filter">
-                                    <Input
-                                      placeholder="Search"
-                                      value={searchBugProject}
-                                      onChange={handleSearchBugProject}
-                                    />
-                                  </div>
-                                  <ul className="assigness-data">
-                                    {filteredBugProjectList?.map(
-                                      (val, index) => (
-                                        <li key={index}>
-                                          <Checkbox
-                                            onChange={() =>
-                                              handleFilters(
-                                                val,
-                                                projectsBug,
-                                                setProjectsBug
-                                              )
-                                            }
-                                            checked={projectsBug.includes(
-                                              val?._id
-                                            )}
-                                          >
-                                            {val?.title}
-                                          </Checkbox>
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myBugs();
-                                        handleVisibleChange(
-                                          "bugProject",
-                                          false
-                                        );
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() =>
-                                        handleVisibleChange("bugProject", false)
-                                      }
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <i className="fi fi-rr-users"></i>{" "}
-                              {projectsBug.length === 0 ? "All" : "Selected"}
-                            </Popover>
-                          </div>
-                        </div>
-
-                        <div
-                          className="view-data-range-wrapper"
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="filter-name">
-                            <p>View : </p>
-                            <Popover
-                              placement="bottom"
-                              trigger="click"
-                              visible={popOver.bugDate}
-                              onVisibleChange={() =>
-                                handleVisibleChange("bugDate", true)
-                              }
-                              content={
-                                <div className="right-popover-wrapper popover-task">
-                                  <Form.Item label="Start Date">
-                                    <DatePicker
-                                      value={dates.bugStartDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("bugStartDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-
-                                  <Form.Item label="Due Date">
-                                    <DatePicker
-                                      value={dates.bugEndDate}
-                                      onChange={(date) =>
-                                        handleChangeDate("bugEndDate", date)
-                                      }
-                                    />
-                                  </Form.Item>
-                                  <div className="popver-footer-btn">
-                                    <Button
-                                      type="primary"
-                                      className="square-primary-btn ant-btn-primary"
-                                      onClick={() => {
-                                        myBugs();
-                                        handleVisibleChange("bugDate", false);
-                                      }}
-                                    >
-                                      Apply
-                                    </Button>
-                                    <Button
-                                      type="outlined"
-                                      className="square-outline-btn ant-delete"
-                                      onClick={() => {
-                                        handleVisibleChange("bugDate", false);
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              }
-                            >
-                              <span className="status-check-icon">
-                                <i className="fa-solid fa-calendar-alt"></i>
-                                <span className="all-status">
-                                  Start: , Due:{" "}
-                                </span>
-                              </span>
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-                    </th>
-                  </tr>
-                )}
                 <tr>
                   <th className="table-task-title">
                     <div className="task-title">
-                      <p> Title</p>
+                      <p>Title</p>
                     </div>
                   </th>
                   <th>
@@ -1430,7 +958,7 @@ const Dashbaord = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className={showBugsFiltrs && "showfilter"}>
+              <tbody>
                 {myBug?.length > 0 ? (
                   myBug?.map((item) => (
                     <tr>
@@ -1463,8 +991,18 @@ const Dashbaord = () => {
           </div>
         </div>
       </div>
+      <ProjectListModal
+        projectDetails={projectDetails}
+        recentList={recentList}
+        isModalOpen={isModalOpen}
+        handleCancel={handleCancel}
+        addVisitedData={addVisitedData}
+        setIsModalOpen={setIsModalOpen}
+        form={form}
+        getProjectListing={getProjectListing}
+      />
     </div>
   );
 };
 
-export default Dashbaord;
+export default Dashboard;

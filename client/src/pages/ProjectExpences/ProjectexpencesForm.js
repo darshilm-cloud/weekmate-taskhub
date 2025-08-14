@@ -35,12 +35,12 @@ const { Text } = Typography;
 const STATIC_ACCOUNTANT_ID = [sideBarContentId2];
 const FORM_ITEM_LAYOUT = {
   labelCol: {
-    xs: { span: 24 }
-    
+    xs: { span: 24 },
+    sm: { span: 8 },
   },
   wrapperCol: {
-    xs: { span: 24 }
-   
+    xs: { span: 24 },
+    sm: { span: 16 },
   },
 };
 
@@ -89,13 +89,13 @@ const ProjectExpensesForm = () => {
   const isAccountant = useMemo(
     () =>
       STATIC_ACCOUNTANT_ID.includes(userRole?._id) &&
-      !(userRole?.pms_role_id?.role_name === "Admin"),
+      !(userRole?.pms_role_id?.role_name === "Super Admin"),
     [userRole]
   );
 
   const canEditStatus = useMemo(
     () =>
-      userRole?.pms_role_id?.role_name === "Admin" ||
+      userRole?.pms_role_id?.role_name === "Super Admin" ||
       STATIC_ACCOUNTANT_ID.includes(userRole?._id) ||
       userRole?.pms_role_id?.role_name === "Admin",
     [userRole]
@@ -282,10 +282,10 @@ const ProjectExpensesForm = () => {
             ) {
               if (key === "status" && value === undefined) {
                 formData.append(key, "Pending");
-              } 
+              }
               if(key==="invoice"){
                 formData.delete(key);
-              }
+              } 
               else {
                 formData.append(key === "project" ? "project_id" : key, value);
               }
@@ -401,18 +401,24 @@ const ProjectExpensesForm = () => {
 
   const renderStatusOptions = () => {
     if (STATIC_ACCOUNTANT_ID.includes(userRole?._id)) {
-      return userRole?.pms_role_id?.role_name === "Admin" ? (
+      return userRole?.pms_role_id?.role_name === "Super Admin" ? (
         <Option value="Paid">Paid</Option>
       ) : null;
     }
 
     return (
       <>
-        {userRole?.pms_role_id?.role_name === "Admin" && (
+        {userRole?.pms_role_id?.role_name === "Super Admin" && (
           <>
             <Option value="Approved">Approved</Option>
             <Option value="Rejected">Rejected</Option>
             <Option value="Paid">Paid</Option>
+          </>
+        )}
+        {userRole?.pms_role_id?.role_name === "Admin" && (
+          <>
+            <Option value="Approved">Approved</Option>
+            <Option value="Rejected">Rejected</Option>
           </>
         )}
       </>
@@ -755,7 +761,7 @@ const ProjectExpensesForm = () => {
                 <Form.Item>
                   <div
                     className="feedback-submit-button-form"
-                    style={{ paddingTop: "15px" }}
+                  
                   >
                     <Button id="addbutton" type="primary" htmlType="submit">
                       {state.reviewId ? "Update" : "Submit"}

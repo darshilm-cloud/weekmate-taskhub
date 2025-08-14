@@ -10,9 +10,7 @@
     height: 50px;
 
 }
-.time-logged-main-wrapper{
-    background-color: #fff;
-}
+
 .no-data-found-my-log-time {
     position: absolute;
     top: 50%;
@@ -205,7 +203,6 @@
 
 .my-logtime-modal .overview-modal-wrapper .date-time-picker {
     width: 100%;
-    margin-top: 10px;
 }
 
 .my-logtime-modal .overview-modal-wrapper .minutes,
@@ -234,7 +231,6 @@
 
 .my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .hours-time-wrapper {
     width: 100%;
-
     justify-content: space-between;
     align-items: baseline;
 }
@@ -246,6 +242,7 @@
 }
 
 .my-logtime-modal .overview-modal-wrapper .logtime-left-wrapper .ant-row {
+    margin: 0 -5px;
     justify-content: space-between;
 }
 

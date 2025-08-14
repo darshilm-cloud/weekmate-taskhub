@@ -103,7 +103,7 @@
 }
 .feedbackForm-card {
     height: auto;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     position: relative;
 }
 
@@ -114,7 +114,6 @@
 
 .Complaint-status-form .feedback-details-submit-button-form .ant-row {
     justify-content: center;
-    margin-top: 10px;
 }
 
 .edit-complaint-status-btn {
@@ -264,7 +263,6 @@ p.attatch-complaint-item {
 .feedback-details-submit-button-form .feedback-details-submit-button {
     display: flex;
     justify-content: center;
-    margin-top: 15px;
 }
 
 .feedback-details-submit-button-form .ant-form-item-control .ant-form-item-control-input {
@@ -300,11 +298,7 @@ ul.assigness-data {
 }
 /* 7-3-2025  end  */
 
-.admin-user .ant-layout  .ant-layout-content  .feedback-form-view-detail-form  .feedbackForm-card.ant-card  {
-background-color: #fff;
-padding: 20px;
-    box-shadow: 0 1px 2px #0000000d;
-}
+
 @media screen and (max-width:992px) {
     .add-complaint-wrapper form.ant-form.ant-form-horizontal {
         width: 100%;

@@ -22,13 +22,13 @@ const FEEDBACK_TYPE_OPTIONS = [
 
 const FORM_LAYOUT = {
   labelCol: { xs: { span: 24 }, sm: { span: 8 } },
-  wrapperCol: { xs: { span: 24 }, sm: { span: 0 } },
+  wrapperCol: { xs: { span: 24 }, sm: { span: 16 } },
 };
 
 const PositiveReviewForm = () => {
-  const companySlug = localStorage.getItem("companyDomain");
   // Hooks
   const { review_id } = useParams();
+  const companySlug = localStorage.getItem("companyDomain");
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const history = useHistory();
@@ -119,7 +119,7 @@ const PositiveReviewForm = () => {
         if (response?.data?.data) {
           const reviewData = response.data.data;
           setSelectedFeedbackType(reviewData.feedback_type || "");
-
+          
           form.setFieldsValue({
             project: reviewData.project_id,
             client_name: reviewData.client_name,
@@ -206,14 +206,14 @@ const PositiveReviewForm = () => {
   }, [review_id, getProjects, getReviewForEdit]);
 
   // Memoized project options
-  const projectOptions = useMemo(() =>
+  const projectOptions = useMemo(() => 
     projects.map((project, index) => (
       <Select.Option
-        key={ `${project._id}-${index}` }
-        value={ project._id }
-        style={ { textTransform: "capitalize" } }
+        key={`${project._id}-${index}`}
+        value={project._id}
+        style={{ textTransform: "capitalize" }}
       >
-        { project.title }
+        {project.title}
       </Select.Option>
     )),
     [projects]
@@ -223,128 +223,165 @@ const PositiveReviewForm = () => {
     <div className="main-time-sheet-project-wrapper">
       <Header className="main-header">
         <div className="project-name">
-          <h3 style={ { textTransform: "capitalize" } }>
-            { headerTitle }
+          <h3 style={{ textTransform: "capitalize" }}>
+            {headerTitle}
           </h3>
         </div>
       </Header>
-
+      
       <div className="project-wrapper new-project-overview project-running-reports">
         <div className="peoject-page">
           <div className="header">
             <div className="project-running-reports-fillter-wrapper feedback-form">
               <Form
-                form={ form }
+                form={form}
                 noValidate
-                onFinish={ handleSubmit }
-                layout="vertical" // Ensures labels are above inputs for better mobile experience
+                {...FORM_LAYOUT}
+                onFinish={handleSubmit}
               >
-                <Row gutter={ [0, 0] }> {/* Add gutter for spacing between columns */ }
-                  <Col xs={ 24 } sm={ 12 }> {/* Full width on extra small screens, half on small and up */ }
+                <Row>
+                  <Col span={12}>
                     <Form.Item
                       name="project"
                       label="Project"
-                      rules={ [{ required: true, message: "Please Select Project!" }] }
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please Select Project !",
+                        },
+                      ]}
                     >
                       <Select
                         placeholder="Project"
                         showSearch
-                        loading={ loading }
-                        filterOption={ (input, option) =>
-                          option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
+                        loading={loading}
+                        filterOption={(input, option) =>
+                          option.children
+                            ?.toLowerCase()
+                            .indexOf(input?.toLowerCase()) >= 0
                         }
-                        filterSort={ (optionA, optionB) =>
-                          optionA.children?.toLowerCase().localeCompare(optionB.children?.toLowerCase())
+                        filterSort={(optionA, optionB) =>
+                          optionA.children
+                            ?.toLowerCase()
+                            .localeCompare(optionB.children?.toLowerCase())
                         }
-                        onChange={ handleProjectChange }
+                        onChange={handleProjectChange}
                       >
-                        { projectOptions }
+                        {projectOptions}
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col xs={ 24 } sm={ 12 }>
+                  <Col span={12}>
                     <Form.Item
                       name="project_manager"
                       label="Project Manager"
-                      rules={ [{ required: true, message: "Please enter Project Manager name!" }] }
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter Project Manager name !",
+                        },
+                      ]}
                     >
-                      <Input placeholder="Enter Project Manager name" disabled />
+                      <Input
+                        placeholder="Enter Project Manager name"
+                        disabled
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
 
-                <Row gutter={ [0, 0] }>
-                  <Col xs={ 24 } sm={ 12 }>
+                <Row>
+                  <Col span={12}>
                     <Form.Item
                       name="account_manager"
                       label="Account Manager"
-                      rules={ [{ required: true, message: "Please Select Account Manager!" }] }
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please Select Account Manager !",
+                        },
+                      ]}
                     >
-                      <Input placeholder="Enter Account Manager name" disabled />
+                      <Input
+                        placeholder="Enter Account Manager name"
+                        disabled
+                      />
                     </Form.Item>
                   </Col>
-                  <Col xs={ 24 } sm={ 12 }>
+                  <Col span={12}>
                     <Form.Item
-                      name="client_name"
                       label="Client Name"
-                      rules={ [{ required: true, message: "Please enter client name!" }] }
+                      name="client_name"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter client name !",
+                        },
+                      ]}
                     >
                       <Input placeholder="Enter client name" />
                     </Form.Item>
                   </Col>
                 </Row>
 
-                <Row gutter={ [0, 0] }>
-                  <Col xs={ 24 } sm={ 12 }>
+                <Row>
+                  <Col span={12}>
                     <Form.Item name="feedback_type" label="Feedback Type">
                       <Select
-                        onChange={ handleFeedbackTypeChange }
+                        onChange={handleFeedbackTypeChange}
                         defaultValue="--select--"
-                        options={ FEEDBACK_TYPE_OPTIONS }
+                        options={FEEDBACK_TYPE_OPTIONS}
                       />
                     </Form.Item>
                   </Col>
-                  <Col xs={ 24 } sm={ 12 }>
+                </Row>
+
+                <Row>
+                  <Col span={12}>
                     <Form.Item
-                      name="client_nda_sign"
                       label="Did the client sign the NDA?"
+                      name="client_nda_sign"
                       valuePropName="checked"
                     >
                       <Checkbox />
                     </Form.Item>
                   </Col>
-                </Row>
-
-                <Row gutter={ [0, 0] }>
-                  <Col xs={ 24 } sm={ 12 }>
+                  <Col span={12}>
                     <Form.Item
-                      name="feedback"
                       label="Feedback"
-                      rules={ [{ required: true, message: "Please fill the feedback!" }] }
+                      name="feedback"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please fill the feedback!",
+                        },
+                      ]}
                     >
-                      <TextArea rows={ 4 } placeholder="Enter your feedback" />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={ 24 } sm={ 24 }>
-
-                    <Form.Item>
-                      <div className="feedback-submit-button-form" style={ { display: 'flex', gap: '10px',justifyContent:"center" } }>
-                        <Button id="addbutton" type="primary" htmlType="submit" loading={ loading }>
-                          { submitButtonText }
-                        </Button>
-                        <Button
-                          className="ant-delete"
-                          type="primary"
-                          onClick={ handleCancel }
-                          disabled={ loading }
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                      <TextArea rows={4} placeholder="Enter your feedback" />
                     </Form.Item>
                   </Col>
                 </Row>
+
+                <Form.Item>
+                  <div className="feedback-submit-button-form">
+                    <Button 
+                      id="addbutton" 
+                      type="primary" 
+                      htmlType="submit"
+                      loading={loading}
+                    >
+                      {submitButtonText}
+                    </Button>
+                    <Button
+                      className="ant-delete delete-btn"
+          
+                      onClick={handleCancel}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </Form.Item>
               </Form>
             </div>
           </div>

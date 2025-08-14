@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Button,
   Popover,
@@ -7,13 +7,27 @@ import {
   Input,
   Badge,
   Divider,
+  Spin,
 } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
+import InfiniteScroll from "react-infinite-scroll-component";
+import _ from "lodash";
 import "../../assets/css/FilterUI.css";
+import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
-import MyAvatar from "../../components/Avatar/MyAvatar";
+import { getRoles } from "../../util/hasPermission";
 
 const { Search } = Input;
+
+// Filter types
+const FILTER_TYPES = {
+  PROJECT: "project",
+  DEPARTMENT: "technology",
+  MANAGER: "manager",
+  ACCOUNT_MANAGER: "accountManager",
+  PRIORITY: "priority",
+  STATUS: "status",
+};
 
 // Priority options
 const PRIORITY_OPTIONS = [
@@ -21,7 +35,7 @@ const PRIORITY_OPTIONS = [
   { value: "critical", label: "Critical" },
   { value: "high", label: "High" },
   { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" }
+  { value: "low", label: "Low" },
 ];
 
 // Status options
@@ -32,467 +46,765 @@ const STATUS_OPTIONS = [
   { value: "client_review", label: "Client Review" },
   { value: "resolved", label: "Resolved" },
   { value: "reopened", label: "Reopen" },
-  { value: "customer_lost", label: "Customer Lost" }
+  { value: "customer_lost", label: "Customer Lost" },
 ];
 
-// Create dynamic filter menu items based on role
+// Filter configuration
+const FILTER_CONFIG = {
+  [FILTER_TYPES.PROJECT]: {
+    api: Service.myProjects,
+    method: Service.postMethod,
+    limit: 20,
+    label: "Project",
+    getName: (item) => item.title,
+    skipParam: "skipProject",
+    searchKey: "title",
+    renderItem: (item, handleSelect, selectedItems) => (
+      <div
+        key={item._id}
+        className={`assignee-item ${
+          selectedItems.includes(item._id) ? "selected" : ""
+        }`}
+      >
+        <Checkbox
+          checked={selectedItems.includes(item._id)}
+          onChange={() => handleSelect(item)}
+        />
+        <span>{item.title}</span>
+      </div>
+    ),
+  },
+  [FILTER_TYPES.DEPARTMENT]: {
+    api: Service.getprojectTech,
+    method: Service.postMethod,
+    limit: 20,
+    label: "Department",
+    getName: (item) => item.project_tech,
+    skipParam: "skipDepartment",
+    searchKey: "project_tech",
+    renderItem: (item, handleSelect, selectedItems) => (
+      <div
+        key={item._id}
+        className={`assignee-item ${
+          selectedItems.includes(item._id) ? "selected" : ""
+        }`}
+      >
+        <Checkbox
+          checked={selectedItems.includes(item._id)}
+          onChange={() => handleSelect(item)}
+        />
+        <span>{item.project_tech}</span>
+      </div>
+    ),
+  },
+  [FILTER_TYPES.MANAGER]: {
+    api: Service.getProjectManager,
+    method: Service.getMethod,
+    limit: 20,
+    label: "Manager",
+    getName: (item) => removeTitle(item.manager_name),
+    skipParam: "skipManager",
+    searchKey: "manager_name",
+    renderItem: (item, handleSelect, selectedItems) => (
+      <div
+        key={item._id}
+        className={`assignee-item ${
+          selectedItems.includes(item._id) ? "selected" : ""
+        }`}
+      >
+        <Checkbox
+          checked={selectedItems.includes(item._id)}
+          onChange={() => handleSelect(item)}
+        />
+        <span>{removeTitle(item.manager_name)}</span>
+      </div>
+    ),
+  },
+  [FILTER_TYPES.ACCOUNT_MANAGER]: {
+    api: Service.getAccountManager,
+    method: Service.getMethod,
+    limit: 20,
+    label: "Account Manager",
+    getName: (item) => removeTitle(item.full_name),
+    skipParam: "skipAccountManager",
+    searchKey: "full_name",
+    renderItem: (item, handleSelect, selectedItems) => (
+      <div
+        key={item._id}
+        className={`assignee-item ${
+          selectedItems.includes(item._id) ? "selected" : ""
+        }`}
+      >
+        <Checkbox
+          checked={selectedItems.includes(item._id)}
+          onChange={() => handleSelect(item)}
+        />
+        <span>{removeTitle(item.full_name)}</span>
+      </div>
+    ),
+  },
+  [FILTER_TYPES.PRIORITY]: {
+    label: "Priority Level",
+    skipParam: "skipPriority",
+  },
+  [FILTER_TYPES.STATUS]: {
+    label: "Status",
+    skipParam: "skipStatus",
+  },
+};
+
+// Create filter menu items based on roles
 const createFilterMenuItems = (getRoles) => {
   const baseItems = [
-    { key: "project", label: "Project" },
-    { key: "priority", label: "Priority Level" },
-    { key: "status", label: "Status" },
+    {
+      key: FILTER_TYPES.PROJECT,
+      label: FILTER_CONFIG[FILTER_TYPES.PROJECT].label,
+    },
+    {
+      key: FILTER_TYPES.PRIORITY,
+      label: FILTER_CONFIG[FILTER_TYPES.PRIORITY].label,
+    },
+    {
+      key: FILTER_TYPES.STATUS,
+      label: FILTER_CONFIG[FILTER_TYPES.STATUS].label,
+    },
   ];
 
-  // Add admin-only filters
-  if (getRoles(["Admin"])) {
+  if (getRoles(["Super Admin"])) {
     return [
       ...baseItems,
-      { key: "technology", label: "Department" },
-      { key: "manager", label: "Manager" },
-      { key: "accountManager", label: "Account Manager" },
+      {
+        key: FILTER_TYPES.DEPARTMENT,
+        label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
+      },
+      {
+        key: FILTER_TYPES.MANAGER,
+        label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
+      },
+      {
+        key: FILTER_TYPES.ACCOUNT_MANAGER,
+        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      },
     ];
   }
 
   return baseItems;
 };
 
-const ComplaintFilterComponent = ({
-  // Project props
-  selectedProject,
-  setSelectedProject,
-  searchProject,
-  handleSearchProjects,
-  filteredProjectsList,
-  
-  // Technology props (Admin only)
-  technology,
-  setTechnology,
-  searchTechnology,
-  handleSearchTechnology,
-  filteredTechnologyList,
-  
-  // Manager props (Admin only)
-  manager,
-  setManager,
-  searchManager,
-  handleSearchManager,
-  filteredManagerList,
-  
-  // Account Manager props (Admin only)
-  accontManager,
-  setAccountManager,
-  searchAccountManager,
-  handleSearchAccountManager,
-  filteredAccManagerList,
-  
-  // Priority props
-  priority,
-  handlePriorityFilter,
-  
-  // Status props
-  status,
-  handleStatusFilter,
-  
-  // Role check function
-  getRoles,
-  
-  // Common props
-  handleFilters,
-  getComplaintList,
-}) => {
-  // Create dynamic menu items based on role
-  const FILTER_MENU_ITEMS = useMemo(() => createFilterMenuItems(getRoles), [getRoles]);
-  
-  // UI state
+// FilterSection component for API-driven filters
+const FilterSection = ({
+  config,
+  items,
+  selectedItems,
+  pagination,
+  searchTerm,
+  onSearch,
+  onSelect,
+  onLoadMore,
+  onApply,
+  onReset,
+  isInitialLoadComplete,
+}) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">{config.label}</h4>
+    <div className="filter-search">
+      <Search
+        placeholder={`Search ${config.label.toLowerCase()}...`}
+        value={searchTerm}
+        onChange={(e) => onSearch(e.target.value)}
+        size="small"
+        loading={pagination.loading && pagination.page === 1}
+      />
+    </div>
+    <InfiniteScroll
+      dataLength={items.length}
+      next={onLoadMore}
+      hasMore={isInitialLoadComplete && pagination.hasMore}
+      loader={
+        pagination.loading && pagination.page > 1 ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "16px 0",
+              alignItems: "center",
+            }}
+          >
+            <Spin size="small" margin={{ margin: 0 }} />
+            <span
+              style={{ marginLeft: "8px", fontSize: "12px", color: "#666" }}
+            >
+              Loading more...
+            </span>
+          </div>
+        ) : null
+      }
+      height={180}
+      style={{ paddingRight: "8px" }}
+      scrollThreshold={0.9}
+    >
+      {items.map((item) => config.renderItem(item, onSelect, selectedItems))}
+      {items.length === 0 && !pagination.loading && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "16px 0",
+            fontSize: "12px",
+            color: "#999",
+          }}
+        >
+          {searchTerm ? "No items found" : "No items available"}
+        </div>
+      )}
+    </InfiniteScroll>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
+// RadioFilter component for Priority and Status
+const RadioFilter = ({
+  options,
+  selectedValue,
+  onSelect,
+  onApply,
+  onReset,
+  label,
+}) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">Filter by {label}</h4>
+    <div className="filter-options">
+      <Radio.Group
+        onChange={(e) => onSelect(e.target.value)}
+        value={selectedValue}
+      >
+        {options.map(({ value, label }) => (
+          <div key={value} className="radio-option">
+            <Radio value={value}>{label}</Radio>
+          </div>
+        ))}
+      </Radio.Group>
+    </div>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
+const ComplaintFilterComponent = ({ onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilterType, setActiveFilterType] = useState("project");
+  const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT);
+  const [filterData, setFilterData] = useState({
+    [FILTER_TYPES.PROJECT]: [],
+    [FILTER_TYPES.DEPARTMENT]: [],
+    [FILTER_TYPES.MANAGER]: [],
+    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+  });
+  const [selectedFilters, setSelectedFilters] = useState({
+    [FILTER_TYPES.PROJECT]: [],
+    [FILTER_TYPES.DEPARTMENT]: [],
+    [FILTER_TYPES.MANAGER]: [],
+    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+    [FILTER_TYPES.PRIORITY]: "",
+    [FILTER_TYPES.STATUS]: "",
+  });
+  const [searchTerms, setSearchTerms] = useState({
+    [FILTER_TYPES.PROJECT]: "",
+    [FILTER_TYPES.DEPARTMENT]: "",
+    [FILTER_TYPES.MANAGER]: "",
+    [FILTER_TYPES.ACCOUNT_MANAGER]: "",
+  });
+  const [pagination, setPagination] = useState({
+    [FILTER_TYPES.PROJECT]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.DEPARTMENT]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.MANAGER]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+    [FILTER_TYPES.ACCOUNT_MANAGER]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
+  });
+  const [initialLoadComplete, setInitialLoadComplete] = useState({
+    [FILTER_TYPES.PROJECT]: false,
+    [FILTER_TYPES.DEPARTMENT]: false,
+    [FILTER_TYPES.MANAGER]: false,
+    [FILTER_TYPES.ACCOUNT_MANAGER]: false,
+  });
 
-  // Active filters count calculation
   const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    
-    // Project filter
-    if (Array.isArray(selectedProject) && selectedProject.length > 0) count++;
-    
-    // Priority filter (count if not empty)
-    if (priority && priority !== "") count++;
-    
-    // Status filter (count if not empty)
-    if (status && status !== "") count++;
-    
-    // Admin-only filters
-    if (getRoles(["Admin"])) {
-      if (Array.isArray(technology) && technology.length > 0) count++;
-      if (Array.isArray(manager) && manager.length > 0) count++;
-      if (Array.isArray(accontManager) && accontManager.length > 0) count++;
+    return Object.entries(selectedFilters).reduce((count, [key, value]) => {
+      return (
+        count +
+        (Array.isArray(value) ? (value.length > 0 ? 1 : 0) : value ? 1 : 0)
+      );
+    }, 0);
+  }, [selectedFilters]);
+
+  // const fetchFilterData = useCallback(
+  //   async (filterType, page = 1, search = "", reset = false) => {
+  //     const config = FILTER_CONFIG[filterType];
+  //     if (
+  //       !config ||
+  //       pagination[filterType].loading ||
+  //       (!reset && !pagination[filterType].hasMore)
+  //     )
+  //       return;
+
+  //     setPagination((prev) => ({
+  //       ...prev,
+  //       [filterType]: { ...prev[filterType], loading: true },
+  //     }));
+
+  //     try {
+  //       const reqBody =
+  //         filterType === FILTER_TYPES.DEPARTMENT ? { isDropdown: false } : {};
+  //       const apiUrl = `${config.api}?page=${page}&limit=${config.limit}&search=${search}`;
+  //       const response = await Service.makeAPICall({
+  //         methodName: config.method,
+  //         api_url: apiUrl,
+  //         body: filterType === FILTER_TYPES.DEPARTMENT ? reqBody : undefined,
+  //       });
+
+  //       const newData = Array.isArray(response?.data?.data)
+  //         ? response.data.data
+  //         : Array.isArray(response?.data)
+  //         ? response.data
+  //         : [];
+  //       const metadata = response?.data?.metadata || {
+  //         total: newData.length,
+  //         totalPages: 1,
+  //       };
+
+  //       setFilterData((prev) => ({
+  //         ...prev,
+  //         [filterType]: reset ? newData : [...prev[filterType], ...newData],
+  //       }));
+
+  //       setPagination((prev) => ({
+  //         ...prev,
+  //         [filterType]: {
+  //           ...prev[filterType],
+  //           page,
+  //           total: metadata.total || newData.length,
+  //           hasMore:
+  //             newData.length > 0 &&
+  //             page < (metadata.totalPages || 1) &&
+  //             newData.length >= config.limit,
+  //           loading: false,
+  //         },
+  //       }));
+
+  //       if (page === 1) {
+  //         setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+  //       }
+  //     } catch (error) {
+  //       console.error(`Error fetching ${filterType}:`, error);
+  //       setPagination((prev) => ({
+  //         ...prev,
+  //         [filterType]: { ...prev[filterType], loading: false, hasMore: false },
+  //       }));
+  //       if (page === 1) {
+  //         setFilterData((prev) => ({ ...prev, [filterType]: [] }));
+  //         setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+  //       }
+  //     }
+  //   },
+  //   [pagination]
+  // );
+
+  const fetchFilterData = useCallback(
+    async (filterType, page = 1, search = "", reset = false) => {
+      const config = FILTER_CONFIG[filterType];
+      if (
+        !config ||
+        pagination[filterType].loading ||
+        (!reset && !pagination[filterType].hasMore)
+      )
+        return;
+  
+      setPagination((prev) => ({
+        ...prev,
+        [filterType]: { ...prev[filterType], loading: true },
+      }));
+  
+      try {
+        let response;
+  
+        if (config.method === Service.postMethod) {
+          // For POST methods, send pagination and search in the request body
+          const reqBody = {
+            pageNo: page,
+            limit: config.limit,
+            search,
+            ...(filterType === FILTER_TYPES.DEPARTMENT && { isDropdown: false }),
+            ...(config.requestBody || {}), // Include any additional request body from config
+          };
+  
+          response = await Service.makeAPICall({
+            methodName: config.method,
+            api_url: config.api,
+            body: reqBody,
+          });
+        } else {
+          // For GET methods, use query parameters
+          const reqBody = filterType === FILTER_TYPES.DEPARTMENT ? { isDropdown: false } : {};
+          const apiUrl = `${config.api}?page=${page}&limit=${config.limit}&search=${search}`;
+          
+          response = await Service.makeAPICall({
+            methodName: config.method,
+            api_url: apiUrl,
+            body: filterType === FILTER_TYPES.DEPARTMENT ? reqBody : undefined,
+          });
+        }
+  
+        const newData = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : Array.isArray(response?.data)
+          ? response.data
+          : [];
+        const metadata = response?.data?.metadata || {
+          total: newData.length,
+          totalPages: 1,
+        };
+  
+        setFilterData((prev) => ({
+          ...prev,
+          [filterType]: reset ? newData : [...prev[filterType], ...newData],
+        }));
+  
+        // Fixed hasMore calculation
+        const actualLimit = metadata.limit || config.limit;
+        const currentPage = metadata.currentPage || metadata.pageNo || page;
+        const totalPages = metadata.totalPages || 1;
+        
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: {
+            ...prev[filterType],
+            page: currentPage,
+            total: metadata.total || newData.length,
+            hasMore:
+              newData.length > 0 &&
+              currentPage < totalPages &&
+              newData.length >= actualLimit,
+            loading: false,
+          },
+        }));
+  
+        if (page === 1) {
+          setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+        }
+      } catch (error) {
+        console.error(`Error fetching ${filterType}:`, error);
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: { ...prev[filterType], loading: false, hasMore: false },
+        }));
+        if (page === 1) {
+          setFilterData((prev) => ({ ...prev, [filterType]: [] }));
+          setInitialLoadComplete((prev) => ({ ...prev, [filterType]: true }));
+        }
+      }
+    },
+    [pagination]
+  );
+  
+
+  const debouncedSearch = useMemo(() => {
+    const functions = {};
+    [
+      FILTER_TYPES.PROJECT,
+      FILTER_TYPES.DEPARTMENT,
+      FILTER_TYPES.MANAGER,
+      FILTER_TYPES.ACCOUNT_MANAGER,
+    ].forEach((key) => {
+      functions[key] = _.debounce((value) => {
+        setPagination((prev) => ({
+          ...prev,
+          [key]: {
+            ...prev[key],
+            page: 1,
+            hasMore: true,
+          },
+        }));
+        setFilterData((prev) => ({ ...prev, [key]: [] }));
+        setInitialLoadComplete((prev) => ({
+          ...prev,
+          [key]: false,
+        }));
+        fetchFilterData(key, 1, value, true);
+      }, 300);
+    });
+    return functions;
+  }, [fetchFilterData]);
+
+  const handleSearch = useCallback(
+    (filterType, rawValue) => {
+      const value = rawValue ?? "";
+      const trimmed = value.trim();
+
+      setSearchTerms((prev) => ({ ...prev, [filterType]: value }));
+
+      const debouncedFn = debouncedSearch[filterType];
+      debouncedFn.cancel?.();
+
+      if (!trimmed) {
+        setPagination((prev) => ({
+          ...prev,
+          [filterType]: {
+            ...prev[filterType],
+            page: 1,
+            hasMore: true,
+            loading: false,
+          },
+        }));
+        setFilterData((prev) => ({ ...prev, [filterType]: [] }));
+        setInitialLoadComplete((prev) => ({ ...prev, [filterType]: false }));
+        fetchFilterData(filterType, 1, "", true);
+      } else {
+        debouncedFn(trimmed);
+      }
+    },
+    [debouncedSearch, fetchFilterData]
+  );
+
+  const handleLoadMore = useCallback(
+    (filterType) => {
+      if (
+        pagination[filterType].hasMore &&
+        !pagination[filterType].loading &&
+        initialLoadComplete[filterType]
+      ) {
+        fetchFilterData(
+          filterType,
+          pagination[filterType].page + 1,
+          searchTerms[filterType],
+          false
+        );
+      }
+    },
+    [pagination, searchTerms, fetchFilterData, initialLoadComplete]
+  );
+
+  const handleFilterSelection = useCallback((item, filterType) => {
+    setSelectedFilters((prev) => {
+      const current = prev[filterType];
+      const updated = current.includes(item._id)
+        ? current.filter((id) => id !== item._id)
+        : [...current, item._id];
+      return { ...prev, [filterType]: updated };
+    });
+  }, []);
+
+  const handleSingleSelection = useCallback((value, filterType) => {
+    setSelectedFilters((prev) => ({ ...prev, [filterType]: value }));
+  }, []);
+
+  const resetFilter = useCallback(
+    (filterType) => {
+      setSelectedFilters((prev) => ({
+        ...prev,
+        [filterType]: Array.isArray(prev[filterType]) ? [] : "",
+      }));
+      setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
+      onFilterChange([FILTER_CONFIG[filterType].skipParam]);
+    },
+    [onFilterChange]
+  );
+
+  const resetAllFilters = useCallback(() => {
+    setSelectedFilters({
+      [FILTER_TYPES.PROJECT]: [],
+      [FILTER_TYPES.DEPARTMENT]: [],
+      [FILTER_TYPES.MANAGER]: [],
+      [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+      [FILTER_TYPES.PRIORITY]: "",
+      [FILTER_TYPES.STATUS]: "",
+    });
+    setSearchTerms({
+      [FILTER_TYPES.PROJECT]: "",
+      [FILTER_TYPES.DEPARTMENT]: "",
+      [FILTER_TYPES.MANAGER]: "",
+      [FILTER_TYPES.ACCOUNT_MANAGER]: "",
+    });
+    onFilterChange(["skipAll"]);
+  }, [onFilterChange]);
+
+  useEffect(() => {
+    if (
+      [
+        FILTER_TYPES.PROJECT,
+        FILTER_TYPES.DEPARTMENT,
+        FILTER_TYPES.MANAGER,
+        FILTER_TYPES.ACCOUNT_MANAGER,
+      ].includes(activeFilter) &&
+      filterData[activeFilter].length === 0 &&
+      !pagination[activeFilter].loading &&
+      pagination[activeFilter].hasMore &&
+      !initialLoadComplete[activeFilter]
+    ) {
+      fetchFilterData(activeFilter, 1, "", true);
     }
-    
-    return count;
-  }, [selectedProject, priority, status, technology, manager, accontManager, getRoles]);
+  }, [
+    activeFilter,
+    filterData,
+    pagination,
+    fetchFilterData,
+    initialLoadComplete,
+  ]);
 
-  const resetAllFilters = () => {
-    // Reset project filter
-    handleFilters("", selectedProject, setSelectedProject);
-    
-    // Reset priority and status
-    handlePriorityFilter({ target: { value: "" } });
-    handleStatusFilter({ target: { value: "" } });
-    
-    // Reset admin-only filters
-    if (getRoles(["Admin"])) {
-      handleFilters("", technology, setTechnology);
-      handleFilters("", manager, setManager);
-      handleFilters("", accontManager, setAccountManager);
+  // Add this useEffect to move selected items to top when switching filters
+  useEffect(() => {
+    if (activeFilter && initialLoadComplete[activeFilter]) {
+      const selectedIds = selectedFilters[activeFilter];
+      if (selectedIds && Array.isArray(selectedIds) && selectedIds.length > 0) {
+        setFilterData((prev) => {
+          const items = [...prev[activeFilter]];
+          const selectedItems = [];
+          const unselectedItems = [];
+
+          // Separate selected and unselected items
+          items.forEach((item) => {
+            if (selectedIds.includes(item._id)) {
+              selectedItems.push(item);
+            } else {
+              unselectedItems.push(item);
+            }
+          });
+
+          // Put selected items at the top, followed by unselected items
+          const reorderedItems = [...selectedItems, ...unselectedItems];
+
+          return { ...prev, [activeFilter]: reorderedItems };
+        });
+      }
     }
-  };
+  }, [activeFilter, initialLoadComplete, isPopoverOpen]);
 
-  // Render Methods for Checkbox Filters
-  const renderProjectFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Project</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchProject}
-          onSearch={handleSearchProjects}
-          onChange={handleSearchProjects}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredProjectsList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              selectedProject.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={selectedProject.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, selectedProject, setSelectedProject);
-              }}
-            />
-            <span>{item?.title}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handleFilters("", selectedProject, setSelectedProject);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderTechnologyFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Department</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchTechnology}
-          onSearch={handleSearchTechnology}
-          onChange={handleSearchTechnology}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredTechnologyList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              technology.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={technology.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, technology, setTechnology);
-              }}
-            />
-            <span>{item.project_tech}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handleFilters("", technology, setTechnology);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderManagerFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Manager</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchManager}
-          onSearch={handleSearchManager}
-          onChange={handleSearchManager}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredManagerList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              manager.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={manager.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, manager, setManager);
-              }}
-            />
-            <MyAvatar
-              userName={item?.manager_name || "-"}
-              src={item?.emp_img}
-              key={item?._id}
-              alt={item?.manager_name}
-            />
-            <span>{removeTitle(item?.manager_name)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handleFilters("", manager, setManager);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderAccountManagerFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Account Manager</h4>
-
-      <div className="filter-search">
-        <Search
-          placeholder="Search.."
-          value={searchAccountManager}
-          onSearch={handleSearchAccountManager}
-          onChange={handleSearchAccountManager}
-          size="small"
-        />
-      </div>
-
-      <div className="filter-options">
-        {filteredAccManagerList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              accontManager?.includes(item._id) ? "selected" : ""
-            }`}
-          >
-            <Checkbox
-              checked={accontManager?.includes(item._id)}
-              onChange={() => {
-                handleFilters(item, accontManager, setAccountManager);
-              }}
-            />
-            <MyAvatar
-              userName={item?.full_name || "-"}
-              src={item?.emp_img}
-              key={item?._id}
-              alt={item?.full_name}
-            />
-            <span>{removeTitle(item?.full_name)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handleFilters("", accontManager, setAccountManager);
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  // Render Methods for Radio Filters
-  const renderPriorityFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Priority Level</h4>
-
-      <div className="filter-options">
-        <Radio.Group 
-          onChange={handlePriorityFilter} 
-          value={priority}
-        >
-          {PRIORITY_OPTIONS.map(({ value, label }) => (
-            <div key={value} className="radio-option">
-              <Radio value={value}>{label}</Radio>
-            </div>
-          ))}
-        </Radio.Group>
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handlePriorityFilter({ target: { value: "" } });
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderStatusFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Status</h4>
-
-      <div className="filter-options">
-        <Radio.Group 
-          onChange={handleStatusFilter} 
-          value={status}
-        >
-          {STATUS_OPTIONS.map(({ value, label }) => (
-            <div key={value} className="radio-option">
-              <Radio value={value}>{label}</Radio>
-            </div>
-          ))}
-        </Radio.Group>
-      </div>
-
-      <div className="filter-actions">
-        <Button
-          onClick={() => {
-            getComplaintList();
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            handleStatusFilter({ target: { value: "" } });
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    return () => Object.values(debouncedSearch).forEach((fn) => fn.cancel());
+  }, [debouncedSearch]);
 
   const renderFilterContent = () => {
-    switch (activeFilterType) {
-      case "project":
-        return renderProjectFilter();
-      case "technology":
-        return getRoles(["Admin"]) ? renderTechnologyFilter() : renderProjectFilter();
-      case "manager":
-        return getRoles(["Admin"]) ? renderManagerFilter() : renderProjectFilter();
-      case "accountManager":
-        return getRoles(["Admin"]) ? renderAccountManagerFilter() : renderProjectFilter();
-      case "priority":
-        return renderPriorityFilter();
-      case "status":
-        return renderStatusFilter();
+    const config = FILTER_CONFIG[activeFilter];
+    if (
+      !config ||
+      ((activeFilter === FILTER_TYPES.DEPARTMENT ||
+        activeFilter === FILTER_TYPES.MANAGER ||
+        activeFilter === FILTER_TYPES.ACCOUNT_MANAGER) &&
+        !getRoles(["Super Admin"]))
+    ) {
+      return (
+        <RadioFilter
+          options={PRIORITY_OPTIONS}
+          selectedValue={selectedFilters[FILTER_TYPES.PRIORITY]}
+          onSelect={(value) =>
+            handleSingleSelection(value, FILTER_TYPES.PRIORITY)
+          }
+          onApply={() => {
+            onFilterChange([], selectedFilters);
+            setIsPopoverOpen(false);
+          }}
+          onReset={() => resetFilter(FILTER_TYPES.PRIORITY)}
+          label={FILTER_CONFIG[FILTER_TYPES.PRIORITY].label}
+        />
+      );
+    }
+
+    switch (activeFilter) {
+      case FILTER_TYPES.PROJECT:
+      case FILTER_TYPES.DEPARTMENT:
+      case FILTER_TYPES.MANAGER:
+      case FILTER_TYPES.ACCOUNT_MANAGER:
+        return (
+          <FilterSection
+            config={config}
+            items={filterData[activeFilter]}
+            selectedItems={selectedFilters[activeFilter]}
+            pagination={pagination[activeFilter]}
+            searchTerm={searchTerms[activeFilter]}
+            onSearch={(value) => handleSearch(activeFilter, value)}
+            onSelect={(item) => handleFilterSelection(item, activeFilter)}
+            onLoadMore={() => handleLoadMore(activeFilter)}
+            onApply={() => {
+              onFilterChange([], selectedFilters);
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(activeFilter)}
+            isInitialLoadComplete={initialLoadComplete[activeFilter]}
+          />
+        );
+      case FILTER_TYPES.PRIORITY:
+        return (
+          <RadioFilter
+            options={PRIORITY_OPTIONS}
+            selectedValue={selectedFilters[FILTER_TYPES.PRIORITY]}
+            onSelect={(value) =>
+              handleSingleSelection(value, FILTER_TYPES.PRIORITY)
+            }
+            onApply={() => {
+              onFilterChange([], selectedFilters);
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.PRIORITY)}
+            label={FILTER_CONFIG[FILTER_TYPES.PRIORITY].label}
+          />
+        );
+      case FILTER_TYPES.STATUS:
+        return (
+          <RadioFilter
+            options={STATUS_OPTIONS}
+            selectedValue={selectedFilters[FILTER_TYPES.STATUS]}
+            onSelect={(value) =>
+              handleSingleSelection(value, FILTER_TYPES.STATUS)
+            }
+            onApply={() => {
+              onFilterChange([], selectedFilters);
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.STATUS)}
+            label={FILTER_CONFIG[FILTER_TYPES.STATUS].label}
+          />
+        );
       default:
-        return renderProjectFilter();
+        return null;
     }
   };
 
   const popoverContent = (
     <div className="filter-popover-content">
       <div className="filter-sidebar">
-        {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
           {activeFiltersCount > 0 && (
@@ -508,25 +820,27 @@ const ComplaintFilterComponent = ({
           )}
         </div>
         <Divider style={{ margin: "8px 0" }} />
-        {/* Filter Menu Items */}
-        {FILTER_MENU_ITEMS.map((item) => (
+        {createFilterMenuItems(getRoles).map((item) => (
           <div
             key={item.key}
             onClick={() => {
-              // Additional safety check for admin-only filters
               if (
-                (item.key === "technology" || item.key === "manager" || item.key === "accountManager") && 
-                !getRoles(["Admin"])
-              ) {
+                (item.key === FILTER_TYPES.DEPARTMENT ||
+                  item.key === FILTER_TYPES.MANAGER ||
+                  item.key === FILTER_TYPES.ACCOUNT_MANAGER) &&
+                !getRoles(["Super Admin"])
+              )
                 return;
-              }
-              setActiveFilterType(item.key);
+              setActiveFilter(item.key);
             }}
             className={`filter-menu-item ${
-              activeFilterType === item.key ? "active" : ""
+              activeFilter === item.key ? "active" : ""
             }`}
           >
             <span>{item.label}</span>
+            {!_.isEmpty(selectedFilters[item.key]) && (
+              <Badge size="small" color="#1890ff" />
+            )}
           </div>
         ))}
       </div>
@@ -537,7 +851,6 @@ const ComplaintFilterComponent = ({
   return (
     <div className="filter-container">
       <Popover
-        arrow={false}
         content={popoverContent}
         trigger="click"
         open={isPopoverOpen}
@@ -560,4 +873,4 @@ const ComplaintFilterComponent = ({
   );
 };
 
-export default memo(ComplaintFilterComponent);
+export default React.memo(ComplaintFilterComponent);

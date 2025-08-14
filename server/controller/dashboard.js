@@ -25,13 +25,12 @@ const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
 //Get Project :
 exports.getMyProjects = async (req, res) => {
   try {
-     // Decode user from token
-     const {
+    // Decode user from token
+    const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
-
 
     const validationSchema = Joi.object({
       manager_id: Joi.string().optional(),
@@ -39,6 +38,9 @@ exports.getMyProjects = async (req, res) => {
       category: Joi.array().optional().default([]), // technology
       project_type: Joi.array().optional().default([]),
       isComplaints: Joi.boolean().optional().default(false),
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(''),
     });
 
     const { error, value } = validationSchema.validate(req?.body);
@@ -49,10 +51,16 @@ exports.getMyProjects = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const { manager_id, project_status, category, project_type, isComplaints, pageNo, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+
     // Or filter..
     let orFilter = {};
     // get login user role ...
-    // !(await checkUserIsAdmin(req?.user?._id) &&
     if (!(await checkUserIsAdmin(req?.user?._id))) {
       orFilter = {
         $or: [
@@ -65,45 +73,46 @@ exports.getMyProjects = async (req, res) => {
       };
     }
 
-    // Manage projects default tabs .. . .
+    // Manage projects default tabs .. . ..
     await manageAllProjectTabSetting(req.user);
+    
     let matchQuery = {
       isDeleted: false,
-      companyId:newObjectId(decodedCompanyId),
+      companyId: newObjectId(decodedCompanyId),
       // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
 
       // filters..
-      ...(value.project_status.length > 0
+      ...(project_status.length > 0
         ? {
           project_status: {
-            $in: value.project_status.map(
+            $in: project_status.map(
               (s) => new mongoose.Types.ObjectId(s)
             ),
           },
         }
         : {}),
 
-      ...(value.category.length > 0
+      ...(category.length > 0
         ? {
           technology: {
-            $in: value.category.map((c) => new mongoose.Types.ObjectId(c)),
+            $in: category.map((c) => new mongoose.Types.ObjectId(c)),
           },
         }
         : {}),
 
-      ...(value.project_type.length > 0
+      ...(project_type.length > 0
         ? {
           project_type: {
-            $in: value.project_type.map(
+            $in: project_type.map(
               (t) => new mongoose.Types.ObjectId(t)
             ),
           },
         }
         : {}),
 
-      ...(value.manager_id
-        ? { manager: new mongoose.Types.ObjectId(value.manager_id) }
+      ...(manager_id
+        ? { manager: new mongoose.Types.ObjectId(manager_id) }
         : {}),
     };
 
@@ -111,6 +120,86 @@ exports.getMyProjects = async (req, res) => {
       ...matchQuery,
       ...orFilter,
     };
+
+    // Add search condition if provided
+    if (search && search.trim()) {
+      matchQuery.$and = matchQuery.$and || [];
+      matchQuery.$and.push({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { projectId: { $regex: search, $options: "i" } },
+          { descriptions: { $regex: search, $options: "i" } }
+        ]
+      });
+    }
+
+    // Count query for pagination metadata
+    const countQuery = [
+      {
+        $lookup: {
+          from: "star_projects",
+          let: { project: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$project_id", "$$project"] },
+                    { $eq: ["$isDeleted", false] },
+                    {
+                      $eq: [
+                        "$createdBy",
+                        new mongoose.Types.ObjectId(req?.user?._id),
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "starProects",
+        },
+      },
+      {
+        $unwind: {
+          path: "$starProects",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "projecttypes",
+          let: { typeId: "$project_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$typeId"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "project_types",
+        },
+      },
+      {
+        $unwind: {
+          path: "$project_types",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      ...(await getProjectDefaultSettingQuery("_id")),
+      { $match: matchQuery },
+      {
+        $count: "total"
+      }
+    ];
+
+    const countResult = await Project.aggregate(countQuery);
+    let totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
 
     const mainQuery = [
       {
@@ -155,7 +244,6 @@ exports.getMyProjects = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$typeId"] },
                     { $eq: ["$isDeleted", false] },
-
                   ],
                 },
               },
@@ -205,13 +293,59 @@ exports.getMyProjects = async (req, res) => {
       },
     ];
 
+    // Add pagination if both page and limit are provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push(
+        { $skip: skip },
+        { $limit: limitNum }
+      );
+    }
+
     let data = await Project.aggregate(mainQuery);
 
-   
+    // Apply complaints filter if needed (after aggregation to maintain count accuracy)
+    if (isComplaints && isComplaints !== undefined) {
+      const filteredData = data.filter((ele) => {
+        if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
+          return ele;
+        }
+      });
+      
+      // If complaints filter is applied after pagination, we need to recalculate total
+      if (pageNum && limitNum) {
+        // For complaints filter, we need to run a separate count query
+        const complaintsCountQuery = [...countQuery];
+        const complaintsCountResult = await Project.aggregate(complaintsCountQuery);
+        const allData = complaintsCountResult.length > 0 ? await Project.aggregate([
+          ...mainQuery.slice(0, -2) // Remove skip and limit
+        ]) : [];
+        
+        const complaintsFilteredCount = allData.filter((ele) => {
+          if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
+            return ele;
+          }
+        }).length;
+        
+        totalDocuments = complaintsFilteredCount;
+      }
+      
+      data = filteredData;
+    }
+
     // check project have project id or not...
     await addProjectRandomId(data);
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }

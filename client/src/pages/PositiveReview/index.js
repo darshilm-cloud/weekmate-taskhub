@@ -1,182 +1,30 @@
-import {
-  Button,
-  Card,
-  Checkbox,
-  Input,
-  Modal,
-  Popconfirm,
-  Popover,
-  Radio,
-  Table,
-} from "antd";
-import React, { memo, useCallback, useMemo } from "react";
+import { Button, Card, Modal, Popconfirm, Table } from "antd";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import PositiveReviewController from "./PositiveReviewController";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import { getRoles } from "../../util/hasPermission";
 import moment from "moment";
 import "../Complaints/ComplaintsForm.css";
-import {
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined,
-  PlusOutlined,
-  QuestionCircleOutlined,
-} from "@ant-design/icons";
-import PositiveReviewFilter from "./PositiveReviewFilter";
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import GenericFilterComponent from "./PositiveReviewFilter";
+import { useDispatch } from "react-redux";
+import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import Service from "../../service";
+import { message } from "antd";
 
-// Constants moved outside component to prevent recreation
-const FEEDBACK_TYPES = [
-  { value: "", label: "All" },
-  { value: "Clutch Review", label: "Clutch Review" },
-  { value: "Video Testimonial", label: "Video Testimonial" },
-  { value: "Text Testimonial", label: "Text Testimonial" },
-  { value: "Feedback", label: "Feedback" },
-  { value: "Zoho Partner Profile", label: "Zoho Partner Profile" },
-];
-
+// Constants
 const PAGINATION_OPTIONS = ["10", "20", "30"];
-const ADMIN_ROLES = ["Admin", "PC", "Admin", "AM"];
-const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
-const SUPER_ADMIN_ROLES = ["Admin"];
-
+const ADMIN_ROLES = ["Admin", "PC", "Super Admin", "AM"];
+const ACCESS_ROLES = ["Super Admin", "PC", "TL", "AM"];
+const SUPER_ADMIN_ROLES = ["Super Admin"];
 const companySlug = localStorage.getItem("companyDomain");
 
-// Memoized components for better performance
-const FilterPopover = memo(
-  ({
-    title,
-    visible,
-    onVisibleChange,
-    searchValue,
-    onSearchChange,
-    selectedItems,
-    allItems,
-    onFilterChange,
-    onApply,
-    onCancel,
-    renderItem,
-    icon,
-  }) => (
-    <Popover
-      trigger="click"
-      visible={visible}
-      onVisibleChange={onVisibleChange}
-      placement="bottomRight"
-      content={
-        <div className="right-popover-wrapper">
-          <ul className="assigness-data">
-            <li>
-              <Checkbox
-                checked={selectedItems.length === 0}
-                onChange={() => onFilterChange("")}
-              >
-                All
-              </Checkbox>
-            </li>
-          </ul>
-          <div className="search-filter">
-            <Input
-              placeholder="Search"
-              value={searchValue}
-              onChange={onSearchChange}
-            />
-          </div>
-          <div>
-            <ul className="assigness-data">{allItems.map(renderItem)}</ul>
-          </div>
-          <div className="popver-footer-btn">
-            <Button
-              type="primary"
-              className="square-primary-btn ant-btn-primary"
-              onClick={onApply}
-            >
-              Apply
-            </Button>
-            <Button
-              className="square-outline-btn ant-delete"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      }
-    >
-      <Button className="dropdown-button">
-        <span className="filter-text">
-          <span>{title}:</span>
-          <span>
-            {selectedItems.length === 0
-              ? "All"
-              : `Selected (${selectedItems.length})`}
-          </span>
-        </span>
-      </Button>
-    </Popover>
-  )
-);
-
-const FeedbackTypeFilter = memo(
-  ({
-    visible,
-    onVisibleChange,
-    feedBackTypeFilter,
-    onFilterChange,
-    onApply,
-    onCancel,
-  }) => (
-    <Popover
-      trigger="click"
-      visible={visible}
-      onVisibleChange={onVisibleChange}
-      placement="bottomRight"
-      content={
-        <div className="right-popover-wrapper">
-          <ul className="assigness-data">
-            <Radio.Group onChange={onFilterChange} value={feedBackTypeFilter}>
-              {FEEDBACK_TYPES.map(({ value, label }) => (
-                <li key={value}>
-                  <Radio value={value}>{label}</Radio>
-                </li>
-              ))}
-            </Radio.Group>
-          </ul>
-          <div className="popver-footer-btn">
-            <Button
-              type="primary"
-              className="square-primary-btn ant-btn-primary"
-              onClick={onApply}
-            >
-              Apply
-            </Button>
-            <Button
-              className="square-outline-btn ant-delete"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      }
-    >
-      <Button className="dropdown-button">
-        <span className="filter-text">
-          <span>Feedback Type:</span>
-          <span>
-            {feedBackTypeFilter === ""
-              ? "All"
-              : FEEDBACK_TYPES.find((type) => type.value === feedBackTypeFilter)
-                  ?.label || "Selected"}
-          </span>
-        </span>
-      </Button>
-    </Popover>
-  )
-);
-
-const ActionButtons = memo(({ record, onView, onDelete }) => (
+const ActionButtons = React.memo(({ 
+  record, 
+  onView, 
+  onDelete 
+}) => (
   <div
     style={{
       display: "flex",
@@ -206,199 +54,151 @@ const ActionButtons = memo(({ record, onView, onDelete }) => (
 ));
 
 const PositiveReview = () => {
-  const {
-    popOver,
-    setPopOver,
-    handleVisibleChange,
-    handleSearchTechnology,
-    searchTechnology,
-    reviewList,
-    filteredTechnologyList,
-    technology,
-    setTechnology,
-    handleFilters,
-    filteredManagerList,
-    handleSearchManager,
-    searchManager,
-    manager,
-    setManager,
-    accontManager,
-    setAccountManager,
-    searchProject,
-    handleSearchProjects,
-    filteredProjectsList,
-    selectedProject,
-    setSelectedProject,
-    handleSearchAccountManager,
-    searchAccountManager,
-    filteredAccManagerList,
-    handleTableChange,
-    pagination,
-    feedBackTypeFilter,
-    handleFeedBackTypeFilter,
-    getReviewList,
-    isModalOpenTopic,
-    setIsModalOpenTopic,
-    getReviewById,
-    feedBackDetails,
-    setFeedBackDetails,
-    deleteReview,
-  } = PositiveReviewController();
+  const dispatch = useDispatch();
+  const [reviewList, setReviewList] = useState([]);
+  const [feedBackDetails, setFeedBackDetails] = useState([]);
+  const [isModalOpenTopic, setIsModalOpenTopic] = useState(false);
+  const [selectedProject, setSelectedProject] = useState([]);
+  const [technology, setTechnology] = useState([]);
+  const [manager, setManager] = useState([]);
+  const [accontManager, setAccountManager] = useState([]);
+  const [feedBackTypeFilter, setFeedBackTypeFilter] = useState("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+  });
+
+  useEffect(() => {
+    getReviewList();
+  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, feedBackTypeFilter]);
+
+  const onFilterChange = (skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setSelectedProject([]);
+      setTechnology([]);
+      setManager([]);
+      setAccountManager([]);
+      setFeedBackTypeFilter("");
+      setPagination({ ...pagination, current: 1 });
+    } else {
+      if (skipParams.includes("skipProject")) {
+        setSelectedProject([]);
+      }
+      if (skipParams.includes("skipDepartment")) {
+        setTechnology([]);
+      }
+      if (skipParams.includes("skipManager")) {
+        setManager([]);
+      }
+      if (skipParams.includes("skipAccountManager")) {
+        setAccountManager([]);
+      }
+      if (skipParams.includes("skipFeedbackType")) {
+        setFeedBackTypeFilter("");
+      }
+    }
+    if (selectedFilters) {
+      setSelectedProject(selectedFilters.project || []);
+      setTechnology(selectedFilters.technology || []);
+      setManager(selectedFilters.manager || []);
+      setAccountManager(selectedFilters.accountManager || []);
+      setFeedBackTypeFilter(selectedFilters.feedbackType || "");
+      setPagination({ ...pagination, current: 1 });
+    }
+  };
+
+  const getReviewList = async () => {
+    try {
+      dispatch(showAuthLoader());
+      const reqBody = {
+        pageNo: pagination.current,
+        limit: pagination.pageSize,
+        project_id: selectedProject,
+        technology: technology,
+        manager_id: manager,
+        acc_manager_id: accontManager,
+        feedback_type: feedBackTypeFilter,
+      };
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getReviewList,
+        body: reqBody,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setReviewList(response.data.data);
+        setPagination({
+          ...pagination,
+          total: response.data.metadata.total,
+        });
+      }
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.error(error);
+    }
+  };
+
+  const getReviewById = async (reviewId) => {
+    try {
+      dispatch(showAuthLoader());
+      const reqBody = {
+        _id: reviewId,
+      };
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getReviewList,
+        body: reqBody,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setFeedBackDetails(response.data.data);
+        setIsModalOpenTopic(true);
+      }
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.error(error);
+    }
+  };
+
+  const deleteReview = async (deleteId) => {
+    try {
+      dispatch(showAuthLoader());
+      const params = `/${deleteId}`;
+      const response = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: Service.deleteReview + params,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        message.success(response.data.message);
+        getReviewList();
+      }
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.error(error);
+    }
+  };
 
   // Memoized permission checks
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
   const canAddReview = useMemo(() => getRoles(ADMIN_ROLES), []);
-  const isSuperAdmin = useMemo(() => getRoles(SUPER_ADMIN_ROLES), []);
 
   // Memoized callbacks
-  const handleViewReview = useCallback(
-    (id) => {
-      getReviewById(id);
-      if (feedBackDetails) {
-        setIsModalOpenTopic(true);
-      }
-    },
-    [getReviewById, feedBackDetails, setIsModalOpenTopic]
-  );
+  const handleViewReview = useCallback((id) => {
+    getReviewById(id);
+  }, []);
 
-  const handleDeleteReview = useCallback(
-    (id) => {
-      deleteReview(id);
-    },
-    [deleteReview]
-  );
+  const handleDeleteReview = useCallback((id) => {
+    deleteReview(id);
+  }, []);
 
   const handleModalClose = useCallback(() => {
     setIsModalOpenTopic(false);
     setFeedBackDetails([]);
-  }, [setIsModalOpenTopic, setFeedBackDetails]);
+  }, []);
 
-  const showTotal = useCallback(
-    (total) => `Total Records Count is ${total}`,
-    []
-  );
-
-  // Memoized filter handlers
-  const handleProjectFilter = useCallback(
-    (item) => {
-      handleFilters(item, selectedProject, setSelectedProject);
-    },
-    [handleFilters, selectedProject, setSelectedProject]
-  );
-
-  const handleTechnologyFilter = useCallback(
-    (item) => {
-      handleFilters(item, technology, setTechnology);
-    },
-    [handleFilters, technology, setTechnology]
-  );
-
-  const handleManagerFilter = useCallback(
-    (item) => {
-      handleFilters(item, manager, setManager);
-    },
-    [handleFilters, manager, setManager]
-  );
-
-  const handleAccountManagerFilter = useCallback(
-    (item) => {
-      handleFilters(item, accontManager, setAccountManager);
-    },
-    [handleFilters, accontManager, setAccountManager]
-  );
-
-  // Memoized apply handlers
-  const handleApplyProject = useCallback(() => {
-    getReviewList();
-    setPopOver((prev) => ({ ...prev, project: false }));
-  }, [getReviewList, setPopOver]);
-
-  const handleApplyTechnology = useCallback(() => {
-    getReviewList();
-    setPopOver((prev) => ({ ...prev, technology: false }));
-  }, [getReviewList, setPopOver]);
-
-  const handleApplyManager = useCallback(() => {
-    getReviewList();
-    setPopOver((prev) => ({ ...prev, manager: false }));
-  }, [getReviewList, setPopOver]);
-
-  const handleApplyAccountManager = useCallback(() => {
-    getReviewList();
-    setPopOver((prev) => ({ ...prev, accontManager: false }));
-  }, [getReviewList, setPopOver]);
-
-  const handleApplyFeedbackType = useCallback(() => {
-    getReviewList();
-    setPopOver((prev) => ({ ...prev, feedBackType: false }));
-  }, [getReviewList, setPopOver]);
-
-  // Memoized render functions
-  const renderProjectItem = useCallback(
-    (item) => (
-      <li key={item._id}>
-        <Checkbox
-          onChange={() => handleProjectFilter(item)}
-          checked={selectedProject.includes(item._id)}
-        >
-          <span>{item?.title}</span>
-        </Checkbox>
-      </li>
-    ),
-    [handleProjectFilter, selectedProject]
-  );
-
-  const renderTechnologyItem = useCallback(
-    (item) => (
-      <li key={item._id}>
-        <Checkbox
-          onChange={() => handleTechnologyFilter(item)}
-          checked={technology.includes(item._id)}
-        >
-          {item.project_tech}
-        </Checkbox>
-      </li>
-    ),
-    [handleTechnologyFilter, technology]
-  );
-
-  const renderManagerItem = useCallback(
-    (item) => (
-      <li key={item._id}>
-        <Checkbox
-          onChange={() => handleManagerFilter(item)}
-          checked={manager.includes(item._id)}
-        >
-          <MyAvatar
-            userName={item?.manager_name || "-"}
-            src={item?.emp_img}
-            alt={item?.manager_name}
-          />
-          <span>{removeTitle(item?.manager_name)}</span>
-        </Checkbox>
-      </li>
-    ),
-    [handleManagerFilter, manager]
-  );
-
-  const renderAccountManagerItem = useCallback(
-    (item) => (
-      <li key={item._id}>
-        <Checkbox
-          onChange={() => handleAccountManagerFilter(item)}
-          checked={accontManager?.includes(item._id)}
-        >
-          <MyAvatar
-            userName={item?.manager_name || "-"}
-            src={item?.emp_img}
-            alt={item?.manager_name}
-          />
-          <span>{removeTitle(item?.manager_name)}</span>
-        </Checkbox>
-      </li>
-    ),
-    [handleAccountManagerFilter, accontManager]
-  );
+  const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
 
   // Memoized table columns
   const columns = useMemo(() => {
@@ -436,7 +236,7 @@ const PositiveReview = () => {
       },
       {
         title: "NDA signed by client",
-        render: (text) => (text?.client_nda_sign === true ? "YES" : "NO"),
+        render: (text) => text?.client_nda_sign === true ? "YES" : "NO",
       },
     ];
 
@@ -457,100 +257,27 @@ const PositiveReview = () => {
   }, [userHasAccess, handleViewReview, handleDeleteReview]);
 
   // Memoized pagination config
-  const paginationConfig = useMemo(
-    () => ({
-      showSizeChanger: true,
-      pageSizeOptions: PAGINATION_OPTIONS,
-      showTotal: showTotal,
-      ...pagination,
-    }),
-    [pagination, showTotal]
-  );
+  const paginationConfig = useMemo(() => ({
+    showSizeChanger: true,
+    pageSizeOptions: PAGINATION_OPTIONS,
+    showTotal: showTotal,
+    ...pagination,
+  }), [pagination, showTotal]);
 
-
-  const filterConfigs = [
-    {
-      key: "project",
-      label: "Project",
-      filterType: "checkbox",
-      searchValue: searchProject,
-      onSearchChange: handleSearchProjects,
-      selectedItems: selectedProject,
-      allItems: filteredProjectsList,
-      onFilterChange: handleProjectFilter,
-      onApply: handleApplyProject,
-      onReset: () => handleProjectFilter(""),
-      renderItem: renderProjectItem,
-      hasSearch: true,
-    },
-    ...(isSuperAdmin ? [
-      {
-        key: "technology",
-        label: "Department",
-        filterType: "checkbox",
-        searchValue: searchTechnology,
-        onSearchChange: handleSearchTechnology,
-        selectedItems: technology,
-        allItems: filteredTechnologyList,
-        onFilterChange: handleTechnologyFilter,
-        onApply: handleApplyTechnology,
-        onReset: () => handleTechnologyFilter(""),
-        renderItem: renderTechnologyItem,
-        hasSearch: true,
-      },
-      {
-        key: "manager",
-        label: "Manager",
-        filterType: "checkbox",
-        searchValue: searchManager,
-        onSearchChange: handleSearchManager,
-        selectedItems: manager,
-        allItems: filteredManagerList,
-        onFilterChange: handleManagerFilter,
-        onApply: handleApplyManager,
-        onReset: () => handleManagerFilter(""),
-        renderItem: renderManagerItem,
-        hasSearch: true,
-      },
-      {
-        key: "accountManager",
-        label: "Account Manager",
-        filterType: "checkbox",
-        searchValue: searchAccountManager,
-        onSearchChange: handleSearchAccountManager,
-        selectedItems: accontManager,
-        allItems: filteredAccManagerList,
-        onFilterChange: handleAccountManagerFilter,
-        onApply: handleApplyAccountManager,
-        onReset: () => handleAccountManagerFilter(""),
-        renderItem: renderAccountManagerItem,
-        hasSearch: true,
-      },
-    ] : []),
-    {
-      key: "feedbackType",
-      label: "Feedback Type",
-      filterType: "radio",
-      selectedValue: feedBackTypeFilter,
-      options: FEEDBACK_TYPES,
-      onFilterChange: handleFeedBackTypeFilter,
-      onApply: handleApplyFeedbackType,
-      onReset: () => handleFeedBackTypeFilter({ target: { value: "" } }),
-      hasSearch: false,
-    },
-  ];
-  
+  const handleTableChange = (page) => {
+    setPagination({ ...pagination, ...page });
+  };
 
   return (
     <div className="ant-project-task all-project-main-wrapper positive-feedback-review">
       <Card>
-        <div class="heading-wrapper">
+        <div className="heading-wrapper">
           <h2>Positive Reviews</h2>
           {canAddReview && (
             <Link to={`/${companySlug}/add/positiveReviewForm`}>
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
+              <Button 
+                icon={<PlusOutlined />} 
+                type="primary" 
                 className="square-primary-btn"
               >
                 Add Review
@@ -561,7 +288,7 @@ const PositiveReview = () => {
 
         <div className="global-search">
           <div className="filter-btn-wrapper">
-            <PositiveReviewFilter filterConfigs={filterConfigs} />
+            <GenericFilterComponent onFilterChange={onFilterChange} />
           </div>
         </div>
 
@@ -584,8 +311,8 @@ const PositiveReview = () => {
         <div className="modal-header">
           <h1>Feedback Details</h1>
         </div>
-        <div
-          className="overview-modal-wrapper"
+        <div 
+          className="overview-modal-wrapper" 
           dangerouslySetInnerHTML={{ __html: feedBackDetails?.feedback }}
         />
       </Modal>
@@ -593,4 +320,5 @@ const PositiveReview = () => {
   );
 };
 
-export default memo(PositiveReview);
+export default React.memo(PositiveReview);
+
