@@ -1,27 +1,45 @@
 import React, { useState, useMemo, memo } from "react";
-import {
-  Button,
-  Popover,
-  Checkbox,
-  Input,
-  Badge,
-  Divider,
-} from "antd";
+import { Button, Popover, Checkbox, Input, Badge, Divider } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
-import MyAvatar from "../../components/Avatar/MyAvatar";
 
 const { Search } = Input;
 
 // Constants
 const FILTER_TYPES = {
-  SUBSCRIBERS: "subscribers"
+  SUBSCRIBERS: "subscribers",
 };
 
 const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.SUBSCRIBERS, label: "Subscribers" },
 ];
+
+// Updated sorting utility function
+const sortWithSelectedOnTop = (items, selectedItems) => {
+  // Separate unassigned option from regular subscribers
+  const unassignedItems = items.filter((item) => item.isSpecial);
+  const regularItems = items.filter((item) => !item.isSpecial);
+
+  if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
+    return [...unassignedItems, ...regularItems];
+  }
+
+  const selectedRegular = [];
+  const unselectedRegular = [];
+
+  // Sort only regular subscribers
+  regularItems.forEach((item) => {
+    if (selectedItems.includes(item._id)) {
+      selectedRegular.push(item);
+    } else {
+      unselectedRegular.push(item);
+    }
+  });
+
+  // Always return: [Unassigned, Selected Regular Subscribers, Unselected Regular Subscribers]
+  return [...unassignedItems, ...selectedRegular, ...unselectedRegular];
+};
 
 const SubscribersFilterComponent = ({
   // Subscribers props
@@ -31,57 +49,113 @@ const SubscribersFilterComponent = ({
   setfilterSubscribersSearchInput,
   handleSelectionAssignedFilter,
   handleAllFilter,
-  handleCancleFilter,
-  getDetails,
 }) => {
   // UI state
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilterType, setActiveFilterType] = useState(FILTER_TYPES.SUBSCRIBERS);
+  const [activeFilterType, setActiveFilterType] = useState(
+    FILTER_TYPES.SUBSCRIBERS
+  );
+  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
 
-  // Create combined list with "Unassigned Tasks" at the top
+  // Create combined list with "Unassigned Tasks" always at the top
   const combinedSubscribersList = useMemo(() => {
     const unassignedOption = {
       _id: "unassigned",
       full_name: "Unassigned Tasks",
       emp_img: null,
-      isSpecial: true
+      isSpecial: true,
     };
 
-    const filteredRegularSubscribers = subscribers?.filter((data) =>
-      data.full_name
-        ?.toLowerCase()
-        .includes(filterSubscribersSearchInput.toLowerCase())
-    ) || [];
+    const filteredRegularSubscribers =
+      subscribers?.filter((data) =>
+        data.full_name
+          ?.toLowerCase()
+          .includes(filterSubscribersSearchInput.toLowerCase())
+      ) || [];
+
+    let baseList = [];
 
     // If search is empty, show unassigned at top
     if (!filterSubscribersSearchInput.trim()) {
-      return [unassignedOption, ...filteredRegularSubscribers];
+      baseList = [unassignedOption, ...filteredRegularSubscribers];
+    } else {
+      // If searching and "unassigned" matches search, include it
+      if (
+        "unassigned tasks"
+          .toLowerCase()
+          .includes(filterSubscribersSearchInput.toLowerCase())
+      ) {
+        baseList = [unassignedOption, ...filteredRegularSubscribers];
+      } else {
+        // Otherwise, just show filtered regular subscribers (no unassigned)
+        baseList = filteredRegularSubscribers;
+      }
     }
 
-    // If searching and "unassigned" matches search, include it
-    if ("unassigned tasks".toLowerCase().includes(filterSubscribersSearchInput.toLowerCase())) {
-      return [unassignedOption, ...filteredRegularSubscribers];
+    // Apply sorting - this will keep unassigned at top and sort only regular subscribers
+    if (hasAppliedFilter) {
+      return sortWithSelectedOnTop(baseList, filterSubscribers);
     }
 
-    // Otherwise, just show filtered regular subscribers
-    return filteredRegularSubscribers;
-  }, [subscribers, filterSubscribersSearchInput]);
+    return baseList;
+  }, [
+    subscribers,
+    filterSubscribersSearchInput,
+    filterSubscribers,
+    hasAppliedFilter,
+  ]);
 
   // Active filters count calculation
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    
+
     // Count as active if not "all" and has selections
     if (!(filterSubscribers[0] === "all" || filterSubscribers.length === 0)) {
       count = 1;
     }
-    
+
     return count;
   }, [filterSubscribers]);
 
-  const resetAllFilters = () => {
-    handleSelectionAssignedFilter("all", true); // Map "ALL" functionality to reset
+  // Event Handlers
+  const handleSubscriberSelection = (id, isSpecial = false) => {
+    if (isSpecial) {
+      handleSelectionAssignedFilter("unassigned", true);
+    } else {
+      handleSelectionAssignedFilter(id);
+    }
+
+    // Reset applied filter state when making new selections
+    setHasAppliedFilter(false);
+  };
+
+  const handleSearchChange = (value) => {
+    setfilterSubscribersSearchInput(value);
+
+    // Reset applied filter state when searching
+    setHasAppliedFilter(false);
+  };
+
+  const handleApplyFilter = () => {
+    handleAllFilter();
     setfilterSubscribersSearchInput("");
+    setHasAppliedFilter(true); // Set this to true when applying filter
+    setIsPopoverOpen(false);
+  };
+
+  const resetAllFilters = () => {
+    handleSelectionAssignedFilter("all", true);
+    setfilterSubscribersSearchInput("");
+    setHasAppliedFilter(false); // Reset applied filter state
+    handleAllFilter(true);
+  };
+
+  // Check if subscriber is selected
+  const isSubscriberSelected = (item) => {
+    if (item.isSpecial) {
+      return filterSubscribers[0] === "unassigned";
+    }
+    return filterSubscribers.includes(item._id);
   };
 
   // Main render method for subscribers filter
@@ -94,69 +168,41 @@ const SubscribersFilterComponent = ({
         <Search
           placeholder="Search subscribers..."
           value={filterSubscribersSearchInput}
-          onSearch={(val) => setfilterSubscribersSearchInput(val)}
-          onChange={(e) => setfilterSubscribersSearchInput(e.target.value)}
+          onSearch={handleSearchChange}
+          onChange={(e) => handleSearchChange(e.target.value)}
           size="small"
         />
       </div>
 
       {/* Combined list: Unassigned + Individual subscribers */}
       <div className="filter-options">
-        {combinedSubscribersList.map((item, index) => (
-          <div
-            key={item._id || index}
-            className={`assignee-item ${
-              item.isSpecial 
-                ? (filterSubscribers[0] === "unassigned" ? "selected" : "")
-                : (filterSubscribers.includes(item._id) ? "selected" : "")
-            }`}
-          >
-            <Checkbox
-              checked={
-                item.isSpecial 
-                  ? filterSubscribers[0] === "unassigned"
-                  : filterSubscribers.includes(item._id)
-              }
-              onChange={() =>
-                item.isSpecial
-                  ? handleSelectionAssignedFilter("unassigned", true)
-                  : handleSelectionAssignedFilter(item._id)
-              }
-            />
-            
-            {/* Show avatar only for regular subscribers */}
-            {!item.isSpecial && (
-              <MyAvatar
-                userName={item?.full_name}
-                alt={item?.full_name}
-                src={item.emp_img}
+        {combinedSubscribersList.map((item, index) => {
+          const isSelected = isSubscriberSelected(item);
+
+          return (
+            <div
+              key={item._id || index}
+              className={`assignee-item ${isSelected ? "selected" : ""}`}
+            >
+              <Checkbox
+                checked={isSelected}
+                onChange={() =>
+                  handleSubscriberSelection(item._id, item.isSpecial)
+                }
               />
-            )}
-            
-            <span>{item.isSpecial ? item.full_name : removeTitle(item.full_name)}</span>
-          </div>
-        ))}
+              <span>
+                {item.isSpecial ? item.full_name : removeTitle(item.full_name)}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       <div className="filter-actions">
-        <Button
-          onClick={() => {
-            handleAllFilter();
-            setfilterSubscribersSearchInput("");
-            setIsPopoverOpen(false);
-          }}
-          size="small"
-          className="filter-btn"
-        >
+        <Button onClick={handleApplyFilter} size="small" className="filter-btn">
           Apply Filter
         </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={() => {
-            resetAllFilters(); // Use reset function instead of cancel
-          }}
-        >
+        <Button size="small" className="delete-btn" onClick={resetAllFilters}>
           Reset
         </Button>
       </div>
@@ -169,9 +215,21 @@ const SubscribersFilterComponent = ({
         {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          
+          {activeFiltersCount > 0 && (
+            <Button
+              size="small"
+              type="text"
+              onClick={resetAllFilters}
+              className="delete-btn"
+              title="Reset all filters"
+            >
+              Reset All ({activeFiltersCount})
+            </Button>
+          )}
         </div>
+
         <Divider style={{ margin: "8px 0" }} />
+
         {/* Filter Menu Items */}
         {FILTER_MENU_ITEMS.map((item) => (
           <div
@@ -182,6 +240,8 @@ const SubscribersFilterComponent = ({
             }`}
           >
             <span>{item.label}</span>
+            {/* Filter Tab Badge Indicator */}
+            {activeFiltersCount > 0 && <Badge size="small" color="#1890ff" />}
           </div>
         ))}
       </div>

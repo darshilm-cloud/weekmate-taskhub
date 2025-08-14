@@ -3,6 +3,7 @@ import {
   Button,
   Popover,
   Checkbox,
+  Radio,
   Input,
   Avatar,
   Select,
@@ -17,8 +18,8 @@ import {
   UserOutlined,
   CalendarOutlined,
   RightOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
-import "./FilterUI.css";
 import moment from "moment";
 
 const { Search } = Input;
@@ -95,6 +96,46 @@ const parseDateValue = (value) => {
   return value;
 };
 
+// Sorting utility functions
+const sortWithSelectedOnTop = (items, selectedItems, idKey = '_id') => {
+  if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
+    return items;
+  }
+
+  const selected = [];
+  const unselected = [];
+
+  items.forEach(item => {
+    const itemId = item[idKey];
+    if (selectedItems.includes(itemId)) {
+      selected.push(item);
+    } else {
+      unselected.push(item);
+    }
+  });
+
+  return [...selected, ...unselected];
+};
+
+const sortBugStatusWithSelectedOnTop = (bugs, selectedBugStatusId) => {
+  if (!selectedBugStatusId) {
+    return bugs;
+  }
+
+  const selected = [];
+  const unselected = [];
+
+  bugs.forEach(bug => {
+    if (bug?._id === selectedBugStatusId) {
+      selected.push(bug);
+    } else {
+      unselected.push(bug);
+    }
+  });
+
+  return [...selected, ...unselected];
+};
+
 const BugFilter = ({ 
   boardTasksBugs = [], 
   projectLabels = [], 
@@ -109,6 +150,7 @@ const BugFilter = ({
   // UI state
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilterType, setActiveFilterType] = useState(FILTER_TYPES.BUG_STATUS);
+  const [hasNavigated, setHasNavigated] = useState(false);
   
   // Bug Status filter state
   const [bugStatusSearchQuery, setBugStatusSearchQuery] = useState("");
@@ -135,28 +177,47 @@ const BugFilter = ({
   // Title search state
   const [titleSearch, setTitleSearch] = useState("");
 
-  // Memoized filtered data
+  // Memoized filtered and sorted data
   const filteredBugStatuses = useMemo(() => {
-    return boardTasksBugs?.filter((task) =>
+    const filtered = boardTasksBugs?.filter((task) =>
       task?.title
         ?.toLowerCase()
         .includes(bugStatusSearchQuery.toLowerCase())
     ) || [];
-  }, [boardTasksBugs, bugStatusSearchQuery]);
+    
+    // Sort with selected bug status on top only after navigation
+    return hasNavigated && activeFilterType === FILTER_TYPES.BUG_STATUS 
+      ? sortBugStatusWithSelectedOnTop(filtered, selectedBugStatus)
+      : filtered;
+  }, [boardTasksBugs, bugStatusSearchQuery, selectedBugStatus, hasNavigated, activeFilterType]);
 
   const filteredAssignees = useMemo(() => {
-    return subscribersList.filter((user) =>
+    const filtered = subscribersList.filter((user) =>
       user?.full_name
         ?.toLowerCase()
         .includes(assigneeSearchQuery.toLowerCase())
     );
-  }, [subscribersList, assigneeSearchQuery]);
+    
+    // Sort with selected assignees on top only after navigation
+    if (hasNavigated && activeFilterType === FILTER_TYPES.ASSIGNEE) {
+      const selectedAssigneeIds = Array.isArray(selectedAssignees) ? selectedAssignees : [];
+      return sortWithSelectedOnTop(filtered, selectedAssigneeIds, '_id');
+    }
+    return filtered;
+  }, [subscribersList, assigneeSearchQuery, selectedAssignees, hasNavigated, activeFilterType]);
 
   const filteredLabels = useMemo(() => {
-    return projectLabels.filter((label) =>
+    const filtered = projectLabels.filter((label) =>
       label.title?.toLowerCase().includes(labelsSearchQuery.toLowerCase())
     );
-  }, [projectLabels, labelsSearchQuery]);
+    
+    // Sort with selected labels on top only after navigation
+    if (hasNavigated && activeFilterType === FILTER_TYPES.LABELS) {
+      const selectedLabelIds = Array.isArray(selectedLabels) ? selectedLabels : [];
+      return sortWithSelectedOnTop(filtered, selectedLabelIds, '_id');
+    }
+    return filtered;
+  }, [projectLabels, labelsSearchQuery, selectedLabels, hasNavigated, activeFilterType]);
 
   // Active filters count calculation
   const activeFiltersCount = useMemo(() => {
@@ -177,8 +238,11 @@ const BugFilter = ({
   // Event Handlers
   const handleBugStatusChange = (e) => {
     const status = e.target.value;
-    const isChecked = e.target.checked;
-    setSelectedBugStatus(isChecked ? status : "");
+    setSelectedBugStatus(status);
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.BUG_STATUS) {
+      setHasNavigated(false);
+    }
   };
 
   const handleAssigneeSelection = (userId, shouldRemoveAll = false) => {
@@ -189,16 +253,20 @@ const BugFilter = ({
     
     if (userId === "unassigned") {
       setSelectedAssignees("unassigned");
-      return;
+    } else {
+      setSelectedAssignees(prev => 
+        Array.isArray(prev) 
+          ? prev.includes(userId)
+            ? prev.filter(id => id !== userId)
+            : [...prev, userId]
+          : [userId]
+      );
     }
     
-    setSelectedAssignees(prev => 
-      Array.isArray(prev) 
-        ? prev.includes(userId)
-          ? prev.filter(id => id !== userId)
-          : [...prev, userId]
-        : [userId]
-    );
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.ASSIGNEE) {
+      setHasNavigated(false);
+    }
   };
 
   const handleLabelSelection = (labelId, shouldRemoveAll = false) => {
@@ -209,16 +277,20 @@ const BugFilter = ({
     
     if (labelId === "unlabelled") {
       setSelectedLabels("unlabelled");
-      return;
+    } else {
+      setSelectedLabels(prev => 
+        Array.isArray(prev)
+          ? prev.includes(labelId)
+            ? prev.filter(id => id !== labelId)
+            : [...prev, labelId]
+          : [labelId]
+      );
     }
     
-    setSelectedLabels(prev => 
-      Array.isArray(prev)
-        ? prev.includes(labelId)
-          ? prev.filter(id => id !== labelId)
-          : [...prev, labelId]
-        : [labelId]
-    );
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.LABELS) {
+      setHasNavigated(false);
+    }
   };
 
   const handleStartDateChange = (value) => {
@@ -232,6 +304,11 @@ const BugFilter = ({
     setIsCustomStartDate(false);
     const parsedValue = parseDateValue(value);
     setSelectedStartDate(parsedValue);
+    
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.DATES) {
+      setHasNavigated(false);
+    }
   };
 
   const handleCustomStartDateChange = (position, dateString) => {
@@ -239,6 +316,11 @@ const BugFilter = ({
     newRange[position] = dateString;
     setCustomStartDateRange(newRange);
     setSelectedStartDate(newRange);
+    
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.DATES) {
+      setHasNavigated(false);
+    }
   };
 
   const handleDueDateChange = (value) => {
@@ -252,6 +334,11 @@ const BugFilter = ({
     setIsCustomDueDate(false);
     const parsedValue = parseDateValue(value);
     setSelectedDueDate(parsedValue);
+    
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.DATES) {
+      setHasNavigated(false);
+    }
   };
 
   const handleCustomDueDateChange = (position, dateString) => {
@@ -259,41 +346,20 @@ const BugFilter = ({
     newRange[position] = dateString;
     setCustomDueDateRange(newRange);
     setSelectedDueDate(newRange);
+    
+    // Reset navigation state when making new selections in current filter
+    if (activeFilterType === FILTER_TYPES.DATES) {
+      setHasNavigated(false);
+    }
   };
 
   const handleTitleSearchChange = (e) => {
     setTitleSearch(e.target.value);
   };
 
-  // Apply filter functions - Only include properties with valid values
-  const applyBugStatusFilter = () => {
-    setFilterSchema(prev => ({ 
-      ...prev, 
-      ...(selectedBugStatus ? { Status: selectedBugStatus } : {})
-    }));
-  };
-
-  const applyAssigneeFilter = () => {
-    setFilterSchema(prev => ({
-      ...prev,
-      bugs: { 
-        ...prev.bugs, 
-        ...(selectedAssignees.length > 0 ? { assigneeIds: selectedAssignees } : {})
-      }
-    }));
-  };
-
-  const applyLabelsFilter = () => {
-    setFilterSchema(prev => ({
-      ...prev,
-      bugs: { 
-        ...prev.bugs, 
-        ...(selectedLabels.length > 0 ? { labelIds: selectedLabels } : {})
-      }
-    }));
-  };
-
-  const applyDateFilters = () => {
+  // UNIFIED APPLY FUNCTION - This fixes the cross-filter issue
+  const applyAllFilters = () => {
+    // Validate date arrays first
     if (Array.isArray(selectedStartDate) && validateArray(selectedStartDate) && selectedStartDate.length < 2) {
       message.error("Please select both start dates");
       return;
@@ -303,25 +369,42 @@ const BugFilter = ({
       message.error("Please select both due dates");
       return;
     }
-    
-    setFilterSchema(prev => ({
-      ...prev,
-      bugs: { 
-        ...prev.bugs, 
-        ...(selectedStartDate ? { startDate: selectedStartDate } : {}), 
-        ...(selectedDueDate ? { dueDate: selectedDueDate } : {})
-      }
-    }));
-  };
 
-  const applyTitleFilter = () => {
-    setFilterSchema(prev => ({
-      ...prev,
-      bugs: { 
-        ...prev.bugs, 
-        ...(titleSearch.trim() ? { title: titleSearch.trim() } : {})
-      }
-    }));
+    // Build the complete filter schema with all active filters
+    const newFilterSchema = { bugs: {} };
+
+    // Add Bug Status filter
+    if (selectedBugStatus) {
+      newFilterSchema.Status = selectedBugStatus;
+    }
+
+    // Add Assignee filter
+    if (selectedAssignees.length > 0) {
+      newFilterSchema.bugs.assigneeIds = selectedAssignees;
+    }
+
+    // Add Labels filter
+    if (selectedLabels.length > 0) {
+      newFilterSchema.bugs.labelIds = selectedLabels;
+    }
+
+    // Add Date filters
+    if (selectedStartDate) {
+      newFilterSchema.bugs.startDate = selectedStartDate;
+    }
+    if (selectedDueDate) {
+      newFilterSchema.bugs.dueDate = selectedDueDate;
+    }
+
+    // Add Title filter
+    if (titleSearch.trim()) {
+      newFilterSchema.bugs.title = titleSearch.trim();
+    }
+
+    setFilterSchema(newFilterSchema);
+    // Reset navigation state after applying
+    setHasNavigated(false);
+    setIsPopoverOpen(false)
   };
 
   const resetAllFilters = () => {
@@ -341,6 +424,8 @@ const BugFilter = ({
     setIsCustomDueDate(false);
     setCustomStartDateRange(["", ""]);
     setCustomDueDateRange(["", ""]);
+    // Reset navigation state
+    setHasNavigated(false);
     setIsPopoverOpen(false);
   };
 
@@ -412,25 +497,43 @@ const BugFilter = ({
       </div>
       
       <div className="filter-options">
-        {filteredBugStatuses.map((task, index) => (
-          <div
-            key={index}
-            className={`filter-option-item ${selectedBugStatus === task?._id ? "selected" : ""}`}
-          >
-            <Checkbox
-              checked={selectedBugStatus === task?._id}
-              value={task?._id}
-              onChange={handleBugStatusChange}
-            >
-              {task?.title}
-            </Checkbox>
+        <Radio.Group
+          value={selectedBugStatus}
+          onChange={handleBugStatusChange}
+          className="bug-status-radio-group"
+        >
+          {/* Add "None" option to allow deselection */}
+          <div className={`filter-option-item ${selectedBugStatus === "" ? "selected" : ""}`}>
+            <Radio value="">
+              All
+            </Radio>
           </div>
-        ))}
+          
+          {filteredBugStatuses.map((task, index) => (
+            <div
+              key={index}
+              className={`filter-option-item ${selectedBugStatus === task?._id ? "selected" : ""}`}
+            >
+              <Radio value={task?._id}>
+                {task?.title}
+                {hasNavigated && 
+                 activeFilterType === FILTER_TYPES.BUG_STATUS && 
+                 selectedBugStatus === task?._id && (
+                  <Badge 
+                    size="small" 
+                    color="#1890ff" 
+                    style={{ marginLeft: '8px' }} 
+                  />
+                )}
+              </Radio>
+            </div>
+          ))}
+        </Radio.Group>
       </div>
       
       <div className="filter-actions">
         <Button
-          onClick={applyBugStatusFilter}
+          onClick={applyAllFilters}
           size="small"
           className="filter-btn"
         >
@@ -447,135 +550,205 @@ const BugFilter = ({
     </div>
   );
 
-  const renderAssigneeFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Assignee</h4>
-      
-      <div className="filter-search">
-        <Search
-          placeholder="Search assignee"
-          value={assigneeSearchQuery}
-          onSearch={setAssigneeSearchQuery}
-          onChange={(e) => setAssigneeSearchQuery(e.target.value)}
-          size="small"
-        />
-      </div>
-      
-      <div className="filter-options">
-        <div className={`assignee-item ${selectedAssignees === "unassigned" ? "selected" : ""}`}>
-          <Checkbox
-            checked={selectedAssignees === "unassigned"}
-            onChange={() => handleAssigneeSelection("unassigned")}
-          >
-            Unassigned Bugs
-          </Checkbox>
+  const renderAssigneeFilter = () => {
+    const shouldShowUnassigned = "unassigned bugs".includes(assigneeSearchQuery.toLowerCase());
+    
+    return (
+      <div className="filter-content-inner">
+        <h4 className="filter-title">Filter by Assignee</h4>
+        
+        <div className="filter-search">
+          <Search
+            placeholder="Search assignee"
+            value={assigneeSearchQuery}
+            onSearch={setAssigneeSearchQuery}
+            onChange={(e) => setAssigneeSearchQuery(e.target.value)}
+            size="small"
+          />
         </div>
-        {filteredAssignees.map((user, index) => (
-          <div
-            key={index}
-            className={`assignee-item ${
-              Array.isArray(selectedAssignees) && selectedAssignees.includes(user?._id) 
-                ? "selected" 
-                : ""
-            }`}
+        
+        <div className="filter-options">
+          {/* Unassigned Bugs Option */}
+          {(selectedAssignees === "unassigned" || shouldShowUnassigned) && (
+            <div 
+              className={`assignee-item ${selectedAssignees === "unassigned" ? "selected" : ""}`}
+              style={{ 
+                order: (hasNavigated && 
+                       activeFilterType === FILTER_TYPES.ASSIGNEE && 
+                       selectedAssignees === "unassigned") ? -1 : 0 
+              }}
+            >
+              <Checkbox
+                checked={selectedAssignees === "unassigned"}
+                onChange={() => handleAssigneeSelection("unassigned")}
+              >
+                Unassigned Bugs
+              </Checkbox>
+              {hasNavigated && 
+               activeFilterType === FILTER_TYPES.ASSIGNEE && 
+               selectedAssignees === "unassigned" && (
+                <Badge 
+                  size="small" 
+                  color="#1890ff" 
+                  style={{ marginLeft: '8px' }} 
+                />
+              )}
+            </div>
+          )}
+          
+          {/* Regular Assignees */}
+          {filteredAssignees.map((user, index) => (
+            <div
+              key={index}
+              className={`assignee-item ${
+                Array.isArray(selectedAssignees) && selectedAssignees.includes(user?._id) 
+                  ? "selected" 
+                  : ""
+              }`}
+            >
+              <Checkbox
+                checked={Array.isArray(selectedAssignees) && selectedAssignees.includes(user?._id)}
+                onChange={() => handleAssigneeSelection(user?._id)}
+              />
+             
+              <span>{user.full_name}</span>
+              {hasNavigated && 
+               activeFilterType === FILTER_TYPES.ASSIGNEE &&
+               Array.isArray(selectedAssignees) && 
+               selectedAssignees.includes(user?._id) && (
+                <Badge 
+                  size="small" 
+                  color="#1890ff" 
+                  style={{ marginLeft: '8px' }} 
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <div className="filter-actions">
+          <Button
+            onClick={applyAllFilters}
+            size="small"
+            className="filter-btn"
           >
-            <Checkbox
-              checked={Array.isArray(selectedAssignees) && selectedAssignees.includes(user?._id)}
-              onChange={() => handleAssigneeSelection(user?._id)}
-            />
-            <UserAvatar
-              userName={user?.full_name}
-              alt={user?.full_name}
-              src={user.emp_img}
-            />
-            <span>{user.full_name}</span>
-          </div>
-        ))}
+            Apply Filter
+          </Button>
+          <Button
+            size="small"
+            className="delete-btn"
+            onClick={resetAssigneeFilter}
+          >
+            Reset
+          </Button>
+        </div>
       </div>
-      
-      <div className="filter-actions">
-        <Button
-          onClick={applyAssigneeFilter}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={resetAssigneeFilter}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const renderLabelsFilter = () => (
-    <div className="filter-content-inner">
-      <h4 className="filter-title">Filter by Labels</h4>
-      
-      <div className="filter-search">
-        <Search
-          placeholder="Search labels"
-          value={labelsSearchQuery}
-          onSearch={setLabelsSearchQuery}
-          onChange={(e) => setLabelsSearchQuery(e.target.value)}
-          size="small"
-        />
-      </div>
-      
-      <div className="filter-options">
-        <div className={`label-item ${selectedLabels === "unlabelled" ? "selected" : ""}`}>
-          <Checkbox
-            checked={selectedLabels === "unlabelled"}
-            onChange={() => handleLabelSelection("unlabelled")}
-          >
-            Unlabelled Bug
-          </Checkbox>
+  const renderLabelsFilter = () => {
+    const shouldShowUnlabelled = "unlabelled bug".includes(labelsSearchQuery.toLowerCase());
+    
+    return (
+      <div className="filter-content-inner">
+        <h4 className="filter-title">Filter by Labels</h4>
+        
+        <div className="filter-search">
+          <Search
+            placeholder="Search labels"
+            value={labelsSearchQuery}
+            onSearch={setLabelsSearchQuery}
+            onChange={(e) => setLabelsSearchQuery(e.target.value)}
+            size="small"
+          />
         </div>
-       
-        {filteredLabels.map((label) => (
-          <div
-            key={label._id}
-            className={`label-item ${
-              Array.isArray(selectedLabels) && selectedLabels.includes(label._id) 
-                ? "selected" 
-                : ""
-            }`}
+        
+        <div className="filter-options">
+          {/* Unlabelled Bug Option */}
+          {(selectedLabels === "unlabelled" || shouldShowUnlabelled) && (
+            <div 
+              className={`label-item ${selectedLabels === "unlabelled" ? "selected" : ""}`}
+              style={{ 
+                order: (hasNavigated && 
+                       activeFilterType === FILTER_TYPES.LABELS && 
+                       selectedLabels === "unlabelled") ? -1 : 0 
+              }}
+            >
+              <Checkbox
+                checked={selectedLabels === "unlabelled"}
+                onChange={() => handleLabelSelection("unlabelled")}
+              >
+                Unlabelled Bug
+              </Checkbox>
+              <Avatar
+                icon={<TagOutlined />}
+                size="small"
+                style={{ backgroundColor: "#f5f5f5", color: "#999" }}
+              />
+              {hasNavigated && 
+               activeFilterType === FILTER_TYPES.LABELS && 
+               selectedLabels === "unlabelled" && (
+                <Badge 
+                  size="small" 
+                  color="#1890ff" 
+                  style={{ marginLeft: '8px' }} 
+                />
+              )}
+            </div>
+          )}
+         
+          {/* Regular Labels */}
+          {filteredLabels.map((label) => (
+            <div
+              key={label._id}
+              className={`label-item ${
+                Array.isArray(selectedLabels) && selectedLabels.includes(label._id) 
+                  ? "selected" 
+                  : ""
+              }`}
+            >
+              <Checkbox
+                checked={Array.isArray(selectedLabels) && selectedLabels.includes(label._id)}
+                onChange={() => handleLabelSelection(label._id)}
+              />
+              <Avatar
+                size="small"
+                style={{ backgroundColor: label.color }}
+              />
+              <span>{label.title}</span>
+              {hasNavigated && 
+               activeFilterType === FILTER_TYPES.LABELS &&
+               Array.isArray(selectedLabels) && 
+               selectedLabels.includes(label._id) && (
+                <Badge 
+                  size="small" 
+                  color="#1890ff" 
+                  style={{ marginLeft: '8px' }} 
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <div className="filter-actions">
+          <Button
+            onClick={applyAllFilters}
+            size="small"
+            className="filter-btn"
           >
-            <Checkbox
-              checked={Array.isArray(selectedLabels) && selectedLabels.includes(label._id)}
-              onChange={() => handleLabelSelection(label._id)}
-            />
-            <Avatar
-              size="small"
-              style={{ backgroundColor: label.color }}
-            />
-            <span>{label.title}</span>
-          </div>
-        ))}
+            Apply Filter
+          </Button>
+          <Button
+            size="small"
+            className="delete-btn"
+            onClick={resetLabelsFilter}
+          >
+            Reset
+          </Button>
+        </div>
       </div>
-      
-      <div className="filter-actions">
-        <Button
-          onClick={applyLabelsFilter}
-          size="small"
-          className="filter-btn"
-        >
-          Apply Filter
-        </Button>
-        <Button
-          size="small"
-          className="delete-btn"
-          onClick={resetLabelsFilter}
-        >
-          Reset
-        </Button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderDatesFilter = () => {
     const getDateLabel = (dateValue) => {
@@ -662,7 +835,7 @@ const BugFilter = ({
         
         <div className="filter-actions">
           <Button
-            onClick={applyDateFilters}
+            onClick={applyAllFilters}
             size="small"
             className="filter-btn"
           >
@@ -715,13 +888,30 @@ const BugFilter = ({
         
         <Divider style={{ margin: "8px 0" }} />
         
+        {/* Filter Menu Items */}
         {FILTER_MENU_ITEMS.map((item) => (
           <div
             key={item.key}
-            onClick={() => setActiveFilterType(item.key)}
+            onClick={() => {
+              setHasNavigated(true);
+              setActiveFilterType(item.key);
+            }}
             className={`filter-menu-item ${activeFilterType === item.key ? "active" : ""}`}
           >
             <span>{item.label}</span>
+            {((item.key === FILTER_TYPES.BUG_STATUS && selectedBugStatus) ||
+              (item.key === FILTER_TYPES.ASSIGNEE &&
+                (Array.isArray(selectedAssignees)
+                  ? selectedAssignees.length > 0
+                  : selectedAssignees === "unassigned")) ||
+              (item.key === FILTER_TYPES.LABELS &&
+                (Array.isArray(selectedLabels)
+                  ? selectedLabels.length > 0
+                  : selectedLabels === "unlabelled")) ||
+              (item.key === FILTER_TYPES.DATES &&
+                (selectedStartDate || selectedDueDate))) && (
+              <Badge size="small" color="#1890ff" />
+            )}
           </div>
         ))}
       </div>

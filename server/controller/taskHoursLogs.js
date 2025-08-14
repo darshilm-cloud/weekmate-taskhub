@@ -674,11 +674,19 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         $lte: currentDate.toDate()
       };
     } else if (value.dateRange === "last_month") {
+      const startOfLastMonth = moment().subtract(1, "month").startOf("month");
+      const endOfLastMonth = moment().subtract(1, "month").endOf("month");
+
+        matchQuery.logged_date = {
+         $gte: startOfLastMonth.toDate(),
+         $lte: endOfLastMonth.toDate(),
+        };
+    } else if (value.dateRange === "this_month") {
       matchQuery.logged_date = {
-        $gte: startDt.subtract(31, "days").toDate(),
-        $lte: currentDate.toDate()
+        $gte: moment().startOf("month").toDate(),
+        $lte: moment().endOf("month").toDate(),
       };
-    } else if (value.dateRange === "Custom") {
+    }else if (value.dateRange === "Custom") {
       matchQuery.logged_date = {
         $gte: moment(value.startDate).startOf("day").toDate(),
         $lte: moment(value.endDate).endOf("day").toDate()

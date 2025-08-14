@@ -91,7 +91,7 @@ function TimeForPMS() {
   const [timesheetdropdownById, setTimesheetdropdownById] = useState([]);
   const [selectedTimesheet, setSelectedTimesheet] = useState({});
   const [timesheetList, setTimesheetList] = useState([]);
-  const [radioValue, setRadioValue] = useState("Custom");
+  const [radioValue, setRadioValue] = useState("this_month");
   const [radioStatusValue, setRadioStatusValue] = useState("all");
   const [radioOrderbyValue, setRadioOrderbyValue] = useState("asc");
   const [modalData, setModalData] = useState({});
@@ -902,20 +902,24 @@ function TimeForPMS() {
     }
   };
 
-  const getTimesheetById = async (id) => {
+  const getTimesheetById = async (id,skipArray=[]) => {
     try {
       if (id || selectedTimesheet?._id) {
         const reqBody = {
           project_id: projectId,
           timesheet_id: id ? id : selectedTimesheet?._id,
         };
-        if (radioValue && radioValue !== "" && radioValue !== "Custom") {
-          reqBody.dateRange = radioValue;
-        }
-        if (radioValue == "Custom") {
-          reqBody.dateRange = radioValue;
-          reqBody.startDate = addInputStartDate?.start_date;
-          reqBody.endDate = addInputEndDate?.end_date;
+        if(!skipArray.includes("SkipDateRange")){
+          if (radioValue && radioValue !== "" && radioValue !== "Custom") {
+            reqBody.dateRange = radioValue;
+          }
+          if (radioValue == "Custom") {
+            reqBody.dateRange = radioValue;
+            reqBody.startDate = addInputStartDate?.start_date;
+            reqBody.endDate = addInputEndDate?.end_date;
+          }
+        }else{
+          reqBody.dateRange = "this_month";
         }
 
         if (radioStatusValue && radioStatusValue !== "") {
@@ -925,14 +929,10 @@ function TimeForPMS() {
         if (radioOrderbyValue && radioOrderbyValue !== "") {
           reqBody.orderBy = radioOrderbyValue;
         }
-
-        if (radioOrderbyValue && radioOrderbyValue !== "") {
-          reqBody.orderBy = radioOrderbyValue;
-        }
-        if (users) {
+        if (users.length && !skipArray.includes("SkipUser")) {
           reqBody.users = users;
         }
-
+        
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getLoggedHoursById,
@@ -952,6 +952,7 @@ function TimeForPMS() {
       dispatch(hideAuthLoader());
     }
   };
+
   const generateAvatarFromName1 = (name) => {
     const initials = name
       ?.trim()
