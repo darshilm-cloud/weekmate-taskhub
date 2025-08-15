@@ -159,12 +159,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       //   label: "Dashboard",
       //   onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
       // },
-      getRoles(["Admin"]) &&  {
-        key: "Admin_Administrator",
-        icon: <AdminIcon />,
-        label: "Admins",
-        onClick: () => handleMenuClick("Admin_Administrator", `/admin/Administrator`)
-      },
+      // getRoles(["Admin"]) &&  {
+      //   key: "Admin_Administrator",
+      //   icon: <AdminIcon />,
+      //   label: "Admins",
+      //   onClick: () => handleMenuClick("Admin_Administrator", `/admin/Administrator`)
+      // },
       !getRoles(["Client"]) &&{
         key: "Dashboard",
         icon: <i className="fi fi-rs-house-chimney"></i>,

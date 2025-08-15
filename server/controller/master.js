@@ -1338,8 +1338,12 @@ exports.getEmployees = async (req, res) => {
     } = req.user || {};
 
     const validationSchema = Joi.object({
-      emp_id: Joi.string().optional().default(null)
+      emp_id: Joi.string().optional().default(null),
+      page: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      search: Joi.string().optional().allow(''),
     });
+
     const { error, value } = validationSchema.validate(req.query);
     if (error) {
       return errorResponse(
@@ -1348,40 +1352,95 @@ exports.getEmployees = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const { emp_id, page, limit, search } = value;
+
+    // Convert page and limit to integers with default values
+    const pageNum = page && page > 0 ? parseInt(page, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+
+    // Base match conditions
+    const baseMatch = {
+      companyId: newObjectId(decodedCompanyId),
+      isDeleted: false,
+      isSoftDeleted: false,
+      isActivate: true,
+      ...(emp_id && {
+        _id: new mongoose.Types.ObjectId(emp_id),
+      }),
+    };
+
+    // Add search condition if provided
+    if (search && search.trim()) {
+      baseMatch.$or = [
+        { full_name: { $regex: search, $options: "i" } },
+        { emp_code: { $regex: search, $options: "i" } },
+        { first_name: { $regex: search, $options: "i" } },
+        { last_name: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Get total count for this filter
+    const countQuery = [
+      {
+        $match: baseMatch
+      },
+      {
+        $count: "total"
+      }
+    ];
+
+    const countResult = await Employee.aggregate(countQuery);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Main aggregation query
     const mainQuery = [
       {
-        $match: {
-          companyId: newObjectId(decodedCompanyId),
-          isDeleted: false,
-          isSoftDeleted: false,
-          isActivate: true,
-          ...(value?.emp_id && {
-            _id: new mongoose.Types.ObjectId(value.emp_id)
-          })
-        }
+        $match: baseMatch,
       },
       {
         $sort: {
-          first_name: 1
-        }
+          first_name: 1,
+        },
       },
       {
         $project: {
           _id: 1,
           full_name: 1,
-          emp_code: 1
-        }
-      }
+          emp_code: 1,
+          first_name: 1,
+          last_name: 1,
+        },
+      },
     ];
+
+    // Add pagination if both page and limit are provided
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push(
+        { $skip: skip },
+        { $limit: limitNum }
+      );
+    }
 
     const data = await Employee.aggregate(mainQuery);
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+    // Prepare pagination meta if pagination is used
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
     console.error("Error 152 master.js / controller :", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 exports.getTasks = async (req, res) => {
   try {
