@@ -14,7 +14,7 @@ const SORT_MENU_ITEMS = [{ key: SORT_TYPES.SORTBY, label: "Sort By" }];
 const SORT_OPTIONS = [
   { value: "createdAt", label: "Latest Updated" },
   { value: "title", label: "Name" },
-  { value: "project_type", label: "Status" },
+  // { value: "project_type", label: "Status" },
 ];
 
 const SortByComponent = ({
