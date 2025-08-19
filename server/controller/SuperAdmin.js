@@ -344,8 +344,7 @@ exports.getDashboardData = async (req, res) => {
 
     const commonFilter = {
       isActivate: true,
-      isDeleted: false,
-      companyId:newObjectId(companyId)
+      isDeleted: false
     };
 
     // Get role data
