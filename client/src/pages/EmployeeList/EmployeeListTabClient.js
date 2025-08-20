@@ -638,7 +638,7 @@ const EmployeeListTabClient = () => {
         open={ addModal }
         width={ 800 }
         footer={ [
-          <Button type="primary" htmlType="submit">
+          <Button key="submit" type="primary" htmlType="submit" form="addClientForm">
             { modalMode === "add" ? "Add" : "Save" }
           </Button>,
           <Button
@@ -656,6 +656,7 @@ const EmployeeListTabClient = () => {
         <div className="overview-modal-wrapper ">
 
           <Form
+          id="addClientForm"
             form={ addemployee }
    layout="vertical"
             onFinish={ (values) => {
@@ -679,23 +680,19 @@ const EmployeeListTabClient = () => {
                 </Form.Item>
               </Col>
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-
-                <Form.Item
-                  label="Phone number"
-                  name="phone_number"
+              <Form.Item
+                  label="Last Name"
+                  name="last_name"
                   rules={ [
                     {
-                      len: 10,
-                      message: "Phone number must be 10 digits",
-                    },
-                    {
-                      pattern: /^[0-9]+$/,
-                      message: "Phone number must contain only digits",
+                      required: true,
+                      message: "Please enter last name",
                     },
                   ] }
                 >
-                  <Input placeholder="Enter Phone Number" />
+                  <Input placeholder="Enter Last Name" />
                 </Form.Item>
+               
               </Col>
               <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
@@ -722,18 +719,23 @@ const EmployeeListTabClient = () => {
 
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-                <Form.Item
-                  label="Last Name"
-                  name="last_name"
+              <Form.Item
+                  label="Phone number"
+                  name="phone_number"
                   rules={ [
                     {
-                      required: true,
-                      message: "Please enter last name",
+                      len: 10,
+                      message: "Phone number must be 10 digits",
+                    },
+                    {
+                      pattern: /^[0-9]+$/,
+                      message: "Phone number must contain only digits",
                     },
                   ] }
                 >
-                  <Input placeholder="Enter Last Name" />
+                  <Input placeholder="Enter Phone Number" />
                 </Form.Item>
+               
               </Col>
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
