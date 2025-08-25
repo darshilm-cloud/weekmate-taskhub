@@ -7,6 +7,8 @@ const {
 } = require("../template/deadlineMissed");
 const Project = mongoose.model("projects");
 const Complaints = mongoose.model("complaints");
+const company = mongoose.model("companies")
+const fileuploads = mongoose.model("fileuploads")
 const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
 const {
   newReminderMailforStatusUpdate
@@ -598,3 +600,27 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
     );
   }
 };
+
+exports.scheduleCronForGetFileUploadSize = async () => {
+  try {
+    console.log("Inside cron schedule company")
+    const companies = await company.find({});
+      for (const company of companies) {
+        const companyId = company._id;
+
+        // FileUpload collection has fileSize per document
+        const fileResult = await fileuploads.aggregate([
+          { $match: { companyId: companyId } },
+          { $group: { _id: null, totalFileSize: { $sum: "$file_size" } } }
+        ]);
+
+        const totalFileSize = fileResult.length > 0 ? fileResult[0].totalFileSize : 0;
+
+        company.fileSize = totalFileSize;
+        await company.save();
+
+      }
+  } catch (err) {
+    console.error("❌ Cron job failed:", err.message);
+  }
+}
