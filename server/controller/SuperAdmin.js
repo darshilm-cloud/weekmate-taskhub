@@ -125,6 +125,8 @@ exports.getAdminList = async (req, res) => {
           loginActivity: 1,
           companyId: { $ifNull: ["$companyDetails._id", ""] },
           companyName: { $ifNull: ["$companyDetails.companyName", ""] },
+          companyFileSize: { $ifNull: ["$companyDetails.fileSize", ""] },
+          companyDataSize: { $ifNull: ["$companyDetails.dataSize", ""] },
           totalEmp: "$companyDetails.totalEmployeeCount"
         }
       },
