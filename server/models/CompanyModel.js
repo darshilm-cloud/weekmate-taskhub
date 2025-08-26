@@ -41,6 +41,10 @@ const CompanySchema = new mongoose.Schema(
     fileSize: {
       type: Number,
       default: 0 //stored in bytes
+    },
+    dataSize: {
+      type: Number,
+      default: 0 //stored in bytes
     }
   },
   {
