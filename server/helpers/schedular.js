@@ -28,7 +28,7 @@ schedule.scheduleJob("30 4 * * *", async () => {
 });
 
 // add companyfileUpload size on new day
-schedule.scheduleJob("* * * * *", async () => {
+schedule.scheduleJob("0 0 * * *", async () => {
   try {
      await scheduleCronForGetFileUploadSize();
   } catch (error) {
