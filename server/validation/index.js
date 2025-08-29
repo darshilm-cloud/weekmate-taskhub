@@ -163,7 +163,8 @@ class Validator {
       email: this.emailValidator("Email is required"),
       password: Joi.string().optional(),
       firstName: Joi.string().required(),
-      lastName: Joi.string().required()
+      lastName: Joi.string().required(),
+      isActivate: Joi.boolean().optional()
     });
   };
 

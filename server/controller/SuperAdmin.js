@@ -252,7 +252,7 @@ exports.editAdmin = async (req, res) => {
       );
     }
 
-    const { email, firstName, lastName, password } = value;
+    const { email, firstName, lastName, password, isActivate } = value;
     const { adminId } = req.params;
 
     // Check if admin exists
@@ -278,6 +278,7 @@ exports.editAdmin = async (req, res) => {
     existingUser.email = email;
     existingUser.first_name = firstName;
     existingUser.last_name = lastName;
+    existingUser.isActivate = isActivate;
 
     if (password) {
       existingUser.password = password;
