@@ -70,6 +70,10 @@ const FileUploadSchema = new mongoose.Schema({
     type: [{ type: Schema.Types.ObjectId, ref: "pmsclients" }],
     default: [],
   },
+  file_size: {
+    type: Number,
+    default: 0
+  },
   isBookmark: { type: Boolean, default: false },
   complaint_comment_id: {
     type: Schema.Types.ObjectId,

@@ -3,7 +3,8 @@ const moment = require("moment");
 const {
   scheduleCronForProjectMissedDeadline,
   scheduleCronForTaskMissedDeadline,
-  scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus
+  scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus,
+  scheduleCronForGetFileUploadSize
 } = require("../controller/schedular");
 const { getQuarterlyMails, updateSentMails } = require("../controller/quarterlyMails")
 const { emailSenderForPMS } = require("../helpers/common")
@@ -25,6 +26,18 @@ schedule.scheduleJob("30 4 * * *", async () => {
     );
   }
 });
+
+// add companyfileUpload size on new day
+schedule.scheduleJob("0 0 * * *", async () => {
+  try {
+     await scheduleCronForGetFileUploadSize();
+  } catch (error) {
+     console.log(
+      "🚀 ~ schedule.scheduleJob ~ company file size error:",
+      error
+    );
+  }
+})
 
 // Send mail to PM and PM's manager to missed project Task Deadline... 11am
 schedule.scheduleJob("30 5 * * *", async () => {

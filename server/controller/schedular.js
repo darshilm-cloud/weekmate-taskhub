@@ -7,6 +7,27 @@ const {
 } = require("../template/deadlineMissed");
 const Project = mongoose.model("projects");
 const Complaints = mongoose.model("complaints");
+const Company = mongoose.model("companies")
+const Fileupload = mongoose.model("fileuploads")
+const ProjectTask = mongoose.model("projecttasks")
+const ProjectsubTask = mongoose.model("projectsubtasks")
+const Projecttaskbug = mongoose.model("projecttaskbugs")
+const Employee = mongoose.model("employees")
+const Projecttotaltaskhourlog = mongoose.model("projecttotaltaskhourlogs")
+const Bugscomment = mongoose.model("bugscomments")
+const Projecttimesheet = mongoose.model("projecttimesheets")
+const Complaint = mongoose.model("complaints")
+const Empdepartments = mongoose.model("empdepartments")
+const Empdesignation = mongoose.model("empdesignations")
+const Discussionstopic = mongoose.model("discussionstopics")
+const Discussionstopicsdetail = mongoose.model("discussionstopicsdetails")
+const Notes = mongoose.model("notes_pms")
+const Comments = mongoose.model("Comments")
+const Taskupdatehistory = mongoose.model("taskupdatehistory")
+const Notebook = mongoose.model("notebook")
+const StarProject = mongoose.model("star_project")
+const ProjectTabSetting = mongoose.model("project_tabs_settings")
+
 const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
 const {
   newReminderMailforStatusUpdate
@@ -598,3 +619,224 @@ exports.scheduleCronTosendMailtoAllPMandAMfornotUpdatingStatus = async () => {
     );
   }
 };
+
+exports.scheduleCronForGetFileUploadSize = async () => {
+  try {
+    console.log("Inside cron schedule company")
+    const companies = await Company.find({});
+    await Promise.all(
+      companies.map(async (company) => {
+        const companyId = company._id;
+
+        // Get all projectIds & employeeIds for this company
+        const [projectIds, employIds] = await Promise.all([
+          Project.distinct("_id", { companyId }),
+          Employee.distinct("_id", { companyId }),
+        ]);
+
+        // Define all aggregations in parallel
+        const [
+          employeeSizeAgg,
+          projectSizeAgg,
+          taskSizeAgg,
+          subTaskSizeAgg,
+          bugAgg,
+          projecttotaltaskhourlogAgg,
+          bugscommentAgg,
+          timesheetAgg,
+          complaintAgg,
+          empdepartmentsAgg,
+          empdesignationAgg,
+          discussionstopicAgg,
+          discussionstopicsdetailsAgg,
+          notesAgg,
+          commentsAgg,
+          taskupdatehistoryAgg,
+          notebookAgg,
+          starProjectAgg,
+          projectTabSettingAgg,
+          fileResult,
+        ] = await Promise.all([
+          Employee.aggregate([
+            { $match: { companyId } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Project.aggregate([
+            { $match: { companyId } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          ProjectTask.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          ProjectsubTask.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Projecttaskbug.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Projecttotaltaskhourlog.aggregate([
+            { $match: { employee_id: { $in: employIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Bugscomment.aggregate([
+            { $match: { employee_id: { $in: employIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Projecttimesheet.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Complaint.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Empdepartments.aggregate([
+            { $match: { companyId } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Empdesignation.aggregate([
+            { $match: { companyId } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Discussionstopic.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Discussionstopicsdetail.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Notes.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Comments.aggregate([
+            { $match: { employee_id: { $in: employIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Taskupdatehistory.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Notebook.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          StarProject.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          ProjectTabSetting.aggregate([
+            { $match: { project_id: { $in: projectIds } } },
+            { $group: { _id: null, totalSize: { $sum: { $bsonSize: "$$ROOT" } } } },
+          ]),
+          Fileupload.aggregate([
+            { $match: { companyId } },
+            { $group: { _id: null, totalFileSize: { $sum: "$file_size" } } },
+          ]),
+        ]);
+
+        // Extract values safely
+        const getSize = (agg) => (agg?.[0]?.totalSize || 0);
+        const employeeSize = getSize(employeeSizeAgg);
+        const projectSize = getSize(projectSizeAgg);
+        const taskSize = getSize(taskSizeAgg);
+        const subTaskSize = getSize(subTaskSizeAgg);
+        const bugSize = getSize(bugAgg);
+        const taskHourLogSize = getSize(projecttotaltaskhourlogAgg);
+        const bugsCommentSize = getSize(bugscommentAgg);
+        const timesheetSize = getSize(timesheetAgg);
+        const complaintSize = getSize(complaintAgg);
+        const empDepartmentsSize = getSize(empdepartmentsAgg);
+        const empDesignationSize = getSize(empdesignationAgg);
+        const discussionTopicSize = getSize(discussionstopicAgg);
+        const discussionDetailsSize = getSize(discussionstopicsdetailsAgg);
+        const notesSize = getSize(notesAgg);
+        const commentsSize = getSize(commentsAgg);
+        const taskHistorySize = getSize(taskupdatehistoryAgg);
+        const notebookSize = getSize(notebookAgg);
+        const starProjectSize = getSize(starProjectAgg);
+        const projectTabSettingSize = getSize(projectTabSettingAgg);
+        const totalFileSize = fileResult?.[0]?.totalFileSize || 0;
+
+        // console.log(
+        //   "🚀 ~ getSize ~ employeeSize:",
+        //   employeeSize,
+        //   "projectSize:",
+        //   projectSize,
+        //   "taskSize:",
+        //   taskSize,
+        //   "subTaskSize:",
+        //   subTaskSize,
+        //   "bugSize:",
+        //   bugSize,
+        //   "taskHourLogSize:",
+        //   taskHourLogSize,
+        //   "bugsCommentSize:",
+        //   bugsCommentSize,
+        //   "timesheetSize:",
+        //   timesheetSize,
+        //   "complaintSize:",
+        //   complaintSize,
+        //   "empDepartmentsSize:",
+        //   empDepartmentsSize,
+        //   "empDesignationSize:",
+        //   empDesignationSize,
+        //   "discussionTopicSize:",
+        //   discussionTopicSize,
+        //   "discussionDetailsSize:",
+        //   discussionDetailsSize,
+        //   "notesSize:",
+        //   notesSize,
+        //   "commentsSize:",  
+        //   commentsSize,
+        //   "taskHistorySize:",
+        //   taskHistorySize,
+        //   "notebookSize:",
+        //   notebookSize,
+        //   "starProjectSize:",
+        //   starProjectSize,
+        //   "projectTabSettingSize:",
+        //   projectTabSettingSize,
+        //   "totalFileSize:", 
+        //   totalFileSize)
+
+        // ✅ Sum all data sizes
+        const dataSize =
+          employeeSize +
+          projectSize +
+          taskSize +
+          subTaskSize +
+          bugSize +
+          taskHourLogSize +
+          bugsCommentSize +
+          timesheetSize +
+          complaintSize +
+          empDepartmentsSize +
+          empDesignationSize +
+          discussionTopicSize +
+          discussionDetailsSize +
+          notesSize +
+          commentsSize +
+          taskHistorySize +
+          notebookSize +
+          starProjectSize +
+          projectTabSettingSize;
+
+        // Save in company
+        company.dataSize = dataSize;
+        company.fileSize = totalFileSize;
+        await company.save();
+
+        console.log(
+          `✅ Company ${companyId} => dataSize: ${dataSize}, fileSize: ${totalFileSize}`
+        );
+      })
+    );
+  } catch (err) {
+    console.error("❌ Cron job failed:", err.message);
+  }
+}

@@ -17,6 +17,13 @@ const FileUploads = mongoose.model("fileuploads");
 
 exports.uploadFiles = async (req, res) => {
   try {
+    // Decode user from token
+    const {
+      _id: decodedUserId,
+      pms_role_id: { _id: roleId, role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -29,6 +36,8 @@ exports.uploadFiles = async (req, res) => {
               process.platform === "win32"
                 ? f.path.split("public\\")[1]
                 : f.path.split("public/")[1],
+            file_size: f.size,
+            companyId: decodedCompanyId
           };
         })
         : []
@@ -123,7 +132,9 @@ exports.filesManageInDB = async (
           name: element.file_name,
           path: element.file_path,
           file_section: fileSection,
+          companyId: element.companyId,
           file_type: path.extname(element.file_name),
+          file_size: element.file_size,  
           updatedBy: loginUserId,
           project_id: projectId,
           ...(folderId ? { folder_id: folderId } : {}),

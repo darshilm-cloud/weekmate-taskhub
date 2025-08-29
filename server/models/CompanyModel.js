@@ -37,6 +37,14 @@ const CompanySchema = new mongoose.Schema(
     companyDomain: {
       type: String,
       default: null
+    },
+    fileSize: {
+      type: Number,
+      default: 0 //stored in bytes
+    },
+    dataSize: {
+      type: Number,
+      default: 0 //stored in bytes
     }
   },
   {
