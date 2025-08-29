@@ -1,6 +1,7 @@
 const { statusCode } = require("../helpers/constant");
 const {
   UNAUTHORIZED,
+  UPDATED,
   LISTING,
   DELETED,
   SERVER_ERROR
@@ -10,7 +11,7 @@ const {
   errorResponse,
   catchBlockErrorResponse
 } = require("../helpers/response");
-const { getAddAdminSchema, getEditAdminSchema } = require("../validation");
+const { getAddAdminSchema, getEditAdminSchema, getEditUserSchema, getEditEmpSchema } = require("../validation");
 const CONFIG_JSON = require("../settings/config.json");
 const { employeeSchema, PMSRoles } = require("../models");
 const { searchDataArr } = require("../helpers/queryHelper");
@@ -517,8 +518,8 @@ exports.addUser = async (req, res) => {
 // Edit users (employee) by super admin API
 exports.editUser = async (req, res) => {
   try {
-   
-    const { error, value } = validateFormatter(getEditUserSchema(), req.body);
+
+    const { error, value } = validateFormatter(getEditEmpSchema(), req.body);
 
     if (error) {
       return errorResponse(
@@ -552,7 +553,7 @@ exports.editUser = async (req, res) => {
       { $set: updateFields },
       { new: true } // Return the updated document
     );
-
+    
     // Check if user exists
     if (!updatedUser) {
       return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
