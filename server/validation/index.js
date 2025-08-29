@@ -119,6 +119,16 @@ class Validator {
     });
   };
 
+  getEditEmpSchema = () => {
+    return Joi.object({
+      email: this.emailValidator("Email is required"),
+      companyId: Joi.string().required(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      isActivate: Joi.boolean().required(),
+    });
+  };
+
   getAddCompanySchema = () => {
     return Joi.object({
       companyName: Joi.string().required()
