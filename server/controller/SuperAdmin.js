@@ -40,7 +40,7 @@ exports.getAdminList = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      isAdmin: true
+      isActivate: true,
     };
 
     let orFilter = [];
