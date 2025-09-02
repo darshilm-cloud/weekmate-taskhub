@@ -11,7 +11,12 @@ const {
   errorResponse,
   catchBlockErrorResponse
 } = require("../helpers/response");
-const { getAddAdminSchema, getEditAdminSchema, getEditUserSchema, getEditEmpSchema } = require("../validation");
+const {
+  getAddAdminSchema,
+  getEditAdminSchema,
+  getEditUserSchema,
+  getEditEmpSchema
+} = require("../validation");
 const CONFIG_JSON = require("../settings/config.json");
 const { employeeSchema, PMSRoles } = require("../models");
 const { searchDataArr } = require("../helpers/queryHelper");
@@ -28,7 +33,7 @@ exports.getAdminList = async (req, res) => {
       companyId
     } = req.user || {};
 
-    console.log(req.user)
+    console.log(req.user);
 
     const {
       page = 1,
@@ -40,7 +45,7 @@ exports.getAdminList = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      isActivate: true,
+      isActivate: true
     };
 
     let orFilter = [];
@@ -169,7 +174,6 @@ exports.addAdmin = async (req, res) => {
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId
     } = req.user || {};
-
 
     const { error, value } = validateFormatter(getAddAdminSchema(), req.body);
 
@@ -302,7 +306,7 @@ exports.editAdmin = async (req, res) => {
 // Delete admin API
 exports.deleteAdmin = async (req, res) => {
   try {
-    console.log("RUNN")
+    console.log("RUNN");
     // Get user's data from JWT decode
     const {
       _id: decodedUserId,
@@ -315,11 +319,7 @@ exports.deleteAdmin = async (req, res) => {
     let userData = await employeeSchema.findById({ _id: newObjectId(userId) });
 
     if (!userData) {
-      return errorResponse(
-        res,
-        statusCode.NOT_FOUND,
-        "User not found"
-      );;
+      return errorResponse(res, statusCode.NOT_FOUND, "User not found");
     }
 
     userData.isDeleted = true;
@@ -346,10 +346,16 @@ exports.getDashboardData = async (req, res) => {
     let totalEmployees = 0;
     let totalAdmins = 0;
 
-    const commonFilter = {
+    let commonFilter = {
       isActivate: true,
       isDeleted: false
     };
+    if (companyId) {
+      commonFilter = {
+        ...commonFilter,
+        companyId: newObjectId(commonFilter)
+      };
+    }
 
     // Get role data
     let userRoleData = await PMSRoles.findOne({
@@ -361,25 +367,24 @@ exports.getDashboardData = async (req, res) => {
       role_name: "Admin",
       isDeleted: false
     });
-   
 
-      const [employeeCount, adminCount] = await Promise.all([
-        employeeSchema.countDocuments({
-          ...commonFilter,
-          // pms_role_id: { $ne: adminRoleData._id }
-        }),
-        employeeSchema.countDocuments({
-          ...commonFilter,
-          pms_role_id: adminRoleData._id
-        })
-      ]);
+    const [employeeCount, adminCount] = await Promise.all([
+      employeeSchema.countDocuments({
+        ...commonFilter
+        // pms_role_id: { $ne: adminRoleData._id }
+      }),
+      employeeSchema.countDocuments({
+        ...commonFilter,
+        pms_role_id: adminRoleData._id
+      })
+    ]);
 
-      totalEmployees = employeeCount;
-      totalAdmins = adminCount;
+    totalEmployees = employeeCount;
+    totalAdmins = adminCount;
 
     const responseData = {
       totalEmployees,
-       totalAdmins
+      totalAdmins
     };
 
     return successResponse(
@@ -464,7 +469,6 @@ exports.getUsersList = async (req, res) => {
 // Add users (employee) by super admin API
 exports.addUser = async (req, res) => {
   try {
-
     const { error, value } = validateFormatter(getAddUserSchema(), req.body);
 
     if (error) {
@@ -518,7 +522,6 @@ exports.addUser = async (req, res) => {
 // Edit users (employee) by super admin API
 exports.editUser = async (req, res) => {
   try {
-
     const { error, value } = validateFormatter(getEditEmpSchema(), req.body);
 
     if (error) {
@@ -553,7 +556,7 @@ exports.editUser = async (req, res) => {
       { $set: updateFields },
       { new: true } // Return the updated document
     );
-    
+
     // Check if user exists
     if (!updatedUser) {
       return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
@@ -566,11 +569,9 @@ exports.editUser = async (req, res) => {
   }
 };
 
-
 //Delete user (employee) by super admin API
 exports.deleteUser = async (req, res) => {
   try {
-
     const { userId } = req.params;
 
     let userData = await employeeSchema.findOne({ _id: newObjectId(userId) });
