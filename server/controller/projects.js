@@ -2186,7 +2186,7 @@ exports.getProjectsReports = async (req, res) => {
       );
     }
 
-    const cacheKey = generateCacheKey(value);
+    const cacheKey = generateCacheKey({...value,companyId});
 
     const cached = getCache(cacheKey);
     if (cached) {

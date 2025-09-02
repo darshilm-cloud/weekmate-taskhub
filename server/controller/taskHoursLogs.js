@@ -1941,7 +1941,7 @@ exports.getTimesheetsReports = async (req, res) => {
         error.details[0].message
       );
     }
-    const cacheKey = generateCacheKey(value);
+    const cacheKey = generateCacheKey({...value,decodedCompanyId});
 
     const cached = getCache(cacheKey);
     if (cached) {
