@@ -353,7 +353,7 @@ exports.getDashboardData = async (req, res) => {
     if (companyId) {
       commonFilter = {
         ...commonFilter,
-        companyId: newObjectId(commonFilter)
+        companyId: newObjectId(companyId)
       };
     }
 
