@@ -571,23 +571,53 @@ const ProjectsRunning = () => {
 
   // Render methods
 
+
+
 const renderChart = useCallback(
   (chartData, type, title) => {
     if (!chartData) return null;
 
     const colors = chartData.options.colors || [];
-    // Reduced height for pie chart since no built-in legend
     const chartHeight = type === "pie" ? 300 : 350;
 
-    // Prepare legend data based on chart type
+    // Helper function to capitalize each word
+    const capitalizeWords = (str) => {
+      return str.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+    };
+
+    // Modify chart options to include capitalized tooltips
+    const modifiedChartData = {
+      ...chartData,
+      options: {
+        ...chartData.options,
+        tooltip: {
+          ...chartData.options.tooltip,
+          y: {
+            formatter: function(val) {
+              return val;
+            },
+            title: {
+              formatter: function(seriesName) {
+                return capitalizeWords(seriesName);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // Prepare legend data
     let legendData = [];
     let legendLabels = [];
     if (type === "pie") {
       legendData = pieeChartData;
-      legendLabels = pieechartDataMangerNames;
+      // Capitalize each word in legend labels
+      legendLabels = pieechartDataMangerNames.map(name => capitalizeWords(name));
     } else if (type === "bar" && title === "Projects by Type") {
-      legendData = chartData.series[0].data; // Project type data
-      legendLabels = processedChartData.projectTypeLabels; // Project type labels
+      legendData = chartData.series[0].data;
+      legendLabels = processedChartData.projectTypeLabels.map(label => capitalizeWords(label));
     }
 
     return (
@@ -599,13 +629,12 @@ const renderChart = useCallback(
           <ReactApexChart
             className={type === "pie" ? "justifyCenter" : ""}
             key={type === "pie" ? chartKey : undefined}
-            options={chartData.options}
-            series={chartData.series}
+            options={modifiedChartData.options}
+            series={modifiedChartData.series}
             type={type}
             height={chartHeight}
             width={type === "pie" ? chartHeight : undefined}
           />
-          {/* Custom legend for both pie and horizontal bar (Projects by Type) charts */}
           {(type === "pie" || title === "Projects by Type") && (
             <CustomLegend 
               data={legendData} 
@@ -659,7 +688,7 @@ const renderChart = useCallback(
         <div className="header-content">
           <div className="heading-wrapper">
             <div className="heading-main">
-              <h2>Running Projects</h2>
+              <h2>Projects Running</h2>
             </div>
             <div className="header-stats">
               <div className="stat-item">

@@ -671,10 +671,8 @@ const BugsPMS = () => {
                     placeholder="Task"
                     size="large"
                     showSearch
-                    filterSort={ (optionA, optionB) =>
-                      optionA.children
-                        ?.toLowerCase()
-                        .localeCompare(optionB.children?.toLowerCase())
+                    filterOption={(input, option) =>
+                      option?.children?.toLowerCase().includes(input.toLowerCase())
                     }
                     value={ addInputTaskData?.task_id }
                     onChange={ (value) => handleTaskInput("task_id", value) }

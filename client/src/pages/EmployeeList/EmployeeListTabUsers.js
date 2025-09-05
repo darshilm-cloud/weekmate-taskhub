@@ -146,9 +146,7 @@ const CombinedEmployeeList = () => {
       } else {
         setEmployees([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
-        if (response.data?.message) {
-          message.success(response.data.message);
-        }
+      
       }
     } catch (err) {
       message.error("Failed to fetch employees");
@@ -380,19 +378,23 @@ const CombinedEmployeeList = () => {
 
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
+    const currentValue = searchRef.current?.input?.value || '';
+    
     switch (keyCode) {
-      case 8:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
+      case 8: // Backspace
+        if (currentValue.length <= 1 && seachEnabled) {
+          searchRef.current.input.value = "";
           setSearchText("");
           setSearchEnabled(false);
+          setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
         }
         break;
-      case 46:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
+      case 46: // Delete
+        if (currentValue.length <= 1 && seachEnabled) {
+          searchRef.current.input.value = "";
           setSearchText("");
           setSearchEnabled(false);
+          setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
         }
         break;
       default:
@@ -401,7 +403,14 @@ const CombinedEmployeeList = () => {
   };
 
   const onSearch = (value) => {
-    setSearchText(value);
+    if (value === '' || !value) {
+      // Handle empty search
+      setSearchText("");
+      setSearchEnabled(false);
+    } else {
+      setSearchText(value);
+      setSearchEnabled(true);
+    }
     setPagination({ ...pagination, current: 1 });
   };
 
@@ -527,9 +536,11 @@ const CombinedEmployeeList = () => {
           onSearch={onSearch}
           onKeyUp={resetSearchFilter}
           style={{ width: 200 }}
+          allowClear
           onChange={(e) => {
             setPagination({ ...pagination, current: 1 });
           }}
+
         />
 
         <input

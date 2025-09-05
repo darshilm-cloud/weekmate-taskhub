@@ -275,7 +275,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   return (
     <>
       <div className="gx-sidebar-content sidebar-menu">
-        <div className="Etask-hub-logo">
+    
+        <div className="Etask-hub-logo" style={{cursor:"pointer"}} onClick={()=> history.push(`/${companySlug}/dashboard`)}>
           <img alt="logo" src={companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : Taskhub} />{" "}
         </div>
         <CustomScrollbars className="gx-layout-sider-scrollbar">

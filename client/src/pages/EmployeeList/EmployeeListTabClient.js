@@ -538,21 +538,28 @@ const EmployeeListTabClient = () => {
     deletedata,
   ]);
 
+
+
+
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
+    const currentValue = searchRef.current?.input?.value || '';
+    
     switch (keyCode) {
-      case 8:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
+      case 8: // Backspace
+        if (currentValue.length <= 1 && seachEnabled) {
+          searchRef.current.input.value = "";
           setSearchText("");
           setSearchEnabled(false);
+          setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
         }
         break;
-      case 46:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
+      case 46: // Delete
+        if (currentValue.length <= 1 && seachEnabled) {
+          searchRef.current.input.value = "";
           setSearchText("");
           setSearchEnabled(false);
+          setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
         }
         break;
       default:
@@ -561,7 +568,14 @@ const EmployeeListTabClient = () => {
   };
 
   const onSearch = (value) => {
-    setSearchText(value);
+    if (value === '' || !value) {
+      // Handle empty search
+      setSearchText("");
+      setSearchEnabled(false);
+    } else {
+      setSearchText(value);
+      setSearchEnabled(true);
+    }
     setPagination({ ...pagination, current: 1 });
   };
 
@@ -582,6 +596,7 @@ const EmployeeListTabClient = () => {
             onChange={ (e) => {
               setPagination({ ...pagination, current: 1 });
             } }
+            allowClear
             onKeyUp={ resetSearchFilter }
         style={{width:"200px"}}
           />
