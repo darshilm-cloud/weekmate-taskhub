@@ -246,7 +246,7 @@ function SignIn() {
                   </Button>
                 </Form.Item>
 
-                {/* <Form.Item>
+                <Form.Item>
                   <Button
                     type="primary"
                     htmlType="button"
@@ -258,7 +258,7 @@ function SignIn() {
                   >
                     <IntlMessages id="app.userAuth.signUpForNewCompany" />
                   </Button>
-                </Form.Item> */}
+                </Form.Item>
 
                 <Form.Item>
                   <div style={ { textAlign: "center" } }>
