@@ -197,7 +197,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         children: [
           {
             key: "Analytics-Projects- running",
-            label: "Projects- running",
+            label: "Projects Running",
             onClick: () =>
               handleMenuClick(
                 "Analytics-Projects- running",
