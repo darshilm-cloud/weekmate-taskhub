@@ -190,7 +190,7 @@ function SignIn() {
               >
                 <div className="form-label">
                   <span>
-                    <label>Login Id</label>
+                    <label>Email</label>
                   </span>
                 </div>
                 <div className="form-content">
@@ -198,16 +198,16 @@ function SignIn() {
                     rules={ [
                       {
                         required: true,
-                        message: "Please enter your Login Id!",
+                        message: "Please enter your email!",
                       },
                       {
                         type: "email",
-                        message: "Please enter valid Login Id",
+                        message: "Please enter valid email",
                       },
                     ] }
                     name="email"
                   >
-                    <Input type="email" placeholder="Login Id" />
+                    <Input type="email" placeholder="Enter your email" />
                   </Form.Item>
                   <span className="login-icon">
                     <i className="fas fa-envelope"></i>
@@ -228,7 +228,7 @@ function SignIn() {
                       },
                     ] }
                   >
-                    <Input.Password placeholder="Password" />
+                    <Input.Password placeholder="Enter your password" />
                   </Form.Item>
                   <span className="login-icon lock">
                     <i className="fas fa-lock"></i>
@@ -245,6 +245,7 @@ function SignIn() {
                     <IntlMessages id="app.userAuth.signIn" />
                   </Button>
                 </Form.Item>
+                {!companySlug &&(
 
                 <Form.Item>
                   <Button
@@ -259,10 +260,11 @@ function SignIn() {
                     <IntlMessages id="app.userAuth.signUpForNewCompany" />
                   </Button>
                 </Form.Item>
+                )}
 
                 <Form.Item>
                   <div style={ { textAlign: "center" } }>
-                    Forgot your Login details?
+                    Forgot your login details?
                     <Link to={`/${companySlug}/forgot-password`}>
                       &nbsp;Get help logging in.
                     </Link>
