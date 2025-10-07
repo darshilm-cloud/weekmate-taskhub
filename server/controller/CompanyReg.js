@@ -11,10 +11,13 @@ const nodemailer = require("nodemailer");
 const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 const { addDefaultProjectStatus, addDefaultPermission } = require("../helpers/common");
+const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
+const { dataForJWT, getUserPermissions } = require("./authentication");
+const { createJWTToken } = require("../helpers/JWTToken");
 
 
 // Register a company details API
-exports.registerAdminAndCompany = async (req, res) => {
+exports.registerAdminAndCompanyOld = async (req, res) => {
   try {
     const { error, value } = validateFormatter(
       getRegistrationSchema(),
@@ -246,6 +249,208 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     );
   }
 };
+
+// Register a company and admin directly (without verification)
+exports.registerAdminAndCompany = async (req, res) => {
+  try {
+    const { error, value } = validateFormatter(
+      getRegistrationSchema(),
+      req.body
+    );
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const {
+      adminDetails: { first_name, last_name, email, password },
+      companyDetails: { companyName, companyDomain },
+    } = value;
+
+    // 🔍 Check if admin email already exists
+    const existingUser = await employeeSchema.findOne({ email });
+    if (existingUser) {
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Admin email already exists."
+      );
+    }
+
+    // 🔍 Check if company name already exists
+    const existingCompanyName = await CompanyModel.findOne({ companyName });
+    if (existingCompanyName) {
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Company name already exists."
+      );
+    }
+
+    // 🔍 Check if company domain already exists
+    const existingCompanyDomain = await CompanyModel.findOne({ companyDomain });
+    if (existingCompanyDomain) {
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Company domain or slug already exists, please try with different slug or domain"
+      );
+    }
+
+    // ✅ Create company directly
+    const company = await new CompanyModel({
+      companyName,
+      companyDomain
+    }).save();
+
+    // 🔍 Find admin role
+    const role = await PMSRoles.findOne({ role_name: CONFIG_JSON.PMS_ROLES.ADMIN });
+
+    if (!role) {
+      // Rollback company creation if role not found
+      await CompanyModel.deleteOne({ _id: company._id });
+      return errorResponse(
+        res,
+        statusCode.INTERNAL_SERVER_ERROR,
+        "Admin role not found in system."
+      );
+    }
+
+    // ✅ Create admin user directly (email pre-verified)
+    const newUser = await new employeeSchema({
+      first_name,
+      last_name,
+      full_name: `${first_name} ${last_name}`,
+      email,
+      password,
+      companyId: company._id,
+      pms_role_id: role._id,
+      isActivate: true,
+      isAdmin: true,
+      emailVerified: true, // Mark email as verified directly
+      emailVerifiedAt: new Date() // Set verification timestamp
+    }).save();
+
+    // 🔄 Aggregate enriched user details
+    const userDetails = await employeeSchema.aggregate([
+      { $match: { _id: newUser._id } },
+      {
+        $lookup: {
+          from: "pms_roles",
+          localField: "pms_role_id",
+          foreignField: "_id",
+          as: "pms_role"
+        }
+      },
+      { $unwind: "$pms_role" },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "companyId",
+          foreignField: "_id",
+          as: "companyDetails"
+        }
+      },
+      { $unwind: "$companyDetails" },
+      {
+        $project: {
+          _id: 1,
+          last_name: 1,
+          first_name: 1,
+          full_name: 1,
+          email: 1,
+          status: 1,
+          isActivate: 1,
+          isAdmin: 1,
+          emailVerified: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          position: 1,
+          roleId: "$pms_role._id",
+          roleName: "$pms_role.role_name",
+          companyId: "$companyDetails._id",
+          companyName: "$companyDetails.companyName",
+          companyDomain: "$companyDetails.companyDomain"
+        }
+      }
+    ]);
+
+    const enrichedUser = userDetails[0];
+
+    // Add default permissions for users
+    await addDefaultPermission(company._id, newUser._id);
+    
+    // Add default project status for company
+    await addDefaultProjectStatus(company._id, newUser._id);
+
+    // 📧 Optional: Send welcome email (without verification requirement)
+    try {
+      await CompanyWelcomeMail(newUser);
+    } catch (emailError) {
+      // Log email error but don't fail the registration
+      console.log("Welcome email failed to send:", emailError.message);
+    }
+
+    const user = await dataForJWT(newUser);
+
+    const auth_token = createJWTToken(
+      user,
+      157680000 // 5 year
+    );
+    // Get login user permissions..
+    let permissions = await getUserPermissions(
+      user._id,
+      user.companyId
+    );
+    
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Company account created successfully. You can now login to your account.",
+      { user, auth_token },
+      {},
+      permissions,
+      user?.pms_role_id?._id
+    );
+
+    // ✅ Success response
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Company account created successfully. You can now login to your account.",
+      {
+        user: enrichedUser,
+        company: {
+          id: company._id,
+          name: companyName,
+          domain: companyDomain
+        },
+        loginUrl: `${process.env.HOST_ORIGIN_URL}/${companyDomain}/signin`
+      }
+    );
+
+  } catch (err) {
+    console.log(err.message, "err.message", err);
+    
+    // Enhanced error handling with rollback
+    if (err.name === 'ValidationError') {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Validation failed: " + err.message
+      );
+    }
+    
+    return catchBlockErrorResponse(
+      res,
+      err.message
+    );
+  }
+};
+
 
 // Email service function (replace with your email provider)
 async function sendVerificationEmail({

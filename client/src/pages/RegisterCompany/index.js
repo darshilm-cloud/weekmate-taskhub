@@ -160,9 +160,6 @@ const VALIDATION_RULES = {
         return Promise.resolve();
       }
     }
-  ],
-  termsCondition: [
-    { required: true, message: "Please accept Terms & Conditions!" }
   ]
 };
 
