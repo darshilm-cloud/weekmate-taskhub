@@ -14,6 +14,7 @@ const { addDefaultProjectStatus, addDefaultPermission } = require("../helpers/co
 const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
 const { dataForJWT, getUserPermissions } = require("./authentication");
 const { createJWTToken } = require("../helpers/JWTToken");
+const { OnboardMailForSupport } = require("../template/OnboardMailtoSupport");
 
 
 // Register a company details API
@@ -389,6 +390,7 @@ exports.registerAdminAndCompany = async (req, res) => {
     // 📧 Optional: Send welcome email (without verification requirement)
     try {
       await CompanyWelcomeMail(newUser);
+      await OnboardMailForSupport({...newUser,companyName})
     } catch (emailError) {
       // Log email error but don't fail the registration
       console.log("Welcome email failed to send:", emailError.message);
