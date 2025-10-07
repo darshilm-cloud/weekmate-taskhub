@@ -26,6 +26,10 @@ import "./companyregister.scss";
 import TaskHub from "../../assets/images/taskhubicon.svg";
 import Service from "../../service";
 import { useHistory } from "react-router-dom";
+import { userpermission, userRole, userSignInSuccess } from "../../appRedux/actions/Auth";
+import { useDispatch } from "react-redux";
+import setCookie from "../../hooks/setCookie";
+import { getRoles } from "../../util/hasPermission";
 
 const { Step } = Steps;
 const { Title, Text } = Typography;
@@ -165,6 +169,8 @@ const VALIDATION_RULES = {
 
 const CompanyRegistration = () => {
   const history = useHistory();
+  const dispatch = useDispatch();
+
   // State management
   const [currentStep, setCurrentStep] = useState(0);
   const [validatedAdminData, setValidatedAdminData] = useState(null);
@@ -325,10 +331,34 @@ const CompanyRegistration = () => {
       });
 
       if (response.data.status === 1) {
-        showVerificationModal(response.data.message);
-        history.push(
-          `/${companyData.companySlug || currentFormValues.companySlug}/signin`
+        // showVerificationModal(response.data.message);
+        // history.push(
+        //   `/${companyData.companySlug || currentFormValues.companySlug}/dashboard`
+        // );
+        const userData = response?.data?.data;
+
+        localStorage.setItem("user_data", JSON.stringify(userData.user));
+        localStorage.setItem("accessToken", userData.auth_token);
+        localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
+        localStorage.setItem(`companyLogoUrl-${userData?.user?.companyDetails?.companyDomain}`,userData?.user?.companyDetails?.companyLogoUrl)
+        localStorage.setItem(`companyFavIcoUrl-${userData?.user?.companyDetails?.companyDomain}`,userData?.user?.companyDetails?.companyFavIcoUrl)
+
+        //cookie
+        setCookie(
+          "user_permission",
+          JSON.stringify(response.data.permissions),
+          { expires: 365 }
         );
+        setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
+
+        getRoles(["Client"])
+          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`) :
+          (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`)
+          
+
+        dispatch(userSignInSuccess(userData));
+        dispatch(userpermission(response.data.permissions));
+        dispatch(userRole(response.data.pms_role_id));
       } else {
         showErrorMessage(response.data.message || "Registration failed");
       }
