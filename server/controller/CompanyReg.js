@@ -389,8 +389,8 @@ exports.registerAdminAndCompany = async (req, res) => {
 
     // 📧 Optional: Send welcome email (without verification requirement)
     try {
-      await CompanyWelcomeMail(newUser);
-      await OnboardMailForSupport({...newUser,companyName})
+      await CompanyWelcomeMail(enrichedUser);
+      await OnboardMailForSupport(enrichedUser)
     } catch (emailError) {
       // Log email error but don't fail the registration
       console.log("Welcome email failed to send:", emailError.message);
