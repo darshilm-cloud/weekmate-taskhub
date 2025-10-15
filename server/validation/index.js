@@ -41,6 +41,9 @@ class Validator {
           "string.empty": "Email is required",
           "string.email": "Invalid email format"
         }),
+        phone_number: Joi.string().trim().required().messages({
+          "string.empty": "Phone Number is required",
+        }),
         password: Joi.string().trim().min(8).required().messages({
           "string.empty": "Password is required",
           "string.min": "Password must be at least 8 characters long"

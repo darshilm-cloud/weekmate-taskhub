@@ -267,7 +267,7 @@ exports.registerAdminAndCompany = async (req, res) => {
     }
 
     const {
-      adminDetails: { first_name, last_name, email, password },
+      adminDetails: { first_name, last_name, email, phone_number, password },
       companyDetails: { companyName, companyDomain },
     } = value;
 
@@ -280,6 +280,15 @@ exports.registerAdminAndCompany = async (req, res) => {
         "Admin email already exists."
       );
     }
+     // 🔍 Check if admin email already exists
+     const existingPhoneNumber = await employeeSchema.findOne({ phone_number });
+     if (existingPhoneNumber) {
+       return errorResponse(
+         res,
+         statusCode.CONFLICT,
+         "Admin phone number already exists."
+       );
+     }
 
     // 🔍 Check if company name already exists
     const existingCompanyName = await CompanyModel.findOne({ companyName });
@@ -326,6 +335,7 @@ exports.registerAdminAndCompany = async (req, res) => {
       last_name,
       full_name: `${first_name} ${last_name}`,
       email,
+      phone_number,
       password,
       companyId: company._id,
       pms_role_id: role._id,
@@ -363,6 +373,7 @@ exports.registerAdminAndCompany = async (req, res) => {
           first_name: 1,
           full_name: 1,
           email: 1,
+          phone_number:1,
           status: 1,
           isActivate: 1,
           isAdmin: 1,

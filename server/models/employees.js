@@ -10,6 +10,7 @@ const employeeSchema = new Schema({
   full_name: { type: String },
   emp_img: { type: String, default: "" },
   email: { type: String },
+  phone_number: { type: String },
   phone_number: { type: String, default: "" },
   password: { type: String },
   pms_role_id: { type: Schema.Types.ObjectId, ref: "pms_roles", default: null },

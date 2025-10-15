@@ -7,7 +7,6 @@
   overflow-y: auto;
 
   .ant-steps {
-
     .ant-steps-item-container {
       display: flex;
     }
@@ -27,14 +26,12 @@
     .ant-steps-item {
       &.ant-steps-item-process {
         .ant-steps-item-title {
-
           &::after {
             background-color: #fff;
           }
         }
       }
     }
-
 
     .registration-header {
       text-align: center;
@@ -140,7 +137,15 @@
         border: none;
         border-radius: 10px 10px 0 0;
         overflow: hidden;
-
+        .country-select {
+          .ant-input-affix-wrapper {
+            border-top-left-radius:  0 !important;
+            border-bottom-left-radius:  0 !important;
+          }
+          .ant-select-selector{
+            height: 40px;
+          }
+        }
         .ant-card-head {
           background: #03497a;
           border-radius: 10px 10px 0 0;
@@ -163,12 +168,12 @@
 
           .ant-form {
             .ant-form-item {
-             margin-bottom: 15px;
+              margin-bottom: 15px;
 
               .ant-form-item-label {
                 padding-bottom: 4px;
 
-                >label {
+                > label {
                   font-weight: 500;
                   color: #333;
                   font-size: 13px;
@@ -183,7 +188,6 @@
               }
 
               .ant-form-item-control {
-
                 .ant-input,
                 .ant-input-affix-wrapper,
                 .ant-input-password {
@@ -263,7 +267,6 @@
 
               // Error states
               &.ant-form-item-has-error {
-
                 .ant-input,
                 .ant-input-affix-wrapper {
                   border-color: #ef4444;
@@ -287,7 +290,6 @@
 
               // Success states
               &.ant-form-item-has-success {
-
                 .ant-input,
                 .ant-input-affix-wrapper {
                   border-color: #0074b8;
@@ -299,7 +301,7 @@
 
         .terms-link {
           text-decoration: underline !important;
-          color: #1C8FFB;
+          color: #1c8ffb;
         }
 
         .terms-link:hover {
@@ -376,10 +378,7 @@
       }
     }
   }
-
 }
-
-
 
 @media (max-width: 768px) {
   .registration-wrapper {
@@ -387,7 +386,6 @@
 
     .registration-main-row {
       .login-page-logo {
-
         img {
           max-width: 100px;
         }
@@ -407,10 +405,9 @@
 
       .ant-steps {
         margin-bottom: 16px;
-max-width: 90%;
+        max-width: 90%;
         .ant-steps-item {
           &.ant-steps-item-process {
-
             .ant-steps-item-title {
               font-size: 11px;
             }
@@ -430,7 +427,6 @@ max-width: 90%;
 
           .ant-card-body {
             padding: 16px;
-
           }
         }
       }
@@ -459,6 +455,15 @@ max-width: 90%;
 
     .steps-content {
       .step-card {
+        .country-select {
+          .ant-input-affix-wrapper {
+            border-top-left-radius:  0 !important;
+            border-bottom-left-radius:  0 !important;
+          }
+          .ant-select-selector{
+            height: 40px;
+          }
+        }
         .ant-card-head {
           padding: 10px 12px;
         }
@@ -471,7 +476,6 @@ max-width: 90%;
               margin-bottom: 12px;
 
               .ant-form-item-control {
-
                 .ant-input,
                 .ant-input-affix-wrapper,
                 .ant-input-password {
@@ -530,4 +534,3 @@ max-width: 90%;
 .step-card .ant-card-head-title {
   padding: 0;
 }
-

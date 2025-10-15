@@ -12,7 +12,8 @@ import {
   Typography,
   Alert,
   Spin,
-  Checkbox
+  Checkbox,
+  Select
 } from "antd";
 import {
   UserOutlined,
@@ -26,7 +27,11 @@ import "./companyregister.scss";
 import TaskHub from "../../assets/images/taskhubicon.svg";
 import Service from "../../service";
 import { useHistory } from "react-router-dom";
-import { userpermission, userRole, userSignInSuccess } from "../../appRedux/actions/Auth";
+import {
+  userpermission,
+  userRole,
+  userSignInSuccess
+} from "../../appRedux/actions/Auth";
 import { useDispatch } from "react-redux";
 import setCookie from "../../hooks/setCookie";
 import { getRoles } from "../../util/hasPermission";
@@ -42,6 +47,8 @@ const BASE_DOMAIN = window.location.origin;
 // MillionVerifier API configuration
 const MILLION_VERIFIER_API = "EtZ9UjCjczYS5lxJyJ9rxvAn7";
 const MILLION_VERIFIER_URL = "https://api.millionverifier.com/api/v3/";
+
+const { Option } = Select;
 
 // Email validation function
 const validateEmailWithAPI = async (email) => {
@@ -64,112 +71,221 @@ const validateEmailWithAPI = async (email) => {
   }
 };
 
-// Validation rules - memoized to prevent recreation
-const VALIDATION_RULES = {
-  first_name: [{ required: true, message: "Please input first name!" }],
-  last_name: [{ required: true, message: "Please input last name!" }],
-  position: [], // Made optional - no required rule
-  email: [
-    { required: true, message: "Please input email!" },
-    { type: "email", message: "Please enter valid email!" },
-    {
-      validator: async (_, value) => {
-        if (!value) return Promise.resolve();
-
-        try {
-          const result = await validateEmailWithAPI(value);
-
-          // Check if email verification was successful
-          if (result.resultcode !== 1 || result.result !== "ok") {
-            return Promise.reject(
-              new Error("Invalid email address. Please enter a valid email.")
-            );
-          }
-
-          // Check if email is from a free/generic provider
-          if (result.free === true) {
-            return Promise.reject(
-              new Error(
-                "Generic email addresses (Gmail, Yahoo, Outlook, etc.) are not allowed. Please use a corporate email address."
-              )
-            );
-          }
-
-          // Check if it's a role-based email (optional additional check)
-          if (result.role === true) {
-            return Promise.reject(
-              new Error(
-                "Role-based email addresses (info@, admin@, etc.) are not recommended. Please use a personal corporate email."
-              )
-            );
-          }
-
-          return Promise.resolve();
-        } catch (error) {
-          return Promise.reject(
-            new Error(error.message || "Email validation failed")
-          );
-        }
-      }
-    }
-  ],
-  password: [
-    { required: true, message: "Please input password!" },
-    { min: 8, message: "Password must be at least 8 characters!" },
-    {
-      validator: (_, value) => {
-        if (value && /\s/.test(value)) {
-          return Promise.reject(
-            new Error("Password should not contain spaces")
-          );
-        }
-        return Promise.resolve();
-      }
-    }
-  ],
-  confirmPassword: [{ required: true, message: "Please confirm password!" }],
-  companyName: [{ required: true, message: "Please input company name!" }],
-  companySlug: [
-    { required: true, message: "Please input company slug!" },
-    { min: 3, message: "Slug must be at least 3 characters!" },
-    { max: 8, message: "Slug must be less than 8 characters!" },
-    {
-      validator: (_, value) => {
-        if (!value) return Promise.resolve();
-
-        // Check if slug contains only allowed characters (letters, numbers, hyphens)
-        const slugRegex = /^[a-z0-9-]+$/;
-        if (!slugRegex.test(value)) {
-          return Promise.reject(
-            new Error(
-              "Slug can only contain lowercase letters, numbers, and hyphens"
-            )
-          );
-        }
-
-        // Check if slug starts or ends with hyphen
-        if (value.startsWith("-") || value.endsWith("-")) {
-          return Promise.reject(
-            new Error("Slug cannot start or end with a hyphen")
-          );
-        }
-
-        // Check for consecutive hyphens
-        if (value.includes("--")) {
-          return Promise.reject(
-            new Error("Slug cannot contain consecutive hyphens")
-          );
-        }
-
-        return Promise.resolve();
-      }
-    }
-  ]
-};
-
 const CompanyRegistration = () => {
   const history = useHistory();
   const dispatch = useDispatch();
+
+  const countryOptions = useMemo(() => {
+    const countries = [
+      { code: "+93", label: "Afghanistan" },
+      { code: "+355", label: "Albania" },
+      { code: "+213", label: "Algeria" },
+      { code: "+1", label: "United States" },
+      { code: "+376", label: "Andorra" },
+      { code: "+244", label: "Angola" },
+      { code: "+1", label: "Antigua and Barbuda" },
+      { code: "+54", label: "Argentina" },
+      { code: "+374", label: "Armenia" },
+      { code: "+297", label: "Aruba" },
+      { code: "+61", label: "Australia" },
+      { code: "+43", label: "Austria" },
+      { code: "+994", label: "Azerbaijan" },
+      { code: "+1", label: "Bahamas" },
+      { code: "+973", label: "Bahrain" },
+      { code: "+880", label: "Bangladesh" },
+      { code: "+1", label: "Barbados" },
+      { code: "+375", label: "Belarus" },
+      { code: "+32", label: "Belgium" },
+      { code: "+501", label: "Belize" },
+      { code: "+229", label: "Benin" },
+      { code: "+975", label: "Bhutan" },
+      { code: "+591", label: "Bolivia" },
+      { code: "+387", label: "Bosnia and Herzegovina" },
+      { code: "+267", label: "Botswana" },
+      { code: "+55", label: "Brazil" },
+      { code: "+673", label: "Brunei" },
+      { code: "+359", label: "Bulgaria" },
+      { code: "+226", label: "Burkina Faso" },
+      { code: "+257", label: "Burundi" },
+      { code: "+855", label: "Cambodia" },
+      { code: "+237", label: "Cameroon" },
+      { code: "+1", label: "Canada" },
+      { code: "+238", label: "Cape Verde" },
+      { code: "+236", label: "Central African Republic" },
+      { code: "+235", label: "Chad" },
+      { code: "+56", label: "Chile" },
+      { code: "+86", label: "China" },
+      { code: "+57", label: "Colombia" },
+      { code: "+269", label: "Comoros" },
+      { code: "+242", label: "Republic of the Congo" },
+      { code: "+243", label: "Democratic Republic of the Congo" },
+      { code: "+506", label: "Costa Rica" },
+      { code: "+385", label: "Croatia" },
+      { code: "+53", label: "Cuba" },
+      { code: "+357", label: "Cyprus" },
+      { code: "+420", label: "Czech Republic" },
+      { code: "+45", label: "Denmark" },
+      { code: "+253", label: "Djibouti" },
+      { code: "+1", label: "Dominica" },
+      { code: "+1", label: "Dominican Republic" },
+      { code: "+593", label: "Ecuador" },
+      { code: "+20", label: "Egypt" },
+      { code: "+503", label: "El Salvador" },
+      { code: "+240", label: "Equatorial Guinea" },
+      { code: "+291", label: "Eritrea" },
+      { code: "+372", label: "Estonia" },
+      { code: "+251", label: "Ethiopia" },
+      { code: "+679", label: "Fiji" },
+      { code: "+358", label: "Finland" },
+      { code: "+33", label: "France" },
+      { code: "+241", label: "Gabon" },
+      { code: "+220", label: "Gambia" },
+      { code: "+995", label: "Georgia" },
+      { code: "+49", label: "Germany" },
+      { code: "+233", label: "Ghana" },
+      { code: "+30", label: "Greece" },
+      { code: "+299", label: "Greenland" },
+      { code: "+1", label: "Grenada" },
+      { code: "+502", label: "Guatemala" },
+      { code: "+224", label: "Guinea" },
+      { code: "+245", label: "Guinea-Bissau" },
+      { code: "+592", label: "Guyana" },
+      { code: "+509", label: "Haiti" },
+      { code: "+504", label: "Honduras" },
+      { code: "+852", label: "Hong Kong" },
+      { code: "+36", label: "Hungary" },
+      { code: "+354", label: "Iceland" },
+      { code: "+91", label: "India" },
+      { code: "+62", label: "Indonesia" },
+      { code: "+98", label: "Iran" },
+      { code: "+964", label: "Iraq" },
+      { code: "+353", label: "Ireland" },
+      { code: "+972", label: "Israel" },
+      { code: "+39", label: "Italy" },
+      { code: "+81", label: "Japan" },
+      { code: "+962", label: "Jordan" },
+      { code: "+7", label: "Kazakhstan" },
+      { code: "+254", label: "Kenya" },
+      { code: "+686", label: "Kiribati" },
+      { code: "+850", label: "North Korea" },
+      { code: "+82", label: "South Korea" },
+      { code: "+965", label: "Kuwait" },
+      { code: "+996", label: "Kyrgyzstan" },
+      { code: "+856", label: "Laos" },
+      { code: "+371", label: "Latvia" },
+      { code: "+961", label: "Lebanon" },
+      { code: "+266", label: "Lesotho" },
+      { code: "+231", label: "Liberia" },
+      { code: "+218", label: "Libya" },
+      { code: "+423", label: "Liechtenstein" },
+      { code: "+370", label: "Lithuania" },
+      { code: "+352", label: "Luxembourg" },
+      { code: "+853", label: "Macau" },
+      { code: "+389", label: "North Macedonia" },
+      { code: "+261", label: "Madagascar" },
+      { code: "+265", label: "Malawi" },
+      { code: "+60", label: "Malaysia" },
+      { code: "+960", label: "Maldives" },
+      { code: "+223", label: "Mali" },
+      { code: "+356", label: "Malta" },
+      { code: "+692", label: "Marshall Islands" },
+      { code: "+222", label: "Mauritania" },
+      { code: "+230", label: "Mauritius" },
+      { code: "+52", label: "Mexico" },
+      { code: "+691", label: "Micronesia" },
+      { code: "+373", label: "Moldova" },
+      { code: "+377", label: "Monaco" },
+      { code: "+976", label: "Mongolia" },
+      { code: "+382", label: "Montenegro" },
+      { code: "+212", label: "Morocco" },
+      { code: "+258", label: "Mozambique" },
+      { code: "+95", label: "Myanmar (Burma)" },
+      { code: "+264", label: "Namibia" },
+      { code: "+674", label: "Nauru" },
+      { code: "+977", label: "Nepal" },
+      { code: "+31", label: "Netherlands" },
+      { code: "+64", label: "New Zealand" },
+      { code: "+505", label: "Nicaragua" },
+      { code: "+227", label: "Niger" },
+      { code: "+234", label: "Nigeria" },
+      { code: "+47", label: "Norway" },
+      { code: "+968", label: "Oman" },
+      { code: "+92", label: "Pakistan" },
+      { code: "+680", label: "Palau" },
+      { code: "+970", label: "Palestine" },
+      { code: "+507", label: "Panama" },
+      { code: "+675", label: "Papua New Guinea" },
+      { code: "+595", label: "Paraguay" },
+      { code: "+51", label: "Peru" },
+      { code: "+63", label: "Philippines" },
+      { code: "+48", label: "Poland" },
+      { code: "+351", label: "Portugal" },
+      { code: "+974", label: "Qatar" },
+      { code: "+40", label: "Romania" },
+      { code: "+7", label: "Russia" },
+      { code: "+250", label: "Rwanda" },
+      { code: "+966", label: "Saudi Arabia" },
+      { code: "+221", label: "Senegal" },
+      { code: "+381", label: "Serbia" },
+      { code: "+248", label: "Seychelles" },
+      { code: "+232", label: "Sierra Leone" },
+      { code: "+65", label: "Singapore" },
+      { code: "+421", label: "Slovakia" },
+      { code: "+386", label: "Slovenia" },
+      { code: "+677", label: "Solomon Islands" },
+      { code: "+252", label: "Somalia" },
+      { code: "+27", label: "South Africa" },
+      { code: "+82", label: "South Korea" },
+      { code: "+211", label: "South Sudan" },
+      { code: "+34", label: "Spain" },
+      { code: "+94", label: "Sri Lanka" },
+      { code: "+249", label: "Sudan" },
+      { code: "+597", label: "Suriname" },
+      { code: "+268", label: "Eswatini" },
+      { code: "+46", label: "Sweden" },
+      { code: "+41", label: "Switzerland" },
+      { code: "+963", label: "Syria" },
+      { code: "+886", label: "Taiwan" },
+      { code: "+992", label: "Tajikistan" },
+      { code: "+255", label: "Tanzania" },
+      { code: "+66", label: "Thailand" },
+      { code: "+228", label: "Togo" },
+      { code: "+676", label: "Tonga" },
+      { code: "+216", label: "Tunisia" },
+      { code: "+90", label: "Turkey" },
+      { code: "+993", label: "Turkmenistan" },
+      { code: "+688", label: "Tuvalu" },
+      { code: "+256", label: "Uganda" },
+      { code: "+380", label: "Ukraine" },
+      { code: "+971", label: "United Arab Emirates" },
+      { code: "+44", label: "United Kingdom" },
+      { code: "+598", label: "Uruguay" },
+      { code: "+998", label: "Uzbekistan" },
+      { code: "+678", label: "Vanuatu" },
+      { code: "+379", label: "Vatican City" },
+      { code: "+58", label: "Venezuela" },
+      { code: "+84", label: "Vietnam" },
+      { code: "+967", label: "Yemen" },
+      { code: "+260", label: "Zambia" },
+      { code: "+263", label: "Zimbabwe" }
+    ];
+    // Deduplicate by code
+    const uniqueCountries = Object.values(
+      countries.reduce((acc, country) => {
+        if (!acc[country.code]) {
+          acc[country.code] = country;
+        }
+        return acc;
+      }, {})
+    );
+
+    return uniqueCountries
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .map((c) => ({
+        label: `${c.label} (${c.code})`,
+        value: c.code // only the code
+      }));
+  }, []);
 
   // State management
   const [currentStep, setCurrentStep] = useState(0);
@@ -178,10 +294,143 @@ const CompanyRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companySlug, setCompanySlug] = useState("");
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
+  const [isValidatingPhoneNumber, setIsValidatingPhoneNumber] = useState(false);
+  const [selectedCode, setSelectedCode] = useState("+91");
 
   // Form instances - stable references
   const [adminForm] = Form.useForm();
   const [companyForm] = Form.useForm();
+
+  // Validation rules - memoized to prevent recreation
+  const VALIDATION_RULES = {
+    first_name: [{ required: true, message: "Please input first name!" }],
+    last_name: [{ required: true, message: "Please input last name!" }],
+    position: [], // Made optional - no required rule
+    email: [
+      { required: true, message: "Please input email!" },
+      { type: "email", message: "Please enter valid email!" },
+      {
+        validator: async (_, value) => {
+          if (!value) return Promise.resolve();
+
+          try {
+            const result = await validateEmailWithAPI(value);
+
+            // Check if email verification was successful
+            if (result.resultcode !== 1 || result.result !== "ok") {
+              return Promise.reject(
+                new Error("Invalid email address. Please enter a valid email.")
+              );
+            }
+
+            // Check if email is from a free/generic provider
+            if (result.free === true) {
+              return Promise.reject(
+                new Error(
+                  "Generic email addresses (Gmail, Yahoo, Outlook, etc.) are not allowed. Please use a corporate email address."
+                )
+              );
+            }
+
+            // Check if it's a role-based email (optional additional check)
+            if (result.role === true) {
+              return Promise.reject(
+                new Error(
+                  "Role-based email addresses (info@, admin@, etc.) are not recommended. Please use a personal corporate email."
+                )
+              );
+            }
+
+            return Promise.resolve();
+          } catch (error) {
+            return Promise.reject(
+              new Error(error.message || "Email validation failed")
+            );
+          }
+        }
+      }
+    ],
+    phone_number: [
+      { required: true, message: "Please input phone number!" },
+      {
+        validator: async (_, value) => {
+          if (!value) return Promise.resolve();
+
+          const fullNumber = `${selectedCode}${value.replace(/\s+/g, "")}`; // prepend country code
+          console.log("🚀 ~ CompanyRegistration ~ fullNumber:", fullNumber);
+
+          const phoneRegex = /^\+[1-9]\d{1,3}\d{6,12}$/; // stricter regex
+          if (!phoneRegex.test(fullNumber)) {
+            return Promise.reject(
+              new Error(
+                "Invalid phone number format. Include country code, e.g., +911234567890."
+              )
+            );
+          }
+
+          // Optional: async validation like API check
+          try {
+            return Promise.resolve();
+          } catch (error) {
+            return Promise.reject(
+              new Error(error.message || "Phone number validation failed")
+            );
+          }
+        }
+      }
+    ],
+    password: [
+      { required: true, message: "Please input password!" },
+      { min: 8, message: "Password must be at least 8 characters!" },
+      {
+        validator: (_, value) => {
+          if (value && /\s/.test(value)) {
+            return Promise.reject(
+              new Error("Password should not contain spaces")
+            );
+          }
+          return Promise.resolve();
+        }
+      }
+    ],
+    companyName: [{ required: true, message: "Please input company name!" }],
+    companySlug: [
+      { required: true, message: "Please input company slug!" },
+      { min: 3, message: "Slug must be at least 3 characters!" },
+      { max: 8, message: "Slug must be less than 8 characters!" },
+      {
+        validator: (_, value) => {
+          if (!value) return Promise.resolve();
+
+          // Check if slug contains only allowed characters (letters, numbers, hyphens)
+          const slugRegex = /^[a-z0-9-]+$/;
+          if (!slugRegex.test(value)) {
+            return Promise.reject(
+              new Error(
+                "Slug can only contain lowercase letters, numbers, and hyphens"
+              )
+            );
+          }
+
+          // Check if slug starts or ends with hyphen
+          if (value.startsWith("-") || value.endsWith("-")) {
+            return Promise.reject(
+              new Error("Slug cannot start or end with a hyphen")
+            );
+          }
+
+          // Check for consecutive hyphens
+          if (value.includes("--")) {
+            return Promise.reject(
+              new Error("Slug cannot contain consecutive hyphens")
+            );
+          }
+
+          return Promise.resolve();
+        }
+      }
+    ]
+  };
 
   // Utility functions
   const showVerificationModal = useCallback((messageText) => {
@@ -245,6 +494,28 @@ const CompanyRegistration = () => {
     }
   }, []);
 
+  // Handle email validation state
+  const handlePhoneNumberValidation = useCallback(
+    async (number) => {
+      const fullNumber = `${selectedCode}${number.replace(/\s+/g, "")}`;
+      console.log("🚀 ~ CompanyRegistration ~ fullNumber:", fullNumber);
+      const phoneRegex = /^\+[1-9]\d{1,3}\d{6,12}$/;
+
+      if (!phoneRegex.test(fullNumber)) {
+        // optionally show error
+        return;
+      }
+
+      setIsValidatingPhoneNumber(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } finally {
+        setIsValidatingPhoneNumber(false);
+      }
+    },
+    [selectedCode]
+  );
+
   // Step 1: Admin Details Handler
   const handleAdminNext = useCallback(async () => {
     try {
@@ -252,7 +523,7 @@ const CompanyRegistration = () => {
       const adminData = await adminForm.validateFields();
 
       // Store validated admin data (excluding confirmPassword)
-      const { confirmPassword, ...adminDetailsToStore } = adminData;
+      const { ...adminDetailsToStore } = adminData;
       setValidatedAdminData(adminDetailsToStore);
       setCurrentStep(1);
     } catch (error) {
@@ -314,6 +585,7 @@ const CompanyRegistration = () => {
           first_name: validatedAdminData.first_name,
           last_name: validatedAdminData.last_name,
           email: validatedAdminData.email,
+          phone_number: `${selectedCode}${validatedAdminData.phone_number}`,
           password: validatedAdminData.password,
           position: validatedAdminData.position || ""
         },
@@ -339,9 +611,18 @@ const CompanyRegistration = () => {
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
-        localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
-        localStorage.setItem(`companyLogoUrl-${userData?.user?.companyDetails?.companyDomain}`,userData?.user?.companyDetails?.companyLogoUrl)
-        localStorage.setItem(`companyFavIcoUrl-${userData?.user?.companyDetails?.companyDomain}`,userData?.user?.companyDetails?.companyFavIcoUrl)
+        localStorage.setItem(
+          "companyDomain",
+          userData?.user?.companyDetails?.companyDomain
+        );
+        localStorage.setItem(
+          `companyLogoUrl-${userData?.user?.companyDetails?.companyDomain}`,
+          userData?.user?.companyDetails?.companyLogoUrl
+        );
+        localStorage.setItem(
+          `companyFavIcoUrl-${userData?.user?.companyDetails?.companyDomain}`,
+          userData?.user?.companyDetails?.companyFavIcoUrl
+        );
 
         //cookie
         setCookie(
@@ -352,9 +633,8 @@ const CompanyRegistration = () => {
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
         getRoles(["Client"])
-          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`) :
-          (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`)
-          
+          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`)
+          : (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`);
 
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
@@ -385,19 +665,6 @@ const CompanyRegistration = () => {
       setCurrentStep(currentStep - 1);
     }
   }, [currentStep]);
-
-  // Custom validator for confirm password - memoized
-  const confirmPasswordValidator = useCallback(
-    ({ getFieldValue }) => ({
-      validator(_, value) {
-        if (!value || getFieldValue("password") === value) {
-          return Promise.resolve();
-        }
-        return Promise.reject(new Error("Passwords do not match!"));
-      }
-    }),
-    []
-  );
 
   // Memoized form components to prevent unnecessary re-renders
   const AdminForm = useMemo(
@@ -465,6 +732,53 @@ const CompanyRegistration = () => {
           </Row>
           <Row gutter={24}>
             <Col xs={24} sm={12}>
+              <Form.Item label="Phone Number" hasFeedback required>
+                <Input.Group className="country-select" compact>
+                  <Form.Item
+                    name="country_code"
+                    noStyle
+                    initialValue="+91"
+                    rules={[
+                      { required: true, message: "Select country code!" }
+                    ]}
+                  >
+                    <Select
+                      showSearch
+                      style={{ width: "40%" }}
+                      options={countryOptions.map((c) => ({
+                        label: c.label, // e.g. "India (+91)"
+                        value: c.value // only the code, e.g. "+91"
+                      }))}
+                      filterOption={(input, option) =>
+                        option.label.toLowerCase().includes(input.toLowerCase())
+                      }
+                      value={selectedCode} // controlled select
+                      onChange={(value) => setSelectedCode(value)} // update state on select
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="phone_number"
+                    noStyle
+                    rules={VALIDATION_RULES.phone_number}
+                  >
+                    <Input
+                      style={{ width: "60%" }}
+                      placeholder="1234567890"
+                      suffix={
+                        isValidatingPhoneNumber ? (
+                          <Spin indicator={<LoadingOutlined spin />} />
+                        ) : null
+                      }
+                      onBlur={(e) =>
+                        handlePhoneNumberValidation(e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                </Input.Group>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
               <Form.Item
                 label="Password"
                 name="password"
@@ -473,22 +787,6 @@ const CompanyRegistration = () => {
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="Password"
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Confirm Password"
-                name="confirmPassword"
-                dependencies={["password"]}
-                rules={[
-                  ...VALIDATION_RULES.confirmPassword,
-                  confirmPasswordValidator
-                ]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  placeholder="Confirm Password"
                 />
               </Form.Item>
             </Col>
@@ -509,13 +807,7 @@ const CompanyRegistration = () => {
         </Form>
       </Card>
     ),
-    [
-      adminForm,
-      validatedAdminData,
-      confirmPasswordValidator,
-      isValidatingEmail,
-      handleEmailValidation
-    ]
+    [adminForm, validatedAdminData, isValidatingEmail, handleEmailValidation]
   );
 
   const CompanyForm = useMemo(

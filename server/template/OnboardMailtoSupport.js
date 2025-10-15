@@ -21,6 +21,7 @@ exports.OnboardMailForSupport = async (data) => {
     <div style="background-color: #f9f9f9; padding: 12px 16px; border-radius: 6px; border: 1px solid #e0e0e0;">
       <p>👤 <strong>Name:</strong> ${data.full_name}</p>
       <p>📧 <strong>Email:</strong> ${data.email}</p>
+      <p>📞 <strong>Phone Number:</strong> ${data.phone_number}</p>
       <p>🏢 <strong>Company Name:</strong> ${data.companyName}</p>
     </div>
 
