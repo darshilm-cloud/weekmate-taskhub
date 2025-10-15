@@ -35,6 +35,8 @@ import {
 import { useDispatch } from "react-redux";
 import setCookie from "../../hooks/setCookie";
 import { getRoles } from "../../util/hasPermission";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import 'react-phone-number-input/style.css';
 
 const { Step } = Steps;
 const { Title, Text } = Typography;
@@ -47,8 +49,6 @@ const BASE_DOMAIN = window.location.origin;
 // MillionVerifier API configuration
 const MILLION_VERIFIER_API = "EtZ9UjCjczYS5lxJyJ9rxvAn7";
 const MILLION_VERIFIER_URL = "https://api.millionverifier.com/api/v3/";
-
-const { Option } = Select;
 
 // Email validation function
 const validateEmailWithAPI = async (email) => {
@@ -294,8 +294,8 @@ const CompanyRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companySlug, setCompanySlug] = useState("");
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
-  const [isValidatingPhoneNumber, setIsValidatingPhoneNumber] = useState(false);
-  const [selectedCode, setSelectedCode] = useState("+91");
+  const [phoneValue, setPhoneValue] = useState(""); // store phone number with country code
+
 
   // Form instances - stable references
   const [adminForm] = Form.useForm();
@@ -345,35 +345,6 @@ const CompanyRegistration = () => {
           } catch (error) {
             return Promise.reject(
               new Error(error.message || "Email validation failed")
-            );
-          }
-        }
-      }
-    ],
-    phone_number: [
-      { required: true, message: "Please input phone number!" },
-      {
-        validator: async (_, value) => {
-          if (!value) return Promise.resolve();
-
-          const fullNumber = `${selectedCode}${value.replace(/\s+/g, "")}`; // prepend country code
-          console.log("🚀 ~ CompanyRegistration ~ fullNumber:", fullNumber);
-
-          const phoneRegex = /^\+[1-9]\d{1,3}\d{6,12}$/; // stricter regex
-          if (!phoneRegex.test(fullNumber)) {
-            return Promise.reject(
-              new Error(
-                "Invalid phone number format. Include country code, e.g., +911234567890."
-              )
-            );
-          }
-
-          // Optional: async validation like API check
-          try {
-            return Promise.resolve();
-          } catch (error) {
-            return Promise.reject(
-              new Error(error.message || "Phone number validation failed")
             );
           }
         }
@@ -494,28 +465,6 @@ const CompanyRegistration = () => {
     }
   }, []);
 
-  // Handle email validation state
-  const handlePhoneNumberValidation = useCallback(
-    async (number) => {
-      const fullNumber = `${selectedCode}${number.replace(/\s+/g, "")}`;
-      console.log("🚀 ~ CompanyRegistration ~ fullNumber:", fullNumber);
-      const phoneRegex = /^\+[1-9]\d{1,3}\d{6,12}$/;
-
-      if (!phoneRegex.test(fullNumber)) {
-        // optionally show error
-        return;
-      }
-
-      setIsValidatingPhoneNumber(true);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      } finally {
-        setIsValidatingPhoneNumber(false);
-      }
-    },
-    [selectedCode]
-  );
-
   // Step 1: Admin Details Handler
   const handleAdminNext = useCallback(async () => {
     try {
@@ -585,7 +534,7 @@ const CompanyRegistration = () => {
           first_name: validatedAdminData.first_name,
           last_name: validatedAdminData.last_name,
           email: validatedAdminData.email,
-          phone_number: `${selectedCode}${validatedAdminData.phone_number}`,
+          phone_number: validatedAdminData.phone_number,
           password: validatedAdminData.password,
           position: validatedAdminData.position || ""
         },
@@ -732,50 +681,37 @@ const CompanyRegistration = () => {
           </Row>
           <Row gutter={24}>
             <Col xs={24} sm={12}>
-              <Form.Item label="Phone Number" hasFeedback required>
-                <Input.Group className="country-select" compact>
-                  <Form.Item
-                    name="country_code"
-                    noStyle
-                    initialValue="+91"
-                    rules={[
-                      { required: true, message: "Select country code!" }
-                    ]}
-                  >
-                    <Select
-                      showSearch
-                      style={{ width: "40%" }}
-                      options={countryOptions.map((c) => ({
-                        label: c.label, // e.g. "India (+91)"
-                        value: c.value // only the code, e.g. "+91"
-                      }))}
-                      filterOption={(input, option) =>
-                        option.label.toLowerCase().includes(input.toLowerCase())
+              <Form.Item
+                label="Phone Number"
+                name="phone_number"
+                rules={[
+                  { required: true, message: "Please input phone number!" },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      if (!isValidPhoneNumber(value)) {
+                        return Promise.reject(
+                          new Error("Invalid phone number!")
+                        );
                       }
-                      value={selectedCode} // controlled select
-                      onChange={(value) => setSelectedCode(value)} // update state on select
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="phone_number"
-                    noStyle
-                    rules={VALIDATION_RULES.phone_number}
-                  >
-                    <Input
-                      style={{ width: "60%" }}
-                      placeholder="1234567890"
-                      suffix={
-                        isValidatingPhoneNumber ? (
-                          <Spin indicator={<LoadingOutlined spin />} />
-                        ) : null
-                      }
-                      onBlur={(e) =>
-                        handlePhoneNumberValidation(e.target.value)
-                      }
-                    />
-                  </Form.Item>
-                </Input.Group>
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+                initialValue={phoneValue}
+                hasFeedback
+              >
+                <PhoneInput
+                  placeholder="Enter phone number"
+                  value={phoneValue}
+                  onChange={(value) => {
+                    setPhoneValue(value); // updates value including country code
+                    companyForm.setFieldsValue({ phone_number: value }); // update form field
+                  }}
+                  defaultCountry="IN" // optional, set default country
+                  international
+                  countryCallingCodeEditable={true}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>

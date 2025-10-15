@@ -137,15 +137,27 @@
         border: none;
         border-radius: 10px 10px 0 0;
         overflow: hidden;
-        .country-select {
-          .ant-input-affix-wrapper {
-            border-top-left-radius:  0 !important;
-            border-bottom-left-radius:  0 !important;
-          }
-          .ant-select-selector{
+
+        .ant-form-item-control
+          .ant-form-item-control-input-content
+          .PhoneInput {
+          font-size: 13px;
+          line-height: 22px;
+          border: none;
+          text-align: left;
+          color: rgb(51, 71, 91);
+          background-color: rgb(245, 248, 250);
+          border: 1px solid rgb(203, 214, 226);
+          border-radius: 3px;
+          padding: 0 10px;
+          font-weight: 400;
+          .PhoneInputInput {
+            background-color: transparent;
+            border: none;
             height: 40px;
           }
         }
+
         .ant-card-head {
           background: #03497a;
           border-radius: 10px 10px 0 0;
@@ -455,12 +467,22 @@
 
     .steps-content {
       .step-card {
-        .country-select {
-          .ant-input-affix-wrapper {
-            border-top-left-radius:  0 !important;
-            border-bottom-left-radius:  0 !important;
-          }
-          .ant-select-selector{
+        .ant-form-item-control
+          .ant-form-item-control-input-content
+          .PhoneInput {
+          font-size: 13px;
+          line-height: 22px;
+          border: none;
+          text-align: left;
+          color: rgb(51, 71, 91);
+          background-color: rgb(245, 248, 250);
+          border: 1px solid rgb(203, 214, 226);
+          border-radius: 3px;
+          padding: 0 10px;
+          font-weight: 400;
+          .PhoneInputInput {
+            background-color: transparent;
+            border: none;
             height: 40px;
           }
         }
