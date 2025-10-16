@@ -35,8 +35,11 @@ import {
 import { useDispatch } from "react-redux";
 import setCookie from "../../hooks/setCookie";
 import { getRoles } from "../../util/hasPermission";
-import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
-import 'react-phone-number-input/style.css';
+import PhoneInput, {
+  isValidPhoneNumber,
+  parsePhoneNumber
+} from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 const { Step } = Steps;
 const { Title, Text } = Typography;
@@ -295,7 +298,7 @@ const CompanyRegistration = () => {
   const [companySlug, setCompanySlug] = useState("");
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const [phoneValue, setPhoneValue] = useState(""); // store phone number with country code
-
+  const [country, setCountry] = useState("IN");
 
   // Form instances - stable references
   const [adminForm] = Form.useForm();
@@ -535,6 +538,7 @@ const CompanyRegistration = () => {
           last_name: validatedAdminData.last_name,
           email: validatedAdminData.email,
           phone_number: validatedAdminData.phone_number,
+          country_code: country,
           password: validatedAdminData.password,
           position: validatedAdminData.position || ""
         },
@@ -705,6 +709,15 @@ const CompanyRegistration = () => {
                   placeholder="Enter phone number"
                   value={phoneValue}
                   onChange={(value) => {
+                    try {
+                      const phoneObj = parsePhoneNumber(value || "");
+                      if (phoneObj) {
+                        setCountry(phoneObj.country);
+                      }
+                    } catch (error) {
+                      // invalid number — reset country code
+                      setCountry("IN");
+                    }
                     setPhoneValue(value); // updates value including country code
                     companyForm.setFieldsValue({ phone_number: value }); // update form field
                   }}

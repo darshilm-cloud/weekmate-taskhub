@@ -2,7 +2,7 @@ const { statusCode } = require("../helpers/constant");
 const {
   successResponse,
   errorResponse,
-  catchBlockErrorResponse,
+  catchBlockErrorResponse
 } = require("../helpers/response");
 const { CompanyModel, employeeSchema, PMSRoles } = require("../models");
 const CONFIG_JSON = require("../settings/config.json");
@@ -10,12 +10,14 @@ const CompanyRegistrationMail = require("../models/CompanyRegistrationMail");
 const nodemailer = require("nodemailer");
 const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
-const { addDefaultProjectStatus, addDefaultPermission } = require("../helpers/common");
+const {
+  addDefaultProjectStatus,
+  addDefaultPermission
+} = require("../helpers/common");
 const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
 const { dataForJWT, getUserPermissions } = require("./authentication");
 const { createJWTToken } = require("../helpers/JWTToken");
 const { OnboardMailForSupport } = require("../template/OnboardMailtoSupport");
-
 
 // Register a company details API
 exports.registerAdminAndCompanyOld = async (req, res) => {
@@ -34,9 +36,8 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
 
     const {
       adminDetails: { first_name, last_name, email, password },
-      companyDetails: { companyName, companyDomain },
+      companyDetails: { companyName, companyDomain }
     } = value;
-    
 
     // 🔍 Check if admin email already exists in main database
     const existingUser = await employeeSchema.findOne({ email });
@@ -48,7 +49,6 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
       );
     }
 
-  
     // 🔍 Check if company name already exists in main database
     const existingCompanyName = await CompanyModel.findOne({ companyName });
     if (existingCompanyName) {
@@ -59,20 +59,19 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
       );
     }
 
-     // 🔍 Check if company name already exists in main database
-     const existingCompanyDomain = await CompanyModel.findOne({ companyDomain });
-     if (existingCompanyDomain) {
-       return errorResponse(
-         res,
-         statusCode.CONFLICT,
-         "Company domain or slug already exists, please try with different slug or domain"
-       );
-     }
-
+    // 🔍 Check if company name already exists in main database
+    const existingCompanyDomain = await CompanyModel.findOne({ companyDomain });
+    if (existingCompanyDomain) {
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Company domain or slug already exists, please try with different slug or domain"
+      );
+    }
 
     // 🔍 Check if admin email exists in temporary registrations
     const existingTempEmail = await CompanyRegistrationMail.findOne({
-      "adminDetails.email": email,
+      "adminDetails.email": email
     });
     if (existingTempEmail) {
       return successResponse(
@@ -81,7 +80,7 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
         "Please check your email. We have already sent a verification link to complete your registration.",
         {
           message: "Verification email already sent",
-          email: email,
+          email: email
         }
       );
     }
@@ -94,7 +93,7 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
     const tempRegistration = await new CompanyRegistrationMail({
       adminDetails: { first_name, last_name, email, password },
       companyDetails: { companyName, companyDomain },
-      verificationToken,
+      verificationToken
     }).save();
 
     // 📧 Send verification email
@@ -117,15 +116,12 @@ exports.registerAdminAndCompanyOld = async (req, res) => {
       "Registration initiated successfully. Please check your email to verify and complete the registration.",
       {
         message: "Verification email sent",
-        email: email,
+        email: email
       }
     );
   } catch (err) {
     console.log(err.message, "err.message", err);
-    return catchBlockErrorResponse(
-      res,
-      err.message,
-    );
+    return catchBlockErrorResponse(res, err.message);
   }
 };
 
@@ -135,17 +131,24 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     const { token } = req.body;
 
     if (!token) {
-      return errorResponse(res, statusCode.BAD_REQUEST, "Verification token is required.");
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Verification token is required."
+      );
     }
 
     // 🔍 Find the temporary registration
-    const tempRegistration = await CompanyRegistrationMail.findOne({ 
-      verificationToken: token 
+    const tempRegistration = await CompanyRegistrationMail.findOne({
+      verificationToken: token
     });
 
     if (!tempRegistration) {
-      return errorResponse(res, statusCode.BAD_REQUEST, 
-        "Email is already verified or token expired");
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Email is already verified or token expired"
+      );
     }
 
     const {
@@ -157,7 +160,11 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     const existingUser = await employeeSchema.findOne({ email });
     if (existingUser) {
       await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
-      return errorResponse(res, statusCode.CONFLICT, "Admin email already exists.");
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Admin email already exists."
+      );
     }
 
     // ✅ Create company
@@ -167,19 +174,21 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     }).save();
 
     // 🔍 Find admin role
-    const role = await PMSRoles.findOne({ role_name: CONFIG_JSON.PMS_ROLES.ADMIN });
+    const role = await PMSRoles.findOne({
+      role_name: CONFIG_JSON.PMS_ROLES.ADMIN
+    });
 
     // ✅ Create admin user
     const newUser = await new employeeSchema({
       first_name,
       last_name,
-      full_name:`${first_name} ${last_name}`,
+      full_name: `${first_name} ${last_name}`,
       email,
       password,
       companyId: company._id,
       pms_role_id: role._id,
       isActivate: true,
-      isAdmin : true
+      isAdmin: true
     }).save();
 
     // 🔄 Aggregate enriched user details
@@ -211,43 +220,41 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
           email: 1,
           status: 1,
           isActivate: 1,
-          isAdmin:1,
+          isAdmin: 1,
           createdAt: 1,
           updatedAt: 1,
           position: 1,
           roleId: "$pms_role._id",
           roleName: "$pms_role.role_name",
           companyId: "$companyDetails._id",
-          companyName: "$companyDetails.companyName",
+          companyName: "$companyDetails.companyName"
         }
       }
     ]);
 
-    
-
     const enrichedUser = userDetails[0];
 
     //Add default permission for users
-    await addDefaultPermission(company._id,newUser._id)
-    
+    await addDefaultPermission(company._id, newUser._id);
+
     // Add default project status for company
-    await addDefaultProjectStatus(company._id,newUser._id)
+    await addDefaultProjectStatus(company._id, newUser._id);
 
     // 🗑️ Clean up temporary registration
     await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
 
-    
     // ✅ Success response
-    return successResponse(res, statusCode.SUCCESS, "Registration completed successfully", {
-      user: enrichedUser
-    });
-
-  } catch (err) {
-    console.log(err.message, 'err.message', err);
-    return catchBlockErrorResponse(
+    return successResponse(
       res,
-      err.message
+      statusCode.SUCCESS,
+      "Registration completed successfully",
+      {
+        user: enrichedUser
+      }
     );
+  } catch (err) {
+    console.log(err.message, "err.message", err);
+    return catchBlockErrorResponse(res, err.message);
   }
 };
 
@@ -267,8 +274,16 @@ exports.registerAdminAndCompany = async (req, res) => {
     }
 
     const {
-      adminDetails: { first_name, last_name, email, phone_number, password },
-      companyDetails: { companyName, companyDomain },
+      adminDetails: {
+        first_name,
+        last_name,
+        email,
+        phone_number,
+        country_code,
+        password,
+        position
+      },
+      companyDetails: { companyName, companyDomain }
     } = value;
 
     // 🔍 Check if admin email already exists
@@ -280,15 +295,15 @@ exports.registerAdminAndCompany = async (req, res) => {
         "Admin email already exists."
       );
     }
-     // 🔍 Check if admin email already exists
-     const existingPhoneNumber = await employeeSchema.findOne({ phone_number });
-     if (existingPhoneNumber) {
-       return errorResponse(
-         res,
-         statusCode.CONFLICT,
-         "Admin phone number already exists."
-       );
-     }
+    // 🔍 Check if admin email already exists
+    const existingPhoneNumber = await employeeSchema.findOne({ phone_number });
+    if (existingPhoneNumber) {
+      return errorResponse(
+        res,
+        statusCode.CONFLICT,
+        "Admin phone number already exists."
+      );
+    }
 
     // 🔍 Check if company name already exists
     const existingCompanyName = await CompanyModel.findOne({ companyName });
@@ -317,7 +332,9 @@ exports.registerAdminAndCompany = async (req, res) => {
     }).save();
 
     // 🔍 Find admin role
-    const role = await PMSRoles.findOne({ role_name: CONFIG_JSON.PMS_ROLES.ADMIN });
+    const role = await PMSRoles.findOne({
+      role_name: CONFIG_JSON.PMS_ROLES.ADMIN
+    });
 
     if (!role) {
       // Rollback company creation if role not found
@@ -373,7 +390,7 @@ exports.registerAdminAndCompany = async (req, res) => {
           first_name: 1,
           full_name: 1,
           email: 1,
-          phone_number:1,
+          phone_number: 1,
           status: 1,
           isActivate: 1,
           isAdmin: 1,
@@ -394,14 +411,35 @@ exports.registerAdminAndCompany = async (req, res) => {
 
     // Add default permissions for users
     await addDefaultPermission(company._id, newUser._id);
-    
+
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
 
     // 📧 Optional: Send welcome email (without verification requirement)
     try {
       await CompanyWelcomeMail(enrichedUser);
-      await OnboardMailForSupport(enrichedUser)
+      await OnboardMailForSupport(enrichedUser);
+      // 🌐 Make a POST API call
+      const payload = {
+        country_code,
+        selectedProducts: ["PMS"],
+        email,
+        companyName,
+        phoneNumber: phone_number,
+        jobTitle: position,
+        fullName: `${first_name} ${last_name}`
+      };
+
+      const response = await fetch(process.env.RESELLER_PANNEL_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      console.log("API Response:", result);
     } catch (emailError) {
       // Log email error but don't fail the registration
       console.log("Welcome email failed to send:", emailError.message);
@@ -414,11 +452,8 @@ exports.registerAdminAndCompany = async (req, res) => {
       157680000 // 5 year
     );
     // Get login user permissions..
-    let permissions = await getUserPermissions(
-      user._id,
-      user.companyId
-    );
-    
+    let permissions = await getUserPermissions(user._id, user.companyId);
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -428,42 +463,21 @@ exports.registerAdminAndCompany = async (req, res) => {
       permissions,
       user?.pms_role_id?._id
     );
-
-    // ✅ Success response
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      "Company account created successfully. You can now login to your account.",
-      {
-        user: enrichedUser,
-        company: {
-          id: company._id,
-          name: companyName,
-          domain: companyDomain
-        },
-        loginUrl: `${process.env.HOST_ORIGIN_URL}/${companyDomain}/signin`
-      }
-    );
-
   } catch (err) {
     console.log(err.message, "err.message", err);
-    
+
     // Enhanced error handling with rollback
-    if (err.name === 'ValidationError') {
+    if (err.name === "ValidationError") {
       return errorResponse(
         res,
         statusCode.BAD_REQUEST,
         "Validation failed: " + err.message
       );
     }
-    
-    return catchBlockErrorResponse(
-      res,
-      err.message
-    );
+
+    return catchBlockErrorResponse(res, err.message);
   }
 };
-
 
 // Email service function (replace with your email provider)
 async function sendVerificationEmail({
@@ -528,15 +542,15 @@ async function sendVerificationEmail({
     secure: process.env.SMTP_SECURE === "true", // convert to boolean
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+      pass: process.env.SMTP_PASS
+    }
   });
 
   let datatransporter = await transporter.sendMail({
     from: process.env.FROM_EMAIL,
     to: to,
     subject: subject,
-    html: emailContent,
+    html: emailContent
   });
   console.log(datatransporter, "datatransporter");
 }

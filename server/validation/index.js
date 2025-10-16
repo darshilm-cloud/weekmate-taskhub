@@ -36,13 +36,17 @@ class Validator {
     return Joi.object({
       adminDetails: Joi.object({
         first_name: Joi.string().required().label("First name is required"),
+        position: Joi.string().optional(),
         last_name: Joi.string().required().label("Last name is required"),
         email: Joi.string().email().trim().required().messages({
           "string.empty": "Email is required",
           "string.email": "Invalid email format"
         }),
         phone_number: Joi.string().trim().required().messages({
-          "string.empty": "Phone Number is required",
+          "string.empty": "Phone Number is required"
+        }),
+        country_code: Joi.string().trim().required().messages({
+          "string.empty": "Phone Number is required"
         }),
         password: Joi.string().trim().min(8).required().messages({
           "string.empty": "Password is required",
@@ -52,7 +56,7 @@ class Validator {
 
       companyDetails: Joi.object({
         companyName: Joi.string().required().label("Company name is required"),
-        companyDomain: Joi.string().required().label("Company slug is required"),
+        companyDomain: Joi.string().required().label("Company slug is required")
       }).required()
     });
   };
@@ -103,22 +107,22 @@ class Validator {
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
       companyId: Joi.string().required("Company ID is required"),
-      pmsRoleId: Joi.string().required("Role is required"),
+      pmsRoleId: Joi.string().required("Role is required")
     });
   };
 
-   /**
+  /**
    * Get the schema for user edit validation
    * @returns {Object} Joi schema object
    */
-   getEditUserSchema = () => {
+  getEditUserSchema = () => {
     return Joi.object({
       email: this.emailValidator("Email is required"),
       companyId: Joi.string().required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
       isActivate: Joi.boolean().required(),
-      pmsRoleId: Joi.string().required("Role is required"),
+      pmsRoleId: Joi.string().required("Role is required")
     });
   };
 
@@ -128,7 +132,7 @@ class Validator {
       companyId: Joi.string().required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      isActivate: Joi.boolean().required(),
+      isActivate: Joi.boolean().required()
     });
   };
 
@@ -158,11 +162,11 @@ class Validator {
     });
   };
 
-   /**
+  /**
    * Get the schema for admin add validation
    * @returns {Object} Joi schema object
    */
-   getAddAdminSchema = () => {
+  getAddAdminSchema = () => {
     return Joi.object({
       email: this.emailValidator("Email is required"),
       password: this.passwordValidator("Password is required"),
@@ -188,7 +192,7 @@ class Validator {
       smtpEmail: Joi.string().required(),
       smtpPassword: Joi.string().required(),
       smtpSecure: Joi.boolean().required(),
-      fromName: Joi.string().required(),
+      fromName: Joi.string().required()
     });
   };
 }
