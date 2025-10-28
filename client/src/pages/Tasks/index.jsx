@@ -511,6 +511,8 @@ const TasksPMS = ({ flag }) => {
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
 
         task_progress: "0",
+        recurringType:addInputTaskData?.recurringType || "",
+
       };
       if (uploadedFiles) {
         reqBody = {
@@ -560,6 +562,7 @@ const TasksPMS = ({ flag }) => {
           "attachments",
           "task_status",
           "pms_clients",
+           "recurringType"
         ],
         project_id: projectId,
         main_task_id: selectedTask._id,
@@ -577,6 +580,8 @@ const TasksPMS = ({ flag }) => {
           : null,
         due_date: addInputTaskData.end_date ? addInputTaskData.end_date : null,
         pms_clients: selectedClients.map((item) => item._id),
+        recurringType:addInputTaskData?.recurringType || "",
+
       };
 
       if (populatedFiles.length > 0) {
@@ -1214,6 +1219,7 @@ const TasksPMS = ({ flag }) => {
       clients: addInputTaskData?.clients
         ? addInputTaskData?.clients.map((val) => val?._id)
         : data.pms_clients?.map((value) => value._id),
+        recurringType: data?.recurringType || null,
     });
     setSelectedItems(data.assignees);
     setSelectedClients(data.pms_clients);
@@ -2479,6 +2485,32 @@ const TasksPMS = ({ flag }) => {
                           </div>
                         </div>
                       </li>
+                      <li>
+                        <div className="table-left">
+                          <div className="flex-table">
+                            <i className="fi fi-rr-refresh"></i>
+                            <span className="schedule-label">Recurring</span>
+                          </div>
+                        </div>
+                        <div className="table-right">
+                          <div className="flex-table">
+                            <Select
+                              value={addInputTaskData?.recurringType}
+                              allowClear
+                              onChange={(value) =>
+                                handleTaskInput("recurringType", value)
+                              }
+                            >
+                              <Option value="monthly" style={{ textTransform: "capitalize" }}>
+                                Monthly
+                              </Option>
+                              <Option value="yearly" style={{ textTransform: "capitalize" }}>
+                                Yearly
+                              </Option>
+                            </Select>
+                          </div>
+                        </div>
+                      </li>
                     </ul>
                   </div>
                 </Col>
@@ -2864,6 +2896,32 @@ const TasksPMS = ({ flag }) => {
                                 </div>
                               </div>
                             </div>
+                          </div>
+                        </div>
+                      </li>
+                      <li>
+                        <div className="table-left">
+                          <div className="flex-table">
+                            <i className="fi fi-rr-refresh"></i>
+                            <span className="schedule-label">Recurring</span>
+                          </div>
+                        </div>
+                        <div className="table-right">
+                          <div className="flex-table">
+                            <Select
+                              value={addInputTaskData?.recurringType}
+                              allowClear
+                              onChange={(value) =>
+                                handleTaskInput("recurringType", value)
+                              }
+                            >
+                              <Option value="monthly" style={{ textTransform: "capitalize" }}>
+                                Monthly
+                              </Option>
+                              <Option value="yearly" style={{ textTransform: "capitalize" }}>
+                                Yearly
+                              </Option>
+                            </Select>
                           </div>
                         </div>
                       </li>

@@ -470,6 +470,13 @@ export default class Service {
   //file size limit
   static fileSizeUpload = "/CompanyManage/file-upload-size"
 
+  //timer functionality
+  static startTaskTimer = "/projects/task-timers/start"
+  static stopTaskTimer = "/projects/task-timers/stop"
+  static stopMultiple = "/projects/task-timers/stop-multiple"
+  static getTaskTimer = "/projects/task-timers/task"
+
+
   static async makeAPICall({
     props,
     methodName,

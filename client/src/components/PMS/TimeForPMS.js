@@ -1086,6 +1086,9 @@ function TimeForPMS() {
     return `${H}h ${paddedM}m`;
   }
 
+          const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"]) 
+  
+
   const columns = [
     {
       title: "Logged by",
@@ -1144,6 +1147,7 @@ function TimeForPMS() {
               }} // Call a function to handle storing _id
               style={{ cursor: "pointer" }}
             />
+            {isDisabledTrackManually && (
             <EditOutlined
               style={{ color: "green" }}
               onClick={() => {
@@ -1152,6 +1156,7 @@ function TimeForPMS() {
                 setOnEditClick(true);
               }}
             />
+          )}
 
             <Popconfirm
               icon={

@@ -1,3 +1,6 @@
+
+
+
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   PlusOutlined,
@@ -15,6 +18,9 @@ import {
   LinkOutlined,
   FieldTimeOutlined,
   DownloadOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import {
@@ -32,6 +38,7 @@ import {
   Badge,
   Popconfirm,
   Checkbox,
+  message,
 } from "antd";
 import dayjs from "dayjs";
 import "../style.css";
@@ -40,7 +47,7 @@ import AddComment from "../../../ReuseComponent/AddComment/AddComment";
 import { fileImageSelect } from "../../../util/FIleSelection";
 import TaskKanbanController from "./TaskKanbanController";
 import { getRoles, hasPermission } from "../../../util/hasPermission";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import useUserColors from "../../../hooks/customColor";
 import { isCreatedBy } from "../../../util/isCreatedBy";
 import { calculateTimeDifference } from "../../../util/formatTimeDifference";
@@ -59,6 +66,8 @@ import { setData } from "../../../appRedux/reducers/ApiData";
 import { useDispatch, useSelector } from "react-redux";
 import { moveWorkFlowTaskHandler } from "../../../appRedux/actions/Common";
 import isEqual from "lodash/isEqual";
+import Service from "../../../service";
+import queryString from "query-string";
 
 const TaskList = ({
   tasks,
@@ -225,6 +234,12 @@ const TaskList = ({
     getBoardTasks,
     updateTasks,
   });
+  const userData = JSON.parse(localStorage.getItem("user_data"));
+  const roleName = userData.pms_role_id.role_name;
+    const location = useLocation();
+  
+    let { listID } = queryString.parse(location.search);
+  
 
   const dispatch = useDispatch();
   const observers = useRef({});
@@ -235,6 +250,609 @@ const TaskList = ({
   const [editorInstance, setEditorInstance] = useState(null);
   const [sliceStates, setSliceStates] = useState(6);
   const [taskDrafts, setTaskDrafts] = useState({});
+
+  const [timerUpdateKey, setTimerUpdateKey] = useState(0);
+  const [timerState, setTimerState] = useState({
+    isRunning: false,
+    elapsedTime: 0,
+    isPopoverVisible: false,
+    currentTaskId: null,
+    isTimeExceeded: false
+  });
+
+  // Use a more optimized global state that doesn't cause re-renders
+  const globalTimerRef = useRef({
+    activeTaskId: null,
+    timers: {},
+    intervals: {} // Store intervals separately
+  });
+
+
+  // Optimized format time function
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+
+
+
+
+
+  // Get timer display info for current task
+  const getTimerDisplayInfo = () => {
+    const currentTaskId = taskDetails?._id;
+    const taskTimer = globalTimerRef.current.timers[currentTaskId];
+    // Use only this task's stored elapsed time; do not fall back to shared timerState
+    const elapsedTime = typeof taskTimer?.elapsedTime === 'number' ? taskTimer.elapsedTime : 0;
+    const isActive = globalTimerRef.current.activeTaskId === currentTaskId;
+    const estimatedSeconds = getEstimatedTimeInSeconds(taskDetails);
+    const isNearLimit = estimatedSeconds > 0 && elapsedTime >= (estimatedSeconds * 0.9);
+    const isExceeded = isEstimatedTimeExceeded(elapsedTime, taskDetails);
+
+    // console.log(taskTimer,"taskTimer",currentTaskId)
+    // console.log(currentTaskId,"currentTaskId")
+    return {
+      timeString: formatTime(elapsedTime),
+      isActive,
+      isNearLimit,
+      isExceeded,
+      canStart: shouldShowTimer(taskDetails) && !isActive,
+      canStop: isActive
+    };
+  };
+
+  // Optimized useEffect - only updates when the specific task changes, not on every timer tick
+  useEffect(() => {
+    const currentTaskId = taskDetails?._id;
+    if (currentTaskId) {
+      const taskTimer = globalTimerRef.current.timers[currentTaskId];
+      const isActive = globalTimerRef.current.activeTaskId === currentTaskId;
+      console.log("🚀 ~ TaskList ~ globalTimerRef:", isActive, taskTimer, currentTaskId)
+
+      if (taskTimer && isActive) {
+        setTimerState(prev => ({
+          ...prev,
+          isRunning: taskTimer?.isRunning || false,
+          elapsedTime: taskTimer?.elapsedTime || 0,
+          currentTaskId: isActive ? currentTaskId : null,
+          isTimeExceeded: isEstimatedTimeExceeded(taskTimer?.elapsedTime || 0, taskDetails)
+        }));
+      } else {
+        setTimerState(prev => ({
+          ...prev,
+          isRunning: false,
+          elapsedTime: 0,
+          currentTaskId: null,
+          isTimeExceeded: false
+        }));
+      }
+    }
+  }, [taskDetails?._id, timerUpdateKey]); // Only depend on task ID change, not timer state
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      // Clean up all intervals when component unmounts
+      Object.values(globalTimerRef.current.intervals).forEach(interval => {
+        clearInterval(interval);
+      });
+      globalTimerRef.current.intervals = {};
+    };
+  }, []);
+
+  // Fetch timer state when component mounts or task changes
+  useEffect(() => {
+    if (taskDetails?._id) {
+      fetchTimerState(taskDetails._id);
+    }
+  }, [taskDetails?._id]);
+
+  // Fetch timer states for all tasks when tasks are loaded
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      // Get all task IDs from all boards
+      const allTaskIds = tasks.flatMap(boardData =>
+        boardData.tasks.map(task => task._id)
+      );
+
+      // Fetch timer state for each task (with debouncing to prevent too many API calls)
+      const fetchPromises = allTaskIds.map(taskId =>
+        new Promise(resolve => {
+          setTimeout(() => {
+            fetchTimerState(taskId);
+            resolve();
+          }, Math.random() * 100); // Small random delay to spread API calls
+        })
+      );
+
+      Promise.all(fetchPromises).then(() => {
+        console.log('All timer states fetched successfully');
+      });
+    }
+  }, [tasks]);
+
+  // Handle page visibility changes to refresh timer states
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && taskDetails?._id) {
+        // Page became visible, refresh timer state for current task
+        fetchTimerState(taskDetails._id);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [taskDetails?._id]);
+
+
+  /// neww 
+
+  // Enhanced timer functions with improved logic for task status management
+
+  // Helper function to check if task is in "In Progress" status (enhanced)
+  const isTaskInProgress = (task) => {
+    console.log(task, "tasktask", task?.task_status?.title)
+    if (!task?.task_status?.title) return false;
+    const statusTitle = task.task_status.title.toLowerCase().replace(/\s+/g, '');
+    return statusTitle === 'inprogress' || statusTitle === 'progress' || statusTitle === 'in progress' || statusTitle === "In Progress"
+      ;
+  };
+
+  // Helper function to convert estimated time to seconds
+  const getEstimatedTimeInSeconds = (task) => {
+    const hours = parseInt(task?.estimated_hours || 0);
+    const minutes = parseInt(task?.estimated_minutes || 0);
+    return (hours * 3600) + (minutes * 60);
+  };
+
+  // Helper function to check if estimated time is exceeded
+  const isEstimatedTimeExceeded = (elapsedSeconds, task) => {
+    const estimatedSeconds = getEstimatedTimeInSeconds(task);
+    return estimatedSeconds > 0 && elapsedSeconds >= estimatedSeconds;
+  };
+
+  // Enhanced start timer function
+  const startTimer = async (taskId = taskDetails?._id) => {
+    // First, find the task object to check its status
+    const currentTask = tasks.find(boardData =>
+      boardData.tasks.find(task => task._id === taskId)
+    )?.tasks.find(task => task._id === taskId) || taskDetails;
+
+    console.log(isTaskInProgress(taskDetails), "currentTaskcurrentTask")
+
+    // Check if task is in "In Progress" status
+    if (!isTaskInProgress(taskDetails)) {
+      console.log('Timer can only be started for tasks in "In Progress" status');
+      // Optional: Show user notification
+      // notification.warning({
+      //   message: 'Timer Unavailable',
+      //   description: 'Timer can only be started for tasks in "In Progress" status',
+      // });
+      return;
+    }
+
+    // Check if estimated time is already exceeded
+    // const currentElapsed = globalTimerRef.current.timers[taskId]?.elapsedTime || 0;
+    // if (isEstimatedTimeExceeded(currentElapsed, currentTask)) {
+    //   console.log('Cannot start timer: Estimated time already exceeded');
+    //   return;
+    // }
+
+    // Check if there's already a running timer for a different task
+    if (globalTimerRef.current.activeTaskId && globalTimerRef.current.activeTaskId !== taskId) {
+      const runningTaskId = globalTimerRef.current.activeTaskId;
+      console.log(`Stopping timer for task ${runningTaskId} to start timer for task ${taskId}`);
+
+      // Stop the currently running timer
+      await stopTimer(runningTaskId, false);
+
+      // Optional: Show user notification about timer switching
+      // notification.info({
+      //   message: 'Timer Switched',
+      //   description: 'Previous task timer stopped. Starting timer for current task.',
+      // });
+    }
+
+    try {
+      // Call API to start timer
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.startTaskTimer,
+        body: { task_id: taskId }
+      });
+
+      if (response?.data?.status) {
+        console.log('Timer started successfully via API');
+
+        // Initialize timer data if doesn't exist
+        if (!globalTimerRef.current.timers[taskId]) {
+          globalTimerRef.current.timers[taskId] = {
+            elapsedTime: 0,
+            isRunning: false,
+            startTime: null
+          };
+        }
+
+        // Start new timer
+        const currentElapsedTime = globalTimerRef.current.timers[taskId].elapsedTime || 0;
+        const startTime = Date.now() - (currentElapsedTime * 1000);
+
+        globalTimerRef.current.activeTaskId = taskId;
+        globalTimerRef.current.timers[taskId] = {
+          ...globalTimerRef.current.timers[taskId],
+          isRunning: true,
+          startTime: startTime
+        };
+
+        // Update local state only for current task
+        if (taskId === taskDetails?._id) {
+          setTimerState(prev => ({
+            ...prev,
+            isRunning: true,
+            isPopoverVisible: false,
+            currentTaskId: taskId,
+            elapsedTime: currentElapsedTime
+          }));
+        }
+
+        // Clear any existing interval for this task
+        if (globalTimerRef.current.intervals[taskId]) {
+          clearInterval(globalTimerRef.current.intervals[taskId]);
+        }
+
+        // Start interval for the active task
+        globalTimerRef.current.intervals[taskId] = setInterval(() => {
+          const now = Date.now();
+          const elapsed = Math.floor((now - startTime) / 1000);
+
+          // Update timer data
+          globalTimerRef.current.timers[taskId].elapsedTime = elapsed;
+          setTimerUpdateKey(k => k + 1);
+
+          // Update local state only if this is the current task being viewed
+          if (taskId === taskDetails?._id) {
+            console.log("🚀 ~ startTimer ~ taskId === taskDetails?._id:", taskId === taskDetails?._id, taskId, taskDetails?._id)
+            setTimerState(prev => ({
+              ...prev,
+              elapsedTime: elapsed,
+              isTimeExceeded: isEstimatedTimeExceeded(elapsed, currentTask)
+            }));
+          }
+
+          // Auto-stop if estimated time is exceeded (disabled to allow overtime)
+          // if (isEstimatedTimeExceeded(elapsed, currentTask)) {
+          //   stopTimer(taskId, true);
+          // }
+        }, 1000);
+      } else {
+        console.error('Failed to start timer via API:', response?.data?.message);
+        // Optional: Show error notification
+        // notification.error({
+        //   message: 'Timer Start Failed',
+        //   description: response?.data?.message || 'Failed to start timer',
+        // });
+      }
+    } catch (error) {
+      console.error('Error starting timer:', error);
+      // Optional: Show error notification
+      // notification.error({
+      //   message: 'Timer Start Error',
+      //   description: 'An error occurred while starting the timer',
+      // });
+    }
+  };
+
+  // Enhanced stop timer function
+  const stopTimer = async (taskId = taskDetails?._id, autoStopped = false) => {
+    try {
+      // Call API to stop timer
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.stopTaskTimer,
+        body: { task_id: taskId }
+      });
+
+      if (response?.data?.status) {
+        console.log('Timer stopped successfully via API');
+        // getTaskByIdDetails(taskId);
+        getBoardTasks(listID,taskId)
+      } else {
+        console.error('Failed to stop timer via API:', response?.data?.message);
+        // Optional: Show error notification
+        // notification.error({
+        //   message: 'Timer Stop Failed',
+        //   description: response?.data?.message || 'Failed to stop timer',
+        // });
+      }
+    } catch (error) {
+      console.error('Error stopping timer:', error);
+      // Optional: Show error notification
+      // notification.error({
+      //   message: 'Timer Stop Error',
+      //   description: 'An error occurred while stopping the timer',
+      // });
+    }
+
+    // Clear interval for this task
+    if (globalTimerRef.current.intervals[taskId]) {
+      clearInterval(globalTimerRef.current.intervals[taskId]);
+      delete globalTimerRef.current.intervals[taskId];
+    }
+
+    // Update global state
+    if (globalTimerRef.current.timers[taskId]) {
+      globalTimerRef.current.timers[taskId].isRunning = false;
+    }
+
+    if (globalTimerRef.current.activeTaskId === taskId) {
+      globalTimerRef.current.activeTaskId = null;
+    }
+
+    // Update local state only for current task
+    if (taskId === taskDetails?._id) {
+      setTimerState(prev => ({
+        ...prev,
+        isRunning: false,
+        isPopoverVisible: autoStopped ? false : prev.isPopoverVisible,
+        currentTaskId: null
+      }));
+
+      // Show notification if auto-stopped
+      if (autoStopped) {
+        console.log('Timer stopped automatically: Estimated time exceeded');
+        // Optional: Show user notification
+        // notification.warning({
+        //   message: 'Timer Stopped',
+        //   description: 'Timer stopped automatically as estimated time was exceeded',
+        // });
+      }
+    }
+  };
+
+  const stopMultipleTimer = async (task_id, assignees) => {
+    let user_ids = [];
+    assignees.forEach(a => {
+      user_ids.push(a._id);
+    })
+    let payload = {
+      user_ids,
+      task_id
+    }
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.stopMultiple,
+      body: payload,
+    })
+    if (response.data?.data?.success_count == 1) {
+      // message.success("State Updated and Timer Stopped Suuccessfully")
+    }
+
+  }
+
+  // Function to fetch timer state from API
+  const fetchTimerState = async (taskId) => {
+    if (!taskId) return;
+
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskTimer}/${taskId}`
+      });
+
+      if (response?.data?.status && response?.data?.data) {
+        const timerData = response.data.data;
+        console.log('Timer state fetched from API:', timerData);
+
+        const active = !!timerData?.active_timer?.is_active;
+        const baseSeconds = Number(timerData?.total_time_spent?.total_seconds || 0);
+
+        // Ensure timer object exists
+        if (!globalTimerRef.current.timers[taskId]) {
+          globalTimerRef.current.timers[taskId] = {
+            elapsedTime: 0,
+            isRunning: false,
+            startTime: null,
+            baseSeconds: 0
+          };
+        }
+
+        if (active) {
+          const startTime = new Date(timerData.active_timer.start_time).getTime();
+          const now = Date.now();
+          const activeElapsed = Math.max(0, Math.floor((now - startTime) / 1000));
+          const elapsedTime = baseSeconds + activeElapsed;
+
+          // Mark this task as active and running
+          globalTimerRef.current.activeTaskId = taskId;
+          globalTimerRef.current.timers[taskId] = {
+            ...globalTimerRef.current.timers[taskId],
+            isRunning: true,
+            elapsedTime,
+            startTime,
+            baseSeconds
+          };
+
+          // Update local state if this is the current task
+          if (taskId === taskDetails?._id) {
+            setTimerState(prev => ({
+              ...prev,
+              isRunning: true,
+              elapsedTime,
+              currentTaskId: taskId
+            }));
+          }
+
+          // Clear any existing interval for this task
+          if (globalTimerRef.current.intervals[taskId]) {
+            clearInterval(globalTimerRef.current.intervals[taskId]);
+          }
+
+          // Start interval to keep time ticking (base + active elapsed)
+          globalTimerRef.current.intervals[taskId] = setInterval(() => {
+            const tickNow = Date.now();
+            const elapsed = baseSeconds + Math.max(0, Math.floor((tickNow - startTime) / 1000));
+
+            globalTimerRef.current.timers[taskId].elapsedTime = elapsed;
+            setTimerUpdateKey(k => k + 1);
+
+            if (taskId === taskDetails?._id) {
+              setTimerState(prev => ({
+                ...prev,
+                elapsedTime: elapsed
+              }));
+            }
+
+            // if (isEstimatedTimeExceeded(elapsed, taskDetails)) {
+            //   stopTimer(taskId, true);
+            // }
+          }, 1000);
+        } else {
+          // Not active: show accumulated total only
+          if (globalTimerRef.current.intervals[taskId]) {
+            clearInterval(globalTimerRef.current.intervals[taskId]);
+            delete globalTimerRef.current.intervals[taskId];
+          }
+
+          globalTimerRef.current.timers[taskId].elapsedTime = baseSeconds;
+          globalTimerRef.current.timers[taskId].isRunning = false;
+          globalTimerRef.current.timers[taskId].startTime = null;
+          globalTimerRef.current.timers[taskId].baseSeconds = baseSeconds;
+
+          if (globalTimerRef.current.activeTaskId === taskId) {
+            globalTimerRef.current.activeTaskId = null;
+          }
+
+          if (taskId === taskDetails?._id) {
+            setTimerState(prev => ({
+              ...prev,
+              isRunning: false,
+              elapsedTime: baseSeconds,
+              currentTaskId: null
+            }));
+          }
+        }
+      } else {
+        console.log('No timer data found for task:', taskId);
+        // Initialize empty timer state
+        if (!globalTimerRef.current.timers[taskId]) {
+          globalTimerRef.current.timers[taskId] = {
+            elapsedTime: 0,
+            isRunning: false,
+            startTime: null
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching timer state:', error);
+      // Initialize empty timer state on error
+      if (!globalTimerRef.current.timers[taskId]) {
+        globalTimerRef.current.timers[taskId] = {
+          elapsedTime: 0,
+          isRunning: false,
+          startTime: null
+        };
+      }
+    }
+  };
+
+  // New function to handle task status change
+  const handleTaskStatusChange = (taskId, newStatusId, newStatusTitle) => {
+    // Check if the task had a running timer and new status is not "In Progress"
+    const wasTimerRunning = globalTimerRef.current.activeTaskId === taskId;
+    const isNewStatusInProgress = newStatusTitle?.toLowerCase().replace(/\s+/g, '') === 'inprogress' ||
+      newStatusTitle?.toLowerCase().replace(/\s+/g, '') === 'progress' ||
+      newStatusTitle?.toLowerCase().replace(/\s+/g, '') === 'in progress' ||
+      newStatusTitle === "In Progress";
+    console.log("🚀 ~ handleTaskStatusChange ~ isNewStatusInProgress:", isNewStatusInProgress)
+
+    if (wasTimerRunning && !isNewStatusInProgress) {
+      console.log(`Task status changed from "In Progress" to "${newStatusTitle}". Stopping timer.`);
+      stopTimer(taskId, false);
+    }
+  };
+  function getAssigneesByTaskId(taskLists, taskId) {
+    for (const list of taskLists) {
+      const task = list.tasks.find(t => t._id === taskId);
+      if (task) {
+        return task.assignees || [];
+      }
+    }
+    return []; // not found
+  }
+  // Enhanced handleTaskStatusClick function
+  const handleTaskStatusClickFor = (statusId, taskId) => {
+    // Find the new status details
+    const newStatus = projectWorkflowStage.find(stage => stage._id === statusId);
+    // const taskData = tasks.find(t => t._id === taskId)
+    if (newStatus) {
+      const assignees = getAssigneesByTaskId(tasks, taskId)
+      // Handle timer logic before updating status
+      handleTaskStatusChange(taskId, statusId, newStatus.title, assignees);
+      stopMultipleTimer(taskId, assignees)
+      // Update the task status (your existing logic)
+      // setSelectedTaskStatusTitle(newStatus.title);
+      setIsPopoverVisible(false);
+
+      // Call your existing API to update task status
+      // updateTaskStatus(taskId, statusId);
+    }
+  };
+
+  // Function to check if timer should be visible for current task
+  const shouldShowTimer = (task) => {
+    if (!isTaskInProgress(task)) {
+      return false;
+    }
+
+    // const currentElapsed = globalTimerRef.current.timers[task?._id]?.elapsedTime || 0;
+    // if (isEstimatedTimeExceeded(currentElapsed, task)) {
+    //   return false;
+    // }
+
+    return true;
+  };
+
+  // Enhanced function to get all running timers (for debugging/monitoring)
+  const getAllRunningTimers = () => {
+    const runningTimers = [];
+    Object.entries(globalTimerRef.current.timers).forEach(([taskId, timerData]) => {
+      if (timerData.isRunning) {
+        runningTimers.push({
+          taskId,
+          elapsedTime: timerData.elapsedTime,
+          isActive: globalTimerRef.current.activeTaskId === taskId
+        });
+      }
+    });
+    return runningTimers;
+  };
+
+  // Function to stop all timers (useful for cleanup or when user logs out)
+  const stopAllTimers = () => {
+    Object.keys(globalTimerRef.current.intervals).forEach(taskId => {
+      stopTimer(taskId, false);
+    });
+  };
+
+
+
+  // Function to get current timer state for any task (for display in task cards)
+  const getTaskTimerState = (taskId) => {
+    const taskTimer = globalTimerRef.current.timers[taskId];
+    const isActive = globalTimerRef.current.activeTaskId === taskId;
+
+    return {
+      isRunning: isActive && taskTimer?.isRunning,
+      elapsedTime: taskTimer?.elapsedTime || 0,
+      isActive
+    };
+  };
 
   const handleCancelLoggedTime = () => {
     setVisibleTime(false);
@@ -303,8 +921,12 @@ const TaskList = ({
     }
   };
   const isDisabled =
-  taskDetails?.task_status?.isDefault ||
-  (projectDetails.projectHoursExceeded && !getRoles(["Client"]));
+    taskDetails?.task_status?.isDefault ||
+    (projectDetails.projectHoursExceeded && !getRoles(["Client"])) || getRoles(["User"]);
+
+
+    const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"]) 
+
   return (
     <>
       <div className="container project-task-section">
@@ -317,7 +939,11 @@ const TaskList = ({
             onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
             onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
+           
+
+
           >
+            {console.log(boardData, "boardData")}
             <section className="drag_container">
               <div className="container project-task-list">
                 <div className="drag_column">
@@ -365,7 +991,7 @@ const TaskList = ({
                               0,
                               sliceStates[boardData.workflowStatus._id]
                             ).length -
-                              1;
+                            1;
                           return (
                             <>
                               <div
@@ -377,13 +1003,13 @@ const TaskList = ({
                                 onDragEnd={(e) => onDragEnd(e)}
                                 ref={
                                   isLastTask &&
-                                  boardData.tasks.length >
+                                    boardData.tasks.length >
                                     sliceStates[boardData.workflowStatus._id]
                                     ? (node) =>
-                                        lastTaskElementRef(
-                                          node,
-                                          boardData.workflowStatus._id
-                                        )
+                                      lastTaskElementRef(
+                                        node,
+                                        boardData.workflowStatus._id
+                                      )
                                     : null
                                 }
                               >
@@ -399,7 +1025,7 @@ const TaskList = ({
                                   style={{
                                     background:
                                       boardData.workflowStatus.title ==
-                                        "Done" && "#cffdcf",
+                                      "Done" && "#cffdcf",
                                   }}
                                 >
                                   <div
@@ -411,13 +1037,13 @@ const TaskList = ({
                                       style={{
                                         color:
                                           boardData.workflowStatus.title ==
-                                            "Done" && "green",
+                                          "Done" && "green",
                                         "-webkit-text-fill-color":
                                           boardData.workflowStatus.title ==
-                                            "Done" && "green",
+                                          "Done" && "green",
                                         textDecoration:
                                           boardData.workflowStatus.title ==
-                                            "Done" && "line-through",
+                                          "Done" && "line-through",
                                       }}
                                     >
                                       {task.title}
@@ -465,7 +1091,7 @@ const TaskList = ({
                                     style={{
                                       borderBottom:
                                         boardData.workflowStatus.title ==
-                                          "Done" && "1px solid green",
+                                        "Done" && "1px solid green",
                                     }}
                                   >
                                     <div className="assignee-name">
@@ -495,7 +1121,7 @@ const TaskList = ({
                                         disabled={
                                           !getRoles(["Admin"]) ||
                                           boardData.workflowStatus.title ===
-                                            "Done"
+                                          "Done"
                                         }
                                       ></Button>
                                     </div>
@@ -503,23 +1129,25 @@ const TaskList = ({
 
                                   {hasPermission(["view_timesheet"]) && (
                                     <div className="assignee-name">
-                                      {((task?.total_logged_hours !== "" &&
-                                        parseInt(task?.total_logged_hours) >
+                                      {(
+                                        (task?.total_logged_hours !== "" &&
+                                          parseInt(task?.total_logged_hours) >
                                           0) ||
                                         (task?.total_logged_minutes !== "" &&
                                           parseInt(task?.total_logged_minutes) >
-                                            0) ||
+                                          0) ||
                                         (task?.estimated_hours !== "" &&
                                           parseInt(task?.estimated_hours) >
-                                            0) ||
+                                          0) ||
                                         (task?.estimated_minutes !== "" &&
                                           parseInt(task?.estimated_minutes) >
-                                            0)) && (
-                                        <div className="assignee-task-time">
-                                          <i className="fi fi-rr-clock"></i>
-                                          <p>Logged Time</p>
-                                        </div>
-                                      )}
+                                          0)) && (
+                                          <div className="assignee-task-time">
+                                            <i className="fi fi-rr-clock"></i>
+                                            <p>Logged Time</p>
+                                          </div>
+                                        )}
+                                      {console.log(task, "tasktask")}
                                       <div className="task-time">
                                         <Tooltip
                                           placement="topLeft"
@@ -527,8 +1155,7 @@ const TaskList = ({
                                           arrow={false}
                                         >
                                           {task?.total_logged_hours !== "" &&
-                                          parseInt(task?.total_logged_hours) >
-                                            0 ? (
+                                            parseInt(task?.total_logged_hours) > 0 ? (
                                             <span>
                                               {task?.total_logged_hours}h{" "}
                                             </span>
@@ -536,23 +1163,26 @@ const TaskList = ({
                                             ""
                                           )}
                                           {task?.total_logged_minutes !== "" &&
-                                          parseInt(task?.total_logged_minutes) >
-                                            0 ? (
+                                            parseInt(task?.total_logged_minutes) > 0 ? (
                                             <span>
                                               {task?.total_logged_minutes}m{" "}
                                             </span>
                                           ) : (
                                             ""
                                           )}
-                                          {(parseInt(task?.total_logged_hours) >
-                                            0 ||
-                                            parseInt(
-                                              task?.total_logged_minutes
-                                            ) > 0) &&
-                                          (parseInt(task?.estimated_hours) >
-                                            0 ||
-                                            parseInt(task?.estimated_minutes) >
-                                              0)
+                                          {task?.total_logged_seconds !== "" &&
+                                            parseInt(task?.total_logged_seconds) > 0 ? (
+                                            <span>
+                                              {task?.total_logged_seconds}s{" "}
+                                            </span>
+                                          ) : (
+                                            ""
+                                          )}
+                                          {(parseInt(task?.total_logged_hours) > 0 ||
+                                            parseInt(task?.total_logged_minutes) > 0 ||
+                                            parseInt(task?.total_logged_seconds) > 0) &&
+                                            (parseInt(task?.estimated_hours) > 0 ||
+                                              parseInt(task?.estimated_minutes) > 0)
                                             ? " / "
                                             : ""}
                                         </Tooltip>
@@ -562,7 +1192,7 @@ const TaskList = ({
                                           arrow={false}
                                         >
                                           {task?.estimated_hours !== "" &&
-                                          parseInt(task?.estimated_hours) >
+                                            parseInt(task?.estimated_hours) >
                                             0 ? (
                                             <span>
                                               {task?.estimated_hours}h{" "}
@@ -571,7 +1201,7 @@ const TaskList = ({
                                             ""
                                           )}
                                           {task?.estimated_minutes !== "" &&
-                                          parseInt(task?.estimated_minutes) >
+                                            parseInt(task?.estimated_minutes) >
                                             0 ? (
                                             <span>
                                               {task?.estimated_minutes}m{" "}
@@ -597,13 +1227,13 @@ const TaskList = ({
                                           {task.comments}{" "}
                                           {(taskDrafts[task._id] ||
                                             task.hasDraft) && (
-                                            <span
-                                              className="draft-indicator"
-                                              style={{ color: "#ff4d4f" }}
-                                            >
-                                              Draft
-                                            </span>
-                                          )}
+                                              <span
+                                                className="draft-indicator"
+                                                style={{ color: "#ff4d4f" }}
+                                              >
+                                                Draft
+                                              </span>
+                                            )}
                                         </div>
                                       </Tooltip>
 
@@ -743,27 +1373,27 @@ const TaskList = ({
                                         {hasPermission(
                                           ["task_edit"] && ["manage_people"]
                                         ) && (
-                                          <Menu.Item
-                                            onClick={() => {
-                                              setTaskId(task._id);
-                                              setManagePeople(true);
+                                            <Menu.Item
+                                              onClick={() => {
+                                                setTaskId(task._id);
+                                                setManagePeople(true);
 
-                                              managePeopleForm.setFieldsValue({
-                                                assignees:
-                                                  detailClientSubs?.assignees?.map(
-                                                    (item) => item._id
-                                                  ),
-                                                clients:
-                                                  detailClientSubs?.pms_clients?.map(
-                                                    (item) => item._id
-                                                  ),
-                                              });
-                                            }}
-                                          >
-                                            <i className="fi fi-rr-users"></i>{" "}
-                                            Manage People
-                                          </Menu.Item>
-                                        )}
+                                                managePeopleForm.setFieldsValue({
+                                                  assignees:
+                                                    detailClientSubs?.assignees?.map(
+                                                      (item) => item._id
+                                                    ),
+                                                  clients:
+                                                    detailClientSubs?.pms_clients?.map(
+                                                      (item) => item._id
+                                                    ),
+                                                });
+                                              }}
+                                            >
+                                              <i className="fi fi-rr-users"></i>{" "}
+                                              Manage People
+                                            </Menu.Item>
+                                          )}
                                       </Menu>
                                     }
                                     trigger={["click"]}
@@ -1066,9 +1696,10 @@ const TaskList = ({
                                 }}
                               ></div>
                               <div
-                                onClick={() =>
-                                  handleTaskStatusClick(item._id, taskId)
-                                }
+                                onClick={() => {
+                                  handleTaskStatusClick(item._id, taskId);
+                                  handleTaskStatusClickFor(item._id, taskId);
+                                }}
                               >
                                 {item.title}
                               </div>
@@ -1095,44 +1726,212 @@ const TaskList = ({
 
                 <span>{taskDetails?.taskId}</span>
               </div>
-              <div className="task-editbtn">
-                {hasPermission(["task_edit"]) &&
-                  ((projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
-                    <Tooltip title="Project hours exceeded" placement="top">
-                      <EditOutlined
-                        style={{ color: "gray", cursor: "not-allowed" }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      />
-                    </Tooltip>
-                  ) : (
-                    <EditOutlined
-                      style={{ color: "green" }}
-                      onClick={() => {
-                        getTaskByIdDetails(taskDetails?._id, {
-                          editFlag: true,
-                          boardID: tempBoard?.workflowStatus._id,
-                        });
-                      }}
-                    />
-                  ))}
+              <div className="task-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ flex: 1 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* Only show timer for In Progress tasks */}
+                  {isDisabledTrackManually && (
+                  isTaskInProgress(taskDetails)
+                    && (
+                      <Popover
 
-                {hasPermission(["task_delete"]) && (
-                  <Popconfirm
-                    title="Do you want to delete?"
-                    onConfirm={() => handleTaskDelete(taskDetails._id)}
-                    okText="Yes"
-                    cancelText="No"
-                    placement="bottom"
-                  >
-                    <Button danger>
-                      <i className="fi fi-rs-trash"></i>
-                      {/* Delete */}
-                    </Button>
-                  </Popconfirm>
-                )}
+                        content={
+                          <div style={{ minWidth: '280px', padding: '8px' }}>
+                            {/* Header Section */}
+                            <div style={{
+                              textAlign: 'center',
+                              paddingBottom: '16px',
+                              borderBottom: '1px solid #f0f0f0',
+                              marginBottom: '16px'
+                            }}>
+                              <div style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#262626',
+                                marginBottom: '8px'
+                              }}>
+                                Time Tracker
+                              </div>
+                              <div style={{
+                                fontSize: '32px',
+                                fontWeight: 'bold',
+                                color: (() => {
+                                  const displayInfo = getTimerDisplayInfo();
+                                  if (displayInfo.isActive) return '#52c41a';
+                                  return '#1890ff';
+                                })(),
+                                fontFamily: 'monospace',
+                                letterSpacing: '1px'
+                              }}>
+                                {getTimerDisplayInfo().timeString}
+                              </div>
+                            </div>
+
+
+
+                            {/* Action Buttons */}
+                            <div style={{
+                              display: 'flex',
+                              gap: '8px',
+                              justifyContent: 'center',
+                              marginBottom: '12px'
+                            }}>
+                              {(() => {
+                                const displayInfo = getTimerDisplayInfo();
+
+                                if (displayInfo.canStart) {
+                                  return (
+                                    <Button
+                                      type="primary"
+                                      icon={<PlayCircleOutlined />}
+                                      onClick={() => startTimer(taskDetails?._id)}
+                                      style={{
+                                        borderRadius: '6px',
+                                        fontWeight: '500'
+                                      }}
+                                    >
+                                      Start Timer
+                                    </Button>
+                                  );
+                                }
+
+                                if (displayInfo.canStop) {
+                                  return (
+                                    <Button
+                                      danger
+                                      icon={<PauseCircleOutlined />}
+                                      onClick={() => stopTimer(taskDetails?._id)}
+                                      style={{
+                                        borderRadius: '6px',
+                                        fontWeight: '500'
+                                      }}
+                                    >
+                                      Stop Timer
+                                    </Button>
+                                  );
+                                }
+
+                                return null;
+                              })()}
+                            </div>
+
+                            {/* Warning Messages */}
+                            {globalTimerRef.current.activeTaskId &&
+                              globalTimerRef.current.activeTaskId !== taskDetails?._id &&
+                              shouldShowTimer(taskDetails) && (
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: '#fa8c16',
+                                  padding: '8px 12px',
+                                  backgroundColor: '#fffbe6',
+                                  borderRadius: '4px',
+                                  border: '1px solid #ffe58f',
+                                  textAlign: 'center'
+                                }}>
+                                  Another timer is running and will be stopped
+                                </div>
+                              )}
+                          </div>
+                        }
+                        title={null}
+                        trigger="click"
+                        visible={timerState.isPopoverVisible}
+                        onVisibleChange={(visible) => setTimerState(prev => ({ ...prev, isPopoverVisible: visible }))}
+                        placement="bottomRight"
+                      >
+                        <Button
+                          style={{
+                            marginRight: '10px',
+                            border: (() => {
+                              const displayInfo = getTimerDisplayInfo();
+                              // if (displayInfo.isExceeded) return '2px solid #ff4d4f';
+                              if (displayInfo.isActive) return '2px solid #52c41a';
+                              // if (displayInfo.isNearLimit) return '2px solid #fa8c16';
+                              return '1px solid #d9d9d9';
+                            })(),
+                            backgroundColor: (() => {
+                              const displayInfo = getTimerDisplayInfo();
+                              // if (displayInfo.isExceeded) return '#fff2f0';
+                              if (displayInfo.isActive) return '#f6ffed';
+                              // if (displayInfo.isNearLimit) return '#fffbe6';
+                              return 'white';
+                            })()
+                          }}
+                        >
+                          <ClockCircleOutlined
+                            style={{
+                              color: (() => {
+                                const displayInfo = getTimerDisplayInfo();
+                                // if (displayInfo.isExceeded) return '#ff4d4f';
+                                if (displayInfo.isActive) return '#52c41a';
+                                // if (displayInfo.isNearLimit) return '#fa8c16';
+                                return '#1890ff';
+                              })(),
+                              fontSize: '16px'
+                            }}
+                          />
+                          {/* {(() => {
+                        const displayInfo = getTimerDisplayInfo();
+                        return displayInfo.isActive && displayInfo.timeString !== '00:00:00';
+                      })() && ( */}
+                          <span style={{
+                            marginLeft: '5px',
+                            fontSize: '12px',
+                            color: (() => {
+                              const displayInfo = getTimerDisplayInfo();
+                              // if (displayInfo.isExceeded) return '#ff4d4f';
+                              // if (displayInfo.isNearLimit) return '#fa8c16';
+                              return 'inherit';
+                            })()
+                          }}>
+                            {(() => getTimerDisplayInfo().timeString)()}
+                          </span>
+                          {/* )} */}
+                        </Button>
+                      </Popover>
+                    )
+                    )}
+
+                  <div className="task-editbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {hasPermission(["task_edit"]) &&
+                      ((projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
+                        <Tooltip title="Project hours exceeded" placement="top">
+                          <EditOutlined
+                            style={{ color: "gray", cursor: "not-allowed" }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          />
+                        </Tooltip>
+                      ) : (
+                        <EditOutlined
+                          style={{ color: "green" }}
+                          onClick={() => {
+                            getTaskByIdDetails(taskDetails?._id, {
+                              editFlag: true,
+                              boardID: tempBoard?.workflowStatus._id,
+                            });
+                          }}
+                        />
+                      ))}
+
+                    {hasPermission(["task_delete"]) && (
+                      <Popconfirm
+                        title="Do you want to delete?"
+                        onConfirm={() => handleTaskDelete(taskDetails._id)}
+                        okText="Yes"
+                        cancelText="No"
+                        placement="bottom"
+                      >
+                        <Button danger>
+                          <i className="fi fi-rs-trash"></i>
+                          {/* Delete */}
+                        </Button>
+                      </Popconfirm>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1313,7 +2112,7 @@ const TaskList = ({
                           <div className="flex-table">
                             <i className="fi fi-rr-calendar-day"></i>
                             {hasPermission(["task_edit"]) &&
-                            isEditable.start_date ? (
+                              isEditable.start_date ? (
                               <DatePicker
                                 value={
                                   viewTask?.start_date &&
@@ -1346,7 +2145,7 @@ const TaskList = ({
                           <div className="flex-table">
                             <i className="fi fi-rr-calendar-day"></i>
                             {hasPermission(["task_edit"]) &&
-                            isEditable.end_date ? (
+                              isEditable.end_date ? (
                               <DatePicker
                                 value={
                                   viewTask?.due_date &&
@@ -1359,7 +2158,7 @@ const TaskList = ({
                                 disabledDate={(current) =>
                                   current &&
                                   current <
-                                    dayjs(viewTask?.start_date, "YYYY-MM-DD")
+                                  dayjs(viewTask?.start_date, "YYYY-MM-DD")
                                 }
                                 allowClear={false}
                               />
@@ -1390,7 +2189,7 @@ const TaskList = ({
                         </div>
                         <div className="table-right">
                           {hasPermission(["task_edit"]) &&
-                          isEditable.taskLabels ? (
+                            isEditable.taskLabels ? (
                             <Select
                               value={viewTask?.taskLabels[0]?.title}
                               placeholder="Select labels"
@@ -1432,15 +2231,15 @@ const TaskList = ({
                         </div>
                         <div className="table-right">
                           {hasPermission(["task_edit"]) &&
-                          isEditable.assignees ? (
+                            isEditable.assignees ? (
                             <MultiSelect
                               onSearch={handleSearch}
                               onChange={handleSelectedItemsChange}
                               values={
                                 viewTask
                                   ? viewTask?.assignees?.map(
-                                      (item) => item?._id
-                                    )
+                                    (item) => item?._id
+                                  )
                                   : []
                               }
                               listData={subscribersList}
@@ -1496,7 +2295,7 @@ const TaskList = ({
                         <div className="table-right">
                           <div className="flex-table">
                             {hasPermission(["task_edit"]) &&
-                            isEditable.estimated_time ? (
+                              isEditable.estimated_time ? (
                               <div className="estimated_time_input_container">
                                 <div className="hours_min_container">
                                   <Tooltip title="Add hours and press enter key">
@@ -1511,9 +2310,8 @@ const TaskList = ({
                                           value
                                         );
                                       }}
-                                      className={`hours_input ${
-                                        estHrsError && "error-border"
-                                      }`}
+                                      className={`hours_input ${estHrsError && "error-border"
+                                        }`}
                                       placeholder="Hours"
                                     />
                                   </Tooltip>
@@ -1528,9 +2326,8 @@ const TaskList = ({
                                       max={59}
                                       type="number"
                                       defaultValue={viewTask.estimated_minutes}
-                                      className={`hours_input ${
-                                        estMinsError && "error-border"
-                                      }`}
+                                      className={`hours_input ${estMinsError && "error-border"
+                                        }`}
                                       placeholder="Minutes"
                                       onPressEnter={(e) => {
                                         const value = e.target.value;
@@ -1559,27 +2356,28 @@ const TaskList = ({
                                       <>
                                         <div
                                           onClick={
-                                            isDisabled ? undefined : popOver
+                                            isDisabledTrackManually ? undefined : popOver
                                           }
                                           style={{
-                                            cursor: isDisabled
+                                            cursor: isDisabledTrackManually
                                               ? "not-allowed"
                                               : "pointer",
-                                            opacity: isDisabled ? 0.5 : 1,
-                                            pointerEvents: isDisabled
+                                            opacity: isDisabledTrackManually ? 0.5 : 1,
+                                            pointerEvents: isDisabledTrackManually
                                               ? "none"
                                               : "auto",
                                           }}
                                         >
-                                          <p>
+                                          <p >
                                             <EditOutlined
                                               style={{
                                                 marginRight: "20px",
                                                 marginBottom: "10px",
-                                                color: isDisabled
+                                                color: isDisabledTrackManually
                                                   ? "gray"
                                                   : "green",
                                               }}
+
                                             />
                                             Track Manually
                                           </p>
@@ -1615,11 +2413,11 @@ const TaskList = ({
                                       taskDetails.time,
                                       `${taskDetails?.estimated_hours}:${taskDetails?.estimated_minutes}`
                                     ) && (
-                                      <i
-                                        style={{ color: "red" }}
-                                        className="fi fi-ss-triangle-warning"
-                                      ></i>
-                                    )}
+                                        <i
+                                          style={{ color: "red" }}
+                                          className="fi fi-ss-triangle-warning"
+                                        ></i>
+                                      )}
                                     <p className="logged-time">
                                       <span>Logged Time : </span>
                                       {taskDetails?.time} /{" "}
@@ -1879,7 +2677,7 @@ const TaskList = ({
                           <div className="table-left">
                             <div className="flex-table">
                               {moment(value?.due_date).format("DD-MMM-YYYY") ==
-                              "Invalid date"
+                                "Invalid date"
                                 ? "-"
                                 : moment(value?.due_date).format("DD-MMM-YYYY")}
                             </div>
@@ -2038,9 +2836,9 @@ const TaskList = ({
                                           >
                                             {file.name.length > 15
                                               ? `${file.name.slice(
-                                                  0,
-                                                  15
-                                                )}.....${file.file_type}`
+                                                0,
+                                                15
+                                              )}.....${file.file_type}`
                                               : file.name + file.file_type}
                                           </a>
                                         </p>
@@ -2235,7 +3033,7 @@ const TaskList = ({
                           <div className="table-left">
                             <div className="flex-table">
                               {moment(value?.due_date).format("DD-MMM-YYYY") ==
-                              "Invalid date"
+                                "Invalid date"
                                 ? "-"
                                 : moment(value?.due_date).format("DD-MMM-YYYY")}
                             </div>
@@ -2321,14 +3119,14 @@ const TaskList = ({
                                         item?.updated_key === "due_date"
                                         ? item?.pervious_value
                                           ? updateKey +
-                                            " : " +
-                                            moment(item.pervious_value).format(
-                                              "DD MMM, YY"
-                                            )
+                                          " : " +
+                                          moment(item.pervious_value).format(
+                                            "DD MMM, YY"
+                                          )
                                           : updateKey + " : " + "-"
                                         : updateKey +
-                                          " : " +
-                                          item.pervious_value
+                                        " : " +
+                                        item.pervious_value
                                       : updateKey + " : " + "-"}
                                   </h5>
                                 </div>
@@ -2342,10 +3140,10 @@ const TaskList = ({
                                         item?.updated_key === "due_date"
                                         ? item?.new_value
                                           ? updateKey +
-                                            " : " +
-                                            moment(item.new_value).format(
-                                              "DD MMM, YY"
-                                            )
+                                          " : " +
+                                          moment(item.new_value).format(
+                                            "DD MMM, YY"
+                                          )
                                           : updateKey + " : " + "-"
                                         : updateKey + " : " + item.new_value
                                       : updateKey + " : " + "-"}
@@ -2455,3 +3253,4 @@ TaskList.propTypes = {
 export default React.memo(TaskList, (prevProps, nextProps) => {
   return isEqual(prevProps.tasks, nextProps.tasks);
 });
+

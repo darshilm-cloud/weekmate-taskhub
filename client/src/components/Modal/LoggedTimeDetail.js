@@ -25,6 +25,7 @@ import { useDispatch } from "react-redux";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import dayjs from "dayjs";
+import { getRoles } from "../../util/hasPermission";
 
 const LoggedTimeDetail = ({
   onCancel,
@@ -54,6 +55,9 @@ const LoggedTimeDetail = ({
         "D MMMM YYYY"
       )
     : "";
+
+        const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"]) 
+    
 
   const columns = [
     {
@@ -97,8 +101,8 @@ const LoggedTimeDetail = ({
       render: (text, record) => {
         return (
           <div>
-            <span style={{ textTransform: "capitalize" }}>
-              {record?.logged_hours}h {record?.logged_minutes}m
+ <span style={{ textTransform: "capitalize" }}>
+              {record?.logged_hours}h {record?.logged_minutes}m {record?.logged_seconds ?record?.logged_seconds : 0}s
             </span>
           </div>
         );
@@ -118,6 +122,7 @@ const LoggedTimeDetail = ({
               gap: "20px",
             }}
           >
+           { isDisabledTrackManually &&(
             <EditOutlined
               style={{ color: "green" }}
               onClick={() => {
@@ -127,6 +132,7 @@ const LoggedTimeDetail = ({
                 setVisibleTime(false);
               }}
             />
+          )}
 
             <Popconfirm
               icon={
