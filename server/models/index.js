@@ -44,6 +44,7 @@ let projectTabsSetting = require("./projectTabsSettings");
 let loggedhoursComents = require("./hoursLoggedComments");
 let hoursApprove = require("./hoursApprove");
 let totaltaskhourslogged = require("./totaltaskhourslogged");
+let taskTimers = require("./taskTimers");
 // let holidays = require("./holidays");
 let complaints = require("./complaints");
 let complaints_status = require("./complaints_status");
@@ -100,6 +101,7 @@ module.exports = {
   hoursApprove,
   empInOut,
   totaltaskhourslogged,
+  taskTimers,
   // holidays,
   complaints,
   complaints_status,
