@@ -1167,11 +1167,22 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                                 {
                                   $toDouble: "$$this.logged_hours" // Convert string to double
                                 },
-                                60
-                              ] // Convert hours to minutes
+                                3600 // Convert hours to seconds (60 * 60)
+                              ]
                             },
                             {
-                              $toDouble: "$$this.logged_minutes" // Convert string to double
+                              $multiply: [
+                                {
+                                  $toDouble: "$$this.logged_minutes" // Convert string to double
+                                },
+                                60 // Convert minutes to seconds
+                              ]
+                            },
+                            {
+                              $ifNull: [
+                                { $toDouble: "$$this.logged_seconds" },
+                                0 // Default to 0 if logged_seconds is null/undefined
+                              ]
                             }
                           ]
                         }
@@ -1226,10 +1237,15 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 total_logged_hours: {
                   // only hours
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60]
+                    $divide: ["$totalLoggedTime", 3600]
                   }
                 },
                 total_logged_minutes: {
+                  $floor: {
+                    $divide: [{ $mod: ["$totalLoggedTime", 3600] }, 60]
+                  }
+                },
+                total_logged_seconds: {
                   $mod: ["$totalLoggedTime", 60]
                 }
                 // totalLoggedTime: {

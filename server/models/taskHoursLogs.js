@@ -46,6 +46,10 @@ const TaskHoursLogsSchema = new mongoose.Schema({
     type: String,
     default: "00",
   },
+  logged_seconds: {
+    type: String,
+    default: "00",
+  },
   logged_date: { type: Date, required: true },
   isManuallyAdded: {
     type: Boolean,

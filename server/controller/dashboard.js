@@ -662,6 +662,7 @@ exports.getMyLoggedHours = async (req, res) => {
           descriptions: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: 1,
           logged_date: 1,
           createdBy: {
             _id: 1,
@@ -686,6 +687,7 @@ exports.getMyLoggedHours = async (req, res) => {
           data: { $push: "$$ROOT" },
           totalHours: { $sum: { $toInt: "$logged_hours" } }, // Convert logged_hours to integer and sum
           totalMinutes: { $sum: { $toInt: "$logged_minutes" } }, // Convert logged_minutes to integer and sum
+          totalSeconds: { $sum: { $toInt: { $ifNull: ["$logged_seconds", 0] } } }, // Convert logged_seconds to integer and sum
         },
       },
       {
@@ -750,6 +752,19 @@ exports.getMyLoggedHours = async (req, res) => {
                 },
               },
               { $toInt: "$totalMinutes" },
+            ],
+          },
+          total_seconds: {
+            $add: [
+              {
+                $cond: {
+                  if: { $eq: [{ $type: "$totalHours" }, "string"] },
+                  then: { $multiply: [{ $toInt: "$totalHours" }, 3600] },
+                  else: { $multiply: ["$totalHours", 3600] },
+                },
+              },
+              { $multiply: [{ $toInt: "$totalMinutes" }, 60] },
+              { $toInt: { $ifNull: ["$totalSeconds", 0] } },
             ],
           },
         },

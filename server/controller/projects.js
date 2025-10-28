@@ -1816,6 +1816,11 @@ exports.getProjectOverviewData = async (req, res) => {
                   $sum: {
                     $toInt: "$logged_minutes"
                   }
+                },
+                totalSeconds: {
+                  $sum: {
+                    $toInt: { $ifNull: ["$logged_seconds", 0] }
+                  }
                 }
               }
             },
@@ -1835,6 +1840,29 @@ exports.getProjectOverviewData = async (req, res) => {
                       $toDouble: "$totalMinutes"
                     }
                   ]
+                },
+                time_in_seconds: {
+                  $add: [
+                    {
+                      $multiply: [
+                        {
+                          $toDouble: "$totalHours"
+                        },
+                        3600
+                      ]
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $toDouble: "$totalMinutes"
+                        },
+                        60
+                      ]
+                    },
+                    {
+                      $toDouble: { $ifNull: ["$totalSeconds", 0] }
+                    }
+                  ]
                 }
               }
             },
@@ -1852,6 +1880,9 @@ exports.getProjectOverviewData = async (req, res) => {
                       },
                       total_logged_minutes: {
                         $mod: ["$time_in_mins", 60]
+                      },
+                      total_logged_seconds: {
+                        $mod: ["$time_in_seconds", 60]
                       }
                     }
                   }
@@ -1873,7 +1904,8 @@ exports.getProjectOverviewData = async (req, res) => {
                         ]
                       },
                       total_logged_hours: { $literal: 0 },
-                      total_logged_minutes: { $literal: 0 }
+                      total_logged_minutes: { $literal: 0 },
+                      total_logged_seconds: { $literal: 0 }
                     }
                   },
                   { $unwind: "$logged_status" }
@@ -1913,11 +1945,19 @@ exports.getProjectOverviewData = async (req, res) => {
                           {
                             $toDouble: "$$this.total_logged_hours"
                           },
+                          3600
+                        ]
+                      },
+                      {
+                        $multiply: [
+                          {
+                            $toDouble: "$$this.total_logged_minutes"
+                          },
                           60
                         ]
                       },
                       {
-                        $toDouble: "$$this.total_logged_minutes"
+                        $toDouble: { $ifNull: ["$$this.total_logged_seconds", 0] }
                       }
                     ]
                   }
@@ -1998,21 +2038,34 @@ exports.getProjectOverviewData = async (req, res) => {
           ),
           logged_hours: "$task_hours.task_hours",
           total_logged_time: {
-            $concat: [
-              {
-                $toString: {
-                  $floor: {
-                    $divide: ["$totalLoggedTime", 60]
-                  }
-                }
+            $let: {
+              vars: {
+                hours: { $floor: { $divide: ["$totalLoggedTime", 3600] } },
+                minutes: { $floor: { $divide: [{ $mod: ["$totalLoggedTime", 3600] }, 60] } },
+                seconds: { $mod: ["$totalLoggedTime", 60] }
               },
-              ":",
-              {
-                $toString: {
-                  $mod: ["$totalLoggedTime", 60]
-                }
+              in: {
+                $concat: [
+                  { $toString: "$$hours" },
+                  ":",
+                  {
+                    $cond: [
+                      { $lt: ["$$minutes", 10] },
+                      { $concat: ["0", { $toString: "$$minutes" }] },
+                      { $toString: "$$minutes" }
+                    ]
+                  },
+                  ":",
+                  {
+                    $cond: [
+                      { $lt: ["$$seconds", 10] },
+                      { $concat: ["0", { $toString: "$$seconds" }] },
+                      { $toString: "$$seconds" }
+                    ]
+                  }
+                ]
               }
-            ]
+            }
           }
         }
       }
@@ -2186,19 +2239,19 @@ exports.getProjectsReports = async (req, res) => {
       );
     }
 
-    const cacheKey = generateCacheKey({...value,companyId});
+    // const cacheKey = generateCacheKey({...value,companyId});
 
-    const cached = getCache(cacheKey);
-    if (cached) {
-      const { data, metadata } = cached;
-      return successResponse(
-        res,
-        statusCode.SUCCESS,
-        messages.LISTING,
-        data,
-        metadata
-      );
-    }
+    // const cached = getCache(cacheKey);
+    // if (cached) {
+    //   const { data, metadata } = cached;
+    //   return successResponse(
+    //     res,
+    //     statusCode.SUCCESS,
+    //     messages.LISTING,
+    //     data,
+    //     metadata
+    //   );
+    // }
 
     const pagination = getPagination({
       pageLimit: value?.limit,
@@ -2366,6 +2419,11 @@ exports.getProjectsReports = async (req, res) => {
                   $sum: {
                     $toInt: "$logged_minutes"
                   }
+                },
+                totalSeconds: {
+                  $sum: {
+                    $toInt: { $ifNull: ["$logged_seconds", 0] }
+                  }
                 }
               }
             },
@@ -2385,6 +2443,29 @@ exports.getProjectsReports = async (req, res) => {
                       $toDouble: "$totalMinutes"
                     }
                   ]
+                },
+                time_in_seconds: {
+                  $add: [
+                    {
+                      $multiply: [
+                        {
+                          $toDouble: "$totalHours"
+                        },
+                        3600
+                      ]
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $toDouble: "$totalMinutes"
+                        },
+                        60
+                      ]
+                    },
+                    {
+                      $toDouble: { $ifNull: ["$totalSeconds", 0] }
+                    }
+                  ]
                 }
               }
             },
@@ -2402,6 +2483,9 @@ exports.getProjectsReports = async (req, res) => {
                       },
                       total_logged_minutes: {
                         $mod: ["$time_in_mins", 60]
+                      },
+                      total_logged_seconds: {
+                        $mod: ["$time_in_seconds", 60]
                       }
                     }
                   }
@@ -2423,7 +2507,8 @@ exports.getProjectsReports = async (req, res) => {
                         ]
                       },
                       total_logged_hours: { $literal: 0 },
-                      total_logged_minutes: { $literal: 0 }
+                      total_logged_minutes: { $literal: 0 },
+                      total_logged_seconds: { $literal: 0 }
                     }
                   },
                   { $unwind: "$logged_status" }
@@ -2464,11 +2549,19 @@ exports.getProjectsReports = async (req, res) => {
                           {
                             $toDouble: "$$this.total_logged_hours"
                           },
+                          3600
+                        ]
+                      },
+                      {
+                        $multiply: [
+                          {
+                            $toDouble: "$$this.total_logged_minutes"
+                          },
                           60
                         ]
                       },
                       {
-                        $toDouble: "$$this.total_logged_minutes"
+                        $toDouble: { $ifNull: ["$$this.total_logged_seconds", 0] }
                       }
                     ]
                   }
@@ -2511,21 +2604,39 @@ exports.getProjectsReports = async (req, res) => {
           logged_hours: "$task_hours.task_hours",
           ...(await getProjectDefaultSettingQuery("_id", true)),
           total_logged_time: {
-            $concat: [
-              {
-                $toString: {
-                  $floor: {
-                    $divide: ["$totalLoggedTime", 60]
-                  }
-                }
+            $let: {
+              vars: {
+                totalTime: { $ifNull: ["$totalLoggedTime", 0] },
+                hours: { $floor: { $divide: [{ $ifNull: ["$totalLoggedTime", 0] }, 3600] } },
+                minutes: { $floor: { $divide: [{ $mod: [{ $ifNull: ["$totalLoggedTime", 0] }, 3600] }, 60] } },
+                seconds: { $mod: [{ $ifNull: ["$totalLoggedTime", 0] }, 60] }
               },
-              ":",
-              {
-                $toString: {
-                  $mod: ["$totalLoggedTime", 60]
-                }
+              in: {
+                $concat: [
+                  { $toString: "$$hours" },
+                  ":",
+                  {
+                    $toString: {
+                      $cond: [
+                        { $lt: ["$$minutes", 10] },
+                        { $concat: ["0", { $toString: "$$minutes" }] },
+                        { $toString: "$$minutes" }
+                      ]
+                    }
+                  },
+                  ":",
+                  {
+                    $toString: {
+                      $cond: [
+                        { $lt: ["$$seconds", 10] },
+                        { $concat: ["0", { $toString: "$$seconds" }] },
+                        { $toString: "$$seconds" }
+                      ]
+                    }
+                  }
+                ]
               }
-            ]
+            }
           }
         }
       }
@@ -2685,7 +2796,7 @@ exports.getProjectsReports = async (req, res) => {
       )
     };
 
-    storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
+    // storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
 
     return successResponse(
       res,

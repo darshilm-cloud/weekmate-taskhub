@@ -420,6 +420,7 @@ exports.getProjectsTask = async (req, res) => {
                 descriptions: 1,
                 logged_hours: 1,
                 logged_minutes: 1,
+                logged_seconds: 1,
                 logged_status: 1,
                 createdBy: {
                   _id: 1,
@@ -642,11 +643,22 @@ exports.getProjectsTask = async (req, res) => {
                           {
                             $toDouble: "$$this.logged_hours" // Convert string to double
                           },
-                          60
-                        ] // Convert hours to minutes
+                          3600 // Convert hours to seconds (60 * 60)
+                        ]
                       },
                       {
-                        $toDouble: "$$this.logged_minutes" // Convert string to double
+                        $multiply: [
+                          {
+                            $toDouble: "$$this.logged_minutes" // Convert string to double
+                          },
+                          60 // Convert minutes to seconds
+                        ]
+                      },
+                      {
+                        $ifNull: [
+                          { $toDouble: "$$this.logged_seconds" },
+                          0 // Default to 0 if logged_seconds is null/undefined
+                        ]
                       }
                     ]
                   }

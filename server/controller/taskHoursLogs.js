@@ -286,6 +286,7 @@ exports.getTaskHoursLogs = async (req, res) => {
           descriptions: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           isManuallyAdded: 1,
           logged_status: 1
         }
@@ -575,6 +576,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
           loggedBy_img: { $ifNull: ["$createdBy.emp_img", ""] },
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           createdAt: 1,
           logged_date: {
             $dateToString: {
@@ -586,8 +588,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
           time: {
             $concat: [
               { $toString: "$logged_hours" },
-              "h",
-              " ",
+              "h ",
               {
                 $toString: {
                   $concat: [
@@ -600,7 +601,20 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
                   ]
                 }
               },
-              "m"
+              "m ",
+              {
+                $toString: {
+                  $concat: [
+                    {
+                      $toString: {
+                        $cond: [{ $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] }, "0", ""]
+                      }
+                    },
+                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
+                  ]
+                }
+              },
+              "s"
             ]
           },
           descriptions: 1,
@@ -1099,7 +1113,8 @@ exports.getTaskTotalHours = async (req, res) => {
           total_hours: {
             $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1]
           },
-          total_minutes: { $mod: ["$total_minutes", 60] }
+          total_minutes: { $mod: ["$total_minutes", 60] },
+          total_seconds: { $ifNull: ["$total_seconds", 0] }
         }
       },
       {
@@ -1440,6 +1455,7 @@ exports.getLoggedHoursData = async (loggedId) => {
           logged_date: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           totalLoggedTime: 1,
           total_logged_hours: {
             $floor: {
@@ -1790,6 +1806,7 @@ exports.exportTimesheetCSV = async (req, res) => {
           loggedBy: { $ifNull: ["$createdBy.full_name", ""] },
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           logged_date: {
             $dateToString: {
               format: "%d-%m-%Y",
@@ -1943,17 +1960,17 @@ exports.getTimesheetsReports = async (req, res) => {
     }
     const cacheKey = generateCacheKey({...value,decodedCompanyId});
 
-    const cached = getCache(cacheKey);
-    if (cached) {
-      const { data, metadata } = cached;
-      return successResponse(
-        res,
-        statusCode.SUCCESS,
-        messages.LISTING,
-        data,
-        metadata
-      );
-    }
+    // const cached = getCache(cacheKey);
+    // if (cached) {
+    //   const { data, metadata } = cached;
+    //   return successResponse(
+    //     res,
+    //     statusCode.SUCCESS,
+    //     messages.LISTING,
+    //     data,
+    //     metadata
+    //   );
+    // }
 
     const pagination = getPagination({
       pageLimit: value.limit,
@@ -2222,11 +2239,30 @@ exports.getTimesheetsReports = async (req, res) => {
           logged_date: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           logged_time: {
             $concat: [
               { $toString: "$logged_hours" },
               ":",
-              { $toString: "$logged_minutes" }
+              {
+                $toString: {
+                  $cond: [
+                    { $lt: ["$logged_minutes", 10] },
+                    { $concat: ["0", { $toString: "$logged_minutes" }] },
+                    { $toString: "$logged_minutes" }
+                  ]
+                }
+              },
+              ":",
+              {
+                $toString: {
+                  $cond: [
+                    { $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] },
+                    { $concat: ["0", { $toString: { $ifNull: ["$logged_seconds", 0] } }] },
+                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
+                  ]
+                }
+              }
             ]
           },
           // employeeDepartment: "$dept.sub_department_name",
@@ -2391,7 +2427,7 @@ exports.getTimesheetsReports = async (req, res) => {
         .slice(0, 9)
     };
 
-    storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
+    // storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
 
     return successResponse(
       res,
@@ -2590,6 +2626,7 @@ exports.getHoursData = async (req, res) => {
           email: { $ifNull: ["$createdBy.email", ""] },
           logged_hours: 1,
           logged_mins: "$logged_minutes",
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           createdAt: 1,
           date: {
             $dateToString: {
@@ -2601,8 +2638,7 @@ exports.getHoursData = async (req, res) => {
           time: {
             $concat: [
               { $toString: "$logged_hours" },
-              "h",
-              " ",
+              "h ",
               {
                 $toString: {
                   $concat: [
@@ -2615,7 +2651,20 @@ exports.getHoursData = async (req, res) => {
                   ]
                 }
               },
-              "m"
+              "m ",
+              {
+                $toString: {
+                  $concat: [
+                    {
+                      $toString: {
+                        $cond: [{ $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] }, "0", ""]
+                      }
+                    },
+                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
+                  ]
+                }
+              },
+              "s"
             ]
           },
           descriptions: 1,
@@ -2833,6 +2882,7 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
           },
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           createdAt: 1,
           descriptions: 1,
           projectDetails: {
@@ -3131,6 +3181,7 @@ exports.getMyLoggedHours = async (req, res) => {
           descriptions: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           logged_date: 1,
           projectDetails: {
             _id: 1,
@@ -3142,8 +3193,7 @@ exports.getMyLoggedHours = async (req, res) => {
           time: {
             $concat: [
               { $toString: "$logged_hours" },
-              "h",
-              " ",
+              "h ",
               {
                 $toString: {
                   $concat: [
@@ -3156,7 +3206,20 @@ exports.getMyLoggedHours = async (req, res) => {
                   ]
                 }
               },
-              "m"
+              "m ",
+              {
+                $toString: {
+                  $concat: [
+                    {
+                      $toString: {
+                        $cond: [{ $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] }, "0", ""]
+                      }
+                    },
+                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
+                  ]
+                }
+              },
+              "s"
             ]
           },
           createdBy: {
@@ -3180,7 +3243,8 @@ exports.getMyLoggedHours = async (req, res) => {
           },
           data: { $push: "$$ROOT" },
           totalHours: { $sum: { $toInt: "$logged_hours" } }, // Convert logged_hours to integer and sum
-          totalMinutes: { $sum: { $toInt: "$logged_minutes" } } // Convert logged_minutes to integer and sum
+          totalMinutes: { $sum: { $toInt: "$logged_minutes" } }, // Convert logged_minutes to integer and sum
+          totalSeconds: { $sum: { $toInt: { $ifNull: ["$logged_seconds", 0] } } } // Convert logged_seconds to integer and sum
         }
       },
       {
@@ -3222,6 +3286,19 @@ exports.getMyLoggedHours = async (req, res) => {
               },
               { $toInt: "$totalMinutes" }
             ]
+          },
+          total_seconds: {
+            $add: [
+              {
+                $cond: {
+                  if: { $eq: [{ $type: "$totalHours" }, "string"] },
+                  then: { $multiply: [{ $toInt: "$totalHours" }, 3600] },
+                  else: { $multiply: ["$totalHours", 3600] }
+                }
+              },
+              { $multiply: [{ $toInt: "$totalMinutes" }, 60] },
+              { $toInt: { $ifNull: ["$totalSeconds", 0] } }
+            ]
           }
         }
       },
@@ -3241,7 +3318,8 @@ exports.getMyLoggedHours = async (req, res) => {
           total_hours: {
             $divide: [{ $floor: { $divide: ["$total_minutes", 60] } }, 1]
           },
-          total_minutes: { $mod: ["$total_minutes", 60] }
+          total_minutes: { $mod: ["$total_minutes", 60] },
+          total_seconds: { $ifNull: ["$total_seconds", 0] }
         }
       },
 
@@ -3639,6 +3717,7 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
           descriptions: 1,
           logged_hours: 1,
           logged_minutes: 1,
+          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
           logged_date: 1,
           projectDetails: {
             _id: 1,
@@ -3650,8 +3729,7 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
           time: {
             $concat: [
               { $toString: "$logged_hours" },
-              "h",
-              " ",
+              "h ",
               {
                 $toString: {
                   $concat: [
@@ -3664,7 +3742,20 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
                   ]
                 }
               },
-              "m"
+              "m ",
+              {
+                $toString: {
+                  $concat: [
+                    {
+                      $toString: {
+                        $cond: [{ $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] }, "0", ""]
+                      }
+                    },
+                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
+                  ]
+                }
+              },
+              "s"
             ]
           },
           createdBy: {
