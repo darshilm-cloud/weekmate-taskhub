@@ -119,7 +119,8 @@ exports.addProjectsTask = async (req, res) => {
       attachments: Joi.any().optional(),
       folder_id: Joi.any().optional(),
       task_progress: Joi.string().optional().default("0"),
-      task_status: Joi.string().optional()
+      task_status: Joi.string().optional(),
+      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default("")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -168,6 +169,7 @@ exports.addProjectsTask = async (req, res) => {
       estimated_minutes: value.estimated_minutes,
       // attachments: value.attachments || [],
       task_progress: value.task_progress,
+      recurringType: value.recurringType || "",
       ...(value?.task_status && {
         task_status_history: [
           {
@@ -801,7 +803,8 @@ exports.getProjectsTask = async (req, res) => {
             }
           },
           ...(await getClientQuery(true)),
-          task_update_history: 1
+          task_update_history: 1,
+          recurringType: 1
         }
       }
     ];
@@ -832,11 +835,12 @@ exports.getProjectsTask = async (req, res) => {
         ...(await getClientQuery()),
         { $match: matchQuery },
         {
-          $project: {
-            _id: 1,
-            title: 1,
-            project: 1,
-            assignees: {
+        $project: {
+          _id: 1,
+          title: 1,
+          project: 1,
+          recurringType: 1,
+          assignees: {
               $map: {
                 input: {
                   $cond: {
@@ -1395,7 +1399,8 @@ exports.updateProjectsTaskProps = async (req, res) => {
       attachments: Joi.array().optional(),
       task_progress: Joi.string().optional().default("0"),
       task_status: Joi.string().optional(),
-      folder_id: Joi.string().optional()
+      folder_id: Joi.string().optional(),
+      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default("")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1980,6 +1985,22 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   updated_key: element,
                   pervious_value: previousTaskStatusTitle,
                   new_value: newTaskStatusTitle
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+            break;
+
+          case "recurringType":
+            if (reqBody?.recurringType !== undefined) {
+              updateObj.recurringType = reqBody?.recurringType;
+              // if previous and new both value same no need to update..
+              if (perviousData?.recurringType !== reqBody?.recurringType) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.recurringType,
+                  new_value: reqBody?.recurringType
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
@@ -2762,6 +2783,15 @@ exports.importTasksData = async (req, res) => {
             assignees: employees?.map((assignee) => assignee._id) || [],
             taskId: generateRandomId(),
             isImported: true,
+            recurringType: (item["Recurring Type(Monthly/Yearly)"] && (
+                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "month" ||
+                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "monthly"
+              )) ? "monthly"
+              : (item["Recurring Type(Monthly/Yearly)"] && (
+                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "year" ||
+                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "yearly"
+              )) ? "yearly"
+              : "",
             createdBy: createdbyEmp[0]?._id,
             updatedBy: createdbyEmp[0]?._id,
             ...(value?.task_status && {

@@ -8,6 +8,8 @@ const {
 } = require("../controller/schedular");
 const { getQuarterlyMails, updateSentMails } = require("../controller/quarterlyMails")
 const { emailSenderForPMS } = require("../helpers/common")
+const { autoStopTimers } = require("../controller/taskTimers");
+const { createMonthlyRecurringTasks, createYearlyRecurringTasks } = require("../controller/recurringTasks");
 
 // Send mail to PM and PM's manager to missed project Deadline... 10am
 schedule.scheduleJob("30 4 * * *", async () => {
@@ -94,3 +96,112 @@ schedule.scheduleJob("00 4 * * *", async () => {
 
   }
 });
+
+// TESTING: Create recurring tasks every minute (for task recurrence testing only)
+// schedule.scheduleJob("* * * * *", async () => {
+//   try {
+//     console.info(
+//       "🔄 TESTING: Starting monthly recurring tasks creation",
+//       moment().toString(),
+//       moment.utc().valueOf()
+//     );
+    
+//     const result = await createMonthlyRecurringTasks();
+    
+//     if (result.success) {
+//       console.info(`✅ TESTING: Monthly recurring tasks creation completed: ${result.message}`);
+//     } else {
+//       console.error(`❌ TESTING: Monthly recurring tasks creation failed: ${result.message}`);
+//     }
+//   } catch (error) {
+//     console.log("🚀 ~ schedule.scheduleJob ~ monthly recurring tasks error:", error);
+//   }
+// });
+
+schedule.scheduleJob("59 23 28-31 * *", async () => {
+  try {
+    const today = moment();
+    const lastDayOfMonth = today.clone().endOf('month');
+    
+    // Only run if today is the last day of the month
+    if (today.format('YYYY-MM-DD') === lastDayOfMonth.format('YYYY-MM-DD')) {
+      console.info(
+        "🔄 Starting monthly recurring tasks creation",
+        moment().toString(),
+        moment.utc().valueOf()
+      );
+      
+      const result = await createMonthlyRecurringTasks();
+      
+      if (result.success) {
+        console.info(`✅ Monthly recurring tasks creation completed: ${result.message}`);
+      } else {
+        console.error(`❌ Monthly recurring tasks creation failed: ${result.message}`);
+      }
+    }
+  } catch (error) {
+    console.log("🚀 ~ schedule.scheduleJob ~ monthly recurring tasks error:", error);
+  }
+});
+
+schedule.scheduleJob("59 23 31 12 *", async () => {
+  try {
+    console.info(
+      "🔄 Starting yearly recurring tasks creation",
+      moment().toString(),
+      moment.utc().valueOf()
+    );
+    
+    const result = await createYearlyRecurringTasks();
+    
+    if (result.success) {
+      console.info(`✅ Yearly recurring tasks creation completed: ${result.message}`);
+    } else {
+      console.error(`❌ Yearly recurring tasks creation failed: ${result.message}`);
+    }
+  } catch (error) {
+    console.log("🚀 ~ schedule.scheduleJob ~ yearly recurring tasks error:", error);
+  }
+});
+
+// PRODUCTION: Auto-stop timers - runs at 11:59 PM daily
+schedule.scheduleJob("59 23 * * *", async () => {
+  try {
+    console.info(
+      "🔄 Starting daily timer cleanup",
+      moment().toString(),
+      moment.utc().valueOf()
+    );
+    
+    // Auto-stop forgotten timers
+    const autoStopResult = await autoStopTimers();
+    if (autoStopResult.success) {
+      console.info(`✅ Auto-stop timers completed: ${autoStopResult.message}`);
+    } else {
+      console.error(`❌ Auto-stop timers failed: ${autoStopResult.message}`);
+    }
+  } catch (error) {
+    console.log("🚀 ~ schedule.scheduleJob ~ timer cleanup error:", error);
+  }
+});
+
+// TESTING: Auto-stop timers every minute (for testing only)
+// schedule.scheduleJob("* * * * *", async () => {
+//   try {
+//     console.info(
+//       "🔄 TESTING: Starting timer cleanup",
+//       moment().toString(),
+//       moment.utc().valueOf()
+//     );
+    
+//     // Auto-stop forgotten timers
+//     const autoStopResult = await autoStopTimers();
+//     if (autoStopResult.success) {
+//       console.info(`✅ TESTING: Auto-stop timers completed: ${autoStopResult.message}`);
+//     } else {
+//       console.error(`❌ TESTING: Auto-stop timers failed: ${autoStopResult.message}`);
+//     }
+//   } catch (error) {
+//     console.log("🚀 ~ schedule.scheduleJob ~ TESTING timer cleanup error:", error);
+//   }
+// });

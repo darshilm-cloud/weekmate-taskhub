@@ -85,6 +85,10 @@ const TaskSchema = new mongoose.Schema({
     default: [],
   },
   isImported: { type: Boolean, default: false },
+  recurringType: { 
+    type: String, 
+    default: ""
+  },
   // comments: {
   //   type: [
   //     {
