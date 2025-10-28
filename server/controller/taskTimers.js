@@ -459,8 +459,9 @@ exports.stopMultipleTimers = async (req, res) => {
     }
 
     // Create final user_ids array including task owners and project owners
+    // Normalize all IDs to strings and remove duplicates
     const finalUserIds = [...new Set([
-      ...value.user_ids,                                    // Frontend provided users
+      ...value.user_ids.map(id => id.toString()),           // Frontend provided users (normalized to string)
       ...(task.createdBy ? [task.createdBy.toString()] : []),      // Task creator
       ...(task.updatedBy ? [task.updatedBy.toString()] : []),      // Task updater
       ...(project.createdBy ? [project.createdBy.toString()] : []), // Project creator
@@ -473,6 +474,7 @@ exports.stopMultipleTimers = async (req, res) => {
 
     for (const userId of finalUserIds) {
       try {
+        console.log(userId)
         // Find user's active timer
         const activeTimer = await TaskTimers.findOne({
           task_id: value.task_id,
@@ -553,10 +555,12 @@ exports.stopMultipleTimers = async (req, res) => {
           isManuallyAdded: false, // Timer log
           logged_status: "Void",
           descriptions: "Auto logged via timer",
-          createdBy: req.user._id,
-          updatedBy: req.user._id,
+          createdBy: userId,
+          updatedBy: userId,
           ...(await getRefModelFromLoginUser(req.user)),
         };
+
+        console.log(logData)
 
         const newLog = new TaskHourLogs(logData);
         await newLog.save();
