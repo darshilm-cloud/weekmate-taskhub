@@ -77,7 +77,8 @@ module.exports = {
     "/v1/taskhub/complaint/resolution/feedback/get",
     "/v1/CompanyReg/registerAdminAndCompany",
     "/v1/CompanyReg/verify-registration",
-    "/v1/CompanyManage/getCompanyDetails"
+    "/v1/CompanyManage/getCompanyDetails",
+    "/v1/maintenance/delete-company-data"
   ],
   API_KEY_VALIDATIONS: ["/v1/projects/task-logged-hours/getHoursData"],
 };
