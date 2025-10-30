@@ -66,7 +66,7 @@ const ProjectFormModal = ({
     const fetchAllData = async () => {
       try {
         dispatch(showAuthLoader());
-        
+
         const apiCalls = [
           getTechnologyList(),
           getProjectType(),
@@ -101,23 +101,24 @@ const ProjectFormModal = ({
         body: { _id: id },
         options: { cachekey: Key },
       });
-      
+
       if (response.data.statusCode === 401) {
         window.location.href = `${process.env.REACT_APP_URL}unauthorised`;
       }
       if (response.data && response.data.data) {
         const projectDetails = response.data.data;
+        console.log(projectDetails,"projectDetails")
         setSelectedItems(projectDetails?.assignees || []);
         setSelectedClient(projectDetails?.pms_clients || []);
         setNewFilteredAssignees(projectDetails?.assignees || []);
         setNewFilteredClients(projectDetails?.pms_clients || []);
         setEditorData(projectDetails?.descriptions || "");
         setIsBillable(projectDetails?.isBillable || false);
-        
+
         // Fix: Ensure technology IDs are properly set and sync with projectTech state
         const technologyIds = projectDetails?.technology?.map((item) => item?._id) || [];
         setProjectTech(technologyIds);
-        
+
         form.setFieldsValue({
           title: projectDetails?.title?.trim(),
           technology: technologyIds,
@@ -131,6 +132,7 @@ const ProjectFormModal = ({
           start_date: projectDetails?.start_date ? dayjs(projectDetails.start_date) : null,
           end_date: projectDetails?.end_date ? dayjs(projectDetails.end_date) : null,
           isBillable: projectDetails?.isBillable,
+          recurringType:projectDetails?.recurringType
         });
       }
     } catch (error) {
@@ -366,6 +368,7 @@ const ProjectFormModal = ({
         descriptions: editorData,
         technology: values.technology,
         isBillable,
+        recurringType:values?.recurringType || "",
       };
       form.setFieldsValue({ assignees, clients });
       let moduleprefix = "project";
@@ -386,7 +389,7 @@ const ProjectFormModal = ({
       }
     } catch (error) {
       console.error(error);
-    } finally{
+    } finally {
       triggerRefreshList()
     }
   };
@@ -401,7 +404,7 @@ const ProjectFormModal = ({
       const typeId = getProjectTypeIdByName(values.project_type);
       const statusId = getProjectStatusIdByName(values.project_status);
       const workflowID = getWorkflowIdByName(values.workFlow);
-      
+
       const reqBody = {
         ...values,
         descriptions: editorData,
@@ -414,8 +417,9 @@ const ProjectFormModal = ({
         manager: managerId ? managerId._id : values.manager,
         acc_manager: acc_managerId ? acc_managerId._id : values.acc_manager,
         workFlow: workflowID ? workflowID._id : values.workFlow,
+        recurringType:values?.recurringType ,
       };
-      
+
       let moduleprefix = "project";
       const params = `/${id}`;
       const response = await Service.makeAPICall({
@@ -444,7 +448,7 @@ const ProjectFormModal = ({
       }
     } catch (error) {
       console.error(error);
-    } finally{
+    } finally {
       triggerRefreshList()
     }
   };
@@ -480,16 +484,16 @@ const ProjectFormModal = ({
                 name="title"
                 label="Project Title"
                 rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                    {
-                      pattern: generatePattern(projectTypeSlug),
-                      message: "Title must be in the format AB1234/TM/ABC",
-                    },
-                  ]}
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter a valid title",
+                  },
+                  {
+                    pattern: generatePattern(projectTypeSlug),
+                    message: "Title must be in the format AB1234/TM/ABC",
+                  },
+                ]}
               >
                 <Input placeholder="AB1234/TM/ABC" />
               </Form.Item>
@@ -773,6 +777,30 @@ const ProjectFormModal = ({
                       placeholder="End Date"
                       disabledDate={(value) => value < form.getFieldValue("start_date")}
                     />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={12} >
+                  <Form.Item
+                    label="Recurring"
+                    // className="poject-type"
+                    name="recurringType"
+                  >
+                    <Select
+                      // value={addInputTaskData?.recurringType}
+                      allowClear
+                    // onChange={(value) =>
+                    //   handleTaskInput("recurringType", value)
+                    // }
+                    >
+                      <Select.Option value="monthly" style={{ textTransform: "capitalize" }}>
+                        Monthly
+                      </Select.Option>
+                      <Select.Option value="yearly" style={{ textTransform: "capitalize" }}>
+                        Yearly
+                      </Select.Option>
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
