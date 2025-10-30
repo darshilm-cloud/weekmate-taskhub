@@ -4,8 +4,14 @@ const ProjectTasks = mongoose.model("projecttasks");
 const ProjectSubTasks = mongoose.model("projectsubtasks");
 const ProjectTaskUpdateHistory = mongoose.model("taskupdatehistory");
 const CommentsModel = mongoose.model("Comments");
+const Project = mongoose.model("projects");
+const ProjectMainTasks = mongoose.model("projectmaintasks");
+const ProjectTimeSheet = mongoose.model("projecttimesheets");
+const fileFolders = mongoose.model("filefolders");
+const ProjectWorkFlowStatus = mongoose.model("workflowstatus");
 const { generateRandomId, getRefModelFromLoginUser } = require("../helpers/common");
 const configs = require("../configs");
+const { DEFAULT_DATA } = require("../helpers/constant");
 
 /**
  * Create monthly recurring tasks for the next month
@@ -457,6 +463,462 @@ exports.createYearlyRecurringTasks = async () => {
       success: false,
       error: error.message,
       message: "Failed to create yearly recurring tasks"
+    };
+  }
+};
+
+/**
+ * Create monthly recurring projects for the next month
+ * This function should be called at the end of each month by cron job
+ */
+exports.createMonthlyRecurringProjects = async () => {
+  try {
+    console.log("🔄 Starting recurring projects creation for next month...");
+    
+    // Get current date and calculate next month's start and end dates
+    const currentDate = moment();
+    const nextMonth = currentDate.clone().add(1, 'month');
+    const nextMonthStart = nextMonth.clone().startOf('month');
+    const nextMonthEnd = nextMonth.clone().endOf('month');
+    
+    console.log(`📅 Next month: ${nextMonth.format('YYYY-MM')}`);
+    console.log(`📅 Next month start: ${nextMonthStart.format('YYYY-MM-DD')}`);
+    console.log(`📅 Next month end: ${nextMonthEnd.format('YYYY-MM-DD')}`);
+    
+    // Find all projects that are recurring and active
+    // For TESTING: Get all monthly recurring projects (no date filter)
+    // For PRODUCTION: Add createdAt filter to only get projects created in current month
+    const currentMonthStart = currentDate.clone().startOf('month');
+    const currentMonthEnd = currentDate.clone().endOf('month');
+    
+    const recurringProjects = await Project.find({
+      recurringType: "monthly",
+      isDeleted: false,
+      // TESTING: Commented out to test with all projects
+      // createdAt: {
+      //   $gte: currentMonthStart.toDate(),
+      //   $lte: currentMonthEnd.toDate()
+      // }
+    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow');
+    
+    console.log(`📋 Found ${recurringProjects.length} recurring projects to process`);
+    
+    let createdProjectsCount = 0;
+    let createdMainTasksCount = 0;
+    let createdTasksCount = 0;
+    
+    for (const originalProject of recurringProjects) {
+      try {
+        // Create a carbon copy of the project
+        const newProjectData = {
+          companyId: originalProject.companyId,
+          title: `${originalProject.title} - ${nextMonth.format('MMM YYYY')}`,
+          projectId: generateRandomId(),
+          color: originalProject.color,
+          descriptions: originalProject.descriptions,
+          technology: originalProject.technology.map(tech => tech._id),
+          project_type: originalProject.project_type._id,
+          project_status: originalProject.project_status._id,
+          manager: originalProject.manager._id,
+          acc_manager: originalProject.acc_manager ? originalProject.acc_manager._id : null,
+          assignees: originalProject.assignees.map(assignee => assignee._id),
+          pms_clients: originalProject.pms_clients.map(client => client._id),
+          workFlow: originalProject.workFlow._id,
+          estimatedHours: originalProject.estimatedHours,
+          isBillable: originalProject.isBillable,
+          recurringType: originalProject.recurringType,
+          
+          // Update dates to next month
+          start_date: originalProject.start_date ? 
+            nextMonthStart.clone().add(moment(originalProject.start_date).date() - 1, 'days').toDate() : 
+            nextMonthStart.toDate(),
+          end_date: originalProject.end_date ? 
+            nextMonthEnd.clone().subtract(moment(originalProject.end_date).date() - 1, 'days').toDate() : 
+            nextMonthEnd.toDate(),
+          
+          // Metadata
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy,
+          ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+        };
+        
+        // Create the new project
+        const newProject = new Project(newProjectData);
+        const savedProject = await newProject.save();
+        
+        console.log(`✅ Created recurring project: ${savedProject.title} (${savedProject.projectId})`);
+        createdProjectsCount++;
+        
+        // Add default project folder
+        let projectFolder = new fileFolders({
+          name: savedProject.title,
+          isDefault: true,
+          project_id: savedProject._id,
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy
+        });
+        await projectFolder.save();
+        
+        // Add default project timesheet (plain, no data)
+        let timeSheet = new ProjectTimeSheet({
+          title: `${savedProject.title} - Timesheet`,
+          isDefault: true,
+          project_id: savedProject._id,
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy
+        });
+        await timeSheet.save();
+        console.log(`✅ Created default timesheet for project: ${savedProject.title}`);
+        
+        // Get TODO workflow status for the cloned project
+        const todoWorkflowStatus = await ProjectWorkFlowStatus.findOne({
+          workflow_id: savedProject.workFlow,
+          title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+          isDeleted: false
+        });
+        
+        // Now clone all main tasks
+        const originalMainTasks = await ProjectMainTasks.find({
+          project_id: originalProject._id,
+          isDeleted: false
+        });
+        
+        for (const originalMainTask of originalMainTasks) {
+          const newMainTaskData = {
+            title: originalMainTask.title,
+            project_id: savedProject._id,
+            subscribers: originalMainTask.subscribers,
+            pms_clients: originalMainTask.pms_clients,
+            subscriber_stages: originalMainTask.subscriber_stages,
+            status: originalMainTask.status,
+            task_status: originalMainTask.task_status,
+            task_status_history: originalMainTask.task_status ? [{
+              task_status: originalMainTask.task_status,
+              updatedBy: originalProject.createdBy,
+              updatedAt: configs.utcDefault()
+            }] : [],
+            isPrivateList: originalMainTask.isPrivateList,
+            isDisplayInGantt: originalMainTask.isDisplayInGantt,
+            createdBy: originalProject.createdBy,
+            updatedBy: originalProject.createdBy,
+            ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+          };
+          
+          const newMainTask = new ProjectMainTasks(newMainTaskData);
+          const savedMainTask = await newMainTask.save();
+          
+          console.log(`✅ Created recurring main task: ${savedMainTask.title}`);
+          createdMainTasksCount++;
+          
+          // Now clone all tasks under this main task (without comments)
+          const originalTasks = await ProjectTasks.find({
+            main_task_id: originalMainTask._id,
+            project_id: originalProject._id,
+            isDeleted: false
+          });
+          
+          for (const originalTask of originalTasks) {
+            const newTaskData = {
+              title: originalTask.title,
+              taskId: generateRandomId(),
+              project_id: savedProject._id,
+              main_task_id: savedMainTask._id,
+              task_status: todoWorkflowStatus ? todoWorkflowStatus._id : null, // Always set to TODO
+              assignees: originalTask.assignees,
+              pms_clients: originalTask.pms_clients,
+              status: originalTask.status,
+              descriptions: originalTask.descriptions,
+              task_labels: originalTask.task_labels,
+              estimated_hours: originalTask.estimated_hours,
+              estimated_minutes: originalTask.estimated_minutes,
+              task_progress: "0", // Reset progress for new month
+              recurringType: originalTask.recurringType,
+              isImported: false,
+              
+              // Update dates to next month
+              start_date: originalTask.start_date ? 
+                nextMonthStart.clone().add(moment(originalTask.start_date).date() - 1, 'days').toDate() : 
+                null,
+              due_date: originalTask.due_date ? 
+                nextMonthEnd.clone().subtract(moment(originalTask.due_date).date() - 1, 'days').toDate() : 
+                null,
+              
+              // Task status history - Always set to TODO
+              task_status_history: todoWorkflowStatus ? [{
+                task_status: todoWorkflowStatus._id,
+                updatedBy: originalProject.createdBy,
+                updatedAt: configs.utcDefault()
+              }] : [],
+              
+              // Metadata
+              createdBy: originalProject.createdBy,
+              updatedBy: originalProject.createdBy,
+              ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+            };
+            
+            const newTask = new ProjectTasks(newTaskData);
+            const savedTask = await newTask.save();
+            
+            console.log(`✅ Created recurring task: ${savedTask.title} (${savedTask.taskId})`);
+            createdTasksCount++;
+          }
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error creating recurring project ${originalProject.title}:`, error);
+      }
+    }
+    
+    console.log(`🎉 Recurring projects creation completed!`);
+    console.log(`📊 Summary:`);
+    console.log(`   - Projects created: ${createdProjectsCount}`);
+    console.log(`   - Main tasks created: ${createdMainTasksCount}`);
+    console.log(`   - Tasks created: ${createdTasksCount}`);
+    console.log(`   - Next month: ${nextMonth.format('YYYY-MM')}`);
+    
+    return {
+      success: true,
+      createdProjectsCount,
+      createdMainTasksCount,
+      createdTasksCount,
+      nextMonth: nextMonth.format('YYYY-MM'),
+      message: `Successfully created ${createdProjectsCount} recurring projects with ${createdMainTasksCount} main tasks and ${createdTasksCount} tasks for ${nextMonth.format('YYYY-MM')}`
+    };
+    
+  } catch (error) {
+    console.error("❌ Error in createMonthlyRecurringProjects:", error);
+    return {
+      success: false,
+      error: error.message,
+      message: "Failed to create monthly recurring projects"
+    };
+  }
+};
+
+/**
+ * Create yearly recurring projects for the next year
+ * This function should be called at the end of each year by cron job
+ */
+exports.createYearlyRecurringProjects = async () => {
+  try {
+    console.log("🔄 Starting yearly recurring projects creation for next year...");
+    
+    // Get current date and calculate next year's start and end dates
+    const currentDate = moment();
+    const nextYear = currentDate.clone().add(1, 'year');
+    const nextYearStart = nextYear.clone().startOf('year');
+    const nextYearEnd = nextYear.clone().endOf('year');
+    
+    console.log(`📅 Next year: ${nextYear.format('YYYY')}`);
+    console.log(`📅 Next year start: ${nextYearStart.format('YYYY-MM-DD')}`);
+    console.log(`📅 Next year end: ${nextYearEnd.format('YYYY-MM-DD')}`);
+    
+    // Find all projects that are yearly recurring and active
+    // For TESTING: Get all yearly recurring projects (no date filter)
+    // For PRODUCTION: Add createdAt filter to only get projects created in current year
+    const currentYearStart = currentDate.clone().startOf('year');
+    const currentYearEnd = currentDate.clone().endOf('year');
+    
+    const recurringProjects = await Project.find({
+      recurringType: "yearly",
+      isDeleted: false,
+      // TESTING: Commented out to test with all projects
+      // createdAt: {
+      //   $gte: currentYearStart.toDate(),
+      //   $lte: currentYearEnd.toDate()
+      // }
+    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow');
+    
+    console.log(`📋 Found ${recurringProjects.length} yearly recurring projects to process`);
+    
+    let createdProjectsCount = 0;
+    let createdMainTasksCount = 0;
+    let createdTasksCount = 0;
+    
+    for (const originalProject of recurringProjects) {
+      try {
+        // Create a carbon copy of the project
+        const newProjectData = {
+          companyId: originalProject.companyId,
+          title: `${originalProject.title} - ${nextYear.format('YYYY')}`,
+          projectId: generateRandomId(),
+          color: originalProject.color,
+          descriptions: originalProject.descriptions,
+          technology: originalProject.technology.map(tech => tech._id),
+          project_type: originalProject.project_type._id,
+          project_status: originalProject.project_status._id,
+          manager: originalProject.manager._id,
+          acc_manager: originalProject.acc_manager ? originalProject.acc_manager._id : null,
+          assignees: originalProject.assignees.map(assignee => assignee._id),
+          pms_clients: originalProject.pms_clients.map(client => client._id),
+          workFlow: originalProject.workFlow._id,
+          estimatedHours: originalProject.estimatedHours,
+          isBillable: originalProject.isBillable,
+          recurringType: originalProject.recurringType,
+          
+          // Update dates to next year
+          start_date: originalProject.start_date ? 
+            nextYearStart.clone().add(moment(originalProject.start_date).date() - 1, 'days').add(moment(originalProject.start_date).month(), 'months').toDate() : 
+            nextYearStart.toDate(),
+          end_date: originalProject.end_date ? 
+            nextYearEnd.clone().subtract(moment(originalProject.end_date).date() - 1, 'days').subtract(11 - moment(originalProject.end_date).month(), 'months').toDate() : 
+            nextYearEnd.toDate(),
+          
+          // Metadata
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy,
+          ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+        };
+        
+        // Create the new project
+        const newProject = new Project(newProjectData);
+        const savedProject = await newProject.save();
+        
+        console.log(`✅ Created yearly recurring project: ${savedProject.title} (${savedProject.projectId})`);
+        createdProjectsCount++;
+        
+        // Add default project folder
+        let projectFolder = new fileFolders({
+          name: savedProject.title,
+          isDefault: true,
+          project_id: savedProject._id,
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy
+        });
+        await projectFolder.save();
+        
+        // Add default project timesheet (plain, no data)
+        let timeSheet = new ProjectTimeSheet({
+          title: `${savedProject.title} - Timesheet`,
+          isDefault: true,
+          project_id: savedProject._id,
+          createdBy: originalProject.createdBy,
+          updatedBy: originalProject.createdBy
+        });
+        await timeSheet.save();
+        console.log(`✅ Created default timesheet for yearly project: ${savedProject.title}`);
+        
+        // Get TODO workflow status for the cloned project
+        const todoWorkflowStatus = await ProjectWorkFlowStatus.findOne({
+          workflow_id: savedProject.workFlow,
+          title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+          isDeleted: false
+        });
+        
+        // Now clone all main tasks
+        const originalMainTasks = await ProjectMainTasks.find({
+          project_id: originalProject._id,
+          isDeleted: false
+        });
+        
+        for (const originalMainTask of originalMainTasks) {
+          const newMainTaskData = {
+            title: originalMainTask.title,
+            project_id: savedProject._id,
+            subscribers: originalMainTask.subscribers,
+            pms_clients: originalMainTask.pms_clients,
+            subscriber_stages: originalMainTask.subscriber_stages,
+            status: originalMainTask.status,
+            task_status: originalMainTask.task_status,
+            task_status_history: originalMainTask.task_status ? [{
+              task_status: originalMainTask.task_status,
+              updatedBy: originalProject.createdBy,
+              updatedAt: configs.utcDefault()
+            }] : [],
+            isPrivateList: originalMainTask.isPrivateList,
+            isDisplayInGantt: originalMainTask.isDisplayInGantt,
+            createdBy: originalProject.createdBy,
+            updatedBy: originalProject.createdBy,
+            ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+          };
+          
+          const newMainTask = new ProjectMainTasks(newMainTaskData);
+          const savedMainTask = await newMainTask.save();
+          
+          console.log(`✅ Created yearly recurring main task: ${savedMainTask.title}`);
+          createdMainTasksCount++;
+          
+          // Now clone all tasks under this main task (without comments)
+          const originalTasks = await ProjectTasks.find({
+            main_task_id: originalMainTask._id,
+            project_id: originalProject._id,
+            isDeleted: false
+          });
+          
+          for (const originalTask of originalTasks) {
+            const newTaskData = {
+              title: originalTask.title,
+              taskId: generateRandomId(),
+              project_id: savedProject._id,
+              main_task_id: savedMainTask._id,
+              task_status: todoWorkflowStatus ? todoWorkflowStatus._id : null, // Always set to TODO
+              assignees: originalTask.assignees,
+              pms_clients: originalTask.pms_clients,
+              status: originalTask.status,
+              descriptions: originalTask.descriptions,
+              task_labels: originalTask.task_labels,
+              estimated_hours: originalTask.estimated_hours,
+              estimated_minutes: originalTask.estimated_minutes,
+              task_progress: "0", // Reset progress for new year
+              recurringType: originalTask.recurringType,
+              isImported: false,
+              
+              // Update dates to next year
+              start_date: originalTask.start_date ? 
+                nextYearStart.clone().add(moment(originalTask.start_date).date() - 1, 'days').add(moment(originalTask.start_date).month(), 'months').toDate() : 
+                null,
+              due_date: originalTask.due_date ? 
+                nextYearEnd.clone().subtract(moment(originalTask.due_date).date() - 1, 'days').subtract(11 - moment(originalTask.due_date).month(), 'months').toDate() : 
+                null,
+              
+              // Task status history - Always set to TODO
+              task_status_history: todoWorkflowStatus ? [{
+                task_status: todoWorkflowStatus._id,
+                updatedBy: originalProject.createdBy,
+                updatedAt: configs.utcDefault()
+              }] : [],
+              
+              // Metadata
+              createdBy: originalProject.createdBy,
+              updatedBy: originalProject.createdBy,
+              ...(await getRefModelFromLoginUser({ _id: originalProject.createdBy }))
+            };
+            
+            const newTask = new ProjectTasks(newTaskData);
+            const savedTask = await newTask.save();
+            
+            console.log(`✅ Created yearly recurring task: ${savedTask.title} (${savedTask.taskId})`);
+            createdTasksCount++;
+          }
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error creating yearly recurring project ${originalProject.title}:`, error);
+      }
+    }
+    
+    console.log(`🎉 Yearly recurring projects creation completed!`);
+    console.log(`📊 Summary:`);
+    console.log(`   - Projects created: ${createdProjectsCount}`);
+    console.log(`   - Main tasks created: ${createdMainTasksCount}`);
+    console.log(`   - Tasks created: ${createdTasksCount}`);
+    console.log(`   - Next year: ${nextYear.format('YYYY')}`);
+    
+    return {
+      success: true,
+      createdProjectsCount,
+      createdMainTasksCount,
+      createdTasksCount,
+      nextYear: nextYear.format('YYYY'),
+      message: `Successfully created ${createdProjectsCount} yearly recurring projects with ${createdMainTasksCount} main tasks and ${createdTasksCount} tasks for ${nextYear.format('YYYY')}`
+    };
+    
+  } catch (error) {
+    console.error("❌ Error in createYearlyRecurringProjects:", error);
+    return {
+      success: false,
+      error: error.message,
+      message: "Failed to create yearly recurring projects"
     };
   }
 };

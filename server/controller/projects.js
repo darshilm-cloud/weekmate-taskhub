@@ -673,6 +673,7 @@ exports.getProjects = async (req, res) => {
           start_date: 1,
           descriptions: 1,
           estimatedHours: 1,
+          recurringType: 1,
           technology: 1,
           //  {
           //   _id: 1,
@@ -1979,6 +1980,7 @@ exports.getProjectOverviewData = async (req, res) => {
           color: 1,
           isBillable: 1,
           descriptions: 1,
+          recurringType: 1,
           project_type: {
             _id: 1,
             title: "$project_type.project_type"
@@ -2587,6 +2589,7 @@ exports.getProjectsReports = async (req, res) => {
           title: 1,
           color: 1,
           descriptions: 1,
+          recurringType: 1,
           technology: 1,
           technologyName: {
             $map: {
