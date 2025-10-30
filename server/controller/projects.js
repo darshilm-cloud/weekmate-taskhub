@@ -221,7 +221,8 @@ exports.addProjects = async (req, res) => {
       start_date: Joi.date().optional().default(null),
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional().default(false),
-      acc_manager: Joi.string().optional().allow("")
+      acc_manager: Joi.string().optional().allow(""),
+      recurringType: Joi.string().optional().allow("").default("")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -264,6 +265,7 @@ exports.addProjects = async (req, res) => {
         isBillable: value?.isBillable,
         projectId: generateRandomId(),
         end_date: value?.end_date,
+        recurringType: value?.recurringType || "",
         createdBy: req.user._id,
         updatedBy: req.user._id,
         ...(await getRefModelFromLoginUser(req?.user)),
@@ -860,7 +862,8 @@ exports.updateProjects = async (req, res) => {
       start_date: Joi.date().optional().default(null),
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional(),
-      acc_manager: Joi.string().optional().default(null)
+      acc_manager: Joi.string().optional().default(null),
+      recurringType: Joi.string().optional().allow("").default("")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -910,6 +913,7 @@ exports.updateProjects = async (req, res) => {
           ...("isBillable" in value && { isBillable: value?.isBillable }),
           start_date: value?.start_date,
           end_date: value?.end_date,
+          recurringType: value?.recurringType || "",
           updatedBy: req.user._id,
           ...(await getRefModelFromLoginUser(req?.user, true)),
           acc_manager: value?.acc_manager || null

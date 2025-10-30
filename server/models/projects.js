@@ -73,6 +73,10 @@ const ProjectSchema = new mongoose.Schema({
   },
   start_date: { type: Date, default: null },
   end_date: { type: Date, default: null },
+  recurringType: { 
+    type: String, 
+    default: ""
+  },
   ...commonSchema(),
 });
 
