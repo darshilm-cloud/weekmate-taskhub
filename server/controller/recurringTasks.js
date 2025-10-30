@@ -509,10 +509,14 @@ exports.createMonthlyRecurringProjects = async () => {
     
     for (const originalProject of recurringProjects) {
       try {
+        // Strip any existing date suffix from the title (e.g., " - Nov 2026", " - 2025")
+        // This prevents stacking like "Project - Nov 2026 - Dec 2026"
+        const baseTitle = originalProject.title.replace(/\s*-\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i, '').trim();
+        
         // Create a carbon copy of the project
         const newProjectData = {
           companyId: originalProject.companyId,
-          title: `${originalProject.title} - ${nextMonth.format('MMM YYYY')}`,
+          title: `${baseTitle} - ${nextMonth.format('MMM YYYY')}`,
           projectId: generateRandomId(),
           color: originalProject.color,
           descriptions: originalProject.descriptions,
@@ -737,10 +741,14 @@ exports.createYearlyRecurringProjects = async () => {
     
     for (const originalProject of recurringProjects) {
       try {
+        // Strip any existing year suffix from the title (e.g., " - 2025", " - 2026")
+        // This prevents stacking like "Project - 2025 - 2026"
+        const baseTitle = originalProject.title.replace(/\s*-\s*\d{4}$/i, '').trim();
+        
         // Create a carbon copy of the project
         const newProjectData = {
           companyId: originalProject.companyId,
-          title: `${originalProject.title} - ${nextYear.format('YYYY')}`,
+          title: `${baseTitle} - ${nextYear.format('YYYY')}`,
           projectId: generateRandomId(),
           color: originalProject.color,
           descriptions: originalProject.descriptions,
