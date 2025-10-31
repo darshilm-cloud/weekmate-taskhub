@@ -9,7 +9,7 @@ const {
 const { getQuarterlyMails, updateSentMails } = require("../controller/quarterlyMails")
 const { emailSenderForPMS } = require("../helpers/common")
 const { autoStopTimers } = require("../controller/taskTimers");
-const { createMonthlyRecurringTasks, createYearlyRecurringTasks } = require("../controller/recurringTasks");
+const { createMonthlyRecurringTasks, createYearlyRecurringTasks, createMonthlyRecurringProjects, createYearlyRecurringProjects } = require("../controller/recurringTasks");
 
 // Send mail to PM and PM's manager to missed project Deadline... 10am
 schedule.scheduleJob("30 4 * * *", async () => {
@@ -118,6 +118,48 @@ schedule.scheduleJob("00 4 * * *", async () => {
 //   }
 // });
 
+// TESTING: Create recurring projects every 10 seconds (for testing only)
+// Commented out for production - uncomment for testing
+// schedule.scheduleJob("*/10 * * * * *", async () => {
+//   try {
+//     console.info(
+//       "🔄 TESTING: Starting monthly recurring projects creation (every 10 seconds)",
+//       moment().toString()
+//     );
+//    
+//     const result = await createMonthlyRecurringProjects();
+//    
+//     if (result.success) {
+//       console.info(`✅ TESTING: Monthly recurring projects creation completed: ${result.message}`);
+//     } else {
+//       console.error(`❌ TESTING: Monthly recurring projects creation failed: ${result.message}`);
+//     }
+//   } catch (error) {
+//     console.log("🚀 ~ schedule.scheduleJob ~ monthly recurring projects error:", error);
+//   }
+// });
+
+// TESTING: Create yearly recurring projects every 10 seconds (for testing only)
+// Commented out for production - uncomment for testing
+// schedule.scheduleJob("*/10 * * * * *", async () => {
+//   try {
+//     console.info(
+//       "🔄 TESTING: Starting yearly recurring projects creation (every 10 seconds)",
+//       moment().toString()
+//     );
+//    
+//     const result = await createYearlyRecurringProjects();
+//    
+//     if (result.success) {
+//       console.info(`✅ TESTING: Yearly recurring projects creation completed: ${result.message}`);
+//     } else {
+//       console.error(`❌ TESTING: Yearly recurring projects creation failed: ${result.message}`);
+//     }
+//   } catch (error) {
+//     console.log("🚀 ~ schedule.scheduleJob ~ yearly recurring projects error:", error);
+//   }
+// });
+
 schedule.scheduleJob("59 23 28-31 * *", async () => {
   try {
     const today = moment();
@@ -137,6 +179,21 @@ schedule.scheduleJob("59 23 28-31 * *", async () => {
         console.info(`✅ Monthly recurring tasks creation completed: ${result.message}`);
       } else {
         console.error(`❌ Monthly recurring tasks creation failed: ${result.message}`);
+      }
+      
+      // Also create recurring projects
+      console.info(
+        "🔄 Starting monthly recurring projects creation",
+        moment().toString(),
+        moment.utc().valueOf()
+      );
+      
+      const projectResult = await createMonthlyRecurringProjects();
+      
+      if (projectResult.success) {
+        console.info(`✅ Monthly recurring projects creation completed: ${projectResult.message}`);
+      } else {
+        console.error(`❌ Monthly recurring projects creation failed: ${projectResult.message}`);
       }
     }
   } catch (error) {
@@ -158,6 +215,21 @@ schedule.scheduleJob("59 23 31 12 *", async () => {
       console.info(`✅ Yearly recurring tasks creation completed: ${result.message}`);
     } else {
       console.error(`❌ Yearly recurring tasks creation failed: ${result.message}`);
+    }
+    
+    // Also create yearly recurring projects
+    console.info(
+      "🔄 Starting yearly recurring projects creation",
+      moment().toString(),
+      moment.utc().valueOf()
+    );
+    
+    const projectResult = await createYearlyRecurringProjects();
+    
+    if (projectResult.success) {
+      console.info(`✅ Yearly recurring projects creation completed: ${projectResult.message}`);
+    } else {
+      console.error(`❌ Yearly recurring projects creation failed: ${projectResult.message}`);
     }
   } catch (error) {
     console.log("🚀 ~ schedule.scheduleJob ~ yearly recurring tasks error:", error);
