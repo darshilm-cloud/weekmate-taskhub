@@ -1871,6 +1871,7 @@ function TimeForPMS() {
             columns={columns}
             dataSource={timesheetdropdownById}
             pagination={false}
+            style={{ overflowY: "auto" }}
           />
         </div>
       </div>

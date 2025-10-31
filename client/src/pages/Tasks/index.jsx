@@ -1954,7 +1954,7 @@ const TasksPMS = ({ flag }) => {
         open={isModalOpenList}
         onCancel={handleCancelList}
         onOk={handleOkList}
-        title={modalMode === "add" ? "Add List" : "Ed it List"}
+        title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
         width={800}
         footer={[
