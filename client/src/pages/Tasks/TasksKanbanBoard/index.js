@@ -236,10 +236,10 @@ const TaskList = ({
   });
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;
-    const location = useLocation();
-  
-    let { listID } = queryString.parse(location.search);
-  
+  const location = useLocation();
+
+  let { listID } = queryString.parse(location.search);
+
 
   const dispatch = useDispatch();
   const observers = useRef({});
@@ -561,7 +561,7 @@ const TaskList = ({
       if (response?.data?.status) {
         console.log('Timer stopped successfully via API');
         // getTaskByIdDetails(taskId);
-        getBoardTasks(listID,taskId)
+        getBoardTasks(listID, taskId)
       } else {
         console.error('Failed to stop timer via API:', response?.data?.message);
         // Optional: Show error notification
@@ -925,7 +925,7 @@ const TaskList = ({
     (projectDetails.projectHoursExceeded && !getRoles(["Client"])) || getRoles(["User"]);
 
 
-    const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"]) 
+  const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"])
 
   return (
     <>
@@ -939,7 +939,7 @@ const TaskList = ({
             onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
             onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
-           
+
 
 
           >
@@ -1731,7 +1731,7 @@ const TaskList = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {/* Only show timer for In Progress tasks */}
                   {isDisabledTrackManually && (
-                  isTaskInProgress(taskDetails)
+                    isTaskInProgress(taskDetails)
                     && (
                       <Popover
 
@@ -1890,7 +1890,7 @@ const TaskList = ({
                         </Button>
                       </Popover>
                     )
-                    )}
+                  )}
 
                   <div className="task-editbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     {hasPermission(["task_edit"]) &&
@@ -2452,8 +2452,19 @@ const TaskList = ({
                 <h5>Attached Files</h5>
               </div>
               <div className="fileAttachment_container">
-                {[...fileViewAttachment, ...populatedViewFiles]?.map(
-                  (file, index) => (
+                {(() => {
+                  const attachments = [
+                    ...(fileViewAttachment || []),
+                    ...(populatedViewFiles || []),
+                  ];
+                  return attachments.map((file, index) => {
+                    const fileName = file?.name || file?.file_name || "";
+                    const fileType = file?.file_type || file?.type || "";
+                    const rawPath = file?.path || file?.file_path || "";
+                    const href = rawPath
+                      ? `${process.env.REACT_APP_API_URL}/public/${rawPath}`
+                      : undefined;
+                    return (
                     <Badge
                       key={index}
                       count={
@@ -2463,20 +2474,29 @@ const TaskList = ({
                       }
                     >
                       <div className="fileAttachment_Box">
-                        <a
-                          className="fileNameTxtellipsis"
-                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          {file.name.length > 15
-                            ? `${file.name.slice(0, 15)}.....${file.file_type}`
-                            : file.name + file.file_type}
-                        </a>
+                          {href ? (
+                            <a
+                              className="fileNameTxtellipsis"
+                              href={href}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                          {fileName && fileName.length > 15
+                            ? `${fileName.slice(0, 15)}.....${fileType}`
+                            : `${fileName}${fileType}`}
+                            </a>
+                          ) : (
+                            <span className="fileNameTxtellipsis">
+                              {fileName && fileName.length > 15
+                                ? `${fileName.slice(0, 15)}.....${fileType}`
+                                : `${fileName}${fileType}`}
+                            </span>
+                          )}
                       </div>
                     </Badge>
-                  )
-                )}
+                    );
+                  });
+                })()}
               </div>
               {populatedViewFiles?.length > 0 && (
                 <div className="folder-comment">
@@ -3113,7 +3133,7 @@ const TaskList = ({
                                   <h2>Previous:</h2>
                                 </div>
                                 <div className="history-data">
-                                  <h5>
+                                  {/* <h5>
                                     {item.pervious_value
                                       ? item?.updated_key === "start_date" ||
                                         item?.updated_key === "due_date"
@@ -3128,6 +3148,28 @@ const TaskList = ({
                                         " : " +
                                         item.pervious_value
                                       : updateKey + " : " + "-"}
+                                  </h5> */}
+                                  <h5>
+                                    {item.pervious_value ? (
+                                      item?.updated_key === "start_date" ||
+                                        item?.updated_key === "due_date" ? (
+                                        item?.pervious_value ? (
+                                          <span>
+                                            {updateKey + " : "}
+                                            {moment(item.pervious_value).format("DD MMM, YY")}
+                                          </span>
+                                        ) : (
+                                          updateKey + " : " + "-"
+                                        )
+                                      ) : (
+                                        <span>
+                                          {updateKey + " : "}
+                                          <span dangerouslySetInnerHTML={{ __html: item.pervious_value }} />
+                                        </span>
+                                      )
+                                    ) : (
+                                      updateKey + " : " + "-"
+                                    )}
                                   </h5>
                                 </div>
                                 <div className="history-prev">
@@ -3135,18 +3177,26 @@ const TaskList = ({
                                 </div>
                                 <div className="history-data">
                                   <h5>
-                                    {item.new_value
-                                      ? item?.updated_key === "start_date" ||
-                                        item?.updated_key === "due_date"
-                                        ? item?.new_value
-                                          ? updateKey +
-                                          " : " +
-                                          moment(item.new_value).format(
-                                            "DD MMM, YY"
-                                          )
-                                          : updateKey + " : " + "-"
-                                        : updateKey + " : " + item.new_value
-                                      : updateKey + " : " + "-"}
+                                    {item.new_value ? (
+                                      item?.updated_key === "start_date" ||
+                                        item?.updated_key === "due_date" ? (
+                                        item?.new_value ? (
+                                          <span>
+                                            {updateKey + " : "}
+                                            {moment(item.new_value).format("DD MMM, YY")}
+                                          </span>
+                                        ) : (
+                                          updateKey + " : " + "-"
+                                        )
+                                      ) : (
+                                        <span>
+                                          {updateKey + " : "}
+                                          <span dangerouslySetInnerHTML={{ __html: item.new_value }} />
+                                        </span>
+                                      )
+                                    ) : (
+                                      updateKey + " : " + "-"
+                                    )}
                                   </h5>
                                 </div>
                               </div>

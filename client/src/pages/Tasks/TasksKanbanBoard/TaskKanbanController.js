@@ -874,6 +874,10 @@ useEffect(() => {
       }
     });
     const uploadedfile = await uploadFiles(newFiles, "task");
+    if (uploadedfile && uploadedfile.length > 0) {
+      // Optimistically update local view attachments so UI reflects immediately
+      setFileViewAttachment((prev) => [...prev, ...uploadedfile]);
+    }
     updateviewTask({ ...viewTask }, uploadedfile);
   };
 
@@ -889,8 +893,14 @@ useEffect(() => {
 
   const removeAttachmentViewFile = (index, file) => {
     if (file?._id) {
+      // Optimistically remove from local arrays so UI updates immediately
+      setFileViewAttachment((prev) => prev.filter((f) => f._id !== file._id));
+      setPopulatedViewFiles((prev) => prev.filter((f) => f._id !== file._id));
       deleteUploadedFiles([file._id], "task");
       getBoardTasks(taskDetails?.mainTask?._id);
+    } else {
+      // In case of newly added but not yet persisted items without _id
+      setFileViewAttachment((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
