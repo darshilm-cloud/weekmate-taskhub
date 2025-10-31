@@ -74,6 +74,8 @@ class MaintenanceController {
       const ProjectTasks = mongoose.model("projecttasks");
       const Notes = mongoose.model("notes_pms");
       const NoteBook = mongoose.model("notebook");
+      const DiscussionsTopics = mongoose.model("discussionstopics");
+      const DiscussionsTopicsDetails = mongoose.model("discussionstopicsdetails");
       const Employees = mongoose.model("employees");
       const PMSRoles = mongoose.model("pms_roles");
       const PMSClients = mongoose.model("pmsclients");
@@ -106,7 +108,9 @@ class MaintenanceController {
         tasks: [],
         taskLogs: [],
         notebooks: [],
-        notes: []
+        notes: [],
+        discussionTopics: [],
+        discussionTopicsDetails: []
       };
 
       // Step 1: Create employees for each PMS role
@@ -135,11 +139,25 @@ class MaintenanceController {
           continue;
         }
 
+        const email = `${roleName.toLowerCase().replace(/ /g, "_")}_${i + 1}@test.com`;
+        
+        // Check if email already exists and is NOT deleted
+        const existingEmployee = await Employees.findOne({ 
+          email: email.toLowerCase(),
+          isDeleted: false,
+          isSoftDeleted: false
+        });
+        if (existingEmployee) {
+          console.log(chalk.yellow(`  ↻ Employee with email ${email} already exists, skipping...`));
+          createdData.employees.push(existingEmployee);
+          continue;
+        }
+
         const employeeData = {
           first_name: roleName.split(" ")[0],
           last_name: "User",
           full_name: `${roleName.split(" ")[0]} User`,
-          email: `${roleName.toLowerCase().replace(/ /g, "_")}_${i + 1}@test.com`,
+          email: email,
           phone_number: `+91111111111${i}`,
           password: "123456",
           companyId: new mongoose.Types.ObjectId(companyId),
@@ -157,31 +175,47 @@ class MaintenanceController {
       }
 
       // Use first employee as creator for all data
+      if (!createdData.employees || createdData.employees.length === 0) {
+        return errorResponse(res, statusCode.SERVER_ERROR, "No employees created or found");
+      }
       const creatorEmployee = createdData.employees[0];
 
       // Step 2: Create PMS Client
       console.log(chalk.blue("📋 Step 2: Creating PMS client..."));
       const clientRole = roleMap[CONFIG_JSON.PMS_ROLES.CLIENT.toLowerCase()];
       if (clientRole) {
-        const clientData = {
-          first_name: "Test",
-          last_name: "Client",
-          full_name: "Test Client",
-          email: "testclient@test.com",
-          phone_number: "+91222222222",
-          password: "123456",
-          plain_password: "123456",
-          companyId: new mongoose.Types.ObjectId(companyId),
-          pms_role_id: clientRole._id,
-          isActivate: true,
-          createdBy: creatorEmployee._id,
-          updatedBy: creatorEmployee._id
-        };
+        const clientEmail = "testclient@test.com";
+        
+        // Check if client email already exists and is NOT deleted
+        const existingClient = await PMSClients.findOne({ 
+          email: clientEmail.toLowerCase(),
+          isDeleted: false,
+          isSoftDeleted: false
+        });
+        if (existingClient) {
+          console.log(chalk.yellow(`  ↻ PMS Client with email ${clientEmail} already exists, skipping...`));
+          createdData.pmsClients.push(existingClient);
+        } else {
+          const clientData = {
+            first_name: "Test",
+            last_name: "Client",
+            full_name: "Test Client",
+            email: clientEmail,
+            phone_number: "+91222222222",
+            password: "123456",
+            plain_password: "123456",
+            companyId: new mongoose.Types.ObjectId(companyId),
+            pms_role_id: clientRole._id,
+            isActivate: true,
+            createdBy: creatorEmployee._id,
+            updatedBy: creatorEmployee._id
+          };
 
-        const client = new PMSClients(clientData);
-        await client.save();
-        createdData.pmsClients.push(client);
-        console.log(chalk.green(`  ✓ Created PMS Client: ${client.email}`));
+          const client = new PMSClients(clientData);
+          await client.save();
+          createdData.pmsClients.push(client);
+          console.log(chalk.green(`  ✓ Created PMS Client: ${client.email}`));
+        }
       }
 
       // Step 3: Get or create Project Type
@@ -570,6 +604,52 @@ class MaintenanceController {
         console.log(chalk.green(`  ✓ Created note: ${note.title}`));
       }
 
+      // Step 19: Create Discussion Topics
+      console.log(chalk.blue("📋 Step 19: Creating discussion topics..."));
+      const discussionTopicTitles = [
+        "Architecture Discussion",
+        "Performance Optimization",
+        "Feature Planning"
+      ];
+
+      for (const topicTitle of discussionTopicTitles) {
+        const discussionTopic = new DiscussionsTopics({
+          title: topicTitle,
+          project_id: project._id,
+          status: "active",
+          descriptions: `Discussion about ${topicTitle}`,
+          subscribers: [creatorEmployee._id, ...createdData.employees.slice(0, 2).map(e => e._id)],
+          pms_clients: [createdData.pmsClients[0]._id],
+          isPinToTop: false,
+          isPrivate: false,
+          isBookMark: false,
+          createdBy: creatorEmployee._id,
+          updatedBy: creatorEmployee._id,
+          createdByModel: "employees",
+          updatedByModel: "employees"
+        });
+        await discussionTopic.save();
+        createdData.discussionTopics.push(discussionTopic);
+        console.log(chalk.green(`  ✓ Created discussion topic: ${discussionTopic.title}`));
+
+        // Create default topic detail
+        console.log(chalk.blue(`📋 Step 20: Creating discussion topic details for ${topicTitle}...`));
+        const topicDetail = new DiscussionsTopicsDetails({
+          topic_id: discussionTopic._id,
+          title: `Added discussion about ${topicTitle}`,
+          isDefault: true,
+          project_id: project._id,
+          taggedUsers: [],
+          createdBy: creatorEmployee._id,
+          updatedBy: creatorEmployee._id,
+          createdByModel: "employees",
+          updatedByModel: "employees"
+        });
+        await topicDetail.save();
+        createdData.discussionTopicsDetails.push(topicDetail);
+        console.log(chalk.green(`    ✓ Created topic detail`));
+      }
+
       // Update all employees with proper createdBy reference (all created by the first admin)
       console.log(chalk.blue("📋 Final: Updating employee references..."));
       for (const employee of createdData.employees) {
@@ -601,7 +681,9 @@ class MaintenanceController {
           loggedHoursCreated: createdData.taskLogs.length,
           notebooksCreated: createdData.notebooks.length,
           notesCreated: createdData.notes.length,
-          labelsCreated: createdData.labels.length
+          labelsCreated: createdData.labels.length,
+          discussionTopicsCreated: createdData.discussionTopics.length,
+          discussionTopicDetailsCreated: createdData.discussionTopicsDetails.length
         }
       );
 
