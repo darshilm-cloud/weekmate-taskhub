@@ -2601,6 +2601,7 @@ const TasksPMS = ({ flag }) => {
         title="Edit Task"
         className="edit-task-modal edit-details-task-model"
         width={800}
+        zIndex={2000}
         footer={[
           <Button
             key="cancel"

@@ -32,6 +32,8 @@ const ComplaintsForm = () => {
   const [selectedStatus, setSelectedStatus] = useState(
     form.getFieldValue("status")
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Track changes in the form
   const handleFormChange = (changedValues) => {
@@ -112,6 +114,9 @@ const ComplaintsForm = () => {
   };
 
   const handleSubmit = async (values) => {
+    if (isSubmitting) return; // Prevent if already submitting
+  
+  setIsSubmitting(true);
     try {
       const reqBody = {
         project_id: values.project,
@@ -147,6 +152,9 @@ const ComplaintsForm = () => {
       }
     } catch (error) {
       console.log(error);
+    }
+    finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -506,12 +514,12 @@ const ComplaintsForm = () => {
                           okText="Yes"
                           cancelText="No"
                         >
-                          <Button id="addbutton" type="primary">
+                          <Button id="addbutton" type="primary" loading={isSubmitting} disabled={isSubmitting}>
                             {complaintId ? "Update" : "Submit"}
                           </Button>
                         </Popconfirm>
                       ) : (
-                        <Button id="addbutton" type="primary" htmlType="submit">
+                        <Button id="addbutton" type="primary" htmlType="submit"  loading={isSubmitting} disabled={isSubmitting}>
                           {complaintId ? "Update" : "Submit"}
                         </Button>
                       )}
