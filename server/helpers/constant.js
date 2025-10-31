@@ -78,7 +78,8 @@ module.exports = {
     "/v1/CompanyReg/registerAdminAndCompany",
     "/v1/CompanyReg/verify-registration",
     "/v1/CompanyManage/getCompanyDetails",
-    "/v1/maintenance/delete-company-data"
+    "/v1/maintenance/delete-company-data",
+    "/v1/maintenance/addTestData"
   ],
   API_KEY_VALIDATIONS: ["/v1/projects/task-logged-hours/getHoursData"],
 };
