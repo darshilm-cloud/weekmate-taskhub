@@ -127,8 +127,9 @@ function NotesPMS() {
   //UseState to store exist data for notification:
   const [newFilteredAssignees, setNewFilteredAssignees] = useState([]);
   const [newFilteredClients, setNewFilteredClients] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedSubscriberIds, setSelectedSubscriberIds] = useState([]);
   const [selectedClient, setSelectedClient] = useState([]);
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState({});
   const [commentDrafts, setCommentDrafts] = useState({});
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -155,6 +156,8 @@ function NotesPMS() {
     setSelectedClient(
       clients.filter((item) => selectedItemIds.includes(item._id))
     );
+    setSelectedClientIds(selectedItemIds);
+    formNotes.setFieldsValue({ clients: selectedItemIds });
     setSearchKeyword("");
   };
 
@@ -162,6 +165,8 @@ function NotesPMS() {
     setselectedSubscribers(
       subscribers.filter((item) => selectedItemIds.includes(item._id))
     );
+    setSelectedSubscriberIds(selectedItemIds);
+    formNotes.setFieldsValue({ subscribers: selectedItemIds });
     setSearchKeyword("");
   };
 
@@ -205,11 +210,22 @@ function NotesPMS() {
     }
   };
 
-  const openModelNotes = () => {
+  const openModelNotes = async () => {
+    // Ensure we have the latest subscribers, then preselect all
+    const list = await getProjectSubscribersList(selectedNotebook._id);
+    const subs = Array.isArray(list) && list.length > 0 ? list : subscribers;
+
+    const allIds = subs.map((item) => item._id);
+
     formNotes.setFieldsValue({
-      subscribers: subscribers.map((item) => item._id),
+      title: undefined,
+      subscribers: allIds,
+      clients: [],
     });
-    setSelectedItems(subscribers.map((item) => item._id));
+    setSelectedSubscriberIds(allIds);
+    setselectedSubscribers(subs);
+    setSelectedClientIds([]);
+    setSelectedClient([]);
     setIopenNotes(true);
     setModelModeNotes("add");
   };
@@ -218,8 +234,9 @@ function NotesPMS() {
     setEditorData("");
     setIopenNotes(false);
     setselectedSubscribers([]);
-    setSelectedItems([]);
+    setSelectedSubscriberIds([]);
     setSelectedClient([]);
+    setSelectedClientIds([]);
     formNotes.resetFields();
   };
 
@@ -256,12 +273,13 @@ function NotesPMS() {
         );
 
         setSubscribers(uniqueNamesWithIds);
-
         setallSubscribers(uniqueNamesWithIds);
+        return uniqueNamesWithIds;
       }
     } catch (error) {
       console.log(error);
     }
+    return [];
   };
 
   const getClientList = async () => {
@@ -415,9 +433,10 @@ function NotesPMS() {
         title: values.title.trim(),
         isPrivate: isPrivate ? true : false,
         color: "#000000",
-        subscribers: selectedSubscribers.map((item) => item._id)
-          ? selectedSubscribers.map((item) => item._id)
-          : selectedItems,
+        subscribers:
+          selectedSubscribers.map((item) => item._id).length > 0
+            ? selectedSubscribers.map((item) => item._id)
+            : selectedSubscriberIds,
         notebook_id: selectedNotebook._id,
         notesInfo: editorData,
         pms_clients: selectedClient,
@@ -1081,14 +1100,9 @@ function NotesPMS() {
                     <MultiSelect
                       onSearch={handleSearch}
                       onChange={handleSelectedItemsChange}
-                      values={
-                        selectedItems && selectedItems.map((item) => item._id)
-                      }
+                      values={selectedSubscriberIds}
                       listData={subscribers}
                       search={searchKeyword}
-                      onDropdownVisibleChange={(open) =>
-                        open && getProjectSubscribersList(selectedNotebook._id)
-                      }
                     />
                   )}
                   <div className="list-clear-btn" style={{ marginTop: 8 }}>
@@ -1098,8 +1112,9 @@ function NotesPMS() {
                         formNotes.setFieldsValue({
                           subscribers: [],
                         });
-                        setSelectedItems([]);
+                        
                         setselectedSubscribers([]);
+                        setSelectedSubscriberIds([]);
                       }}
                       size="small"
                     >
@@ -1120,6 +1135,7 @@ function NotesPMS() {
                     <MultiSelect
                       onSearch={handleSearch}
                       onChange={handleSelectedClientsChange}
+                      values={selectedClientIds}
                       listData={clients}
                       search={searchKeyword}
                     />
@@ -1132,6 +1148,7 @@ function NotesPMS() {
                           clients: [],
                         });
                         setSelectedClient([]);
+                        setSelectedClientIds([]);
                       }}
                       size="small"
                     >

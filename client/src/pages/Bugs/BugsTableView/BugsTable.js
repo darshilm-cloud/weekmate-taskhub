@@ -854,20 +854,26 @@ const BugsTable = ({
                                   </div>
                                   <div className="history-data">
                                     <h5>
-                                      {item.pervious_value
-                                        ? item?.updated_key === "start_date" ||
-                                          item?.updated_key === "due_date"
-                                          ? item?.pervious_value
-                                            ? updateKey +
-                                              " : " +
-                                              moment(
-                                                item.pervious_value
-                                              ).format("DD MMM, YY")
-                                            : updateKey + " : " + "-"
-                                          : updateKey +
-                                            " : " +
-                                            item.pervious_value
-                                        : updateKey + " : " + "-"}
+                                       {item.pervious_value ? (
+                                                                            item?.updated_key === "start_date" ||
+                                                                              item?.updated_key === "due_date" ? (
+                                                                              item?.pervious_value ? (
+                                                                                <span>
+                                                                                  {updateKey + " : "}
+                                                                                  {moment(item.pervious_value).format("DD MMM, YY")}
+                                                                                </span>
+                                                                              ) : (
+                                                                                updateKey + " : " + "-"
+                                                                              )
+                                                                            ) : (
+                                                                              <span>
+                                                                                {updateKey + " : "}
+                                                                                <span dangerouslySetInnerHTML={{ __html: item.pervious_value }} />
+                                                                              </span>
+                                                                            )
+                                                                          ) : (
+                                                                            updateKey + " : " + "-"
+                                                                          )}
                                     </h5>
                                   </div>
                                   <div className="history-prev">
@@ -875,18 +881,26 @@ const BugsTable = ({
                                   </div>
                                   <div className="history-data">
                                     <h5>
-                                      {item.new_value
-                                        ? item?.updated_key === "start_date" ||
-                                          item?.updated_key === "due_date"
-                                          ? item?.new_value
-                                            ? updateKey +
-                                              " : " +
-                                              moment(item.new_value).format(
-                                                "DD MMM, YY"
-                                              )
-                                            : updateKey + " : " + "-"
-                                          : updateKey + " : " + item.new_value
-                                        : updateKey + " : " + "-"}
+                                     {item.new_value ? (
+                                                                           item?.updated_key === "start_date" ||
+                                                                             item?.updated_key === "due_date" ? (
+                                                                             item?.new_value ? (
+                                                                               <span>
+                                                                                 {updateKey + " : "}
+                                                                                 {moment(item.new_value).format("DD MMM, YY")}
+                                                                               </span>
+                                                                             ) : (
+                                                                               updateKey + " : " + "-"
+                                                                             )
+                                                                           ) : (
+                                                                             <span>
+                                                                               {updateKey + " : "}
+                                                                               <span dangerouslySetInnerHTML={{ __html: item.new_value }} />
+                                                                             </span>
+                                                                           )
+                                                                         ) : (
+                                                                           updateKey + " : " + "-"
+                                                                         )}
                                     </h5>
                                   </div>
                                 </div>

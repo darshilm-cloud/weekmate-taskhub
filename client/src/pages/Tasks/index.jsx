@@ -990,12 +990,12 @@ const TasksPMS = ({ flag }) => {
       dispatch(showAuthLoader());
       const subscriberStages = [];
       for (let i = 0; i < selectSubscriber.length; i++) {
-        // Construct subscriber stages object
+        const stageValue = values.subscriber_stages?.[i] || defaultStageId;
+
         const subscriberStage = {
           subscriber_id: selectSubscriber[i],
-          stages: values.subscriber_stages[i] || defaultStageId,
+          stages: stageValue,
         };
-        // Push the subscriber stages object to the array
         subscriberStages.push(subscriberStage);
       }
       const reqBody = {
@@ -1954,7 +1954,7 @@ const TasksPMS = ({ flag }) => {
         open={isModalOpenList}
         onCancel={handleCancelList}
         onOk={handleOkList}
-        title={modalMode === "add" ? "Add List" : "Ed it List"}
+        title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
         width={800}
         footer={[
@@ -2099,53 +2099,48 @@ const TasksPMS = ({ flag }) => {
 
                               {/* Stage Selection */}
                               <Form.Item
-                                label="Stage"
-                                name={["subscriber_stages", index]}
-                                className="stage-select-item"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: "Please select a stage",
-                                  },
-                                ]}
-                              >
-                                <Select
-                                  size="large"
-                                  placeholder="Select Stage"
-                                  showSearch
-                                  filterOption={(input, option) =>
-                                    option.children
-                                      .toLowerCase()
-                                      .indexOf(input.toLowerCase()) >= 0
-                                  }
-                                  filterSort={(optionA, optionB) =>
-                                    optionA.children
-                                      .toLowerCase()
-                                      .localeCompare(
-                                        optionB.children.toLowerCase()
-                                      )
-                                  }
-                                  onDropdownVisibleChange={(open) =>
-                                    open &&
-                                    dispatch(
-                                      getSpecificProjectWorkflowStage(stagesId)
-                                    )
-                                  }
-                                  defaultValue={defaultStageId}
-                                >
-                                  {projectWorkflowStage.map(
-                                    (item, stageIndex) => (
-                                      <Option
-                                        key={stageIndex}
-                                        value={item?._id}
-                                        style={{ textTransform: "capitalize" }}
-                                      >
-                                        {item.title}
-                                      </Option>
-                                    )
-                                  )}
-                                </Select>
-                              </Form.Item>
+  label="Stage"
+  name={["subscriber_stages", index]}
+  className="stage-select-item"
+  initialValue={defaultStageId} // Add this
+  rules={[
+    {
+      required: true,
+      message: "Please select a stage",
+    },
+  ]}
+>
+  <Select
+    size="large"
+    placeholder="Select Stage"
+    showSearch
+    filterOption={(input, option) =>
+      option.children
+        .toLowerCase()
+        .indexOf(input.toLowerCase()) >= 0
+    }
+    filterSort={(optionA, optionB) =>
+      optionA.children
+        .toLowerCase()
+        .localeCompare(optionB.children.toLowerCase())
+    }
+    onDropdownVisibleChange={(open) =>
+      open &&
+      dispatch(getSpecificProjectWorkflowStage(stagesId))
+    }
+    // Remove defaultValue and use initialValue in Form.Item instead
+  >
+    {projectWorkflowStage.map((item, stageIndex) => (
+      <Option
+        key={stageIndex}
+        value={item?._id}
+        style={{ textTransform: "capitalize" }}
+      >
+        {item.title}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
                             </div>
                           </Col>
                         );
