@@ -72,6 +72,7 @@ class MaintenanceController {
       const Projects = mongoose.model("projects");
       const ProjectMainTask = mongoose.model("projectmaintasks");
       const ProjectTasks = mongoose.model("projecttasks");
+      const ProjectBugs = mongoose.model("projecttaskbugs");
       const Notes = mongoose.model("notes_pms");
       const NoteBook = mongoose.model("notebook");
       const DiscussionsTopics = mongoose.model("discussionstopics");
@@ -107,6 +108,7 @@ class MaintenanceController {
         mainTasks: [],
         tasks: [],
         taskLogs: [],
+        bugs: [],
         notebooks: [],
         notes: [],
         discussionTopics: [],
@@ -524,27 +526,40 @@ class MaintenanceController {
           createdData.tasks.push(task);
           console.log(chalk.green(`    ✓ Created task: ${task.title}`));
 
-          // Step 15: Create Task Hours Logs for each task
+          // Step 15: Create Task Hours Logs for each task with different users
           console.log(chalk.blue(`📋 Step 15: Creating logged hours for ${task.title}...`));
-          const hoursLog = new TaskHoursLogs({
-            employee_id: creatorEmployee._id,
-            project_id: project._id,
-            task_id: task._id,
-            timesheet_id: timesheet._id,
-            descriptions: "Worked on task implementation",
-            logged_hours: "04",
-            logged_minutes: "30",
-            logged_date: new Date(),
-            isManuallyAdded: true,
-            logged_status: "Billable",
-            createdBy: creatorEmployee._id,
-            updatedBy: creatorEmployee._id,
-            createdByModel: "employees",
-            updatedByModel: "employees"
-          });
-          await hoursLog.save();
-          createdData.taskLogs.push(hoursLog);
-          console.log(chalk.green(`    ✓ Created logged hours: 4h 30m`));
+          // Create logs with different employees
+          const logEmployees = createdData.employees.slice(0, Math.min(3, createdData.employees.length));
+          const logDurations = [
+            { hours: "02", minutes: "00" },
+            { hours: "03", minutes: "30" },
+            { hours: "01", minutes: "45" }
+          ];
+          
+          for (let logIdx = 0; logIdx < logEmployees.length; logIdx++) {
+            const logEmployee = logEmployees[logIdx];
+            const duration = logDurations[logIdx] || { hours: "02", minutes: "00" };
+            
+            const hoursLog = new TaskHoursLogs({
+              employee_id: logEmployee._id,
+              project_id: project._id,
+              task_id: task._id,
+              timesheet_id: timesheet._id,
+              descriptions: `Worked on task implementation by ${logEmployee.full_name}`,
+              logged_hours: duration.hours,
+              logged_minutes: duration.minutes,
+              logged_date: new Date(),
+              isManuallyAdded: true,
+              logged_status: "Billable",
+              createdBy: logEmployee._id,
+              updatedBy: logEmployee._id,
+              createdByModel: "employees",
+              updatedByModel: "employees"
+            });
+            await hoursLog.save();
+            createdData.taskLogs.push(hoursLog);
+            console.log(chalk.green(`    ✓ Created logged hours: ${duration.hours}h ${duration.minutes}m by ${logEmployee.full_name}`));
+          }
 
           // Step 16: Create Task Comments
           console.log(chalk.blue(`📋 Step 16: Creating comments for ${task.title}...`));
@@ -575,6 +590,47 @@ class MaintenanceController {
       await notebook.save();
       createdData.notebooks.push(notebook);
       console.log(chalk.green(`  ✓ Created notebook: ${notebook.title}`));
+
+      // Step 17: Create Bugs
+      console.log(chalk.blue("📋 Step 17: Creating bugs..."));
+      const bugTitles = [
+        "Login page not redirecting after authentication",
+        "Database connection timeout issue"
+      ];
+      
+      for (const bugTitle of bugTitles) {
+        const bugData = {
+          title: bugTitle,
+          bugId: generateRandomId(),
+          project_id: project._id,
+          task_id: createdData.tasks[0]?._id || null,
+          status: "active",
+          descriptions: `Description and steps to reproduce: ${bugTitle}`,
+          bug_labels: [createdData.labels[0]._id], // High priority
+          assignees: [creatorEmployee._id, createdData.employees[1]._id],
+          pms_clients: [createdData.pmsClients[0]._id],
+          estimated_hours: "04",
+          estimated_minutes: "00",
+          progress: "0",
+          bug_status: createdData.bugWorkflowStatuses[0]._id, // Todo
+          bug_status_history: [{
+            bug_status: createdData.bugWorkflowStatuses[0]._id,
+            updatedBy: creatorEmployee._id,
+            updatedAt: configs.utcDefault()
+          }],
+          isImported: false,
+          isRepeated: false,
+          createdBy: creatorEmployee._id,
+          updatedBy: creatorEmployee._id,
+          createdByModel: "employees",
+          updatedByModel: "employees"
+        };
+        
+        const bug = new ProjectBugs(bugData);
+        await bug.save();
+        createdData.bugs.push(bug);
+        console.log(chalk.green(`  ✓ Created bug: ${bug.title}`));
+      }
 
       // Step 18: Create Notes
       console.log(chalk.blue("📋 Step 18: Creating notes..."));
@@ -679,6 +735,7 @@ class MaintenanceController {
           mainTasksCreated: createdData.mainTasks.length,
           tasksCreated: createdData.tasks.length,
           loggedHoursCreated: createdData.taskLogs.length,
+          bugsCreated: createdData.bugs.length,
           notebooksCreated: createdData.notebooks.length,
           notesCreated: createdData.notes.length,
           labelsCreated: createdData.labels.length,
