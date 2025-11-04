@@ -80,7 +80,10 @@ const TaskList = ({
   updateTasks,
   updateTaskDraftStatus,
   projectDetails,
+  isEditTaskSave,
+  setEditTaskSave
 }) => {
+  console.log("🚀 ~ TaskList ~ isEditTaskSave:", isEditTaskSave)
   const companySlug = localStorage.getItem("companyDomain");
   const {
     dragged,
@@ -350,6 +353,14 @@ const TaskList = ({
     }
   }, [taskDetails?._id]);
 
+  useEffect(() => {
+    if (isEditTaskSave) {
+      console.log("🚀 ~ getTaskByIdDetails ~ selectedTask:", selectedTask)
+      getTaskByIdDetails(taskDetails?._id)
+      setEditTaskSave(false);
+    }
+  }, [isEditTaskSave, taskDetails?._id])
+
   // Fetch timer states for all tasks when tasks are loaded
   useEffect(() => {
     if (tasks && tasks.length > 0) {
@@ -397,7 +408,6 @@ const TaskList = ({
 
   // Helper function to check if task is in "In Progress" status (enhanced)
   const isTaskInProgress = (task) => {
-    console.log(task, "tasktask", task?.task_status?.title)
     if (!task?.task_status?.title) return false;
     const statusTitle = task.task_status.title.toLowerCase().replace(/\s+/g, '');
     return statusTitle === 'inprogress' || statusTitle === 'progress' || statusTitle === 'in progress' || statusTitle === "In Progress"
@@ -3301,6 +3311,7 @@ TaskList.propTypes = {
 };
 
 export default React.memo(TaskList, (prevProps, nextProps) => {
-  return isEqual(prevProps.tasks, nextProps.tasks);
+  console.log("🚀 ~ prevProps, nextProps:", prevProps, nextProps)
+  return isEqual(prevProps.tasks, nextProps.tasks) && isEqual(prevProps.isEditTaskSave, nextProps.isEditTaskSave);
 });
 

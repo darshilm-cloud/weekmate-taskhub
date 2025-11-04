@@ -123,7 +123,7 @@ const TasksPMS = ({ flag }) => {
   const [newFilteredAssignees, setNewFilteredAssignees] = useState([]);
   const [newFilteredClients, setNewFilteredClients] = useState([]);
 
-  const [showEditor, setShowEditor] = useState(false);
+  const [isEditTaskSave, setEditTaskSave] = useState(false);
 
   const [editorData, setEditorData] = useState("");
   const [editModalDescription, seteditModalDescription] = useState("");
@@ -442,7 +442,6 @@ const TasksPMS = ({ flag }) => {
     setSelectdclients([]);
     setSelectSubscribers([]);
     setAddInputTaskData({});
-    setShowEditor(false);
     setEditorData("");
     setEstHrs("");
     setEstMins("");
@@ -480,8 +479,8 @@ const TasksPMS = ({ flag }) => {
       const uploadedfile = await uploadFiles(fileAttachment, "task");
       if (uploadedfile.length > 0) {
         updateType
-          ? updateTasks(values, uploadedfile)
-          : addTasks(values, uploadedfile);
+          ? await updateTasks(values, uploadedfile)
+          : await addTasks(values, uploadedfile);
         return;
       } else {
         return message.error("File not uploaded something went wrong");
@@ -631,11 +630,13 @@ const TasksPMS = ({ flag }) => {
           assignees: filterAssignees.map((item) => item._id),
           pms_clients: filterClients.map((item) => item._id),
         });
-        getBoardTasks(selectedTask._id);
+        await getBoardTasks(selectedTask._id);
         handleCancelTaskModal();
       } else {
         message.error(response.data.message);
       }
+      // fetch current task data to get updated content
+      setEditTaskSave(true); // Call API in tasklist component
       dispatch(hideAuthLoader());
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -1933,6 +1934,8 @@ const TasksPMS = ({ flag }) => {
                 deleteTasks={deleteTasks}
                 getProjectMianTask={getProjectMianTask}
                 projectDetails={projectDetails}
+                isEditTaskSave={isEditTaskSave}
+                setEditTaskSave={setEditTaskSave}
               />
             ) : (
               <TasksTableView
@@ -1944,6 +1947,7 @@ const TasksPMS = ({ flag }) => {
                 deleteTasks={deleteTasks}
                 getProjectMianTask={getProjectMianTask}
                 projectDetails={projectDetails}
+                isEditTaskSave={isEditTaskSave}
               />
             )}
           </div>
