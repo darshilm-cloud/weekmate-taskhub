@@ -142,6 +142,12 @@ class Validator {
     });
   };
 
+  getEmailValidationSchema = () => {
+    return Joi.object({
+      email: this.emailValidator("Email is required"),
+    });
+  };
+
   fileUploadSizeSchema = () => {
     return Joi.object({
       fileUploadSize: Joi.number().min(1).max(80).required().messages({

@@ -11,6 +11,9 @@ Router.post("/delete-company-data", (req, res, next) => validate(req, res, next)
 // POST /v1/maintenance/addTestData
 Router.post("/addTestData", MaintenanceController.addDummyTestData);
 
+
+Router.post("/getEmployeeOverviewData", MaintenanceController.getEmployeeOverviewData);
+
 module.exports = Router;
 
 

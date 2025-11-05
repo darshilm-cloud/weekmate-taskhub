@@ -2,12 +2,18 @@ const mongoose = require("mongoose");
 const chalk = require("chalk");
 const messages = require("../helpers/messages");
 const { statusCode } = require("../helpers/constant");
-const { successResponse, errorResponse, catchBlockErrorResponse } = require("../helpers/response");
+const {
+  successResponse,
+  errorResponse,
+  catchBlockErrorResponse
+} = require("../helpers/response");
 const { generateRandomId } = require("../helpers/common");
 const configs = require("../configs");
 const CONFIG_JSON = require("../settings/config.json");
 const DEFAULT_DATA = require("../helpers/constant").DEFAULT_DATA;
 const Models = require("../models");
+const { getEmailValidationSchema } = require("../validation");
+const { getDataForLoginUser } = require("./authentication");
 
 class MaintenanceController {
   async deleteCompanyData(req, res) {
@@ -15,7 +21,11 @@ class MaintenanceController {
       const { companyId } = req.body || {};
 
       if (!companyId || !global.validObjectId(companyId)) {
-        return errorResponse(res, statusCode.BAD_REQUEST, "Invalid or missing companyId");
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "Invalid or missing companyId"
+        );
       }
 
       const companyObjectId = global.newObjectId(companyId);
@@ -27,22 +37,35 @@ class MaintenanceController {
         for (const [, model] of modelEntries) {
           if (!model || !model.schema || !model.schema.paths) continue;
 
-          const hasCompanyIdPath = Object.prototype.hasOwnProperty.call(model.schema.paths, "companyId");
+          const hasCompanyIdPath = Object.prototype.hasOwnProperty.call(
+            model.schema.paths,
+            "companyId"
+          );
 
           if (hasCompanyIdPath) {
-            await model.deleteMany({ companyId: companyObjectId }).session(session);
+            await model
+              .deleteMany({ companyId: companyObjectId })
+              .session(session);
           }
         }
 
         if (Models.CompanyModel) {
-          await Models.CompanyModel.deleteOne({ _id: companyObjectId }).session(session);
+          await Models.CompanyModel.deleteOne({ _id: companyObjectId }).session(
+            session
+          );
         }
       });
       session.endSession();
 
-      return successResponse(res, statusCode.SUCCESS, messages.DELETED, { companyId });
+      return successResponse(res, statusCode.SUCCESS, messages.DELETED, {
+        companyId
+      });
     } catch (err) {
-      return errorResponse(res, statusCode.SERVER_ERROR, err && err.message ? err.message : messages.SERVER_ERROR);
+      return errorResponse(
+        res,
+        statusCode.SERVER_ERROR,
+        err && err.message ? err.message : messages.SERVER_ERROR
+      );
     }
   }
 
@@ -66,7 +89,9 @@ class MaintenanceController {
         return errorResponse(res, statusCode.NOT_FOUND, "Company not found");
       }
 
-      console.log(chalk.green(`✅ Starting dummy data creation for company: ${companyId}`));
+      console.log(
+        chalk.green(`✅ Starting dummy data creation for company: ${companyId}`)
+      );
 
       // Import all models
       const Projects = mongoose.model("projects");
@@ -76,7 +101,9 @@ class MaintenanceController {
       const Notes = mongoose.model("notes_pms");
       const NoteBook = mongoose.model("notebook");
       const DiscussionsTopics = mongoose.model("discussionstopics");
-      const DiscussionsTopicsDetails = mongoose.model("discussionstopicsdetails");
+      const DiscussionsTopicsDetails = mongoose.model(
+        "discussionstopicsdetails"
+      );
       const Employees = mongoose.model("employees");
       const PMSRoles = mongoose.model("pms_roles");
       const PMSClients = mongoose.model("pmsclients");
@@ -119,7 +146,7 @@ class MaintenanceController {
       console.log(chalk.blue("📋 Step 1: Creating employees for each role..."));
       const allRoles = await PMSRoles.find({ isDeleted: false }).lean();
       const roleMap = {};
-      
+
       for (const role of allRoles) {
         roleMap[role.role_name.toLowerCase()] = role;
       }
@@ -135,22 +162,28 @@ class MaintenanceController {
       for (let i = 0; i < employeeRoles.length; i++) {
         const roleName = employeeRoles[i];
         const role = roleMap[roleName.toLowerCase()];
-        
+
         if (!role) {
           console.log(chalk.yellow(`⚠️  Role not found: ${roleName}`));
           continue;
         }
 
-        const email = `${roleName.toLowerCase().replace(/ /g, "_")}_${i + 1}@test.com`;
-        
+        const email = `${roleName.toLowerCase().replace(/ /g, "_")}_${
+          i + 1
+        }@test.com`;
+
         // Check if email already exists and is NOT deleted
-        const existingEmployee = await Employees.findOne({ 
+        const existingEmployee = await Employees.findOne({
           email: email.toLowerCase(),
           isDeleted: false,
           isSoftDeleted: false
         });
         if (existingEmployee) {
-          console.log(chalk.yellow(`  ↻ Employee with email ${email} already exists, skipping...`));
+          console.log(
+            chalk.yellow(
+              `  ↻ Employee with email ${email} already exists, skipping...`
+            )
+          );
           createdData.employees.push(existingEmployee);
           continue;
         }
@@ -173,12 +206,18 @@ class MaintenanceController {
         const employee = new Employees(employeeData);
         await employee.save();
         createdData.employees.push(employee);
-        console.log(chalk.green(`  ✓ Created ${roleName} employee: ${employee.email}`));
+        console.log(
+          chalk.green(`  ✓ Created ${roleName} employee: ${employee.email}`)
+        );
       }
 
       // Use first employee as creator for all data
       if (!createdData.employees || createdData.employees.length === 0) {
-        return errorResponse(res, statusCode.SERVER_ERROR, "No employees created or found");
+        return errorResponse(
+          res,
+          statusCode.SERVER_ERROR,
+          "No employees created or found"
+        );
       }
       const creatorEmployee = createdData.employees[0];
 
@@ -187,15 +226,19 @@ class MaintenanceController {
       const clientRole = roleMap[CONFIG_JSON.PMS_ROLES.CLIENT.toLowerCase()];
       if (clientRole) {
         const clientEmail = "testclient@test.com";
-        
+
         // Check if client email already exists and is NOT deleted
-        const existingClient = await PMSClients.findOne({ 
+        const existingClient = await PMSClients.findOne({
           email: clientEmail.toLowerCase(),
           isDeleted: false,
           isSoftDeleted: false
         });
         if (existingClient) {
-          console.log(chalk.yellow(`  ↻ PMS Client with email ${clientEmail} already exists, skipping...`));
+          console.log(
+            chalk.yellow(
+              `  ↻ PMS Client with email ${clientEmail} already exists, skipping...`
+            )
+          );
           createdData.pmsClients.push(existingClient);
         } else {
           const clientData = {
@@ -236,9 +279,15 @@ class MaintenanceController {
         });
         await newProjectType.save();
         projectType = newProjectType;
-        console.log(chalk.green(`  ✓ Created project type: ${projectType.project_type}`));
+        console.log(
+          chalk.green(`  ✓ Created project type: ${projectType.project_type}`)
+        );
       } else {
-        console.log(chalk.yellow(`  ↻ Using existing project type: ${projectType.project_type}`));
+        console.log(
+          chalk.yellow(
+            `  ↻ Using existing project type: ${projectType.project_type}`
+          )
+        );
       }
       createdData.projectType = projectType;
 
@@ -300,7 +349,9 @@ class MaintenanceController {
         console.log(chalk.green(`  ✓ Created project status: Archived`));
       } else {
         createdData.projectStatuses.push(archivedStatus);
-        console.log(chalk.yellow(`  ↻ Using existing project status: Archived`));
+        console.log(
+          chalk.yellow(`  ↻ Using existing project status: Archived`)
+        );
       }
 
       // Step 6: Get or create Workflow
@@ -322,9 +373,15 @@ class MaintenanceController {
         });
         await newWorkflow.save();
         workflow = newWorkflow;
-        console.log(chalk.green(`  ✓ Created workflow: ${workflow.project_workflow}`));
+        console.log(
+          chalk.green(`  ✓ Created workflow: ${workflow.project_workflow}`)
+        );
       } else {
-        console.log(chalk.yellow(`  ↻ Using existing workflow: ${workflow.project_workflow}`));
+        console.log(
+          chalk.yellow(
+            `  ↻ Using existing workflow: ${workflow.project_workflow}`
+          )
+        );
       }
       createdData.workflow = workflow;
 
@@ -337,10 +394,19 @@ class MaintenanceController {
 
       if (existingStatuses.length === 0) {
         const workflowStatuses = [
-          { title: DEFAULT_DATA.WORKFLOW_STATUS.TODO, color: "#616161", sequence: 1, isDefault: true },
+          {
+            title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+            color: "#616161",
+            sequence: 1,
+            isDefault: true
+          },
           { title: "In Progress", color: "#FFA500", sequence: 2 },
           { title: "Review", color: "#9370DB", sequence: 3 },
-          { title: DEFAULT_DATA.WORKFLOW_STATUS.DONE, color: "#228B22", sequence: 4 }
+          {
+            title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
+            color: "#228B22",
+            sequence: 4
+          }
         ];
 
         for (const status of workflowStatuses) {
@@ -352,24 +418,52 @@ class MaintenanceController {
           });
           await newStatus.save();
           createdData.workflowStatuses.push(newStatus);
-          console.log(chalk.green(`  ✓ Created workflow status: ${status.title}`));
+          console.log(
+            chalk.green(`  ✓ Created workflow status: ${status.title}`)
+          );
         }
       } else {
         createdData.workflowStatuses = existingStatuses;
-        console.log(chalk.yellow(`  ↻ Using existing workflow statuses (${existingStatuses.length} found)`));
+        console.log(
+          chalk.yellow(
+            `  ↻ Using existing workflow statuses (${existingStatuses.length} found)`
+          )
+        );
       }
 
       // Step 8: Create Bug Workflow Statuses
       console.log(chalk.blue("📋 Step 8: Setting up bug workflow statuses..."));
-      const existingBugStatuses = await BugsWorkFlowStatus.find({ isDeleted: false }).lean();
+      const existingBugStatuses = await BugsWorkFlowStatus.find({
+        isDeleted: false
+      }).lean();
 
       if (existingBugStatuses.length === 0) {
         const bugStatuses = [
-          { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO, color: "#89CFF0", sequence: 1 },
-          { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.IN_PROGRESS, color: "#89CFF0", sequence: 2 },
-          { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TO_BE_TESTED, color: "#89CFF0", sequence: 3 },
-          { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.ON_HOLD, color: "#89CFF0", sequence: 4 },
-          { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.DONE, color: "#89CFF0", sequence: 5 }
+          {
+            title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+            color: "#89CFF0",
+            sequence: 1
+          },
+          {
+            title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.IN_PROGRESS,
+            color: "#89CFF0",
+            sequence: 2
+          },
+          {
+            title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TO_BE_TESTED,
+            color: "#89CFF0",
+            sequence: 3
+          },
+          {
+            title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.ON_HOLD,
+            color: "#89CFF0",
+            sequence: 4
+          },
+          {
+            title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.DONE,
+            color: "#89CFF0",
+            sequence: 5
+          }
         ];
 
         for (const status of bugStatuses) {
@@ -380,17 +474,32 @@ class MaintenanceController {
           });
           await newStatus.save();
           createdData.bugWorkflowStatuses.push(newStatus);
-          console.log(chalk.green(`  ✓ Created bug workflow status: ${status.title}`));
+          console.log(
+            chalk.green(`  ✓ Created bug workflow status: ${status.title}`)
+          );
         }
       } else {
         createdData.bugWorkflowStatuses = existingBugStatuses;
-        console.log(chalk.yellow(`  ↻ Using existing bug workflow statuses (${existingBugStatuses.length} found)`));
+        console.log(
+          chalk.yellow(
+            `  ↻ Using existing bug workflow statuses (${existingBugStatuses.length} found)`
+          )
+        );
       }
 
       // Step 9: Create Project
       console.log(chalk.blue("📋 Step 9: Creating project..."));
-      const managerEmployee = createdData.employees.find(e => e.pms_role_id?.toString() === roleMap[CONFIG_JSON.PMS_ROLES.TL.toLowerCase()]?._id?.toString()) || creatorEmployee;
-      const amEmployee = createdData.employees.find(e => e.pms_role_id?.toString() === roleMap[CONFIG_JSON.PMS_ROLES.AM.toLowerCase()]?._id?.toString());
+      const managerEmployee =
+        createdData.employees.find(
+          (e) =>
+            e.pms_role_id?.toString() ===
+            roleMap[CONFIG_JSON.PMS_ROLES.TL.toLowerCase()]?._id?.toString()
+        ) || creatorEmployee;
+      const amEmployee = createdData.employees.find(
+        (e) =>
+          e.pms_role_id?.toString() ===
+          roleMap[CONFIG_JSON.PMS_ROLES.AM.toLowerCase()]?._id?.toString()
+      );
 
       const projectData = {
         companyId: new mongoose.Types.ObjectId(companyId),
@@ -398,13 +507,18 @@ class MaintenanceController {
         projectId: generateRandomId(),
         color: CONFIG_JSON.COLORS[0],
         descriptions: "This is a sample project created for testing purposes",
-        technology: createdData.projectTechs.map(t => t._id),
+        technology: createdData.projectTechs.map((t) => t._id),
         project_type: projectType._id,
-        project_status: createdData.projectStatuses.find(s => s.title === DEFAULT_DATA.PROJECT_STATUS.ACTIVE)._id,
+        project_status: createdData.projectStatuses.find(
+          (s) => s.title === DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+        )._id,
         manager: managerEmployee._id,
         acc_manager: amEmployee?._id || null,
-        assignees: [creatorEmployee._id, ...createdData.employees.slice(0, 2).map(e => e._id)],
-        pms_clients: createdData.pmsClients.map(c => c._id),
+        assignees: [
+          creatorEmployee._id,
+          ...createdData.employees.slice(0, 2).map((e) => e._id)
+        ],
+        pms_clients: createdData.pmsClients.map((c) => c._id),
         workFlow: workflow._id,
         estimatedHours: "80",
         isBillable: true,
@@ -469,14 +583,21 @@ class MaintenanceController {
 
       // Step 13: Create Main Tasks (Project Main Task Lists)
       console.log(chalk.blue("📋 Step 13: Creating main tasks..."));
-      const mainTaskTitles = ["Backend Development", "Frontend Development", "Testing"];
-      
+      const mainTaskTitles = [
+        "Backend Development",
+        "Frontend Development",
+        "Testing"
+      ];
+
       for (const title of mainTaskTitles) {
         const mainTask = new ProjectMainTask({
           title: title,
           project_id: project._id,
-          subscribers: [creatorEmployee._id, ...createdData.employees.slice(0, 2).map(e => e._id)],
-          pms_clients: createdData.pmsClients.map(c => c._id),
+          subscribers: [
+            creatorEmployee._id,
+            ...createdData.employees.slice(0, 2).map((e) => e._id)
+          ],
+          pms_clients: createdData.pmsClients.map((c) => c._id),
           status: "active",
           createdBy: creatorEmployee._id,
           updatedBy: creatorEmployee._id,
@@ -488,7 +609,9 @@ class MaintenanceController {
         console.log(chalk.green(`  ✓ Created main task: ${mainTask.title}`));
 
         // Step 14: Create Tasks for this Main Task
-        console.log(chalk.blue(`📋 Step 14: Creating tasks for ${mainTask.title}...`));
+        console.log(
+          chalk.blue(`📋 Step 14: Creating tasks for ${mainTask.title}...`)
+        );
         const taskTitles = [
           "Setup database schema",
           "Implement API endpoints",
@@ -510,11 +633,13 @@ class MaintenanceController {
             estimated_minutes: "00",
             task_progress: "50",
             task_status: createdData.workflowStatuses[0]._id, // To-Do
-            task_status_history: [{
-              task_status: createdData.workflowStatuses[0]._id,
-              updatedBy: creatorEmployee._id,
-              updatedAt: configs.utcDefault()
-            }],
+            task_status_history: [
+              {
+                task_status: createdData.workflowStatuses[0]._id,
+                updatedBy: creatorEmployee._id,
+                updatedAt: configs.utcDefault()
+              }
+            ],
             createdBy: creatorEmployee._id,
             updatedBy: creatorEmployee._id,
             createdByModel: "employees",
@@ -527,19 +652,27 @@ class MaintenanceController {
           console.log(chalk.green(`    ✓ Created task: ${task.title}`));
 
           // Step 15: Create Task Hours Logs for each task with different users
-          console.log(chalk.blue(`📋 Step 15: Creating logged hours for ${task.title}...`));
+          console.log(
+            chalk.blue(`📋 Step 15: Creating logged hours for ${task.title}...`)
+          );
           // Create logs with different employees
-          const logEmployees = createdData.employees.slice(0, Math.min(3, createdData.employees.length));
+          const logEmployees = createdData.employees.slice(
+            0,
+            Math.min(3, createdData.employees.length)
+          );
           const logDurations = [
             { hours: "02", minutes: "00" },
             { hours: "03", minutes: "30" },
             { hours: "01", minutes: "45" }
           ];
-          
+
           for (let logIdx = 0; logIdx < logEmployees.length; logIdx++) {
             const logEmployee = logEmployees[logIdx];
-            const duration = logDurations[logIdx] || { hours: "02", minutes: "00" };
-            
+            const duration = logDurations[logIdx] || {
+              hours: "02",
+              minutes: "00"
+            };
+
             const hoursLog = new TaskHoursLogs({
               employee_id: logEmployee._id,
               project_id: project._id,
@@ -558,11 +691,17 @@ class MaintenanceController {
             });
             await hoursLog.save();
             createdData.taskLogs.push(hoursLog);
-            console.log(chalk.green(`    ✓ Created logged hours: ${duration.hours}h ${duration.minutes}m by ${logEmployee.full_name}`));
+            console.log(
+              chalk.green(
+                `    ✓ Created logged hours: ${duration.hours}h ${duration.minutes}m by ${logEmployee.full_name}`
+              )
+            );
           }
 
           // Step 16: Create Task Comments
-          console.log(chalk.blue(`📋 Step 16: Creating comments for ${task.title}...`));
+          console.log(
+            chalk.blue(`📋 Step 16: Creating comments for ${task.title}...`)
+          );
           const comment = new Comments({
             task_id: task._id,
             employee_id: creatorEmployee._id,
@@ -597,7 +736,7 @@ class MaintenanceController {
         "Login page not redirecting after authentication",
         "Database connection timeout issue"
       ];
-      
+
       for (const bugTitle of bugTitles) {
         const bugData = {
           title: bugTitle,
@@ -613,11 +752,13 @@ class MaintenanceController {
           estimated_minutes: "00",
           progress: "0",
           bug_status: createdData.bugWorkflowStatuses[0]._id, // Todo
-          bug_status_history: [{
-            bug_status: createdData.bugWorkflowStatuses[0]._id,
-            updatedBy: creatorEmployee._id,
-            updatedAt: configs.utcDefault()
-          }],
+          bug_status_history: [
+            {
+              bug_status: createdData.bugWorkflowStatuses[0]._id,
+              updatedBy: creatorEmployee._id,
+              updatedAt: configs.utcDefault()
+            }
+          ],
           isImported: false,
           isRepeated: false,
           createdBy: creatorEmployee._id,
@@ -625,7 +766,7 @@ class MaintenanceController {
           createdByModel: "employees",
           updatedByModel: "employees"
         };
-        
+
         const bug = new ProjectBugs(bugData);
         await bug.save();
         createdData.bugs.push(bug);
@@ -646,7 +787,10 @@ class MaintenanceController {
           color: CONFIG_JSON.COLORS[1],
           project_id: project._id,
           noteBook_id: notebook._id,
-          subscribers: [creatorEmployee._id, ...createdData.employees.slice(0, 1).map(e => e._id)],
+          subscribers: [
+            creatorEmployee._id,
+            ...createdData.employees.slice(0, 1).map((e) => e._id)
+          ],
           pms_clients: [createdData.pmsClients[0]._id],
           notesInfo: `Content for ${noteTitle}`,
           isPrivate: false,
@@ -674,7 +818,10 @@ class MaintenanceController {
           project_id: project._id,
           status: "active",
           descriptions: `Discussion about ${topicTitle}`,
-          subscribers: [creatorEmployee._id, ...createdData.employees.slice(0, 2).map(e => e._id)],
+          subscribers: [
+            creatorEmployee._id,
+            ...createdData.employees.slice(0, 2).map((e) => e._id)
+          ],
           pms_clients: [createdData.pmsClients[0]._id],
           isPinToTop: false,
           isPrivate: false,
@@ -686,10 +833,16 @@ class MaintenanceController {
         });
         await discussionTopic.save();
         createdData.discussionTopics.push(discussionTopic);
-        console.log(chalk.green(`  ✓ Created discussion topic: ${discussionTopic.title}`));
+        console.log(
+          chalk.green(`  ✓ Created discussion topic: ${discussionTopic.title}`)
+        );
 
         // Create default topic detail
-        console.log(chalk.blue(`📋 Step 20: Creating discussion topic details for ${topicTitle}...`));
+        console.log(
+          chalk.blue(
+            `📋 Step 20: Creating discussion topic details for ${topicTitle}...`
+          )
+        );
         const topicDetail = new DiscussionsTopicsDetails({
           topic_id: discussionTopic._id,
           title: `Added discussion about ${topicTitle}`,
@@ -740,17 +893,238 @@ class MaintenanceController {
           notesCreated: createdData.notes.length,
           labelsCreated: createdData.labels.length,
           discussionTopicsCreated: createdData.discussionTopics.length,
-          discussionTopicDetailsCreated: createdData.discussionTopicsDetails.length
+          discussionTopicDetailsCreated:
+            createdData.discussionTopicsDetails.length
+        }
+      );
+    } catch (error) {
+      console.log(chalk.red("❌ Error creating dummy test data:"), error);
+      return catchBlockErrorResponse(res, error.message);
+    }
+  }
+
+  async getEmployeeOverviewData(req, res) {
+    try {
+      const { error, value } = configs.validateFormatter(
+        getEmailValidationSchema(),
+        req.body
+      );
+      if (error) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          error.details[0].message
+        );
+      }
+
+      let userData = await getDataForLoginUser(value);
+
+      if (!userData) {
+        return errorResponse(res, statusCode.BAD_REQUEST, "User not found");
+      }
+
+      const employeeId = userData._id;
+
+      // Helper function to convert minutes to HH:MM format (no seconds)
+      const minutesToHHMM = (totalMinutes) => {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = Math.round(totalMinutes % 60);
+
+        // Pad with leading zeros
+        const hoursStr = hours.toString().padStart(2, "0");
+        const minutesStr = minutes.toString().padStart(2, "0");
+
+        return `${hoursStr}:${minutesStr}`;
+      };
+
+      // Get id for active status project
+      const ProjectStatus = await Models.projectStatus.findOne({
+        companyId: userData.companyId,
+        title: "Active"
+      });
+
+      // Step 1: Get all projects assigned to the user
+      const projects = await Models.projects
+        .find({
+          assignees: employeeId,
+          project_status: ProjectStatus._id,
+          isDeleted: false
+        })
+        .select("_id title projectId isBillable")
+        .lean();
+
+      if (!projects || projects.length === 0) {
+        return successResponse(
+          res,
+          statusCode.OK,
+          "No projects found for this user",
+          []
+        );
+      }
+
+      const projectIds = projects.map((p) => p._id);
+
+      // Step 2: Get all tasks for these projects where user is assigned
+      const tasks = await Models.tasks
+        .find({
+          project_id: { $in: projectIds },
+          assignees: employeeId,
+          isDeleted: false
+        })
+        .select("project_id estimated_hours estimated_minutes assignees")
+        .lean();
+
+      // Step 3: Get all logged hours for this user across these projects (ignoring seconds)
+      const loggedHours = await Models.taskHoursLogs
+        .find({
+          project_id: { $in: projectIds },
+          employee_id: employeeId,
+          isDeleted: false
+        })
+        .select("project_id logged_hours logged_minutes")
+        .lean();
+
+      // Step 4: Process data in JavaScript for better performance
+      const projectMap = new Map();
+
+      // Initialize project map
+      projects.forEach((project) => {
+        projectMap.set(project._id.toString(), {
+          projectId: project.projectId,
+          projectName: project.title,
+          isBillable: project.isBillable,
+          totalAssignedMinutes: 0,
+          totalLoggedMinutes: 0,
+          taskCount: 0
+        });
+      });
+
+      // Calculate assigned hours (divided by assignee count) - only hours and minutes
+      tasks.forEach((task) => {
+        const projectKey = task.project_id.toString();
+        const projectData = projectMap.get(projectKey);
+
+        if (projectData) {
+          // Convert estimated time to minutes (ignoring seconds)
+          const estimatedHours = parseFloat(task.estimated_hours || 0);
+          const estimatedMinutes = parseFloat(task.estimated_minutes || 0);
+          const totalMinutes = estimatedHours * 60 + estimatedMinutes;
+
+          // Divide by number of assignees
+          const assigneeCount = task.assignees?.length || 1;
+          const userShareMinutes = totalMinutes / assigneeCount;
+
+          projectData.totalAssignedMinutes += userShareMinutes;
+          projectData.taskCount += 1;
+        }
+      });
+
+      // Calculate logged hours (ignoring seconds completely)
+      loggedHours.forEach((log) => {
+        const projectKey = log.project_id.toString();
+        const projectData = projectMap.get(projectKey);
+
+        if (projectData) {
+          const hours = parseFloat(log.logged_hours || 0);
+          const minutes = parseFloat(log.logged_minutes || 0);
+          // Seconds removed - not included in calculation
+
+          const totalMinutes = hours * 60 + minutes;
+          projectData.totalLoggedMinutes += totalMinutes;
+        }
+      });
+
+      // Format final result
+      const result = Array.from(projectMap.values()).map((project) => {
+        // Round to nearest minute before converting to decimal hours
+        const roundedAssignedMinutes = Math.round(project.totalAssignedMinutes);
+        const roundedLoggedMinutes = Math.round(project.totalLoggedMinutes);
+
+        return {
+          projectId: project.projectId,
+          projectName: project.projectName,
+          isBillable: project.isBillable,
+          totalAssignedHours: parseFloat(
+            (roundedAssignedMinutes / 60).toFixed(2)
+          ),
+          totalLoggedHours: parseFloat((roundedLoggedMinutes / 60).toFixed(2)),
+          totalAssignedHoursFormatted: minutesToHHMM(roundedAssignedMinutes),
+          totalLoggedHoursFormatted: minutesToHHMM(roundedLoggedMinutes),
+          taskCount: project.taskCount,
+          productivity:
+            roundedAssignedMinutes > 0
+              ? parseFloat(
+                  (
+                    (roundedLoggedMinutes / roundedAssignedMinutes) *
+                    100
+                  ).toFixed(2)
+                )
+              : 0
+        };
+      });
+
+      // Sort by project name
+      result.sort((a, b) => a.projectName.localeCompare(b.projectName));
+
+      // Calculate summary totals using reduce
+      const summary = result.reduce(
+        (acc, project) => {
+          return {
+            totalAssignedMinutes:
+              acc.totalAssignedMinutes + project.totalAssignedHours * 60,
+            totalLoggedMinutes:
+              acc.totalLoggedMinutes + project.totalLoggedHours * 60,
+            totalTaskCount: acc.totalTaskCount + project.taskCount
+          };
+        },
+        {
+          totalAssignedMinutes: 0,
+          totalLoggedMinutes: 0,
+          totalTaskCount: 0
         }
       );
 
+      // Round summary totals
+      const summaryAssignedMinutes = Math.round(summary.totalAssignedMinutes);
+      const summaryLoggedMinutes = Math.round(summary.totalLoggedMinutes);
+
+      // Create summary object
+      const overallSummary = {
+        totalProjects: result.length,
+        totalTasks: summary.totalTaskCount,
+        totalAssignedHours: parseFloat(
+          (summaryAssignedMinutes / 60).toFixed(2)
+        ),
+        totalLoggedHours: parseFloat((summaryLoggedMinutes / 60).toFixed(2)),
+        totalAssignedHoursFormatted: minutesToHHMM(summaryAssignedMinutes),
+        totalLoggedHoursFormatted: minutesToHHMM(summaryLoggedMinutes),
+        overallProductivity:
+          summaryAssignedMinutes > 0
+            ? parseFloat(
+                ((summaryLoggedMinutes / summaryAssignedMinutes) * 100).toFixed(
+                  2
+                )
+              )
+            : 0
+      };
+
+      return successResponse(
+        res,
+        statusCode.OK,
+        "Employee overview data fetched successfully",
+        {
+          projects: result,
+          summary: overallSummary
+        }
+      );
     } catch (error) {
-      console.log(chalk.red("❌ Error creating dummy test data:"), error);
+      console.log(
+        "🚀 ~ MaintenanceController ~ getEmployeeOverviewData ~ error:",
+        error
+      );
       return catchBlockErrorResponse(res, error.message);
     }
   }
 }
 
 module.exports = new MaintenanceController();
-
-
