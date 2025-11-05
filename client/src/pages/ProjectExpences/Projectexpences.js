@@ -282,14 +282,19 @@ const Projectexpences = () => {
               <span>{text.cost_in_usd}</span>
             </span>
           ) : "-",
+         width: 90,
+
       },
       {
         title: "Need to Bill Customer",
         render: (text) => text?.need_to_bill_customer ? "YES" : "NO",
+         width: 200,
       },
       {
         title: "Created By",
         render: (text) => text?.createdBy?.full_name || "-",
+         width: 130,
+
       },
       {
         title: "Date",
@@ -297,10 +302,14 @@ const Projectexpences = () => {
           const createdDate = moment(text.createdAt).format("DD MMM YYYY");
           return <span>{createdDate || "-"}</span>;
         },
+         width: 130,
+
       },
       {
         title: "Status",
         render: (text) => <span>{text.status}</span>,
+         width: 130,
+
       },
     ];
 
@@ -333,6 +342,8 @@ const Projectexpences = () => {
             </Popconfirm>
           </div>
         ),
+         width: 130,
+
       });
     } else if (userPermissions.hasClientAccess) {
       baseColumns.push({
@@ -354,6 +365,8 @@ const Projectexpences = () => {
             </Link>
           </div>
         ),
+         width: 130,
+
       });
     }
 

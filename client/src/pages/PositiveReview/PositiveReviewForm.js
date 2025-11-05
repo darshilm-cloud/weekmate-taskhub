@@ -236,7 +236,11 @@ const PositiveReviewForm = () => {
               <Form
                 form={form}
                 noValidate
-                {...FORM_LAYOUT}
+ labelCol={{ xs: 24, sm: 24, md: 8, lg: 8 }}
+  wrapperCol={{ xs: 24, sm: 24, md: 16, lg: 16 }}
+  labelWrap
+                // {...FORM_LAYOUT}
+                  labelAlign="left"
                 onFinish={handleSubmit}
               >
                 <Row>
