@@ -55,6 +55,7 @@ class Validator {
       }).required(),
 
       companyDetails: Joi.object({
+        companyId: Joi.string(),
         companyName: Joi.string().required().label("Company name is required"),
         companyDomain: Joi.string().required().label("Company slug is required")
       }).required()
