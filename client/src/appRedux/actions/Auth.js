@@ -37,6 +37,8 @@ export const userSignOut = () => {
   localStorage.removeItem('loginLogo')  
   localStorage.removeItem('logoMode')
   localStorage.removeItem('favIcon')
+  localStorage.removeItem('companyDomain')
+
 
 
   removeCookie("user_permission")

@@ -327,12 +327,12 @@ function App() {
               path={`${match.url}:companySlug/signin/:verificationToken`}
               component={SignIn}
             />
-              <AuthRoute
+              {/* <AuthRoute
               path={`${match.url}:companySlug/signin`}
               authUser={authUser}
               location={location}
               component={SignIn}
-            />
+            /> */}
             <AuthRoute
               path={`${match.url}signin`}
               authUser={authUser}
@@ -344,7 +344,7 @@ function App() {
               component={CompanyRegistration}
             />
             <AuthRoute
-              path={`${match.url}:companySlug/forgot-password`}
+              path={`${match.url}forgot-password`}
               component={ForgotPassword}
             />
             <AuthRoute
@@ -352,7 +352,7 @@ function App() {
               component={EmployeeFeedback}
             />
             <AuthRoute
-              path={`${match.url}:companySlug/reset-password/:token`}
+              path={`${match.url}reset-password/:token`}
               component={ResetPassword}
             />
             <AuthRoute
