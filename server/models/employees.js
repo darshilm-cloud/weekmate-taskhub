@@ -41,6 +41,12 @@ employeeSchema.pre("save", function (next) {
       return next();
     }
 
+    // Skip hashing if skipPasswordHash flag is set
+    if (user?.skipPasswordHash) {
+      delete user.skipPasswordHash; // Remove the flag before saving
+      return next();
+    }
+
     const hash = crypto.createHash("md5").update(user.password).digest("hex");
     user.password = hash;
     next();
@@ -50,11 +56,20 @@ employeeSchema.pre("save", function (next) {
 });
 
 employeeSchema.methods.comparePassword = function (candidatePassword, cb) {
-  const encryptedInputPassword = crypto
-    .createHash("md5")
-    .update(candidatePassword)
-    .digest("hex");
-  cb(null, encryptedInputPassword === this.password);
+  // Check if stored password is an MD5 hash (32 hex characters)
+  const isMD5Hash = /^[a-f0-9]{32}$/i.test(this.password);
+  
+  if (isMD5Hash) {
+    // Password is hashed, compare with hashed candidate
+    const encryptedInputPassword = crypto
+      .createHash("md5")
+      .update(candidatePassword)
+      .digest("hex");
+    cb(null, encryptedInputPassword === this.password);
+  } else {
+    // Password is plain text, compare directly
+    cb(null, candidatePassword === this.password);
+  }
 };
 
 employeeSchema.index({ email: 1 });

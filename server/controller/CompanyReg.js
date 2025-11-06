@@ -185,6 +185,7 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
       full_name: `${first_name} ${last_name}`,
       email,
       password,
+      skipPasswordHash: true, // Skip password hashing for company registration
       companyId: company._id,
       pms_role_id: role._id,
       isActivate: true,
@@ -359,6 +360,7 @@ exports.registerAdminAndCompany = async (req, res) => {
       email,
       phone_number,
       password,
+      skipPasswordHash: true, // Skip password hashing for company registration
       companyId: company._id,
       pms_role_id: role._id,
       isActivate: true,
