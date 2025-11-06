@@ -14,7 +14,6 @@ import { IntlProvider } from "react-intl";
 import AppLocale from "../../lngProvider";
 import MainApp from "./MainApp";
 import SignIn from "../SignIn";
-import CompanyRegistration from "../../pages/RegisterCompany";
 import ForgotPassword from "../ForgotPassword";
 import ResetPassword from "../ResetPassword";
 import {
@@ -338,10 +337,6 @@ function App() {
               authUser={authUser}
               location={location}
               component={SignIn}
-            />
-            <AuthRoute
-              path={`${match.url}register-company`}
-              component={CompanyRegistration}
             />
             <AuthRoute
               path={`${match.url}forgot-password`}
