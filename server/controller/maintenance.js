@@ -915,14 +915,14 @@ class MaintenanceController {
           error.details[0].message
         );
       }
-  
+
       const userData = await getDataForLoginUser(value);
       if (!userData) {
         return errorResponse(res, statusCode.BAD_REQUEST, "User not found");
       }
-  
+
       const employeeId = userData._id;
-  
+
       // Helper: convert minutes -> HH:MM
       const minutesToHHMM = (totalMinutes) => {
         const hours = Math.floor(totalMinutes / 60);
@@ -931,13 +931,13 @@ class MaintenanceController {
           .toString()
           .padStart(2, "0")}`;
       };
-  
+
       // Find "Active" project status ID
       const ProjectStatus = await Models.projectStatus.findOne({
         companyId: userData.companyId,
         title: "Active"
       });
-  
+
       // Get user's active projects
       const projects = await Models.projects
         .find({
@@ -947,13 +947,13 @@ class MaintenanceController {
         })
         .select("_id title projectId isBillable")
         .lean();
-  
+
       if (!projects || projects.length === 0) {
         return successResponse(res, statusCode.OK, "No projects found", []);
       }
-  
+
       const projectIds = projects.map((p) => p._id);
-  
+
       // Get tasks (with completion progress)
       const tasks = await Models.tasks
         .find({
@@ -965,7 +965,7 @@ class MaintenanceController {
           "project_id estimated_hours estimated_minutes assignees completion_progress"
         )
         .lean();
-  
+
       // Get logged time entries
       const loggedHours = await Models.taskHoursLogs
         .find({
@@ -975,7 +975,7 @@ class MaintenanceController {
         })
         .select("project_id logged_hours logged_minutes")
         .lean();
-  
+
       // Initialize project map
       const projectMap = new Map();
       projects.forEach((p) => {
@@ -991,56 +991,56 @@ class MaintenanceController {
           weightedTotalMinutes: 0
         });
       });
-  
+
       // Step 1: Calculate assigned hours and weighted progress
       tasks.forEach((task) => {
         const projectKey = task.project_id.toString();
         const projectData = projectMap.get(projectKey);
         if (!projectData) return;
-  
+
         const estimatedHours = parseFloat(task.estimated_hours || 0);
         const estimatedMinutes = parseFloat(task.estimated_minutes || 0);
         const totalMinutes = estimatedHours * 60 + estimatedMinutes;
-  
+
         const assigneeCount = task.assignees?.length || 1;
         const userShareMinutes = totalMinutes / assigneeCount;
-  
+
         const completionProgress = parseFloat(task.completion_progress || 0); // 0–100
-  
+
         // Weighted completion by estimated minutes
         projectData.weightedProgressSum +=
           completionProgress * userShareMinutes;
         projectData.weightedTotalMinutes += userShareMinutes;
-  
+
         projectData.totalAssignedMinutes += userShareMinutes;
         projectData.taskCount += 1;
       });
-  
+
       // Step 2: Calculate logged hours
       loggedHours.forEach((log) => {
         const projectKey = log.project_id.toString();
         const projectData = projectMap.get(projectKey);
         if (!projectData) return;
-  
+
         const hours = parseFloat(log.logged_hours || 0);
         const minutes = parseFloat(log.logged_minutes || 0);
         const totalMinutes = hours * 60 + minutes;
-  
+
         projectData.totalLoggedMinutes += totalMinutes;
       });
-  
+
       // Step 3: Final computation for each project
       const result = Array.from(projectMap.values()).map((project) => {
         const assignedMins = Math.round(project.totalAssignedMinutes);
         const loggedMins = Math.round(project.totalLoggedMinutes);
-  
+
         // Weighted completion percentage across tasks
         let completionProgress = 0;
         if (project.weightedTotalMinutes > 0) {
           completionProgress =
             project.weightedProgressSum / project.weightedTotalMinutes;
         }
-  
+
         // Calculate productivity (balanced logic)
         let productivity = 0;
         if (assignedMins === 0 || loggedMins === 0) {
@@ -1055,7 +1055,7 @@ class MaintenanceController {
           }
         }
         productivity = parseFloat(Math.min(productivity, 100).toFixed(2));
-  
+
         // Completion % based on actual logged vs assigned (capped)
         let completionPercentage = 0;
         if (assignedMins > 0) {
@@ -1064,7 +1064,7 @@ class MaintenanceController {
             100
           );
         }
-  
+
         return {
           projectId: project.projectId,
           projectName: project.projectName,
@@ -1079,10 +1079,10 @@ class MaintenanceController {
           productivity
         };
       });
-  
+
       // Step 4: Sort projects alphabetically
       result.sort((a, b) => a.projectName.localeCompare(b.projectName));
-  
+
       // Step 5: Calculate overall summary (simple average)
       const summary = result.reduce(
         (acc, p) => {
@@ -1099,16 +1099,16 @@ class MaintenanceController {
           totalProductivity: 0
         }
       );
-  
+
       const summaryAssignedMins = Math.round(summary.totalAssignedMinutes);
       const summaryLoggedMins = Math.round(summary.totalLoggedMinutes);
-  
+
       // Simple average productivity across projects
       const overallProductivity =
         result.length > 0
           ? parseFloat((summary.totalProductivity / result.length).toFixed(2))
           : 0;
-  
+
       // Overall completion %
       let overallCompletionPercentage = 0;
       if (summaryAssignedMins > 0) {
@@ -1117,7 +1117,7 @@ class MaintenanceController {
           100
         );
       }
-  
+
       const overallSummary = {
         totalProjects: result.length,
         totalTasks: summary.totalTasks,
@@ -1125,10 +1125,12 @@ class MaintenanceController {
         totalLoggedHours: parseFloat((summaryLoggedMins / 60).toFixed(2)),
         totalAssignedHoursFormatted: minutesToHHMM(summaryAssignedMins),
         totalLoggedHoursFormatted: minutesToHHMM(summaryLoggedMins),
-        completionPercentage: parseFloat(overallCompletionPercentage.toFixed(2)),
+        completionPercentage: parseFloat(
+          overallCompletionPercentage.toFixed(2)
+        ),
         productivity: overallProductivity
       };
-  
+
       return successResponse(
         res,
         statusCode.OK,
@@ -1143,7 +1145,186 @@ class MaintenanceController {
       return catchBlockErrorResponse(res, error.message);
     }
   }
-  
+
+  async getEmployeeProjectTaskOverviewData(req, res) {
+    try {
+      const { error, value } = configs.validateFormatter(
+        getEmailValidationSchema(),
+        req.body
+      );
+      if (error) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          error.details[0].message
+        );
+      }
+
+      const userData = await getDataForLoginUser(value);
+      if (!userData) {
+        return errorResponse(res, statusCode.BAD_REQUEST, "User not found");
+      }
+
+      const employeeId = userData._id;
+
+      // Find "Active" project status ID
+      const ProjectStatus = await Models.projectStatus.findOne({
+        companyId: userData.companyId,
+        title: "Active"
+      });
+
+      // Get user's active projects with populated manager and account manager
+      const projects = await Models.projects
+        .find({
+          assignees: employeeId,
+          project_status: ProjectStatus?._id,
+          isDeleted: false
+        })
+        .select(
+          "_id title projectId color descriptions isBillable estimatedHours start_date end_date manager acc_manager assignees technology project_type project_status"
+        )
+        .populate({
+          path: "manager",
+          select: "full_name email"
+        })
+        .populate({
+          path: "acc_manager",
+          select: "full_name email"
+        })
+        .populate({
+          path: "project_type",
+          select: "project_type"
+        })
+        .lean();
+
+      if (!projects || projects.length === 0) {
+        return successResponse(res, statusCode.OK, "No projects found", {
+          projects: [],
+          summary: {
+            totalProjects: 0,
+            totalTasks: 0
+          }
+        });
+      }
+
+      const projectIds = projects.map((p) => p._id);
+
+      // Get tasks with populated task_status
+      // const tasks = await Models.tasks
+      //   .find({
+      //     project_id: { $in: projectIds },
+      //     assignees: employeeId,
+      //     isDeleted: false
+      //   })
+      //   .select(
+      //     "_id title taskId project_id main_task_id descriptions start_date due_date assignees estimated_hours estimated_minutes task_progress task_status task_labels status"
+      //   )
+      //   .populate({
+      //     path: "task_status",
+      //     select: "title color"
+      //   })
+      //   .populate({
+      //     path: "task_labels",
+      //     select: "title color"
+      //   })
+      //   .lean();
+
+      // console.log("🚀 ~ getEmployeeProjectTaskOverviewData ~ tasks:", tasks.length);
+
+      // Group tasks by project
+      const projectTaskMap = new Map();
+
+      // Initialize map with project data
+      projects.forEach((project) => {
+        projectTaskMap.set(project._id.toString(), {
+          projectId: project.projectId,
+          projectName: project.title,
+          projectColor: project.color,
+          projectDescription: project.descriptions,
+          isBillable: project.isBillable,
+          estimatedHours: project.estimatedHours,
+          startDate: project.start_date,
+          endDate: project.end_date,
+          projectType: project.project_type?.project_type || null,
+          manager: project.manager
+            ? {
+                id: project.manager._id,
+                name: project.manager.full_name,
+                email: project.manager.email
+              }
+            : null,
+          accountManager: project.acc_manager
+            ? {
+                id: project.acc_manager._id,
+                name: project.acc_manager.full_name,
+                email: project.acc_manager.email
+              }
+            : null,
+          totalAssignees: project.assignees?.length || 0
+          // tasks: []
+        });
+      });
+
+      // Add tasks to their respective projects
+      // tasks.forEach((task) => {
+      //   const projectKey = task.project_id.toString();
+      //   const projectData = projectTaskMap.get(projectKey);
+
+      //   if (projectData) {
+      //     projectData.tasks.push({
+      //       taskId: task.taskId,
+      //       title: task.title,
+      //       description: task.descriptions,
+      //       startDate: task.start_date,
+      //       dueDate: task.due_date,
+      //       estimatedHours: task.estimated_hours,
+      //       estimatedMinutes: task.estimated_minutes,
+      //       taskProgress: task.task_progress,
+      //       status: task.status,
+      //       taskStatus: task.task_status
+      //         ? {
+      //             title: task.task_status.title,
+      //             color: task.task_status.color
+      //           }
+      //         : null,
+      //       taskLabels: task.task_labels?.map((label) => ({
+      //         title: label.title,
+      //         color: label.color
+      //       })) || [],
+      //       totalAssignees: task.assignees?.length || 0,
+      //       mainTaskId: task.main_task_id
+      //     });
+      //   }
+      // });
+
+      // Convert map to array with task counts
+      const result = Array.from(projectTaskMap.values()).map((project) => ({
+        ...project
+        // totalTasks: project.tasks.length
+      }));
+
+      // Sort projects by name
+      result.sort((a, b) => a.projectName.localeCompare(b.projectName));
+
+      // Calculate summary
+      const summary = {
+        totalProjects: result.length
+        // totalTasks: tasks.length,
+        // projectsWithTasks: result.filter(p => p.totalTasks > 0).length,
+        // projectsWithoutTasks: result.filter(p => p.totalTasks === 0).length
+      };
+
+      return successResponse(
+        res,
+        statusCode.OK,
+        "Employee project and task overview fetched successfully",
+        result
+      );
+    } catch (error) {
+      console.log("🚀 ~ getEmployeeProjectTaskOverviewData ~ error:", error);
+      return catchBlockErrorResponse(res, error.message);
+    }
+  }
 }
 
 module.exports = new MaintenanceController();

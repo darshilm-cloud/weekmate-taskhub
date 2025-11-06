@@ -80,7 +80,8 @@ module.exports = {
     "/v1/CompanyManage/getCompanyDetails",
     "/v1/maintenance/delete-company-data",
     "/v1/maintenance/addTestData",
-    "/v1/maintenance/getEmployeeOverviewData"
+    "/v1/maintenance/getEmployeeOverviewData",
+    "/v1/maintenance/getEmployeeProjectTaskOverviewData"
   ],
   API_KEY_VALIDATIONS: ["/v1/projects/task-logged-hours/getHoursData"],
 };

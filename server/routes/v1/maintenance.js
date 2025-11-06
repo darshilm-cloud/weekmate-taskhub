@@ -13,6 +13,7 @@ Router.post("/addTestData", MaintenanceController.addDummyTestData);
 
 
 Router.post("/getEmployeeOverviewData", MaintenanceController.getEmployeeOverviewData);
+Router.post("/getEmployeeProjectTaskOverviewData", MaintenanceController.getEmployeeProjectTaskOverviewData);
 
 module.exports = Router;
 
