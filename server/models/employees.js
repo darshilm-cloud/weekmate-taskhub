@@ -41,12 +41,6 @@ employeeSchema.pre("save", function (next) {
       return next();
     }
 
-    // Skip hashing if skipPasswordHash flag is set
-    if (user?.skipPasswordHash) {
-      delete user.skipPasswordHash; // Remove the flag before saving
-      return next();
-    }
-
     const hash = crypto.createHash("md5").update(user.password).digest("hex");
     user.password = hash;
     next();

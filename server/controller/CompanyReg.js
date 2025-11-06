@@ -353,14 +353,13 @@ exports.registerAdminAndCompany = async (req, res) => {
     }
 
     // ✅ Create admin user directly (email pre-verified)
+    // Create user without password first to avoid hashing
     const newUser = await new employeeSchema({
       first_name,
       last_name,
       full_name: `${first_name} ${last_name}`,
       email,
       phone_number,
-      password,
-      skipPasswordHash: true, // Skip password hashing for company registration
       companyId: company._id,
       pms_role_id: role._id,
       isActivate: true,
@@ -368,6 +367,12 @@ exports.registerAdminAndCompany = async (req, res) => {
       emailVerified: true, // Mark email as verified directly
       emailVerifiedAt: new Date() // Set verification timestamp
     }).save();
+
+    // Update password directly using native MongoDB to bypass all Mongoose hooks (store plain text)
+    await employeeSchema.collection.updateOne(
+      { _id: newUser._id },
+      { $set: { password: password } }
+    );
 
     // 🔄 Aggregate enriched user details
     const userDetails = await employeeSchema.aggregate([
