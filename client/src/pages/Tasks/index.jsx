@@ -72,6 +72,8 @@ const TasksPMS = ({ flag }) => {
 
   const [selectedView, setSelectedView] = useState("board");
   const [tableTrue, setTableTrue] = useState(false);
+  const [isTaskUpdating, setIsTaskUpdating] = useState(false);
+
 
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
@@ -455,6 +457,7 @@ const TasksPMS = ({ flag }) => {
   };
 
   const handleTaskOps = async (values, updateType) => {
+    setIsTaskUpdating(true)
     if (!estHrs && !estMins && !getRoles(["Client"])) {
       setEstHrsError("Enter hours");
       setEstMinsError("Enter minutes");
@@ -489,6 +492,7 @@ const TasksPMS = ({ flag }) => {
     setEstHrsError("");
     setEstMinsError("");
     updateType ? updateTasks(values) : addTasks(values);
+    setIsTaskUpdating(false);
   };
 
   const addTasks = async (values, uploadedFiles) => {
@@ -2620,6 +2624,8 @@ const TasksPMS = ({ flag }) => {
             type="primary"
             size="large"
             className="square-primary-btn"
+            loading={isTaskUpdating}
+            disabled={isTaskUpdating}
             onClick={() => editform.submit()}
           >
             Save
