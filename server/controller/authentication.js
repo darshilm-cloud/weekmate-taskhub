@@ -102,6 +102,7 @@ exports.login = async (req, res, next) => {
     }
 
     const loginUser = await this.getDataForLoginUser(value);
+    console.log("🚀 ~ loginUser:", loginUser)
     if (!loginUser) {
       return errorResponse(
         res,
@@ -133,6 +134,7 @@ exports.login = async (req, res, next) => {
           }
 
           const user = await module.exports.dataForJWT(loginUser);
+          console.log("🚀 ~ user:", user)
           const auth_token = createJWTToken(
             user,
             157680000 // 5 year
@@ -154,19 +156,19 @@ exports.login = async (req, res, next) => {
         }
       );
     } else {
-      if (!value?.slug) {
-        return errorResponse(
-          res,
-          statusCode.BAD_REQUEST,
-          "Please login with your company url"
-        );
-      } else {
-        let getCompanyDetails = await Company.findOne({
-          companyDomain: value.slug,
-          isActive: true
-        });
+      // if (!value?.slug) {
+      //   return errorResponse(
+      //     res,
+      //     statusCode.BAD_REQUEST,
+      //     "Please login with your company url"
+      //   );
+      // } else {
+        // let getCompanyDetails = await Company.findOne({
+        //   // companyDomain: value.slug,
+        //   isActive: true
+        // });
 
-        if (getCompanyDetails) {
+        // if (getCompanyDetails) {
           // Verify user password..
           loginUser.comparePassword(
             value.password,
@@ -190,16 +192,16 @@ exports.login = async (req, res, next) => {
 
               const user = await module.exports.dataForJWT(loginUser);
 
-              if (
-                user?.companyDetails?.companyDomain !==
-                getCompanyDetails?.companyDomain
-              ) {
-                return errorResponse(
-                  res,
-                  statusCode.NOT_FOUND,
-                  "You are not register in company"
-                );
-              }
+              // if (
+              //   user?.companyDetails?.companyDomain !==
+              //   getCompanyDetails?.companyDomain
+              // ) {
+              //   return errorResponse(
+              //     res,
+              //     statusCode.NOT_FOUND,
+              //     "You are not register in company"
+              //   );
+              // }
 
               const auth_token = createJWTToken(
                 user,
@@ -221,14 +223,14 @@ exports.login = async (req, res, next) => {
               );
             }
           );
-        } else {
-          return errorResponse(
-            res,
-            statusCode.NOT_FOUND,
-            "Company not found or you are not register in company"
-          );
-        }
-      }
+        // } else {
+          // return errorResponse(
+          //   res,
+          //   statusCode.NOT_FOUND,
+          //   "Company not found or you are not register in company"
+          // );
+        // }
+      // }
     }
   } catch (error) {
     console.log("🚀 ~ exports.login= ~ error:", error);
@@ -363,7 +365,7 @@ exports.forgotPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       email: Joi.string().required(),
-      companySlug: Joi.string().required()
+      // companySlug: Joi.string().required()
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {

@@ -283,7 +283,7 @@ exports.registerAdminAndCompany = async (req, res) => {
         password,
         position
       },
-      companyDetails: { companyName, companyDomain }
+      companyDetails: { companyName, companyDomain, companyId }
     } = value;
 
     // 🔍 Check if admin email already exists
@@ -325,11 +325,16 @@ exports.registerAdminAndCompany = async (req, res) => {
       );
     }
 
-    // ✅ Create company directly
-    const company = await new CompanyModel({
+    const data = {
       companyName,
       companyDomain
-    }).save();
+    }
+
+    if(companyId) {
+      data._id = companyId
+    }
+    // ✅ Create company directly
+    const company = await new CompanyModel(data).save();
 
     // 🔍 Find admin role
     const role = await PMSRoles.findOne({

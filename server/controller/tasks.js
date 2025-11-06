@@ -687,7 +687,7 @@ exports.getProjectsTask = async (req, res) => {
               {
                 $toString: {
                   $floor: {
-                    $divide: ["$totalLoggedTime", 60]
+                    $divide: ["$totalLoggedTime", 3600]
                   }
                 }
               },
@@ -698,7 +698,7 @@ exports.getProjectsTask = async (req, res) => {
                     {
                       $toString: {
                         $cond: [
-                          { $lt: [{ $mod: ["$totalLoggedTime", 60] }, 10] },
+                        { $lt: [{ $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60] }, 10] }, 
                           "0",
                           ""
                         ]
@@ -706,7 +706,7 @@ exports.getProjectsTask = async (req, res) => {
                     },
                     {
                       $toString: {
-                        $mod: ["$totalLoggedTime", 60]
+                         $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60] 
                       }
                     }
                   ]

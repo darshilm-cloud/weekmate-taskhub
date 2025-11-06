@@ -30,7 +30,7 @@ function SignIn() {
     if(!companySlug){
       let storedSlug = localStorage.getItem("companyDomain")
       if(storedSlug){
-        history.push(`/${storedSlug}/signin`);
+        history.push(`/signin`);
       }
     }
     if (verificationToken) {
@@ -41,7 +41,7 @@ function SignIn() {
   const tokenVerfication = async (token) => {
     let accessToken = localStorage.getItem("accessToken");
     if(accessToken) {
-      history.push(`/${companySlug}/signin`)
+      history.push(`/signin`)
       return
     };
     try {
@@ -57,7 +57,7 @@ function SignIn() {
       } else {
         showVerificationModal(response.data.message, false);
       }
-      history.push(`/${companySlug}/signin`)
+      history.push(`/signin`)
     } catch (error) {
       console.log(error);
     }
@@ -103,8 +103,8 @@ function SignIn() {
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
         getRoles(["Client"])
-          ? (window.location.href = `/${companySlug}/project-list`) :
-          (window.location.href = `/${companySlug}/dashboard`)
+          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`) :
+          (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`)
           
 
         dispatch(userSignInSuccess(userData));
@@ -153,7 +153,7 @@ function SignIn() {
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
                 { login_logo ? (
-                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub } />
+                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }  onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }/>
                 ) : (
                   <img
                     alt="example"
@@ -162,6 +162,7 @@ function SignIn() {
                     //   maxWidth: "80px",
                     //   marginBottom: "0",
                     // } }
+                    onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }
                     src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
                   />
                 ) }
@@ -245,7 +246,7 @@ function SignIn() {
                     <IntlMessages id="app.userAuth.signIn" />
                   </Button>
                 </Form.Item>
-                {!companySlug &&(
+                {/* {!companySlug &&(
 
                 <Form.Item>
                   <Button
@@ -260,12 +261,12 @@ function SignIn() {
                     <IntlMessages id="app.userAuth.signUpForNewCompany" />
                   </Button>
                 </Form.Item>
-                )}
+                )} */}
 
                 <Form.Item>
                   <div style={ { textAlign: "center" } }>
                     Forgot your login details?
-                    <Link to={`/${companySlug}/forgot-password`}>
+                    <Link to={`/forgot-password`}>
                       &nbsp;Get help logging in.
                     </Link>
                   </div>
