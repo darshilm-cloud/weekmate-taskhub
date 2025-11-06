@@ -21,51 +21,30 @@ class MaintenanceController {
       const { companyId } = req.body || {};
 
       if (!companyId || !global.validObjectId(companyId)) {
-        return errorResponse(
-          res,
-          statusCode.BAD_REQUEST,
-          "Invalid or missing companyId"
-        );
+        return errorResponse(res, statusCode.BAD_REQUEST, "Invalid or missing companyId");
       }
 
       const companyObjectId = global.newObjectId(companyId);
 
-      const session = await mongoose.startSession();
-      await session.withTransaction(async () => {
-        const modelEntries = Object.entries(Models);
+      const modelEntries = Object.entries(Models);
 
-        for (const [, model] of modelEntries) {
-          if (!model || !model.schema || !model.schema.paths) continue;
+      for (const [, model] of modelEntries) {
+        if (!model || !model.schema || !model.schema.paths) continue;
 
-          const hasCompanyIdPath = Object.prototype.hasOwnProperty.call(
-            model.schema.paths,
-            "companyId"
-          );
+        const hasCompanyIdPath = Object.prototype.hasOwnProperty.call(model.schema.paths, "companyId");
 
-          if (hasCompanyIdPath) {
-            await model
-              .deleteMany({ companyId: companyObjectId })
-              .session(session);
-          }
+        if (hasCompanyIdPath) {
+          await model.deleteMany({ companyId: companyObjectId });
         }
+      }
 
-        if (Models.CompanyModel) {
-          await Models.CompanyModel.deleteOne({ _id: companyObjectId }).session(
-            session
-          );
-        }
-      });
-      session.endSession();
+      if (Models.CompanyModel) {
+        await Models.CompanyModel.deleteOne({ _id: companyObjectId });
+      }
 
-      return successResponse(res, statusCode.SUCCESS, messages.DELETED, {
-        companyId
-      });
+      return successResponse(res, statusCode.SUCCESS, messages.DELETED, { companyId });
     } catch (err) {
-      return errorResponse(
-        res,
-        statusCode.SERVER_ERROR,
-        err && err.message ? err.message : messages.SERVER_ERROR
-      );
+      return errorResponse(res, statusCode.SERVER_ERROR, err && err.message ? err.message : messages.SERVER_ERROR);
     }
   }
 
@@ -77,6 +56,7 @@ class MaintenanceController {
   async addDummyTestData(req, res) {
     try {
       const { companyId } = req.body;
+      console.log(companyId)
 
       if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
         return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company ID");
@@ -175,6 +155,7 @@ class MaintenanceController {
         // Check if email already exists and is NOT deleted
         const existingEmployee = await Employees.findOne({
           email: email.toLowerCase(),
+          companyId: companyId,
           isDeleted: false,
           isSoftDeleted: false
         });
