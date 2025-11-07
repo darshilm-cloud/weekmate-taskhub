@@ -16,7 +16,7 @@ Router.post("/deleteTestData", MaintenanceController.deleteDummyTestData);
 
 
 Router.post("/getEmployeeOverviewData", MaintenanceController.getEmployeeOverviewData);
-Router.post("/getEmployeeProjectTaskOverviewData", MaintenanceController.getEmployeeProjectTaskOverviewData);
+// Router.post("/getEmployeeProjectTaskOverviewData", MaintenanceController.getEmployeeProjectTaskOverviewData);
 
 module.exports = Router;
 

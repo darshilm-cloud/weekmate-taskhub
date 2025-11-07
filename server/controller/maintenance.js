@@ -1117,7 +1117,21 @@ class MaintenanceController {
           project_status: ProjectStatus?._id,
           isDeleted: false
         })
-        .select("_id title projectId isBillable")
+        .select(
+          "_id title projectId color descriptions isBillable estimatedHours start_date end_date manager acc_manager assignees technology project_type project_status"
+        )
+        .populate({
+          path: "manager",
+          select: "full_name email"
+        })
+        .populate({
+          path: "acc_manager",
+          select: "full_name email"
+        })
+        .populate({
+          path: "project_type",
+          select: "project_type"
+        })
         .lean();
 
       if (!projects || projects.length === 0) {
@@ -1133,9 +1147,7 @@ class MaintenanceController {
           assignees: employeeId,
           isDeleted: false
         })
-        .select(
-          "project_id estimated_hours estimated_minutes assignees completion_progress"
-        )
+        .select("project_id estimated_hours estimated_minutes assignees")
         .lean();
 
       // Get logged time entries
@@ -1154,13 +1166,33 @@ class MaintenanceController {
         projectMap.set(p._id.toString(), {
           projectId: p.projectId,
           projectName: p.title,
+          projectDescription: p.descriptions,
           isBillable: p.isBillable,
           totalAssignedMinutes: 0,
           totalLoggedMinutes: 0,
           totalCompletionProgress: 0,
+          estimatedHours: p.estimatedHours,
           taskCount: 0,
           weightedProgressSum: 0,
-          weightedTotalMinutes: 0
+          weightedTotalMinutes: 0,
+          startDate: p.start_date,
+          endDate: p.end_date,
+          projectType: p.project_type?.project_type || null,
+          manager: p.manager
+            ? {
+                id: p.manager._id,
+                name: p.manager.full_name,
+                email: p.manager.email
+              }
+            : {},
+          accountManager: p.acc_manager
+            ? {
+                id: p.acc_manager._id,
+                name: p.acc_manager.full_name,
+                email: p.acc_manager.email
+              }
+            : {},
+          totalAssignees: p.assignees?.length || 0
         });
       });
 
@@ -1177,11 +1209,8 @@ class MaintenanceController {
         const assigneeCount = task.assignees?.length || 1;
         const userShareMinutes = totalMinutes / assigneeCount;
 
-        const completionProgress = parseFloat(task.completion_progress || 0); // 0–100
-
         // Weighted completion by estimated minutes
-        projectData.weightedProgressSum +=
-          completionProgress * userShareMinutes;
+        projectData.weightedProgressSum += userShareMinutes;
         projectData.weightedTotalMinutes += userShareMinutes;
 
         projectData.totalAssignedMinutes += userShareMinutes;
@@ -1205,13 +1234,6 @@ class MaintenanceController {
       const result = Array.from(projectMap.values()).map((project) => {
         const assignedMins = Math.round(project.totalAssignedMinutes);
         const loggedMins = Math.round(project.totalLoggedMinutes);
-
-        // Weighted completion percentage across tasks
-        let completionProgress = 0;
-        if (project.weightedTotalMinutes > 0) {
-          completionProgress =
-            project.weightedProgressSum / project.weightedTotalMinutes;
-        }
 
         // Calculate productivity (balanced logic)
         let productivity = 0;
@@ -1240,20 +1262,39 @@ class MaintenanceController {
         return {
           projectId: project.projectId,
           projectName: project.projectName,
+          projectDescription: project.descriptions,
           isBillable: project.isBillable,
           taskCount: project.taskCount,
+          estimatedHours: project.estimatedHours,
           totalAssignedHours: parseFloat((assignedMins / 60).toFixed(2)),
           totalLoggedHours: parseFloat((loggedMins / 60).toFixed(2)),
           totalAssignedHoursFormatted: minutesToHHMM(assignedMins),
           totalLoggedHoursFormatted: minutesToHHMM(loggedMins),
-          completionProgress: parseFloat(completionProgress.toFixed(2)),
           completionPercentage: parseFloat(completionPercentage.toFixed(2)),
-          productivity
+          productivity,
+          startDate: project.startDate,
+          endDate: project.endDate,
+          projectType: project?.projectType || null,
+          manager: project.manager
+            ? {
+                id: project.manager.id,
+                name: project.manager.name,
+                email: project.manager.email
+              }
+            : {},
+          accountManager: project.accountManager
+            ? {
+                id: project.accountManager.id,
+                name: project.accountManager.name,
+                email: project.accountManager.email
+              }
+            : {},
+          totalAssignees: project.totalAssignees || 0
         };
       });
 
       // Step 4: Sort projects alphabetically
-      result.sort((a, b) => a.projectName.localeCompare(b.projectName));
+      result.sort((a, b) => b.taskCount - a.taskCount);
 
       // Step 5: Calculate overall summary (simple average)
       const summary = result.reduce(
