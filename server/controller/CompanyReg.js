@@ -427,11 +427,8 @@ exports.registerAdminAndCompany = async (req, res) => {
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
 
-    // 📧 Optional: Send welcome email (without verification requirement)
+    // 🌐 Notify reseller panel about new registration
     try {
-      await CompanyWelcomeMail(enrichedUser);
-      await OnboardMailForSupport(enrichedUser);
-      // 🌐 Make a POST API call
       const payload = {
         country_code,
         selectedProducts: ["PMS"],
@@ -451,10 +448,10 @@ exports.registerAdminAndCompany = async (req, res) => {
       });
 
       const result = await response.json();
-      console.log("API Response:", result);
-    } catch (emailError) {
-      // Log email error but don't fail the registration
-      console.log("Welcome email failed to send:", emailError.message);
+      console.log("Reseller panel response:", result);
+    } catch (resellerError) {
+      // Log reseller panel error but don't fail the registration
+      console.log("Reseller panel notification failed:", resellerError.message);
     }
 
     const user = await dataForJWT(newUser);
