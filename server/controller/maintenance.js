@@ -119,7 +119,8 @@ class MaintenanceController {
         notebooks: [],
         notes: [],
         discussionTopics: [],
-        discussionTopicsDetails: []
+        discussionTopicsDetails: [],
+        comments: []
       };
 
       // Step 1: Create employees for each PMS role
@@ -693,6 +694,7 @@ class MaintenanceController {
             updatedByModel: "employees"
           });
           await comment.save();
+          createdData.comments.push(comment);
           console.log(chalk.green(`    ✓ Created comment`));
         }
       }
@@ -856,33 +858,222 @@ class MaintenanceController {
 
       console.log(chalk.green("\n✅ Dummy test data created successfully!\n"));
 
+      // Build the return object with collection names as keys and arrays of _id strings as values
+      const createdRecords = {};
+      
+      // Map createdData to collection names
+      if (createdData.project?._id) {
+        createdRecords.projects = [createdData.project._id.toString()];
+      }
+      if (createdData.employees?.length > 0) {
+        createdRecords.employees = createdData.employees.map(e => e?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.pmsClients?.length > 0) {
+        createdRecords.pmsclients = createdData.pmsClients.map(c => c?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.projectType?._id) {
+        createdRecords.projecttypes = [createdData.projectType._id.toString()];
+      }
+      if (createdData.projectTechs?.length > 0) {
+        createdRecords.projecttechs = createdData.projectTechs.map(t => t?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.projectStatuses?.length > 0) {
+        createdRecords.projectstatus = createdData.projectStatuses.map(s => s?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.workflow?._id) {
+        createdRecords.projectworkflows = [createdData.workflow._id.toString()];
+      }
+      if (createdData.workflowStatuses?.length > 0) {
+        createdRecords.workflowstatus = createdData.workflowStatuses.map(s => s?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.bugWorkflowStatuses?.length > 0) {
+        createdRecords.bugsworkflowstatus = createdData.bugWorkflowStatuses.map(s => s?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.labels?.length > 0) {
+        createdRecords.tasklabels = createdData.labels.map(l => l?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.fileFolder?._id) {
+        createdRecords.filefolders = [createdData.fileFolder._id.toString()];
+      }
+      if (createdData.timesheet?._id) {
+        createdRecords.projecttimesheets = [createdData.timesheet._id.toString()];
+      }
+      if (createdData.mainTasks?.length > 0) {
+        createdRecords.projectmaintasks = createdData.mainTasks.map(mt => mt?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.tasks?.length > 0) {
+        createdRecords.projecttasks = createdData.tasks.map(t => t?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.taskLogs?.length > 0) {
+        createdRecords.projecttaskhourlogs = createdData.taskLogs.map(log => log?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.bugs?.length > 0) {
+        createdRecords.projecttaskbugs = createdData.bugs.map(b => b?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.notebooks?.length > 0) {
+        createdRecords.notebook = createdData.notebooks.map(nb => nb?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.notes?.length > 0) {
+        createdRecords.notes_pms = createdData.notes.map(n => n?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.discussionTopics?.length > 0) {
+        createdRecords.discussionstopics = createdData.discussionTopics.map(dt => dt?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.discussionTopicsDetails?.length > 0) {
+        createdRecords.discussionstopicsdetails = createdData.discussionTopicsDetails.map(dtd => dtd?._id?.toString()).filter(Boolean);
+      }
+      if (createdData.comments?.length > 0) {
+        createdRecords.Comments = createdData.comments.map(c => c?._id?.toString()).filter(Boolean);
+      }
+
       return successResponse(
         res,
         statusCode.CREATED,
         "Dummy test data created successfully",
-        {
-          companyId: companyId,
-          projectId: project._id,
-          projectTitle: project.title,
-          employeesCreated: createdData.employees.length,
-          pmsClientsCreated: createdData.pmsClients.length,
-          mainTasksCreated: createdData.mainTasks.length,
-          tasksCreated: createdData.tasks.length,
-          loggedHoursCreated: createdData.taskLogs.length,
-          bugsCreated: createdData.bugs.length,
-          notebooksCreated: createdData.notebooks.length,
-          notesCreated: createdData.notes.length,
-          labelsCreated: createdData.labels.length,
-          discussionTopicsCreated: createdData.discussionTopics.length,
-          discussionTopicDetailsCreated:
-            createdData.discussionTopicsDetails.length
-        }
+        createdRecords
       );
     } catch (error) {
       console.log(chalk.red("❌ Error creating dummy test data:"), error);
       return catchBlockErrorResponse(res, error.message);
     }
   }
+
+  /**
+   * Delete dummy test data for a company
+   * Accepts an object with collection names as keys and arrays of _id strings as values
+   * Deletes only the specified records
+   */
+  async deleteDummyTestData(req, res) {
+    try {
+      const createdRecords = req.body;
+
+      if (!createdRecords || typeof createdRecords !== "object" || Array.isArray(createdRecords)) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "Invalid request body. Expected an object with collection names as keys and arrays of _id strings as values"
+        );
+      }
+
+      console.log(
+        chalk.blue(`🗑️  Starting dummy data deletion...`)
+      );
+
+      // Map of collection names to mongoose model names
+      const collectionModelMap = {
+        projects: "projects",
+        employees: "employees",
+        pmsclients: "pmsclients",
+        projecttypes: "projecttypes",
+        projecttechs: "projecttechs",
+        projectstatus: "projectstatus",
+        projectworkflows: "projectworkflows",
+        workflowstatus: "workflowstatus",
+        bugsworkflowstatus: "bugsworkflowstatus",
+        tasklabels: "tasklabels",
+        filefolders: "filefolders",
+        projecttimesheets: "projecttimesheets",
+        projectmaintasks: "projectmaintasks",
+        projecttasks: "projecttasks",
+        projecttaskhourlogs: "projecttaskhourlogs",
+        projecttaskbugs: "projecttaskbugs",
+        notebook: "notebook",
+        notes_pms: "notes_pms",
+        discussionstopics: "discussionstopics",
+        discussionstopicsdetails: "discussionstopicsdetails",
+        Comments: "Comments"
+      };
+
+      const deletionResults = {};
+      let totalDeleted = 0;
+
+      // Iterate through each collection in the createdRecords object
+      for (const [collectionName, idArray] of Object.entries(createdRecords)) {
+        if (!Array.isArray(idArray) || idArray.length === 0) {
+          console.log(
+            chalk.yellow(
+              `  ⚠️  Skipping ${collectionName}: invalid or empty array`
+            )
+          );
+          continue;
+        }
+
+        const modelName = collectionModelMap?.[collectionName];
+        if (!modelName) {
+          console.log(
+            chalk.yellow(
+              `  ⚠️  Unknown collection name: ${collectionName}, skipping...`
+            )
+          );
+          continue;
+        }
+
+        try {
+          const Model = mongoose.model(modelName);
+          
+          // Convert string IDs to ObjectIds
+          const objectIds = idArray
+            .filter(id => id && mongoose.Types?.ObjectId?.isValid?.(id))
+            .map(id => new mongoose.Types.ObjectId(id));
+
+          if (objectIds.length === 0) {
+            console.log(
+              chalk.yellow(
+                `  ⚠️  No valid ObjectIds found for ${collectionName}`
+              )
+            );
+            deletionResults[collectionName] = { deleted: 0, skipped: idArray?.length || 0 };
+            continue;
+          }
+
+          // Delete records by _id
+          const deleteResult = await Model.deleteMany({
+            _id: { $in: objectIds }
+          });
+
+          const deletedCount = deleteResult?.deletedCount || 0;
+          deletionResults[collectionName] = {
+            deleted: deletedCount,
+            requested: objectIds.length
+          };
+          totalDeleted += deletedCount;
+
+          console.log(
+            chalk.green(
+              `  ✓ Deleted ${deletedCount} record(s) from ${collectionName}`
+            )
+          );
+        } catch (error) {
+          console.log(
+            chalk.red(
+              `  ❌ Error deleting from ${collectionName}: ${error?.message || "Unknown error"}`
+            )
+          );
+          deletionResults[collectionName] = {
+            deleted: 0,
+            error: error?.message || "Unknown error"
+          };
+        }
+      }
+
+      console.log(chalk.green(`\n✅ Dummy test data deletion completed!\n`));
+      console.log(chalk.blue(`Total records deleted: ${totalDeleted}`));
+
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        "Dummy test data deleted successfully",
+        {
+          totalDeleted,
+          deletionResults
+        }
+      );
+    } catch (error) {
+      console.log(chalk.red("❌ Error deleting dummy test data:"), error);
+      return catchBlockErrorResponse(res, error.message);
+    }
+  }
+
   async getEmployeeOverviewData(req, res) {
     try {
       const { error, value } = configs.validateFormatter(
