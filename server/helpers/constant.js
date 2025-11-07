@@ -80,6 +80,7 @@ module.exports = {
     "/v1/CompanyManage/getCompanyDetails",
     "/v1/maintenance/delete-company-data",
     "/v1/maintenance/addTestData",
+    "/v1/maintenance/deleteTestData",
     "/v1/maintenance/getEmployeeOverviewData",
     "/v1/maintenance/getEmployeeProjectTaskOverviewData"
   ],

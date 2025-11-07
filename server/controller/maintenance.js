@@ -945,7 +945,7 @@ class MaintenanceController {
    */
   async deleteDummyTestData(req, res) {
     try {
-      const createdRecords = req.body;
+      const { recordIds: createdRecords }= req.body;
 
       if (!createdRecords || typeof createdRecords !== "object" || Array.isArray(createdRecords)) {
         return errorResponse(
