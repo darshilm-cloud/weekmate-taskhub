@@ -1060,10 +1060,6 @@ class MaintenanceController {
 
       // Step 3: Final computation for each project
       const result = Array.from(projectMap.values()).map((project) => {
-        console.log(
-          "🚀 ~ MaintenanceController ~ getEmployeeOverviewData ~ project:",
-          project
-        );
         const assignedMins = Math.round(project.totalAssignedMinutes);
         const loggedMins = Math.round(project.totalLoggedMinutes);
 
@@ -1121,12 +1117,12 @@ class MaintenanceController {
                 email: project.accountManager.email
               }
             : {},
-          totalAssignees: project.assignees?.length || 0
+          totalAssignees: project.totalAssignees || 0
         };
       });
 
       // Step 4: Sort projects alphabetically
-      result.sort((a, b) => a.projectName.localeCompare(b.projectName));
+      result.sort((a, b) => b.taskCount - a.taskCount);
 
       // Step 5: Calculate overall summary (simple average)
       const summary = result.reduce(
