@@ -96,7 +96,7 @@ function ForgetPassword() {
                       to={ "/signin"}
                       className="ant ant-btn-back"
                     >
-                    Back to login
+                Back to Sign In
                     </Link>
                   </Form.Item>
                 </Form>

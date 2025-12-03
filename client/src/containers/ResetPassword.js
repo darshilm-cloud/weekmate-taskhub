@@ -54,21 +54,18 @@ function ResetPassword({ match, computedMatch, history }) {
                 <div className="gx-app-logo-wid">
                   <h1>Reset Password</h1>
                 </div>
+                  <div class="gx-app-login-left-content"><h6>Welcome to  WeekMate TaskHub Portal !</h6></div>
                 <Form
                   name="basic"
+                  layout="vertical"
                   onFinish={ handleSubmit }
                   className="gx-signin-form gx-form-row0"
                 >
-                  <div className="form-label">
-                    <span>
-                      <label>Password</label>
-                    </span>
-                  </div>
+              
                   <div className="form-content">
-                    <span className="login-icon">
-                      <i className="fa fa-lock"></i>
-                    </span>
+                  
                     <Form.Item
+                    label="Password"
                       name="password"
                       hasFeedback
                       rules={ [
@@ -78,16 +75,15 @@ function ResetPassword({ match, computedMatch, history }) {
                         },
                       ] }
                     >
-                      <Input.Password placeholder="Password" />
+                      <Input.Password placeholder="Password" prefix={  <span className="login-icon">
+                      <i className="fa fa-lock"></i>
+                    </span>}/>
                     </Form.Item>
                   </div>
-                  <div className="form-label">
-                    <span>
-                      <label>Confirm Password</label>
-                    </span>
-                  </div>
+                 
                   <div className="form-content">
                     <Form.Item
+                      label="Confirm Password"
                       name="confirm"
                       hasFeedback
                       rules={ [
@@ -107,11 +103,11 @@ function ResetPassword({ match, computedMatch, history }) {
                         }),
                       ] }
                     >
-                      <Input.Password placeholder="Confirm Password" />
+                      <Input.Password placeholder="Confirm Password" prefix={  <span className="login-icon">
+                      <i className="fa fa-lock"></i>
+                    </span>} />
                     </Form.Item>
-                    <span className="login-icon">
-                      <i className="fas fa-lock"></i>
-                    </span>
+                  
                   </div>
                   <Form.Item>
                     <Button
