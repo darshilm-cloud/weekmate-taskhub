@@ -23,6 +23,7 @@ const {
 } = require("../template/clientPasswordMails");
 const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
+const { logLogin, logLogout } = require("../helpers/activityLoggerHelper");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -144,6 +145,14 @@ exports.login = async (req, res, next) => {
             user._id,
             user.companyId
           );
+          
+          // Log login activity
+          await logLogin({
+            _id: user._id,
+            email: user.email,
+            companyId: user.companyId
+          });
+          
           return successResponse(
             res,
             statusCode.SUCCESS,
@@ -212,6 +221,14 @@ exports.login = async (req, res, next) => {
                 user._id,
                 user.companyId
               );
+              
+              // Log login activity
+              await logLogin({
+                _id: user._id,
+                email: user.email,
+                companyId: user.companyId
+              });
+              
               return successResponse(
                 res,
                 statusCode.SUCCESS,
@@ -552,5 +569,48 @@ exports.checkUserIsSuperAdmin = async (userId) => {
     return isSuperAdmin;
   } catch (error) {
     console.log("🚀 ~ exports.checkUserIsSuperAdmin= ~ error:", error);
+  }
+};
+
+// Logout API
+exports.logout = async (req, res) => {
+  try {
+    // Get user info from req.user (set by authentication middleware)
+    if (!req.user || !req.user._id) {
+      return errorResponse(
+        res,
+        statusCode.UNAUTHORIZED,
+        "User not authenticated"
+      );
+    }
+
+    const userData = await module.exports.getDataForLoginUser({ _id: req.user._id });
+    
+    if (!userData) {
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "User not found"
+      );
+    }
+
+    // Get user data for logging
+    const user = await module.exports.dataForJWT(userData);
+
+    // Log logout activity
+    await logLogout({
+      _id: user._id,
+      email: user.email,
+      companyId: user.companyId
+    });
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Logout successful"
+    );
+  } catch (error) {
+    console.log("🚀 ~ exports.logout= ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
   }
 };

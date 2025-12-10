@@ -52,6 +52,7 @@ const smtpConfig = require("./smtpConfig")
 const AdminManage = require("./AdminManage")
 const SuperAdminRoute = require("./SuperAdminRoute")
 const Maintenance = require("./maintenance")
+const ActivityLog = require("./activityLog")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
 
@@ -105,6 +106,7 @@ Router.use('/smtpConfig',smtpConfig)
 Router.use('/adminManage',AdminManage)
 Router.use('/superAdmin',SuperAdminRoute)
 Router.use('/maintenance', Maintenance)
+Router.use('/activityLog', ActivityLog)
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 
