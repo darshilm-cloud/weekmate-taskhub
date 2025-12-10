@@ -973,6 +973,9 @@ exports.updateProjectsTask = async (req, res) => {
     value.task_labels = task_labels;
     const getData = await ProjectTasks.findById(req.params.id);
 
+    // Get old data before update for logging
+    const oldTaskData = getData.toObject ? getData.toObject() : getData;
+
     const data = await ProjectTasks.findByIdAndUpdate(
       req.params.id,
       {

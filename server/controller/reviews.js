@@ -398,6 +398,9 @@ exports.updateReview = async (req, res) => {
       );
     }
 
+    // Get old data before update for logging
+    const oldReviewData = await Reviews.findById(req.params.id).lean();
+
     const data = await Reviews.findByIdAndUpdate(
       req.params.id,
       {
@@ -414,6 +417,31 @@ exports.updateReview = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
+
+    // Get new data after update for logging
+    const newReviewData = data.toObject ? data.toObject() : data;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldReviewData && newReviewData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "reviews",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldReviewData,
+          newData: newReviewData,
+          additionalData: {
+            recordId: oldReviewData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging review update activity:", logError);
     }
 
     return successResponse(

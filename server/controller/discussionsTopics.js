@@ -460,6 +460,9 @@ exports.updateDiscussionsTopics = async (req, res) => {
     } else {
       const getData = await DiscussionsTopics.findById(req.params.id);
 
+      // Get old data before update for logging
+      const oldTopicData = getData.toObject ? getData.toObject() : getData;
+
       const data = await DiscussionsTopics.findByIdAndUpdate(
         req.params.id,
         {
@@ -512,6 +515,31 @@ exports.updateDiscussionsTopics = async (req, res) => {
           clientsData.added,
           decodedCompanyId
         );
+      }
+
+      // Get new data after update for logging
+      const newTopicData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldTopicData && newTopicData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "discussions",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldTopicData,
+            newData: newTopicData,
+            additionalData: {
+              recordId: oldTopicData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging discussion topic update activity:", logError);
       }
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

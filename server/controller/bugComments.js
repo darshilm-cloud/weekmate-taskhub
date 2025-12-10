@@ -370,6 +370,9 @@ exports.editComment = async (req, res, next) => {
       new mongoose.Types.ObjectId(req.params.id)
     );
 
+    // Get old data before update for logging
+    const oldCommentData = getData.toObject ? getData.toObject() : getData;
+
     // let updated Data;
     const updatedData = await CommentsModel.findByIdAndUpdate(
       req.params.id,
@@ -404,6 +407,31 @@ exports.editComment = async (req, res, next) => {
       null,
       updatedData._id
     );
+
+    // Get new data after update for logging
+    const newCommentData = updatedData.toObject ? updatedData.toObject() : updatedData;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldCommentData && newCommentData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "bugComments",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldCommentData,
+          newData: newCommentData,
+          additionalData: {
+            recordId: oldCommentData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging bug comment update activity:", logError);
+    }
 
     return successResponse(
       res,

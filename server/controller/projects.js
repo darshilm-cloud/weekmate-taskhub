@@ -884,6 +884,9 @@ exports.updateProjects = async (req, res) => {
         .populate("manager")
         .populate("assignees");
 
+      // Get old data before update for logging
+      const oldProjectData = projectData.toObject ? projectData.toObject() : projectData;
+
       const data = await Project.findByIdAndUpdate(
         req.params.id,
         {
@@ -925,6 +928,9 @@ exports.updateProjects = async (req, res) => {
       if (!data) {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
       }
+
+      // Get new data after update for logging
+      const newProjectData = data.toObject ? data.toObject() : data;
 
       // updated project data...
       if (
@@ -973,6 +979,29 @@ exports.updateProjects = async (req, res) => {
 
         await newProjectAssigneesMail(updatedData, decodedCompanyId);
       }
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldProjectData && newProjectData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projects",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldProjectData,
+            newData: newProjectData,
+            additionalData: {
+              recordId: oldProjectData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging project update activity:", logError);
+      }
+
       return successResponse(
         res,
         statusCode.SUCCESS,

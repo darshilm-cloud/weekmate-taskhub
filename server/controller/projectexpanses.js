@@ -556,6 +556,9 @@ exports.updateProjectExpense = async (req, res) => {
           );
         }
 
+        // Get old data before update for logging
+        const oldExpenseData = existingExpense.toObject ? existingExpense.toObject() : existingExpense;
+
         // Update the expense
         const updatedExpense = await ProjectExpanses.findByIdAndUpdate(
           expenseId,
@@ -569,6 +572,32 @@ exports.updateProjectExpense = async (req, res) => {
             statusCode.BAD_REQUEST,
             "Failed to update expense"
           );
+        }
+
+        // Get new data after update for logging
+        const newExpenseData = updatedExpense.toObject ? updatedExpense.toObject() : updatedExpense;
+
+        // Log update activity
+        try {
+          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req.user);
+          if (userInfo && oldExpenseData && newExpenseData) {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "projectexpanses",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: oldExpenseData,
+              newData: newExpenseData,
+              additionalData: {
+                recordId: oldExpenseData._id.toString(),
+                project_id: oldExpenseData.project_id?.toString()
+              }
+            });
+          }
+        } catch (logError) {
+          console.error("Error logging expense update activity:", logError);
         }
 
         // Send Email Notification

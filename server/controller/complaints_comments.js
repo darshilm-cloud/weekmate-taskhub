@@ -170,6 +170,9 @@ exports.updateComplaintComments = async (req, res) => {
       );
     }
 
+    // Get old data before update for logging
+    const oldCommentData = await ComplaintsComments.findById(req.params.id).lean();
+
     const data = await ComplaintsComments.findByIdAndUpdate(
       req.params.id,
       {
@@ -182,6 +185,31 @@ exports.updateComplaintComments = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
+
+    // Get new data after update for logging
+    const newCommentData = data.toObject ? data.toObject() : data;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldCommentData && newCommentData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "complaints_comments",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldCommentData,
+          newData: newCommentData,
+          additionalData: {
+            recordId: oldCommentData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging complaint comment update activity:", logError);
     }
 
     return successResponse(

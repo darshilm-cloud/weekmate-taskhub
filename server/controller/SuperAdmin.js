@@ -280,6 +280,9 @@ exports.editAdmin = async (req, res) => {
       );
     }
 
+    // Get old data before update for logging
+    const oldAdminData = existingUser.toObject ? existingUser.toObject() : existingUser;
+
     existingUser.email = email;
     existingUser.first_name = firstName;
     existingUser.last_name = lastName;
@@ -290,6 +293,35 @@ exports.editAdmin = async (req, res) => {
     }
 
     const updatedUser = await existingUser.save();
+
+    // Get new data after update for logging
+    const newAdminData = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldAdminData && newAdminData) {
+        // Remove password from logged data
+        delete oldAdminData.password;
+        delete newAdminData.password;
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "employees",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldAdminData,
+          newData: newAdminData,
+          additionalData: {
+            recordId: oldAdminData._id.toString(),
+            isAdmin: true
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging admin update activity:", logError);
+    }
 
     return successResponse(
       res,
@@ -573,6 +605,9 @@ exports.editUser = async (req, res) => {
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 
+    // Get old data before update for logging
+    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+
     // Find and update the user with only the provided fields
     const updatedUser = await employeeSchema.findOneAndUpdate(
       { _id: newObjectId(userId) },
@@ -583,6 +618,34 @@ exports.editUser = async (req, res) => {
     // Check if user exists
     if (!updatedUser) {
       return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
+
+    // Get new data after update for logging
+    const newUserData = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldUserData && newUserData) {
+        // Remove password from logged data
+        delete oldUserData.password;
+        delete newUserData.password;
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "employees",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldUserData,
+          newData: newUserData,
+          additionalData: {
+            recordId: oldUserData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging user update activity:", logError);
     }
 
     return successResponse(res, statusCode.SUCCESS, UPDATED, updatedUser);

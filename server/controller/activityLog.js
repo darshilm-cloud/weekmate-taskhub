@@ -1515,6 +1515,161 @@ exports.getActivityLogById = async (req, res) => {
       }
     }
 
+    // Helper function to populate user fields and remove all IDs from data objects
+    const populateUserFields = async (dataObj) => {
+      if (!dataObj || typeof dataObj !== 'object') return dataObj;
+
+      const EmployeesModel = mongoose.model("employees");
+      const CompanyModel = mongoose.model("companies");
+      const populatedObj = { ...dataObj };
+
+      // Helper to convert ID to ObjectId
+      const toObjectId = (id) => {
+        if (!id) return null;
+        if (id instanceof mongoose.Types.ObjectId) return id;
+        if (typeof id === 'string' && mongoose.Types.ObjectId.isValid(id)) {
+          return new mongoose.Types.ObjectId(id);
+        }
+        return null;
+      };
+
+      // Populate companyId with company name and rename to "company"
+      if (populatedObj.companyId) {
+        try {
+          const companyId = toObjectId(populatedObj.companyId);
+          if (companyId) {
+            const company = await CompanyModel.findById(companyId)
+              .select("companyName")
+              .lean();
+            if (company && company.companyName) {
+              // Rename companyId to company
+              populatedObj.company = company.companyName;
+              delete populatedObj.companyId;
+            } else {
+              delete populatedObj.companyId;
+            }
+          } else {
+            delete populatedObj.companyId;
+          }
+        } catch (error) {
+          console.error("Error populating companyId:", error);
+          delete populatedObj.companyId;
+        }
+      }
+
+      // Populate createdBy
+      if (populatedObj.createdBy) {
+        try {
+          const createdById = toObjectId(populatedObj.createdBy);
+          if (createdById) {
+            const createdByUser = await EmployeesModel.findById(createdById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (createdByUser) {
+              populatedObj.createdBy = createdByUser.full_name || `${createdByUser.first_name || ""} ${createdByUser.last_name || ""}`.trim() || createdByUser.email || "";
+            } else {
+              delete populatedObj.createdBy;
+            }
+          } else {
+            delete populatedObj.createdBy;
+          }
+        } catch (error) {
+          console.error("Error populating createdBy:", error);
+          delete populatedObj.createdBy;
+        }
+      }
+
+      // Populate updatedBy
+      if (populatedObj.updatedBy) {
+        try {
+          const updatedById = toObjectId(populatedObj.updatedBy);
+          if (updatedById) {
+            const updatedByUser = await EmployeesModel.findById(updatedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (updatedByUser) {
+              populatedObj.updatedBy = updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email || "";
+            } else {
+              delete populatedObj.updatedBy;
+            }
+          } else {
+            delete populatedObj.updatedBy;
+          }
+        } catch (error) {
+          console.error("Error populating updatedBy:", error);
+          delete populatedObj.updatedBy;
+        }
+      }
+
+      // Populate deletedBy
+      if (populatedObj.deletedBy) {
+        try {
+          const deletedById = toObjectId(populatedObj.deletedBy);
+          if (deletedById) {
+            const deletedByUser = await EmployeesModel.findById(deletedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (deletedByUser) {
+              populatedObj.deletedBy = deletedByUser.full_name || `${deletedByUser.first_name || ""} ${deletedByUser.last_name || ""}`.trim() || deletedByUser.email || "";
+            } else {
+              delete populatedObj.deletedBy;
+            }
+          } else {
+            delete populatedObj.deletedBy;
+          }
+        } catch (error) {
+          console.error("Error populating deletedBy:", error);
+          delete populatedObj.deletedBy;
+        }
+      }
+
+      // Remove all ID fields and ObjectId instances
+      Object.keys(populatedObj).forEach(key => {
+        const value = populatedObj[key];
+        
+        // Remove _id field
+        if (key === '_id' || key === '__v') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove ObjectId instances
+        if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'ObjectId') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove arrays that might contain ObjectIds (if not already populated)
+        if (Array.isArray(value) && value.length > 0) {
+          const firstItem = value[0];
+          if (firstItem && typeof firstItem === 'object' && firstItem.constructor && firstItem.constructor.name === 'ObjectId') {
+            delete populatedObj[key];
+            return;
+          }
+        }
+
+        // Remove null or undefined
+        if (value === null || value === undefined) {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Recursively process nested objects (but not arrays of objects to avoid infinite loops)
+        if (value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
+          // Process nested objects recursively, but limit depth to avoid issues
+          Object.keys(value).forEach(nestedKey => {
+            if (nestedKey === '_id' || nestedKey === '__v') {
+              delete value[nestedKey];
+            } else if (value[nestedKey] && typeof value[nestedKey] === 'object' && value[nestedKey].constructor && value[nestedKey].constructor.name === 'ObjectId') {
+              delete value[nestedKey];
+            }
+          });
+        }
+      });
+
+      return populatedObj;
+    };
+
     // Helper function to map module names to display labels
     const getModuleLabel = (moduleName) => {
       if (!moduleName) return null;
@@ -1556,6 +1711,22 @@ exports.getActivityLogById = async (req, res) => {
       return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
     };
 
+    // Populate user fields in updatedData if it exists
+    let populatedUpdatedData = null;
+    if (logData.updatedData && logData.updatedData.oldData && logData.updatedData.newData) {
+      try {
+        populatedUpdatedData = {
+          oldData: await populateUserFields(logData.updatedData.oldData),
+          newData: await populateUserFields(logData.updatedData.newData)
+        };
+      } catch (error) {
+        console.error("Error populating updatedData user fields:", error);
+        populatedUpdatedData = logData.updatedData;
+      }
+    } else {
+      populatedUpdatedData = logData.updatedData || null;
+    }
+
     const response = {
       _id: logData._id,
       operationName: logData.operationName,
@@ -1587,7 +1758,7 @@ exports.getActivityLogById = async (req, res) => {
         phone_number: logData.deletedByDetails.phone_number
       } : null,
       additionalData: logData.additionalData || null,
-      updatedData: logData.updatedData || null,
+      updatedData: populatedUpdatedData,
       deletedData: deletedData || null
     };
 

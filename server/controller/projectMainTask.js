@@ -722,6 +722,9 @@ exports.updateProjectsMainTask = async (req, res) => {
         "task_status"
       );
 
+      // Get old data before update for logging
+      const oldMainTaskData = getData.toObject ? getData.toObject() : getData;
+
       const data = await ProjectMainTasks.findByIdAndUpdate(
         req.params.id,
         {
@@ -802,6 +805,31 @@ exports.updateProjectsMainTask = async (req, res) => {
           clientsData.added,
           decodedCompanyId
         );
+      }
+
+      // Get new data after update for logging
+      const newMainTaskData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldMainTaskData && newMainTaskData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectMainTask",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldMainTaskData,
+            newData: newMainTaskData,
+            additionalData: {
+              recordId: oldMainTaskData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging main task update activity:", logError);
       }
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

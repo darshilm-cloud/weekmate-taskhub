@@ -228,6 +228,9 @@ exports.updateProjectLabels = async (req, res) => {
     ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      // Get old data before update for logging
+      const oldLabelData = await ProjectLabels.findById(req.params.id).lean();
+
       const data = await ProjectLabels.findByIdAndUpdate(
         req.params.id,
         {
@@ -241,6 +244,31 @@ exports.updateProjectLabels = async (req, res) => {
 
       if (!data) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+
+      // Get new data after update for logging
+      const newLabelData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldLabelData && newLabelData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectLabels",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldLabelData,
+            newData: newLabelData,
+            additionalData: {
+              recordId: oldLabelData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging project label update activity:", logError);
       }
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

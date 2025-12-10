@@ -288,6 +288,9 @@ exports.updateProjectWorkFlow = async (req, res) => {
         decodedCompanyId
       ))
     ) {
+      // Get old data before update for logging
+      const oldWorkflowData = await ProjectWorkFlow.findById(value.projectWorkFlowId).lean();
+
       const updatedProjectWorkFlowData =
         await ProjectWorkFlow.findByIdAndUpdate(
           value.projectWorkFlowId,
@@ -300,6 +303,31 @@ exports.updateProjectWorkFlow = async (req, res) => {
 
       if (!updatedProjectWorkFlowData) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+
+      // Get new data after update for logging
+      const newWorkflowData = updatedProjectWorkFlowData.toObject ? updatedProjectWorkFlowData.toObject() : updatedProjectWorkFlowData;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldWorkflowData && newWorkflowData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectWorkFlow",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldWorkflowData,
+            newData: newWorkflowData,
+            additionalData: {
+              recordId: oldWorkflowData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging workflow update activity:", logError);
       }
 
       return successResponse(
