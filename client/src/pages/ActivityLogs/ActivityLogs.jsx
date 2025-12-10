@@ -189,6 +189,66 @@ const ActivityLogs = () => {
     return String(value);
   };
 
+  const renderArrayValue = (value) => {
+    if (!Array.isArray(value)) {
+      return formatValue(value);
+    }
+    
+    if (value.length === 0) {
+      return "-";
+    }
+
+    return (
+      <ul style={{ margin: "4px 0", paddingLeft: "20px" }}>
+        {value.map((val, idx) => {
+          // Handle objects in array
+          if (val && typeof val === "object" && !Array.isArray(val)) {
+            return (
+              <li key={idx}>
+                {Object.keys(val)
+                  .filter(k => k !== "_id")
+                  .map((objKey) => {
+                    let objValue = val[objKey];
+                    // Strip HTML from string values
+                    if (typeof objValue === "string") {
+                      objValue = stripHtml(objValue);
+                    } else if (objValue === null || objValue === undefined) {
+                      objValue = "-";
+                    } else if (typeof objValue === "boolean") {
+                      objValue = objValue ? "Yes" : "No";
+                    } else if (typeof objValue === "string" && objValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+                      objValue = formatDate(objValue);
+                    } else {
+                      objValue = String(objValue);
+                    }
+                    return (
+                      <div key={objKey} style={{ marginLeft: "10px" }}>
+                        <strong>{formatKeyToLabel(objKey)}:</strong> {objValue}
+                      </div>
+                    );
+                  })}
+              </li>
+            );
+          }
+          // Handle primitive values
+          return (
+            <li key={idx}>
+              {typeof val === "string" 
+                ? stripHtml(val) 
+                : val === null || val === undefined 
+                  ? "-" 
+                  : typeof val === "boolean"
+                    ? val ? "Yes" : "No"
+                    : typeof val === "string" && val.match(/^\d{4}-\d{2}-\d{2}/)
+                      ? formatDate(val)
+                      : String(val)}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   const openModal = (log) => {
     getActivityLogById(log._id);
   };
@@ -485,7 +545,7 @@ const ActivityLogs = () => {
                     const unchangedFields = [];
 
                     allKeys.forEach((key) => {
-                      if (key === "updated_at" || key === "created_at") return;
+                      if (key === "updated_at" || key === "created_at" || key === "updated_by" || key === "updatedBy" || key === "updated_by_id" || key === "updatedById") return;
                       const oldValue = oldData?.[key];
                       const newValue = newData?.[key];
                       const isChanged = JSON.stringify(oldValue) !== JSON.stringify(newValue);
@@ -512,12 +572,12 @@ const ActivityLogs = () => {
                                 <div key={key} className="change-row">
                                   <div className="change-col">
                                     <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                    <div className="prev-value">{formatValue(oldValue)}</div>
+                                    <div className="prev-value">{renderArrayValue(oldValue)}</div>
                                   </div>
                                   <div className="change-arrow">→</div>
                                   <div className="change-col">
                                     <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                    <div className="curr-value">{formatValue(newValue)}</div>
+                                    <div className="curr-value">{renderArrayValue(newValue)}</div>
                                   </div>
                                 </div>
                               ))}
@@ -532,7 +592,7 @@ const ActivityLogs = () => {
                               {unchangedFields.map(({ key, value }) => (
                                 <div key={key}>
                                   <div className="field-label">{formatKeyToLabel(key)}</div>
-                                  <div className="field-value">{formatValue(value)}</div>
+                                  <div className="field-value">{renderArrayValue(value)}</div>
                                 </div>
                               ))}
                             </div>
