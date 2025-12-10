@@ -1673,6 +1673,139 @@ exports.getActivityLogById = async (req, res) => {
         }
       }
 
+      // Handle subscribers array - convert to names if needed
+      if (populatedObj.subscribers && Array.isArray(populatedObj.subscribers)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscribers.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains ObjectIds or objects
+            const subscriberNames = [];
+            
+            for (const subscriber of populatedObj.subscribers) {
+              if (!subscriber) continue;
+              
+              // Check if it's already a populated object
+              if (typeof subscriber === 'object' && 
+                  (subscriber.full_name !== undefined || 
+                   subscriber.first_name !== undefined ||
+                   subscriber.last_name !== undefined)) {
+                const name = subscriber.full_name || 
+                  `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                if (name) subscriberNames.push(name);
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                const subscriberId = toObjectId(subscriber);
+                if (subscriberId) {
+                  const subscriberDoc = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriberDoc) {
+                    const name = subscriberDoc.full_name || 
+                      `${subscriberDoc.first_name || ""} ${subscriberDoc.last_name || ""}`.trim();
+                    if (name) subscriberNames.push(name);
+                  }
+                }
+              }
+            }
+            
+            populatedObj.subscribers = subscriberNames;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscribers in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscribers) || 
+              !populatedObj.subscribers.every(item => typeof item === 'string')) {
+            populatedObj.subscribers = [];
+          }
+        }
+      }
+
+      // Handle subscriber_stages specifically for projectMainTask
+      if (populatedObj.subscriber_stages && Array.isArray(populatedObj.subscriber_stages)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscriber_stages.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains objects with IDs
+            const WorkflowStatusModel = mongoose.model("workflowstatus");
+            const stagesData = [];
+            
+            for (const stageItem of populatedObj.subscriber_stages) {
+              if (!stageItem || typeof stageItem !== 'object') continue;
+              
+              let subscriberName = null;
+              let stageName = null;
+              
+              // Get subscriber name
+              if (stageItem.subscriber_id) {
+                let subscriberId = null;
+                if (stageItem.subscriber_id instanceof mongoose.Types.ObjectId) {
+                  subscriberId = stageItem.subscriber_id;
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id._id) {
+                  subscriberId = toObjectId(stageItem.subscriber_id._id);
+                } else if (typeof stageItem.subscriber_id === 'string') {
+                  subscriberId = toObjectId(stageItem.subscriber_id);
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.full_name) {
+                  subscriberName = stageItem.subscriber_id.full_name || 
+                    `${stageItem.subscriber_id.first_name || ""} ${stageItem.subscriber_id.last_name || ""}`.trim();
+                }
+                
+                if (subscriberId && !subscriberName) {
+                  const subscriber = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriber) {
+                    subscriberName = subscriber.full_name || 
+                      `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                  }
+                }
+              }
+              
+              // Get stage name
+              if (stageItem.stages) {
+                let stageId = null;
+                if (stageItem.stages instanceof mongoose.Types.ObjectId) {
+                  stageId = stageItem.stages;
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages._id) {
+                  stageId = toObjectId(stageItem.stages._id);
+                } else if (typeof stageItem.stages === 'string') {
+                  stageId = toObjectId(stageItem.stages);
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages.title) {
+                  stageName = stageItem.stages.title;
+                }
+                
+                if (stageId && !stageName) {
+                  const stage = await WorkflowStatusModel.findById(stageId)
+                    .select("title")
+                    .lean();
+                  if (stage) {
+                    stageName = stage.title;
+                  }
+                }
+              }
+              
+              if (subscriberName || stageName) {
+                stagesData.push(`${subscriberName || "Unknown"} - ${stageName || "Unknown"}`);
+              }
+            }
+            
+            populatedObj.subscriber_stages = stagesData;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscriber_stages in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscriber_stages) || 
+              !populatedObj.subscriber_stages.every(item => typeof item === 'string')) {
+            populatedObj.subscriber_stages = [];
+          }
+        }
+      }
+
       // Remove all ID fields and ObjectId instances
       Object.keys(populatedObj).forEach(key => {
         const value = populatedObj[key];
@@ -1690,7 +1823,8 @@ exports.getActivityLogById = async (req, res) => {
         }
 
         // Remove arrays that might contain ObjectIds (if not already populated)
-        if (Array.isArray(value) && value.length > 0) {
+        // Skip subscribers and subscriber_stages as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && Array.isArray(value) && value.length > 0) {
           const firstItem = value[0];
           if (firstItem && typeof firstItem === 'object' && firstItem.constructor && firstItem.constructor.name === 'ObjectId') {
             delete populatedObj[key];
@@ -1705,7 +1839,8 @@ exports.getActivityLogById = async (req, res) => {
         }
 
         // Recursively process nested objects (but not arrays of objects to avoid infinite loops)
-        if (value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
+        // Skip subscribers and subscriber_stages as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
           // Process nested objects recursively, but limit depth to avoid issues
           Object.keys(value).forEach(nestedKey => {
             if (nestedKey === '_id' || nestedKey === '__v') {

@@ -724,8 +724,9 @@ exports.updateProjectsMainTask = async (req, res) => {
         .populate("subscriber_stages.subscriber_id", "full_name first_name last_name")
         .populate("subscriber_stages.stages", "title");
 
-      // Get old data before update for logging
-      const oldMainTaskDataRaw = getData.toObject ? getData.toObject() : getData;
+      // Get old data before update for logging - convert to plain object
+      // Note: toObject() with { flattenMaps: false } preserves nested populated fields
+      const oldMainTaskDataRaw = getData ? (getData.toObject ? getData.toObject({ flattenMaps: false }) : getData) : null;
 
       const data = await ProjectMainTasks.findByIdAndUpdate(
         req.params.id,
@@ -891,65 +892,98 @@ exports.updateProjectsMainTask = async (req, res) => {
         // Transform subscriber_stages array to readable format
         if (transformed.subscriber_stages && Array.isArray(transformed.subscriber_stages)) {
           try {
+            const EmployeesModel = mongoose.model("employees");
             const stagesData = [];
             
             for (const stageItem of transformed.subscriber_stages) {
-              if (!stageItem || typeof stageItem !== 'object') continue;
+              if (!stageItem) continue;
               
               let subscriberName = null;
               let stageName = null;
               
-              // Get subscriber name
+              // Handle subscriber_id - check multiple possible formats
+              let subscriberId = null;
               if (stageItem.subscriber_id) {
-                if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.full_name !== undefined) {
-                  // Already populated
+                // Check if it's already a populated object
+                if (typeof stageItem.subscriber_id === 'object' && 
+                    (stageItem.subscriber_id.full_name !== undefined || 
+                     stageItem.subscriber_id.first_name !== undefined ||
+                     stageItem.subscriber_id._id !== undefined)) {
+                  // Already populated - extract name
                   subscriberName = stageItem.subscriber_id.full_name || 
                     `${stageItem.subscriber_id.first_name || ""} ${stageItem.subscriber_id.last_name || ""}`.trim();
-                } else {
-                  // It's an ObjectId - fetch the name
-                  const subscriberId = stageItem.subscriber_id instanceof mongoose.Types.ObjectId 
-                    ? stageItem.subscriber_id 
-                    : (typeof stageItem.subscriber_id === 'string' && mongoose.Types.ObjectId.isValid(stageItem.subscriber_id)
-                      ? new mongoose.Types.ObjectId(stageItem.subscriber_id)
-                      : null);
                   
-                  if (subscriberId) {
-                    const EmployeesModel = mongoose.model("employees");
-                    const subscriber = await EmployeesModel.findById(subscriberId)
-                      .select("full_name first_name last_name")
-                      .lean();
-                    if (subscriber) {
-                      subscriberName = subscriber.full_name || 
-                        `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
-                    }
+                  // If we got the name, we're done with subscriber
+                  if (!subscriberName && stageItem.subscriber_id._id) {
+                    subscriberId = stageItem.subscriber_id._id instanceof mongoose.Types.ObjectId 
+                      ? stageItem.subscriber_id._id 
+                      : (mongoose.Types.ObjectId.isValid(stageItem.subscriber_id._id) 
+                        ? new mongoose.Types.ObjectId(stageItem.subscriber_id._id) 
+                        : null);
+                  }
+                } else {
+                  // It's an ObjectId or string - convert to ObjectId
+                  if (stageItem.subscriber_id instanceof mongoose.Types.ObjectId) {
+                    subscriberId = stageItem.subscriber_id;
+                  } else if (typeof stageItem.subscriber_id === 'string' && mongoose.Types.ObjectId.isValid(stageItem.subscriber_id)) {
+                    subscriberId = new mongoose.Types.ObjectId(stageItem.subscriber_id);
+                  } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.toString) {
+                    subscriberId = new mongoose.Types.ObjectId(stageItem.subscriber_id.toString());
+                  }
+                }
+                
+                // Fetch subscriber name if we have an ID but no name yet
+                if (subscriberId && !subscriberName) {
+                  const subscriber = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriber) {
+                    subscriberName = subscriber.full_name || 
+                      `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
                   }
                 }
               }
               
-              // Get stage name
+              // Handle stages - check multiple possible formats
+              let stageId = null;
               if (stageItem.stages) {
-                if (typeof stageItem.stages === 'object' && stageItem.stages.title !== undefined) {
-                  // Already populated
+                // Check if it's already a populated object
+                if (typeof stageItem.stages === 'object' && 
+                    (stageItem.stages.title !== undefined || stageItem.stages._id !== undefined)) {
+                  // Already populated - extract title
                   stageName = stageItem.stages.title;
-                } else {
-                  // It's an ObjectId - fetch the name
-                  const stageId = stageItem.stages instanceof mongoose.Types.ObjectId 
-                    ? stageItem.stages 
-                    : (typeof stageItem.stages === 'string' && mongoose.Types.ObjectId.isValid(stageItem.stages)
-                      ? new mongoose.Types.ObjectId(stageItem.stages)
-                      : null);
                   
-                  if (stageId) {
-                    const stage = await WorkflowStatusModel.findById(stageId)
-                      .select("title")
-                      .lean();
-                    if (stage) {
-                      stageName = stage.title;
-                    }
+                  // If we didn't get the title but have _id, fetch it
+                  if (!stageName && stageItem.stages._id) {
+                    stageId = stageItem.stages._id instanceof mongoose.Types.ObjectId 
+                      ? stageItem.stages._id 
+                      : (mongoose.Types.ObjectId.isValid(stageItem.stages._id) 
+                        ? new mongoose.Types.ObjectId(stageItem.stages._id) 
+                        : null);
+                  }
+                } else {
+                  // It's an ObjectId or string - convert to ObjectId
+                  if (stageItem.stages instanceof mongoose.Types.ObjectId) {
+                    stageId = stageItem.stages;
+                  } else if (typeof stageItem.stages === 'string' && mongoose.Types.ObjectId.isValid(stageItem.stages)) {
+                    stageId = new mongoose.Types.ObjectId(stageItem.stages);
+                  } else if (typeof stageItem.stages === 'object' && stageItem.stages.toString) {
+                    stageId = new mongoose.Types.ObjectId(stageItem.stages.toString());
+                  }
+                }
+                
+                // Fetch stage title if we have an ID but no title yet
+                if (stageId && !stageName) {
+                  const stage = await WorkflowStatusModel.findById(stageId)
+                    .select("title")
+                    .lean();
+                  if (stage) {
+                    stageName = stage.title;
                   }
                 }
               }
               
+              // Only add if we have at least one value
               if (subscriberName || stageName) {
                 // Format as "Subscriber Name - Stage Name" for better display
                 const stageString = `${subscriberName || "Unknown"} - ${stageName || "Unknown"}`;
