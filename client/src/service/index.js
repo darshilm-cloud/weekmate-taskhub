@@ -618,19 +618,19 @@ export default class Service {
     } finally {
       // Clear local storage and cookies
       localStorage.removeItem('user_data')
-    localStorage.removeItem('is_reporting_manager')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('title')
-    localStorage.removeItem('headerLogo')
-    localStorage.removeItem('loginLogo')  
-    localStorage.removeItem('logoMode')
-    localStorage.removeItem('favIcon')
-  
-  
-    removeCookie("user_permission")
-    removeCookie("pms_role_id")
-    window.location = "/signin";
+      localStorage.removeItem('is_reporting_manager')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('title')
+      localStorage.removeItem('headerLogo')
+      localStorage.removeItem('loginLogo')  
+      localStorage.removeItem('logoMode')
+      localStorage.removeItem('favIcon')
+    
+      removeCookie("user_permission")
+      removeCookie("pms_role_id")
+      window.location = "/signin";
+    }
   }
 
   static uuidv4() {
