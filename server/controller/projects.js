@@ -1242,6 +1242,11 @@ exports.getProjectDetailsForMail = async (
 // Archived to active Project :
 exports.deleteProjects = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the project data before deletion for logging
+    const projectData = await Project.findById(req.params.id).lean();
+    
     const project = await Project.findByIdAndUpdate(
       req.params.id,
       {
@@ -1255,6 +1260,23 @@ exports.deleteProjects = async (req, res) => {
 
     if (!project) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && projectData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projects",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: projectData,
+        additionalData: {
+          recordId: projectData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

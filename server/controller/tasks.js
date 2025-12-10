@@ -1162,6 +1162,11 @@ exports.updateMultipleTaskStatus = async (req, res) => {
 //Soft Delete Project task :
 exports.deleteProjectsTask = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the task data before deletion for logging
+    const taskData = await ProjectTasks.findById(req.params.id).lean();
+    
     const data = await ProjectTasks.findByIdAndUpdate(
       req.params.id,
       {
@@ -1175,6 +1180,23 @@ exports.deleteProjectsTask = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && taskData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "tasks",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: taskData,
+        additionalData: {
+          recordId: taskData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

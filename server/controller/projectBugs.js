@@ -950,6 +950,11 @@ exports.updateProjectsBugStatus = async (req, res) => {
 //Soft Delete Project bugs :
 exports.deleteProjectsBugs = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the bug data before deletion for logging
+    const bugData = await ProjectBugs.findById(req.params.id).lean();
+    
     const data = await ProjectBugs.findByIdAndUpdate(
       req.params.id,
       {
@@ -963,6 +968,23 @@ exports.deleteProjectsBugs = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && bugData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "bugs",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: bugData,
+        additionalData: {
+          recordId: bugData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.BUG_DELETED, data);

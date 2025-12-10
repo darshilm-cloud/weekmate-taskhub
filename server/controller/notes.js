@@ -535,6 +535,11 @@ exports.updateNotesbookmark = async (req, res) => {
 //Soft Delete Project Notes :
 exports.deleteNotes = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the note data before deletion for logging
+    const noteData = await Notes.findById(req.params.id).lean();
+    
     const data = await Notes.findByIdAndUpdate(
       req.params.id,
       {
@@ -548,6 +553,23 @@ exports.deleteNotes = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && noteData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "notes",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: noteData,
+        additionalData: {
+          recordId: noteData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

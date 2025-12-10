@@ -212,17 +212,26 @@ exports.getActivityLogList = async (req, res) => {
           createdBy: {
             _id: "$createdByDetails._id",
             full_name: "$createdByDetails.full_name",
-            email: "$createdByDetails.email"
+            first_name: "$createdByDetails.first_name",
+            last_name: "$createdByDetails.last_name",
+            email: "$createdByDetails.email",
+            phone_number: "$createdByDetails.phone_number"
           },
           updatedBy: {
             _id: "$updatedByDetails._id",
             full_name: "$updatedByDetails.full_name",
-            email: "$updatedByDetails.email"
+            first_name: "$updatedByDetails.first_name",
+            last_name: "$updatedByDetails.last_name",
+            email: "$updatedByDetails.email",
+            phone_number: "$updatedByDetails.phone_number"
           },
           deletedBy: {
             _id: "$deletedByDetails._id",
             full_name: "$deletedByDetails.full_name",
-            email: "$deletedByDetails.email"
+            first_name: "$deletedByDetails.first_name",
+            last_name: "$deletedByDetails.last_name",
+            email: "$deletedByDetails.email",
+            phone_number: "$deletedByDetails.phone_number"
           },
           additionalData: 1,
           updatedData: 1
@@ -429,6 +438,82 @@ exports.getActivityLogById = async (req, res) => {
 
     const logData = activityLog[0];
 
+    // Helper function to map module names to model names
+    const getModelName = (moduleName) => {
+      const modelMap = {
+        "tasks": "projecttasks",
+        "projects": "projects",
+        "notes": "notes_pms",
+        "notebook": "notebook",
+        "bugs": "projecttaskbugs",
+        "discussions": "discussionstopics",
+        "discussionDetails": "discussionstopicsdetails",
+        "fileFolders": "filefolders",
+        "fileUploads": "fileuploads",
+        "taskComments": "Comments",
+        "bugComments": "bugcomments",
+        "notesComments": "notescomments",
+        "subTasks": "subtasks",
+        "projectMainTask": "projectmaintasks",
+        "taskHoursLogs": "projecttaskhourlogs",
+        "projectTimeSheets": "projecttimesheets",
+        "projectLabels": "tasklabels",
+        "projectStatus": "projectstatus",
+        "projectTypes": "projecttypes",
+        "projectTech": "projecttechs",
+        "projectWorkFlow": "projectworkflows",
+        "workFlowStatus": "workflowstatus",
+        "employees": "employees",
+        "pmsClients": "pmsclients",
+        "pmsRoles": "pms_roles",
+        "rolePermissions": "role_permissions",
+        "complaints": "complaints",
+        "complaints_status": "complaints_status",
+        "complaints_comments": "complaints_comments",
+        "reviews": "reviews",
+        "projectexpanses": "projectexpanses",
+        "hoursLoggedComments": "hoursloggedcomments",
+        "hoursApprove": "hoursapprove"
+      };
+      return modelMap[moduleName?.toLowerCase()] || moduleName?.toLowerCase();
+    };
+
+    // Fetch deleted data if it's a DELETE operation
+    let deletedData = null;
+    if (logData.operationName === "DELETE" && logData.moduleName && logData.additionalData) {
+      try {
+        const modelName = getModelName(logData.moduleName);
+        const Model = mongoose.model(modelName);
+        const additionalData = logData.additionalData;
+        
+        // Get deleted record IDs
+        let deletedIds = [];
+        if (additionalData.deletedRecordIds && Array.isArray(additionalData.deletedRecordIds)) {
+          deletedIds = additionalData.deletedRecordIds;
+        } else if (additionalData.recordId) {
+          deletedIds = [additionalData.recordId];
+        }
+
+        if (deletedIds.length > 0) {
+          // Fetch deleted records (including soft deleted ones)
+          const deletedRecords = await Model.find({
+            _id: { $in: deletedIds.map(id => global.newObjectId(id)) }
+          }).lean();
+
+          if (deletedRecords && deletedRecords.length > 0) {
+            deletedData = deletedRecords.map(record => {
+              // Remove sensitive/internal fields
+              const { password, resetCode, __v, ...cleanRecord } = record;
+              return cleanRecord;
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching deleted data:", error);
+        // Continue without deleted data if there's an error
+      }
+    }
+
     const response = {
       _id: logData._id,
       operationName: logData.operationName,
@@ -439,20 +524,30 @@ exports.getActivityLogById = async (req, res) => {
       createdBy: logData.createdByDetails ? {
         _id: logData.createdByDetails._id,
         full_name: logData.createdByDetails.full_name,
-        email: logData.createdByDetails.email
+        first_name: logData.createdByDetails.first_name,
+        last_name: logData.createdByDetails.last_name,
+        email: logData.createdByDetails.email,
+        phone_number: logData.createdByDetails.phone_number
       } : null,
       updatedBy: logData.updatedByDetails ? {
         _id: logData.updatedByDetails._id,
         full_name: logData.updatedByDetails.full_name,
-        email: logData.updatedByDetails.email
+        first_name: logData.updatedByDetails.first_name,
+        last_name: logData.updatedByDetails.last_name,
+        email: logData.updatedByDetails.email,
+        phone_number: logData.updatedByDetails.phone_number
       } : null,
       deletedBy: logData.deletedByDetails ? {
         _id: logData.deletedByDetails._id,
         full_name: logData.deletedByDetails.full_name,
-        email: logData.deletedByDetails.email
+        first_name: logData.deletedByDetails.first_name,
+        last_name: logData.deletedByDetails.last_name,
+        email: logData.deletedByDetails.email,
+        phone_number: logData.deletedByDetails.phone_number
       } : null,
       additionalData: logData.additionalData || null,
-      updatedData: logData.updatedData || null
+      updatedData: logData.updatedData || null,
+      deletedData: deletedData || null
     };
 
     return successResponse(

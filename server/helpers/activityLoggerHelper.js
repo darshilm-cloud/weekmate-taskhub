@@ -173,6 +173,7 @@ exports.logDelete = async (params) => {
 
 /**
  * Log update operation
+ * Detects if isDeleted is being set to true and logs it as DELETE operation instead
  * @param {Object} params - Update operation parameters
  * @param {String} params.companyId - Company ID
  * @param {String} params.moduleName - Module name (e.g., "employees", "projects", "tasks")
@@ -198,6 +199,34 @@ exports.logUpdate = async (params) => {
 
     if (!companyId || !moduleName || !email || !createdBy) {
       console.error("ActivityLogger: Missing required fields for update log", params);
+      return;
+    }
+
+    // Check if this is a soft delete operation (isDeleted being set to true)
+    const isSoftDelete = newData && (
+      newData.isDeleted === true || 
+      newData.isDeleted === "true" ||
+      (oldData && oldData.isDeleted === false && newData.isDeleted === true)
+    );
+
+    if (isSoftDelete) {
+      // Log as DELETE operation instead of UPDATE
+      const recordId = additionalData?.recordId || additionalData?._id || oldData?._id || newData?._id;
+      
+      await exports.logDelete({
+        companyId,
+        moduleName,
+        email,
+        createdBy,
+        deletedBy: updatedBy || createdBy,
+        deletedRecord: newData || oldData,
+        additionalData: {
+          ...additionalData,
+          recordId: recordId,
+          isSoftDelete: true,
+          deletedFromUpdate: true
+        }
+      });
       return;
     }
 

@@ -50,6 +50,8 @@ exports.uploadFiles = async (req, res) => {
 
 exports.deleteFiles = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     const validationSchema = Joi.object({
       del_files_arr: Joi.array().required(),
       file_for: Joi.string().required(),
@@ -67,19 +69,60 @@ exports.deleteFiles = async (req, res) => {
       _id: {
         $in: value.del_files_arr,
       },
-    });
+    }).lean();
+
+    if (!getFiles || getFiles.length === 0) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Files not found");
+    }
+
+    // Get user info for logging
+    const userInfo = await getUserInfoForLogging(req.user);
+    
+    // Prepare file information for logging
+    const fileNames = getFiles.map(file => file.name || file._id.toString());
+    const fileIds = getFiles.map(file => file._id.toString());
 
     // delete from storage
     const filePath = getFileUploadPath(value.file_for);
-    getFiles?.forEach((file) => fs.unlinkSync(`.${filePath}/${file.name}`));
+    getFiles?.forEach((file) => {
+      try {
+        fs.unlinkSync(`.${filePath}/${file.name}`);
+      } catch (err) {
+        console.error(`Error deleting file ${file.name}:`, err);
+      }
+    });
 
-    // Delete files from db..
+    // Hard delete files from db
     await FileUploads.deleteMany({
       _id: {
         $in: value.del_files_arr.map((d) => new mongoose.Types.ObjectId(d)),
       },
     });
-    return successResponse(res, statusCode.SUCCESS, messages.FILE_DELETED, {});
+
+    // Log delete activity
+    if (userInfo) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "fileUploads",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        additionalData: {
+          fileNames: fileNames,
+          deletedFileIds: fileIds,
+          file_for: value.file_for,
+          deletedCount: getFiles.length,
+          deletedBy: {
+            _id: userInfo._id,
+            email: userInfo.email
+          }
+        }
+      });
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.FILE_DELETED, {
+      deletedCount: getFiles.length
+    });
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }

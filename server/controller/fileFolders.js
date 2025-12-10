@@ -295,6 +295,11 @@ exports.updateFileFolders = async (req, res) => {
 //Soft Delete file folders :
 exports.deleteFileFolders = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the folder data before deletion for logging
+    const folderData = await FileFolders.findById(req.params.id).lean();
+    
     const data = await FileFolders.findByIdAndUpdate(
       req.params.id,
       {
@@ -307,6 +312,23 @@ exports.deleteFileFolders = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && folderData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "fileFolders",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: folderData,
+        additionalData: {
+          recordId: folderData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     // Delete folder files ..
