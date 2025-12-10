@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import {
   Button,
   Popover,
-  Checkbox,
+  Radio,
   Badge,
   Divider,
   DatePicker,
@@ -31,15 +31,17 @@ const FILTER_CONFIG = {
       { value: "UPDATE", label: "Update" },
       { value: "DELETE", label: "Delete" },
     ],
-    renderItem: (item, handleSelect, selectedItems) => (
+    renderItem: (item, handleSelect, selectedValue) => (
       <div
         key={item.value}
         className={`assignee-item ${
-          selectedItems.includes(item.value) ? "selected" : ""
+          selectedValue === item.value ? "selected" : ""
         }`}
+        onClick={() => handleSelect(item, FILTER_TYPES.OPERATION)}
+        style={{ cursor: "pointer" }}
       >
-        <Checkbox
-          checked={selectedItems.includes(item.value)}
+        <Radio
+          checked={selectedValue === item.value}
           onChange={() => handleSelect(item, FILTER_TYPES.OPERATION)}
         />
         <span>{item.label}</span>
@@ -64,7 +66,7 @@ const createFilterMenuItems = () => {
 const OperationFilterSection = ({
   config,
   items,
-  selectedItems,
+  selectedValue,
   onSelect,
   onApply,
   onReset,
@@ -72,7 +74,7 @@ const OperationFilterSection = ({
   <div className="filter-content-inner">
     <h4 className="filter-title">{config.label}</h4>
     <div style={{ maxHeight: "300px", overflowY: "auto", paddingRight: "8px" }}>
-      {items.map((item) => config.renderItem(item, onSelect, selectedItems))}
+      {items.map((item) => config.renderItem(item, onSelect, selectedValue))}
     </div>
     <div className="filter-actions">
       <Button onClick={onApply} size="small" className="filter-btn">
@@ -131,41 +133,34 @@ const ActivityLogFilter = ({ onFilterChange }) => {
     [FILTER_TYPES.OPERATION]: FILTER_CONFIG[FILTER_TYPES.OPERATION].options,
   });
   const [selectedFilters, setSelectedFilters] = useState({
-    [FILTER_TYPES.OPERATION]: [],
+    [FILTER_TYPES.OPERATION]: null,
     [FILTER_TYPES.DATE_RANGE]: null,
   });
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (selectedFilters[FILTER_TYPES.OPERATION]?.length > 0) count++;
+    if (selectedFilters[FILTER_TYPES.OPERATION]) count++;
     if (selectedFilters[FILTER_TYPES.DATE_RANGE]) count++;
     return count;
   }, [selectedFilters]);
 
   const handleFilterSelection = useCallback((item, filterType) => {
     setSelectedFilters((prev) => {
-      const current = prev[filterType] || [];
-      const updated = current.includes(item.value)
-        ? current.filter((val) => val !== item.value)
-        : [...current, item.value];
-      return { ...prev, [filterType]: updated };
+      // For radio buttons, set the value directly (toggle if same value is clicked)
+      const newValue = prev[filterType] === item.value ? null : item.value;
+      return { ...prev, [filterType]: newValue };
     });
   }, []);
 
   const resetFilter = useCallback(
     (filterType) => {
       setSelectedFilters((prev) => {
-        const updated = { ...prev };
-        if (filterType === FILTER_TYPES.DATE_RANGE) {
-          updated[filterType] = null;
-        } else {
-          updated[filterType] = [];
-        }
+        const updated = { ...prev, [filterType]: null };
         
         // Pass the updated filter state to parent so other filters remain applied
         if (onFilterChange) {
           onFilterChange([], {
-            operation: updated[FILTER_TYPES.OPERATION],
+            operation: updated[FILTER_TYPES.OPERATION] ? [updated[FILTER_TYPES.OPERATION]] : [],
             dateRange: updated[FILTER_TYPES.DATE_RANGE],
           });
         }
@@ -178,7 +173,7 @@ const ActivityLogFilter = ({ onFilterChange }) => {
 
   const resetAllFilters = useCallback(() => {
     setSelectedFilters({
-      [FILTER_TYPES.OPERATION]: [],
+      [FILTER_TYPES.OPERATION]: null,
       [FILTER_TYPES.DATE_RANGE]: null,
     });
     if (onFilterChange) {
@@ -206,7 +201,7 @@ const ActivityLogFilter = ({ onFilterChange }) => {
           onApply={() => {
             if (onFilterChange) {
               onFilterChange([], {
-                operation: selectedFilters[FILTER_TYPES.OPERATION],
+                operation: selectedFilters[FILTER_TYPES.OPERATION] ? [selectedFilters[FILTER_TYPES.OPERATION]] : [],
                 dateRange: selectedFilters[FILTER_TYPES.DATE_RANGE],
               });
             }
@@ -222,11 +217,12 @@ const ActivityLogFilter = ({ onFilterChange }) => {
         config={config}
         items={filterData[activeFilter]}
         selectedItems={selectedFilters[activeFilter]}
+        selectedValue={selectedFilters[activeFilter]}
         onSelect={(item) => handleFilterSelection(item, activeFilter)}
         onApply={() => {
           if (onFilterChange) {
             onFilterChange([], {
-              operation: selectedFilters[FILTER_TYPES.OPERATION],
+              operation: selectedFilters[FILTER_TYPES.OPERATION] ? [selectedFilters[FILTER_TYPES.OPERATION]] : [],
               dateRange: selectedFilters[FILTER_TYPES.DATE_RANGE],
             });
           }
@@ -269,7 +265,7 @@ const ActivityLogFilter = ({ onFilterChange }) => {
               ? selectedFilters[FILTER_TYPES.DATE_RANGE] && (
                   <Badge size="small" color="#1890ff" />
                 )
-              : !_.isEmpty(selectedFilters[item.key]) && (
+              : selectedFilters[item.key] && (
                   <Badge size="small" color="#1890ff" />
                 )}
           </div>
