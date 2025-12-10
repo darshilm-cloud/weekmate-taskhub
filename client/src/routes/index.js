@@ -70,6 +70,10 @@ const DashboardModule = React.lazy(() => import("../pages/Dashbaord"));
 const BillableHoursAdmin = React.lazy(() =>
   import("../pages/BillableHours/SuperAdminBillableHours.js")
 );
+const ActivityLogs = React.lazy(() =>
+  import("../pages/ActivityLogs/ActivityLogs")
+);
+
 
 const index = ({ match, userPermission }) => {
   const routeArray = [
@@ -385,7 +389,12 @@ const index = ({ match, userPermission }) => {
       roleName: [
         config.PMS_ROLES.SUPER_ADMIN,
       ],
-    }
+    },
+    {
+      path: ":companySlug/admin/activity-logs",
+      component: ActivityLogs,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
   ];
   let userData = JSON.parse(localStorage.getItem("user_data"));
   return (

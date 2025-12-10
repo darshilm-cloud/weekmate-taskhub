@@ -3,7 +3,7 @@ import { Form, Menu, Layout } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import { useDispatch } from "react-redux";
-import { SearchOutlined, DashboardOutlined, SettingOutlined } from "@ant-design/icons";
+import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./SidebarContent.css";
@@ -243,6 +243,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <SettingOutlined />,
         label: "Settings",
         onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
+      },
+      getRoles(["Admin"]) &&{
+        key: "activity_logs",
+        icon: <HistoryOutlined />,
+        label: "Activity Logs",
+        onClick: () => handleMenuClick("activity_logs", `/${companySlug}/admin/activity-logs`)
       },
     ],
     []

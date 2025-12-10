@@ -271,6 +271,10 @@ export default class Service {
   // Employee List
   static getEmployeeList = "/master/get/employees";
 
+  // Activity Logs
+  static getActivityLogList = "/activityLog/list";
+  static getActivityLogById = "/activityLog";
+
   // tab settings
   static getTabSetting = '/project-tabs/setting/get/'
   static EditTabSetting = '/project-tabs/setting/add-edit'
