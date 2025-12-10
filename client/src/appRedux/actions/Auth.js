@@ -14,6 +14,7 @@ import {
   USER_HANDLER
 } from "../../constants/ActionTypes";
 import removeCookie from "../../hooks/removeCookie";
+import Service from "../../service";
 
 export const userSignUp = (user) => {
   return {
@@ -28,24 +29,45 @@ export const userSignIn = (user) => {
   };
 };
 export const userSignOut = () => {
-  localStorage.removeItem('user_data')
-  localStorage.removeItem('is_reporting_manager')
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('title')
-  localStorage.removeItem('headerLogo')
-  localStorage.removeItem('loginLogo')  
-  localStorage.removeItem('logoMode')
-  localStorage.removeItem('favIcon')
-  localStorage.removeItem('companyDomain')
+  return async (dispatch) => {
+    try {
+      // Call logout API to log the activity
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
+        try {
+          await Service.makeAPICall({
+            props: {},
+            methodName: Service.postMethod,
+            api_url: Service.logout,
+            body: {},
+          });
+        } catch (error) {
+          // Continue with logout even if API call fails
+          console.error("Logout API error:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear local storage and cookies
+      localStorage.removeItem('user_data')
+      localStorage.removeItem('is_reporting_manager')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('title')
+      localStorage.removeItem('headerLogo')
+      localStorage.removeItem('loginLogo')  
+      localStorage.removeItem('logoMode')
+      localStorage.removeItem('favIcon')
+      localStorage.removeItem('companyDomain')
 
+      removeCookie("user_permission")
+      removeCookie("pms_role_id")
 
-
-  removeCookie("user_permission")
-  removeCookie("pms_role_id")
-
-  return {
-    type: SIGNOUT_USER_SUCCESS
+      dispatch({
+        type: SIGNOUT_USER_SUCCESS
+      });
+    }
   };
 };
 export const userSignUpSuccess = (authUser) => {

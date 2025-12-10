@@ -793,15 +793,55 @@ exports.projectFileUpdateSubscribers = async (req, res) => {
 // delete file
 exports.projectFileDelete = async (req, res) => {
   try {
-    await FileUploads.findByIdAndUpdate(
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the file data before deletion for logging
+    const fileData = await FileUploads.findById(req.params.id).lean();
+    
+    const data = await FileUploads.findByIdAndUpdate(
       new mongoose.Types.ObjectId(req.params.id),
       {
         isDeleted: true,
         deletedBy: req.user._id,
         deletedAt: configs.utcDefault(),
         ...(await getRefModelFromLoginUser(req?.user, false, true))
-      }
+      },
+      { new: true }
     );
+
+    if (!data) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    try {
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && userInfo.companyId && userInfo.email && userInfo._id && fileData) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "fileUploads",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          deletedRecord: fileData,
+          additionalData: {
+            recordId: fileData._id.toString(),
+            fileName: fileData.name || fileData._id.toString(),
+            file_for: fileData.file_for || "project",
+            isSoftDelete: true,
+            deletedBy: {
+              _id: userInfo._id,
+              email: userInfo.email
+            }
+          }
+        });
+      } else {
+        console.error("File delete log: Invalid userInfo or fileData", { userInfo, fileData, reqUser: req.user });
+      }
+    } catch (logError) {
+      console.error("Error logging file delete activity:", logError);
+      // Continue even if logging fails
+    }
 
     return successResponse(res, 200, messages.FILE_DELETED, {}, []);
   } catch (error) {

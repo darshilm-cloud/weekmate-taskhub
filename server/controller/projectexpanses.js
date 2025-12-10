@@ -612,12 +612,14 @@ exports.updateProjectExpense = async (req, res) => {
 
 exports.deleteProjectExpense = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     const staticAccountantId = process.env.ACCOUNTANT_ID;
     const userRole = req.user.pms_role_id.role_name;
     const userId = req.user._id.toString();
 
     // Fetch existing project expense
-    const existingExpense = await ProjectExpanses.findById(req.params.id);
+    const existingExpense = await ProjectExpanses.findById(req.params.id).lean();
     if (!existingExpense) {
       return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
     }
@@ -636,15 +638,36 @@ exports.deleteProjectExpense = async (req, res) => {
     }
 
     // Soft delete: Set `isDeleted: true`
-    existingExpense.isDeleted = true;
-    existingExpense.updatedBy = userId;
-    await existingExpense.save();
+    const expenseModel = await ProjectExpanses.findById(req.params.id);
+    expenseModel.isDeleted = true;
+    expenseModel.deletedBy = req.user._id;
+    expenseModel.deletedAt = configs.utcDefault();
+    expenseModel.updatedBy = userId;
+    await expenseModel.save();
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && existingExpense) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectexpanses",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: existingExpense,
+        additionalData: {
+          recordId: existingExpense._id.toString(),
+          project_id: existingExpense.project_id?.toString(),
+          isSoftDelete: true
+        }
+      });
+    }
 
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.PROJECTEXPENSE_DELETED,
-      existingExpense
+      expenseModel
     );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);

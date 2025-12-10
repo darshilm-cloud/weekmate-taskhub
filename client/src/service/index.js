@@ -73,6 +73,7 @@ export default class Service {
   static resetPasswordV2 = "/authentication/resetPassword";
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
   static login = "/authentication/login";
+  static logout = "/authentication/logout";
 
   //icon & logo
   // static editLogo_Icon = "/adminsettings/editAdminSetting";
@@ -595,8 +596,28 @@ export default class Service {
     }
   }
 
-  static logOut() {
-    localStorage.removeItem('user_data')
+  static async logOut() {
+    try {
+      // Call logout API to log the activity
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
+        try {
+          await this.makeAPICall({
+            props: {},
+            methodName: this.postMethod,
+            api_url: this.logout,
+            body: {},
+          });
+        } catch (error) {
+          // Continue with logout even if API call fails
+          console.error("Logout API error:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear local storage and cookies
+      localStorage.removeItem('user_data')
     localStorage.removeItem('is_reporting_manager')
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')

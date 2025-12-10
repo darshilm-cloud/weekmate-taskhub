@@ -488,6 +488,11 @@ exports.editCommentResolve = async (req, res, next) => {
 
 exports.deleteComment = async (req, res, next) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the comment data before deletion for logging
+    const commentData = await CommentsModel.findById(req.params.id).lean();
+    
     const deletecomment_id = await CommentsModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -499,7 +504,26 @@ exports.deleteComment = async (req, res, next) => {
       { new: true }
     ).exec();
     const data = await CommentsModel.findById(req.params.id).exec();
+    
     if (data && deletecomment_id) {
+      // Log delete activity
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && commentData) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "taskComments",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          deletedRecord: commentData,
+          additionalData: {
+            recordId: commentData._id.toString(),
+            task_id: commentData.task_id?.toString(),
+            isSoftDelete: true
+          }
+        });
+      }
+      
       return successResponse(res, statusCode.CREATED, messages.DELETED, data);
     } else {
       return successResponse(

@@ -75,9 +75,6 @@ exports.deleteFiles = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, "Files not found");
     }
 
-    // Get user info for logging
-    const userInfo = await getUserInfoForLogging(req.user);
-    
     // Prepare file information for logging
     const fileNames = getFiles.map(file => file.name || file._id.toString());
     const fileIds = getFiles.map(file => file._id.toString());
@@ -100,24 +97,32 @@ exports.deleteFiles = async (req, res) => {
     });
 
     // Log delete activity
-    if (userInfo) {
-      await logDelete({
-        companyId: userInfo.companyId,
-        moduleName: "fileUploads",
-        email: userInfo.email,
-        createdBy: userInfo._id,
-        deletedBy: userInfo._id,
-        additionalData: {
-          fileNames: fileNames,
-          deletedFileIds: fileIds,
-          file_for: value.file_for,
-          deletedCount: getFiles.length,
-          deletedBy: {
-            _id: userInfo._id,
-            email: userInfo.email
+    try {
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && userInfo.companyId && userInfo.email && userInfo._id) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "fileUploads",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            fileNames: fileNames,
+            deletedFileIds: fileIds,
+            file_for: value.file_for,
+            deletedCount: getFiles.length,
+            deletedBy: {
+              _id: userInfo._id,
+              email: userInfo.email
+            }
           }
-        }
-      });
+        });
+      } else {
+        console.error("File delete log: Invalid userInfo", { userInfo, reqUser: req.user });
+      }
+    } catch (logError) {
+      console.error("Error logging file delete activity:", logError);
+      // Continue even if logging fails
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.FILE_DELETED, {

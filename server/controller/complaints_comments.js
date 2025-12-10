@@ -198,6 +198,11 @@ exports.updateComplaintComments = async (req, res) => {
 // Archived to active Complaint :
 exports.deleteComplaintComments = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the complaint comment data before deletion for logging
+    const commentData = await ComplaintsComments.findById(req.params.id).lean();
+    
     const complaint_comment = await ComplaintsComments.findByIdAndUpdate(
       req.params.id,
       {
@@ -211,6 +216,24 @@ exports.deleteComplaintComments = async (req, res) => {
 
     if (!complaint_comment) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && commentData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "complaints_comments",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: commentData,
+        additionalData: {
+          recordId: commentData._id.toString(),
+          complaint_id: commentData.complaint_id?.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

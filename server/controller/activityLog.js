@@ -898,6 +898,316 @@ exports.getActivityLogById = async (req, res) => {
           if (formatted.updatedAt) {
             formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
           }
+        } else if (moduleName === "bugs") {
+          // Populate bug_status_history
+          if (formatted.bug_status_history && Array.isArray(formatted.bug_status_history) && formatted.bug_status_history.length > 0) {
+            try {
+              const BugWorkflowStatusModel = mongoose.model("bugsworkflowstatus");
+              const EmployeesModel = mongoose.model("employees");
+              
+              const populatedHistory = await Promise.all(
+                formatted.bug_status_history.map(async (historyItem) => {
+                  const populatedItem = { ...historyItem };
+                  
+                  // Populate bug_status
+                  if (historyItem.bug_status) {
+                    const bugStatusId = toObjectId(historyItem.bug_status);
+                    if (bugStatusId) {
+                      const bugStatus = await BugWorkflowStatusModel.findById(bugStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.bug_status = bugStatus && bugStatus.title ? bugStatus.title : "";
+                    } else {
+                      populatedItem.bug_status = "";
+                    }
+                  }
+                  
+                  // Populate updatedBy
+                  if (historyItem.updatedBy) {
+                    const updatedById = toObjectId(historyItem.updatedBy);
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                  
+                  // Format updatedAt
+                  if (historyItem.updatedAt) {
+                    populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                  }
+                  
+                  // Remove any ID fields
+                  delete populatedItem._id;
+                  
+                  return populatedItem;
+                })
+              );
+              
+              formatted.bug_status_history = populatedHistory;
+            } catch (error) {
+              console.error("Error populating bug_status_history:", error);
+              formatted.bug_status_history = [];
+            }
+          } else {
+            formatted.bug_status_history = [];
+          }
+
+          // Format dates
+          if (formatted.start_date) {
+            formatted.start_date = moment(formatted.start_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.due_date) {
+            formatted.due_date = moment(formatted.due_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format booleans
+          if (formatted.isImported !== undefined) {
+            formatted.isImported = formatted.isImported ? "Yes" : "No";
+          }
+          if (formatted.isRepeated !== undefined) {
+            formatted.isRepeated = formatted.isRepeated ? "Yes" : "No";
+          }
+        } else if (moduleName === "discussionDetails") {
+          // Populate topic_id
+          if (formatted.topic_id) {
+            try {
+              const DiscussionsTopicsModel = mongoose.model("discussionstopics");
+              const topicId = toObjectId(formatted.topic_id);
+              if (topicId) {
+                const topic = await DiscussionsTopicsModel.findById(topicId)
+                  .select("title")
+                  .lean();
+                formatted.topic_id = topic && topic.title ? topic.title : "";
+              } else {
+                formatted.topic_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating topic_id for discussionDetails:", error);
+              formatted.topic_id = "";
+            }
+          } else {
+            formatted.topic_id = "";
+          }
+
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for discussionDetails:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate taggedUsers
+          if (formatted.taggedUsers && Array.isArray(formatted.taggedUsers) && formatted.taggedUsers.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const taggedUserIds = formatted.taggedUsers.map(id => toObjectId(id)).filter(Boolean);
+              if (taggedUserIds.length > 0) {
+                const taggedUsers = await EmployeesModel.find({ _id: { $in: taggedUserIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.taggedUsers = taggedUsers.length > 0
+                  ? taggedUsers.map(u => u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.taggedUsers = "";
+              }
+            } catch (error) {
+              console.error("Error populating taggedUsers for discussionDetails:", error);
+              formatted.taggedUsers = "";
+            }
+          } else {
+            formatted.taggedUsers = "";
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format boolean
+          if (formatted.isDefault !== undefined) {
+            formatted.isDefault = formatted.isDefault ? "Yes" : "No";
+          }
+        } else if (moduleName === "taskHoursLogs") {
+          // Populate employee_id
+          if (formatted.employee_id) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const employeeId = toObjectId(formatted.employee_id);
+              if (employeeId) {
+                const employee = await EmployeesModel.findById(employeeId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.employee_id = employee ? (employee.full_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()) : "";
+              } else {
+                formatted.employee_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating employee_id for taskHoursLogs:", error);
+              formatted.employee_id = "";
+            }
+          } else {
+            formatted.employee_id = "";
+          }
+
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for taskHoursLogs:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate task_id
+          if (formatted.task_id) {
+            try {
+              const ProjectTasksModel = mongoose.model("projecttasks");
+              const taskId = toObjectId(formatted.task_id);
+              if (taskId) {
+                const task = await ProjectTasksModel.findById(taskId)
+                  .select("title taskId")
+                  .lean();
+                formatted.task_id = task && task.taskId ? `#${task.taskId}` : (task && task.title ? task.title : "");
+              } else {
+                formatted.task_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_id for taskHoursLogs:", error);
+              formatted.task_id = "";
+            }
+          } else {
+            formatted.task_id = "";
+          }
+
+          // Populate subtask_id
+          if (formatted.subtask_id) {
+            try {
+              const ProjectSubTasksModel = mongoose.model("projectsubtasks");
+              const subtaskId = toObjectId(formatted.subtask_id);
+              if (subtaskId) {
+                const subtask = await ProjectSubTasksModel.findById(subtaskId)
+                  .select("title subTaskId")
+                  .lean();
+                formatted.subtask_id = subtask && subtask.subTaskId ? `#${subtask.subTaskId}` : (subtask && subtask.title ? subtask.title : "");
+              } else {
+                formatted.subtask_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating subtask_id for taskHoursLogs:", error);
+              formatted.subtask_id = "";
+            }
+          } else {
+            formatted.subtask_id = "";
+          }
+
+          // Populate bug_id
+          if (formatted.bug_id) {
+            try {
+              const ProjectBugsModel = mongoose.model("projecttaskbugs");
+              const bugId = toObjectId(formatted.bug_id);
+              if (bugId) {
+                const bug = await ProjectBugsModel.findById(bugId)
+                  .select("title bugId")
+                  .lean();
+                formatted.bug_id = bug && bug.bugId ? `#${bug.bugId}` : (bug && bug.title ? bug.title : "");
+              } else {
+                formatted.bug_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating bug_id for taskHoursLogs:", error);
+              formatted.bug_id = "";
+            }
+          } else {
+            formatted.bug_id = "";
+          }
+
+          // Populate timesheet_id
+          if (formatted.timesheet_id) {
+            try {
+              const ProjectTimeSheetsModel = mongoose.model("projecttimesheets");
+              const timesheetId = toObjectId(formatted.timesheet_id);
+              if (timesheetId) {
+                const timesheet = await ProjectTimeSheetsModel.findById(timesheetId)
+                  .select("title")
+                  .lean();
+                formatted.timesheet_id = timesheet && timesheet.title ? timesheet.title : "";
+              } else {
+                formatted.timesheet_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating timesheet_id for taskHoursLogs:", error);
+              formatted.timesheet_id = "";
+            }
+          } else {
+            formatted.timesheet_id = "";
+          }
+
+          // Format logged_date
+          if (formatted.logged_date) {
+            formatted.logged_date = moment(formatted.logged_date).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format boolean
+          if (formatted.isManuallyAdded !== undefined) {
+            formatted.isManuallyAdded = formatted.isManuallyAdded ? "Yes" : "No";
+          }
+
+          // Format logged_hours and logged_minutes (combine if both exist)
+          if (formatted.logged_hours || formatted.logged_minutes) {
+            const hours = formatted.logged_hours || "00";
+            const minutes = formatted.logged_minutes || "00";
+            formatted.logged_time = `${hours}:${minutes}`;
+          }
         }
 
         // Remove any remaining ObjectId fields, arrays of ObjectIds, or null/undefined values

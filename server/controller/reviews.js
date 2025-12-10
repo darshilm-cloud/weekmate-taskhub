@@ -430,7 +430,12 @@ exports.updateReview = async (req, res) => {
 // delete Review :
 exports.deleteReview = async (req, res) => {
   try {
-    const complaint = await Reviews.findByIdAndUpdate(
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the review data before deletion for logging
+    const reviewData = await Reviews.findById(req.params.id).lean();
+    
+    const review = await Reviews.findByIdAndUpdate(
       req.params.id,
       {
         isDeleted: true,
@@ -441,15 +446,32 @@ exports.deleteReview = async (req, res) => {
       { new: true }
     );
 
-    if (!complaint) {
+    if (!review) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && reviewData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "reviews",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: reviewData,
+        additionalData: {
+          recordId: reviewData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.REVIEW_DELETED,
-      complaint
+      review
     );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);

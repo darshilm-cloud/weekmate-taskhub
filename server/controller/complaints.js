@@ -463,6 +463,11 @@ exports.updateComplaint = async (req, res) => {
 // delete Complaint :
 exports.deleteComplaint = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the complaint data before deletion for logging
+    const complaintData = await Complaints.findById(req.params.id).lean();
+    
     const complaint = await Complaints.findByIdAndUpdate(
       req.params.id,
       {
@@ -476,6 +481,23 @@ exports.deleteComplaint = async (req, res) => {
 
     if (!complaint) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && complaintData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "complaints",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: complaintData,
+        additionalData: {
+          recordId: complaintData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(
