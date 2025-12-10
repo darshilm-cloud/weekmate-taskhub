@@ -42,13 +42,34 @@ exports.logActivity = async (params) => {
       return;
     }
 
-    // Ensure companyId and createdBy are valid ObjectIds
+    // Ensure companyId and createdBy are valid Mongoose ObjectIds
+    // Handle both string and ObjectId instances (MongoDB driver or Mongoose)
     let companyIdObj;
     let createdByObj;
     
     try {
-      companyIdObj = global.newObjectId(companyId);
-      createdByObj = global.newObjectId(createdBy);
+      // Convert to Mongoose ObjectId - handle MongoDB driver ObjectId, Mongoose ObjectId, or string
+      if (companyId instanceof mongoose.Types.ObjectId) {
+        companyIdObj = companyId;
+      } else if (companyId && companyId.toString) {
+        // Handle MongoDB driver ObjectId or other ObjectId-like objects
+        companyIdObj = new mongoose.Types.ObjectId(companyId.toString());
+      } else if (mongoose.Types.ObjectId.isValid(companyId)) {
+        companyIdObj = new mongoose.Types.ObjectId(companyId);
+      } else {
+        throw new Error(`Invalid companyId: ${companyId}`);
+      }
+      
+      if (createdBy instanceof mongoose.Types.ObjectId) {
+        createdByObj = createdBy;
+      } else if (createdBy && createdBy.toString) {
+        // Handle MongoDB driver ObjectId or other ObjectId-like objects
+        createdByObj = new mongoose.Types.ObjectId(createdBy.toString());
+      } else if (mongoose.Types.ObjectId.isValid(createdBy)) {
+        createdByObj = new mongoose.Types.ObjectId(createdBy);
+      } else {
+        throw new Error(`Invalid createdBy: ${createdBy}`);
+      }
     } catch (idError) {
       console.error("ActivityLogger: Invalid ObjectId", {
         companyId,
@@ -65,14 +86,20 @@ exports.logActivity = async (params) => {
       email,
       createdBy: createdByObj,
       createdAt: configs.utcDefault(),
-      additionalData,
-      updatedData
+      additionalData: additionalData || null,
+      updatedData: updatedData || null
     };
 
     // Add updatedBy if provided (for UPDATE operations)
     if (updatedBy) {
       try {
-        logEntryData.updatedBy = global.newObjectId(updatedBy);
+        if (updatedBy instanceof mongoose.Types.ObjectId) {
+          logEntryData.updatedBy = updatedBy;
+        } else if (updatedBy && updatedBy.toString) {
+          logEntryData.updatedBy = new mongoose.Types.ObjectId(updatedBy.toString());
+        } else if (mongoose.Types.ObjectId.isValid(updatedBy)) {
+          logEntryData.updatedBy = new mongoose.Types.ObjectId(updatedBy);
+        }
       } catch (idError) {
         console.error("ActivityLogger: Invalid updatedBy ObjectId", updatedBy);
       }
@@ -81,7 +108,13 @@ exports.logActivity = async (params) => {
     // Add deletedBy if provided (for DELETE operations)
     if (deletedBy) {
       try {
-        logEntryData.deletedBy = global.newObjectId(deletedBy);
+        if (deletedBy instanceof mongoose.Types.ObjectId) {
+          logEntryData.deletedBy = deletedBy;
+        } else if (deletedBy && deletedBy.toString) {
+          logEntryData.deletedBy = new mongoose.Types.ObjectId(deletedBy.toString());
+        } else if (mongoose.Types.ObjectId.isValid(deletedBy)) {
+          logEntryData.deletedBy = new mongoose.Types.ObjectId(deletedBy);
+        }
       } catch (idError) {
         console.error("ActivityLogger: Invalid deletedBy ObjectId", deletedBy);
       }
