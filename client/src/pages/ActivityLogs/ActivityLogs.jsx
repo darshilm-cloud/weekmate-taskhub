@@ -170,13 +170,83 @@ const ActivityLogs = () => {
       .join(" ");
   };
 
+  const stripHtml = (html) => {
+    if (typeof html !== "string") return html;
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
   const formatValue = (value) => {
     if (value === null || value === undefined) return "-";
     if (typeof value === "boolean") return value ? "Yes" : "No";
     if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
       return formatDate(value);
     }
+    if (typeof value === "string") {
+      return stripHtml(value);
+    }
     return String(value);
+  };
+
+  const renderArrayValue = (value) => {
+    if (!Array.isArray(value)) {
+      return formatValue(value);
+    }
+    
+    if (value.length === 0) {
+      return "-";
+    }
+
+    return (
+      <ul style={{ margin: "4px 0", paddingLeft: "20px" }}>
+        {value.map((val, idx) => {
+          // Handle objects in array
+          if (val && typeof val === "object" && !Array.isArray(val)) {
+            return (
+              <li key={idx}>
+                {Object.keys(val)
+                  .filter(k => k !== "_id")
+                  .map((objKey) => {
+                    let objValue = val[objKey];
+                    // Strip HTML from string values
+                    if (typeof objValue === "string") {
+                      objValue = stripHtml(objValue);
+                    } else if (objValue === null || objValue === undefined) {
+                      objValue = "-";
+                    } else if (typeof objValue === "boolean") {
+                      objValue = objValue ? "Yes" : "No";
+                    } else if (typeof objValue === "string" && objValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+                      objValue = formatDate(objValue);
+                    } else {
+                      objValue = String(objValue);
+                    }
+                    return (
+                      <div key={objKey} style={{ marginLeft: "10px" }}>
+                        <strong>{formatKeyToLabel(objKey)}:</strong> {objValue}
+                      </div>
+                    );
+                  })}
+              </li>
+            );
+          }
+          // Handle primitive values
+          return (
+            <li key={idx}>
+              {typeof val === "string" 
+                ? stripHtml(val) 
+                : val === null || val === undefined 
+                  ? "-" 
+                  : typeof val === "boolean"
+                    ? val ? "Yes" : "No"
+                    : typeof val === "string" && val.match(/^\d{4}-\d{2}-\d{2}/)
+                      ? formatDate(val)
+                      : String(val)}
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   const openModal = (log) => {
@@ -366,13 +436,7 @@ const ActivityLogs = () => {
                        selectedLog.createdByName || "-"}
                     </div>
                   </div>
-                  <div>
-                    <div className="field-label">Employee Code</div>
-                    <div className="field-value">
-                      {selectedLog.createdBy?.emp_code || 
-                       selectedLog.createdByEmpCode || "-"}
-                    </div>
-                  </div>
+                  
                   <div>
                     <div className="field-label">Email</div>
                     <div className="field-value">
@@ -455,13 +519,19 @@ const ActivityLogs = () => {
                   </div>
                 </div>
 
-                {selectedLog.updatedByName && (
+                {(selectedLog.updatedBy || selectedLog.updatedByName) && (
                   <div className="activity-section">
                     <h3 className="section-title">Status Information</h3>
                     <div className="status-grid">
                       <div>
                         <div className="field-label">Updated By</div>
-                        <div className="field-value">{selectedLog.updatedByName}</div>
+                        <div className="field-value">
+                          {selectedLog.updatedBy?.full_name || 
+                           (selectedLog.updatedBy?.first_name && selectedLog.updatedBy?.last_name 
+                             ? `${selectedLog.updatedBy.first_name} ${selectedLog.updatedBy.last_name}`
+                             : selectedLog.updatedBy?.first_name || selectedLog.updatedBy?.last_name) ||
+                           selectedLog.updatedByName || "-"}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -475,7 +545,7 @@ const ActivityLogs = () => {
                     const unchangedFields = [];
 
                     allKeys.forEach((key) => {
-                      if (key === "updated_at" || key === "created_at") return;
+                      if (key === "updated_at" || key === "created_at" || key === "updated_by" || key === "updatedBy" || key === "updated_by_id" || key === "updatedById") return;
                       const oldValue = oldData?.[key];
                       const newValue = newData?.[key];
                       const isChanged = JSON.stringify(oldValue) !== JSON.stringify(newValue);
@@ -502,12 +572,12 @@ const ActivityLogs = () => {
                                 <div key={key} className="change-row">
                                   <div className="change-col">
                                     <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                    <div className="prev-value">{formatValue(oldValue)}</div>
+                                    <div className="prev-value">{renderArrayValue(oldValue)}</div>
                                   </div>
                                   <div className="change-arrow">→</div>
                                   <div className="change-col">
                                     <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                    <div className="curr-value">{formatValue(newValue)}</div>
+                                    <div className="curr-value">{renderArrayValue(newValue)}</div>
                                   </div>
                                 </div>
                               ))}
@@ -522,7 +592,7 @@ const ActivityLogs = () => {
                               {unchangedFields.map(({ key, value }) => (
                                 <div key={key}>
                                   <div className="field-label">{formatKeyToLabel(key)}</div>
-                                  <div className="field-value">{formatValue(value)}</div>
+                                  <div className="field-value">{renderArrayValue(value)}</div>
                                 </div>
                               ))}
                             </div>
@@ -585,31 +655,138 @@ const ActivityLogs = () => {
                   </div>
                 </div>
 
-                {selectedLog.deletedByName && (
+                {(selectedLog.deletedBy || selectedLog.deletedByName) && (
                   <div className="activity-section">
                     <h3 className="section-title">Status Information</h3>
                     <div className="status-grid">
                       <div>
                         <div className="field-label">Deleted By</div>
-                        <div className="field-value">{selectedLog.deletedByName}</div>
+                        <div className="field-value">
+                          {selectedLog.deletedBy?.full_name || 
+                           (selectedLog.deletedBy?.first_name && selectedLog.deletedBy?.last_name 
+                             ? `${selectedLog.deletedBy.first_name} ${selectedLog.deletedBy.last_name}`
+                             : selectedLog.deletedBy?.first_name || selectedLog.deletedBy?.last_name) ||
+                           selectedLog.deletedByName || "-"}
+                        </div>
                       </div>
+                     
                     </div>
                   </div>
                 )}
 
-                {selectedLog.additionalData?.deletedData && (
+                {(selectedLog.deletedData || selectedLog.additionalData?.deletedData) && (
                   <div className="activity-section">
                     <h3 className="section-title">Deleted Data</h3>
                     <div className="deleted-data-grid">
-                      {selectedLog.additionalData.deletedData.map((item, index) =>
+                      {(selectedLog.deletedData || selectedLog.additionalData?.deletedData || []).map((item, index) =>
                         Object.keys(item)
-                          .filter((key) => key !== "_id")
-                          .map((key) => (
-                            <div key={`${index}-${key}`}>
-                              <div className="field-label">{formatKeyToLabel(key)}</div>
-                              <div className="field-value">{formatValue(item[key])}</div>
-                            </div>
-                          ))
+                          .filter((key) => 
+                            key !== "_id" && 
+                            key !== "companyId" &&
+                            key !== "createdBy" &&
+                            key !== "updatedBy" &&
+                            key !== "deletedBy" &&
+                            key !== "createdByModel" &&
+                            key !== "updatedByModel" &&
+                            key !== "deletedByModel" &&
+                            key !== "isDeleted" &&
+                            key !== "deletedAt"
+                          )
+                          .map((key) => {
+                            let displayValue = item[key];
+                            
+                            // Strip HTML tags from string values
+                            const stripHtml = (html) => {
+                              if (typeof html !== "string") return html;
+                              const tmp = document.createElement("DIV");
+                              tmp.innerHTML = html;
+                              return tmp.textContent || tmp.innerText || "";
+                            };
+                            
+                            // Handle array values - render as list
+                            if (Array.isArray(displayValue)) {
+                              if (displayValue.length === 0) {
+                                displayValue = "-";
+                              } else {
+                                return (
+                                  <div key={`${index}-${key}`} style={{ gridColumn: "1 / -1" }}>
+                                    <div className="field-label">{formatKeyToLabel(key)}</div>
+                                    <div className="field-value">
+                                      <ul style={{ margin: "4px 0", paddingLeft: "20px" }}>
+                                        {displayValue.map((val, idx) => {
+                                          // Handle objects in array
+                                          if (val && typeof val === "object" && !Array.isArray(val)) {
+                                            return (
+                                              <li key={idx}>
+                                                
+                                                  {Object.keys(val)
+                                                    .filter(k => k !== "_id")
+                                                    .map((objKey) => {
+                                                      let objValue = val[objKey];
+                                                      // Strip HTML from string values
+                                                      if (typeof objValue === "string") {
+                                                        objValue = stripHtml(objValue);
+                                                      } else if (objValue === null || objValue === undefined) {
+                                                        objValue = "-";
+                                                      } else if (typeof objValue === "boolean") {
+                                                        objValue = objValue ? "Yes" : "No";
+                                                      } else {
+                                                        objValue = String(objValue);
+                                                      }
+                                                      return (
+                                                        <li key={objKey}>
+                                                          <strong>{formatKeyToLabel(objKey)}:</strong> {objValue}
+                                                        </li>
+                                                      );
+                                                    })}
+                                                
+                                              </li>
+                                            );
+                                          }
+                                          // Handle primitive values
+                                          return (
+                                            <li key={idx}>
+                                              {typeof val === "string" 
+                                                ? stripHtml(val) 
+                                                : val === null || val === undefined 
+                                                  ? "-" 
+                                                  : String(val)}
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            }
+                            // Handle boolean values
+                            else if (typeof displayValue === "boolean") {
+                              displayValue = displayValue ? "Yes" : "No";
+                            }
+                            // Handle date values
+                            else if (typeof displayValue === "string" && displayValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+                              displayValue = formatDate(displayValue);
+                            }
+                            // Handle null/undefined
+                            else if (displayValue === null || displayValue === undefined) {
+                              displayValue = "-";
+                            }
+                            // Handle string values - strip HTML
+                            else if (typeof displayValue === "string") {
+                              displayValue = stripHtml(displayValue);
+                            }
+                            else {
+                              displayValue = String(displayValue);
+                            }
+                            
+                            return (
+                              <div key={`${index}-${key}`}>
+                                <div className="field-label">{formatKeyToLabel(key)}</div>
+                                <div className="field-value">{displayValue}</div>
+                              </div>
+                            );
+                          })
                       )}
                     </div>
                   </div>
