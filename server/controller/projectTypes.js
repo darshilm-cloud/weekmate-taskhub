@@ -232,6 +232,8 @@ exports.updateProjectType = async (req, res) => {
 //Soft Delete Project Types:
 exports.deleteProjectType = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     const validationSchema = Joi.object({
       projectTypeId: Joi.string().required()
     });
@@ -239,6 +241,9 @@ exports.deleteProjectType = async (req, res) => {
     if (error) {
       return errorResponse(res, 400, error.details[0].message);
     }
+
+    // Get type data before deletion for logging
+    const typeData = await ProjectType.findById(value.projectTypeId).lean();
 
     const projectType = await ProjectType.findByIdAndUpdate(
       value.projectTypeId,
@@ -252,6 +257,23 @@ exports.deleteProjectType = async (req, res) => {
 
     if (!projectType) {
       return errorResponse(res, 404, "Project type not found");
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && typeData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectTypes",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: typeData,
+        additionalData: {
+          recordId: typeData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

@@ -401,6 +401,8 @@ exports.editUser = async (req, res) => {
 //Delete user (employee) API
 exports.deleteUser = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     // Get user's data from JWT decode
     const {
       _id: decodedUserId,
@@ -421,10 +423,31 @@ exports.deleteUser = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
     }
 
+    // Get user data before deletion for logging
+    const userDataForLog = userData.toObject ? userData.toObject() : userData;
+
     userData.isDeleted = true;
     userData.isActivate = false;
 
     await userData.save();
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && userDataForLog) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "employees",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: userDataForLog,
+        additionalData: {
+          recordId: userDataForLog._id.toString(),
+          deletedUserEmail: userDataForLog.email,
+          isSoftDelete: true
+        }
+      });
+    }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);
   } catch (error) {

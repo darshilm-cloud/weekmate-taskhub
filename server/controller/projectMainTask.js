@@ -814,12 +814,17 @@ exports.updateProjectsMainTask = async (req, res) => {
 //Soft Delete Project main task :
 exports.deleteProjectsMainTask = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     // Decode user from token
     const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
+
+    // Get the main task data before deletion for logging
+    const mainTaskData = await ProjectMainTasks.findById(req.params.id).lean();
 
     const data = await ProjectMainTasks.findByIdAndUpdate(
       req.params.id,
@@ -834,6 +839,24 @@ exports.deleteProjectsMainTask = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && mainTaskData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectMainTask",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: mainTaskData,
+        additionalData: {
+          recordId: mainTaskData._id.toString(),
+          project_id: mainTaskData.project_id?.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     // Mail for manager..

@@ -226,6 +226,8 @@ exports.updateProjectTech = async (req, res) => {
 //Soft Delete Project Tech:
 exports.deleteProjectTech = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     // Decode user from token
     const {
       _id: decodedUserId,
@@ -241,6 +243,9 @@ exports.deleteProjectTech = async (req, res) => {
       return errorResponse(res, 400, error.details[0].message);
     }
 
+    // Get tech data before deletion for logging
+    const techData = await ProjectTechnologies.findById(value.projectTechId).lean();
+
     const projectTech = await ProjectTechnologies.findByIdAndUpdate(
       value.projectTechId,
       {
@@ -253,6 +258,23 @@ exports.deleteProjectTech = async (req, res) => {
 
     if (!projectTech) {
       return errorResponse(res, 404, "Project Tech not found");
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && techData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectTech",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: techData,
+        additionalData: {
+          recordId: techData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

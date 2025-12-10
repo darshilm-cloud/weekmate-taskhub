@@ -497,6 +497,8 @@ exports.updateClientStatus = async (req, res) => {
 //Soft Delete clients.. :
 exports.deleteClientData = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     // Check project associated with client ...
     const projectData = await Project.findOne({
       isDeleted: false,
@@ -511,6 +513,9 @@ exports.deleteClientData = async (req, res) => {
       );
     }
 
+    // Get client data before deletion for logging
+    const clientData = await PMSClient.findById(req.params.id).lean();
+
     const data = await PMSClient.findByIdAndUpdate(
       req.params.id,
       {
@@ -523,6 +528,23 @@ exports.deleteClientData = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && clientData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "pmsClients",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: clientData,
+        additionalData: {
+          recordId: clientData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(

@@ -248,11 +248,65 @@ exports.getActivityLogList = async (req, res) => {
       }
     ];
 
+    // Helper function to map module names to display labels
+    const getModuleLabel = (moduleName) => {
+      if (!moduleName) return null;
+      const moduleLabelMap = {
+        "projectexpanses": "Project Expenses",
+        "tasks": "Tasks",
+        "projects": "Projects",
+        "notes": "Notes",
+        "notebook": "Notebook",
+        "bugs": "Bugs",
+        "discussions": "Discussions",
+        "discussionDetails": "Discussion Details",
+        "fileFolders": "File Folders",
+        "fileUploads": "File Uploads",
+        "taskComments": "Task Comments",
+        "bugComments": "Bug Comments",
+        "notesComments": "Notes Comments",
+        "subTasks": "Sub Tasks",
+        "projectMainTask": "Project Main Task",
+        "taskHoursLogs": "Task Hours Logs",
+        "projectTimeSheets": "Project Time Sheets",
+        "projectLabels": "Project Labels",
+        "projectStatus": "Project Status",
+        "projectTypes": "Project Types",
+        "projectTech": "Project Tech",
+        "projectWorkFlow": "Project Workflow",
+        "workFlowStatus": "Workflow Status",
+        "employees": "Employees",
+        "pmsClients": "PMS Clients",
+        "pmsRoles": "PMS Roles",
+        "rolePermissions": "Role Permissions",
+        "complaints": "Complaints",
+        "complaints_status": "Complaints Status",
+        "complaints_comments": "Complaints Comments",
+        "reviews": "Reviews",
+        "hoursLoggedComments": "Hours Logged Comments",
+        "hoursApprove": "Hours Approve"
+      };
+      return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
+    };
+
     // Get total count
     const totalCount = await ActivityLog.countDocuments(matchQuery);
 
     // Execute aggregation
     const activityLogs = await ActivityLog.aggregate(pipeline);
+
+    // Remove moduleName for LOGIN and LOGOUT operations, and map module names to labels
+    const formattedLogs = activityLogs.map(log => {
+      if (log.operationName === "LOGIN" || log.operationName === "LOGOUT") {
+        const { moduleName, ...rest } = log;
+        return rest;
+      }
+      // Map module name to display label
+      if (log.moduleName) {
+        log.moduleName = getModuleLabel(log.moduleName);
+      }
+      return log;
+    });
 
     // Calculate pagination info
     const totalPages = Math.ceil(totalCount / limit);
@@ -269,7 +323,7 @@ exports.getActivityLogList = async (req, res) => {
       statusCode.SUCCESS,
       "Activity logs fetched successfully",
       {
-        activityLogs,
+        activityLogs: formattedLogs,
         pagination: paginationInfo
       }
     );
@@ -1208,6 +1262,172 @@ exports.getActivityLogById = async (req, res) => {
             const minutes = formatted.logged_minutes || "00";
             formatted.logged_time = `${hours}:${minutes}`;
           }
+        } else if (moduleName === "projectMainTask") {
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for projectMainTask:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate task_status
+          if (formatted.task_status) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const taskStatusId = toObjectId(formatted.task_status);
+              if (taskStatusId) {
+                const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                  .select("title")
+                  .lean();
+                formatted.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+              } else {
+                formatted.task_status = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_status for projectMainTask:", error);
+              formatted.task_status = "";
+            }
+          } else {
+            formatted.task_status = "";
+          }
+
+          // Populate subscribers
+          if (formatted.subscribers && Array.isArray(formatted.subscribers) && formatted.subscribers.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const subscriberIds = formatted.subscribers.map(id => toObjectId(id)).filter(Boolean);
+              if (subscriberIds.length > 0) {
+                const subscribers = await EmployeesModel.find({ _id: { $in: subscriberIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.subscribers = subscribers.length > 0
+                  ? subscribers.map(s => s.full_name || `${s.first_name || ""} ${s.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.subscribers = "";
+              }
+            } catch (error) {
+              console.error("Error populating subscribers for projectMainTask:", error);
+              formatted.subscribers = "";
+            }
+          } else {
+            formatted.subscribers = "";
+          }
+
+          // Populate pms_clients
+          if (formatted.pms_clients && Array.isArray(formatted.pms_clients) && formatted.pms_clients.length > 0) {
+            try {
+              const PMSClientsModel = mongoose.model("pmsclients");
+              const clientIds = formatted.pms_clients.map(id => toObjectId(id)).filter(Boolean);
+              if (clientIds.length > 0) {
+                const clients = await PMSClientsModel.find({ _id: { $in: clientIds } })
+                  .select("name company_name")
+                  .lean();
+                formatted.pms_clients = clients.length > 0
+                  ? clients.map(c => c.name || c.company_name || "").filter(Boolean).join(", ") || "-"
+                  : "-";
+              } else {
+                formatted.pms_clients = "-";
+              }
+            } catch (error) {
+              console.error("Error populating pms_clients for projectMainTask:", error);
+              formatted.pms_clients = "-";
+            }
+          } else {
+            formatted.pms_clients = "-";
+          }
+
+          // Populate task_status_history
+          if (formatted.task_status_history && Array.isArray(formatted.task_status_history) && formatted.task_status_history.length > 0) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const EmployeesModel = mongoose.model("employees");
+
+              const populatedHistory = await Promise.all(
+                formatted.task_status_history.map(async (historyItem) => {
+                  const populatedItem = { ...historyItem };
+
+                  // Populate task_status
+                  if (historyItem.task_status) {
+                    const taskStatusId = toObjectId(historyItem.task_status);
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+
+                  // Populate updatedBy
+                  if (historyItem.updatedBy) {
+                    const updatedById = toObjectId(historyItem.updatedBy);
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+
+                  // Format updatedAt
+                  if (historyItem.updatedAt) {
+                    populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                  }
+
+                  // Remove any ID fields
+                  delete populatedItem._id;
+
+                  return populatedItem;
+                })
+              );
+
+              formatted.task_status_history = populatedHistory;
+            } catch (error) {
+              console.error("Error populating task_status_history for projectMainTask:", error);
+              formatted.task_status_history = [];
+            }
+          } else {
+            formatted.task_status_history = [];
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format booleans
+          if (formatted.isPrivateList !== undefined) {
+            formatted.isPrivateList = formatted.isPrivateList ? "Yes" : "No";
+          }
+          if (formatted.isBookmark !== undefined) {
+            formatted.isBookmark = formatted.isBookmark ? "Yes" : "No";
+          }
+          if (formatted.isDisplayInGantt !== undefined) {
+            formatted.isDisplayInGantt = formatted.isDisplayInGantt ? "Yes" : "No";
+          }
         }
 
         // Remove any remaining ObjectId fields, arrays of ObjectIds, or null/undefined values
@@ -1237,39 +1457,108 @@ exports.getActivityLogById = async (req, res) => {
     let deletedData = null;
     if (logData.operationName === "DELETE" && logData.moduleName && logData.additionalData) {
       try {
-        const modelName = getModelName(logData.moduleName);
-        const Model = mongoose.model(modelName);
         const additionalData = logData.additionalData;
         
-        // Get deleted record IDs
-        let deletedIds = [];
-        if (additionalData.deletedRecordIds && Array.isArray(additionalData.deletedRecordIds)) {
-          deletedIds = additionalData.deletedRecordIds;
-        } else if (additionalData.recordId) {
-          deletedIds = [additionalData.recordId];
-        }
-
-        if (deletedIds.length > 0) {
-          // Fetch deleted records (including soft deleted ones) - don't filter by isDeleted
-          const deletedRecords = await Model.find({
-            _id: { $in: deletedIds.map(id => global.newObjectId(id)) }
-          }).lean();
+        // Check if deletedRecord is already stored in additionalData (for soft deletes)
+        // This is the preferred method as it doesn't require a database query
+        if (additionalData.deletedRecord && typeof additionalData.deletedRecord === 'object') {
+          // Use the stored deleted record directly
+          const storedRecord = additionalData.deletedRecord;
+          deletedData = await populateDeletedData([storedRecord], logData.moduleName);
+          console.log(`[ActivityLog] Using stored deletedRecord for ${logData.moduleName}`);
+        } else {
+          // Fallback: Fetch from database if deletedRecord is not stored
+          const modelName = getModelName(logData.moduleName);
+          const Model = mongoose.model(modelName);
           
-          if (deletedRecords && deletedRecords.length > 0) {
-            // Populate and format the deleted data
-            deletedData = await populateDeletedData(deletedRecords, logData.moduleName);
+          // Get deleted record IDs
+          let deletedIds = [];
+          if (additionalData.deletedRecordIds && Array.isArray(additionalData.deletedRecordIds)) {
+            deletedIds = additionalData.deletedRecordIds;
+          } else if (additionalData.recordId) {
+            deletedIds = [additionalData.recordId];
+          }
+
+          if (deletedIds.length > 0) {
+            // Fetch deleted records (including soft deleted ones) - don't filter by isDeleted
+            const deletedRecords = await Model.find({
+              _id: { $in: deletedIds.map(id => global.newObjectId(id)) }
+            }).lean();
+            
+            console.log(`[ActivityLog] Fetching deleted data for ${logData.moduleName}:`, {
+              modelName,
+              deletedIds,
+              foundRecords: deletedRecords ? deletedRecords.length : 0
+            });
+            
+            if (deletedRecords && deletedRecords.length > 0) {
+              // Populate and format the deleted data
+              deletedData = await populateDeletedData(deletedRecords, logData.moduleName);
+              console.log(`[ActivityLog] Populated deleted data for ${logData.moduleName}:`, deletedData ? deletedData.length : 0, "records");
+            } else {
+              console.log(`[ActivityLog] No records found for ${logData.moduleName} with IDs:`, deletedIds);
+            }
+          } else {
+            console.log(`[ActivityLog] No deleted IDs found in additionalData for ${logData.moduleName}:`, additionalData);
           }
         }
       } catch (error) {
         console.error("Error fetching deleted data:", error);
+        console.error("Error details:", {
+          moduleName: logData.moduleName,
+          operationName: logData.operationName,
+          additionalData: logData.additionalData,
+          error: error.message,
+          stack: error.stack
+        });
         // Continue without deleted data if there's an error
       }
     }
 
+    // Helper function to map module names to display labels
+    const getModuleLabel = (moduleName) => {
+      if (!moduleName) return null;
+      const moduleLabelMap = {
+        "projectexpanses": "Project Expenses",
+        "tasks": "Tasks",
+        "projects": "Projects",
+        "notes": "Notes",
+        "notebook": "Notebook",
+        "bugs": "Bugs",
+        "discussions": "Discussions",
+        "discussionDetails": "Discussion Details",
+        "fileFolders": "File Folders",
+        "fileUploads": "File Uploads",
+        "taskComments": "Task Comments",
+        "bugComments": "Bug Comments",
+        "notesComments": "Notes Comments",
+        "subTasks": "Sub Tasks",
+        "projectMainTask": "Project Main Task",
+        "taskHoursLogs": "Task Hours Logs",
+        "projectTimeSheets": "Project Time Sheets",
+        "projectLabels": "Project Labels",
+        "projectStatus": "Project Status",
+        "projectTypes": "Project Types",
+        "projectTech": "Project Tech",
+        "projectWorkFlow": "Project Workflow",
+        "workFlowStatus": "Workflow Status",
+        "employees": "Employees",
+        "pmsClients": "PMS Clients",
+        "pmsRoles": "PMS Roles",
+        "rolePermissions": "Role Permissions",
+        "complaints": "Complaints",
+        "complaints_status": "Complaints Status",
+        "complaints_comments": "Complaints Comments",
+        "reviews": "Reviews",
+        "hoursLoggedComments": "Hours Logged Comments",
+        "hoursApprove": "Hours Approve"
+      };
+      return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
+    };
+
     const response = {
       _id: logData._id,
       operationName: logData.operationName,
-      moduleName: logData.moduleName,
       email: logData.email,
       createdAt: moment(logData.createdAt).format("YYYY-MM-DD HH:mm:ss"),
       companyName: (logData.companyDetails && logData.companyDetails.companyName) || null,
@@ -1301,6 +1590,13 @@ exports.getActivityLogById = async (req, res) => {
       updatedData: logData.updatedData || null,
       deletedData: deletedData || null
     };
+
+    // Remove moduleName for LOGIN and LOGOUT operations, otherwise map to display label
+    if (logData.operationName === "LOGIN" || logData.operationName === "LOGOUT") {
+      delete response.moduleName;
+    } else {
+      response.moduleName = getModuleLabel(logData.moduleName);
+    }
 
     return successResponse(
       res,

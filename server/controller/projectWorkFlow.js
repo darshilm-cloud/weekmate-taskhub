@@ -324,6 +324,8 @@ exports.updateProjectWorkFlow = async (req, res) => {
 //Soft Delete Project Work Flow:
 exports.deleteProjectWorkFlow = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     const validationSchema = Joi.object({
       projectWorkFlowId: Joi.string().required()
     });
@@ -350,6 +352,9 @@ exports.deleteProjectWorkFlow = async (req, res) => {
       );
     }
 
+    // Get workflow data before deletion for logging
+    const workflowData = await ProjectWorkFlow.findById(value.projectWorkFlowId).lean();
+    
     const projectWorkFlowData = await ProjectWorkFlow.findByIdAndUpdate(
       value.projectWorkFlowId,
       {
@@ -363,6 +368,13 @@ exports.deleteProjectWorkFlow = async (req, res) => {
     if (!projectWorkFlowData) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
+    
+    // Get workflow statuses before deletion for logging
+    const workflowStatuses = await ProjectWorkFlowStatus.find({
+      isDeleted: false,
+      workflow_id: new mongoose.Types.ObjectId(value.projectWorkFlowId)
+    }).lean();
+    
     // Delete workflow status too..
     await ProjectWorkFlowStatus.updateMany(
       {
@@ -375,6 +387,25 @@ exports.deleteProjectWorkFlow = async (req, res) => {
         deletedAt: configs.utcDefault()
       }
     );
+    
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && workflowData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectWorkFlow",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: workflowData,
+        additionalData: {
+          recordId: workflowData._id.toString(),
+          deletedStatusCount: workflowStatuses.length,
+          isSoftDelete: true
+        }
+      });
+    }
+    
     return successResponse(
       res,
       statusCode.SUCCESS,

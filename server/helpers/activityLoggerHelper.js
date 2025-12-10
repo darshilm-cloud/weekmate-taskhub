@@ -246,6 +246,12 @@ exports.logDelete = async (params) => {
       finalDeletedBy = createdBy;
     }
 
+    // Merge deletedRecord into additionalData so we can use it later when fetching the log
+    const finalAdditionalData = {
+      ...(additionalData || {}),
+      ...(deletedRecord ? { deletedRecord: deletedRecord } : {})
+    };
+
     await exports.logActivity({
       companyId,
       operationName: "DELETE",
@@ -253,7 +259,7 @@ exports.logDelete = async (params) => {
       email,
       createdBy,
       deletedBy: finalDeletedBy,
-      additionalData
+      additionalData: finalAdditionalData
     });
   } catch (error) {
     console.error("ActivityLogger: Delete log error", error);

@@ -253,6 +253,11 @@ exports.updateProjectLabels = async (req, res) => {
 //Soft Delete Project Labels :
 exports.deleteProjectLabels = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get label data before deletion for logging
+    const labelData = await ProjectLabels.findById(req.params.id).lean();
+    
     const data = await ProjectLabels.findByIdAndUpdate(
       req.params.id,
       {
@@ -265,6 +270,23 @@ exports.deleteProjectLabels = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && labelData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "projectLabels",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: labelData,
+        additionalData: {
+          recordId: labelData._id.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

@@ -1024,6 +1024,8 @@ exports.getTrashLoggedHours = async (req, res) => {
 
 exports.deleteData = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     // Decode user from token
     const {
       _id: decodedUserId,
@@ -1048,59 +1050,200 @@ exports.deleteData = async (req, res) => {
         error.details[0].message
       );
     }
+    
+    const userInfo = await getUserInfoForLogging(req.user);
     let resMsg = messages.DELETED;
+    
     if (value?.project_ids && value?.project_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await Project.find({
+        isDeleted: true,
+        _id: { $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await Project.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "projects",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     if (value?.discussion_ids && value?.discussion_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await DiscussionTopic.find({
+        isDeleted: true,
+        _id: { $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await DiscussionTopic.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "discussions",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     if (value?.task_ids && value?.task_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await ProjectTasks.find({
+        isDeleted: true,
+        _id: { $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await ProjectTasks.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "tasks",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     if (value?.bug_ids && value?.bug_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await ProjectBugs.find({
+        isDeleted: true,
+        _id: { $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await ProjectBugs.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "bugs",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     if (value?.note_ids && value?.note_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await Notes.find({
+        isDeleted: true,
+        _id: { $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await Notes.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "notes",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     if (value?.logged_time_ids && value?.logged_time_ids.length > 0) {
+      // Get records before deletion for logging
+      const recordsToDelete = await LoggedHours.find({
+        isDeleted: true,
+        _id: { $in: value.logged_time_ids.map((d) => new mongoose.Types.ObjectId(d)) }
+      }).lean();
+      
       await LoggedHours.deleteMany({
         isDeleted: true,
         _id: {
           $in: value.logged_time_ids.map((d) => new mongoose.Types.ObjectId(d))
         }
       });
+      
+      // Log delete activity
+      if (userInfo && recordsToDelete.length > 0) {
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "taskHoursLogs",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: recordsToDelete.map(r => r._id.toString()),
+            deletedCount: recordsToDelete.length,
+            isHardDelete: true,
+            isMultiple: true
+          }
+        });
+      }
     }
 
     return successResponse(res, statusCode.SUCCESS, resMsg, [], []);
