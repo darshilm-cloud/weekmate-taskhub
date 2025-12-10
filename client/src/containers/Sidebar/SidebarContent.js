@@ -14,6 +14,8 @@ import { generateCacheKey } from "../../util/generateCacheKey";
 import Taskhub from "../../assets/images/taskhubicon.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import AdminIcon from "../../assets/icons/AdminIcon"
+import { BiChat } from "react-icons/bi";
+
 
 const { Sider } = Layout;
 
@@ -137,6 +139,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/positive-review")) return "FeedBack";
     if (path.includes("/complaints")) return "FeedBack";
     if (path.includes("/projectexpense")) return "Projectexpences";
+    if (path.includes("/admin/settings")) return "Admin_Settings";
+    if (path.includes("/admin/mira-ai")) return "mira_ai";
     return "Dashboard";
   }, [location.pathname]);
 
@@ -243,6 +247,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <SettingOutlined />,
         label: "Settings",
         onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
+      },
+      getRoles(["Admin"]) &&{
+        key: "mira_ai",
+        icon: <BiChat />,
+        label: "Mira AI",
+        onClick: () => handleMenuClick("mira_ai", `/${companySlug}/admin/mira-ai`)
       },
     ],
     []
