@@ -560,6 +560,11 @@ exports.updateDiscussionsTopicPinToTop = async (req, res) => {
 //Soft Delete Discussions Topic :
 exports.deleteDiscussionsTopics = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the discussion topic data before deletion for logging
+    const topicData = await DiscussionsTopics.findById(req.params.id).lean();
+    
     const data = await DiscussionsTopics.findByIdAndUpdate(
       req.params.id,
       {
@@ -575,6 +580,12 @@ exports.deleteDiscussionsTopics = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
 
+    // Get topic details count before deletion
+    const topicDetailsCount = await DiscussionsTopicsDetails.countDocuments({
+      topic_id: new mongoose.Types.ObjectId(req.params.id),
+      isDeleted: false
+    });
+
     await DiscussionsTopicsDetails.updateMany(
       {
         topic_id: new mongoose.Types.ObjectId(req.params.id),
@@ -588,6 +599,25 @@ exports.deleteDiscussionsTopics = async (req, res) => {
       },
       { new: true }
     );
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && topicData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "discussions",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: topicData,
+        additionalData: {
+          recordId: topicData._id.toString(),
+          topicTitle: topicData.title,
+          deletedDetailsCount: topicDetailsCount,
+          isSoftDelete: true
+        }
+      });
+    }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
   } catch (error) {

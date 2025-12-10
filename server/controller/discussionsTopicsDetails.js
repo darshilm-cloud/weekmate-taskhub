@@ -357,7 +357,13 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
 //Soft Delete Discussions Topic Details :
 exports.deleteDiscussionsTopicsDetails = async (req, res) => {
   try {
-    const getData = await DiscussionsTopicsDetails.findById(req.params.id);
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    const getData = await DiscussionsTopicsDetails.findById(req.params.id).lean();
+
+    if (!getData) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
 
     if (getData.isDefault == true) {
       {
@@ -368,6 +374,7 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
         );
       }
     }
+    
     const data = await DiscussionsTopicsDetails.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(req.params.id), isDefault: false },
       {
@@ -381,6 +388,24 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && getData) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "discussionDetails",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: getData,
+        additionalData: {
+          recordId: getData._id.toString(),
+          topic_id: getData.topic_id?.toString(),
+          isSoftDelete: true
+        }
+      });
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

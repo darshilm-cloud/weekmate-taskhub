@@ -871,6 +871,15 @@ exports.updateTaskHoursLogs = async (req, res) => {
 //Soft Delete task hours :
 exports.deleteTaskHoursLogs = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
+    // Get the task hours log data before deletion for logging
+    const taskLogToDelete = await TaskHoursLogs.findById(req.params.id).lean();
+    
+    if (!taskLogToDelete) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+    
     const data = await TaskHoursLogs.findByIdAndUpdate(
       req.params.id,
       {
@@ -882,8 +891,6 @@ exports.deleteTaskHoursLogs = async (req, res) => {
       { new: true }
     );
 
-    const taskLogToDelete = await TaskHoursLogs.findById(req.params.id);
-    // console.log("🚀 ~ exports.deleteTaskHoursLogs ~ taskLogToDelete:", taskLogToDelete)
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
@@ -956,6 +963,26 @@ exports.deleteTaskHoursLogs = async (req, res) => {
       ).padStart(2, "0")}`;
     }
 
+    // Log delete activity
+    const userInfo = await getUserInfoForLogging(req.user);
+    if (userInfo && taskLogToDelete) {
+      await logDelete({
+        companyId: userInfo.companyId,
+        moduleName: "taskHoursLogs",
+        email: userInfo.email,
+        createdBy: userInfo._id,
+        deletedBy: userInfo._id,
+        deletedRecord: taskLogToDelete,
+        additionalData: {
+          recordId: taskLogToDelete._id.toString(),
+          logged_hours: taskLogToDelete.logged_hours,
+          logged_minutes: taskLogToDelete.logged_minutes,
+          logged_date: taskLogToDelete.logged_date,
+          isSoftDelete: true
+        }
+      });
+    }
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -969,6 +996,8 @@ exports.deleteTaskHoursLogs = async (req, res) => {
 };
 exports.deleteTaskHoursLogsMultiple = async (req, res) => {
   try {
+    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+    
     const validationSchema = Joi.object({
       ids: Joi.array().optional()
     });
@@ -981,6 +1010,16 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
       );
     }
     if (value.ids.length > 0 && value.ids != undefined) {
+      // Get the task hours logs data before deletion for logging
+      const taskLogsToDelete = await TaskHoursLogs.find({
+        _id: { $in: value.ids },
+        isDeleted: false
+      }).lean();
+      
+      if (!taskLogsToDelete || taskLogsToDelete.length === 0) {
+        return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+      
       const data = await TaskHoursLogs.updateMany(
         { _id: { $in: value.ids } },
         {
@@ -996,6 +1035,25 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
 
       if (!data) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+
+      // Log delete activity
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && taskLogsToDelete.length > 0) {
+        const deletedIds = taskLogsToDelete.map(log => log._id.toString());
+        await logDelete({
+          companyId: userInfo.companyId,
+          moduleName: "taskHoursLogs",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          deletedBy: userInfo._id,
+          additionalData: {
+            deletedRecordIds: deletedIds,
+            deletedCount: taskLogsToDelete.length,
+            isSoftDelete: true,
+            isMultiple: true
+          }
+        });
       }
 
       return successResponse(

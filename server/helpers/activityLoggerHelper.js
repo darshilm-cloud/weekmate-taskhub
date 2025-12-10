@@ -32,16 +32,38 @@ exports.logActivity = async (params) => {
 
     // Validate required fields
     if (!companyId || !operationName || !email || !createdBy) {
-      console.error("ActivityLogger: Missing required fields", params);
+      console.error("ActivityLogger: Missing required fields", {
+        companyId: !!companyId,
+        operationName: !!operationName,
+        email: !!email,
+        createdBy: !!createdBy,
+        params
+      });
+      return;
+    }
+
+    // Ensure companyId and createdBy are valid ObjectIds
+    let companyIdObj;
+    let createdByObj;
+    
+    try {
+      companyIdObj = global.newObjectId(companyId);
+      createdByObj = global.newObjectId(createdBy);
+    } catch (idError) {
+      console.error("ActivityLogger: Invalid ObjectId", {
+        companyId,
+        createdBy,
+        error: idError.message
+      });
       return;
     }
 
     const logEntryData = {
-      companyId: global.newObjectId(companyId),
+      companyId: companyIdObj,
       operationName: operationName.toUpperCase(),
       moduleName: moduleName || null,
       email,
-      createdBy: global.newObjectId(createdBy),
+      createdBy: createdByObj,
       createdAt: configs.utcDefault(),
       additionalData,
       updatedData
@@ -49,12 +71,20 @@ exports.logActivity = async (params) => {
 
     // Add updatedBy if provided (for UPDATE operations)
     if (updatedBy) {
-      logEntryData.updatedBy = global.newObjectId(updatedBy);
+      try {
+        logEntryData.updatedBy = global.newObjectId(updatedBy);
+      } catch (idError) {
+        console.error("ActivityLogger: Invalid updatedBy ObjectId", updatedBy);
+      }
     }
 
     // Add deletedBy if provided (for DELETE operations)
     if (deletedBy) {
-      logEntryData.deletedBy = global.newObjectId(deletedBy);
+      try {
+        logEntryData.deletedBy = global.newObjectId(deletedBy);
+      } catch (idError) {
+        console.error("ActivityLogger: Invalid deletedBy ObjectId", deletedBy);
+      }
     }
 
     const logEntry = new ActivityLog(logEntryData);
@@ -63,7 +93,7 @@ exports.logActivity = async (params) => {
     console.log(`Activity logged: ${operationName} - ${email} - ${moduleName || 'N/A'}`);
   } catch (error) {
     // Don't throw error, just log it to avoid breaking the main flow
-    console.error("ActivityLogger Error:", error);
+    console.error("ActivityLogger Error:", error.message || error);
   }
 };
 
@@ -73,13 +103,26 @@ exports.logActivity = async (params) => {
  */
 exports.logLogin = async (userData) => {
   try {
-    if (!userData || !userData._id || !userData.email || !userData.companyId) {
-      console.error("ActivityLogger: Invalid user data for login log");
+    if (!userData || !userData._id || !userData.email) {
+      console.error("ActivityLogger: Invalid user data for login log", userData);
+      return;
+    }
+
+    // Extract companyId - handle both object and direct ID
+    let companyId = null;
+    if (userData.companyId) {
+      companyId = userData.companyId._id || userData.companyId;
+    } else if (userData.companyDetails && userData.companyDetails._id) {
+      companyId = userData.companyDetails._id;
+    }
+
+    if (!companyId) {
+      console.error("ActivityLogger: Missing companyId for login log", userData);
       return;
     }
 
     await exports.logActivity({
-      companyId: userData.companyId._id || userData.companyId,
+      companyId: companyId,
       operationName: "LOGIN",
       email: userData.email,
       createdBy: userData._id
@@ -95,13 +138,26 @@ exports.logLogin = async (userData) => {
  */
 exports.logLogout = async (userData) => {
   try {
-    if (!userData || !userData._id || !userData.email || !userData.companyId) {
-      console.error("ActivityLogger: Invalid user data for logout log");
+    if (!userData || !userData._id || !userData.email) {
+      console.error("ActivityLogger: Invalid user data for logout log", userData);
+      return;
+    }
+
+    // Extract companyId - handle both object and direct ID
+    let companyId = null;
+    if (userData.companyId) {
+      companyId = userData.companyId._id || userData.companyId;
+    } else if (userData.companyDetails && userData.companyDetails._id) {
+      companyId = userData.companyDetails._id;
+    }
+
+    if (!companyId) {
+      console.error("ActivityLogger: Missing companyId for logout log", userData);
       return;
     }
 
     await exports.logActivity({
-      companyId: userData.companyId || userData.companyId?._id,
+      companyId: companyId,
       operationName: "LOGOUT",
       email: userData.email,
       createdBy: userData._id
