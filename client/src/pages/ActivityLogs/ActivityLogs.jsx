@@ -170,11 +170,21 @@ const ActivityLogs = () => {
       .join(" ");
   };
 
+  const stripHtml = (html) => {
+    if (typeof html !== "string") return html;
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
   const formatValue = (value) => {
     if (value === null || value === undefined) return "-";
     if (typeof value === "boolean") return value ? "Yes" : "No";
     if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
       return formatDate(value);
+    }
+    if (typeof value === "string") {
+      return stripHtml(value);
     }
     return String(value);
   };
@@ -449,13 +459,19 @@ const ActivityLogs = () => {
                   </div>
                 </div>
 
-                {selectedLog.updatedByName && (
+                {(selectedLog.updatedBy || selectedLog.updatedByName) && (
                   <div className="activity-section">
                     <h3 className="section-title">Status Information</h3>
                     <div className="status-grid">
                       <div>
                         <div className="field-label">Updated By</div>
-                        <div className="field-value">{selectedLog.updatedByName}</div>
+                        <div className="field-value">
+                          {selectedLog.updatedBy?.full_name || 
+                           (selectedLog.updatedBy?.first_name && selectedLog.updatedBy?.last_name 
+                             ? `${selectedLog.updatedBy.first_name} ${selectedLog.updatedBy.last_name}`
+                             : selectedLog.updatedBy?.first_name || selectedLog.updatedBy?.last_name) ||
+                           selectedLog.updatedByName || "-"}
+                        </div>
                       </div>
                     </div>
                   </div>
