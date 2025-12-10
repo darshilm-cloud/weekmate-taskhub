@@ -1623,6 +1623,56 @@ exports.getActivityLogById = async (req, res) => {
         }
       }
 
+      // Populate manager field - convert object to manager name string
+      if (populatedObj.manager) {
+        try {
+          // If manager is already an object (populated), extract the name
+          if (populatedObj.manager && typeof populatedObj.manager === 'object' && populatedObj.manager.constructor && populatedObj.manager.constructor.name === 'Object') {
+            const managerObj = populatedObj.manager;
+            if (managerObj.full_name) {
+              populatedObj.manager = managerObj.full_name;
+            } else if (managerObj.first_name || managerObj.last_name) {
+              populatedObj.manager = `${managerObj.first_name || ""} ${managerObj.last_name || ""}`.trim();
+            } else if (managerObj.email) {
+              populatedObj.manager = managerObj.email;
+            } else {
+              // If it's an object but no name fields, try to fetch by ID
+              const managerId = toObjectId(managerObj._id || managerObj);
+              if (managerId) {
+                const managerUser = await EmployeesModel.findById(managerId)
+                  .select("full_name first_name last_name email")
+                  .lean();
+                if (managerUser) {
+                  populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+                } else {
+                  delete populatedObj.manager;
+                }
+              } else {
+                delete populatedObj.manager;
+              }
+            }
+          } else {
+            // If manager is an ID (ObjectId or string), fetch and populate
+            const managerId = toObjectId(populatedObj.manager);
+            if (managerId) {
+              const managerUser = await EmployeesModel.findById(managerId)
+                .select("full_name first_name last_name email")
+                .lean();
+              if (managerUser) {
+                populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+              } else {
+                delete populatedObj.manager;
+              }
+            } else {
+              delete populatedObj.manager;
+            }
+          }
+        } catch (error) {
+          console.error("Error populating manager:", error);
+          delete populatedObj.manager;
+        }
+      }
+
       // Remove all ID fields and ObjectId instances
       Object.keys(populatedObj).forEach(key => {
         const value = populatedObj[key];

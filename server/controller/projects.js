@@ -882,10 +882,12 @@ exports.updateProjects = async (req, res) => {
     } else {
       const projectData = await Project.findById(req.params.id)
         .populate("manager")
+        .populate("acc_manager")
+        .populate("technology")
         .populate("assignees");
 
       // Get old data before update for logging
-      const oldProjectData = projectData.toObject ? projectData.toObject() : projectData;
+      const oldProjectDataRaw = projectData.toObject ? projectData.toObject() : projectData;
 
       const data = await Project.findByIdAndUpdate(
         req.params.id,
@@ -929,8 +931,135 @@ exports.updateProjects = async (req, res) => {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
       }
 
-      // Get new data after update for logging
-      const newProjectData = data.toObject ? data.toObject() : data;
+      // Get new data after update for logging - populate manager, acc_manager, and technology for transformation
+      const newDataPopulated = await Project.findById(data._id)
+        .populate("manager")
+        .populate("acc_manager")
+        .populate("technology")
+        .lean();
+      const newProjectDataRaw = newDataPopulated || (data.toObject ? data.toObject() : data);
+      
+      // Helper function to transform project data for logging
+      const transformProjectDataForLogging = async (projectData) => {
+        if (!projectData) return projectData;
+        const transformed = { ...projectData };
+        
+        // Transform manager object to manager name
+        if (transformed.manager) {
+          if (typeof transformed.manager === 'object' && transformed.manager.full_name !== undefined) {
+            // It's a populated manager object with details
+            transformed.manager = transformed.manager.full_name || 
+              `${transformed.manager.first_name || ""} ${transformed.manager.last_name || ""}`.trim() || 
+              transformed.manager._id?.toString() || 
+              null;
+          } else if (transformed.manager instanceof mongoose.Types.ObjectId || (typeof transformed.manager === 'object' && transformed.manager.toString)) {
+            // It's an ObjectId - fetch the name
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const managerUser = await EmployeesModel.findById(transformed.manager)
+                .select("full_name first_name last_name")
+                .lean();
+              if (managerUser) {
+                transformed.manager = managerUser.full_name || 
+                  `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || 
+                  transformed.manager.toString();
+              } else {
+                transformed.manager = transformed.manager.toString();
+              }
+            } catch (error) {
+              transformed.manager = transformed.manager.toString();
+            }
+          }
+        }
+        
+        // Transform acc_manager object to acc_manager name
+        if (transformed.acc_manager) {
+          if (typeof transformed.acc_manager === 'object' && transformed.acc_manager.full_name !== undefined) {
+            // It's a populated acc_manager object with details
+            transformed.acc_manager = transformed.acc_manager.full_name || 
+              `${transformed.acc_manager.first_name || ""} ${transformed.acc_manager.last_name || ""}`.trim() || 
+              transformed.acc_manager._id?.toString() || 
+              null;
+          } else if (transformed.acc_manager instanceof mongoose.Types.ObjectId || (typeof transformed.acc_manager === 'object' && transformed.acc_manager.toString)) {
+            // It's an ObjectId - fetch the name
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const accManagerUser = await EmployeesModel.findById(transformed.acc_manager)
+                .select("full_name first_name last_name")
+                .lean();
+              if (accManagerUser) {
+                transformed.acc_manager = accManagerUser.full_name || 
+                  `${accManagerUser.first_name || ""} ${accManagerUser.last_name || ""}`.trim() || 
+                  transformed.acc_manager.toString();
+              } else {
+                transformed.acc_manager = transformed.acc_manager.toString();
+              }
+            } catch (error) {
+              transformed.acc_manager = transformed.acc_manager.toString();
+            }
+          }
+        }
+        
+        // Transform technology array to technology names
+        if (transformed.technology && Array.isArray(transformed.technology)) {
+          try {
+            // First check if technology is already populated (has project_tech field)
+            const techNames = transformed.technology
+              .map(tech => {
+                if (typeof tech === 'object' && tech.project_tech) {
+                  return tech.project_tech;
+                }
+                return null;
+              })
+              .filter(Boolean);
+            
+            if (techNames.length > 0) {
+              // Technology was already populated, use the names
+              transformed.technology = techNames;
+            } else {
+              // Technology contains ObjectIds, need to fetch names
+              const TechModel = mongoose.model("projecttechs");
+              const techIds = transformed.technology
+                .map(id => {
+                  if (id instanceof mongoose.Types.ObjectId) return id;
+                  if (typeof id === 'object' && id._id) return id._id;
+                  if (typeof id === 'string' && mongoose.Types.ObjectId.isValid(id)) {
+                    return new mongoose.Types.ObjectId(id);
+                  }
+                  return null;
+                })
+                .filter(Boolean);
+              
+              if (techIds.length > 0) {
+                const techs = await TechModel.find({ _id: { $in: techIds } })
+                  .select("project_tech")
+                  .lean();
+                // Store as array of tech names
+                transformed.technology = techs.map(t => t.project_tech || "").filter(Boolean);
+              } else {
+                transformed.technology = [];
+              }
+            }
+          } catch (error) {
+            console.error("Error populating technology for logging:", error);
+            // Keep as array of IDs if population fails
+            transformed.technology = transformed.technology.map(id => {
+              if (id instanceof mongoose.Types.ObjectId) return id.toString();
+              if (typeof id === 'object' && id._id) return id._id.toString();
+              return id ? id.toString() : null;
+            }).filter(Boolean);
+          }
+        } else if (transformed.technology) {
+          // If it's not an array, convert to empty array
+          transformed.technology = [];
+        }
+        
+        return transformed;
+      };
+      
+      // Transform data for logging - convert manager objects to single name values and populate technology
+      const oldProjectData = await transformProjectDataForLogging(oldProjectDataRaw);
+      const newProjectData = await transformProjectDataForLogging(newProjectDataRaw);
 
       // updated project data...
       if (
