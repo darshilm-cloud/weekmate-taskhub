@@ -1515,6 +1515,477 @@ exports.getActivityLogById = async (req, res) => {
       }
     }
 
+    // Helper function to populate user fields and remove all IDs from data objects
+    const populateUserFields = async (dataObj) => {
+      if (!dataObj || typeof dataObj !== 'object') return dataObj;
+
+      const EmployeesModel = mongoose.model("employees");
+      const CompanyModel = mongoose.model("companies");
+      const populatedObj = { ...dataObj };
+
+      // Helper to convert ID to ObjectId
+      const toObjectId = (id) => {
+        if (!id) return null;
+        if (id instanceof mongoose.Types.ObjectId) return id;
+        if (typeof id === 'string' && mongoose.Types.ObjectId.isValid(id)) {
+          return new mongoose.Types.ObjectId(id);
+        }
+        return null;
+      };
+
+      // Populate companyId with company name and rename to "company"
+      if (populatedObj.companyId) {
+        try {
+          const companyId = toObjectId(populatedObj.companyId);
+          if (companyId) {
+            const company = await CompanyModel.findById(companyId)
+              .select("companyName")
+              .lean();
+            if (company && company.companyName) {
+              // Rename companyId to company
+              populatedObj.company = company.companyName;
+              delete populatedObj.companyId;
+            } else {
+              delete populatedObj.companyId;
+            }
+          } else {
+            delete populatedObj.companyId;
+          }
+        } catch (error) {
+          console.error("Error populating companyId:", error);
+          delete populatedObj.companyId;
+        }
+      }
+
+      // Populate createdBy
+      if (populatedObj.createdBy) {
+        try {
+          const createdById = toObjectId(populatedObj.createdBy);
+          if (createdById) {
+            const createdByUser = await EmployeesModel.findById(createdById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (createdByUser) {
+              populatedObj.createdBy = createdByUser.full_name || `${createdByUser.first_name || ""} ${createdByUser.last_name || ""}`.trim() || createdByUser.email || "";
+            } else {
+              delete populatedObj.createdBy;
+            }
+          } else {
+            delete populatedObj.createdBy;
+          }
+        } catch (error) {
+          console.error("Error populating createdBy:", error);
+          delete populatedObj.createdBy;
+        }
+      }
+
+      // Populate updatedBy
+      if (populatedObj.updatedBy) {
+        try {
+          const updatedById = toObjectId(populatedObj.updatedBy);
+          if (updatedById) {
+            const updatedByUser = await EmployeesModel.findById(updatedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (updatedByUser) {
+              populatedObj.updatedBy = updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email || "";
+            } else {
+              delete populatedObj.updatedBy;
+            }
+          } else {
+            delete populatedObj.updatedBy;
+          }
+        } catch (error) {
+          console.error("Error populating updatedBy:", error);
+          delete populatedObj.updatedBy;
+        }
+      }
+
+      // Populate deletedBy
+      if (populatedObj.deletedBy) {
+        try {
+          const deletedById = toObjectId(populatedObj.deletedBy);
+          if (deletedById) {
+            const deletedByUser = await EmployeesModel.findById(deletedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (deletedByUser) {
+              populatedObj.deletedBy = deletedByUser.full_name || `${deletedByUser.first_name || ""} ${deletedByUser.last_name || ""}`.trim() || deletedByUser.email || "";
+            } else {
+              delete populatedObj.deletedBy;
+            }
+          } else {
+            delete populatedObj.deletedBy;
+          }
+        } catch (error) {
+          console.error("Error populating deletedBy:", error);
+          delete populatedObj.deletedBy;
+        }
+      }
+
+      // Populate manager field - convert object to manager name string
+      if (populatedObj.manager) {
+        try {
+          // If manager is already an object (populated), extract the name
+          if (populatedObj.manager && typeof populatedObj.manager === 'object' && populatedObj.manager.constructor && populatedObj.manager.constructor.name === 'Object') {
+            const managerObj = populatedObj.manager;
+            if (managerObj.full_name) {
+              populatedObj.manager = managerObj.full_name;
+            } else if (managerObj.first_name || managerObj.last_name) {
+              populatedObj.manager = `${managerObj.first_name || ""} ${managerObj.last_name || ""}`.trim();
+            } else if (managerObj.email) {
+              populatedObj.manager = managerObj.email;
+            } else {
+              // If it's an object but no name fields, try to fetch by ID
+              const managerId = toObjectId(managerObj._id || managerObj);
+              if (managerId) {
+                const managerUser = await EmployeesModel.findById(managerId)
+                  .select("full_name first_name last_name email")
+                  .lean();
+                if (managerUser) {
+                  populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+                } else {
+                  delete populatedObj.manager;
+                }
+              } else {
+                delete populatedObj.manager;
+              }
+            }
+          } else {
+            // If manager is an ID (ObjectId or string), fetch and populate
+            const managerId = toObjectId(populatedObj.manager);
+            if (managerId) {
+              const managerUser = await EmployeesModel.findById(managerId)
+                .select("full_name first_name last_name email")
+                .lean();
+              if (managerUser) {
+                populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+              } else {
+                delete populatedObj.manager;
+              }
+            } else {
+              delete populatedObj.manager;
+            }
+          }
+        } catch (error) {
+          console.error("Error populating manager:", error);
+          delete populatedObj.manager;
+        }
+      }
+
+      // Handle subscribers array - convert to names if needed
+      if (populatedObj.subscribers && Array.isArray(populatedObj.subscribers)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscribers.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains ObjectIds or objects
+            const subscriberNames = [];
+            
+            for (const subscriber of populatedObj.subscribers) {
+              if (!subscriber) continue;
+              
+              // Check if it's already a populated object
+              if (typeof subscriber === 'object' && 
+                  (subscriber.full_name !== undefined || 
+                   subscriber.first_name !== undefined ||
+                   subscriber.last_name !== undefined)) {
+                const name = subscriber.full_name || 
+                  `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                if (name) subscriberNames.push(name);
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                const subscriberId = toObjectId(subscriber);
+                if (subscriberId) {
+                  const subscriberDoc = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriberDoc) {
+                    const name = subscriberDoc.full_name || 
+                      `${subscriberDoc.first_name || ""} ${subscriberDoc.last_name || ""}`.trim();
+                    if (name) subscriberNames.push(name);
+                  }
+                }
+              }
+            }
+            
+            populatedObj.subscribers = subscriberNames;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscribers in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscribers) || 
+              !populatedObj.subscribers.every(item => typeof item === 'string')) {
+            populatedObj.subscribers = [];
+          }
+        }
+      }
+
+      // Handle subscriber_stages specifically for projectMainTask
+      if (populatedObj.subscriber_stages && Array.isArray(populatedObj.subscriber_stages)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscriber_stages.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains objects with IDs
+            const WorkflowStatusModel = mongoose.model("workflowstatus");
+            const stagesData = [];
+            
+            for (const stageItem of populatedObj.subscriber_stages) {
+              if (!stageItem || typeof stageItem !== 'object') continue;
+              
+              let subscriberName = null;
+              let stageName = null;
+              
+              // Get subscriber name
+              if (stageItem.subscriber_id) {
+                let subscriberId = null;
+                if (stageItem.subscriber_id instanceof mongoose.Types.ObjectId) {
+                  subscriberId = stageItem.subscriber_id;
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id._id) {
+                  subscriberId = toObjectId(stageItem.subscriber_id._id);
+                } else if (typeof stageItem.subscriber_id === 'string') {
+                  subscriberId = toObjectId(stageItem.subscriber_id);
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.full_name) {
+                  subscriberName = stageItem.subscriber_id.full_name || 
+                    `${stageItem.subscriber_id.first_name || ""} ${stageItem.subscriber_id.last_name || ""}`.trim();
+                }
+                
+                if (subscriberId && !subscriberName) {
+                  const subscriber = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriber) {
+                    subscriberName = subscriber.full_name || 
+                      `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                  }
+                }
+              }
+              
+              // Get stage name
+              if (stageItem.stages) {
+                let stageId = null;
+                if (stageItem.stages instanceof mongoose.Types.ObjectId) {
+                  stageId = stageItem.stages;
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages._id) {
+                  stageId = toObjectId(stageItem.stages._id);
+                } else if (typeof stageItem.stages === 'string') {
+                  stageId = toObjectId(stageItem.stages);
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages.title) {
+                  stageName = stageItem.stages.title;
+                }
+                
+                if (stageId && !stageName) {
+                  const stage = await WorkflowStatusModel.findById(stageId)
+                    .select("title")
+                    .lean();
+                  if (stage) {
+                    stageName = stage.title;
+                  }
+                }
+              }
+              
+              if (subscriberName || stageName) {
+                stagesData.push(`${subscriberName || "Unknown"} - ${stageName || "Unknown"}`);
+              }
+            }
+            
+            populatedObj.subscriber_stages = stagesData;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscriber_stages in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscriber_stages) || 
+              !populatedObj.subscriber_stages.every(item => typeof item === 'string')) {
+            populatedObj.subscriber_stages = [];
+          }
+        }
+      }
+
+      // Handle task_status_history for tasks
+      if (populatedObj.task_status_history && Array.isArray(populatedObj.task_status_history)) {
+        try {
+          const WorkflowStatusModel = mongoose.model("workflowstatus");
+          const moment = require("moment");
+          
+          // Check if already transformed (array of objects with string values for task_status and updatedBy)
+          const isAlreadyTransformed = populatedObj.task_status_history.every(item => 
+            item && typeof item === 'object' && 
+            (typeof item.task_status === 'string' || item.task_status === "") &&
+            (typeof item.updatedBy === 'string' || item.updatedBy === "")
+          );
+          
+          if (!isAlreadyTransformed) {
+            const populatedHistory = await Promise.all(
+              populatedObj.task_status_history.map(async (historyItem) => {
+                if (!historyItem || typeof historyItem !== 'object') return historyItem;
+                
+                const populatedItem = { ...historyItem };
+                
+                // Populate task_status - handle null, ObjectId, string, or populated object
+                if (historyItem.task_status !== null && historyItem.task_status !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.task_status === 'string') {
+                    populatedItem.task_status = historyItem.task_status;
+                  } else if (typeof historyItem.task_status === 'object' && historyItem.task_status.title) {
+                    // Already populated object
+                    populatedItem.task_status = historyItem.task_status.title;
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let taskStatusId = null;
+                    if (historyItem.task_status instanceof mongoose.Types.ObjectId) {
+                      taskStatusId = historyItem.task_status;
+                    } else if (typeof historyItem.task_status === 'object' && historyItem.task_status._id) {
+                      taskStatusId = toObjectId(historyItem.task_status._id);
+                    } else if (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)) {
+                      taskStatusId = toObjectId(historyItem.task_status);
+                    }
+                    
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+                } else {
+                  populatedItem.task_status = "";
+                }
+                
+                // Populate updatedBy - handle ObjectId, string, or populated object
+                if (historyItem.updatedBy !== null && historyItem.updatedBy !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.updatedBy === 'string') {
+                    populatedItem.updatedBy = historyItem.updatedBy;
+                  } else if (typeof historyItem.updatedBy === 'object' && 
+                            (historyItem.updatedBy.full_name !== undefined || 
+                             historyItem.updatedBy.first_name !== undefined ||
+                             historyItem.updatedBy.email !== undefined)) {
+                    // Already populated object
+                    populatedItem.updatedBy = historyItem.updatedBy.full_name || 
+                      `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                      historyItem.updatedBy.email || "";
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let updatedById = null;
+                    if (historyItem.updatedBy instanceof mongoose.Types.ObjectId) {
+                      updatedById = historyItem.updatedBy;
+                    } else if (typeof historyItem.updatedBy === 'object' && historyItem.updatedBy._id) {
+                      updatedById = toObjectId(historyItem.updatedBy._id);
+                    } else if (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)) {
+                      updatedById = toObjectId(historyItem.updatedBy);
+                    }
+                    
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                } else {
+                  populatedItem.updatedBy = "";
+                }
+                
+                // Format updatedAt - ensure proper date format
+                if (historyItem.updatedAt) {
+                  // Check if already formatted (string with expected format)
+                  if (typeof historyItem.updatedAt === 'string' && /^\d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2}$/.test(historyItem.updatedAt)) {
+                    populatedItem.updatedAt = historyItem.updatedAt;
+                  } else {
+                    try {
+                      populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                    } catch (dateError) {
+                      populatedItem.updatedAt = historyItem.updatedAt.toString();
+                    }
+                  }
+                } else {
+                  populatedItem.updatedAt = "";
+                }
+                
+                // Remove any ID fields
+                delete populatedItem._id;
+                
+                return populatedItem;
+              })
+            );
+            
+            populatedObj.task_status_history = populatedHistory;
+          }
+          // If already transformed, keep it as is
+        } catch (error) {
+          console.error("Error processing task_status_history in populateUserFields:", error);
+          // Try to preserve already transformed data
+          if (!Array.isArray(populatedObj.task_status_history) || 
+              !populatedObj.task_status_history.every(item => 
+                item && typeof item === 'object' && 
+                (typeof item.task_status === 'string' || item.task_status === "") &&
+                (typeof item.updatedBy === 'string' || item.updatedBy === "")
+              )) {
+            populatedObj.task_status_history = [];
+          }
+        }
+      }
+
+      // Remove all ID fields and ObjectId instances
+      Object.keys(populatedObj).forEach(key => {
+        const value = populatedObj[key];
+        
+        // Remove _id field
+        if (key === '_id' || key === '__v') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove ObjectId instances
+        if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'ObjectId') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove arrays that might contain ObjectIds (if not already populated)
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && Array.isArray(value) && value.length > 0) {
+          const firstItem = value[0];
+          if (firstItem && typeof firstItem === 'object' && firstItem.constructor && firstItem.constructor.name === 'ObjectId') {
+            delete populatedObj[key];
+            return;
+          }
+        }
+
+        // Remove null or undefined
+        if (value === null || value === undefined) {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Recursively process nested objects (but not arrays of objects to avoid infinite loops)
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
+          // Process nested objects recursively, but limit depth to avoid issues
+          Object.keys(value).forEach(nestedKey => {
+            if (nestedKey === '_id' || nestedKey === '__v') {
+              delete value[nestedKey];
+            } else if (value[nestedKey] && typeof value[nestedKey] === 'object' && value[nestedKey].constructor && value[nestedKey].constructor.name === 'ObjectId') {
+              delete value[nestedKey];
+            }
+          });
+        }
+      });
+
+      return populatedObj;
+    };
+
     // Helper function to map module names to display labels
     const getModuleLabel = (moduleName) => {
       if (!moduleName) return null;
@@ -1556,6 +2027,22 @@ exports.getActivityLogById = async (req, res) => {
       return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
     };
 
+    // Populate user fields in updatedData if it exists
+    let populatedUpdatedData = null;
+    if (logData.updatedData && logData.updatedData.oldData && logData.updatedData.newData) {
+      try {
+        populatedUpdatedData = {
+          oldData: await populateUserFields(logData.updatedData.oldData),
+          newData: await populateUserFields(logData.updatedData.newData)
+        };
+      } catch (error) {
+        console.error("Error populating updatedData user fields:", error);
+        populatedUpdatedData = logData.updatedData;
+      }
+    } else {
+      populatedUpdatedData = logData.updatedData || null;
+    }
+
     const response = {
       _id: logData._id,
       operationName: logData.operationName,
@@ -1587,7 +2074,7 @@ exports.getActivityLogById = async (req, res) => {
         phone_number: logData.deletedByDetails.phone_number
       } : null,
       additionalData: logData.additionalData || null,
-      updatedData: logData.updatedData || null,
+      updatedData: populatedUpdatedData,
       deletedData: deletedData || null
     };
 

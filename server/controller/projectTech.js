@@ -198,6 +198,9 @@ exports.updateProjectTech = async (req, res) => {
     if (await this.projectTechExists(value.project_tech, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      // Get old data before update for logging
+      const oldTechData = await ProjectTechnologies.findById(value.projectTechId).lean();
+
       const updatedProjectTech = await ProjectTechnologies.findByIdAndUpdate(
         value.projectTechId,
         {
@@ -209,6 +212,31 @@ exports.updateProjectTech = async (req, res) => {
 
       if (!updatedProjectTech) {
         return errorResponse(res, 404, "Project tech not found");
+      }
+
+      // Get new data after update for logging
+      const newTechData = updatedProjectTech.toObject ? updatedProjectTech.toObject() : updatedProjectTech;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldTechData && newTechData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectTech",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldTechData,
+            newData: newTechData,
+            additionalData: {
+              recordId: oldTechData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging project tech update activity:", logError);
       }
 
       return successResponse(

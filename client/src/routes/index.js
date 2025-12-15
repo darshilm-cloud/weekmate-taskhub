@@ -75,6 +75,10 @@ const ActivityLogs = React.lazy(() =>
 );
 
 
+const MiraAi = React.lazy(() =>
+  import("../pages/MiraAI/MiraAI")
+);
+
 const index = ({ match, userPermission }) => {
   const routeArray = [
     {
@@ -388,6 +392,13 @@ const index = ({ match, userPermission }) => {
       component: Administrator,
       roleName: [
         config.PMS_ROLES.SUPER_ADMIN,
+      ],
+    },
+    {
+      path: ":companySlug/admin/mira-ai",
+      component: MiraAi,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
       ],
     },
     {

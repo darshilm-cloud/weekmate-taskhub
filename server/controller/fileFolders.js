@@ -260,6 +260,9 @@ exports.updateFileFolders = async (req, res) => {
     }
 
     if (!(await this.isFileFolderExists(value, req.params.id))) {
+      // Get old data before update for logging
+      const oldFolderData = await FileFolders.findById(req.params.id).lean();
+
       const data = await FileFolders.findByIdAndUpdate(
         req.params.id,
         {
@@ -271,6 +274,31 @@ exports.updateFileFolders = async (req, res) => {
 
       if (!data) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+
+      // Get new data after update for logging
+      const newFolderData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldFolderData && newFolderData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "fileFolders",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldFolderData,
+            newData: newFolderData,
+            additionalData: {
+              recordId: oldFolderData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging file folder update activity:", logError);
       }
 
       return successResponse(

@@ -779,6 +779,10 @@ exports.updateTaskHoursLogs = async (req, res) => {
         error.details[0].message
       );
     }
+    
+    // Get old data before update for logging
+    const oldTaskHoursData = oldTaskHours.toObject ? oldTaskHours.toObject() : oldTaskHours;
+    
     let loggedDate = moment.utc(value.logged_date, "DD-MM-YYYY").format();
 
     let date1 = moment(value.logged_date, "DD-MM-YYYY").startOf("day");
@@ -857,6 +861,32 @@ exports.updateTaskHoursLogs = async (req, res) => {
       },
       { new: true }
     );
+
+    // Get new data after update for logging
+    const newTaskHoursData = data.toObject ? data.toObject() : data;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldTaskHoursData && newTaskHoursData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "taskHoursLogs",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldTaskHoursData,
+          newData: newTaskHoursData,
+          additionalData: {
+            recordId: oldTaskHoursData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging task hours update activity:", logError);
+    }
+
     return successResponse(
       res,
       statusCode.SUCCESS,

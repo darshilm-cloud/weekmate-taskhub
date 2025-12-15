@@ -211,6 +211,9 @@ exports.updateProjectStatus = async (req, res) => {
     if (await this.projectStatusExists(value.title, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      // Get old data before update for logging
+      const oldStatusData = await ProjectStatus.findById(req.params.id).lean();
+
       const data = await ProjectStatus.findByIdAndUpdate(
         req.params.id,
         {
@@ -222,6 +225,31 @@ exports.updateProjectStatus = async (req, res) => {
 
       if (!data) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+      }
+
+      // Get new data after update for logging
+      const newStatusData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldStatusData && newStatusData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectStatus",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldStatusData,
+            newData: newStatusData,
+            additionalData: {
+              recordId: oldStatusData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging project status update activity:", logError);
       }
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

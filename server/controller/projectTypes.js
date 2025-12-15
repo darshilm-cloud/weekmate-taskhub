@@ -204,6 +204,9 @@ exports.updateProjectType = async (req, res) => {
     ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      // Get old data before update for logging
+      const oldTypeData = await ProjectType.findById(value.projectTypeId).lean();
+
       const updatedProjectType = await ProjectType.findByIdAndUpdate(
         value.projectTypeId,
         {
@@ -215,6 +218,31 @@ exports.updateProjectType = async (req, res) => {
 
       if (!updatedProjectType) {
         return errorResponse(res, 404, "Project type not found");
+      }
+
+      // Get new data after update for logging
+      const newTypeData = updatedProjectType.toObject ? updatedProjectType.toObject() : updatedProjectType;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldTypeData && newTypeData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectTypes",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldTypeData,
+            newData: newTypeData,
+            additionalData: {
+              recordId: oldTypeData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging project type update activity:", logError);
       }
 
       return successResponse(

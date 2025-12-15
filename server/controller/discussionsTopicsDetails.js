@@ -312,6 +312,9 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
       }
     }
 
+    // Get old data before update for logging
+    const oldDetailData = getData.toObject ? getData.toObject() : getData;
+
     const data = await DiscussionsTopicsDetails.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(req.params.id), isDefault: false },
       {
@@ -346,6 +349,31 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
 
     if (newTaggedUsers.added && newTaggedUsers.added.length > 0) {
       await sendmailForNewCommentsInTopic(req.params.id, decodedCompanyId);
+    }
+
+    // Get new data after update for logging
+    const newDetailData = data.toObject ? data.toObject() : data;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldDetailData && newDetailData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "discussionDetails",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldDetailData,
+          newData: newDetailData,
+          additionalData: {
+            recordId: oldDetailData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging discussion detail update activity:", logError);
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

@@ -427,6 +427,9 @@ exports.updateComplaint = async (req, res) => {
       );
     }
 
+    // Get old data before update for logging
+    const oldComplaintData = await Complaints.findById(req.params.id).lean();
+
     const data = await Complaints.findByIdAndUpdate(
       req.params.id,
       {
@@ -447,6 +450,31 @@ exports.updateComplaint = async (req, res) => {
 
     if (!data) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
+
+    // Get new data after update for logging
+    const newComplaintData = data.toObject ? data.toObject() : data;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldComplaintData && newComplaintData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "complaints",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldComplaintData,
+          newData: newComplaintData,
+          additionalData: {
+            recordId: oldComplaintData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging complaint update activity:", logError);
     }
 
     return successResponse(

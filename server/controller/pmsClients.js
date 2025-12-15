@@ -405,6 +405,9 @@ exports.updateClientData = async (req, res) => {
         }
       }
 
+      // Get old data before update for logging
+      const oldClientData = await PMSClient.findById(req.params.id).lean();
+
       const data = await PMSClient.findByIdAndUpdate(
         req.params.id,
         {
@@ -426,6 +429,31 @@ exports.updateClientData = async (req, res) => {
 
       if (!data) {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+      }
+
+      // Get new data after update for logging
+      const newClientData = data.toObject ? data.toObject() : data;
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldClientData && newClientData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "pmsClients",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldClientData,
+            newData: newClientData,
+            additionalData: {
+              recordId: oldClientData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging client update activity:", logError);
       }
 
       return successResponse(

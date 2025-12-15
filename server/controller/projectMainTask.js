@@ -718,9 +718,15 @@ exports.updateProjectsMainTask = async (req, res) => {
     ) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
-      const getData = await ProjectMainTasks.findById(req.params.id).populate(
-        "task_status"
-      );
+      const getData = await ProjectMainTasks.findById(req.params.id)
+        .populate("task_status")
+        .populate("subscribers")
+        .populate("subscriber_stages.subscriber_id", "full_name first_name last_name")
+        .populate("subscriber_stages.stages", "title");
+
+      // Get old data before update for logging - convert to plain object
+      // Note: toObject() with { flattenMaps: false } preserves nested populated fields
+      const oldMainTaskDataRaw = getData ? (getData.toObject ? getData.toObject({ flattenMaps: false }) : getData) : null;
 
       const data = await ProjectMainTasks.findByIdAndUpdate(
         req.params.id,
@@ -802,6 +808,225 @@ exports.updateProjectsMainTask = async (req, res) => {
           clientsData.added,
           decodedCompanyId
         );
+      }
+
+      // Get new data after update for logging - populate subscribers and subscriber_stages
+      const newDataPopulated = await ProjectMainTasks.findById(data._id)
+        .populate("subscribers")
+        .populate("subscriber_stages.subscriber_id", "full_name first_name last_name")
+        .populate("subscriber_stages.stages", "title")
+        .lean();
+      const newMainTaskDataRaw = newDataPopulated || (data.toObject ? data.toObject() : data);
+
+      // Helper function to transform main task data for logging
+      const transformMainTaskDataForLogging = async (mainTaskData) => {
+        if (!mainTaskData) return mainTaskData;
+        const transformed = { ...mainTaskData };
+        
+        // Transform subscribers array to array of subscriber names
+        if (transformed.subscribers && Array.isArray(transformed.subscribers)) {
+          try {
+            const EmployeesModel = mongoose.model("employees");
+            const subscriberNames = [];
+            
+            for (const subscriber of transformed.subscribers) {
+              if (!subscriber) continue;
+              
+              // Check if it's already a populated object (has full_name, first_name, or last_name)
+              if (typeof subscriber === 'object' && 
+                  (subscriber.full_name !== undefined || 
+                   subscriber.first_name !== undefined || 
+                   subscriber.last_name !== undefined)) {
+                // Already populated - extract name
+                const name = subscriber.full_name || 
+                  `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                if (name) {
+                  subscriberNames.push(name);
+                }
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                let subscriberId = null;
+                if (subscriber instanceof mongoose.Types.ObjectId) {
+                  subscriberId = subscriber;
+                } else if (typeof subscriber === 'object' && subscriber._id) {
+                  subscriberId = subscriber._id instanceof mongoose.Types.ObjectId 
+                    ? subscriber._id 
+                    : (mongoose.Types.ObjectId.isValid(subscriber._id) 
+                      ? new mongoose.Types.ObjectId(subscriber._id) 
+                      : null);
+                } else if (typeof subscriber === 'string' && mongoose.Types.ObjectId.isValid(subscriber)) {
+                  subscriberId = new mongoose.Types.ObjectId(subscriber);
+                }
+                
+                if (subscriberId) {
+                  const subscriberDoc = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriberDoc) {
+                    const name = subscriberDoc.full_name || 
+                      `${subscriberDoc.first_name || ""} ${subscriberDoc.last_name || ""}`.trim();
+                    if (name) {
+                      subscriberNames.push(name);
+                    }
+                  }
+                }
+              }
+            }
+            
+            transformed.subscribers = subscriberNames;
+          } catch (error) {
+            console.error("Error transforming subscribers for logging:", error);
+            // Fallback: try to convert to strings
+            transformed.subscribers = transformed.subscribers
+              .map(s => {
+                if (typeof s === 'object' && s.full_name) return s.full_name;
+                if (typeof s === 'object' && s._id) return s._id.toString();
+                return s ? s.toString() : null;
+              })
+              .filter(Boolean);
+          }
+        } else if (transformed.subscribers) {
+          transformed.subscribers = [];
+        }
+        
+        // Transform subscriber_stages array to readable format
+        if (transformed.subscriber_stages && Array.isArray(transformed.subscriber_stages)) {
+          try {
+            const EmployeesModel = mongoose.model("employees");
+            const stagesData = [];
+            
+            for (const stageItem of transformed.subscriber_stages) {
+              if (!stageItem) continue;
+              
+              let subscriberName = null;
+              let stageName = null;
+              
+              // Handle subscriber_id - check multiple possible formats
+              let subscriberId = null;
+              if (stageItem.subscriber_id) {
+                // Check if it's already a populated object
+                if (typeof stageItem.subscriber_id === 'object' && 
+                    (stageItem.subscriber_id.full_name !== undefined || 
+                     stageItem.subscriber_id.first_name !== undefined ||
+                     stageItem.subscriber_id._id !== undefined)) {
+                  // Already populated - extract name
+                  subscriberName = stageItem.subscriber_id.full_name || 
+                    `${stageItem.subscriber_id.first_name || ""} ${stageItem.subscriber_id.last_name || ""}`.trim();
+                  
+                  // If we got the name, we're done with subscriber
+                  if (!subscriberName && stageItem.subscriber_id._id) {
+                    subscriberId = stageItem.subscriber_id._id instanceof mongoose.Types.ObjectId 
+                      ? stageItem.subscriber_id._id 
+                      : (mongoose.Types.ObjectId.isValid(stageItem.subscriber_id._id) 
+                        ? new mongoose.Types.ObjectId(stageItem.subscriber_id._id) 
+                        : null);
+                  }
+                } else {
+                  // It's an ObjectId or string - convert to ObjectId
+                  if (stageItem.subscriber_id instanceof mongoose.Types.ObjectId) {
+                    subscriberId = stageItem.subscriber_id;
+                  } else if (typeof stageItem.subscriber_id === 'string' && mongoose.Types.ObjectId.isValid(stageItem.subscriber_id)) {
+                    subscriberId = new mongoose.Types.ObjectId(stageItem.subscriber_id);
+                  } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.toString) {
+                    subscriberId = new mongoose.Types.ObjectId(stageItem.subscriber_id.toString());
+                  }
+                }
+                
+                // Fetch subscriber name if we have an ID but no name yet
+                if (subscriberId && !subscriberName) {
+                  const subscriber = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriber) {
+                    subscriberName = subscriber.full_name || 
+                      `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                  }
+                }
+              }
+              
+              // Handle stages - check multiple possible formats
+              let stageId = null;
+              if (stageItem.stages) {
+                // Check if it's already a populated object
+                if (typeof stageItem.stages === 'object' && 
+                    (stageItem.stages.title !== undefined || stageItem.stages._id !== undefined)) {
+                  // Already populated - extract title
+                  stageName = stageItem.stages.title;
+                  
+                  // If we didn't get the title but have _id, fetch it
+                  if (!stageName && stageItem.stages._id) {
+                    stageId = stageItem.stages._id instanceof mongoose.Types.ObjectId 
+                      ? stageItem.stages._id 
+                      : (mongoose.Types.ObjectId.isValid(stageItem.stages._id) 
+                        ? new mongoose.Types.ObjectId(stageItem.stages._id) 
+                        : null);
+                  }
+                } else {
+                  // It's an ObjectId or string - convert to ObjectId
+                  if (stageItem.stages instanceof mongoose.Types.ObjectId) {
+                    stageId = stageItem.stages;
+                  } else if (typeof stageItem.stages === 'string' && mongoose.Types.ObjectId.isValid(stageItem.stages)) {
+                    stageId = new mongoose.Types.ObjectId(stageItem.stages);
+                  } else if (typeof stageItem.stages === 'object' && stageItem.stages.toString) {
+                    stageId = new mongoose.Types.ObjectId(stageItem.stages.toString());
+                  }
+                }
+                
+                // Fetch stage title if we have an ID but no title yet
+                if (stageId && !stageName) {
+                  const stage = await WorkflowStatusModel.findById(stageId)
+                    .select("title")
+                    .lean();
+                  if (stage) {
+                    stageName = stage.title;
+                  }
+                }
+              }
+              
+              // Only add if we have at least one value
+              if (subscriberName || stageName) {
+                // Format as "Subscriber Name - Stage Name" for better display
+                const stageString = `${subscriberName || "Unknown"} - ${stageName || "Unknown"}`;
+                stagesData.push(stageString);
+              }
+            }
+            
+            transformed.subscriber_stages = stagesData;
+          } catch (error) {
+            console.error("Error transforming subscriber_stages for logging:", error);
+            transformed.subscriber_stages = [];
+          }
+        } else if (transformed.subscriber_stages) {
+          transformed.subscriber_stages = [];
+        }
+        
+        return transformed;
+      };
+      
+      // Transform data for logging
+      const oldMainTaskData = await transformMainTaskDataForLogging(oldMainTaskDataRaw);
+      const newMainTaskData = await transformMainTaskDataForLogging(newMainTaskDataRaw);
+
+      // Log update activity
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req.user);
+        if (userInfo && oldMainTaskData && newMainTaskData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "projectMainTask",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldMainTaskData,
+            newData: newMainTaskData,
+            additionalData: {
+              recordId: oldMainTaskData._id.toString()
+            }
+          });
+        }
+      } catch (logError) {
+        console.error("Error logging main task update activity:", logError);
       }
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);

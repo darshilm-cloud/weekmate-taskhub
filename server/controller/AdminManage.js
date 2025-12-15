@@ -379,6 +379,9 @@ exports.editUser = async (req, res) => {
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 
+    // Get old data before update for logging
+    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+
     // Find and update the user with only the provided fields
     const updatedUser = await employeeSchema.findOneAndUpdate(
       { _id: newObjectId(userId) },
@@ -389,6 +392,34 @@ exports.editUser = async (req, res) => {
     // Check if user exists
     if (!updatedUser) {
       return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
+
+    // Get new data after update for logging
+    const newUserData = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldUserData && newUserData) {
+        // Remove password from logged data
+        delete oldUserData.password;
+        delete newUserData.password;
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "employees",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldUserData,
+          newData: newUserData,
+          additionalData: {
+            recordId: oldUserData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging user update activity:", logError);
     }
 
     return successResponse(res, statusCode.SUCCESS, UPDATED, updatedUser);
