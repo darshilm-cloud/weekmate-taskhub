@@ -7,6 +7,7 @@ import ActivityLogFilter from "./ActivityLogFilter";
 import moment from "moment";
 import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
+import ViewIcon from "../../assets/icons/ViewIcon";
 
 const ActivityLogs = () => {
   const dispatch = useDispatch();
@@ -360,9 +361,10 @@ const ActivityLogs = () => {
       width: 100,
       fixed: "right",
       render: (_, record) => (
-        <EyeOutlined 
+        <ViewIcon
           onClick={() => openModal(record)} 
-          style={{ cursor: "pointer", fontSize: "16px" }} 
+          style={{ cursor: "pointer" }}
+          
         />
       ),
     },
