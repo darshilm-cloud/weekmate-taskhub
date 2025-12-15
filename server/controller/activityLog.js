@@ -1806,6 +1806,137 @@ exports.getActivityLogById = async (req, res) => {
         }
       }
 
+      // Handle task_status_history for tasks
+      if (populatedObj.task_status_history && Array.isArray(populatedObj.task_status_history)) {
+        try {
+          const WorkflowStatusModel = mongoose.model("workflowstatus");
+          const moment = require("moment");
+          
+          // Check if already transformed (array of objects with string values for task_status and updatedBy)
+          const isAlreadyTransformed = populatedObj.task_status_history.every(item => 
+            item && typeof item === 'object' && 
+            (typeof item.task_status === 'string' || item.task_status === "") &&
+            (typeof item.updatedBy === 'string' || item.updatedBy === "")
+          );
+          
+          if (!isAlreadyTransformed) {
+            const populatedHistory = await Promise.all(
+              populatedObj.task_status_history.map(async (historyItem) => {
+                if (!historyItem || typeof historyItem !== 'object') return historyItem;
+                
+                const populatedItem = { ...historyItem };
+                
+                // Populate task_status - handle null, ObjectId, string, or populated object
+                if (historyItem.task_status !== null && historyItem.task_status !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.task_status === 'string') {
+                    populatedItem.task_status = historyItem.task_status;
+                  } else if (typeof historyItem.task_status === 'object' && historyItem.task_status.title) {
+                    // Already populated object
+                    populatedItem.task_status = historyItem.task_status.title;
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let taskStatusId = null;
+                    if (historyItem.task_status instanceof mongoose.Types.ObjectId) {
+                      taskStatusId = historyItem.task_status;
+                    } else if (typeof historyItem.task_status === 'object' && historyItem.task_status._id) {
+                      taskStatusId = toObjectId(historyItem.task_status._id);
+                    } else if (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)) {
+                      taskStatusId = toObjectId(historyItem.task_status);
+                    }
+                    
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+                } else {
+                  populatedItem.task_status = "";
+                }
+                
+                // Populate updatedBy - handle ObjectId, string, or populated object
+                if (historyItem.updatedBy !== null && historyItem.updatedBy !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.updatedBy === 'string') {
+                    populatedItem.updatedBy = historyItem.updatedBy;
+                  } else if (typeof historyItem.updatedBy === 'object' && 
+                            (historyItem.updatedBy.full_name !== undefined || 
+                             historyItem.updatedBy.first_name !== undefined ||
+                             historyItem.updatedBy.email !== undefined)) {
+                    // Already populated object
+                    populatedItem.updatedBy = historyItem.updatedBy.full_name || 
+                      `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                      historyItem.updatedBy.email || "";
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let updatedById = null;
+                    if (historyItem.updatedBy instanceof mongoose.Types.ObjectId) {
+                      updatedById = historyItem.updatedBy;
+                    } else if (typeof historyItem.updatedBy === 'object' && historyItem.updatedBy._id) {
+                      updatedById = toObjectId(historyItem.updatedBy._id);
+                    } else if (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)) {
+                      updatedById = toObjectId(historyItem.updatedBy);
+                    }
+                    
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                } else {
+                  populatedItem.updatedBy = "";
+                }
+                
+                // Format updatedAt - ensure proper date format
+                if (historyItem.updatedAt) {
+                  // Check if already formatted (string with expected format)
+                  if (typeof historyItem.updatedAt === 'string' && /^\d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2}$/.test(historyItem.updatedAt)) {
+                    populatedItem.updatedAt = historyItem.updatedAt;
+                  } else {
+                    try {
+                      populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                    } catch (dateError) {
+                      populatedItem.updatedAt = historyItem.updatedAt.toString();
+                    }
+                  }
+                } else {
+                  populatedItem.updatedAt = "";
+                }
+                
+                // Remove any ID fields
+                delete populatedItem._id;
+                
+                return populatedItem;
+              })
+            );
+            
+            populatedObj.task_status_history = populatedHistory;
+          }
+          // If already transformed, keep it as is
+        } catch (error) {
+          console.error("Error processing task_status_history in populateUserFields:", error);
+          // Try to preserve already transformed data
+          if (!Array.isArray(populatedObj.task_status_history) || 
+              !populatedObj.task_status_history.every(item => 
+                item && typeof item === 'object' && 
+                (typeof item.task_status === 'string' || item.task_status === "") &&
+                (typeof item.updatedBy === 'string' || item.updatedBy === "")
+              )) {
+            populatedObj.task_status_history = [];
+          }
+        }
+      }
+
       // Remove all ID fields and ObjectId instances
       Object.keys(populatedObj).forEach(key => {
         const value = populatedObj[key];
@@ -1823,8 +1954,8 @@ exports.getActivityLogById = async (req, res) => {
         }
 
         // Remove arrays that might contain ObjectIds (if not already populated)
-        // Skip subscribers and subscriber_stages as we've already handled them above
-        if (key !== 'subscribers' && key !== 'subscriber_stages' && Array.isArray(value) && value.length > 0) {
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && Array.isArray(value) && value.length > 0) {
           const firstItem = value[0];
           if (firstItem && typeof firstItem === 'object' && firstItem.constructor && firstItem.constructor.name === 'ObjectId') {
             delete populatedObj[key];
@@ -1839,8 +1970,8 @@ exports.getActivityLogById = async (req, res) => {
         }
 
         // Recursively process nested objects (but not arrays of objects to avoid infinite loops)
-        // Skip subscribers and subscriber_stages as we've already handled them above
-        if (key !== 'subscribers' && key !== 'subscriber_stages' && value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
           // Process nested objects recursively, but limit depth to avoid issues
           Object.keys(value).forEach(nestedKey => {
             if (nestedKey === '_id' || nestedKey === '__v') {

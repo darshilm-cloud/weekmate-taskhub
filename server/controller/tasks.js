@@ -1278,6 +1278,16 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     // Before update ...
     const getData = await taskData(req.params.id);
 
+    // Get old data before update for logging
+    const oldTaskDataRaw = await ProjectTasks.findById(req.params.id)
+      .populate("assignees")
+      .populate("task_status")
+      .populate("task_labels")
+      .populate("task_status_history.task_status", "title")
+      .populate("task_status_history.updatedBy", "full_name first_name last_name")
+      .lean();
+    const oldTaskDataForLogging = oldTaskDataRaw || (getData.task ? (getData.task.toObject ? getData.task.toObject({ flattenMaps: false }) : getData.task) : null);
+
     const loginUserId = req.user._id;
     let common = {
       updatedBy: loginUserId,
@@ -1389,6 +1399,208 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     // after update ...
     const updatedData = await taskData(req.params.id);
 
+    // Get new data after update for logging
+    const newTaskDataRaw = await ProjectTasks.findById(data._id)
+      .populate("assignees")
+      .populate("task_status")
+      .populate("task_labels")
+      .populate("task_status_history.task_status", "title")
+      .populate("task_status_history.updatedBy", "full_name first_name last_name")
+      .lean();
+    const newTaskDataForLogging = newTaskDataRaw || (data.toObject ? data.toObject() : data);
+
+    // Helper function to transform task data for logging (reuse from updateProjectsTaskProps)
+    const transformTaskDataForLogging = async (taskData) => {
+      if (!taskData) return taskData;
+      const transformed = { ...taskData };
+      
+      // Transform assignees array to array of assignee names
+      if (transformed.assignees && Array.isArray(transformed.assignees)) {
+        try {
+          const EmployeesModel = mongoose.model("employees");
+          const assigneeNames = [];
+          
+          for (const assignee of transformed.assignees) {
+            if (!assignee) continue;
+            
+            if (typeof assignee === 'object' && 
+                (assignee.full_name !== undefined || 
+                 assignee.first_name !== undefined ||
+                 assignee.last_name !== undefined)) {
+              const name = assignee.full_name || 
+                `${assignee.first_name || ""} ${assignee.last_name || ""}`.trim();
+              if (name) assigneeNames.push(name);
+            } else {
+              const assigneeId = assignee instanceof mongoose.Types.ObjectId 
+                ? assignee 
+                : (typeof assignee === 'string' && mongoose.Types.ObjectId.isValid(assignee)
+                  ? new mongoose.Types.ObjectId(assignee)
+                  : (typeof assignee === 'object' && assignee._id
+                    ? (assignee._id instanceof mongoose.Types.ObjectId 
+                      ? assignee._id 
+                      : new mongoose.Types.ObjectId(assignee._id))
+                    : null));
+              
+              if (assigneeId) {
+                const assigneeDoc = await EmployeesModel.findById(assigneeId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                if (assigneeDoc) {
+                  const name = assigneeDoc.full_name || 
+                    `${assigneeDoc.first_name || ""} ${assigneeDoc.last_name || ""}`.trim();
+                  if (name) assigneeNames.push(name);
+                }
+              }
+            }
+          }
+          
+          transformed.assignees = assigneeNames;
+        } catch (error) {
+          console.error("Error transforming assignees for logging:", error);
+          transformed.assignees = [];
+        }
+      } else if (transformed.assignees) {
+        transformed.assignees = [];
+      }
+      
+      // Transform task_status object to task_status name
+      if (transformed.task_status) {
+        if (typeof transformed.task_status === 'object' && transformed.task_status.title !== undefined) {
+          transformed.task_status = transformed.task_status.title;
+        } else if (transformed.task_status instanceof mongoose.Types.ObjectId || 
+                   (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
+          try {
+            const WorkflowStatusModel = mongoose.model("workflowstatus");
+            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId 
+              ? transformed.task_status 
+              : new mongoose.Types.ObjectId(transformed.task_status);
+            const status = await WorkflowStatusModel.findById(statusId)
+              .select("title")
+              .lean();
+            transformed.task_status = status ? status.title : transformed.task_status.toString();
+          } catch (error) {
+            transformed.task_status = transformed.task_status.toString();
+          }
+        }
+      }
+      
+      // Transform task_status_history array
+      if (transformed.task_status_history && Array.isArray(transformed.task_status_history)) {
+        try {
+          const WorkflowStatusModel = mongoose.model("workflowstatus");
+          const EmployeesModel = mongoose.model("employees");
+          const moment = require("moment");
+          const historyData = [];
+          
+          for (const historyItem of transformed.task_status_history) {
+            if (!historyItem || typeof historyItem !== 'object') continue;
+            
+            const historyEntry = {};
+            
+            // Transform task_status - handle null, ObjectId, string, or populated object
+            if (historyItem.task_status !== null && historyItem.task_status !== undefined) {
+              if (typeof historyItem.task_status === 'object' && historyItem.task_status.title !== undefined) {
+                // Already populated
+                historyEntry.task_status = historyItem.task_status.title;
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                let statusId = null;
+                if (historyItem.task_status instanceof mongoose.Types.ObjectId) {
+                  statusId = historyItem.task_status;
+                } else if (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)) {
+                  statusId = new mongoose.Types.ObjectId(historyItem.task_status);
+                } else if (typeof historyItem.task_status === 'object' && historyItem.task_status._id) {
+                  statusId = historyItem.task_status._id instanceof mongoose.Types.ObjectId 
+                    ? historyItem.task_status._id 
+                    : new mongoose.Types.ObjectId(historyItem.task_status._id);
+                }
+                
+                if (statusId) {
+                  const status = await WorkflowStatusModel.findById(statusId)
+                    .select("title")
+                    .lean();
+                  historyEntry.task_status = status && status.title ? status.title : "";
+                } else {
+                  historyEntry.task_status = "";
+                }
+              }
+            } else {
+              // task_status is null or undefined
+              historyEntry.task_status = "";
+            }
+            
+            // Transform updatedBy - handle ObjectId, string, or populated object
+            if (historyItem.updatedBy !== null && historyItem.updatedBy !== undefined) {
+              if (typeof historyItem.updatedBy === 'object' && 
+                  (historyItem.updatedBy.full_name !== undefined || 
+                   historyItem.updatedBy.first_name !== undefined ||
+                   historyItem.updatedBy.email !== undefined)) {
+                // Already populated
+                historyEntry.updatedBy = historyItem.updatedBy.full_name || 
+                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                  historyItem.updatedBy.email || "";
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                let updatedById = null;
+                if (historyItem.updatedBy instanceof mongoose.Types.ObjectId) {
+                  updatedById = historyItem.updatedBy;
+                } else if (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)) {
+                  updatedById = new mongoose.Types.ObjectId(historyItem.updatedBy);
+                } else if (typeof historyItem.updatedBy === 'object' && historyItem.updatedBy._id) {
+                  updatedById = historyItem.updatedBy._id instanceof mongoose.Types.ObjectId 
+                    ? historyItem.updatedBy._id 
+                    : new mongoose.Types.ObjectId(historyItem.updatedBy._id);
+                }
+                
+                if (updatedById) {
+                  const updatedByUser = await EmployeesModel.findById(updatedById)
+                    .select("full_name first_name last_name email")
+                    .lean();
+                  historyEntry.updatedBy = updatedByUser 
+                    ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                    : "";
+                } else {
+                  historyEntry.updatedBy = "";
+                }
+              }
+            } else {
+              historyEntry.updatedBy = "";
+            }
+            
+            // Format updatedAt - ensure proper date format
+            if (historyItem.updatedAt) {
+              try {
+                historyEntry.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+              } catch (dateError) {
+                // If moment fails, try to format manually or keep original
+                historyEntry.updatedAt = historyItem.updatedAt.toString();
+              }
+            } else {
+              historyEntry.updatedAt = "";
+            }
+            
+            // Only add entry if it has at least one meaningful value
+            if (historyEntry.task_status || historyEntry.updatedBy || historyEntry.updatedAt) {
+              historyData.push(historyEntry);
+            }
+          }
+          
+          transformed.task_status_history = historyData;
+        } catch (error) {
+          console.error("Error transforming task_status_history for logging:", error);
+          transformed.task_status_history = [];
+        }
+      } else if (transformed.task_status_history) {
+        transformed.task_status_history = [];
+      }
+      
+      return transformed;
+    };
+    
+    // Transform data for logging
+    const oldTaskData = await transformTaskDataForLogging(oldTaskDataForLogging);
+    const newTaskData = await transformTaskDataForLogging(newTaskDataForLogging);
+
     await taskStatusUpdateMail(
       {
         oldData: getData,
@@ -1396,6 +1608,28 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       },
       decodedCompanyId
     );
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldTaskData && newTaskData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "tasks",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldTaskData,
+          newData: newTaskData,
+          additionalData: {
+            recordId: oldTaskData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging task workflow update activity:", logError);
+    }
 
     return successResponse(
       res,
@@ -1461,7 +1695,21 @@ exports.updateProjectsTaskProps = async (req, res) => {
 
     value.task_labels = task_labels;
 
-    const getData = await ProjectTasks.findById(req.params.id);
+    const getData = await ProjectTasks.findById(req.params.id)
+      .populate("assignees")
+      .populate("task_status")
+      .populate("task_labels")
+      .populate("task_status_history.task_status", "title")
+      .populate("task_status_history.updatedBy", "full_name first_name last_name");
+
+    // Get old data before update for logging - use lean() for consistency with new data
+    const oldTaskDataRaw = await ProjectTasks.findById(req.params.id)
+      .populate("assignees")
+      .populate("task_status")
+      .populate("task_labels")
+      .populate("task_status_history.task_status", "title")
+      .populate("task_status_history.updatedBy", "full_name first_name last_name")
+      .lean();
 
     // Get update obj...
     const { updateObj, historyUpdateArr } = await this.getDataForUpdate(
@@ -1491,6 +1739,242 @@ exports.updateProjectsTaskProps = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
     }
 
+    // Get new data after update for logging - populate necessary fields
+    const newDataPopulated = await ProjectTasks.findById(data._id)
+      .populate("assignees")
+      .populate("task_status")
+      .populate("task_labels")
+      .populate("task_status_history.task_status", "title")
+      .populate("task_status_history.updatedBy", "full_name first_name last_name")
+      .lean();
+    const newTaskDataRaw = newDataPopulated || (data.toObject ? data.toObject() : data);
+
+    // Helper function to transform task data for logging
+    const transformTaskDataForLogging = async (taskData) => {
+      if (!taskData) return taskData;
+      const transformed = { ...taskData };
+      
+      // Transform assignees array to array of assignee names
+      if (transformed.assignees && Array.isArray(transformed.assignees)) {
+        try {
+          const EmployeesModel = mongoose.model("employees");
+          const assigneeNames = [];
+          
+          for (const assignee of transformed.assignees) {
+            if (!assignee) continue;
+            
+            // Check if it's already a populated object
+            if (typeof assignee === 'object' && 
+                (assignee.full_name !== undefined || 
+                 assignee.first_name !== undefined ||
+                 assignee.last_name !== undefined)) {
+              const name = assignee.full_name || 
+                `${assignee.first_name || ""} ${assignee.last_name || ""}`.trim();
+              if (name) assigneeNames.push(name);
+            } else {
+              // It's an ObjectId or string ID - fetch the name
+              const assigneeId = assignee instanceof mongoose.Types.ObjectId 
+                ? assignee 
+                : (typeof assignee === 'string' && mongoose.Types.ObjectId.isValid(assignee)
+                  ? new mongoose.Types.ObjectId(assignee)
+                  : (typeof assignee === 'object' && assignee._id
+                    ? (assignee._id instanceof mongoose.Types.ObjectId 
+                      ? assignee._id 
+                      : new mongoose.Types.ObjectId(assignee._id))
+                    : null));
+              
+              if (assigneeId) {
+                const assigneeDoc = await EmployeesModel.findById(assigneeId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                if (assigneeDoc) {
+                  const name = assigneeDoc.full_name || 
+                    `${assigneeDoc.first_name || ""} ${assigneeDoc.last_name || ""}`.trim();
+                  if (name) assigneeNames.push(name);
+                }
+              }
+            }
+          }
+          
+          transformed.assignees = assigneeNames;
+        } catch (error) {
+          console.error("Error transforming assignees for logging:", error);
+          transformed.assignees = transformed.assignees
+            .map(a => {
+              if (typeof a === 'object' && a.full_name) return a.full_name;
+              if (typeof a === 'object' && a._id) return a._id.toString();
+              return a ? a.toString() : null;
+            })
+            .filter(Boolean);
+        }
+      } else if (transformed.assignees) {
+        transformed.assignees = [];
+      }
+      
+      // Transform task_status object to task_status name
+      if (transformed.task_status) {
+        if (typeof transformed.task_status === 'object' && transformed.task_status.title !== undefined) {
+          transformed.task_status = transformed.task_status.title;
+        } else if (transformed.task_status instanceof mongoose.Types.ObjectId || 
+                   (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
+          try {
+            const WorkflowStatusModel = mongoose.model("workflowstatus");
+            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId 
+              ? transformed.task_status 
+              : new mongoose.Types.ObjectId(transformed.task_status);
+            const status = await WorkflowStatusModel.findById(statusId)
+              .select("title")
+              .lean();
+            transformed.task_status = status ? status.title : transformed.task_status.toString();
+          } catch (error) {
+            transformed.task_status = transformed.task_status.toString();
+          }
+        }
+      }
+      
+      // Transform task_labels array to array of label names
+      if (transformed.task_labels && Array.isArray(transformed.task_labels)) {
+        try {
+          const ProjectLabelsModel = mongoose.model("tasklabels");
+          const labelNames = [];
+          
+          for (const label of transformed.task_labels) {
+            if (!label) continue;
+            
+            // Check if it's already a populated object
+            if (typeof label === 'object' && label.title !== undefined) {
+              labelNames.push(label.title);
+            } else {
+              // It's an ObjectId or string ID - fetch the name
+              const labelId = label instanceof mongoose.Types.ObjectId 
+                ? label 
+                : (typeof label === 'string' && mongoose.Types.ObjectId.isValid(label)
+                  ? new mongoose.Types.ObjectId(label)
+                  : (typeof label === 'object' && label._id
+                    ? (label._id instanceof mongoose.Types.ObjectId 
+                      ? label._id 
+                      : new mongoose.Types.ObjectId(label._id))
+                    : null));
+              
+              if (labelId) {
+                const labelDoc = await ProjectLabelsModel.findById(labelId)
+                  .select("title")
+                  .lean();
+                if (labelDoc && labelDoc.title) {
+                  labelNames.push(labelDoc.title);
+                }
+              }
+            }
+          }
+          
+          transformed.task_labels = labelNames;
+        } catch (error) {
+          console.error("Error transforming task_labels for logging:", error);
+          transformed.task_labels = transformed.task_labels
+            .map(l => {
+              if (typeof l === 'object' && l.title) return l.title;
+              if (typeof l === 'object' && l._id) return l._id.toString();
+              return l ? l.toString() : null;
+            })
+            .filter(Boolean);
+        }
+      } else if (transformed.task_labels) {
+        transformed.task_labels = [];
+      }
+      
+      // Transform task_status_history array
+      if (transformed.task_status_history && Array.isArray(transformed.task_status_history)) {
+        try {
+          const WorkflowStatusModel = mongoose.model("workflowstatus");
+          const moment = require("moment");
+          const historyData = [];
+          
+          for (const historyItem of transformed.task_status_history) {
+            if (!historyItem || typeof historyItem !== 'object') continue;
+            
+            const historyEntry = {};
+            
+            // Transform task_status
+            if (historyItem.task_status) {
+              if (typeof historyItem.task_status === 'object' && historyItem.task_status.title !== undefined) {
+                historyEntry.task_status = historyItem.task_status.title;
+              } else {
+                const statusId = historyItem.task_status instanceof mongoose.Types.ObjectId 
+                  ? historyItem.task_status 
+                  : (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)
+                    ? new mongoose.Types.ObjectId(historyItem.task_status)
+                    : null);
+                
+                if (statusId) {
+                  const status = await WorkflowStatusModel.findById(statusId)
+                    .select("title")
+                    .lean();
+                  historyEntry.task_status = status ? status.title : "";
+                } else {
+                  historyEntry.task_status = "";
+                }
+              }
+            } else {
+              historyEntry.task_status = "";
+            }
+            
+            // Transform updatedBy
+            if (historyItem.updatedBy) {
+              if (typeof historyItem.updatedBy === 'object' && 
+                  (historyItem.updatedBy.full_name !== undefined || 
+                   historyItem.updatedBy.first_name !== undefined)) {
+                historyEntry.updatedBy = historyItem.updatedBy.full_name || 
+                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                  historyItem.updatedBy.email || "";
+              } else {
+                const EmployeesModel = mongoose.model("employees");
+                const updatedById = historyItem.updatedBy instanceof mongoose.Types.ObjectId 
+                  ? historyItem.updatedBy 
+                  : (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)
+                    ? new mongoose.Types.ObjectId(historyItem.updatedBy)
+                    : null);
+                
+                if (updatedById) {
+                  const updatedByUser = await EmployeesModel.findById(updatedById)
+                    .select("full_name first_name last_name email")
+                    .lean();
+                  historyEntry.updatedBy = updatedByUser 
+                    ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                    : "";
+                } else {
+                  historyEntry.updatedBy = "";
+                }
+              }
+            } else {
+              historyEntry.updatedBy = "";
+            }
+            
+            // Format updatedAt
+            if (historyItem.updatedAt) {
+              historyEntry.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+            } else {
+              historyEntry.updatedAt = "";
+            }
+            
+            historyData.push(historyEntry);
+          }
+          
+          transformed.task_status_history = historyData;
+        } catch (error) {
+          console.error("Error transforming task_status_history for logging:", error);
+          transformed.task_status_history = [];
+        }
+      } else if (transformed.task_status_history) {
+        transformed.task_status_history = [];
+      }
+      
+      return transformed;
+    };
+    
+    // Transform data for logging
+    const oldTaskData = await transformTaskDataForLogging(oldTaskDataRaw);
+    const newTaskData = await transformTaskDataForLogging(newTaskDataRaw);
+
     // For send mail for new added subscribers..
     const assigneesData = getArrayChanges(
       getData.assignees.map((a) => a.toString()),
@@ -1504,6 +1988,29 @@ exports.updateProjectsTaskProps = async (req, res) => {
         decodedCompanyId
       );
     }
+
+    // Log update activity
+    try {
+      const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+      const userInfo = await getUserInfoForLogging(req.user);
+      if (userInfo && oldTaskData && newTaskData) {
+        await logUpdate({
+          companyId: userInfo.companyId,
+          moduleName: "tasks",
+          email: userInfo.email,
+          createdBy: userInfo._id,
+          updatedBy: userInfo._id,
+          oldData: oldTaskData,
+          newData: newTaskData,
+          additionalData: {
+            recordId: oldTaskData._id.toString()
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("Error logging task update activity:", logError);
+    }
+
     return successResponse(
       res,
       statusCode.SUCCESS,
