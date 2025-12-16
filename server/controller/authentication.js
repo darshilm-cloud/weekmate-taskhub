@@ -44,20 +44,31 @@ exports.authenticationGetData = async (req, res) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await this.dataForJWT(decodedToken.user);
-
+    const user = await this.dataForJWT(decodedToken.user || decodedToken.admin);
+    // issue a long-lived token just like login
     const pmsUserToken = createJWTToken(
       user,
       157680000 // 5 year
     );
 
     // Get login user permissions..
-    let permissions = await this.getUserPermissions(decodedToken.user._id);
+    const permissions = await this.getUserPermissions(
+      user?._id,
+      user?.companyId
+    );
+
+    // Log login activity to keep parity with normal login flow
+    await logLogin({
+      _id: user._id,
+      email: user.email,
+      companyId: user.companyId
+    });
+
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.USER_LOGIN,
-      { user: user, auth_token: pmsUserToken },
+      { user, auth_token: pmsUserToken },
       {},
       permissions,
       user?.pms_role_id?._id || ""
@@ -286,6 +297,7 @@ exports.getDataForLoginUser = async (reqBody) => {
 
 exports.dataForJWT = async (userData) => {
   try {
+    let data = userData
     if (userData?.pms_role_id?.role_name == "Client") {
       userData = await PMSClients.findOne({
         _id: new mongoose.Types.ObjectId(userData._id)
@@ -296,6 +308,14 @@ exports.dataForJWT = async (userData) => {
     } else {
       userData = await Employees.findOne({
         _id: new mongoose.Types.ObjectId(userData._id)
+      })
+        .populate("pms_role_id", "role_name")
+        .populate("companyId")
+        .exec();
+    }
+    if( userData == null){
+      userData = await Employees.findOne({
+        email: data.email
       })
         .populate("pms_role_id", "role_name")
         .populate("companyId")

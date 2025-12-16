@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Button, Input, message, Form, Row, Col } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams, useHistory } from "react-router-dom";
+import { Link, useParams, useHistory, useLocation } from "react-router-dom";
 import Service from "../service/index";
 import {
   userRole,
@@ -17,6 +17,7 @@ import { Modal, Typography } from "antd";
 
 function SignIn() {
   const history = useHistory();
+  const location = useLocation();
   const { verificationToken, companySlug } = useParams();
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   const companyTitle = localStorage.getItem(`title-${companySlug}`) || "";
@@ -27,16 +28,28 @@ function SignIn() {
   const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
 
   useEffect(() => {
-    if(!companySlug){
-      let storedSlug = localStorage.getItem("companyDomain")
-      if(storedSlug){
+    if (!companySlug) {
+      const storedSlug = localStorage.getItem("companyDomain");
+      if (storedSlug) {
         history.push(`/signin`);
       }
     }
+
+    // 1) Old email verification flow (kept as‑is)
     if (verificationToken) {
       tokenVerfication(verificationToken);
     }
-  }, [verificationToken]);
+
+    // 2) New JWT redirect flow (HRMS / SSO style)
+    //    If a `token` comes in query string, auto‑login via backend /authentication/redirectToBack
+    const searchParams = new URLSearchParams(location.search);
+    const redirectToken = searchParams.get("token");
+    const existingAccessToken = localStorage.getItem("accessToken");
+
+    if (redirectToken && !existingAccessToken) {
+      loginWithRedirectToken(redirectToken);
+    }
+  }, [verificationToken, location.search]);
 
   const tokenVerfication = async (token) => {
     let accessToken = localStorage.getItem("accessToken");
@@ -68,6 +81,67 @@ function SignIn() {
   };
 
   const [form] = Form.useForm();
+
+  // New: login using JWT token that hits /authentication/redirectToBack
+  const loginWithRedirectToken = async (token) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.loginWithHRMSRedirect,
+        body: { token },
+      });
+
+      if (response?.data?.status === 1) {
+        message.success(response?.data?.message);
+        const userData = response?.data?.data;
+
+        // Mirror normal login flow (localStorage + cookies + redirects)
+        localStorage.setItem("user_data", JSON.stringify(userData.user));
+        localStorage.setItem("accessToken", userData.auth_token);
+        const slug =
+          companySlug || userData?.user?.companyDetails?.companyDomain || "";
+        if (slug) {
+          localStorage.setItem(
+            "companyDomain",
+            userData?.user?.companyDetails?.companyDomain
+          );
+          localStorage.setItem(
+            `companyLogoUrl-${slug}`,
+            userData?.user?.companyDetails?.companyLogoUrl
+          );
+          localStorage.setItem(
+            `companyFavIcoUrl-${slug}`,
+            userData?.user?.companyDetails?.companyFavIcoUrl
+          );
+          localStorage.setItem(
+            `title-${slug}`,
+            userData?.user?.companyDetails?.companyName
+          );
+        }
+
+        // cookie
+        setCookie(
+          "user_permission",
+          JSON.stringify(response.data.permissions),
+          { expires: 365 }
+        );
+        setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
+
+        getRoles(["Client"])
+          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`)
+          : (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`);
+
+        dispatch(userSignInSuccess(userData));
+        dispatch(userpermission(response.data.permissions));
+        dispatch(userRole(response.data.pms_role_id));
+      } else {
+        message.error(response?.data?.message || "Unable to login with token");
+      }
+    } catch (error) {
+      console.log("🚀 ~ loginWithRedirectToken ~ error:", error);
+      message.error("Unable to login with token");
+    }
+  };
 
   const loginFn = async (values) => {
     try {
