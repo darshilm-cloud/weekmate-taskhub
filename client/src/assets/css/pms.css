@@ -188,9 +188,18 @@ h6,
 p,
 a,
 :where(.css-dev-only-do-not-override-dkbvqv).ant-tabs {
-    font-family: 'Outfit', sans-serif;
+    /* font-family: 'Outfit', sans-serif; */
 }
-
+*{
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif ;
+}
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif ;
+}
 .ant-layout-sider .sidebar-menu .ant-layout-sider {
     background-color: var(--bg-sidebar);
 }
@@ -1034,7 +1043,9 @@ ul.tab_menu li.active-tab {
     color: #000;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
-
+.ant-btn {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
 .project-update-box {
     display: flex;
     flex-direction: column;
@@ -2999,7 +3010,7 @@ span.ant-upload-list-item-actions button.ant-btn {
     font-size: 1.6rem;
     color: #1f2937;
     margin-bottom: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 }
 
 h1,
@@ -3010,7 +3021,7 @@ h5,
 h6,
 span,
 p {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 }
 
 .collapse-menu {

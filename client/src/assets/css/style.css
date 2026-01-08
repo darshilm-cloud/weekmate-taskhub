@@ -168,7 +168,7 @@ input::-ms-reveal {
 }
 
 html {
-  font-family: 'Outfit', sans-serif;
+  /* font-family: 'Outfit', sans-serif; */
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
@@ -189,7 +189,7 @@ body {
   font-variant: tabular-nums;
   line-height: 1.3;
   font-feature-settings: "tnum";
-  font-family: 'Outfit', sans-serif;
+  /* font-family: 'Outfit', sans-serif; */
 }
 
 [tabindex="-1"]:focus {
@@ -9935,7 +9935,7 @@ textarea.ant-picker-input>input {
   margin-right: 4px;
   color: #f5222d;
   font-size: 14px;
-  font-family: 'Outfit', sans-serif;
+  /* font-family: 'Outfit', sans-serif; */
   line-height: 1;
   content: "*";
 }
@@ -17137,6 +17137,7 @@ textarea.ant-input-affix-wrapper {
   color: #bfbfbf;
 }
 
+.ant-form-item .ant-form-item-explain-error 
 .ant-input:placeholder-shown {
   text-overflow: ellipsis;
 }
@@ -17144,6 +17145,9 @@ textarea.ant-input-affix-wrapper {
 .ant-input:hover {
   border-color: #28aaeb;
   border-right-width: 1px !important;
+}
+.gx-app-login-main-content .ant-form-item-explain-error{
+  font-size: 12px;
 }
 
 .ant-input-rtl .ant-input:hover {
@@ -20894,7 +20898,7 @@ textarea.ant-mentions {
   display: block;
   margin: auto;
   color: rgba(0, 0, 0, 0.25);
-  font-family: 'Outfit', sans-serif;
+  /* font-family: 'Outfit', sans-serif; */
   letter-spacing: 2px;
   text-align: center;
   text-indent: 0.13em;
@@ -48416,15 +48420,22 @@ body .gx-drawer-sidebar-dark .gx-layout-sider-header {
 .account-login .login-icon.lock {
   z-index: 99;
 }
+.login-footer{
+  color: #545454;
+}
 
 .account-login .login-icon.lock img {
   max-width: 20px;
 }
-
+.account-login form .ant-btn-primary:hover{
+  background: var(--bg-primary) !important;
+}
 .account-login form .ant-btn-primary {
+  border-radius: 6px;
   background: var(--bg-secondary);
   color: #fff;
   padding: 12px 16px;
+    line-height: 1.3;
   width: 100%;
   font-size: 14px;
   text-transform: uppercase;
@@ -48901,7 +48912,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .gx-app-logo.account_logo {
-  padding-bottom: 2rem;
+ padding-bottom: 30px;
 }
 
 .gx-app-login-wrap.account-login {
@@ -48911,12 +48922,10 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .gx-app-logo.account_logo img {
-  max-width: 100px;
-  min-width: 100px;
-  height: auto;
-  width: 100%;
-  display: block;
-  margin: 0 auto;
+    margin: 0 auto;
+    display: block;
+    max-width: 80px;
+    min-height: 80px;
 }
 
 p.error_field {
@@ -48925,7 +48934,27 @@ p.error_field {
   font-size: 12px;
   font-weight: 400;
 }
+.gx-app-login-wrap .ant-input-affix-wrapper{
+  padding: 0;
+}
+.gx-app-login-wrap  .ant-input-affix-wrapper .ant-input-prefix {
+  margin: 0;
+}
+ .gx-app-login-wrap .ant-form .ant-form-item  .ant-form-item-label {
+  padding-bottom: 10px;
+ }
+ .gx-app-login-wrap .ant-form-item-label >label{
+    display: inline-block;
+    font-size: 14px;
+    color: #545454;
+    font-weight: 500;
+    height: auto;
+    min-height: 1px;
 
+ }
+  .gx-app-login-wrap a{
+       color: #038fde;
+  }
 .ant-message-notice-content span {
   word-break: break-all;
   white-space: break-spaces;

@@ -263,11 +263,7 @@ function SignIn() {
                 } }
                 layout="vertical"
               >
-                <div className="form-label">
-                  <span>
-                    <label>Email</label>
-                  </span>
-                </div>
+           
                 <div className="form-content">
                   <Form.Item
                     rules={ [
@@ -280,21 +276,19 @@ function SignIn() {
                         message: "Please enter valid email",
                       },
                     ] }
+                    label="Email"
                     name="email"
                   >
-                    <Input type="email" placeholder="Enter your email" />
+                    <Input type="email" placeholder="Enter your email"  prefix={<span className="login-icon">
+                      <i className="fas fa-envelope"></i>
+                    </span>} />
                   </Form.Item>
-                  <span className="login-icon">
-                    <i className="fas fa-envelope"></i>
-                  </span>
+                
                 </div>
-                <div className="form-label">
-                  <span>
-                    <label>Password</label>
-                  </span>
-                </div>
+              
                 <div className="form-content">
                   <Form.Item
+                  label="Password"
                     name="password"
                     rules={ [
                       {
@@ -303,11 +297,11 @@ function SignIn() {
                       },
                     ] }
                   >
-                    <Input.Password placeholder="Enter your password" />
+                    <Input.Password placeholder="Enter your password"   prefix={<span className="login-icon">
+                  <i className="fas fa-lock"></i>
+                    </span>}/>
                   </Form.Item>
-                  <span className="login-icon lock">
-                    <i className="fas fa-lock"></i>
-                  </span>
+            
                 </div>
 
                 <Form.Item>
@@ -338,7 +332,7 @@ function SignIn() {
                 )} */}
 
                 <Form.Item>
-                  <div style={ { textAlign: "center" } }>
+                  <div className="login-footer" style={ { textAlign: "center" } }>
                     Forgot your login details?
                     <Link to={`/forgot-password`}>
                       &nbsp;Get help logging in.

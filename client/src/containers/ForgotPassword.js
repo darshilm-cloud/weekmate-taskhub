@@ -34,6 +34,7 @@ function ForgetPassword() {
       <div className="gx-app-login-wrap account-login">
         <div className="gx-app-login-container">
           <div className="gx-app-login-main-content">
+             <div className="gx-app-login-content">
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
                 <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }                   
@@ -42,27 +43,25 @@ function ForgetPassword() {
                 />
               </div>
             </div>
-            <div className="gx-app-login-content">
+         
               <div className="form-center">
                 <div className="gx-app-logo-wid">
-                  <h1>Trouble Logging in?</h1>
+                  <h1>Forgot Password</h1>
                 </div>
                 <div className="gx-app-login-left-content">
-                  <h6>Welcome to {companyTitle} TaskHub Portal !</h6>
+                  <h6>Welcome to WeekMate {companyTitle} TaskHub Portal !</h6>
 
                 </div>
                 <Form
                   name="basic"
+                  layout="vertical"
                   onFinish={ handleSubmit }
                   className="gx-signin-form gx-form-row0"
                 >
-                  <div className="form-label">
-                    <span>
-                      <label>Email</label>
-                    </span>
-                  </div>
+                
                   <div className="form-content">
                     <Form.Item
+                    label="Email"
                       name="email"
                       rules={ [
                         {
@@ -75,11 +74,11 @@ function ForgetPassword() {
                         },
                       ] }
                     >
-                      <Input type="email" placeholder="Email" />
-                    </Form.Item>
-                    <span className="login-icon">
+                      <Input type="email" placeholder="Enter your email" prefix={   <span className="login-icon">
                       <i className="fas fa-envelope"></i>
-                    </span>
+                    </span>} />
+                    </Form.Item>
+                 
                   </div>
 
                   <p className="form-text">
@@ -87,14 +86,17 @@ function ForgetPassword() {
                   </p>
                   <Form.Item>
                     <Button type="primary" htmlType="submit" >
-                      Send a Reset Link
+                      Send Reset Link
                     </Button>
+                  </Form.Item>
+                  <Form.Item>
+
                     <Link
                       type="button"
                       to={ "/signin"}
                       className="ant ant-btn-back"
                     >
-                      Back
+                Back to Sign In
                     </Link>
                   </Form.Item>
                 </Form>
