@@ -302,7 +302,7 @@ function DiscussionForm() {
         setDiscussionTopic(response.data.data);
         setDiscussionComments(response.data.data);
         setDiscussionComments(response.data.data);
-        if (response?.data?.data.length > 0) {
+        if (response?.data?.data?.length > 0) {
           getDiscussionComment(response.data.data[0]?._id);
         }
         setselectedTopic(response.data.data[0]);

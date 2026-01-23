@@ -34,7 +34,7 @@ const NoDataFound = React.memo(() => (
 
 // Custom Legend Component
 const CustomLegend = React.memo(({ data, labels, colors }) => {
-  if (!data || data.length === 0 || !labels || labels.length === 0) return null;
+  if (!data || data?.length === 0 || !labels || labels?.length === 0) return null;
 
   const total = data.reduce((sum, value) => sum + value, 0);
 

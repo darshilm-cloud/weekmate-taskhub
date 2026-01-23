@@ -749,7 +749,7 @@ const MiraAI = () => {
 
         if (response.type === 'policies') {
             const data = response.content;
-            if (!data || data.length === 0) {
+            if (!data || data?.length === 0) {
                 return <p className="no-data-message">No data found</p>;
             }
             return (
@@ -798,7 +798,7 @@ const MiraAI = () => {
 
         if (response.type === 'documents') {
             const data = response.content;
-            if (!data || data.length === 0) {
+            if (!data || data?.length === 0) {
                 return <p className="no-data-message">No data found</p>;
             }
             return (

@@ -122,8 +122,8 @@ function UserProfile() {
           socketEvents.GET_UNREAD_NOTIFICATIONS,
           (data) => {
             if (isMounted) {
-              setNotificationData(data.data);
-              setCountdata(data.data.length);
+              setNotificationData(data?.data);
+              setCountdata(data?.data?.length);
               setUnReadId(notificationData.map((item) => item?._id));
             }
           }

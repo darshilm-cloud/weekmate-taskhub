@@ -147,7 +147,7 @@ const ComplaintDetailsForm = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data) {
-        if (response.data.data.length > 0) {
+        if (response.data.data?.length > 0) {
           setComplaintsStatusData(response.data.data);
           form.setFieldsValue({
             status: response.data.data[0].status,

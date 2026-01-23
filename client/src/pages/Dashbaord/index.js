@@ -397,7 +397,7 @@ const Dashboard = () => {
         body: reqBody,
       });
       dispatch(hideAuthLoader());
-      if (response?.data?.data.length > 0) {
+      if (response?.data?.data?.length > 0) {
         const taskId = response.data.data[0]._id;
         if (taskId) {
           history.push(`/${companySlug}/project/app/${projectId}?tab=Tasks&listID=${taskId}`);
@@ -505,7 +505,7 @@ const Dashboard = () => {
   useEffect(() => {
     getProjectListing();
     getProjectList();
-    getLoggedHoursProgress();
+    // getLoggedHoursProgress();
     myProjects();
     myTasks();
     myBugs();
