@@ -48,6 +48,7 @@ const EmployeeMasterList = React.lazy(() =>
   import("../pages/EmployeeList/EmployeeMasterList")
 );
 const ProjectsRunningReports = React.lazy(() => import("../pages/Reports"));
+const ReportsHome = React.lazy(() => import("../pages/Reports/ReportsHome"));
 const TimeSheetReports = React.lazy(() => import("../pages/Reports/TimeSheet"));
 const PermissionModule = React.lazy(() => import("../pages/PermissionModule"));
 const ResourcePermission = React.lazy(() =>
@@ -203,6 +204,11 @@ const index = ({ match, userPermission }) => {
     {
       path: ":companySlug/project-runnig-reports",
       component: ProjectsRunningReports,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/reports-home",
+      component: ReportsHome,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {

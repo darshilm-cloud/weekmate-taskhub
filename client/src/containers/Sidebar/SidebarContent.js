@@ -3,7 +3,7 @@ import { Form, Menu, Layout } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import { useDispatch } from "react-redux";
-import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined } from "@ant-design/icons";
+import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined, BarChartOutlined } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./SidebarContent.css";
@@ -133,7 +133,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/project-list")) return "Admin Dashboard";
     if (path.includes("/project-users")) return "Users";
     if (path.includes("/permission-access")) return "Permission";
-    if (path.includes("/project-runnig-reports")) return "Analytics";
+    if (path.includes("/project-runnig-reports")) return "Reports";
     if (path.includes("/timesheet-reports")) return "Analytics";
     if (path.includes("/billable-hours")) return "Hours";
     if (path.includes("/positive-review")) return "FeedBack";
@@ -192,6 +192,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <i className="fi fi-rr-lock"></i>,
         label: "Permissions",
         onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
+      },
+      getRoles(["Admin"]) && {
+        key: "Reports",
+        icon: <BarChartOutlined />,
+        label: "Reports",
+        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports-home`),
       },
       (getRoles(["Admin"]) ||
         userData._id == sideBarContentId) && {
