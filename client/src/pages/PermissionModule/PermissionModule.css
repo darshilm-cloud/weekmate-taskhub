@@ -1,0 +1,44 @@
+.permission-card .add-permission-button span {
+  padding: 5px 5px;
+}
+.permission-modal-content-wrapper {
+  padding: 0px;
+}
+
+.permission-modal-content-wrapper .permission-list-wrapper {
+  width: 100%;
+  height: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
+.permission-modal-content-wrapper .permission-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  
+}
+
+.permission-modal-content-wrapper .permission-modla-close-icon{
+    font-size: 24px;
+}
+
+
+.permission-edit-modal
+  .permission-modal-content-wrapper
+  .permission-list-wrapper
+  ul {
+  list-style: none;
+  padding: 0;
+}
+
+.permission-edit-modal
+  .permission-modal-content-wrapper
+  .permission-list-wrapper
+  ul
+  li {
+  display: flex;
+  justify-content: space-between;
+}

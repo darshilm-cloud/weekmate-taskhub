@@ -1,0 +1,225 @@
+/* ActivityLogs.css */
+:root {
+    --muted: #8c8c8c;
+    --text: #000;
+    --small: 12px;
+    --base: 14px;
+    --section-gap: 24px;
+  }
+  
+ 
+  
+  .activity-logs-wrapper {
+    /* padding: 24px; */
+   
+  }
+  
+  .activity-logs-header {
+    margin-bottom: 24px;
+  }
+  
+  .activity-logs-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: rgba(0, 0, 0, 0.88);
+  }
+  
+  /* Activity Modal Content */
+  .activity-modal {
+    padding: 10px 0;
+  }
+  
+  /* Section container */
+  .activity-section {
+    margin-bottom: var(--section-gap);
+  }
+  
+  .activity-section:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Section title (h3) */
+  .activity-section .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: var(--text);
+  }
+  
+  /* 3-column responsive grid */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+  }
+  
+  /* Single field label and value */
+  .field-label {
+    font-size: var(--small);
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  
+  .field-value {
+    font-size: var(--base);
+    color: var(--text);
+    font-weight: 500;
+  }
+  
+  /* Tag container if you need custom tag wrapper (optional) */
+  .tag-inline {
+    margin: 0;
+    display: inline-block;
+  }
+  
+  /* Status information uses same grid */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+  }
+  
+  /* Changes box styling */
+  .changes-box {
+    background-color: #fffbf0;
+    border: 1px solid #ffe58f;
+    border-radius: 4px;
+    padding: 16px;
+  }
+  
+  /* Header inside the changes box */
+  .changes-box .changes-header {
+    display: flex;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #d4380d;
+  }
+  
+  .changes-box .changes-header .col {
+    flex: 1;
+    color: #8b4513;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Each changed-field row */
+  .change-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  
+  .change-row:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Left/right columns inside change row */
+  .change-col {
+    flex: 1;
+    max-width: 33.33%;
+  }
+  
+  .change-subtitle {
+    font-size: 11px;
+    color: #8b4513;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  
+  .prev-value {
+    color: #d4380d;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .curr-value {
+    color: green;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* Arrow / spacer column between prev and curr */
+  .change-arrow {
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #fa8c16;
+    font-weight: 700;
+  }
+  
+  /* Other Information section uses grid-3 as well */
+  .other-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+  }
+  
+  /* Deleted data grid uses same layout */
+  .deleted-data-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px 24px;
+    word-break: break-all;
+  }
+  
+  /* Company extra row - if present */
+  .company-row {
+    margin-top: 8px;
+  }
+  
+  /* Utility spacer if needed */
+  .spacer-50 {
+    width: 50px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .activity-logs-container {
+      padding: 16px;
+    }
+  
+    .activity-logs-wrapper {
+      padding: 16px;
+    }
+  
+    .grid-3,
+    .status-grid,
+    .other-info,
+    .deleted-data-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .change-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .change-col {
+      max-width: 100%;
+      margin-bottom: 8px;
+    }
+  
+    .change-arrow {
+      transform: rotate(90deg);
+      margin: 8px 0;
+    }
+  
+    .changes-box .changes-header {
+      flex-direction: column;
+    }
+  
+    .changes-box .changes-header .col {
+      margin-bottom: 4px;
+    }
+  }

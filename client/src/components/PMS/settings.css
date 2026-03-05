@@ -1,0 +1,49 @@
+.resources-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.resources-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td,
+
+.project-technology-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.project-technology-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td,
+
+.project-type-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.project-type-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td,
+
+.project-status-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.project-status-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td,
+
+.project-labels-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.project-labels-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td,
+
+.workflow-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+.workflow-container :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td {
+    word-wrap: normal;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.project-labels-container td.ant-table-cell>input[label="color"] {
+    max-width: 60px;
+}
+
+.resources-container .head-box-inner,
+.project-labels-container .head-box-inner,
+.project-status-container .head-box-inner,
+.project-type-container .head-box-inner,
+.project-technology-container .head-box-inner {
+    max-width: 100%;
+}
+
+.workflow-container .profile-sub-head {
+    justify-content: unset;
+    gap: 30px;
+}
+
+.workflow-container .heading-main {
+    margin-bottom: 0;
+    border-bottom: unset;
+    padding-bottom: 0px;
+}
+
+.archived-main-wrapper .head-box-inner {
+    max-width: 50%;
+
+}

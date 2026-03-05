@@ -1,0 +1,42 @@
+.admin-user .ant-modal-content .ant-modal-header .ant-modal-title {
+    font-weight: 600;
+    background-color: transparent;
+}
+.ant-modal-content .ant-modal-title {
+    padding: 16px 24px;
+    color: #545454;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    border-radius: 6px 6px 0 0;
+}
+
+
+.admin-user .ant-modal-content .ant-modal-body {
+    background-color: var(--chat-body-wrapper);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.admin-user .ant-modal-content .ant-modal-body .ant-radio-wrapper:hover .ant-radio-inner {
+    border-color: #c2c3c5;
+}
+
+.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 40px;
+    width: 100%;
+}
+
+.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus,
+.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:focus-within,
+.admin-user .ant-modal-content .ant-modal-body .ant-input-outlined:hover {
+    background-color: #fff;
+    border-color: #c2c3c5;
+    color: #3f4350;
+}
+
+
+.ant-modal-content .ant-modal-body .ant-form-vertical .ant-form-item{
+    margin-bottom: 15px;
+}

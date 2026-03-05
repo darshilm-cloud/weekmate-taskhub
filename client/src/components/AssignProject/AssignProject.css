@@ -1,0 +1,229 @@
+.project_title_main_div {
+    display: flex;
+    gap: 10px;
+    /* color: #000; */
+}
+
+.all-project-main-wrapper .ant-avatar>img {
+    object-fit: cover;
+}
+
+.project_title_main_div .project_status_color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.selected-filter-member {
+    background-color: #cac7b8;
+}
+
+.project-add-wrapper .ant-form-item.subscriber-btn {
+    width: 100%;
+}
+
+.project-add-wrapper .ant-form-item-control-input-content .clear-btn {
+    margin-top: 10px;
+}
+
+.project-add-wrapper .modal-footer-flex .flex-btn {
+    padding-left: 10px;
+}
+
+.project-add-wrapper .ck-editor__main {
+    height: 100%;
+    max-height: 200px;
+}
+
+.project-add-wrapper .ck-editor__editable {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.project-add-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.ant-avatar-string {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-weight: 400;
+    transform: translate(-50%, -50%) !important;
+}
+
+.pop-project-task-main-wrapper .ant-form-item-control-input-content {
+    margin-top: 5px;
+    padding: 0 5px;
+}
+
+.project-add-wrapper .pop-project-task-main-wrapper .ant-row {
+    margin-top: 5px;
+    align-items: baseline;
+}
+
+.pop-project-task-main-wrapper .poject-type .ant-select-show-search>.ant-select-selector {
+    height: 50px !important;
+}
+
+/* .project-add-wrapper {
+    width: 650px !important;
+} */
+
+.project-add-wrapper .pop-project-task-main-wrapper .ant-row .ant-col {
+    padding: 0 5px;
+    width: 100%;
+}
+
+.project-add-wrapper .pop-project-task-main-wrapper .ant-picker {
+    width: 100%;
+}
+
+.project-add-wrapper .ant-form-horizontal .modal-footer-flex {
+    padding: 15px 0;
+}
+
+.assignees-popover .assigness-data {
+    overflow-y: auto;
+    /* height: calc(100vh - 270px); */
+    max-height: 180px
+}
+
+.assignees-popover ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.all-project-main-wrapper .heading-main {
+    padding-bottom: 0px;
+    margin-bottom: 0;
+    white-space: nowrap;
+    margin-right: 15px;
+    border-bottom: none;
+}
+
+.all-project-main-wrapper .ant-card-body table th,
+.ant-card-body table td {
+    padding: 7px ;
+}
+
+.all-project-main-wrapper .ant-card-body {
+    padding: 15px;
+}
+
+.all-project-main-wrapper .profile-sub-head {
+    margin-bottom: 0;
+}
+
+.all-project-main-wrapper .ant-table-body {
+    max-height: calc(100vh - 370px) !important;
+}
+
+.assignees-popover ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+.ant-popover-placement-bottomRight {
+    height: auto;
+}
+
+.modal-footer-flex .ant-form-item {
+    width: fit-content;
+}
+
+.ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
+    margin-left: 0;
+}
+
+.project_title_main_div>span {
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+}
+
+.all-project-main-wrapper .ant-input-search {
+    max-width: 200px;
+}
+
+
+
+.all-project-main-wrapper .head-box-inner {
+    max-width: 50%;
+}
+
+.all-project-main-wrapper .edit-delete {
+    justify-content: center;
+    cursor: pointer;
+}
+
+.all-project-main-wrapper .edit-delete [class="fa-solid fa-ellipsis-vertical"] {
+    display: none;
+}
+
+.all-project-main-wrapper .ant-table-cell:hover [class="fa-solid fa-ellipsis-vertical"] {
+    display: block;
+    cursor: pointer;
+    color: #358CC0;
+    font-size: 13px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.all-project-main-wrapper .ant-table-cell:hover .edit-delete .edit-btn {
+    display: block;
+}
+
+.all-project-main-wrapper .edit-delete .edit-btn {
+    background-color: #eeeeee;
+    max-width: 23px;
+    max-height: 23px;
+    padding: 12px;
+    display: none;
+    position: relative;
+    border-radius: 100%;
+}
+
+.project-edit-btn-wrapper .projectedit {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.ant-popover-content .project-edit-btn-wrapper>div {
+    margin-bottom: 5px;
+    display: flex;
+    gap: 10px;
+    padding: 5px 10px;
+    align-items: center;
+}
+
+@media screen and (max-width: 1024px) {
+
+    .project_title_main_div>span {
+        max-width: 200px;
+    }
+}
+
+.ant-col.ant-col-12.css-dev-only-do-not-override-qnu6hi:nth-child(2) {
+    padding: 0;
+}
+
+.ant-col.ant-col-12.css-dev-only-do-not-override-qnu6hi:first-child {
+    padding: 0;
+}
+
+.ant-form-horizontal .ant-row {
+    margin-left: -15px;
+    margin-right: -15px;
+    width: 100%;
+    /* display: flex; */
+    /* justify-content: center; */
+    margin: 0 auto;
+}

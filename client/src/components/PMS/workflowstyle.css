@@ -1,0 +1,18 @@
+.workflowtask-wrapper .ant-spin-container .ant-table-content {
+    height: 100%;
+}
+
+.workflowtask-wrapper .ant-table-row td.ant-table-cell:nth-child(2),
+.workflowtask-wrapper td.ant-table-cell>span {
+    word-break: break-word;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.workflow-container .head-box-inner {
+    max-width: 100%;
+}
+
+.workflowtask-wrapper td.ant-table-cell>input[name="color"] {
+    max-width: 60px;
+}

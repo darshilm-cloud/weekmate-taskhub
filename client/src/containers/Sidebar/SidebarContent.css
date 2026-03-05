@@ -1,0 +1,16 @@
+.project_title_main_div {
+    display: flex;
+    gap: 10px;
+    /* color: #000; */
+}
+
+.project_title_main_div .project_status_color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.right-popover-wrapper>a>p {
+    margin-bottom: 8px;
+}
+

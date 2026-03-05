@@ -1,0 +1,11 @@
+{
+    "watch": [
+        "server.js",
+        "helpers/",
+        "socketFn.js"
+    ],
+    "ignore": [
+        "socketData.json"
+    ],
+    "ext": "js,json"
+}

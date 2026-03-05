@@ -1,0 +1,124 @@
+.post-content .owl-nav button.owl-next img,
+.owl-nav button.owl-prev img {
+    max-width: 20px;
+}
+
+.post-content .featured_properties_row .featured_properties_main_img_body .left_side_text h5 {
+    font-size: 52px;
+    color: #275683;
+    margin: 0px;
+    font-weight: 400;
+}
+
+.post-content .featured_properties_row .featured_properties_main_img_body .left_side_text {
+    width: 100%;
+    max-width: 65%;
+}
+
+.post-content .featured_properties_row .featured_properties_main_img_body .right_side_text {
+    flex: 0 0 30%;
+    max-width: 30%;
+}
+
+.post-content .left_side_text p.listing_sale {
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0px;
+}
+
+.post-content .left_side_text .listing_sale>span {
+    color: #275683;
+}
+
+.post-content .featured_properties_body_text {
+    align-items: end;
+    background: linear-gradient(180deg, rgba(217, 217, 217, 0) 9.84%, #D9D9D9 100%);
+    padding: 20px 40px;
+    ;
+}
+
+.post-content .fusion-layout-column .fusion_builder_column_inner.fusion-flex-column {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.featured_properties_icon_div {
+    display: flex !important;
+    justify-content: space-between;
+}
+
+.post-content .owl-stage-outer .image-row>img {
+    margin: 10px;
+}
+
+.post-content .image-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: nowrap;
+    margin: -10px;
+    padding-top: 15px;
+}
+
+
+@media screen and (max-width: 1400px) {
+    .featured_properties_row .owl-nav button.owl-next {
+        transform: translate(29px, -50%);
+
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .post-content .featured_properties_row .featured_properties_main_img_body .left_side_text {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-top: 22px;
+    }
+
+    .featured_properties_row .owl-nav button.owl-next {
+        transform: translate(29px, -50%);
+    }
+
+
+}
+
+@media screen and (max-width:991px) {
+    .post-content .featured_properties_row .featured_properties_main_img_body .left_side_text h5 {
+        font-size: 42px;
+    }
+
+    .post-content .featured_properties_row .featured_properties_main_img_body .right_side_text {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-top: 22px;
+    }
+
+    .featured_properties_icon_div {
+        display: flex !important;
+        justify-content: space-evenly;
+    }
+
+    .post-content .featured_properties_row .image-row>img {
+        max-width: 386px;
+        margin: 10px;
+    }
+
+}
+
+@media screen and (max-width:767px) {
+    .post-content .featured_properties_row .featured_properties_main_img_body .left_side_text h5 {
+        font-size: 32px;
+    }
+
+    .post-content .left_side_text p.listing_sale {
+        font-size: 18px;
+    }
+
+    .post-content .fusion-layout-column .fusion_builder_column_inner.fusion-flex-column {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+
+}

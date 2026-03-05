@@ -1,0 +1,429 @@
+/* ============================= 12 march ============================= */
+.discussion-module .discussion-comment-block {
+    padding: 0 16px;
+    height: calc(100% - 40px);
+    position: relative;
+}
+
+
+
+.discussion-module .add-project-wrapper {
+    margin-bottom: 10px;
+}
+
+.discussion-module .discussion-comment-block .comment-module {
+    max-height: calc(100vh - 450px);
+    padding: 0 16px;
+    background-color: transparent;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+}
+
+
+.discussion-comment-block .ant-list.ant-list-split {
+    max-height: 600px;
+    overflow: auto;
+}
+
+.ant-comment-content-detail textarea.ant-input {
+    resize: none;
+}
+
+.discussion-comment-block .ant-comment-content-author span.ant-comment-content-author-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #ffb100;
+}
+
+.ant-comment-content-author-time>span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ant-comment-content-detail p {
+    font-size: 14px;
+    color: #000;
+    font-weight: 500;
+}
+
+.ant-modal-body .ant-form-item-label label {
+    font-size: 12px;
+    text-transform: capitalize;
+}
+
+.ant-modal-body .ant-form-item-control-input-content>textarea {
+    resize: none;
+    min-height: 100px;
+}
+
+.discussion-module .profileleftbar .project-update {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 270px);
+    height: 100%;
+    padding-right: 5px;
+}
+
+
+/* 20 march  */
+.discussion-module .profileleftbar .project-update ul li {
+    background-color: transparent;
+}
+
+.discussion-module .profileleftbar .design-graph-inactive {
+    width: 100%;
+}
+
+.discussion-module .profileleftbar .design-graph>h6,
+.discussion-module .profileleftbar .design-graph-inactive>h6 {
+    word-break: break-all;
+    white-space: normal;
+}
+
+
+.modal-footer-flex label.ant-checkbox-wrapper {
+    margin-bottom: 0px;
+    white-space: nowrap;
+}
+
+.flex-btn button.ant-btn-icon-only {
+    border: none;
+}
+
+.add-task-modal .modal-footer-flex>.flex-btn {
+    flex-wrap: nowrap;
+}
+
+.ant-modal-content .ant-form-horizontal .modal-footer-flex {
+    padding: 0;
+}
+
+.ant-modal-content .ant-form-horizontal .modal-footer-flex {
+    padding: 15px;
+}
+
+.add-task-modal .ant-modal-content .ant-form-horizontal .ant-row {
+    padding: 0px;
+}
+
+.pin-btn .ant-form-item-row {
+    margin: 0;
+    padding: 0px;
+}
+
+.modal-footer-flex .pin-btn.ant-form-item-row {
+    padding: 0px;
+}
+
+.ant-form-horizontal .modal-footer-flex .flex-btn {
+    flex-wrap: nowrap;
+}
+
+.add-task-modal :where(.css-dev-only-do-not-override-dkbvqv).ant-form-item .ant-form-item-control:first-child:not([class^="'ant-col-'"]):not([class*="' ant-col-'"]) {
+    width: 100%;
+    min-width: inherit;
+}
+
+.ant-modal-content .ant-form-item-control-input .ant-select-selector {
+    max-width: 100%;
+    min-width: inherit;
+}
+
+.discussion-module .mention-field-btn-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+.project-update ul li h6.ant-btn-icon-only {
+    border: none;
+}
+
+.discussion-module .project-update .design-graph h6 {
+    font-weight: 500;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.discussion-module .discussion-comment-block .discusstion-main-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.discussion-module .design-graph>div>p {
+    margin-bottom: 0;
+}
+
+.comment-mention-textbox {
+    background-color: #ffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.discussion-module .profilerightbar .ant-badge {
+    max-width: 110px;
+    max-height: 110px;
+    min-width: 110px;
+    min-height: 100px;
+    background: none;
+    border: 1px solid rgba(128, 128, 128, 0.512);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+}
+
+.discussion-module .main-avatar-wrapper {
+    display: flex;
+    position: relative;
+    align-items: center;
+}
+
+.discussion-module .design-graph-inactive>div>p {
+    margin: 0;
+}
+
+.discussion-module .main-comment-wrapper .edit-bar {
+    position: absolute;
+    right: 0;
+}
+
+.discussion-module .main-comment-wrapper {
+    margin: 14px 0;
+}
+
+.discussion-module .comment-wrapper>i>div,
+.discussion-module .comment-wrapper>div {
+    padding-left: 40px;
+    font-weight: 500;
+    padding-right: 40px;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.discussion-module .main-comment-wrapper span.discussion-name-edit {
+    padding: 10px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.discussion-module .main-avatar-wrapper span.discussion-time {
+    color: #545454a3;
+    background-color: #ffff0054;
+    padding: 0px 7px;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.discussion-module .comment-mention-textbox .ant-form-item-row {
+    align-items: end;
+    padding: 0 20px;
+}
+
+.discussion-module .mention-input-add-file-btn .ant-btn:nth-child(2) {
+    margin-left: 10px;
+}
+
+.discussion-module :where(.css-dev-only-do-not-override-dkbvqv).ant-input-search>.ant-input-group>.ant-input-group-addon:last-child .ant-input-search-button:not(.ant-btn-primary) {
+    color: rgba(0, 0, 0, 0.45);
+    border: 1px solid #d9d9d9;
+}
+
+.discussion-module .project-update ul li {
+    padding: 0;
+}
+
+.discussion-module .discusstion-btn {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.discussion-module .main-btn-wrapper {
+    padding-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -10px;
+    margin-left: -10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.discussion-module .main-btn-wrapper .input-file-name-detail {
+    max-width: -webkit-fill-available;
+}
+
+.discussion-module .discussion-comment-block .attachment-discussion {
+    border: none;
+    max-width: 100px;
+    min-width: 150px;
+    min-height: 150px;
+}
+
+.discussion-module .discussion-comment-block .view-attachment {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.discussion-module .view-attachment .ant-badge {
+    max-width: 150px;
+    max-height: 150px;
+    min-width: 150px;
+    min-height: 111px;
+}
+
+.disscusion-pop-wrapper .ck-editor__main {
+    height: 100%;
+    max-height: 200px;
+}
+
+.disscusion-pop-wrapper .ck-editor__editable {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.disscusion-pop-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.disscusion-pop-wrapper .overview-modal-wrapper .rc-textarea {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+}
+
+.overview-modal-wrapper .editModal-actionWrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.discussion-module .ant-mentions>textarea:focus {
+    height: 80px;
+}
+
+.discussion-module .ant-mentions>textarea {
+    max-height: 200px;
+}
+
+.discussion-comment-model .ant-mentions {
+    border: 1px solid #d9d9d9;
+}
+
+.discussion-module .peoject-page {
+    height: 100% !important;
+}
+
+
+.design-graph-inactive a.ant-dropdown-trigger {
+    visibility: hidden;
+}
+
+.discussion-module .profilerightbar {
+    max-height: calc(100% - 16px);
+    flex-basis: calc(100% - 270px) !important;
+    max-width: calc(100% - 270px) !important;
+    overflow-y: auto;
+}
+
+.gx-app-layout .discussion-module .peoject-page {
+    flex-wrap: nowrap;
+}
+
+.discussion-module .profile-sub-head h3 {
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.pin-btn>.ant-form-item {
+    margin-bottom: 9px;
+}
+
+.ant-checkbox+span {
+    font-weight: 700;
+}
+
+.discussion-wrapper .design-graph-inactive .discussion-pin-wrapper,
+.discussion-wrapper .design-graph .discussion-pin-wrapper {
+    flex: 0 0 75%;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    max-width: 75%;
+}
+
+.discussion-module .project-update .ant-dropdown-trigger svg {
+    font-size: 14px;
+}
+
+.design-graph-inactive:hover {
+    background: #eee;
+}
+
+.louckandpin {
+    display: flex;
+    gap: 5px;
+}
+
+.comment-mention-textbox .mention-input-add-file-btn {
+    display: flex;
+}
+
+.discussion-comment-model .overview-modal-wrapper .ant-mentions>[class="rc-textarea"] {
+    min-height: 180px;
+}
+
+@media screen and (max-width: 1024px) {
+    .discussion-module .profilerightbar {
+        max-height: 100%;
+        flex-basis: calc(100% - 230px) !important;
+        max-width: calc(100% - 230px) !important;
+    }
+}
+
+@media screen and (max-width: 991px) {
+
+    .discussion-module .comment-wrapper>i>div,
+    .discussion-module .comment-wrapper>div,
+    .discussion-module .main-comment-wrapper span.discussion-name-edit {
+        font-size: 12px;
+    }
+
+    .discussion-module .main-avatar-wrapper span.discussion-time {
+        font-size: 10px;
+    }
+
+    .discussion-module .profileleftbar .design-graph>h6,
+    .discussion-module .profileleftbar .design-graph-inactive>h6 {
+        font-size: 12px;
+    }
+
+    .discussion-module .profilerightbar {
+        max-height: 100%;
+        flex-basis: calc(100% - 230px) !important;
+        max-width: calc(100% - 230px) !important;
+    }
+
+}
+
+.no-data-div {
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 35%;
+}
+
+
+.comment-mention-textbox .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 100px;
+    overflow-y: auto;
+}

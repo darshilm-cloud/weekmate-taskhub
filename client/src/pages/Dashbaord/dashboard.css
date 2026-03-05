@@ -1,0 +1,583 @@
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+    padding: 0;
+}
+
+.d-flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.main-dashboard-wrapper .container {
+    width: 100%;
+    height: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.main-dashboard-wrapper tbody {
+    width: 100%;
+    display: block;
+    background-color: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 280px;
+    scrollbar-width: none;
+
+    -ms-overflow-style: none;
+}
+
+
+
+.profileNameAndImg {
+    margin: 30px 0;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progress-of-logged-hours-background {
+    background: #fff;
+    width: 100%;
+    max-width: 60%;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+        -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
+    box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
+
+}
+
+.progress-of-logged-hours-background .progress-bar-container .ant-progress-bg-inner {
+    height: 4px !important;
+}
+
+.profile-img>span {
+    width: 100%;
+    height: 100%;
+}
+
+.profile-img img {
+    max-height: 80px;
+    min-width: 80px;
+    min-height: 80px;
+    max-width: 80px;
+}
+
+.main-dashboard-wrapper .ant-avatar>img {
+    object-fit: cover;
+}
+
+.profile-name h2 {
+    font-size: 28px;
+    margin-left: 15px;
+}
+
+.profile-form-wrapper {
+    position: relative;
+}
+
+.profile-form-wrapper input {
+    width: 100%;
+    font-size: 15px;
+ padding: 15px;
+    border-radius: 8px;
+    -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
+    box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
+    border: none;
+    border-radius: 5px;
+}
+
+.profile-input-setting-wrapper {
+    position: absolute;
+    top: 50%;
+    transform: translate(-10px, -50%);
+    right: 10px;
+}
+
+span.profile-setting a {
+    margin-right: 5px;
+    color: #000;
+}
+
+.main-dashboard-box-wrapper {
+    margin-top: 30px;
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.right-side-main-filter {
+    flex: 0 0 30%;
+    max-width: 30%;
+    justify-content: space-between;
+}
+
+.folder-project-wrpper {
+    align-items: center;
+    gap: 10px;
+}
+
+.project-table-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+
+.main-dashboard-wrapper .starred-tab a,
+.main-dashboard-wrapper .recent-tab a {
+    font-weight: 400;
+    color: #000;
+    font-size: 14px;
+}
+
+.project-heading-wrapper {
+    justify-content: space-between;
+}
+
+
+.main-dashboard-wrapper .main-project-wrapper {
+    flex: 0 0 calc(50% - 20px);
+    max-width: 48%;
+    margin: 10px;
+    background-color: #fff;
+    padding: 3px;
+    border-radius: 10px;
+box-shadow: 0 0 0px 19px #0000, 0 0 #0000, 0 0 20px #0000, 0 0 #0000, 0 1px 2px 1px #0000000d;
+    height: 375px;
+    overflow: hidden;
+}
+input#meJumpField-inputEl:focus-visible {
+outline: 1px solid #4fb5ff1a;
+    box-shadow: 0px 0px 2px 0px
+}
+
+.main-dashboard-wrapper .right-project-filter {
+    text-align: end;
+}
+
+.main-dashboard-wrapper .colorCircle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: rgb(252, 3, 3);
+}
+
+.main-dashboard-wrapper .folder-project-wrpper span {
+    font-size: 17px;
+}
+
+.main-dashboard-wrapper th,
+td {
+    padding: 10px;
+    max-height: 50px;
+}
+
+.main-dashboard-wrapper .project-table-wrapper tr {
+    border-bottom: 1px solid #a8a8a8de;
+    width: 100%;
+    display: inline-table;
+    margin-bottom: 1px;
+
+}
+
+.main-dashboard-wrapper .projectname {
+    padding: 0 10px;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 10px;
+    line-height: normal;
+    max-width: 200px;
+}
+
+.main-dashboard-wrapper .timeago {
+    color: #a8a8a8;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.main-dashboard-wrapper .gray {
+    color: #a8a8a8;
+    font-size: 11px;
+    text-align: end;
+    padding-right: 10px;
+}
+
+.main-dashboard-wrapper .gray .fa-arrow-right {
+    margin: 0 5px;
+}
+
+.main-dashboard-wrapper .plus-tab {
+    text-align: center;
+}
+
+.main-dashboard-wrapper .folder-project-wrpper a {
+    font-size: 19px;
+    color: #000;
+}
+
+.main-dashboard-wrapper .task-date {
+    text-align: center;
+}
+
+.main-dashboard-wrapper .table-task-title {
+    width: 75%;
+    border-right: 1px solid #a8a8a8;
+}
+
+.main-dashboard-wrapper .progressStage {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #AFB42B;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.main-dashboard-wrapper .innerColor {
+    width: 8px;
+    height: 16px;
+    margin-left: 7px;
+    display: inline-block;
+    background-color: #AFB42B;
+}
+
+.main-dashboard-wrapper .tasktitle span {
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 10px;
+    line-height: normal;
+    max-width: 248px;
+}
+
+.main-dashboard-wrapper .taskCheckBox {
+    position: relative;
+}
+
+.main-dashboard-wrapper .commentOuter {
+    position: absolute;
+    right: 8px;
+    top: -3px;
+}
+
+.main-dashboard-wrapper .comments {
+    min-width: 20px;
+    max-width: 30px;
+    height: 16px;
+    padding: 0 2px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid #fff;
+    border-radius: 3px;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 15px;
+    font-size: 13px;
+    color: #000;
+    display: inline-block;
+}
+
+.main-dashboard-wrapper .comments:after {
+    top: 100%;
+    left: 50%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    border-width: 4px;
+    margin-left: -4px;
+    border-color: rgba(255, 255, 255, 0);
+    border-top-color: rgba(0, 0, 0, 0.1);
+}
+
+.main-dashboard-wrapper .custom-border-right {
+    width: 75%;
+    border-right: 1px solid #a8a8a8;
+    text-align: center;
+}
+
+.main-dashboard-wrapper .log-time {
+    text-align: center;
+}
+
+.main-dashboard-wrapper .taskbtn {
+    visibility: hidden;
+}
+
+.main-dashboard-wrapper .task-hover-edt-btn:hover .taskbtn {
+    visibility: visible;
+    text-align: end
+}
+
+.main-dashboard-wrapper {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    background-color: #f6faff;
+    overflow-x: hidden;
+}
+
+
+
+.main-filter-pop {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: end;
+    gap: 7px;
+}
+
+.main-dashboard-wrapper .filter-name {
+    text-overflow: ellipsis;
+    max-width: 100px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.main-dashboard-wrapper .filter-name>p {
+    font-weight: 400;
+    font-size: 11px;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 2px;
+    line-height: normal;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
+.main-dashboard-wrapper .all-status {
+    font-size: 12px;
+    font-weight: 400;
+    padding-left: 4px;
+}
+
+.main-dashboard-wrapper .status-check-icon>a {
+    color: #000000;
+    opacity: 0.6;
+    font-weight: 400;
+}
+
+.project-table-wrapper.time-log-wrapper>span {
+    max-width: 250px;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 10px;
+    line-height: normal;
+    max-width: 258px;
+}
+
+.main-dashboard-wrapper .project-time-sheet-title {
+    max-width: 250px;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 10px;
+    line-height: normal;
+    max-width: 258px;
+}
+
+.main-dashboard-wrapper .togtime-username {
+    margin-left: 10px;
+}
+
+.main-dashboard-wrapper .right-project-filter .fa-filter {
+    cursor: pointer;
+    /* color: #358CC0; */
+}
+
+.filter-name>span>i {
+    color: #358CC0;
+    cursor: pointer;
+}
+
+.main-dashboard-wrapper .tasktitle>a {
+    word-wrap: break-word;
+    white-space: normal;
+    word-break: break-word;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding-left: 10px;
+    line-height: normal;
+    max-width: 290px;
+}
+
+.main-dashboard-wrapper .cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+tbody.showfilter {
+    max-height: 225px;
+}
+
+.popver-footer-btn>button {
+    margin-bottom: 5px;
+}
+
+.popver-footer-btn {
+    justify-content: space-between;
+}
+
+.right-popover-wrapper>ul>li>.ant-checkbox-wrapper {
+    margin-bottom: 5px;
+}
+
+.right-popover-wrapper .assigness-data .ant-checkbox-wrapper {
+    margin-bottom: 5px;
+}
+
+.all-dashboard-project td {
+    width: 63%;
+}
+
+.all-dashboard-project tbody {
+    max-height: 320px;
+}
+
+.all-dashboard-project tbody.showfilter {
+    max-height: 260px;
+}
+
+.main-project-wrapper .no-data-found-dashboard {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 600;
+    opacity: .3;
+}
+
+.main-project-wrapper .project-table-wrapper tr>td:nth-child(2) {
+    border-right: transparent;
+}
+
+.main-project-wrapper .time-log-wrapper .table-task-title {
+    width: 60%;
+}
+
+.main-dashboard-wrapper .time-log-wrapper .custom-border-right {
+    width: 60%;
+}
+
+.main-dashboard-wrapper .time-log-wrapper td:nth-child(3) {
+    width: 19.7%;
+    text-align: center;
+    min-width: 19.7%;
+}
+
+.image-and-name-div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: 40%;
+
+}
+
+.logged-hours-content {
+    width: 100%;
+    max-width: calc(100% - 120px);
+}
+
+.logged-hours-icon {
+    margin-right: 10px;
+    background: #e9e9e9;
+    border-radius: 10px;
+    padding: 8px 20px;
+    max-width: fit-content;
+}
+
+.logged-hours-text p {
+    margin: 0;
+    font-size: 16px;
+    color: #000;
+}
+
+.logged-hours-text {
+    width: 100%;
+}
+
+.logged-hours-text .logged-hours-title {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.logged-hours-text span {
+    color: #28a745;
+    font-weight: 600;
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+.red-alert {
+    color: #ff0000 !important;
+}
+
+.remaining-hours-container {
+    width: 100%;
+    text-align: end;
+}
+
+.progress-bar {
+    background-color: #e8e8e8;
+    border-radius: 5px;
+    height: 6px;
+    width: 100%;
+}
+
+.progress-filled {
+    background-color: #28a745;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.main-dashboard-wrapper .ant-progress-line {
+    margin-bottom: 0px;
+}
+
+@media screen and (max-width: 1200px) {
+    .time-log-wrapper tbody.showfilter {
+        max-height: 209px;
+    }
+
+    .main-dashboard-wrapper .time-log-wrapper tbody {
+        max-height: 264px;
+    }
+
+    .main-project-wrapper .time-log-wrapper tr>td:nth-child(2) {
+        white-space: normal;
+    }
+}
+
+@media screen and (max-width: 1100px) {
+    .main-dashboard-wrapper .projectname {
+
+        max-width: 166px;
+    }
+
+    .image-and-name-div {
+        max-width: 40%;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .main-dashboard-wrapper .tasktitle>a {
+        max-width: 288px;
+    }
+}

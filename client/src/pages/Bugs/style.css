@@ -1,0 +1,357 @@
+.bug-comment-model .ant-mentions {
+    border: 1px solid #d9d9d9;
+}
+
+.bug-comment-model .ant-modal-content .ant-form-horizontal .ant-row {
+    margin: 0;
+}
+
+.bug-task-panel .task-history-inner .main-wrapper-btn {
+    display: flex;
+    gap: 10px;
+}
+
+.bug-task-panel .folder-comment {
+    margin-left: 10px;
+    max-width: 90px;
+}
+
+.right-bug-panel .comment-sender-name h1 {
+    color: #ffc107;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.bugs-task-wrapper .block-status-content .importCsvButton {
+    margin: 0;
+}
+
+.bugs-task-wrapper .peoject-page .block-status-content {
+    align-items: center;
+}
+
+.bugs-task-wrapper .drag_container .project-task-list .kanbanView-bugs-data {
+    max-height: calc(100vh - 270px);
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.bug-comment-model .topic-cancel-wrapper .ant-mentions>textarea,
+.bug-comment-model .topic-cancel-wrapper .ant-mentions {
+    min-height: 90px;
+}
+
+.bugs-task-wrapper .profilerightbar .project-task-section {
+    overflow: auto;
+    max-height: calc(100vh - 196px);
+    height: 100%;
+}
+
+.bugs-task-wrapper .peoject-page {
+    height: 100% !important;
+}
+
+/* .bugs-task-wrapper {
+    max-height: calc(100vh - 180px);
+} */
+
+.bug-task-panel .bug-editbtn {
+    max-width: 10%;
+    flex: 0 0 10%;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.bug-overview-modal-wrapper .ant-select-multiple .ant-select-selection-item-content {
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.bug-task-panel .head-toolbar button.ant-btn {
+    background: transparent;
+}
+
+.bug-pop-wrapper .flex-table .ant-select .ant-select-selector {
+    height: 100%;
+}
+
+.bug-pop-wrapper .flex-table {
+    overflow-x: hidden;
+}
+
+.bug-pop-wrapper .table-left {
+    max-width: 20% !important;
+}
+
+.bug-pop-wrapper .hours_input {
+    width: 90px;
+}
+
+
+.bug-overview-modal-wrapper .table-schedule-wrapper .table-left {
+    max-width: 30%;
+}
+
+.bug-overview-modal-wrapper .ant-form-item {
+    margin-bottom: 10px;
+}
+
+.bugs-task-wrapper .status-content [class="fi fi-rr-file-import"] {
+    cursor: pointer;
+}
+
+.bug-overview-modal-wrapper .ant-form-item-control-input-content>input {
+    margin-bottom: 10px;
+}
+
+.bug-task-panel .left-task-detail-panel .task-inner-card {
+    padding: 16px;
+    max-height: calc(100% - 70px);
+    height: 100%;
+    overflow: auto;
+}
+
+.ant-picker {
+    padding: 6px 11px 6px;
+}
+
+.bug-task-panel .left-task-detail-panel .item-inner>p {
+    max-height: 200px;
+    overflow: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.bug-task-panel .task-detail-inner.comments .comment-textarea {
+    justify-content: flex-end;
+    width: calc(100% - 20px);
+    align-self: flex-end;
+    background: #fff;
+    border-radius: 5px;
+    padding: 0px 12px;
+    margin: auto auto 10px auto;
+}
+
+.bug-pop-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.edit-task-modal .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.bug-task-panel .flex-table [type="button"] {
+    margin-bottom: 0;
+}
+
+.bug-task-panel .right-task-detail-panel {
+    max-width: 40%;
+    flex: 0 0 40%;
+}
+
+.hours_input {
+    width: 80px;
+    height: 35px;
+    padding: 8px;
+    border: 1px solid #d9d9d9;
+}
+
+.hours_input.error-border {
+    border: 1px solid red;
+}
+
+.hours_min_container {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+    width: 100%;
+}
+
+.hours_input {
+    width: 80px;
+    height: 35px;
+    padding: 8px;
+    border: 1px solid #d9d9d9;
+}
+
+.hours_input.error-border {
+    border: 1px solid red;
+}
+
+.hours_min_container {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+
+.bug-task-panel .task-detail-inner.comments .comment-textarea {
+    margin: 10px 0 0;
+    width: 100%;
+}
+
+.bug-task-panel .assignee-task-time {
+    display: flex;
+    gap: 5px;
+}
+
+.bug-task-panel .bug-no-comments {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: .5;
+}
+
+.bug-all-file-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
+    margin-left: 0;
+}
+
+
+.file-upload {
+    display: block;
+}
+
+.stages-bug-popover {
+    width: 130px;
+}
+
+.bugs-task-wrapper .head-box-inner {
+    max-width: 50%;
+}
+
+.bug-pop-wrapper .flex-table {
+    overflow-x: hidden;
+}
+
+.bug-overview-modal-wrapper .table-schedule-wrapper .flex-table {
+    overflow-x: hidden;
+}
+
+.bug-task-panel .pop-bug-title {
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.bug-task-panel .head-toolbar button.ant-btn {
+    margin-right: 20px;
+}
+
+.bug-comment-model .ant-form-horizontal {
+    padding: 10px;
+}
+
+
+.bug-task-panel .comment-textarea .fileAttachment_container {
+    padding: 10px 0;
+    max-height: 135px;
+    overflow-y: auto;
+}
+
+.bug-task-panel .main-btn-wrapper {
+    justify-content: space-between;
+    display: flex;
+    width: 100%;
+}
+
+.bug-task-panel .comment-textarea .fileAttachment_Box {
+    height: 80px;
+    width: 100PX;
+}
+
+.bug-task-panel .comment-list-wrapper span.ant-badge {
+    width: 100%;
+    flex: 0 0 calc(33.33% - 12px);
+    max-width: calc(33.33% - 12px);
+}
+
+
+.bug-task-panel .right-bug-panel .main-avatar-wrapper .comment-sender-name {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    align-items: center;
+}
+
+.right-toolbar .right-toolbar-tab .comment-badge {
+    background: #358CC0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: #ffff;
+    border-radius: 50%;
+    padding: 2px;
+    font-size: 10px;
+    line-height: 12px;
+    min-width: 17px;
+    min-height: 17px;
+    max-height: 17px;
+    width: 100%;
+    max-width: fit-content;
+    transform: translate(0, 10px);
+    text-align: center;
+    z-index: 2;
+}
+
+.right-toolbar .right-toolbar-tab {
+    position: relative;
+}
+.bug-task-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners{
+    max-height: 200px;
+    overflow-y: auto;
+}
+.bug-task-panel .task-inner-card .modal-footer-flex .flex-btn {
+    margin-bottom: 0;
+}
+.bug-task-panel .task-inner-card .modal-footer-flex {
+    margin-top: 10px;
+}
+.bug-task-panel .ant-form-horizontal .ant-row{
+    margin-left: unset;
+    margin-right: unset;
+}
+.bug-task-panel .estimated_time_input_container{
+    align-items: normal;
+}
+.bug-task-panel .right-bug-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    max-height: 100px;
+    overflow-y: auto;
+    height: 100%;
+}
+.bug-comment-icon{
+    display: flex;
+    gap: 5px
+}
+@media screen and (max-width:1199px) {
+    .bugs-task-wrapper .head-box-inner {
+        max-width: max-content;
+    }
+}
+
+@media screen and (max-width:991px) {
+
+    .project_title_main_div>span {
+        max-width: 200px;
+    }
+
+    .bugs-task-wrapper .profilerightbar .project-task-section {
+        max-height: calc(100vh - 148px);
+    }
+
+    .bugs-task-wrapper .drag_container .project-task-list .kanbanView-bugs-data {
+        max-height: calc(100vh - 223px);
+        ;
+    }
+}

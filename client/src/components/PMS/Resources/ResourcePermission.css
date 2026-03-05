@@ -1,0 +1,4 @@
+.taskhub-wrapper .ant-card-bordered {
+    height: 100vh;
+    max-height: calc(100% - 100px);
+}

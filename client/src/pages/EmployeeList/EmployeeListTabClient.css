@@ -1,0 +1,63 @@
+.filter-pop-wrapper .ant-row.ant-form-item-row {
+    align-items: center;
+    margin-top: 19px !important;
+}
+
+.employee-card .filter-pop-wrapper .ant-form-item-control-input-content {
+    margin: 0;
+}
+
+.employee-card .ant-tabs-nav-wrap {
+    justify-content: center;
+}
+
+.employee-card .action-edit-btn>a {
+    font-size: 15px;
+}
+
+.employee-card .action-edit-btn {
+    align-items: center;
+}
+
+.employee-card .client-search-bar>span {
+    width: 200px;
+}
+
+.clint-module .ant-input-group-wrapper {
+    width: 100%;
+    max-width: max-content;
+}
+
+.client-table-block :where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>th,
+:where(.css-dev-only-do-not-override-dkbvqv).ant-table-wrapper .ant-table-tbody>tr>td {
+    word-break: break-word;
+}
+
+
+
+.clint-module .head-box-inner>button .fi-rr-plus-small {
+    margin-top: 2px;
+    margin-right: 2px;
+}
+
+.clint-module .head-box-inner {
+    max-width: 25%;
+}
+
+.add-and-edit-client [type="button"] {
+    margin: 0;
+}
+
+.add-and-edit-client .ant-btn-icon-only {
+    height: 18px;
+}
+
+.add-and-edit-client .add-btn-wrapper {
+    width: 100%;
+    gap: 10px;
+    align-items: center;
+}
+
+.add-and-edit-client .ant-row.ant-form-item-row {
+    align-items: flex-start;
+}

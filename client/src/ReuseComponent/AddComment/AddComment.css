@@ -1,0 +1,170 @@
+/* add comment */
+.notes-details-model .comment-textarea textarea:focus-within,
+.task-model .comment-textarea textarea:focus-within {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.notes-details-model .comment-textarea .ant-mentions-outlined,
+.task-model .comment-textarea .ant-mentions-outlined .ck .ck-editor {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.notes-details-model .comment-textarea .fileAttachment_container,
+.task-model .comment-textarea .fileAttachment_container {
+    padding: 10px 0;
+    max-height: 135px;
+    overflow-y: auto;
+}
+
+.notes-details-model .comment-textarea .fileAttachment_Box,
+.task-model .comment-textarea .fileAttachment_Box {
+    height: 80px;
+    width: 100PX;
+}
+
+.notes-details-model .comment-list-wrapper span.ant-badge,
+.task-model .comment-list-wrapper span.ant-badge {
+    width: 90%;
+}
+
+.bug-task-panel .fileAttachment_Box,
+.notes-details-model .fileAttachment_Box,
+.task-model .fileAttachment_Box {
+    display: flex;
+    align-items: start;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.fileAttachment_box-img {
+    display: block;
+    margin: auto;
+}
+
+.notes-details-model .notes-details-model .main-wrapper-btn {
+    display: flex;
+}
+
+.notes-details-model .comment-textarea .btn-comment,
+.task-model .comment-textarea .btn-comment {
+    flex: 0 0 70%;
+    max-width: 70%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: start;
+    align-items: start;
+}
+
+.notes-details-model .comment-textarea .ant-form-item-control-input-content,
+.task-model .comment-textarea .ant-form-item-control-input-content {
+    margin-top: 0px;
+    margin-left: 20px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+
+.bug-task-panel .fileAttachment_box-img .anticon-file-image svg,
+.notes-details-model .fileAttachment_box-img .anticon-file-image svg,
+.task-model .fileAttachment_box-img .anticon-file-image svg {
+    max-width: 40px;
+    max-height: 40px;
+}
+
+.left-task-detail-panel .fileAttachment_container .fileAttachment_Box {
+    height: 80px;
+    width: 100%;
+}
+
+.notes-details-model .task-detail-inner .main-btn-wrapper .ant-btn,
+.task-model .task-detail-inner .main-btn-wrapper .ant-btn {
+    margin-bottom: 0;
+    border: none;
+    color: #000;
+}
+
+.task-model .task-detail-inner .main-btn-wrapper .ant-btn.ant-btn-primary {
+    color: #fff;
+    padding: 10px;
+}
+
+.overview-modal-wrapper .fileAttachment_Box {
+    height: 80px;
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.notes-details-model .comment-sender-name h1,
+.task-model .comment-sender-name h1 {
+    color: #ffc107;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.bug-task-panel .task-detail-inner span.mention-user-comment,
+.notes-details-model .task-detail-inner span.mention-user-comment,
+.task-model .task-detail-inner span.mention-user-comment .ck.ck-editor {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 2px;
+    padding: 0 4px;
+    border: solid 0 rgba(0, 0, 0, 0.05);
+    border-bottom-width: 1px;
+    margin-right: 4px;
+}
+
+
+.bug-task-panel .fileAttachment_Box {
+    height: 100%;
+}
+
+/* update comment */
+
+.edit-comment-task-model .ant-form-horizontal .ant-row {
+    margin: 0;
+    padding: 5px 15px;
+}
+
+.edit-comment-task-model .ant-form-horizontal .modal-footer-flex {
+    justify-content: flex-start;
+    padding: 16px;
+    align-items: baseline;
+}
+
+.edit-comment-task-model .modal-footer-flex .flex-btn {
+    margin-bottom: 0;
+}
+
+.edit-comment-task-model .attachment-comment .link-btn {
+    margin: 0;
+}
+
+.edit-comment-task-model .modal-footer-flex button.link-btn {
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.edit-comment-task-model .overview-modal-wrapper {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.edit-comment-task-model .folder-comment {
+    margin-top: 0px;
+    margin-left: 10px;
+    min-width: 170px;
+    max-width: 170px;
+}
+
+
+.edit-comment-task-model .ant-mentions .ck.ck-editor {
+    border: 1px solid #d9d9d9;
+}

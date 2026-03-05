@@ -1,0 +1,2099 @@
+const mongoose = require("mongoose");
+const { errorResponse, successResponse, catchBlockErrorResponse } = require("../helpers/response");
+const { statusCode } = require("../helpers/constant");
+const messages = require("../helpers/messages");
+const ActivityLog = mongoose.model("activitylogs");
+const moment = require("moment");
+const Joi = require("joi");
+
+/**
+ * Get activity logs list with filters and pagination
+ * POST /v1/activityLog/list
+ */
+exports.getActivityLogList = async (req, res) => {
+  try {
+    // Validation schema
+    const schema = Joi.object({
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).max(100).default(10),
+      operationName: Joi.string().valid("LOGIN", "LOGOUT", "DELETE", "UPDATE", "").allow("").optional(),
+      moduleName: Joi.string().optional().allow(""),
+      email: Joi.string().optional().allow(""),
+      fromDate: Joi.date().optional(),
+      toDate: Joi.date().optional(),
+      search: Joi.string().trim().allow("").optional(),
+      sortBy: Joi.string().valid("createdAt", "operationName", "email").default("createdAt"),
+      sortOrder: Joi.string().valid("asc", "desc").default("desc")
+    });
+
+    const validationResult = await schema.validateAsync(req.body);
+    const {
+      page,
+      limit,
+      operationName,
+      moduleName,
+      email,
+      fromDate,
+      toDate,
+      search,
+      sortBy,
+      sortOrder
+    } = validationResult;
+
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
+
+    // Build match query
+    let matchQuery = {
+      companyId: global.newObjectId(req.user.companyId)
+    };
+
+    // Operation name filter
+    if (operationName && operationName !== "") {
+      matchQuery.operationName = operationName.toUpperCase();
+    }
+
+    // Module name filter
+    if (moduleName && moduleName !== "") {
+      matchQuery.moduleName = moduleName;
+    }
+
+    // Email filter
+    if (email && email !== "") {
+      matchQuery.email = { $regex: email.trim(), $options: "i" };
+    }
+
+    // Date range filter
+    if (fromDate && toDate) {
+      matchQuery.createdAt = {
+        $gte: moment(fromDate).startOf("day").toDate(),
+        $lte: moment(toDate).endOf("day").toDate()
+      };
+    } else if (fromDate) {
+      matchQuery.createdAt = {
+        $gte: moment(fromDate).startOf("day").toDate()
+      };
+    } else if (toDate) {
+      matchQuery.createdAt = {
+        $lte: moment(toDate).endOf("day").toDate()
+      };
+    }
+
+    // Search filter (searches in email)
+    if (search && search.trim() !== "") {
+      matchQuery.email = { $regex: search.trim(), $options: "i" };
+    }
+
+    // Build sort object
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Aggregate pipeline
+    const pipeline = [
+      {
+        $match: matchQuery
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { createdById: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$createdById" }, "objectId"] },
+                            "$$createdById",
+                            { $toObjectId: "$$createdById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "createdByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$createdByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { updatedById: "$updatedBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$updatedById" }, "objectId"] },
+                            "$$updatedById",
+                            { $toObjectId: "$$updatedById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "updatedByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$updatedByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { deletedById: "$deletedBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$deletedById" }, "objectId"] },
+                            "$$deletedById",
+                            { $toObjectId: "$$deletedById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "deletedByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$deletedByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          companyId: 1,
+          operationName: 1,
+          moduleName: 1,
+          email: 1,
+          createdAt: 1,
+          createdBy: {
+            _id: "$createdByDetails._id",
+            full_name: "$createdByDetails.full_name",
+            first_name: "$createdByDetails.first_name",
+            last_name: "$createdByDetails.last_name",
+            email: "$createdByDetails.email",
+            phone_number: "$createdByDetails.phone_number"
+          },
+          updatedBy: {
+            _id: "$updatedByDetails._id",
+            full_name: "$updatedByDetails.full_name",
+            first_name: "$updatedByDetails.first_name",
+            last_name: "$updatedByDetails.last_name",
+            email: "$updatedByDetails.email",
+            phone_number: "$updatedByDetails.phone_number"
+          },
+          deletedBy: {
+            _id: "$deletedByDetails._id",
+            full_name: "$deletedByDetails.full_name",
+            first_name: "$deletedByDetails.first_name",
+            last_name: "$deletedByDetails.last_name",
+            email: "$deletedByDetails.email",
+            phone_number: "$deletedByDetails.phone_number"
+          },
+          additionalData: 1,
+          updatedData: 1
+        }
+      },
+      {
+        $sort: sortObj
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      }
+    ];
+
+    // Helper function to map module names to display labels
+    const getModuleLabel = (moduleName) => {
+      if (!moduleName) return null;
+      const moduleLabelMap = {
+        "projectexpanses": "Project Expenses",
+        "tasks": "Tasks",
+        "projects": "Projects",
+        "notes": "Notes",
+        "notebook": "Notebook",
+        "bugs": "Bugs",
+        "discussions": "Discussions",
+        "discussionDetails": "Discussion Details",
+        "fileFolders": "File Folders",
+        "fileUploads": "File Uploads",
+        "taskComments": "Task Comments",
+        "bugComments": "Bug Comments",
+        "notesComments": "Notes Comments",
+        "subTasks": "Sub Tasks",
+        "projectMainTask": "Project Main Task",
+        "taskHoursLogs": "Task Hours Logs",
+        "projectTimeSheets": "Project Time Sheets",
+        "projectLabels": "Project Labels",
+        "projectStatus": "Project Status",
+        "projectTypes": "Project Types",
+        "projectTech": "Project Tech",
+        "projectWorkFlow": "Project Workflow",
+        "workFlowStatus": "Workflow Status",
+        "employees": "Employees",
+        "pmsClients": "PMS Clients",
+        "pmsRoles": "PMS Roles",
+        "rolePermissions": "Role Permissions",
+        "complaints": "Complaints",
+        "complaints_status": "Complaints Status",
+        "complaints_comments": "Complaints Comments",
+        "reviews": "Reviews",
+        "hoursLoggedComments": "Hours Logged Comments",
+        "hoursApprove": "Hours Approve"
+      };
+      return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
+    };
+
+    // Get total count
+    const totalCount = await ActivityLog.countDocuments(matchQuery);
+
+    // Execute aggregation
+    const activityLogs = await ActivityLog.aggregate(pipeline);
+
+    // Remove moduleName for LOGIN and LOGOUT operations, and map module names to labels
+    const formattedLogs = activityLogs.map(log => {
+      if (log.operationName === "LOGIN" || log.operationName === "LOGOUT") {
+        const { moduleName, ...rest } = log;
+        return rest;
+      }
+      // Map module name to display label
+      if (log.moduleName) {
+        log.moduleName = getModuleLabel(log.moduleName);
+      }
+      return log;
+    });
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const paginationInfo = {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit
+    };
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Activity logs fetched successfully",
+      {
+        activityLogs: formattedLogs,
+        pagination: paginationInfo
+      }
+    );
+  } catch (error) {
+    console.error("ActivityLog List Error:", error);
+    return catchBlockErrorResponse(res, error.message || messages.SERVER_ERROR);
+  }
+};
+
+/**
+ * Get activity log by ID with additional data lookups
+ * GET /v1/activityLog/:id
+ */
+exports.getActivityLogById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id || !global.validObjectId(id)) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Valid activity log ID is required");
+    }
+
+    // Find activity log with createdBy, updatedBy, deletedBy and company lookup
+    const activityLog = await ActivityLog.aggregate([
+      {
+        $match: {
+          _id: global.newObjectId(id),
+          companyId: global.newObjectId(req.user.companyId)
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { createdById: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$createdById" }, "objectId"] },
+                            "$$createdById",
+                            { $toObjectId: "$$createdById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "createdByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$createdByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { updatedById: "$updatedBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$updatedById" }, "objectId"] },
+                            "$$updatedById",
+                            { $toObjectId: "$$updatedById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "updatedByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$updatedByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { deletedById: "$deletedBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: [
+                        "$_id",
+                        {
+                          $cond: [
+                            { $eq: [{ $type: "$$deletedById" }, "objectId"] },
+                            "$$deletedById",
+                            { $toObjectId: "$$deletedById" }
+                          ]
+                        }
+                      ]
+                    },
+                    { $eq: ["$companyId", global.newObjectId(req.user.companyId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "deletedByDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$deletedByDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "companies",
+          let: { companyId: "$companyId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$companyId"]
+                }
+              }
+            }
+          ],
+          as: "companyDetails"
+        }
+      },
+      {
+        $unwind: {
+          path: "$companyDetails",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ]);
+
+    if (!activityLog || activityLog.length === 0) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Activity log not found");
+    }
+
+    const logData = activityLog[0];
+
+    // Helper function to map module names to model names
+    const getModelName = (moduleName) => {
+      const modelMap = {
+        "tasks": "projecttasks",
+        "projects": "projects",
+        "notes": "notes_pms",
+        "notebook": "notebook",
+        "bugs": "projecttaskbugs",
+        "discussions": "discussionstopics",
+        "discussionDetails": "discussionstopicsdetails",
+        "fileFolders": "filefolders",
+        "fileUploads": "fileuploads",
+        "taskComments": "Comments",
+        "bugComments": "bugcomments",
+        "notesComments": "notescomments",
+        "subTasks": "subtasks",
+        "projectMainTask": "projectmaintasks",
+        "taskHoursLogs": "projecttaskhourlogs",
+        "projectTimeSheets": "projecttimesheets",
+        "projectLabels": "tasklabels",
+        "projectStatus": "projectstatus",
+        "projectTypes": "projecttypes",
+        "projectTech": "projecttechs",
+        "projectWorkFlow": "projectworkflows",
+        "workFlowStatus": "workflowstatus",
+        "employees": "employees",
+        "pmsClients": "pmsclients",
+        "pmsRoles": "pms_roles",
+        "rolePermissions": "role_permissions",
+        "complaints": "complaints",
+        "complaints_status": "complaints_status",
+        "complaints_comments": "complaints_comments",
+        "reviews": "reviews",
+        "projectexpanses": "projectexpanses",
+        "hoursLoggedComments": "hoursloggedcomments",
+        "hoursApprove": "hoursapprove"
+      };
+      const lowerModuleName = moduleName ? moduleName.toLowerCase() : "";
+      return modelMap[lowerModuleName] || lowerModuleName;
+    };
+
+    // Helper function to populate and format deleted data
+    const populateDeletedData = async (records, moduleName) => {
+      if (!records || records.length === 0) return [];
+
+      const formattedRecords = [];
+
+      for (const record of records) {
+        const formatted = { ...record };
+
+        // Remove sensitive/internal fields and IDs
+        delete formatted.password;
+        delete formatted.resetCode;
+        delete formatted.__v;
+        delete formatted._id;
+        delete formatted.companyId;
+        delete formatted.createdBy;
+        delete formatted.updatedBy;
+        delete formatted.deletedBy;
+
+        // Helper to convert ObjectId to string for querying
+        const toObjectId = (id) => {
+          if (!id) return null;
+          if (id instanceof mongoose.Types.ObjectId) return id;
+          if (typeof id === 'string' && mongoose.Types.ObjectId.isValid(id)) {
+            return new mongoose.Types.ObjectId(id);
+          }
+          return null;
+        };
+
+        // Module-specific population
+        if (moduleName === "projects") {
+          // Populate technology
+          if (formatted.technology && Array.isArray(formatted.technology) && formatted.technology.length > 0) {
+            try {
+              const TechModel = mongoose.model("projecttechs");
+              const techIds = formatted.technology.map(id => toObjectId(id)).filter(Boolean);
+              if (techIds.length > 0) {
+                const techs = await TechModel.find({ _id: { $in: techIds } })
+                  .select("project_tech")
+                  .lean();
+                formatted.technology = techs.length > 0 ? techs.map(t => t.project_tech || "").filter(Boolean).join(", ") : "";
+              } else {
+                formatted.technology = "";
+              }
+            } catch (error) {
+              console.error("Error populating technology:", error);
+              formatted.technology = "";
+            }
+          } else {
+            formatted.technology = "";
+          }
+
+          // Populate project_type
+          if (formatted.project_type) {
+            try {
+              const ProjectTypeModel = mongoose.model("projecttypes");
+              const projectTypeId = toObjectId(formatted.project_type);
+              if (projectTypeId) {
+                const projectType = await ProjectTypeModel.findById(projectTypeId)
+                  .select("project_type")
+                  .lean();
+                formatted.project_type = projectType && projectType.project_type ? projectType.project_type : "";
+              } else {
+                formatted.project_type = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_type:", error);
+              formatted.project_type = "";
+            }
+          } else {
+            formatted.project_type = "";
+          }
+
+          // Populate project_status
+          if (formatted.project_status) {
+            try {
+              const ProjectStatusModel = mongoose.model("projectstatus");
+              const projectStatusId = toObjectId(formatted.project_status);
+              if (projectStatusId) {
+                const projectStatus = await ProjectStatusModel.findById(projectStatusId)
+                  .select("title")
+                  .lean();
+                formatted.project_status = projectStatus && projectStatus.title ? projectStatus.title : "";
+              } else {
+                formatted.project_status = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_status:", error);
+              formatted.project_status = "";
+            }
+          } else {
+            formatted.project_status = "";
+          }
+
+          // Populate manager
+          if (formatted.manager) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const managerId = toObjectId(formatted.manager);
+              if (managerId) {
+                const manager = await EmployeesModel.findById(managerId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.manager = manager ? (manager.full_name || `${manager.first_name || ""} ${manager.last_name || ""}`.trim()) : "";
+              } else {
+                formatted.manager = "";
+              }
+            } catch (error) {
+              console.error("Error populating manager:", error);
+              formatted.manager = "";
+            }
+          } else {
+            formatted.manager = "";
+          }
+
+          // Populate acc_manager
+          if (formatted.acc_manager) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const accManagerId = toObjectId(formatted.acc_manager);
+              if (accManagerId) {
+                const accManager = await EmployeesModel.findById(accManagerId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.acc_manager = accManager ? (accManager.full_name || `${accManager.first_name || ""} ${accManager.last_name || ""}`.trim()) : "";
+              } else {
+                formatted.acc_manager = "";
+              }
+            } catch (error) {
+              console.error("Error populating acc_manager:", error);
+              formatted.acc_manager = "";
+            }
+          } else {
+            formatted.acc_manager = "";
+          }
+
+          // Populate assignees
+          if (formatted.assignees && Array.isArray(formatted.assignees) && formatted.assignees.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const assigneeIds = formatted.assignees.map(id => toObjectId(id)).filter(Boolean);
+              if (assigneeIds.length > 0) {
+                const assignees = await EmployeesModel.find({ _id: { $in: assigneeIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.assignees = assignees.length > 0 
+                  ? assignees.map(a => a.full_name || `${a.first_name || ""} ${a.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.assignees = "";
+              }
+            } catch (error) {
+              console.error("Error populating assignees:", error);
+              formatted.assignees = "";
+            }
+          } else {
+            formatted.assignees = "";
+          }
+
+          // Populate pms_clients
+          if (formatted.pms_clients && Array.isArray(formatted.pms_clients) && formatted.pms_clients.length > 0) {
+            try {
+              const PMSClientsModel = mongoose.model("pmsclients");
+              const clientIds = formatted.pms_clients.map(id => toObjectId(id)).filter(Boolean);
+              if (clientIds.length > 0) {
+                const clients = await PMSClientsModel.find({ _id: { $in: clientIds } })
+                  .select("name company_name")
+                  .lean();
+                formatted.pms_clients = clients.length > 0 
+                  ? clients.map(c => c.name || c.company_name || "").filter(Boolean).join(", ") || "-"
+                  : "-";
+              } else {
+                formatted.pms_clients = "-";
+              }
+            } catch (error) {
+              console.error("Error populating pms_clients:", error);
+              formatted.pms_clients = "-";
+            }
+          } else {
+            formatted.pms_clients = "-";
+          }
+
+          // Populate workFlow
+          if (formatted.workFlow) {
+            try {
+              const WorkFlowModel = mongoose.model("projectworkflows");
+              const workFlowId = toObjectId(formatted.workFlow);
+              if (workFlowId) {
+                const workFlow = await WorkFlowModel.findById(workFlowId)
+                  .select("title")
+                  .lean();
+                formatted.workFlow = workFlow && workFlow.title ? workFlow.title : "";
+              } else {
+                formatted.workFlow = "";
+              }
+            } catch (error) {
+              console.error("Error populating workFlow:", error);
+              formatted.workFlow = "";
+            }
+          } else {
+            formatted.workFlow = "";
+          }
+
+          // Format dates
+          if (formatted.start_date) {
+            formatted.start_date = moment(formatted.start_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.end_date) {
+            formatted.end_date = moment(formatted.end_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format boolean
+          if (formatted.isBillable !== undefined) {
+            formatted.isBillable = formatted.isBillable ? "Yes" : "No";
+          }
+
+        } else if (moduleName === "tasks") {
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : "";
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id:", error);
+              formatted.project_id = "";
+            }
+          }
+
+          // Populate main_task_id
+          if (formatted.main_task_id) {
+            try {
+              const MainTaskModel = mongoose.model("projectmaintasks");
+              const mainTaskId = toObjectId(formatted.main_task_id);
+              if (mainTaskId) {
+                const mainTask = await MainTaskModel.findById(mainTaskId)
+                  .select("title")
+                  .lean();
+                formatted.main_task_id = mainTask && mainTask.title ? mainTask.title : "";
+              } else {
+                formatted.main_task_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating main_task_id:", error);
+              formatted.main_task_id = "";
+            }
+          }
+
+          // Populate task_labels
+          if (formatted.task_labels && Array.isArray(formatted.task_labels) && formatted.task_labels.length > 0) {
+            try {
+              const TaskLabelsModel = mongoose.model("tasklabels");
+              const labelIds = formatted.task_labels.map(id => toObjectId(id)).filter(Boolean);
+              if (labelIds.length > 0) {
+                const labels = await TaskLabelsModel.find({ _id: { $in: labelIds } })
+                  .select("title")
+                  .lean();
+                formatted.task_labels = labels.length > 0 ? labels.map(l => l.title || "").filter(Boolean).join(", ") : "";
+              } else {
+                formatted.task_labels = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_labels:", error);
+              formatted.task_labels = "";
+            }
+          } else {
+            formatted.task_labels = "";
+          }
+
+          // Populate assignees
+          if (formatted.assignees && Array.isArray(formatted.assignees) && formatted.assignees.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const assigneeIds = formatted.assignees.map(id => toObjectId(id)).filter(Boolean);
+              if (assigneeIds.length > 0) {
+                const assignees = await EmployeesModel.find({ _id: { $in: assigneeIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.assignees = assignees.length > 0 
+                  ? assignees.map(a => a.full_name || `${a.first_name || ""} ${a.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.assignees = "";
+              }
+            } catch (error) {
+              console.error("Error populating assignees:", error);
+              formatted.assignees = "";
+            }
+          } else {
+            formatted.assignees = "";
+          }
+
+          // Populate pms_clients
+          if (formatted.pms_clients && Array.isArray(formatted.pms_clients) && formatted.pms_clients.length > 0) {
+            try {
+              const PMSClientsModel = mongoose.model("pmsclients");
+              const clientIds = formatted.pms_clients.map(id => toObjectId(id)).filter(Boolean);
+              if (clientIds.length > 0) {
+                const clients = await PMSClientsModel.find({ _id: { $in: clientIds } })
+                  .select("name company_name")
+                  .lean();
+                formatted.pms_clients = clients.length > 0 
+                  ? clients.map(c => c.name || c.company_name || "").filter(Boolean).join(", ") || "-"
+                  : "-";
+              } else {
+                formatted.pms_clients = "-";
+              }
+            } catch (error) {
+              console.error("Error populating pms_clients:", error);
+              formatted.pms_clients = "-";
+            }
+          } else {
+            formatted.pms_clients = "-";
+          }
+
+          // Populate task_status
+          if (formatted.task_status) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const taskStatusId = toObjectId(formatted.task_status);
+              if (taskStatusId) {
+                const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                  .select("title")
+                  .lean();
+                formatted.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+              } else {
+                formatted.task_status = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_status:", error);
+              formatted.task_status = "";
+            }
+          }
+
+          // Populate task_status_history
+          if (formatted.task_status_history && Array.isArray(formatted.task_status_history) && formatted.task_status_history.length > 0) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const EmployeesModel = mongoose.model("employees");
+              
+              const populatedHistory = await Promise.all(
+                formatted.task_status_history.map(async (historyItem) => {
+                  const populatedItem = { ...historyItem };
+                  
+                  // Populate task_status
+                  if (historyItem.task_status) {
+                    const taskStatusId = toObjectId(historyItem.task_status);
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+                  
+                  // Populate updatedBy
+                  if (historyItem.updatedBy) {
+                    const updatedById = toObjectId(historyItem.updatedBy);
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                  
+                  // Format updatedAt
+                  if (historyItem.updatedAt) {
+                    populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                  }
+                  
+                  // Remove any ID fields
+                  delete populatedItem._id;
+                  
+                  return populatedItem;
+                })
+              );
+              
+              formatted.task_status_history = populatedHistory;
+            } catch (error) {
+              console.error("Error populating task_status_history:", error);
+              formatted.task_status_history = [];
+            }
+          } else {
+            formatted.task_status_history = [];
+          }
+
+          // Format dates
+          if (formatted.start_date) {
+            formatted.start_date = moment(formatted.start_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.due_date) {
+            formatted.due_date = moment(formatted.due_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+        } else if (moduleName === "bugs") {
+          // Populate bug_status_history
+          if (formatted.bug_status_history && Array.isArray(formatted.bug_status_history) && formatted.bug_status_history.length > 0) {
+            try {
+              const BugWorkflowStatusModel = mongoose.model("bugsworkflowstatus");
+              const EmployeesModel = mongoose.model("employees");
+              
+              const populatedHistory = await Promise.all(
+                formatted.bug_status_history.map(async (historyItem) => {
+                  const populatedItem = { ...historyItem };
+                  
+                  // Populate bug_status
+                  if (historyItem.bug_status) {
+                    const bugStatusId = toObjectId(historyItem.bug_status);
+                    if (bugStatusId) {
+                      const bugStatus = await BugWorkflowStatusModel.findById(bugStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.bug_status = bugStatus && bugStatus.title ? bugStatus.title : "";
+                    } else {
+                      populatedItem.bug_status = "";
+                    }
+                  }
+                  
+                  // Populate updatedBy
+                  if (historyItem.updatedBy) {
+                    const updatedById = toObjectId(historyItem.updatedBy);
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                  
+                  // Format updatedAt
+                  if (historyItem.updatedAt) {
+                    populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                  }
+                  
+                  // Remove any ID fields
+                  delete populatedItem._id;
+                  
+                  return populatedItem;
+                })
+              );
+              
+              formatted.bug_status_history = populatedHistory;
+            } catch (error) {
+              console.error("Error populating bug_status_history:", error);
+              formatted.bug_status_history = [];
+            }
+          } else {
+            formatted.bug_status_history = [];
+          }
+
+          // Format dates
+          if (formatted.start_date) {
+            formatted.start_date = moment(formatted.start_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.due_date) {
+            formatted.due_date = moment(formatted.due_date).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format booleans
+          if (formatted.isImported !== undefined) {
+            formatted.isImported = formatted.isImported ? "Yes" : "No";
+          }
+          if (formatted.isRepeated !== undefined) {
+            formatted.isRepeated = formatted.isRepeated ? "Yes" : "No";
+          }
+        } else if (moduleName === "discussionDetails") {
+          // Populate topic_id
+          if (formatted.topic_id) {
+            try {
+              const DiscussionsTopicsModel = mongoose.model("discussionstopics");
+              const topicId = toObjectId(formatted.topic_id);
+              if (topicId) {
+                const topic = await DiscussionsTopicsModel.findById(topicId)
+                  .select("title")
+                  .lean();
+                formatted.topic_id = topic && topic.title ? topic.title : "";
+              } else {
+                formatted.topic_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating topic_id for discussionDetails:", error);
+              formatted.topic_id = "";
+            }
+          } else {
+            formatted.topic_id = "";
+          }
+
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for discussionDetails:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate taggedUsers
+          if (formatted.taggedUsers && Array.isArray(formatted.taggedUsers) && formatted.taggedUsers.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const taggedUserIds = formatted.taggedUsers.map(id => toObjectId(id)).filter(Boolean);
+              if (taggedUserIds.length > 0) {
+                const taggedUsers = await EmployeesModel.find({ _id: { $in: taggedUserIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.taggedUsers = taggedUsers.length > 0
+                  ? taggedUsers.map(u => u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.taggedUsers = "";
+              }
+            } catch (error) {
+              console.error("Error populating taggedUsers for discussionDetails:", error);
+              formatted.taggedUsers = "";
+            }
+          } else {
+            formatted.taggedUsers = "";
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format boolean
+          if (formatted.isDefault !== undefined) {
+            formatted.isDefault = formatted.isDefault ? "Yes" : "No";
+          }
+        } else if (moduleName === "taskHoursLogs") {
+          // Populate employee_id
+          if (formatted.employee_id) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const employeeId = toObjectId(formatted.employee_id);
+              if (employeeId) {
+                const employee = await EmployeesModel.findById(employeeId)
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.employee_id = employee ? (employee.full_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()) : "";
+              } else {
+                formatted.employee_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating employee_id for taskHoursLogs:", error);
+              formatted.employee_id = "";
+            }
+          } else {
+            formatted.employee_id = "";
+          }
+
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for taskHoursLogs:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate task_id
+          if (formatted.task_id) {
+            try {
+              const ProjectTasksModel = mongoose.model("projecttasks");
+              const taskId = toObjectId(formatted.task_id);
+              if (taskId) {
+                const task = await ProjectTasksModel.findById(taskId)
+                  .select("title taskId")
+                  .lean();
+                formatted.task_id = task && task.taskId ? `#${task.taskId}` : (task && task.title ? task.title : "");
+              } else {
+                formatted.task_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_id for taskHoursLogs:", error);
+              formatted.task_id = "";
+            }
+          } else {
+            formatted.task_id = "";
+          }
+
+          // Populate subtask_id
+          if (formatted.subtask_id) {
+            try {
+              const ProjectSubTasksModel = mongoose.model("projectsubtasks");
+              const subtaskId = toObjectId(formatted.subtask_id);
+              if (subtaskId) {
+                const subtask = await ProjectSubTasksModel.findById(subtaskId)
+                  .select("title subTaskId")
+                  .lean();
+                formatted.subtask_id = subtask && subtask.subTaskId ? `#${subtask.subTaskId}` : (subtask && subtask.title ? subtask.title : "");
+              } else {
+                formatted.subtask_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating subtask_id for taskHoursLogs:", error);
+              formatted.subtask_id = "";
+            }
+          } else {
+            formatted.subtask_id = "";
+          }
+
+          // Populate bug_id
+          if (formatted.bug_id) {
+            try {
+              const ProjectBugsModel = mongoose.model("projecttaskbugs");
+              const bugId = toObjectId(formatted.bug_id);
+              if (bugId) {
+                const bug = await ProjectBugsModel.findById(bugId)
+                  .select("title bugId")
+                  .lean();
+                formatted.bug_id = bug && bug.bugId ? `#${bug.bugId}` : (bug && bug.title ? bug.title : "");
+              } else {
+                formatted.bug_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating bug_id for taskHoursLogs:", error);
+              formatted.bug_id = "";
+            }
+          } else {
+            formatted.bug_id = "";
+          }
+
+          // Populate timesheet_id
+          if (formatted.timesheet_id) {
+            try {
+              const ProjectTimeSheetsModel = mongoose.model("projecttimesheets");
+              const timesheetId = toObjectId(formatted.timesheet_id);
+              if (timesheetId) {
+                const timesheet = await ProjectTimeSheetsModel.findById(timesheetId)
+                  .select("title")
+                  .lean();
+                formatted.timesheet_id = timesheet && timesheet.title ? timesheet.title : "";
+              } else {
+                formatted.timesheet_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating timesheet_id for taskHoursLogs:", error);
+              formatted.timesheet_id = "";
+            }
+          } else {
+            formatted.timesheet_id = "";
+          }
+
+          // Format logged_date
+          if (formatted.logged_date) {
+            formatted.logged_date = moment(formatted.logged_date).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format boolean
+          if (formatted.isManuallyAdded !== undefined) {
+            formatted.isManuallyAdded = formatted.isManuallyAdded ? "Yes" : "No";
+          }
+
+          // Format logged_hours and logged_minutes (combine if both exist)
+          if (formatted.logged_hours || formatted.logged_minutes) {
+            const hours = formatted.logged_hours || "00";
+            const minutes = formatted.logged_minutes || "00";
+            formatted.logged_time = `${hours}:${minutes}`;
+          }
+        } else if (moduleName === "projectMainTask") {
+          // Populate project_id
+          if (formatted.project_id) {
+            try {
+              const ProjectsModel = mongoose.model("projects");
+              const projectId = toObjectId(formatted.project_id);
+              if (projectId) {
+                const project = await ProjectsModel.findById(projectId)
+                  .select("title projectId")
+                  .lean();
+                formatted.project_id = project && project.projectId ? `#${project.projectId}` : (project && project.title ? project.title : "");
+              } else {
+                formatted.project_id = "";
+              }
+            } catch (error) {
+              console.error("Error populating project_id for projectMainTask:", error);
+              formatted.project_id = "";
+            }
+          } else {
+            formatted.project_id = "";
+          }
+
+          // Populate task_status
+          if (formatted.task_status) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const taskStatusId = toObjectId(formatted.task_status);
+              if (taskStatusId) {
+                const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                  .select("title")
+                  .lean();
+                formatted.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+              } else {
+                formatted.task_status = "";
+              }
+            } catch (error) {
+              console.error("Error populating task_status for projectMainTask:", error);
+              formatted.task_status = "";
+            }
+          } else {
+            formatted.task_status = "";
+          }
+
+          // Populate subscribers
+          if (formatted.subscribers && Array.isArray(formatted.subscribers) && formatted.subscribers.length > 0) {
+            try {
+              const EmployeesModel = mongoose.model("employees");
+              const subscriberIds = formatted.subscribers.map(id => toObjectId(id)).filter(Boolean);
+              if (subscriberIds.length > 0) {
+                const subscribers = await EmployeesModel.find({ _id: { $in: subscriberIds } })
+                  .select("full_name first_name last_name")
+                  .lean();
+                formatted.subscribers = subscribers.length > 0
+                  ? subscribers.map(s => s.full_name || `${s.first_name || ""} ${s.last_name || ""}`.trim()).filter(Boolean).join(", ")
+                  : "";
+              } else {
+                formatted.subscribers = "";
+              }
+            } catch (error) {
+              console.error("Error populating subscribers for projectMainTask:", error);
+              formatted.subscribers = "";
+            }
+          } else {
+            formatted.subscribers = "";
+          }
+
+          // Populate pms_clients
+          if (formatted.pms_clients && Array.isArray(formatted.pms_clients) && formatted.pms_clients.length > 0) {
+            try {
+              const PMSClientsModel = mongoose.model("pmsclients");
+              const clientIds = formatted.pms_clients.map(id => toObjectId(id)).filter(Boolean);
+              if (clientIds.length > 0) {
+                const clients = await PMSClientsModel.find({ _id: { $in: clientIds } })
+                  .select("name company_name")
+                  .lean();
+                formatted.pms_clients = clients.length > 0
+                  ? clients.map(c => c.name || c.company_name || "").filter(Boolean).join(", ") || "-"
+                  : "-";
+              } else {
+                formatted.pms_clients = "-";
+              }
+            } catch (error) {
+              console.error("Error populating pms_clients for projectMainTask:", error);
+              formatted.pms_clients = "-";
+            }
+          } else {
+            formatted.pms_clients = "-";
+          }
+
+          // Populate task_status_history
+          if (formatted.task_status_history && Array.isArray(formatted.task_status_history) && formatted.task_status_history.length > 0) {
+            try {
+              const WorkflowStatusModel = mongoose.model("workflowstatus");
+              const EmployeesModel = mongoose.model("employees");
+
+              const populatedHistory = await Promise.all(
+                formatted.task_status_history.map(async (historyItem) => {
+                  const populatedItem = { ...historyItem };
+
+                  // Populate task_status
+                  if (historyItem.task_status) {
+                    const taskStatusId = toObjectId(historyItem.task_status);
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+
+                  // Populate updatedBy
+                  if (historyItem.updatedBy) {
+                    const updatedById = toObjectId(historyItem.updatedBy);
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+
+                  // Format updatedAt
+                  if (historyItem.updatedAt) {
+                    populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                  }
+
+                  // Remove any ID fields
+                  delete populatedItem._id;
+
+                  return populatedItem;
+                })
+              );
+
+              formatted.task_status_history = populatedHistory;
+            } catch (error) {
+              console.error("Error populating task_status_history for projectMainTask:", error);
+              formatted.task_status_history = [];
+            }
+          } else {
+            formatted.task_status_history = [];
+          }
+
+          // Format dates
+          if (formatted.createdAt) {
+            formatted.createdAt = moment(formatted.createdAt).format("DD MMM YYYY HH:mm:ss");
+          }
+          if (formatted.updatedAt) {
+            formatted.updatedAt = moment(formatted.updatedAt).format("DD MMM YYYY HH:mm:ss");
+          }
+
+          // Format booleans
+          if (formatted.isPrivateList !== undefined) {
+            formatted.isPrivateList = formatted.isPrivateList ? "Yes" : "No";
+          }
+          if (formatted.isBookmark !== undefined) {
+            formatted.isBookmark = formatted.isBookmark ? "Yes" : "No";
+          }
+          if (formatted.isDisplayInGantt !== undefined) {
+            formatted.isDisplayInGantt = formatted.isDisplayInGantt ? "Yes" : "No";
+          }
+        }
+
+        // Remove any remaining ObjectId fields, arrays of ObjectIds, or null/undefined values
+        Object.keys(formatted).forEach(key => {
+          const value = formatted[key];
+          // Remove ObjectId instances
+          if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'ObjectId') {
+            delete formatted[key];
+          }
+          // Remove arrays that might contain ObjectIds (if not already populated)
+          else if (Array.isArray(value) && value.length > 0 && value[0] && typeof value[0] === 'object' && value[0].constructor && value[0].constructor.name === 'ObjectId') {
+            delete formatted[key];
+          }
+          // Remove null or undefined
+          else if (value === null || value === undefined) {
+            delete formatted[key];
+          }
+        });
+
+        formattedRecords.push(formatted);
+      }
+
+      return formattedRecords;
+    };
+
+    // Fetch deleted data if it's a DELETE operation
+    let deletedData = null;
+    if (logData.operationName === "DELETE" && logData.moduleName && logData.additionalData) {
+      try {
+        const additionalData = logData.additionalData;
+        
+        // Check if deletedRecord is already stored in additionalData (for soft deletes)
+        // This is the preferred method as it doesn't require a database query
+        if (additionalData.deletedRecord && typeof additionalData.deletedRecord === 'object') {
+          // Use the stored deleted record directly
+          const storedRecord = additionalData.deletedRecord;
+          deletedData = await populateDeletedData([storedRecord], logData.moduleName);
+          console.log(`[ActivityLog] Using stored deletedRecord for ${logData.moduleName}`);
+        } else {
+          // Fallback: Fetch from database if deletedRecord is not stored
+          const modelName = getModelName(logData.moduleName);
+          const Model = mongoose.model(modelName);
+          
+          // Get deleted record IDs
+          let deletedIds = [];
+          if (additionalData.deletedRecordIds && Array.isArray(additionalData.deletedRecordIds)) {
+            deletedIds = additionalData.deletedRecordIds;
+          } else if (additionalData.recordId) {
+            deletedIds = [additionalData.recordId];
+          }
+
+          if (deletedIds.length > 0) {
+            // Fetch deleted records (including soft deleted ones) - don't filter by isDeleted
+            const deletedRecords = await Model.find({
+              _id: { $in: deletedIds.map(id => global.newObjectId(id)) }
+            }).lean();
+            
+            console.log(`[ActivityLog] Fetching deleted data for ${logData.moduleName}:`, {
+              modelName,
+              deletedIds,
+              foundRecords: deletedRecords ? deletedRecords.length : 0
+            });
+            
+            if (deletedRecords && deletedRecords.length > 0) {
+              // Populate and format the deleted data
+              deletedData = await populateDeletedData(deletedRecords, logData.moduleName);
+              console.log(`[ActivityLog] Populated deleted data for ${logData.moduleName}:`, deletedData ? deletedData.length : 0, "records");
+            } else {
+              console.log(`[ActivityLog] No records found for ${logData.moduleName} with IDs:`, deletedIds);
+            }
+          } else {
+            console.log(`[ActivityLog] No deleted IDs found in additionalData for ${logData.moduleName}:`, additionalData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching deleted data:", error);
+        console.error("Error details:", {
+          moduleName: logData.moduleName,
+          operationName: logData.operationName,
+          additionalData: logData.additionalData,
+          error: error.message,
+          stack: error.stack
+        });
+        // Continue without deleted data if there's an error
+      }
+    }
+
+    // Helper function to populate user fields and remove all IDs from data objects
+    const populateUserFields = async (dataObj) => {
+      if (!dataObj || typeof dataObj !== 'object') return dataObj;
+
+      const EmployeesModel = mongoose.model("employees");
+      const CompanyModel = mongoose.model("companies");
+      const populatedObj = { ...dataObj };
+
+      // Helper to convert ID to ObjectId
+      const toObjectId = (id) => {
+        if (!id) return null;
+        if (id instanceof mongoose.Types.ObjectId) return id;
+        if (typeof id === 'string' && mongoose.Types.ObjectId.isValid(id)) {
+          return new mongoose.Types.ObjectId(id);
+        }
+        return null;
+      };
+
+      // Populate companyId with company name and rename to "company"
+      if (populatedObj.companyId) {
+        try {
+          const companyId = toObjectId(populatedObj.companyId);
+          if (companyId) {
+            const company = await CompanyModel.findById(companyId)
+              .select("companyName")
+              .lean();
+            if (company && company.companyName) {
+              // Rename companyId to company
+              populatedObj.company = company.companyName;
+              delete populatedObj.companyId;
+            } else {
+              delete populatedObj.companyId;
+            }
+          } else {
+            delete populatedObj.companyId;
+          }
+        } catch (error) {
+          console.error("Error populating companyId:", error);
+          delete populatedObj.companyId;
+        }
+      }
+
+      // Populate createdBy
+      if (populatedObj.createdBy) {
+        try {
+          const createdById = toObjectId(populatedObj.createdBy);
+          if (createdById) {
+            const createdByUser = await EmployeesModel.findById(createdById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (createdByUser) {
+              populatedObj.createdBy = createdByUser.full_name || `${createdByUser.first_name || ""} ${createdByUser.last_name || ""}`.trim() || createdByUser.email || "";
+            } else {
+              delete populatedObj.createdBy;
+            }
+          } else {
+            delete populatedObj.createdBy;
+          }
+        } catch (error) {
+          console.error("Error populating createdBy:", error);
+          delete populatedObj.createdBy;
+        }
+      }
+
+      // Populate updatedBy
+      if (populatedObj.updatedBy) {
+        try {
+          const updatedById = toObjectId(populatedObj.updatedBy);
+          if (updatedById) {
+            const updatedByUser = await EmployeesModel.findById(updatedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (updatedByUser) {
+              populatedObj.updatedBy = updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email || "";
+            } else {
+              delete populatedObj.updatedBy;
+            }
+          } else {
+            delete populatedObj.updatedBy;
+          }
+        } catch (error) {
+          console.error("Error populating updatedBy:", error);
+          delete populatedObj.updatedBy;
+        }
+      }
+
+      // Populate deletedBy
+      if (populatedObj.deletedBy) {
+        try {
+          const deletedById = toObjectId(populatedObj.deletedBy);
+          if (deletedById) {
+            const deletedByUser = await EmployeesModel.findById(deletedById)
+              .select("full_name first_name last_name email phone_number")
+              .lean();
+            if (deletedByUser) {
+              populatedObj.deletedBy = deletedByUser.full_name || `${deletedByUser.first_name || ""} ${deletedByUser.last_name || ""}`.trim() || deletedByUser.email || "";
+            } else {
+              delete populatedObj.deletedBy;
+            }
+          } else {
+            delete populatedObj.deletedBy;
+          }
+        } catch (error) {
+          console.error("Error populating deletedBy:", error);
+          delete populatedObj.deletedBy;
+        }
+      }
+
+      // Populate manager field - convert object to manager name string
+      if (populatedObj.manager) {
+        try {
+          // If manager is already an object (populated), extract the name
+          if (populatedObj.manager && typeof populatedObj.manager === 'object' && populatedObj.manager.constructor && populatedObj.manager.constructor.name === 'Object') {
+            const managerObj = populatedObj.manager;
+            if (managerObj.full_name) {
+              populatedObj.manager = managerObj.full_name;
+            } else if (managerObj.first_name || managerObj.last_name) {
+              populatedObj.manager = `${managerObj.first_name || ""} ${managerObj.last_name || ""}`.trim();
+            } else if (managerObj.email) {
+              populatedObj.manager = managerObj.email;
+            } else {
+              // If it's an object but no name fields, try to fetch by ID
+              const managerId = toObjectId(managerObj._id || managerObj);
+              if (managerId) {
+                const managerUser = await EmployeesModel.findById(managerId)
+                  .select("full_name first_name last_name email")
+                  .lean();
+                if (managerUser) {
+                  populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+                } else {
+                  delete populatedObj.manager;
+                }
+              } else {
+                delete populatedObj.manager;
+              }
+            }
+          } else {
+            // If manager is an ID (ObjectId or string), fetch and populate
+            const managerId = toObjectId(populatedObj.manager);
+            if (managerId) {
+              const managerUser = await EmployeesModel.findById(managerId)
+                .select("full_name first_name last_name email")
+                .lean();
+              if (managerUser) {
+                populatedObj.manager = managerUser.full_name || `${managerUser.first_name || ""} ${managerUser.last_name || ""}`.trim() || managerUser.email || "";
+              } else {
+                delete populatedObj.manager;
+              }
+            } else {
+              delete populatedObj.manager;
+            }
+          }
+        } catch (error) {
+          console.error("Error populating manager:", error);
+          delete populatedObj.manager;
+        }
+      }
+
+      // Handle subscribers array - convert to names if needed
+      if (populatedObj.subscribers && Array.isArray(populatedObj.subscribers)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscribers.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains ObjectIds or objects
+            const subscriberNames = [];
+            
+            for (const subscriber of populatedObj.subscribers) {
+              if (!subscriber) continue;
+              
+              // Check if it's already a populated object
+              if (typeof subscriber === 'object' && 
+                  (subscriber.full_name !== undefined || 
+                   subscriber.first_name !== undefined ||
+                   subscriber.last_name !== undefined)) {
+                const name = subscriber.full_name || 
+                  `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                if (name) subscriberNames.push(name);
+              } else {
+                // It's an ObjectId or string ID - fetch the name
+                const subscriberId = toObjectId(subscriber);
+                if (subscriberId) {
+                  const subscriberDoc = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriberDoc) {
+                    const name = subscriberDoc.full_name || 
+                      `${subscriberDoc.first_name || ""} ${subscriberDoc.last_name || ""}`.trim();
+                    if (name) subscriberNames.push(name);
+                  }
+                }
+              }
+            }
+            
+            populatedObj.subscribers = subscriberNames;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscribers in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscribers) || 
+              !populatedObj.subscribers.every(item => typeof item === 'string')) {
+            populatedObj.subscribers = [];
+          }
+        }
+      }
+
+      // Handle subscriber_stages specifically for projectMainTask
+      if (populatedObj.subscriber_stages && Array.isArray(populatedObj.subscriber_stages)) {
+        try {
+          // Check if it's already transformed (array of strings)
+          const isAlreadyTransformed = populatedObj.subscriber_stages.every(item => typeof item === 'string');
+          
+          if (!isAlreadyTransformed) {
+            // Need to transform - it contains objects with IDs
+            const WorkflowStatusModel = mongoose.model("workflowstatus");
+            const stagesData = [];
+            
+            for (const stageItem of populatedObj.subscriber_stages) {
+              if (!stageItem || typeof stageItem !== 'object') continue;
+              
+              let subscriberName = null;
+              let stageName = null;
+              
+              // Get subscriber name
+              if (stageItem.subscriber_id) {
+                let subscriberId = null;
+                if (stageItem.subscriber_id instanceof mongoose.Types.ObjectId) {
+                  subscriberId = stageItem.subscriber_id;
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id._id) {
+                  subscriberId = toObjectId(stageItem.subscriber_id._id);
+                } else if (typeof stageItem.subscriber_id === 'string') {
+                  subscriberId = toObjectId(stageItem.subscriber_id);
+                } else if (typeof stageItem.subscriber_id === 'object' && stageItem.subscriber_id.full_name) {
+                  subscriberName = stageItem.subscriber_id.full_name || 
+                    `${stageItem.subscriber_id.first_name || ""} ${stageItem.subscriber_id.last_name || ""}`.trim();
+                }
+                
+                if (subscriberId && !subscriberName) {
+                  const subscriber = await EmployeesModel.findById(subscriberId)
+                    .select("full_name first_name last_name")
+                    .lean();
+                  if (subscriber) {
+                    subscriberName = subscriber.full_name || 
+                      `${subscriber.first_name || ""} ${subscriber.last_name || ""}`.trim();
+                  }
+                }
+              }
+              
+              // Get stage name
+              if (stageItem.stages) {
+                let stageId = null;
+                if (stageItem.stages instanceof mongoose.Types.ObjectId) {
+                  stageId = stageItem.stages;
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages._id) {
+                  stageId = toObjectId(stageItem.stages._id);
+                } else if (typeof stageItem.stages === 'string') {
+                  stageId = toObjectId(stageItem.stages);
+                } else if (typeof stageItem.stages === 'object' && stageItem.stages.title) {
+                  stageName = stageItem.stages.title;
+                }
+                
+                if (stageId && !stageName) {
+                  const stage = await WorkflowStatusModel.findById(stageId)
+                    .select("title")
+                    .lean();
+                  if (stage) {
+                    stageName = stage.title;
+                  }
+                }
+              }
+              
+              if (subscriberName || stageName) {
+                stagesData.push(`${subscriberName || "Unknown"} - ${stageName || "Unknown"}`);
+              }
+            }
+            
+            populatedObj.subscriber_stages = stagesData;
+          }
+          // If already transformed (array of strings), keep it as is
+        } catch (error) {
+          console.error("Error processing subscriber_stages in populateUserFields:", error);
+          // If transformation fails, try to keep string arrays, otherwise set to empty
+          if (!Array.isArray(populatedObj.subscriber_stages) || 
+              !populatedObj.subscriber_stages.every(item => typeof item === 'string')) {
+            populatedObj.subscriber_stages = [];
+          }
+        }
+      }
+
+      // Handle task_status_history for tasks
+      if (populatedObj.task_status_history && Array.isArray(populatedObj.task_status_history)) {
+        try {
+          const WorkflowStatusModel = mongoose.model("workflowstatus");
+          const moment = require("moment");
+          
+          // Check if already transformed (array of objects with string values for task_status and updatedBy)
+          const isAlreadyTransformed = populatedObj.task_status_history.every(item => 
+            item && typeof item === 'object' && 
+            (typeof item.task_status === 'string' || item.task_status === "") &&
+            (typeof item.updatedBy === 'string' || item.updatedBy === "")
+          );
+          
+          if (!isAlreadyTransformed) {
+            const populatedHistory = await Promise.all(
+              populatedObj.task_status_history.map(async (historyItem) => {
+                if (!historyItem || typeof historyItem !== 'object') return historyItem;
+                
+                const populatedItem = { ...historyItem };
+                
+                // Populate task_status - handle null, ObjectId, string, or populated object
+                if (historyItem.task_status !== null && historyItem.task_status !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.task_status === 'string') {
+                    populatedItem.task_status = historyItem.task_status;
+                  } else if (typeof historyItem.task_status === 'object' && historyItem.task_status.title) {
+                    // Already populated object
+                    populatedItem.task_status = historyItem.task_status.title;
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let taskStatusId = null;
+                    if (historyItem.task_status instanceof mongoose.Types.ObjectId) {
+                      taskStatusId = historyItem.task_status;
+                    } else if (typeof historyItem.task_status === 'object' && historyItem.task_status._id) {
+                      taskStatusId = toObjectId(historyItem.task_status._id);
+                    } else if (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)) {
+                      taskStatusId = toObjectId(historyItem.task_status);
+                    }
+                    
+                    if (taskStatusId) {
+                      const taskStatus = await WorkflowStatusModel.findById(taskStatusId)
+                        .select("title")
+                        .lean();
+                      populatedItem.task_status = taskStatus && taskStatus.title ? taskStatus.title : "";
+                    } else {
+                      populatedItem.task_status = "";
+                    }
+                  }
+                } else {
+                  populatedItem.task_status = "";
+                }
+                
+                // Populate updatedBy - handle ObjectId, string, or populated object
+                if (historyItem.updatedBy !== null && historyItem.updatedBy !== undefined) {
+                  // Check if already a string (already transformed)
+                  if (typeof historyItem.updatedBy === 'string') {
+                    populatedItem.updatedBy = historyItem.updatedBy;
+                  } else if (typeof historyItem.updatedBy === 'object' && 
+                            (historyItem.updatedBy.full_name !== undefined || 
+                             historyItem.updatedBy.first_name !== undefined ||
+                             historyItem.updatedBy.email !== undefined)) {
+                    // Already populated object
+                    populatedItem.updatedBy = historyItem.updatedBy.full_name || 
+                      `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                      historyItem.updatedBy.email || "";
+                  } else {
+                    // It's an ObjectId or string ID - fetch the name
+                    let updatedById = null;
+                    if (historyItem.updatedBy instanceof mongoose.Types.ObjectId) {
+                      updatedById = historyItem.updatedBy;
+                    } else if (typeof historyItem.updatedBy === 'object' && historyItem.updatedBy._id) {
+                      updatedById = toObjectId(historyItem.updatedBy._id);
+                    } else if (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)) {
+                      updatedById = toObjectId(historyItem.updatedBy);
+                    }
+                    
+                    if (updatedById) {
+                      const updatedByUser = await EmployeesModel.findById(updatedById)
+                        .select("full_name first_name last_name email")
+                        .lean();
+                      populatedItem.updatedBy = updatedByUser 
+                        ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
+                        : "";
+                    } else {
+                      populatedItem.updatedBy = "";
+                    }
+                  }
+                } else {
+                  populatedItem.updatedBy = "";
+                }
+                
+                // Format updatedAt - ensure proper date format
+                if (historyItem.updatedAt) {
+                  // Check if already formatted (string with expected format)
+                  if (typeof historyItem.updatedAt === 'string' && /^\d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2}$/.test(historyItem.updatedAt)) {
+                    populatedItem.updatedAt = historyItem.updatedAt;
+                  } else {
+                    try {
+                      populatedItem.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
+                    } catch (dateError) {
+                      populatedItem.updatedAt = historyItem.updatedAt.toString();
+                    }
+                  }
+                } else {
+                  populatedItem.updatedAt = "";
+                }
+                
+                // Remove any ID fields
+                delete populatedItem._id;
+                
+                return populatedItem;
+              })
+            );
+            
+            populatedObj.task_status_history = populatedHistory;
+          }
+          // If already transformed, keep it as is
+        } catch (error) {
+          console.error("Error processing task_status_history in populateUserFields:", error);
+          // Try to preserve already transformed data
+          if (!Array.isArray(populatedObj.task_status_history) || 
+              !populatedObj.task_status_history.every(item => 
+                item && typeof item === 'object' && 
+                (typeof item.task_status === 'string' || item.task_status === "") &&
+                (typeof item.updatedBy === 'string' || item.updatedBy === "")
+              )) {
+            populatedObj.task_status_history = [];
+          }
+        }
+      }
+
+      // Remove all ID fields and ObjectId instances
+      Object.keys(populatedObj).forEach(key => {
+        const value = populatedObj[key];
+        
+        // Remove _id field
+        if (key === '_id' || key === '__v') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove ObjectId instances
+        if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'ObjectId') {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Remove arrays that might contain ObjectIds (if not already populated)
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && Array.isArray(value) && value.length > 0) {
+          const firstItem = value[0];
+          if (firstItem && typeof firstItem === 'object' && firstItem.constructor && firstItem.constructor.name === 'ObjectId') {
+            delete populatedObj[key];
+            return;
+          }
+        }
+
+        // Remove null or undefined
+        if (value === null || value === undefined) {
+          delete populatedObj[key];
+          return;
+        }
+
+        // Recursively process nested objects (but not arrays of objects to avoid infinite loops)
+        // Skip subscribers, subscriber_stages, and task_status_history as we've already handled them above
+        if (key !== 'subscribers' && key !== 'subscriber_stages' && key !== 'task_status_history' && value && typeof value === 'object' && !Array.isArray(value) && value.constructor && value.constructor.name === 'Object') {
+          // Process nested objects recursively, but limit depth to avoid issues
+          Object.keys(value).forEach(nestedKey => {
+            if (nestedKey === '_id' || nestedKey === '__v') {
+              delete value[nestedKey];
+            } else if (value[nestedKey] && typeof value[nestedKey] === 'object' && value[nestedKey].constructor && value[nestedKey].constructor.name === 'ObjectId') {
+              delete value[nestedKey];
+            }
+          });
+        }
+      });
+
+      return populatedObj;
+    };
+
+    // Helper function to map module names to display labels
+    const getModuleLabel = (moduleName) => {
+      if (!moduleName) return null;
+      const moduleLabelMap = {
+        "projectexpanses": "Project Expenses",
+        "tasks": "Tasks",
+        "projects": "Projects",
+        "notes": "Notes",
+        "notebook": "Notebook",
+        "bugs": "Bugs",
+        "discussions": "Discussions",
+        "discussionDetails": "Discussion Details",
+        "fileFolders": "File Folders",
+        "fileUploads": "File Uploads",
+        "taskComments": "Task Comments",
+        "bugComments": "Bug Comments",
+        "notesComments": "Notes Comments",
+        "subTasks": "Sub Tasks",
+        "projectMainTask": "Project Main Task",
+        "taskHoursLogs": "Task Hours Logs",
+        "projectTimeSheets": "Project Time Sheets",
+        "projectLabels": "Project Labels",
+        "projectStatus": "Project Status",
+        "projectTypes": "Project Types",
+        "projectTech": "Project Tech",
+        "projectWorkFlow": "Project Workflow",
+        "workFlowStatus": "Workflow Status",
+        "employees": "Employees",
+        "pmsClients": "PMS Clients",
+        "pmsRoles": "PMS Roles",
+        "rolePermissions": "Role Permissions",
+        "complaints": "Complaints",
+        "complaints_status": "Complaints Status",
+        "complaints_comments": "Complaints Comments",
+        "reviews": "Reviews",
+        "hoursLoggedComments": "Hours Logged Comments",
+        "hoursApprove": "Hours Approve"
+      };
+      return moduleLabelMap[moduleName.toLowerCase()] || moduleName;
+    };
+
+    // Populate user fields in updatedData if it exists
+    let populatedUpdatedData = null;
+    if (logData.updatedData && logData.updatedData.oldData && logData.updatedData.newData) {
+      try {
+        populatedUpdatedData = {
+          oldData: await populateUserFields(logData.updatedData.oldData),
+          newData: await populateUserFields(logData.updatedData.newData)
+        };
+      } catch (error) {
+        console.error("Error populating updatedData user fields:", error);
+        populatedUpdatedData = logData.updatedData;
+      }
+    } else {
+      populatedUpdatedData = logData.updatedData || null;
+    }
+
+    const response = {
+      _id: logData._id,
+      operationName: logData.operationName,
+      email: logData.email,
+      createdAt: moment(logData.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+      companyName: (logData.companyDetails && logData.companyDetails.companyName) || null,
+      createdBy: logData.createdByDetails ? {
+        _id: logData.createdByDetails._id,
+        full_name: logData.createdByDetails.full_name,
+        first_name: logData.createdByDetails.first_name,
+        last_name: logData.createdByDetails.last_name,
+        email: logData.createdByDetails.email,
+        phone_number: logData.createdByDetails.phone_number
+      } : null,
+      updatedBy: logData.updatedByDetails ? {
+        _id: logData.updatedByDetails._id,
+        full_name: logData.updatedByDetails.full_name,
+        first_name: logData.updatedByDetails.first_name,
+        last_name: logData.updatedByDetails.last_name,
+        email: logData.updatedByDetails.email,
+        phone_number: logData.updatedByDetails.phone_number
+      } : null,
+      deletedBy: logData.deletedByDetails ? {
+        _id: logData.deletedByDetails._id,
+        full_name: logData.deletedByDetails.full_name,
+        first_name: logData.deletedByDetails.first_name,
+        last_name: logData.deletedByDetails.last_name,
+        email: logData.deletedByDetails.email,
+        phone_number: logData.deletedByDetails.phone_number
+      } : null,
+      additionalData: logData.additionalData || null,
+      updatedData: populatedUpdatedData,
+      deletedData: deletedData || null
+    };
+
+    // Remove moduleName for LOGIN and LOGOUT operations, otherwise map to display label
+    if (logData.operationName === "LOGIN" || logData.operationName === "LOGOUT") {
+      delete response.moduleName;
+    } else {
+      response.moduleName = getModuleLabel(logData.moduleName);
+    }
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Activity log fetched successfully",
+      response
+    );
+  } catch (error) {
+    console.error("ActivityLog Detail Error:", error);
+    return catchBlockErrorResponse(res, error.message || messages.SERVER_ERROR);
+  }
+};
+
