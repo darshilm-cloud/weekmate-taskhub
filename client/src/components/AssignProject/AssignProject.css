@@ -4,9 +4,27 @@
 
 /* ── Page wrapper ─────────────────────────────────────────── */
 .ap-page-wrapper {
-  padding: 20px 24px;
-  background: #f7f8fa;
+  background: #f4f5f7;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top Bar (white sticky header + tabs) ─────────────────── */
+.ap-topbar {
+  background: #fff;
+  border-bottom: 1px solid #e8eaed;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ── Content area ─────────────────────────────────────────── */
+.ap-content-area {
+  padding: 20px 24px;
+  flex: 1;
 }
 
 /* ── Page Header ──────────────────────────────────────────── */
@@ -14,23 +32,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  padding: 14px 0 12px;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .ap-page-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #111827;
   margin: 0;
   line-height: 1.2;
+  letter-spacing: -0.2px;
 }
 
 .ap-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -40,49 +59,68 @@
 
 .ap-search-input .ant-input-affix-wrapper {
   border-radius: 8px;
-  border-color: #e4e6ea;
-  background: #fff;
+  border-color: #d1d5db;
+  background: #f9fafb;
+  height: 34px;
 }
 
 .ap-search-input .ant-input-affix-wrapper:hover,
 .ap-search-input .ant-input-affix-wrapper:focus-within {
   border-color: #00C4B4;
+  background: #fff;
   box-shadow: 0 0 0 2px rgba(0, 196, 180, 0.1);
 }
 
+/* Status select – styled like an outlined action button */
 .ap-status-select {
-  width: 150px !important;
+  width: 120px !important;
 }
 
 .ap-status-select .ant-select-selector {
   border-radius: 8px !important;
-  border-color: #e4e6ea !important;
+  border-color: #d1d5db !important;
+  background: #f9fafb !important;
+  height: 34px !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
+.ap-status-select.ant-select-open .ant-select-selector,
 .ap-status-select .ant-select-selector:hover {
   border-color: #00C4B4 !important;
+  background: #fff !important;
+}
+
+.ap-status-select .ant-select-selection-placeholder {
+  color: #6b7280 !important;
+  font-weight: 500;
 }
 
 /* View toggle buttons */
 .ap-view-toggle {
   display: flex;
   align-items: center;
-  border: 1px solid #e4e6ea;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: #f9fafb;
 }
 
 .ap-view-btn {
   background: transparent;
   border: none;
-  padding: 7px 11px;
+  padding: 0 11px;
   cursor: pointer;
   font-size: 14px;
   color: #9ca3af;
   line-height: 1;
+  height: 34px;
+  display: flex;
+  align-items: center;
   transition: background 0.15s, color 0.15s;
   outline: none;
+  white-space: nowrap;
 }
 
 .ap-view-btn:hover {
@@ -101,9 +139,10 @@
   border: none !important;
   border-radius: 8px !important;
   font-weight: 600 !important;
-  height: 36px !important;
+  height: 34px !important;
   padding: 0 16px !important;
-  box-shadow: 0 2px 8px rgba(0, 196, 180, 0.35) !important;
+  font-size: 13px !important;
+  box-shadow: 0 2px 8px rgba(0, 196, 180, 0.3) !important;
   transition: opacity 0.2s, transform 0.1s !important;
 }
 
@@ -112,13 +151,27 @@
   transform: translateY(-1px) !important;
 }
 
+/* ── Tabs toolbar (tabs on left, count + view-all on right) ── */
+.ap-tabs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ap-tabs-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
 /* ── Tabs ─────────────────────────────────────────────────── */
 .ap-tabs-row {
   display: flex;
   align-items: center;
   gap: 0;
-  border-bottom: 2px solid #eaecf0;
-  margin-bottom: 16px;
+  flex: 1;
 }
 
 .ap-tab-btn {
@@ -128,8 +181,7 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  padding: 10px 18px;
+  padding: 12px 16px;
   font-size: 13.5px;
   font-weight: 500;
   color: #6b7280;
@@ -155,26 +207,10 @@
   align-items: center;
 }
 
-/* ── Sub-header ───────────────────────────────────────────── */
-.ap-sub-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .ap-project-count {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
-}
-
-.ap-sub-header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #6b7280;
 }
 
 .ap-view-all-link {
@@ -183,6 +219,7 @@
   color: #00C4B4;
   cursor: pointer;
   transition: opacity 0.15s;
+  white-space: nowrap;
 }
 
 .ap-view-all-link:hover {
@@ -578,10 +615,31 @@
   }
 }
 
+@media screen and (max-width: 768px) {
+  .ap-tabs-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .ap-tabs-toolbar-right {
+    padding: 0 0 8px;
+  }
+}
+
 @media screen and (max-width: 640px) {
+  .ap-topbar {
+    padding: 0 16px;
+  }
+
+  .ap-content-area {
+    padding: 16px;
+  }
+
   .ap-page-header {
     flex-direction: column;
     align-items: flex-start;
+    padding: 12px 0 10px;
   }
 
   .ap-header-actions {

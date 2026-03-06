@@ -1,40 +1,153 @@
-.new-project-overview .project-panel .project-time-task {
-    max-width: 100%;
-    justify-content: space-between;
+.new-project-overview {
+  padding: 24px;
+  background-color: #f8fafc;
 }
 
-.new-project-overview .project-time-task .hourTable {
-    flex: 0 0 50%;
-    max-width: 50%;
+.overview-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.new-project-overview .project-time-task .ReactApexChart {
-    flex: 0 0 50%;
-    max-width: 50%;
-    display: flex;
-    justify-content: center;
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.modal-overview-details .assignees-list {
-    max-height: 300px;
-    overflow-x: auto;
+.date-range-card {
+  display: flex;
+  align-items: center;
+  gap: 32px;
 }
 
-.modal-overview-details .error-message {
-    justify-content: center;
-    display: flex;
-    color: rgb(19 19 19 / 50%);
+.date-item {
+  flex: 1;
 }
 
-.new-project-overview .ant-spin-container .ant-table-content {
-    height: 100%;
+.date-label {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: block;
 }
 
-.peoject-page .task-table {
-    width: 50%;
-    margin-left: 40px;
+.date-value {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1e293b;
 }
 
+.date-arrow {
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.analysis-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.priority-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.priority-low { background-color: #35c03b; }
+.priority-medium { background-color: #3b82f6; }
+.priority-high { background-color: #ef4444; }
+
+.chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.user-analysis-chart {
+  width: 100%;
+}
+
+.members-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.members-tabs {
+  margin-bottom: 20px;
+}
+
+.members-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.member-role {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.details-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.details-content {
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* Original overdue styles kept for reference if needed */
 .overdue_block {
     display: flex;
     align-items: center;
@@ -54,47 +167,4 @@
     color: #000;
     margin-right: 10px;
     word-break: break-word;
-}
-
-
-.overdue_block span.highlabel {
-    border-radius: 3px;
-    padding: 2px 5px;
-    font-size: 10px;
-    letter-spacing: .5px;
-    display: inline-block;
-    color: #fff;
-}
-
-
-.peoject-page .task-table td:first-child {
-    font-weight: 600;
-}
-
-.peoject-page .task-table th.ant-table-cell {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.peoject-page .task-table td:nth-child(2),
-.peoject-page .task-table td:nth-child(3) {
-    color: #187CB7;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.overview-task-list {
-    height: calc(100vh - 230px);
-    overflow: auto;
-    max-height: 500px;
-    border-radius: 8px;
-}
-
-.assignees-clients{
-    display: flex;
-    justify-content: space-between;    
-}
-
-.overview-assignees-clients{
-    width: 300px;
 }

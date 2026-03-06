@@ -648,159 +648,166 @@ const AssignProject = () => {
 
   return (
     <div className="ap-page-wrapper">
-      {/* ── Page Header ── */}
-      <div className="ap-page-header">
-        <h1 className="ap-page-title">Project</h1>
-        <div className="ap-header-actions">
-          <Input.Search
-            ref={searchRef}
-            placeholder="Search..."
-            onSearch={onSearch}
-            onKeyUp={resetSearchFilter}
-            className="ap-search-input"
-          />
-          <Select
-            placeholder="Select status"
-            allowClear
-            className="ap-status-select"
-            onChange={(val) => {
-              setStatusFilter(val);
-              setPagination((p) => ({ ...p, current: 1 }));
-            }}
-          >
-            {projectStatusList.map((s) => (
-              <Select.Option key={s._id} value={s._id}>
-                {s.title}
-              </Select.Option>
-            ))}
-          </Select>
-          <div className="ap-view-toggle">
-            <button
-              className={`ap-view-btn ${viewMode === "list" ? "active" : ""}`}
-              onClick={() => setViewMode("list")}
-              title="List view"
+
+      {/* ── Top Bar (header + tabs) ── */}
+      <div className="ap-topbar">
+
+        {/* ── Page Header ── */}
+        <div className="ap-page-header">
+          <h1 className="ap-page-title">Projects</h1>
+          <div className="ap-header-actions">
+            <Input.Search
+              ref={searchRef}
+              placeholder="Search..."
+              onSearch={onSearch}
+              onKeyUp={resetSearchFilter}
+              className="ap-search-input"
+            />
+            <AssignProjectFilter
+              getRoles={() => hasPermission}
+              onFilterChange={handleFilterChange}
+            />
+            <Select
+              placeholder="Status"
+              allowClear
+              className="ap-status-select"
+              suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
+              onChange={(val) => {
+                setStatusFilter(val);
+                setPagination((p) => ({ ...p, current: 1 }));
+              }}
             >
-              <UnorderedListOutlined />
-            </button>
-            <button
-              className={`ap-view-btn ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-              title="Grid view"
-            >
-              <AppstoreOutlined />
-            </button>
+              {projectStatusList.map((s) => (
+                <Select.Option key={s._id} value={s._id}>
+                  {s.title}
+                </Select.Option>
+              ))}
+            </Select>
+            <SortByComponent
+              sortOption={sortOption}
+              handleSortFilter={handleSortFilter}
+              getProjectListing={getProjectListing}
+            />
+            <div className="ap-view-toggle">
+              <button
+                className={`ap-view-btn ${viewMode === "list" ? "active" : ""}`}
+                onClick={() => setViewMode("list")}
+                title="List view"
+              >
+                <UnorderedListOutlined />
+              </button>
+              <button
+                className={`ap-view-btn ${viewMode === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+                title="Grid view"
+              >
+                <AppstoreOutlined />
+              </button>
+            </div>
+            {hasPermission(["project_add"]) && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="ap-add-btn"
+                onClick={() => showModal()}
+              >
+                Add Project
+              </Button>
+            )}
           </div>
-          {hasPermission(["project_add"]) && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="ap-add-btn"
-              onClick={() => showModal()}
+        </div>
+
+        {/* ── Tabs + count ── */}
+        <div className="ap-tabs-toolbar">
+          <div className="ap-tabs-row">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                className={`ap-tab-btn ${activeTab === tab.key ? "active" : ""}`}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+              >
+                <span className="ap-tab-icon">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="ap-tabs-toolbar-right">
+            <span className="ap-project-count">All Projects ({totalCount})</span>
+            <span
+              className="ap-view-all-link"
+              onClick={() => setPagination((p) => ({ ...p, pageSize: p.total || 100, current: 1 }))}
             >
-              Add project
-            </Button>
-          )}
+              View All
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* ── Tabs ── */}
-      <div className="ap-tabs-row">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            className={`ap-tab-btn ${activeTab === tab.key ? "active" : ""}`}
-            onClick={() => {
-              setActiveTab(tab.key);
-              setPagination((p) => ({ ...p, current: 1 }));
-            }}
-          >
-            <span className="ap-tab-icon">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Sub-header: count + filter + view-all ── */}
-      <div className="ap-sub-header">
-        <span className="ap-project-count">All Project ({totalCount})</span>
-        <div className="ap-sub-header-right">
-          <AssignProjectFilter
-            getRoles={() => hasPermission}
-            onFilterChange={handleFilterChange}
-          />
-          <SortByComponent
-            sortOption={sortOption}
-            handleSortFilter={handleSortFilter}
-            getProjectListing={getProjectListing}
-          />
-          <span
-            className="ap-view-all-link"
-            onClick={() => setPagination((p) => ({ ...p, pageSize: p.total || 100, current: 1 }))}
-          >
-            View All
-          </span>
-        </div>
-      </div>
+      </div>{/* /ap-topbar */}
 
       {/* ── Content ── */}
-      {viewMode === "grid" ? (
-        <div className="ap-grid-section">
-          {isloadingProject ? (
-            <div className="ap-loading-state">
-              <Spin size="large" />
-            </div>
-          ) : columnDetails.length === 0 ? (
-            <div className="ap-empty-state">
-              <Empty description="No projects found" />
-            </div>
-          ) : (
-            <div className="ap-cards-grid">
-              {columnDetails.map((record) => (
-                <ProjectCard
-                  key={record._id}
-                  record={record}
-                  companySlug={companySlug}
-                  onEdit={showModal}
-                  onDelete={deleteProject}
-                  stats={taskStats[record._id]}
-                  projectStatusList={projectStatusList}
-                  onStatusChange={handleStatusChange}
-                  onCloseProject={handleCloseProject}
+      <div className="ap-content-area">
+        {viewMode === "grid" ? (
+          <div className="ap-grid-section">
+            {isloadingProject ? (
+              <div className="ap-loading-state">
+                <Spin size="large" />
+              </div>
+            ) : columnDetails.length === 0 ? (
+              <div className="ap-empty-state">
+                <Empty description="No projects found" />
+              </div>
+            ) : (
+              <div className="ap-cards-grid">
+                {columnDetails.map((record) => (
+                  <ProjectCard
+                    key={record._id}
+                    record={record}
+                    companySlug={companySlug}
+                    onEdit={showModal}
+                    onDelete={deleteProject}
+                    stats={taskStats[record._id]}
+                    projectStatusList={projectStatusList}
+                    onStatusChange={handleStatusChange}
+                    onCloseProject={handleCloseProject}
+                  />
+                ))}
+              </div>
+            )}
+            {!isloadingProject && columnDetails.length > 0 && (
+              <div className="ap-grid-pagination">
+                <Pagination
+                  current={pagination.current}
+                  pageSize={pagination.pageSize}
+                  total={pagination.total}
+                  showSizeChanger
+                  pageSizeOptions={["10", "20", "30"]}
+                  showTotal={showTotal}
+                  onChange={(page, size) => setPagination({ current: page, pageSize: size })}
                 />
-              ))}
-            </div>
-          )}
-          {!isloadingProject && columnDetails.length > 0 && (
-            <div className="ap-grid-pagination">
-              <Pagination
-                current={pagination.current}
-                pageSize={pagination.pageSize}
-                total={pagination.total}
-                showSizeChanger
-                pageSizeOptions={["10", "20", "30"]}
-                showTotal={showTotal}
-                onChange={(page, size) => setPagination({ current: page, pageSize: size })}
-              />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="ap-table-section">
-          <Table
-            columns={columns}
-            dataSource={columnDetails}
-            pagination={{
-              showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
-              showTotal,
-              ...pagination,
-            }}
-            onChange={handleTableChange}
-            loading={isloadingProject}
-            rowKey="_id"
-          />
-        </div>
-      )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="ap-table-section">
+            <Table
+              columns={columns}
+              dataSource={columnDetails}
+              pagination={{
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "30"],
+                showTotal,
+                ...pagination,
+              }}
+              onChange={handleTableChange}
+              loading={isloadingProject}
+              rowKey="_id"
+            />
+          </div>
+        )}
+      </div>
 
       {isModalOpen && (
         <ProjectFormModal

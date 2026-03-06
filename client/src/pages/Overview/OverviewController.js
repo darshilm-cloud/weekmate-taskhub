@@ -78,7 +78,7 @@ const OverviewController = () => {
     }
 
     return datesArray;
-  };  
+  };
 
   const generateChartData = (start_date, end_date, tasks_summary) => {
     if ((!start_date, !end_date, !tasks_summary)) return 0;
@@ -188,11 +188,117 @@ const OverviewController = () => {
     }
   };
 
+  const [allTasks, setAllTasks] = useState([]);
+  const [priorityAnalysis, setPriorityAnalysis] = useState({ low: 0, medium: 0, high: 0, total: 0 });
+  const [userAnalysis, setUserAnalysis] = useState([]);
+  const [statusAnalysis, setStatusAnalysis] = useState({ closed: 0, pending: 0, total: 0 });
+
+  const { projectOverviewData } = useSelector((state) => state.apiData);
+
+  const fetchAllTasks = async () => {
+    dispatch(showAuthLoader());
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.statusCode === 200) {
+        const tasks = response.data.data;
+        setAllTasks(tasks);
+        processTaskData(tasks);
+      }
+    } catch (error) {
+      console.log(error, "fetchAllTasks");
+      dispatch(hideAuthLoader());
+    }
+  };
+
+  const processTaskData = (tasks) => {
+    // Priority Analysis
+    let low = 0, medium = 0, high = 0;
+
+    // Status Analysis
+    let closed = 0, pending = 0;
+
+    // User Analysis
+    const userMap = {};
+
+    // Initialize userMap with all project members to ensure they show up even with 0 tasks
+    const allMembers = [
+      ...(projectOverviewData?.manager ? [projectOverviewData.manager] : []),
+      ...(projectOverviewData?.assignees || []),
+      ...(projectOverviewData?.pms_clients || [])
+    ];
+
+    allMembers.forEach(member => {
+      if (member?._id && !userMap[member._id]) {
+        userMap[member._id] = {
+          name: member.full_name || member.name || `${member.first_name} ${member.last_name}`.trim(),
+          closed: 0,
+          incomplete: 0
+        };
+      }
+    });
+
+    tasks.forEach(task => {
+      // Priority
+      const labels = task.taskLabels || [];
+      const hasHigh = labels.some(l => {
+        const t = l.title?.toLowerCase() || "";
+        return t.includes("high priority") || t === "high";
+      });
+      const hasMedium = labels.some(l => {
+        const t = l.title?.toLowerCase() || "";
+        return t.includes("medium priority") || t === "medium";
+      });
+      const hasLow = labels.some(l => {
+        const t = l.title?.toLowerCase() || "";
+        return t.includes("low priority") || t === "low";
+      });
+
+      if (hasHigh) high++;
+      else if (hasMedium) medium++;
+      else if (hasLow) low++;
+
+      // Status
+      const isDone = task.task_status?.title?.toLowerCase() === "done";
+      if (isDone) closed++;
+      else pending++;
+
+      // User Analysis - aggregate counts for assigned users
+      const assignees = task.assignees || [];
+      assignees.forEach(user => {
+        const userId = user?._id || user; // Handle case where it might be just the ID
+        if (userId && userMap[userId]) {
+          if (isDone) userMap[userId].closed++;
+          else userMap[userId].incomplete++;
+        } else if (userId) {
+          // If user wasn't in members list, add them (shouldn't really happen but for safety)
+          userMap[userId] = {
+            name: user.full_name || user.name || "Unknown User",
+            closed: isDone ? 1 : 0,
+            incomplete: isDone ? 0 : 1
+          };
+        }
+      });
+    });
+
+    setPriorityAnalysis({ low, medium, high, total: low + medium + high });
+    setStatusAnalysis({ closed, pending, total: closed + pending });
+    setUserAnalysis(Object.values(userMap));
+  };
+
   useEffect(() => {
     dispatch(getOverviewProjectByID(projectId));
     getAllTasks();
     getMyTasks();
+    fetchAllTasks();
   }, [projectId]);
+
+  useEffect(() => {
+    processTaskData(allTasks);
+  }, [projectOverviewData, allTasks]);
 
   return {
     isModalOpenUser,
@@ -205,7 +311,7 @@ const OverviewController = () => {
     convertTimeToHours,
     getDatesArray,
     generateChartData,
-    goToEditProjectPage,    
+    goToEditProjectPage,
     filterAssigneeSearchInput,
     filterClientSearchInput,
     setFilterAssigneeSearchInput,
@@ -218,6 +324,10 @@ const OverviewController = () => {
     myTaskData,
     getTaskList,
     taskListData,
+    priorityAnalysis,
+    userAnalysis,
+    statusAnalysis,
+    allTasks
   };
 };
 
