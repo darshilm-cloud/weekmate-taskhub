@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState, useCallback, useRef } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import URLSearchParams from "url-search-params";
 import {
@@ -208,14 +208,11 @@ function App() {
     if (params.has("layout-type")) {
       dispatch(onLayoutTypeChange(params.get("layout-type")));
     }
-  }, [location.search, initURL]);
+    setLayoutType(layoutType);
+    setNavStyle(navStyle);
+  });
 
-  useEffect(() => {
-    applyLayoutType(layoutType);
-    applyNavStyle(navStyle);
-  }, [layoutType, navStyle]);
-
-  const applyLayoutType = (layoutType) => {
+  const setLayoutType = (layoutType) => {
     if (layoutType === LAYOUT_TYPE_FULL) { 
       document.body.classList.remove("boxed-layout");
       document.body.classList.remove("framed-layout");
@@ -234,7 +231,7 @@ function App() {
     }
   };
 
-  const applyNavStyle = (navStyle) => {
+  const setNavStyle = (navStyle) => {
     if (
       navStyle === NAV_STYLE_DEFAULT_HORIZONTAL ||
       navStyle === NAV_STYLE_DARK_HORIZONTAL ||

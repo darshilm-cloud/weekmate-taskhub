@@ -1,229 +1,662 @@
+/* ================================================================
+   AssignProject – Taskopad-style redesign
+   ================================================================ */
+
+/* ── Page wrapper ─────────────────────────────────────────── */
+.ap-page-wrapper {
+  background: #f4f5f7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top Bar (white sticky header + tabs) ─────────────────── */
+.ap-topbar {
+  background: #fff;
+  border-bottom: 1px solid #e8eaed;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ── Content area ─────────────────────────────────────────── */
+.ap-content-area {
+  padding: 20px 24px;
+  flex: 1;
+}
+
+/* ── Page Header ──────────────────────────────────────────── */
+.ap-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ap-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+}
+
+.ap-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ap-search-input {
+  width: 220px !important;
+}
+
+.ap-search-input .ant-input-affix-wrapper {
+  border-radius: 8px;
+  border-color: #d1d5db;
+  background: #f9fafb;
+  height: 34px;
+}
+
+.ap-search-input .ant-input-affix-wrapper:hover,
+.ap-search-input .ant-input-affix-wrapper:focus-within {
+  border-color: #00C4B4;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 196, 180, 0.1);
+}
+
+/* Status select – styled like an outlined action button */
+.ap-status-select {
+  width: 120px !important;
+}
+
+.ap-status-select .ant-select-selector {
+  border-radius: 8px !important;
+  border-color: #d1d5db !important;
+  background: #f9fafb !important;
+  height: 34px !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ap-status-select.ant-select-open .ant-select-selector,
+.ap-status-select .ant-select-selector:hover {
+  border-color: #00C4B4 !important;
+  background: #fff !important;
+}
+
+.ap-status-select .ant-select-selection-placeholder {
+  color: #6b7280 !important;
+  font-weight: 500;
+}
+
+/* View toggle buttons */
+.ap-view-toggle {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.ap-view-btn {
+  background: transparent;
+  border: none;
+  padding: 0 11px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+  white-space: nowrap;
+}
+
+.ap-view-btn:hover {
+  color: #00C4B4;
+  background: #f0fffe;
+}
+
+.ap-view-btn.active {
+  background: #00C4B4;
+  color: #fff;
+}
+
+/* Add project button */
+.ap-add-btn {
+  background: linear-gradient(135deg, #00C4B4 0%, #00a896 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  height: 34px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  box-shadow: 0 2px 8px rgba(0, 196, 180, 0.3) !important;
+  transition: opacity 0.2s, transform 0.1s !important;
+}
+
+.ap-add-btn:hover {
+  opacity: 0.88 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── Tabs toolbar (tabs on left, count + view-all on right) ── */
+.ap-tabs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ap-tabs-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.ap-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+}
+
+.ap-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  outline: none;
+  white-space: nowrap;
+}
+
+.ap-tab-btn:hover {
+  color: #00C4B4;
+}
+
+.ap-tab-btn.active {
+  color: #00C4B4;
+  border-bottom-color: #00C4B4;
+  font-weight: 600;
+}
+
+.ap-tab-icon {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.ap-project-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.ap-view-all-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00C4B4;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.ap-view-all-link:hover {
+  opacity: 0.75;
+}
+
+/* ── Cards Grid ───────────────────────────────────────────── */
+.ap-grid-section {
+  width: 100%;
+}
+
+.ap-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .ap-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ap-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Project Card ─────────────────────────────────────────── */
+.ap-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.ap-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Card top row */
+.ap-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ap-card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ap-card-check-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 2px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.ap-card-check-icon:hover {
+  background: #fef2f2;
+  transform: scale(1.15);
+}
+
+.ap-card-check-icon--done {
+  /* already green checkmark state */
+}
+
+.ap-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ap-status-pill--sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.ap-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ap-card-top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ap-last-updated {
+  font-size: 11.5px;
+  color: #00C4B4;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ap-card-menu-btn {
+  color: #9ca3af !important;
+  padding: 0 4px !important;
+  height: 24px !important;
+  width: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+}
+
+.ap-card-menu-btn:hover {
+  color: #374151 !important;
+  background: #f3f4f6 !important;
+}
+
+/* Card body */
+.ap-card-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ap-card-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ap-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-decoration: none;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s;
+}
+
+.ap-card-title:hover {
+  color: #00C4B4;
+}
+
+.ap-card-manager {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Task stats */
+.ap-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.ap-stat-item {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ap-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ap-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+/* Card right (due date + donut) */
+.ap-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ap-due-badge {
+  display: inline-block;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* Donut chart */
+.ap-donut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-donut-pct {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+}
+
+/* ── Loading / Empty states ───────────────────────────────── */
+.ap-loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.ap-empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+}
+
+/* ── Pagination ───────────────────────────────────────────── */
+.ap-grid-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-bottom: 16px;
+}
+
+/* ── Table section ────────────────────────────────────────── */
+.ap-table-section {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.ap-table-section .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ap-table-section .ant-table-tbody > tr > td {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #f7f8fa;
+}
+
+.ap-table-section .ant-table-tbody > tr:hover > td {
+  background: #f0fffe;
+}
+
+/* ── Keep old modal styles working ───────────────────────── */
 .project_title_main_div {
-    display: flex;
-    gap: 10px;
-    /* color: #000; */
+  display: flex;
+  gap: 10px;
 }
 
-.all-project-main-wrapper .ant-avatar>img {
-    object-fit: cover;
+.project_title_main_div > span {
+  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
-.project_title_main_div .project_status_color {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-}
-
-.selected-filter-member {
-    background-color: #cac7b8;
+.all-project-main-wrapper .ant-avatar > img {
+  object-fit: cover;
 }
 
 .project-add-wrapper .ant-form-item.subscriber-btn {
-    width: 100%;
+  width: 100%;
 }
 
 .project-add-wrapper .ant-form-item-control-input-content .clear-btn {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 .project-add-wrapper .modal-footer-flex .flex-btn {
-    padding-left: 10px;
+  padding-left: 10px;
 }
 
 .project-add-wrapper .ck-editor__main {
-    height: 100%;
-    max-height: 200px;
+  height: 100%;
+  max-height: 200px;
 }
 
 .project-add-wrapper .ck-editor__editable {
-    max-height: 200px;
-    overflow-y: auto;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .project-add-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
-    max-height: 200px;
-    overflow-y: auto;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .ant-avatar-string {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    font-weight: 400;
-    transform: translate(-50%, -50%) !important;
-}
-
-.pop-project-task-main-wrapper .ant-form-item-control-input-content {
-    margin-top: 5px;
-    padding: 0 5px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-weight: 400;
+  transform: translate(-50%, -50%) !important;
 }
 
 .project-add-wrapper .pop-project-task-main-wrapper .ant-row {
-    margin-top: 5px;
-    align-items: baseline;
+  margin-top: 5px;
+  align-items: baseline;
 }
-
-.pop-project-task-main-wrapper .poject-type .ant-select-show-search>.ant-select-selector {
-    height: 50px !important;
-}
-
-/* .project-add-wrapper {
-    width: 650px !important;
-} */
 
 .project-add-wrapper .pop-project-task-main-wrapper .ant-row .ant-col {
-    padding: 0 5px;
-    width: 100%;
+  padding: 0 5px;
+  width: 100%;
 }
 
 .project-add-wrapper .pop-project-task-main-wrapper .ant-picker {
-    width: 100%;
+  width: 100%;
 }
 
 .project-add-wrapper .ant-form-horizontal .modal-footer-flex {
-    padding: 15px 0;
+  padding: 15px 0;
 }
 
 .assignees-popover .assigness-data {
-    overflow-y: auto;
-    /* height: calc(100vh - 270px); */
-    max-height: 180px
+  overflow-y: auto;
+  max-height: 180px;
 }
 
 .assignees-popover ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-.all-project-main-wrapper .heading-main {
-    padding-bottom: 0px;
-    margin-bottom: 0;
-    white-space: nowrap;
-    margin-right: 15px;
-    border-bottom: none;
-}
-
-.all-project-main-wrapper .ant-card-body table th,
-.ant-card-body table td {
-    padding: 7px ;
-}
-
-.all-project-main-wrapper .ant-card-body {
-    padding: 15px;
-}
-
-.all-project-main-wrapper .profile-sub-head {
-    margin-bottom: 0;
-}
-
-.all-project-main-wrapper .ant-table-body {
-    max-height: calc(100vh - 370px) !important;
-}
-
-.assignees-popover ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    margin-bottom: 10px;
-}
-
-.ant-popover-placement-bottomRight {
-    height: auto;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 10px;
 }
 
 .modal-footer-flex .ant-form-item {
-    width: fit-content;
+  width: fit-content;
 }
 
 .ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
-    margin-left: 0;
-}
-
-.project_title_main_div>span {
-    text-overflow: ellipsis;
-    word-wrap: break-word;
-}
-
-.all-project-main-wrapper .ant-input-search {
-    max-width: 200px;
-}
-
-
-
-.all-project-main-wrapper .head-box-inner {
-    max-width: 50%;
-}
-
-.all-project-main-wrapper .edit-delete {
-    justify-content: center;
-    cursor: pointer;
-}
-
-.all-project-main-wrapper .edit-delete [class="fa-solid fa-ellipsis-vertical"] {
-    display: none;
-}
-
-.all-project-main-wrapper .ant-table-cell:hover [class="fa-solid fa-ellipsis-vertical"] {
-    display: block;
-    cursor: pointer;
-    color: #358CC0;
-    font-size: 13px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.all-project-main-wrapper .ant-table-cell:hover .edit-delete .edit-btn {
-    display: block;
-}
-
-.all-project-main-wrapper .edit-delete .edit-btn {
-    background-color: #eeeeee;
-    max-width: 23px;
-    max-height: 23px;
-    padding: 12px;
-    display: none;
-    position: relative;
-    border-radius: 100%;
-}
-
-.project-edit-btn-wrapper .projectedit {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.ant-popover-content .project-edit-btn-wrapper>div {
-    margin-bottom: 5px;
-    display: flex;
-    gap: 10px;
-    padding: 5px 10px;
-    align-items: center;
-}
-
-@media screen and (max-width: 1024px) {
-
-    .project_title_main_div>span {
-        max-width: 200px;
-    }
-}
-
-.ant-col.ant-col-12.css-dev-only-do-not-override-qnu6hi:nth-child(2) {
-    padding: 0;
-}
-
-.ant-col.ant-col-12.css-dev-only-do-not-override-qnu6hi:first-child {
-    padding: 0;
+  margin-left: 0;
 }
 
 .ant-form-horizontal .ant-row {
-    margin-left: -15px;
-    margin-right: -15px;
+  margin-left: -15px;
+  margin-right: -15px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 1024px) {
+  .project_title_main_div > span {
+    max-width: 200px;
+  }
+
+  .ap-search-input {
+    width: 160px !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ap-tabs-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .ap-tabs-toolbar-right {
+    padding: 0 0 8px;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .ap-topbar {
+    padding: 0 16px;
+  }
+
+  .ap-content-area {
+    padding: 16px;
+  }
+
+  .ap-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 0 10px;
+  }
+
+  .ap-header-actions {
     width: 100%;
-    /* display: flex; */
-    /* justify-content: center; */
-    margin: 0 auto;
+  }
+
+  .ap-search-input {
+    width: 100% !important;
+  }
+
+  .ap-tabs-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ap-tab-btn {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
 }

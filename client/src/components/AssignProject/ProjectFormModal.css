@@ -1,0 +1,275 @@
+/* ================================================================
+   ProjectFormModal – Taskopad-style redesign
+   ================================================================ */
+
+/* ── Modal wrapper ─────────────────────────────────────────── */
+.pfm-modal .ant-modal-content {
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.pfm-modal .ant-modal-body {
+  padding: 32px 32px 24px;
+}
+
+.pfm-modal .ant-modal-close {
+  top: 20px;
+  right: 20px;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.pfm-header {
+  margin-bottom: 24px;
+}
+
+.pfm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ── Field row ─────────────────────────────────────────────── */
+.pfm-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  min-height: 44px;
+}
+
+.pfm-field-row--top {
+  align-items: flex-start;
+  padding-top: 10px;
+}
+
+.pfm-field-row--checkbox {
+  align-items: center;
+  padding: 8px 0;
+}
+
+/* Icon */
+.pfm-icon {
+  font-size: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pfm-field-row--top .pfm-icon {
+  margin-top: 10px;
+}
+
+/* Form item inside field row */
+.pfm-form-item {
+  flex: 1;
+  margin-bottom: 0 !important;
+}
+
+.pfm-form-item .ant-form-item-explain-error {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* ── Inputs (borderless + underline via divider) ────────────── */
+.pfm-input {
+  padding-left: 0 !important;
+  font-size: 14px;
+  color: #374151;
+}
+
+.pfm-input::placeholder {
+  color: #9ca3af;
+}
+
+.pfm-input.ant-input-affix-wrapper {
+  padding-left: 0 !important;
+}
+
+/* ── Select (borderless) ───────────────────────────────────── */
+.pfm-select {
+  width: 100%;
+}
+
+.pfm-select .ant-select-selector {
+  padding-left: 0 !important;
+  font-size: 14px;
+}
+
+.pfm-select .ant-select-selection-placeholder {
+  color: #9ca3af;
+}
+
+.pfm-select .ant-select-arrow {
+  color: #9ca3af;
+}
+
+/* ── Divider line ──────────────────────────────────────────── */
+.pfm-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 2px 0;
+}
+
+/* ── Date fields ───────────────────────────────────────────── */
+.pfm-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 0;
+}
+
+.pfm-date-col {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pfm-date-divider {
+  width: 1px;
+  height: 32px;
+  background: #e5e7eb;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.pfm-datepicker {
+  flex: 1;
+  padding-left: 0 !important;
+  font-size: 14px;
+  width: 100%;
+}
+
+.pfm-datepicker input {
+  padding-left: 0 !important;
+}
+
+.pfm-datepicker.ant-picker-disabled {
+  background: transparent;
+  opacity: 0.5;
+}
+
+/* No end date checkbox */
+.pfm-no-end-date-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+  margin-top: -2px;
+}
+
+.pfm-no-end-date-row .ant-checkbox-wrapper {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ── CKEditor wrapper ──────────────────────────────────────── */
+.pfm-editor-wrapper {
+  width: 100%;
+}
+
+.pfm-editor-wrapper .ck-editor__editable {
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.pfm-editor-wrapper .ck.ck-toolbar {
+  border-radius: 6px 6px 0 0 !important;
+  border-color: #e5e7eb !important;
+}
+
+.pfm-editor-wrapper .ck.ck-editor__editable {
+  border-color: #e5e7eb !important;
+  border-radius: 0 0 6px 6px !important;
+}
+
+/* ── MultiSelect wrapper ───────────────────────────────────── */
+.pfm-multiselect-wrapper {
+  width: 100%;
+}
+
+.pfm-multiselect-wrapper .ant-select {
+  width: 100%;
+}
+
+.pfm-multiselect-wrapper .ant-select-selector {
+  padding-left: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Footer buttons ────────────────────────────────────────── */
+.pfm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.pfm-cancel-btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #fff !important;
+  transition: opacity 0.2s;
+}
+
+.pfm-cancel-btn:hover {
+  opacity: 0.85;
+}
+
+.pfm-submit-btn {
+  height: 40px;
+  padding: 0 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(135deg, #00C4B4 0%, #00a896 100%) !important;
+  border-color: #00C4B4 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(0, 196, 180, 0.35) !important;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.pfm-submit-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* ── Keep old styles for backward compat ──────────────────── */
+.project-add-wrapper .ck-editor__main {
+  height: 100%;
+  max-height: 200px;
+}
+
+.project-add-wrapper .ck-editor__editable {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.project-add-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.assignees-popover .assigness-data {
+  overflow-y: auto;
+  max-height: 180px;
+}
+
+.assignees-popover ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 10px;
+}

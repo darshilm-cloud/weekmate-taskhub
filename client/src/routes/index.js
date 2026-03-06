@@ -1,23 +1,22 @@
-import React, { Suspense, useMemo } from "react";
+import React, { Suspense } from "react";
 import { Route, Redirect } from "react-router-dom";
 import config from "../settings/config.json";
+import Workflows from "../components/PMS/Workflows";
+import ProjectStatus from "../components/PMS/ProjectStatus";
+import ProjectLabels from "../components/PMS/ProjectLabels";
+import EmployeeListTabClient from "../pages/EmployeeList/EmployeeListTabClient.js";
 import { getRoles } from "../util/hasPermission.js";
+import MylogtimeWidget from "../pages/Mylogtime/MylogtimeWidget";
+import Projectexpences from "../pages/ProjectExpences/Projectexpences.js";
+import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js";
 import { sideBarContentId } from "../constants";
-import { LoadingState } from "../components/common";
-import ErrorBoundary from "../components/common/ErrorBoundary";
 
-// All routes lazy-loaded for code splitting
-const Workflows = React.lazy(() => import("../components/PMS/Workflows"));
-const ProjectStatus = React.lazy(() => import("../components/PMS/ProjectStatus"));
-const ProjectLabels = React.lazy(() => import("../components/PMS/ProjectLabels"));
-const EmployeeListTabClient = React.lazy(() => import("../pages/EmployeeList/EmployeeListTabClient.js"));
-const MylogtimeWidget = React.lazy(() => import("../pages/Mylogtime/MylogtimeWidget"));
-const Projectexpences = React.lazy(() => import("../pages/ProjectExpences/Projectexpences.js"));
-const ProjectexpencesForm = React.lazy(() => import("../pages/ProjectExpences/ProjectexpencesForm.js"));
-const AdminDashboard = React.lazy(() => import("../pages/AdminDashboard"));
-const CompanyManagement = React.lazy(() => import("../pages/AdminModules/CompanyManagement"));
-const SettingsModule = React.lazy(() => import("../pages/AdminModules/SettingsModule/SettingsModule"));
-const Administrator = React.lazy(() => import("../pages/AdminModules/Administrator"));
+import AdminDashboard from "../pages/AdminDashboard";
+import CompanyManagement from "../pages/AdminModules/CompanyManagement";
+import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
+import Administrator from "../pages/AdminModules/Administrator";
+ 
 
 const ProgressBoardofProject = React.lazy(() =>
   import("../components/PMS/ProgressBoardofProject")
@@ -161,44 +160,42 @@ const RoutesIndex = ({ match, userPermission }) => {
   }, []);
 
   return (
-    <Suspense fallback={<LoadingState fullPage />}>
-      {routeArray.map((item, index) => (
-        <Route
-          exact
-          key={item.path}
-          path={`${match.url}${item.path}`}
-          render={(routeProps) => {
-            const isSpecialUser = userData._id == sideBarContentId;
-            const isSpecificPath =
-              item.path === ":companySlug/project-runnig-reports" ||
-              item.path === ":companySlug/timesheet-reports";
+    <>
+      <Suspense fallback={<></>}>
+        {routeArray.map((item, index) => (
+          <Route
+            exact
+            key={index}
+            path={`${match.url}${item.path}`}
+            render={(routeProps) => {
+              const isSpecialUser = userData._id == sideBarContentId; // Static User Check
+              const isSpecificPath =
+                item.path === "project-runnig-reports" ||
+                item.path === "timesheet-reports"; // Check for the specific route
 
-            if (getRoles(item.roleName)) {
-              return (
-                <ErrorBoundary>
-                  {React.createElement(item.component, { ...routeProps })}
-                </ErrorBoundary>
-              );
-            }
+              // ✅ Normal Role-Based Access (For Users With Proper Permissions)
+              if (getRoles(item.roleName)) {
+                return React.createElement(item.component, { ...routeProps });
+              }
 
-            if (isSpecificPath && isSpecialUser) {
-              return (
-                <ErrorBoundary>
-                  {React.createElement(item.component, { ...routeProps })}
-                </ErrorBoundary>
-              );
-            }
+              // ✅ Special User Override (Only for 'project-runnig-reports')
+              if (isSpecificPath && isSpecialUser) {
+                return React.createElement(item.component, { ...routeProps });
+              }
 
-            if (getRoles(["Client"])) {
-              return <Redirect to="/project-list" />;
-            }
+              // ✅ If the user has "Client" role, redirect to "project-list"
+              if (getRoles(["Client"])) {
+                return <Redirect to="/project-list" />;
+              }
 
-            return <Redirect to="/dashboard" />;
-          }}
-        />
-      ))}
-    </Suspense>
+              // ❌ Otherwise, redirect unauthorized users to the "dashboard"
+              return <Redirect to="/dashboard" />;
+            }}
+          />
+        ))}
+      </Suspense>
+    </>
   );
 };
 
-export default RoutesIndex;
+export default index;

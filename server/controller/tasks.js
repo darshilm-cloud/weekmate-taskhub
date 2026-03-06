@@ -81,8 +81,8 @@ exports.projectTaskExists = async (reqData, id = null) => {
       main_task_id: new mongoose.Types.ObjectId(reqData.main_task_id),
       ...(id
         ? {
-            _id: { $ne: id }
-          }
+          _id: { $ne: id }
+        }
         : {})
     });
     console.log("🚀 ~ exports.projectTaskExists= ~ data:", data);
@@ -275,45 +275,45 @@ exports.getProjectsTask = async (req, res) => {
       ...(value.status ? { status: value.status } : {}),
       ...(value?.workFlowStatus && !value?.workFlowStatus.includes("all")
         ? {
-            task_status: {
-              $in: value.workFlowStatus.map(
-                (v) => new mongoose.Types.ObjectId(v)
-              )
-            }
+          task_status: {
+            $in: value.workFlowStatus.map(
+              (v) => new mongoose.Types.ObjectId(v)
+            )
           }
+        }
         : {}),
       ...(value?.assignees && !value.assignees.includes("all")
         ? value.assignees.includes("un_assigned")
           ? { assignees: { $eq: [] } }
           : {
-              assignees: value?.assignees
-            }
+            assignees: value?.assignees
+          }
         : {}),
 
       ...(value?.labels && !value.labels.includes("all")
         ? value.labels.includes("un_assigned")
           ? { task_labels: { $size: 0 } }
           : {
-              task_labels: {
-                $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v))
-              }
+            task_labels: {
+              $in: value?.labels.map((v) => new mongoose.Types.ObjectId(v))
             }
+          }
         : {}),
 
       ...(value?.start_date || value?.due_date
         ? value?.start_date && !value?.due_date
           ? {
-              start_date: {
-                $gte: moment(value?.start_date).startOf("day").toDate()
-              }
+            start_date: {
+              $gte: moment(value?.start_date).startOf("day").toDate()
             }
+          }
           : !value?.start_date && value?.due_date
-          ? {
+            ? {
               due_date: {
                 $lte: moment(value?.due_date).startOf("day").toDate()
               }
             }
-          : {
+            : {
               start_date: {
                 $gte: moment(value?.start_date).startOf("day").toDate()
               },
@@ -698,7 +698,7 @@ exports.getProjectsTask = async (req, res) => {
                     {
                       $toString: {
                         $cond: [
-                        { $lt: [{ $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60] }, 10] }, 
+                          { $lt: [{ $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60] }, 10] },
                           "0",
                           ""
                         ]
@@ -706,7 +706,7 @@ exports.getProjectsTask = async (req, res) => {
                     },
                     {
                       $toString: {
-                         $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60] 
+                        $mod: [{ $divide: ["$totalLoggedTime", 60] }, 60]
                       }
                     }
                   ]
@@ -847,12 +847,12 @@ exports.getProjectsTask = async (req, res) => {
         ...(await getClientQuery()),
         { $match: matchQuery },
         {
-        $project: {
-          _id: 1,
-          title: 1,
-          project: 1,
-          recurringType: 1,
-          assignees: {
+          $project: {
+            _id: 1,
+            title: 1,
+            project: 1,
+            recurringType: 1,
+            assignees: {
               $map: {
                 input: {
                   $cond: {
@@ -996,17 +996,17 @@ exports.updateProjectsTask = async (req, res) => {
         task_progress: value.task_progress,
         ...(getData.task_status && !value.task_status
           ? {
-              task_status_history: [
-                ...getData.task_status_history,
-                {
-                  task_status: null,
-                  updatedBy: req.user._id,
-                  updatedAt: configs.utcDefault()
-                }
-              ]
-            }
+            task_status_history: [
+              ...getData.task_status_history,
+              {
+                task_status: null,
+                updatedBy: req.user._id,
+                updatedAt: configs.utcDefault()
+              }
+            ]
+          }
           : !getData.task_status && value.task_status
-          ? {
+            ? {
               task_status_history: [
                 {
                   task_status: value.task_status,
@@ -1015,20 +1015,20 @@ exports.updateProjectsTask = async (req, res) => {
                 }
               ]
             }
-          : getData.task_status &&
-            value.task_status &&
-            getData.task_status.toString() !== value.task_status.toString()
-          ? {
-              task_status_history: [
-                ...getData.task_status_history,
-                {
-                  task_status: value.task_status,
-                  updatedBy: req.user._id,
-                  updatedAt: configs.utcDefault()
-                }
-              ]
-            }
-          : getData.task_status_history),
+            : getData.task_status &&
+              value.task_status &&
+              getData.task_status.toString() !== value.task_status.toString()
+              ? {
+                task_status_history: [
+                  ...getData.task_status_history,
+                  {
+                    task_status: value.task_status,
+                    updatedBy: req.user._id,
+                    updatedAt: configs.utcDefault()
+                  }
+                ]
+              }
+              : getData.task_status_history),
         updatedBy: req.user._id
       },
       { new: true }
@@ -1166,10 +1166,10 @@ exports.updateMultipleTaskStatus = async (req, res) => {
 exports.deleteProjectsTask = async (req, res) => {
   try {
     const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-    
+
     // Get the task data before deletion for logging
     const taskData = await ProjectTasks.findById(req.params.id).lean();
-    
+
     const data = await ProjectTasks.findByIdAndUpdate(
       req.params.id,
       {
@@ -1336,18 +1336,18 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
           ...updateObj,
           ...(getData?.task_status?._id && !value?.task_status
             ? {
-                task_status_history: [
-                  ...getData?.task_status_history,
-                  {
-                    task_status: null,
-                    updatedBy: loginUserId,
-                    updatedAt: configs.utcDefault(),
-                    ...(await getRefModelFromLoginUser(req?.user, true))
-                  }
-                ]
-              }
+              task_status_history: [
+                ...getData?.task_status_history,
+                {
+                  task_status: null,
+                  updatedBy: loginUserId,
+                  updatedAt: configs.utcDefault(),
+                  ...(await getRefModelFromLoginUser(req?.user, true))
+                }
+              ]
+            }
             : !getData?.task_status?._id && value?.task_status
-            ? {
+              ? {
                 task_status_history: [
                   {
                     task_status: value?.task_status,
@@ -1357,21 +1357,21 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                   }
                 ]
               }
-            : getData?.task_status?._id &&
-              value?.task_status &&
-              getData?.task_status?._id.toString() !==
+              : getData?.task_status?._id &&
+                value?.task_status &&
+                getData?.task_status?._id.toString() !==
                 value?.task_status.toString()
-            ? {
-                task_status_history: [
-                  ...getData?.task_status_history,
-                  {
-                    task_status: value?.task_status,
-                    updatedBy: loginUserId,
-                    updatedAt: configs.utcDefault()
-                  }
-                ]
-              }
-            : getData?.task_status_history)
+                ? {
+                  task_status_history: [
+                    ...getData?.task_status_history,
+                    {
+                      task_status: value?.task_status,
+                      updatedBy: loginUserId,
+                      updatedAt: configs.utcDefault()
+                    }
+                  ]
+                }
+                : getData?.task_status_history)
         };
         historyUpdateObj = {
           ...historyUpdateObj,
@@ -1413,47 +1413,45 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     const transformTaskDataForLogging = async (taskData) => {
       if (!taskData) return taskData;
       const transformed = { ...taskData };
-      
       // Transform assignees array to array of assignee names
       if (transformed.assignees && Array.isArray(transformed.assignees)) {
         try {
           const EmployeesModel = mongoose.model("employees");
           const assigneeNames = [];
-          
+
           for (const assignee of transformed.assignees) {
             if (!assignee) continue;
-            
-            if (typeof assignee === 'object' && 
-                (assignee.full_name !== undefined || 
-                 assignee.first_name !== undefined ||
-                 assignee.last_name !== undefined)) {
-              const name = assignee.full_name || 
+
+            if (typeof assignee === 'object' &&
+              (assignee.full_name !== undefined ||
+                assignee.first_name !== undefined ||
+                assignee.last_name !== undefined)) {
+              const name = assignee.full_name ||
                 `${assignee.first_name || ""} ${assignee.last_name || ""}`.trim();
               if (name) assigneeNames.push(name);
             } else {
-              const assigneeId = assignee instanceof mongoose.Types.ObjectId 
-                ? assignee 
+              const assigneeId = assignee instanceof mongoose.Types.ObjectId
+                ? assignee
                 : (typeof assignee === 'string' && mongoose.Types.ObjectId.isValid(assignee)
                   ? new mongoose.Types.ObjectId(assignee)
                   : (typeof assignee === 'object' && assignee._id
-                    ? (assignee._id instanceof mongoose.Types.ObjectId 
-                      ? assignee._id 
+                    ? (assignee._id instanceof mongoose.Types.ObjectId
+                      ? assignee._id
                       : new mongoose.Types.ObjectId(assignee._id))
                     : null));
-              
+
               if (assigneeId) {
                 const assigneeDoc = await EmployeesModel.findById(assigneeId)
                   .select("full_name first_name last_name")
                   .lean();
                 if (assigneeDoc) {
-                  const name = assigneeDoc.full_name || 
+                  const name = assigneeDoc.full_name ||
                     `${assigneeDoc.first_name || ""} ${assigneeDoc.last_name || ""}`.trim();
                   if (name) assigneeNames.push(name);
                 }
               }
             }
           }
-          
           transformed.assignees = assigneeNames;
         } catch (error) {
           console.error("Error transforming assignees for logging:", error);
@@ -1462,17 +1460,16 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       } else if (transformed.assignees) {
         transformed.assignees = [];
       }
-      
       // Transform task_status object to task_status name
       if (transformed.task_status) {
         if (typeof transformed.task_status === 'object' && transformed.task_status.title !== undefined) {
           transformed.task_status = transformed.task_status.title;
-        } else if (transformed.task_status instanceof mongoose.Types.ObjectId || 
-                   (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
+        } else if (transformed.task_status instanceof mongoose.Types.ObjectId ||
+          (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
           try {
             const WorkflowStatusModel = mongoose.model("workflowstatus");
-            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId 
-              ? transformed.task_status 
+            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId
+              ? transformed.task_status
               : new mongoose.Types.ObjectId(transformed.task_status);
             const status = await WorkflowStatusModel.findById(statusId)
               .select("title")
@@ -1483,7 +1480,6 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
           }
         }
       }
-      
       // Transform task_status_history array
       if (transformed.task_status_history && Array.isArray(transformed.task_status_history)) {
         try {
@@ -1491,12 +1487,12 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
           const EmployeesModel = mongoose.model("employees");
           const moment = require("moment");
           const historyData = [];
-          
+
           for (const historyItem of transformed.task_status_history) {
             if (!historyItem || typeof historyItem !== 'object') continue;
-            
+
             const historyEntry = {};
-            
+
             // Transform task_status - handle null, ObjectId, string, or populated object
             if (historyItem.task_status !== null && historyItem.task_status !== undefined) {
               if (typeof historyItem.task_status === 'object' && historyItem.task_status.title !== undefined) {
@@ -1510,11 +1506,11 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                 } else if (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)) {
                   statusId = new mongoose.Types.ObjectId(historyItem.task_status);
                 } else if (typeof historyItem.task_status === 'object' && historyItem.task_status._id) {
-                  statusId = historyItem.task_status._id instanceof mongoose.Types.ObjectId 
-                    ? historyItem.task_status._id 
+                  statusId = historyItem.task_status._id instanceof mongoose.Types.ObjectId
+                    ? historyItem.task_status._id
                     : new mongoose.Types.ObjectId(historyItem.task_status._id);
                 }
-                
+
                 if (statusId) {
                   const status = await WorkflowStatusModel.findById(statusId)
                     .select("title")
@@ -1528,16 +1524,16 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
               // task_status is null or undefined
               historyEntry.task_status = "";
             }
-            
+
             // Transform updatedBy - handle ObjectId, string, or populated object
             if (historyItem.updatedBy !== null && historyItem.updatedBy !== undefined) {
-              if (typeof historyItem.updatedBy === 'object' && 
-                  (historyItem.updatedBy.full_name !== undefined || 
-                   historyItem.updatedBy.first_name !== undefined ||
-                   historyItem.updatedBy.email !== undefined)) {
+              if (typeof historyItem.updatedBy === 'object' &&
+                (historyItem.updatedBy.full_name !== undefined ||
+                  historyItem.updatedBy.first_name !== undefined ||
+                  historyItem.updatedBy.email !== undefined)) {
                 // Already populated
-                historyEntry.updatedBy = historyItem.updatedBy.full_name || 
-                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+                historyEntry.updatedBy = historyItem.updatedBy.full_name ||
+                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() ||
                   historyItem.updatedBy.email || "";
               } else {
                 // It's an ObjectId or string ID - fetch the name
@@ -1547,16 +1543,16 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                 } else if (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)) {
                   updatedById = new mongoose.Types.ObjectId(historyItem.updatedBy);
                 } else if (typeof historyItem.updatedBy === 'object' && historyItem.updatedBy._id) {
-                  updatedById = historyItem.updatedBy._id instanceof mongoose.Types.ObjectId 
-                    ? historyItem.updatedBy._id 
+                  updatedById = historyItem.updatedBy._id instanceof mongoose.Types.ObjectId
+                    ? historyItem.updatedBy._id
                     : new mongoose.Types.ObjectId(historyItem.updatedBy._id);
                 }
-                
+
                 if (updatedById) {
                   const updatedByUser = await EmployeesModel.findById(updatedById)
                     .select("full_name first_name last_name email")
                     .lean();
-                  historyEntry.updatedBy = updatedByUser 
+                  historyEntry.updatedBy = updatedByUser
                     ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
                     : "";
                 } else {
@@ -1566,7 +1562,6 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
             } else {
               historyEntry.updatedBy = "";
             }
-            
             // Format updatedAt - ensure proper date format
             if (historyItem.updatedAt) {
               try {
@@ -1578,13 +1573,11 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
             } else {
               historyEntry.updatedAt = "";
             }
-            
             // Only add entry if it has at least one meaningful value
             if (historyEntry.task_status || historyEntry.updatedBy || historyEntry.updatedAt) {
               historyData.push(historyEntry);
             }
           }
-          
           transformed.task_status_history = historyData;
         } catch (error) {
           console.error("Error transforming task_status_history for logging:", error);
@@ -1593,10 +1586,10 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       } else if (transformed.task_status_history) {
         transformed.task_status_history = [];
       }
-      
+
       return transformed;
     };
-    
+
     // Transform data for logging
     const oldTaskData = await transformTaskDataForLogging(oldTaskDataForLogging);
     const newTaskData = await transformTaskDataForLogging(newTaskDataForLogging);
@@ -1753,49 +1746,47 @@ exports.updateProjectsTaskProps = async (req, res) => {
     const transformTaskDataForLogging = async (taskData) => {
       if (!taskData) return taskData;
       const transformed = { ...taskData };
-      
       // Transform assignees array to array of assignee names
       if (transformed.assignees && Array.isArray(transformed.assignees)) {
         try {
           const EmployeesModel = mongoose.model("employees");
           const assigneeNames = [];
-          
+
           for (const assignee of transformed.assignees) {
             if (!assignee) continue;
-            
+
             // Check if it's already a populated object
-            if (typeof assignee === 'object' && 
-                (assignee.full_name !== undefined || 
-                 assignee.first_name !== undefined ||
-                 assignee.last_name !== undefined)) {
-              const name = assignee.full_name || 
+            if (typeof assignee === 'object' &&
+              (assignee.full_name !== undefined ||
+                assignee.first_name !== undefined ||
+                assignee.last_name !== undefined)) {
+              const name = assignee.full_name ||
                 `${assignee.first_name || ""} ${assignee.last_name || ""}`.trim();
               if (name) assigneeNames.push(name);
             } else {
               // It's an ObjectId or string ID - fetch the name
-              const assigneeId = assignee instanceof mongoose.Types.ObjectId 
-                ? assignee 
+              const assigneeId = assignee instanceof mongoose.Types.ObjectId
+                ? assignee
                 : (typeof assignee === 'string' && mongoose.Types.ObjectId.isValid(assignee)
                   ? new mongoose.Types.ObjectId(assignee)
                   : (typeof assignee === 'object' && assignee._id
-                    ? (assignee._id instanceof mongoose.Types.ObjectId 
-                      ? assignee._id 
+                    ? (assignee._id instanceof mongoose.Types.ObjectId
+                      ? assignee._id
                       : new mongoose.Types.ObjectId(assignee._id))
                     : null));
-              
+
               if (assigneeId) {
                 const assigneeDoc = await EmployeesModel.findById(assigneeId)
                   .select("full_name first_name last_name")
                   .lean();
                 if (assigneeDoc) {
-                  const name = assigneeDoc.full_name || 
+                  const name = assigneeDoc.full_name ||
                     `${assigneeDoc.first_name || ""} ${assigneeDoc.last_name || ""}`.trim();
                   if (name) assigneeNames.push(name);
                 }
               }
             }
           }
-          
           transformed.assignees = assigneeNames;
         } catch (error) {
           console.error("Error transforming assignees for logging:", error);
@@ -1810,17 +1801,16 @@ exports.updateProjectsTaskProps = async (req, res) => {
       } else if (transformed.assignees) {
         transformed.assignees = [];
       }
-      
       // Transform task_status object to task_status name
       if (transformed.task_status) {
         if (typeof transformed.task_status === 'object' && transformed.task_status.title !== undefined) {
           transformed.task_status = transformed.task_status.title;
-        } else if (transformed.task_status instanceof mongoose.Types.ObjectId || 
-                   (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
+        } else if (transformed.task_status instanceof mongoose.Types.ObjectId ||
+          (typeof transformed.task_status === 'string' && mongoose.Types.ObjectId.isValid(transformed.task_status))) {
           try {
             const WorkflowStatusModel = mongoose.model("workflowstatus");
-            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId 
-              ? transformed.task_status 
+            const statusId = transformed.task_status instanceof mongoose.Types.ObjectId
+              ? transformed.task_status
               : new mongoose.Types.ObjectId(transformed.task_status);
             const status = await WorkflowStatusModel.findById(statusId)
               .select("title")
@@ -1831,31 +1821,30 @@ exports.updateProjectsTaskProps = async (req, res) => {
           }
         }
       }
-      
       // Transform task_labels array to array of label names
       if (transformed.task_labels && Array.isArray(transformed.task_labels)) {
         try {
           const ProjectLabelsModel = mongoose.model("tasklabels");
           const labelNames = [];
-          
+
           for (const label of transformed.task_labels) {
             if (!label) continue;
-            
+
             // Check if it's already a populated object
             if (typeof label === 'object' && label.title !== undefined) {
               labelNames.push(label.title);
             } else {
               // It's an ObjectId or string ID - fetch the name
-              const labelId = label instanceof mongoose.Types.ObjectId 
-                ? label 
+              const labelId = label instanceof mongoose.Types.ObjectId
+                ? label
                 : (typeof label === 'string' && mongoose.Types.ObjectId.isValid(label)
                   ? new mongoose.Types.ObjectId(label)
                   : (typeof label === 'object' && label._id
-                    ? (label._id instanceof mongoose.Types.ObjectId 
-                      ? label._id 
+                    ? (label._id instanceof mongoose.Types.ObjectId
+                      ? label._id
                       : new mongoose.Types.ObjectId(label._id))
                     : null));
-              
+
               if (labelId) {
                 const labelDoc = await ProjectLabelsModel.findById(labelId)
                   .select("title")
@@ -1866,7 +1855,6 @@ exports.updateProjectsTaskProps = async (req, res) => {
               }
             }
           }
-          
           transformed.task_labels = labelNames;
         } catch (error) {
           console.error("Error transforming task_labels for logging:", error);
@@ -1881,30 +1869,29 @@ exports.updateProjectsTaskProps = async (req, res) => {
       } else if (transformed.task_labels) {
         transformed.task_labels = [];
       }
-      
       // Transform task_status_history array
       if (transformed.task_status_history && Array.isArray(transformed.task_status_history)) {
         try {
           const WorkflowStatusModel = mongoose.model("workflowstatus");
           const moment = require("moment");
           const historyData = [];
-          
+
           for (const historyItem of transformed.task_status_history) {
             if (!historyItem || typeof historyItem !== 'object') continue;
-            
+
             const historyEntry = {};
-            
+
             // Transform task_status
             if (historyItem.task_status) {
               if (typeof historyItem.task_status === 'object' && historyItem.task_status.title !== undefined) {
                 historyEntry.task_status = historyItem.task_status.title;
               } else {
-                const statusId = historyItem.task_status instanceof mongoose.Types.ObjectId 
-                  ? historyItem.task_status 
+                const statusId = historyItem.task_status instanceof mongoose.Types.ObjectId
+                  ? historyItem.task_status
                   : (typeof historyItem.task_status === 'string' && mongoose.Types.ObjectId.isValid(historyItem.task_status)
                     ? new mongoose.Types.ObjectId(historyItem.task_status)
                     : null);
-                
+
                 if (statusId) {
                   const status = await WorkflowStatusModel.findById(statusId)
                     .select("title")
@@ -1917,28 +1904,28 @@ exports.updateProjectsTaskProps = async (req, res) => {
             } else {
               historyEntry.task_status = "";
             }
-            
+
             // Transform updatedBy
             if (historyItem.updatedBy) {
-              if (typeof historyItem.updatedBy === 'object' && 
-                  (historyItem.updatedBy.full_name !== undefined || 
-                   historyItem.updatedBy.first_name !== undefined)) {
-                historyEntry.updatedBy = historyItem.updatedBy.full_name || 
-                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() || 
+              if (typeof historyItem.updatedBy === 'object' &&
+                (historyItem.updatedBy.full_name !== undefined ||
+                  historyItem.updatedBy.first_name !== undefined)) {
+                historyEntry.updatedBy = historyItem.updatedBy.full_name ||
+                  `${historyItem.updatedBy.first_name || ""} ${historyItem.updatedBy.last_name || ""}`.trim() ||
                   historyItem.updatedBy.email || "";
               } else {
                 const EmployeesModel = mongoose.model("employees");
-                const updatedById = historyItem.updatedBy instanceof mongoose.Types.ObjectId 
-                  ? historyItem.updatedBy 
+                const updatedById = historyItem.updatedBy instanceof mongoose.Types.ObjectId
+                  ? historyItem.updatedBy
                   : (typeof historyItem.updatedBy === 'string' && mongoose.Types.ObjectId.isValid(historyItem.updatedBy)
                     ? new mongoose.Types.ObjectId(historyItem.updatedBy)
                     : null);
-                
+
                 if (updatedById) {
                   const updatedByUser = await EmployeesModel.findById(updatedById)
                     .select("full_name first_name last_name email")
                     .lean();
-                  historyEntry.updatedBy = updatedByUser 
+                  historyEntry.updatedBy = updatedByUser
                     ? (updatedByUser.full_name || `${updatedByUser.first_name || ""} ${updatedByUser.last_name || ""}`.trim() || updatedByUser.email)
                     : "";
                 } else {
@@ -1948,17 +1935,16 @@ exports.updateProjectsTaskProps = async (req, res) => {
             } else {
               historyEntry.updatedBy = "";
             }
-            
             // Format updatedAt
             if (historyItem.updatedAt) {
               historyEntry.updatedAt = moment(historyItem.updatedAt).format("DD MMM YYYY HH:mm:ss");
             } else {
               historyEntry.updatedAt = "";
             }
-            
+
             historyData.push(historyEntry);
           }
-          
+
           transformed.task_status_history = historyData;
         } catch (error) {
           console.error("Error transforming task_status_history for logging:", error);
@@ -1967,10 +1953,10 @@ exports.updateProjectsTaskProps = async (req, res) => {
       } else if (transformed.task_status_history) {
         transformed.task_status_history = [];
       }
-      
+
       return transformed;
     };
-    
+
     // Transform data for logging
     const oldTaskData = await transformTaskDataForLogging(oldTaskDataRaw);
     const newTaskData = await transformTaskDataForLogging(newTaskDataRaw);
@@ -2489,17 +2475,17 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   ...updateObj,
                   ...(perviousData?.task_status && !reqBody?.task_status
                     ? {
-                        task_status_history: [
-                          ...perviousData?.task_status_history,
-                          {
-                            task_status: null,
-                            updatedBy: loginUserId,
-                            updatedAt: configs.utcDefault()
-                          }
-                        ]
-                      }
+                      task_status_history: [
+                        ...perviousData?.task_status_history,
+                        {
+                          task_status: null,
+                          updatedBy: loginUserId,
+                          updatedAt: configs.utcDefault()
+                        }
+                      ]
+                    }
                     : !perviousData?.task_status && reqBody?.task_status
-                    ? {
+                      ? {
                         task_status_history: [
                           {
                             task_status: reqBody?.task_status,
@@ -2508,21 +2494,21 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                           }
                         ]
                       }
-                    : perviousData?.task_status &&
-                      reqBody?.task_status &&
-                      perviousData?.task_status.toString() !==
+                      : perviousData?.task_status &&
+                        reqBody?.task_status &&
+                        perviousData?.task_status.toString() !==
                         reqBody?.task_status.toString()
-                    ? {
-                        task_status_history: [
-                          ...perviousData?.task_status_history,
-                          {
-                            task_status: reqBody?.task_status,
-                            updatedBy: loginUserId,
-                            updatedAt: configs.utcDefault()
-                          }
-                        ]
-                      }
-                    : perviousData?.task_status_history)
+                        ? {
+                          task_status_history: [
+                            ...perviousData?.task_status_history,
+                            {
+                              task_status: reqBody?.task_status,
+                              updatedBy: loginUserId,
+                              updatedAt: configs.utcDefault()
+                            }
+                          ]
+                        }
+                        : perviousData?.task_status_history)
                 };
                 historyUpdateObj = {
                   ...historyUpdateObj,
@@ -2662,8 +2648,8 @@ exports.getHistory = async (req, res) => {
       task_id: new mongoose.Types.ObjectId(value.task_id),
       ...(value?._id
         ? {
-            _id: new mongoose.Types.ObjectId(value._id)
-          }
+          _id: new mongoose.Types.ObjectId(value._id)
+        }
         : {})
     };
 
@@ -2797,6 +2783,71 @@ exports.getProjectsWiseTask = async (req, res) => {
         $unwind: {
           path: "$mainTask",
           preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $lookup: {
+          from: "tasklabels",
+          let: { task_labels: "$task_labels" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$task_labels"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "taskLabels"
+        }
+      },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          let: { task_status: "$task_status" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$task_status"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "task_status"
+        }
+      },
+      {
+        $unwind: {
+          path: "$task_status",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { assigneesIds: "$assignees" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$assigneesIds"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "assignees"
         }
       },
       {
@@ -3118,7 +3169,7 @@ exports.importTasksData = async (req, res) => {
 
       const fileExt =
         fileObj.originalname.split(".")[
-          fileObj.originalname.split(".").length - 1
+        fileObj.originalname.split(".").length - 1
         ];
 
       if (!["xlsx", "xls", "csv"].includes(fileExt.toLowerCase())) {
@@ -3328,14 +3379,14 @@ exports.importTasksData = async (req, res) => {
             taskId: generateRandomId(),
             isImported: true,
             recurringType: (item["Recurring Type(Monthly/Yearly)"] && (
-                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "month" ||
-                item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "monthly"
-              )) ? "monthly"
+              item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "month" ||
+              item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "monthly"
+            )) ? "monthly"
               : (item["Recurring Type(Monthly/Yearly)"] && (
                 item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "year" ||
                 item["Recurring Type(Monthly/Yearly)"].toLowerCase().trim() === "yearly"
               )) ? "yearly"
-              : "",
+                : "",
             createdBy: createdbyEmp[0]?._id,
             updatedBy: createdbyEmp[0]?._id,
             ...(value?.task_status && {
@@ -3713,13 +3764,20 @@ exports.getProjectsTaskOverview = async (req, res) => {
           }
       }
     }
+    const closedTasksCount = await ProjectTasks.countDocuments({
+      ...matchQuery,
+      task_status: tasksStatus?._id,
+      isDeleted: false
+    });
+
     let countData = {
       // data: [...data],
       totalTasks: data.length,
       overDue: overDue.length,
       upComing: upComing.length,
       today: today.length,
-      noDate: noDate.length
+      noDate: noDate.length,
+      closed: closedTasksCount
     };
 
     return successResponse(
