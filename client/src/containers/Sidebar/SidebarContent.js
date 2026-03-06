@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
 import { Form, Menu, Layout } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import { useDispatch } from "react-redux";
-import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined, BarChartOutlined } from "@ant-design/icons";
+import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined, BarChartOutlined, StarOutlined, ExclamationCircleOutlined, BarChartOutlined } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./SidebarContent.css";
@@ -29,7 +29,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const location = useLocation();
 
   const [selectedKeys, setSelectedKeys] = useState([]);
-  const [openKeys, setOpenKeys] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectDetails, setProjectDetails] = useState([]);
   const [recentList, setRecentList] = useState([]);
@@ -136,8 +135,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/project-runnig-reports")) return "Reports";
     if (path.includes("/timesheet-reports")) return "Analytics";
     if (path.includes("/billable-hours")) return "Hours";
-    if (path.includes("/positive-review")) return "FeedBack";
-    if (path.includes("/complaints")) return "FeedBack";
+    if (path.includes("/positive-review")) return "FeedBack-Positive Reviews";
+    if (path.includes("/complaints")) return "FeedBack-Complaints";
     if (path.includes("/projectexpense")) return "Projectexpences";
     if (path.includes("/admin/settings")) return "Admin_Settings";
     if (path.includes("/admin/mira-ai")) return "mira_ai";
@@ -201,45 +200,29 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       },
       (getRoles(["Admin"]) ||
         userData._id == sideBarContentId) && {
-        key: "Analytics",
-        icon: <i className="fi fi-rs-newspaper"></i>,
-        label: "Analytics",
-        children: [
-          {
-            key: "Analytics-Projects- running",
-            label: "Projects Running",
-            onClick: () =>
-              handleMenuClick(
-                "Analytics-Projects- running",
-                `/${companySlug}/project-runnig-reports`
-              ),
-          },
-          {
-            key: "Analytics-Timesheet",
-            label: "Timesheet",
-            onClick: () =>
-              handleMenuClick("Analytics-Timesheet", `/${companySlug}/timesheet-reports`),
-          },
-        ],
+        key: "Analytics-Projects-running",
+        icon: <BarChartOutlined />,
+        label: "Projects Running",
+        onClick: () => handleMenuClick("Analytics-Projects-running", `/${companySlug}/project-runnig-reports`),
       },
-      getRoles(["Admin", "PC", "TL", "Admin", "AM"]) && {
-        key: "FeedBack",
-        label: "Feedback",
-        icon: <i className="fa-solid fa-comments"></i>,
-        children: [
-          {
-            key: "FeedBack-Positive Reviews",
-            label: "Positive Reviews",
-            onClick: () =>
-              handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
-          },
-          {
-            key: "FeedBack-Complaints",
-            label: "Complaints",
-            onClick: () =>
-              handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
-          },
-        ],
+      (getRoles(["Admin"]) ||
+        userData._id == sideBarContentId) && {
+        key: "Analytics-Timesheet",
+        icon: <HistoryOutlined />,
+        label: "Timesheet",
+        onClick: () => handleMenuClick("Analytics-Timesheet", `/${companySlug}/timesheet-reports`),
+      },
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Positive Reviews",
+        icon: <StarOutlined />,
+        label: "Positive Reviews",
+        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
+      },
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Complaints",
+        icon: <ExclamationCircleOutlined />,
+        label: "Complaints",
+        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
       },
       (getRoles(["Admin", "PC", "TL", "Admin"]) ||
         userData._id == sideBarContentId2) && {
@@ -270,26 +253,16 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     []
   );
 
-  const onOpenChange = useCallback(
-    (keys) => {
-      const latestOpenKey = keys.find((key) => !openKeys.includes(key));
-      setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
-    },
-    [openKeys]
-  );
-
   const menuComponent = useMemo(
     () => (
       <Menu
-        theme="dark"
+        theme="light"
         mode="inline"
         selectedKeys={selectedKeys}
-        openKeys={openKeys}
-        onOpenChange={onOpenChange}
         items={item}
       />
     ),
-    [selectedKeys, openKeys, onOpenChange, item]
+    [selectedKeys, item]
   );
 
   const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
@@ -303,9 +276,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         </div>
         <CustomScrollbars className="gx-layout-sider-scrollbar">
           <Sider
-            collapsible
-            collapsed={sidebarCollapsed}
-            onCollapse={setSidebarCollapsed}
+            collapsible={false}
+            collapsed={false}
             className="Sidebar"
           >
             {menuComponent}
@@ -329,4 +301,4 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 SidebarContent.propTypes = {
   setSidebarCollapsed: PropTypes.func.isRequired,
 };
-export default SidebarContent;
+export default memo(SidebarContent);
