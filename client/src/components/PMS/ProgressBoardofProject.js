@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   Menu,
   Popconfirm,
@@ -843,4 +843,4 @@ function ProgressBoardofProject() {
   );
 }
 
-export default ProgressBoardofProject;
+export default memo(ProgressBoardofProject);
