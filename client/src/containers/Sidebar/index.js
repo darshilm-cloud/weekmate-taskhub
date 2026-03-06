@@ -20,7 +20,7 @@ const { Sider } = Layout;
 
 function Sidebar() {
   const dispatch = useDispatch();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const { themeType, navStyle } = useSelector(({ settings }) => settings);
   const { navCollapsed, width } = useSelector(({ common }) => common);

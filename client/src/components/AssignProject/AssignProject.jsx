@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo } from "react";
 import { Input, Table, Popconfirm, message, Button, Card } from "antd";
 import { DeleteTwoTone, EditTwoTone, PlusOutlined } from "@ant-design/icons";
 import { Link, useParams, useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -401,4 +401,4 @@ const AssignProject = () => {
   );
 };
 
-export default AssignProject;
+export default memo(AssignProject);

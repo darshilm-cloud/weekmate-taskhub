@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Button,
   Avatar,
@@ -1401,4 +1401,4 @@ const BugsPMS = () => {
   );
 };
 
-export default BugsPMS;
+export default memo(BugsPMS);
