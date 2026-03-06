@@ -202,6 +202,11 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
+      path: ":companySlug/reports-home",
+      component: ReportsHome,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
       path: ":companySlug/project-runnig-reports",
       component: ProjectsRunningReports,
       roleName: [config.PMS_ROLES.ADMIN],
