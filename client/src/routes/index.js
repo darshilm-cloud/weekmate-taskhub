@@ -1,23 +1,22 @@
-import React, { Suspense, useMemo } from "react";
+import React, { Suspense } from "react";
 import { Route, Redirect } from "react-router-dom";
 import config from "../settings/config.json";
+import Workflows from "../components/PMS/Workflows";
+import ProjectStatus from "../components/PMS/ProjectStatus";
+import ProjectLabels from "../components/PMS/ProjectLabels";
+import EmployeeListTabClient from "../pages/EmployeeList/EmployeeListTabClient.js";
 import { getRoles } from "../util/hasPermission.js";
+import MylogtimeWidget from "../pages/Mylogtime/MylogtimeWidget";
+import Projectexpences from "../pages/ProjectExpences/Projectexpences.js";
+import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js";
 import { sideBarContentId } from "../constants";
-import { LoadingState } from "../components/common";
-import ErrorBoundary from "../components/common/ErrorBoundary";
 
-// All routes lazy-loaded for code splitting
-const Workflows = React.lazy(() => import("../components/PMS/Workflows"));
-const ProjectStatus = React.lazy(() => import("../components/PMS/ProjectStatus"));
-const ProjectLabels = React.lazy(() => import("../components/PMS/ProjectLabels"));
-const EmployeeListTabClient = React.lazy(() => import("../pages/EmployeeList/EmployeeListTabClient.js"));
-const MylogtimeWidget = React.lazy(() => import("../pages/Mylogtime/MylogtimeWidget"));
-const Projectexpences = React.lazy(() => import("../pages/ProjectExpences/Projectexpences.js"));
-const ProjectexpencesForm = React.lazy(() => import("../pages/ProjectExpences/ProjectexpencesForm.js"));
-const AdminDashboard = React.lazy(() => import("../pages/AdminDashboard"));
-const CompanyManagement = React.lazy(() => import("../pages/AdminModules/CompanyManagement"));
-const SettingsModule = React.lazy(() => import("../pages/AdminModules/SettingsModule/SettingsModule"));
-const Administrator = React.lazy(() => import("../pages/AdminModules/Administrator"));
+import AdminDashboard from "../pages/AdminDashboard";
+import CompanyManagement from "../pages/AdminModules/CompanyManagement";
+import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
+import Administrator from "../pages/AdminModules/Administrator";
+ 
 
 const ProgressBoardofProject = React.lazy(() =>
   import("../components/PMS/ProgressBoardofProject")
@@ -79,120 +78,372 @@ const MiraAi = React.lazy(() =>
   import("../pages/MiraAI/MiraAI")
 );
 
-// Role shorthand
-const ALL_ROLES = [
-  config.PMS_ROLES.ADMIN,
-  config.PMS_ROLES.USER,
-  config.PMS_ROLES.CLIENT,
-  config.PMS_ROLES.PC,
-  config.PMS_ROLES.AM,
-  config.PMS_ROLES.TL,
-];
-const ALL_EXCEPT_CLIENT = [
-  config.PMS_ROLES.ADMIN,
-  config.PMS_ROLES.USER,
-  config.PMS_ROLES.PC,
-  config.PMS_ROLES.AM,
-  config.PMS_ROLES.TL,
-];
-const ADMIN_ONLY = [config.PMS_ROLES.ADMIN];
-const MANAGEMENT = [
-  config.PMS_ROLES.ADMIN,
-  config.PMS_ROLES.PC,
-  config.PMS_ROLES.AM,
-  config.PMS_ROLES.TL,
-];
+const index = ({ match, userPermission }) => {
+  const routeArray = [
+    {
+      path: ":companySlug/manage-project-type",
+      component: ManageProjectType,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-technologies",
+      component: ProjectTechnologies,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/workflows-tasks/:id",
+      component: WorkflowTasksUpdate,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/workflows",
+      component: Workflows,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/resources",
+      component: Resource,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-archieved",
+      component: ProjectArchieved,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
 
-// Static route config — defined once, never recreated
-const routeArray = [
-  { path: ":companySlug/manage-project-type", component: ManageProjectType, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-technologies", component: ProjectTechnologies, roleName: ADMIN_ONLY },
-  { path: ":companySlug/workflows-tasks/:id", component: WorkflowTasksUpdate, roleName: ADMIN_ONLY },
-  { path: ":companySlug/workflows", component: Workflows, roleName: ADMIN_ONLY },
-  { path: ":companySlug/resources", component: Resource, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-archieved", component: ProjectArchieved, roleName: ALL_ROLES },
-  { path: ":companySlug/roles-permission/:id", component: ResourcePermission, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-users", component: EmployeeMasterList, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-users/client", component: EmployeeListTabClient, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-labels", component: ProjectLabels, roleName: ADMIN_ONLY },
-  { path: ":companySlug/my-library", component: Library, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project-list", component: AssignProject, roleName: ALL_ROLES },
-  { path: ":companySlug/project-list/edit/:editProjectId", component: AssignProject, roleName: MANAGEMENT },
-  { path: ":companySlug/trash", component: TrashIndex, roleName: ADMIN_ONLY },
-  { path: ":companySlug/project/app/:projectId", component: ProgressBoardofProject, roleName: ALL_ROLES },
-  { path: ":companySlug/project-status", component: ProjectStatus, roleName: ADMIN_ONLY },
-  { path: ":companySlug/my-log-time", component: MylogtimeWidget, roleName: ALL_ROLES },
-  { path: ":companySlug/project-runnig-reports", component: ProjectsRunningReports, roleName: ADMIN_ONLY },
-  { path: ":companySlug/timesheet-reports", component: TimeSheetReports, roleName: ADMIN_ONLY },
-  { path: ":companySlug/permission-access", component: PermissionModule, roleName: ADMIN_ONLY },
-  { path: ":companySlug/dashboard", component: DashboardModule, roleName: ALL_EXCEPT_CLIENT },
-  { path: ":companySlug/billable-hours", component: BillableHoursAdmin, roleName: ALL_EXCEPT_CLIENT },
-  { path: ":companySlug/complaints", component: ComplaintsModule, roleName: MANAGEMENT },
-  { path: ":companySlug/add/complaintsform", component: ComplaintsForm, roleName: MANAGEMENT },
-  { path: ":companySlug/edit/complaintsForm/:complaint_id", component: ComplaintsForm, roleName: MANAGEMENT },
-  { path: ":companySlug/positive-review", component: PositiveReview, roleName: MANAGEMENT },
-  { path: ":companySlug/add/positiveReviewForm", component: PositiveReviewForm, roleName: MANAGEMENT },
-  { path: ":companySlug/edit/positiveReviewForm/:review_id", component: PositiveReviewForm, roleName: MANAGEMENT },
-  { path: ":companySlug/add/complaintForm-action-details/:id", component: ComplaintDetailForm, roleName: MANAGEMENT },
-  { path: ":companySlug/projectexpense", component: Projectexpences, roleName: [config.PMS_ROLES.ADMIN, config.PMS_ROLES.PC, config.PMS_ROLES.TL, config.PMS_ROLES.CLIENT] },
-  { path: ":companySlug/add/projectexpenseform", component: ProjectexpencesForm, roleName: [config.PMS_ROLES.ADMIN, config.PMS_ROLES.PC, config.PMS_ROLES.TL, config.PMS_ROLES.CLIENT] },
-  { path: ":companySlug/edit/projectexpenseform/:review_id", component: ProjectexpencesForm, roleName: [config.PMS_ROLES.ADMIN, config.PMS_ROLES.PC, config.PMS_ROLES.TL, config.PMS_ROLES.CLIENT] },
-  { path: ":companySlug/admin/dashboard", component: AdminDashboard, roleName: ALL_ROLES },
-  { path: ":companySlug/admin/company-management", component: CompanyManagement, roleName: ALL_ROLES },
-  { path: ":companySlug/admin/settings", component: SettingsModule, roleName: ALL_ROLES },
-  { path: "admin/Administrator", component: Administrator, roleName: [config.PMS_ROLES.SUPER_ADMIN] },
-  { path: ":companySlug/admin/mira-ai", component: MiraAi, roleName: ADMIN_ONLY },
-  { path: ":companySlug/admin/activity-logs", component: ActivityLogs, roleName: ADMIN_ONLY },
-];
+    {
+      path: ":companySlug/roles-permission/:id",
+      component: ResourcePermission,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-users",
+      component: EmployeeMasterList,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-users/client",
+      component: EmployeeListTabClient,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-labels",
+      component: ProjectLabels,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/my-library",
+      component: Library,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project-list",
+      component: AssignProject,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/project-list/edit/:editProjectId",
+      component: AssignProject,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/trash",
+      component: TrashIndex,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project/app/:projectId",
+      component: ProgressBoardofProject,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/project-status",
+      component: ProjectStatus,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/my-log-time",
+      component: MylogtimeWidget,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/project-runnig-reports",
+      component: ProjectsRunningReports,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/timesheet-reports",
+      component: TimeSheetReports,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/permission-access",
+      component: PermissionModule,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/dashboard",
+      component: DashboardModule,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
 
-const RoutesIndex = ({ match, userPermission }) => {
-  const userData = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user_data")) || {};
-    } catch {
-      return {};
-    }
-  }, []);
+    {
+      path: ":companySlug/billable-hours",
+      component: BillableHoursAdmin,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.USER,
+      ],
+    },
+    {
+      path: ":companySlug/complaints",
+      component: ComplaintsModule,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/add/complaintsform",
+      component: ComplaintsForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/edit/complaintsForm/:complaint_id",
+      component: ComplaintsForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/positive-review",
+      component: PositiveReview,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/add/positiveReviewForm",
+      component: PositiveReviewForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/edit/positiveReviewForm/:review_id",
+      component: PositiveReviewForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/add/complaintForm-action-details/:id",
+      component: ComplaintDetailForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/projectexpense",
+      component: Projectexpences,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.CLIENT,
+      ],
+    },
 
+    {
+      path: ":companySlug/add/projectexpenseform",
+      component: ProjectexpencesForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.CLIENT,
+      ],
+    },
+    {
+      path: ":companySlug/edit/projectexpenseform/:review_id",
+      component: ProjectexpencesForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.CLIENT,
+      ],
+    },
+    {
+      path: ":companySlug/admin/dashboard",
+      component: AdminDashboard,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/admin/company-management",
+      component: CompanyManagement,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/admin/settings",
+      component: SettingsModule,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    // {
+    //   path: ":companySlug/admin/company-employee",
+    //   component: CompanyEmployee,
+    //   roleName: [
+    //     config.PMS_ROLES.ADMIN,
+    //     config.PMS_ROLES.USER,
+    //     config.PMS_ROLES.CLIENT,
+    //     config.PMS_ROLES.PC,
+    //     config.PMS_ROLES.AM,
+    //     config.PMS_ROLES.TL,
+    //   ],
+    // },
+    {
+      path: "admin/Administrator",
+      component: Administrator,
+      roleName: [
+        config.PMS_ROLES.SUPER_ADMIN,
+      ],
+    },
+    {
+      path: ":companySlug/admin/mira-ai",
+      component: MiraAi,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+      ],
+    },
+    {
+      path: ":companySlug/admin/activity-logs",
+      component: ActivityLogs,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+  ];
+  let userData = JSON.parse(localStorage.getItem("user_data"));
   return (
-    <Suspense fallback={<LoadingState fullPage />}>
-      {routeArray.map((item, index) => (
-        <Route
-          exact
-          key={item.path}
-          path={`${match.url}${item.path}`}
-          render={(routeProps) => {
-            const isSpecialUser = userData._id == sideBarContentId;
-            const isSpecificPath =
-              item.path === ":companySlug/project-runnig-reports" ||
-              item.path === ":companySlug/timesheet-reports";
+    <>
+      <Suspense fallback={<></>}>
+        {routeArray.map((item, index) => (
+          <Route
+            exact
+            key={index}
+            path={`${match.url}${item.path}`}
+            render={(routeProps) => {
+              const isSpecialUser = userData._id == sideBarContentId; // Static User Check
+              const isSpecificPath =
+                item.path === "project-runnig-reports" ||
+                item.path === "timesheet-reports"; // Check for the specific route
 
-            if (getRoles(item.roleName)) {
-              return (
-                <ErrorBoundary>
-                  {React.createElement(item.component, { ...routeProps })}
-                </ErrorBoundary>
-              );
-            }
+              // ✅ Normal Role-Based Access (For Users With Proper Permissions)
+              if (getRoles(item.roleName)) {
+                return React.createElement(item.component, { ...routeProps });
+              }
 
-            if (isSpecificPath && isSpecialUser) {
-              return (
-                <ErrorBoundary>
-                  {React.createElement(item.component, { ...routeProps })}
-                </ErrorBoundary>
-              );
-            }
+              // ✅ Special User Override (Only for 'project-runnig-reports')
+              if (isSpecificPath && isSpecialUser) {
+                return React.createElement(item.component, { ...routeProps });
+              }
 
-            if (getRoles(["Client"])) {
-              return <Redirect to="/project-list" />;
-            }
+              // ✅ If the user has "Client" role, redirect to "project-list"
+              if (getRoles(["Client"])) {
+                return <Redirect to="/project-list" />;
+              }
 
-            return <Redirect to="/dashboard" />;
-          }}
-        />
-      ))}
-    </Suspense>
+              // ❌ Otherwise, redirect unauthorized users to the "dashboard"
+              return <Redirect to="/dashboard" />;
+            }}
+          />
+        ))}
+      </Suspense>
+    </>
   );
 };
 
-export default RoutesIndex;
+export default index;

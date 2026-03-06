@@ -1,13 +1,17 @@
+import axios from "axios";
 import { message } from "antd";
-import { apiClient, BASE_URL, performLogout } from "./apiClient";
 import getCookie from "../hooks/getCookie";
-
+import removeCookie from "../hooks/removeCookie";
 const { REACT_APP_API_URL } = process.env;
 
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
-  static API_URL = BASE_URL;
+  // static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
+  static API_URL = 
+    process.env.NODE_ENV === "production"
+      ? process.env.REACT_APP_API_URL + "/v1"
+      : `${this.Server_Base_URL}/v1`;
 
   static API_Call_Counter = 0;
   static incre_API_Call_Counter = () => this.API_Call_Counter++;
@@ -21,6 +25,7 @@ export default class Service {
   static message_containner = [];
   static add_message = (text) => {
     var index = this.message_containner.findIndex((x) => x === text);
+    // here you can check specific property for an object whether it exist in your array or not
     if (index === -1) {
       this.message_containner.push(text);
     }
@@ -59,6 +64,7 @@ export default class Service {
 
   //Auth Module
   static userById = "/admin/userById";
+  // static empById = "/emp/getempbyid";
   static editAdmin = "/admin/editadminuserprofile";
   static refreshToken = "/auth/refreshToken";
   static forgotPassword = "/authentication/client/forgotPassword";
@@ -68,6 +74,11 @@ export default class Service {
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
   static login = "/authentication/login";
   static logout = "/authentication/logout";
+
+  //icon & logo
+  // static editLogo_Icon = "/adminsettings/editAdminSetting";
+  // static customadminSetting = "/adminsettings/customadminSetting";
+  // static getAdminSettings = "/adminsettings/adminSetting";
 
   // trash module
   static trashProjects = "/trash/get/projects";
@@ -384,6 +395,7 @@ export default class Service {
 
   // billable hours api
   static getBillableHoursForPC = "/projects/task-logged-hours/getEmployeesHours"
+  // static getTotalBillableHoursForPC= "/projects/task-logged-hours/getTotalHours"
   static empHoursDetails = "/projects/task-logged-hours/getHoursDetails"
   static addApprovedBillableHours = "/approvehours/add"
 
@@ -423,6 +435,11 @@ export default class Service {
   static deleteprojectexpanses = "/taskhub/projectexpanses/delete"
   static exportProjectExpenses = "/taskhub/projectexpanses/exportProjectExpenses"
 
+  
+  // static updateReview = "/taskhub/reviews/update"
+  // static deleteReview = "/taskhub/reviews/delete"
+
+
 
   // consumer feedback form
   static consumerResolutionForm = "/taskhub/complaint/resolution/feedback/add"
@@ -431,9 +448,10 @@ export default class Service {
   //Saas flow API's
   static registerAdminAndCompany = "/CompanyReg/registerAdminAndCompany"
   static verifyRegistration = '/CompanyReg/verify-registration'
-
+  
   static getDashboardData = "/superAdmin/getDashboardData"
   static addAdmin = '/superAdmin/addAdmin'
+  static getAdminList = '/superAdmin/getAdminList'
   static getAdminList = '/superAdmin/getAdminList'
   static deleteAdmin = '/superAdmin/deleteAdmin'
   static editAdminList = '/superAdmin/editAdmin'
@@ -471,61 +489,107 @@ export default class Service {
     params,
     options = {},
   }) {
-    let url = api_url;
+    api_url = this.API_URL + api_url;
+
+    //request interceptor to add the auth token header to requests
+    axios.interceptors.request.use(
+      (config) => {
+        const accessToken = localStorage.getItem("accessToken");
+        if (accessToken) {
+          config.headers = {
+            "Access-Control-Allow-Origin": "*",
+            authorization: "Bearer " + accessToken,
+            platform: "web-admin",
+            // ...config.cachekey ?{ cachekey:config.cachekey} : {},
+            // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
+            ...options,
+          };
+        } else {
+          config.headers = {
+            platform: "web-admin",
+            ...options,
+          };
+        }
+        return config;
+      },
+      (error) => {
+        Promise.reject(error);
+      }
+    );
+    //response interceptor to refresh token on receiving token expired error
+    axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          this.logOut();
+        }
+        return Promise.reject(error);
+      }
+    );
 
     if (methodName === this.getMethod) {
       if (params) {
-        url = url + "?" + params;
+        api_url = api_url + "?" + params;
       }
       try {
-        const response = await apiClient.get(url, {
-          headers: options,
-        });
-        if (!url.includes(this.getCompanyDetails)) {
+        const response = await axios.get(api_url);
+        if (!api_url.includes(this.getCompanyDetails)) {
           this.permissionRoleChange(response.data);
         }
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 2")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.postMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.post(url, body, {
-          headers: options,
-        });
+        const response = await axios.post(api_url, body, options);
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 3")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.putMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.put(url, body, {
-          headers: options,
-        });
+        const response = await axios.put(api_url, body, options);
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 4")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.deleteMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.delete(url, { data: body, headers: options });
+        const response = await axios.delete(api_url, { data: body });
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 5")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
@@ -533,18 +597,38 @@ export default class Service {
 
   static async logOut() {
     try {
+      // Call logout API to log the activity
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
         try {
-          await apiClient.post(this.logout, {});
+          await this.makeAPICall({
+            props: {},
+            methodName: this.postMethod,
+            api_url: this.logout,
+            body: {},
+          });
         } catch (error) {
+          // Continue with logout even if API call fails
           console.error("Logout API error:", error);
         }
       }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      performLogout();
+      // Clear local storage and cookies
+      localStorage.removeItem('user_data')
+      localStorage.removeItem('is_reporting_manager')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('title')
+      localStorage.removeItem('headerLogo')
+      localStorage.removeItem('loginLogo')  
+      localStorage.removeItem('logoMode')
+      localStorage.removeItem('favIcon')
+    
+      removeCookie("user_permission")
+      removeCookie("pms_role_id")
+      window.location = "/signin";
     }
   }
 
@@ -581,7 +665,7 @@ export default class Service {
         this.logOut();
       }
     } catch (error) {
-      // silently handle permission check errors
+      console.log(error, "error");
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Menu,
   Popconfirm,
@@ -12,7 +12,6 @@ import {
   Radio,
 } from "antd";
 import { useParams, useLocation, useHistory } from "react-router-dom";
-import { Header } from "antd/lib/layout/layout";
 
 import CalendarPMS from "./CalendarPMS";
 import DiscussionForm from "../Discussion/DiscussionForm";
@@ -28,6 +27,7 @@ import {
   DeleteOutlined,
   DownOutlined,
   EditOutlined,
+  LeftOutlined,
   StarFilled,
   StarOutlined,
 } from "@ant-design/icons";
@@ -596,195 +596,171 @@ function ProgressBoardofProject() {
 
   return (
     <>
-      <Header className="main-header progress-board-wrapper">
-        <div className="project-name">
-          <h3 onClick={showDrawer} style={{ cursor: "pointer" }}>
-            {formattedTitle?.length > 59
-              ? `${formattedTitle.slice(0, 59)}...`
-              : formattedTitle}
-          </h3>
-          <DrawerComponent
-            visible={drawerVisible}
-            onClose={closeDrawer}
-            title="Projects"
-          >
-            <div style={{ marginBottom: "16px" }} className="project-list">
-              <Input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            {sortedProjectList.length === 0 ? (
-              <p className="no-data-found-drawer-antd">No data found</p>
-            ) : (
-              sortedProjectList.map((item, index) => (
-                <div key={index} className="project-name-drawers">
-                  <span
-                    onClick={() => {
-                      handleBookmark(item);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {item.isStarred ? (
-                      <StarFilled style={{ color: "#ffd200" }} />
-                    ) : (
-                      <StarOutlined />
-                    )}
-                  </span>
-                  <Link
-                    to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
-                  >
-                    <p
-                      onClick={() => {
-                        setDrawerVisible(false);
-                        setSearchQuery("");
-                      }}
-                    >
-                      {item.title?.length > 24
-                        ? `${item.title.slice(0, 23)}...`
-                        : item.title}
-                    </p>
-                  </Link>
-                </div>
-              ))
-            )}
-          </DrawerComponent>
+      {/* ── Project Top Bar ── */}
+      <div className="pb-topbar">
 
-          <div>
-            <Popover
-              trigger="click"
-              placement="bottom"
-              arrow={false}
-              visible={popOver}
-              onVisibleChange={setPopOver}
-              content={
-                <div className="progressboard-pop">
-                  <Menu>
-                    {hasPermission(["manage_people"]) && (
-                      <Menu.Item
-                        onClick={() => {
-                          setPopOver(false);
-                          setManageModal(true);
-                          managePeopleForm.setFieldsValue({
-                            clients: projectData?.pms_clients?.map(
-                              (client) =>
-                                clientList.find(
-                                  (item) => item.full_name === client.full_name
-                                )._id
-                            ),
-                            manager: projectData?.manager?._id,
-                            acc_manager: projectData?.acc_manager?._id,
-                            assignees: projectData?.assignees?.map(
-                              (assignee) =>
-                                assignees.find(
-                                  (item) => item.full_name === assignee.name
-                                )?._id
-                            ),
-                          });
-                        }}
-                      >
-                        <i className="fi fi-rr-users"></i>{" "}
-                        <span>Manage People</span>
-                      </Menu.Item>
-                    )}
-
-                    {hasPermission(["project_edit"]) && (
-                      <Menu.Item onClick={goToEditProjectPage}>
-                        <span>
-                          <EditOutlined />
-                          <span>Edit</span>
-                        </span>
-                      </Menu.Item>
-                    )}
-                    {hasPermission(["project_delete"]) && (
-                      <Menu.Item>
-                        <Popconfirm
-                          title="Are you sure you want to delete this?"
-                          onConfirm={handleDeleteProject}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="bottom"
-                          arrow={false}
-                          className="ant-delete"
-                        >
-                          <span>
-                            <DeleteOutlined />
-                            <span> Delete</span>
-                          </span>
-                        </Popconfirm>
-                      </Menu.Item>
-                    )}
-                    {getRoles(["Admin"]) && (
-                      <Menu.Item
-                        onClick={() => {
-                          setPopOver(false);
-                          setTabsModal(true);
-                        }}
-                      >
-                        <i class="fa-solid fa-bars-staggered"></i>
-                        <span>Manage Tabs</span>
-                      </Menu.Item>
-                    )}
-                  </Menu>
-                </div>
-              }
+        {/* ── Header row: back arrow + title + manage + mobile tabs ── */}
+        <div className="pb-header">
+          <div className="pb-header-left">
+            {/* Back to projects list */}
+            <Link
+              to={`/${companySlug}/project-list`}
+              className="pb-back-btn"
+              title="All Projects"
             >
-              {(hasPermission(["project_edit"]) ||
-                hasPermission(["project_delete"])) && (
-                <div>
-                  <DownOutlined style={{ cursor: "pointer" }} />
-                </div>
+              <LeftOutlined />
+            </Link>
+
+            {/* Project title (opens project-switcher drawer) */}
+            <h3 className="pb-project-title" onClick={showDrawer}>
+              {formattedTitle?.length > 59
+                ? `${formattedTitle.slice(0, 59)}...`
+                : formattedTitle}
+            </h3>
+
+            {/* Project switcher drawer */}
+            <DrawerComponent
+              visible={drawerVisible}
+              onClose={closeDrawer}
+              title="Projects"
+            >
+              <div style={{ marginBottom: "16px" }} className="project-list">
+                <Input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
+                />
+              </div>
+              {sortedProjectList.length === 0 ? (
+                <p className="no-data-found-drawer-antd">No data found</p>
+              ) : (
+                sortedProjectList.map((item, index) => (
+                  <div key={index} className="project-name-drawers">
+                    <span onClick={() => handleBookmark(item)} style={{ cursor: "pointer" }}>
+                      {item.isStarred ? (
+                        <StarFilled style={{ color: "#ffd200" }} />
+                      ) : (
+                        <StarOutlined />
+                      )}
+                    </span>
+                    <Link to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}>
+                      <p onClick={() => { setDrawerVisible(false); setSearchQuery(""); }}>
+                        {item.title?.length > 24 ? `${item.title.slice(0, 23)}...` : item.title}
+                      </p>
+                    </Link>
+                  </div>
+                ))
               )}
-            </Popover>
+            </DrawerComponent>
+
+            {/* Manage dropdown (edit / delete / manage people / manage tabs) */}
+            {(hasPermission(["project_edit"]) || hasPermission(["project_delete"])) && (
+              <Popover
+                trigger="click"
+                placement="bottom"
+                arrow={false}
+                visible={popOver}
+                onVisibleChange={setPopOver}
+                content={
+                  <div className="progressboard-pop">
+                    <Menu>
+                      {hasPermission(["manage_people"]) && (
+                        <Menu.Item
+                          onClick={() => {
+                            setPopOver(false);
+                            setManageModal(true);
+                            managePeopleForm.setFieldsValue({
+                              clients: projectData?.pms_clients?.map(
+                                (client) => clientList.find((item) => item.full_name === client.full_name)._id
+                              ),
+                              manager: projectData?.manager?._id,
+                              acc_manager: projectData?.acc_manager?._id,
+                              assignees: projectData?.assignees?.map(
+                                (assignee) => assignees.find((item) => item.full_name === assignee.name)?._id
+                              ),
+                            });
+                          }}
+                        >
+                          <i className="fi fi-rr-users"></i> <span>Manage People</span>
+                        </Menu.Item>
+                      )}
+                      {hasPermission(["project_edit"]) && (
+                        <Menu.Item onClick={goToEditProjectPage}>
+                          <span><EditOutlined /><span> Edit</span></span>
+                        </Menu.Item>
+                      )}
+                      {hasPermission(["project_delete"]) && (
+                        <Menu.Item>
+                          <Popconfirm
+                            title="Are you sure you want to delete this?"
+                            onConfirm={handleDeleteProject}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="bottom"
+                            arrow={false}
+                            className="ant-delete"
+                          >
+                            <span><DeleteOutlined /><span> Delete</span></span>
+                          </Popconfirm>
+                        </Menu.Item>
+                      )}
+                      {getRoles(["Admin"]) && (
+                        <Menu.Item onClick={() => { setPopOver(false); setTabsModal(true); }}>
+                          <i className="fa-solid fa-bars-staggered"></i>
+                          <span> Manage Tabs</span>
+                        </Menu.Item>
+                      )}
+                    </Menu>
+                  </div>
+                }
+              >
+                <DownOutlined className="pb-manage-arrow" />
+              </Popover>
+            )}
           </div>
+
+          {/* Mobile: show tab switcher in header-right */}
+          {windowWidth <= 991 && (
+            <div className="pb-header-right">
+              <Popover
+                content={
+                  <Menu>
+                    {filteredTabOptions.map((option) => (
+                      <Menu.Item key={option.key} onClick={() => handleLiClick(option.key)}>
+                        {option.key}
+                      </Menu.Item>
+                    ))}
+                  </Menu>
+                }
+                placement="bottomLeft"
+                trigger="click"
+              >
+                <button className="pb-tabs-mobile-btn">
+                  <i className="fi fi-bs-menu-dots"></i>
+                </button>
+              </Popover>
+            </div>
+          )}
         </div>
 
-        {windowWidth <= 991 ? (
-          <>
-            <Popover
-              content={
-                <Menu>
-                  {filteredTabOptions.map((option) => (
-                    <Menu.Item
-                      key={option.key}
-                      onClick={() => handleLiClick(option.key)}
-                    >
-                      {option.key}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              }
-              placement="bottomLeft"
-              trigger="click"
-            >
-              <div className="header_tabination">
-                <i class="fi fi-bs-menu-dots"></i>
-              </div>
-            </Popover>
-          </>
-        ) : (
-          <div className="header_tabination">
-            <ul className="tab_menu">
-              {filteredTabOptions.map((option) => (
-                <li
-                  key={option.key}
-                  className={selectedTab === option.key ? "active-tab" : ""}
-                  onClick={() => handleLiClick(option.key)}
-                >
-                  {option.key}
-                </li>
-              ))}
-            </ul>
+        {/* ── Tabs bar (desktop only) ── */}
+        {windowWidth > 991 && (
+          <div className="pb-tabs-bar">
+            {filteredTabOptions.map((option) => (
+              <button
+                key={option.key}
+                className={`pb-tab-btn ${selectedTab === option.key ? "pb-tab-btn--active" : ""}`}
+                onClick={() => handleLiClick(option.key)}
+              >
+                {option.key}
+              </button>
+            ))}
           </div>
         )}
-      </Header>
+
+      </div>{/* /pb-topbar */}
 
       {selectedTab === "Overview" && <Overview />}
       {selectedTab === "Discussion" && <DiscussionForm />}
@@ -843,4 +819,4 @@ function ProgressBoardofProject() {
   );
 }
 
-export default memo(ProgressBoardofProject);
+export default ProgressBoardofProject;

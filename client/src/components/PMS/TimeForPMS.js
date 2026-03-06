@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Avatar,
   Button,
@@ -2394,4 +2394,4 @@ function TimeForPMS() {
   );
 }
 
-export default memo(TimeForPMS);
+export default TimeForPMS;
