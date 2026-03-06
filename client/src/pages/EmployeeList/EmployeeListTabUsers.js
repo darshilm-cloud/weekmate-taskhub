@@ -21,6 +21,9 @@ import {
   EditOutlined,
   UploadOutlined,
   DownloadOutlined,
+  FilterOutlined,
+  CalendarOutlined,
+  MoreOutlined,
   ApiOutlined,
   KeyOutlined,
 } from "@ant-design/icons";
@@ -32,7 +35,7 @@ import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
 
-const CombinedEmployeeList = () => {
+const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
   const companyId = user_data?.companyId;
@@ -528,14 +531,20 @@ const CombinedEmployeeList = () => {
   ];
 
   return (
-    <div>
-      <div className="profile-sub-head global-search employee-module">
+    <div className={taskLikeDesign ? "tasklike-users-list" : ""}>
+      <div
+        className={
+          taskLikeDesign
+            ? "tasklike-list-toolbar"
+            : "profile-sub-head global-search employee-module"
+        }
+      >
         <Search
           ref={searchRef}
-          placeholder="Search employees"
+          placeholder={taskLikeDesign ? "Search" : "Search employees"}
           onSearch={onSearch}
           onKeyUp={resetSearchFilter}
-          style={{ width: 200 }}
+          style={{ width: taskLikeDesign ? 220 : 200 }}
           allowClear
           onChange={(e) => {
             setPagination({ ...pagination, current: 1 });
@@ -551,43 +560,68 @@ const CombinedEmployeeList = () => {
           onChange={handleFileChange}
         />
 
-        <div
-          className="filter-btn-wrapper"
-          style={{ display: "flex", gap: "8px" }}
-        >
-          <Button
-            className="mr2 export-btn"
-            id="exportButton"
-            disabled={pagination.total != 0 ? false : true}
-            onClick={exportCSV}
+        {taskLikeDesign ? (
+          <div className="tasklike-toolbar-actions">
+            <Button icon={<FilterOutlined />}>Filter</Button>
+            <Select
+              size="middle"
+              defaultValue="all"
+              options={[
+                { label: "Status", value: "all" },
+                { label: "Active", value: "active" },
+                { label: "Deactivated", value: "inactive" }
+              ]}
+            />
+            <Select
+              size="middle"
+              defaultValue="default"
+              options={[{ label: "Default", value: "default" }]}
+            />
+            <Button icon={<CalendarOutlined />}>Date Type</Button>
+            <Button icon={<PlusOutlined />} type="primary" onClick={() => showAddEditModal()}>
+              Add Employee
+            </Button>
+            <Button icon={<MoreOutlined />}>More</Button>
+          </div>
+        ) : (
+          <div
+            className="filter-btn-wrapper"
+            style={{ display: "flex", gap: "8px" }}
           >
-            Export CSV
-          </Button>
-          <Button
-            type="primary"
-            icon={<DownloadOutlined />}
-            onClick={exportSampleCSVfile}
-          >
-            Sample CSV
-          </Button>
-          <Button
-            type="primary"
-            icon={<UploadOutlined />}
-            onClick={() => inputRef.current?.click()}
-          >
-            Import CSV
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showAddEditModal()}
-          >
-            Add Employee
-          </Button>
-        </div>
+            <Button
+              className="mr2 export-btn"
+              id="exportButton"
+              disabled={pagination.total != 0 ? false : true}
+              onClick={exportCSV}
+            >
+              Export CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={exportSampleCSVfile}
+            >
+              Sample CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={<UploadOutlined />}
+              onClick={() => inputRef.current?.click()}
+            >
+              Import CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => showAddEditModal()}
+            >
+              Add Employee
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="block-table-content">
+      <div className={taskLikeDesign ? "block-table-content tasklike-table-wrap" : "block-table-content"}>
         <Table
           columns={columns}
           dataSource={employees}

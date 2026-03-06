@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  FilterOutlined,
+  CalendarOutlined,
+  MoreOutlined,
+  PlusOutlined
+} from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import Service from "../../service";
@@ -21,7 +28,7 @@ import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
 import ClientFilterComponent from "./ClientFilterComponent";
 
-const EmployeeListTabClient = () => {
+const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
@@ -587,10 +594,10 @@ const EmployeeListTabClient = () => {
   return (
     <>
     
-        <div className="global-search">
+        <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
           <Search
             ref={ searchRef }
-            placeholder="Search..."
+            placeholder={taskLikeDesign ? "Search" : "Search..."}
             className="client-search-bar"
             onSearch={ onSearch }
             onChange={ (e) => {
@@ -598,41 +605,53 @@ const EmployeeListTabClient = () => {
             } }
             allowClear
             onKeyUp={ resetSearchFilter }
-        style={{width:"200px"}}
+        style={{width: taskLikeDesign ? "220px" : "200px"}}
           />
-          <div className="filter-btn-wrapper">
-            <Button onClick={openAddModal} type="primary" className="btn">
-              <i className="fi fi-rr-plus-small"></i> Add
-            </Button>
-            
-            {/* ✅ Updated: Connect ClientFilterComponent properly */}
-            <ClientFilterComponent
-              onFilterChange={handleFilterChange}
-            />
-            
-            {/* ✅ Updated: Clear Filter button now uses hasActiveFilters */}
-            {/* <Button
-              className="ant-delete"
-              onClick={clearAllFilters}
-              disabled={!hasActiveFilters()}
-            >
-              Clear Filter
-            </Button> */}
-
-            <Button
-              className="mr2 export-btn"
-              id="exportButton"
-       
-              disabled={pagination.total != 0 ? false : true}
-              onClick={exportCSV}
-            >
-              Export CSV
-            </Button>
+          <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
+            {taskLikeDesign ? (
+              <>
+                <Button icon={<FilterOutlined />}>Filter</Button>
+                <Select
+                  size="middle"
+                  defaultValue="all"
+                  options={[
+                    { label: "Status", value: "all" },
+                    { label: "Active", value: "active" },
+                    { label: "Not Active", value: "inactive" }
+                  ]}
+                />
+                <Select
+                  size="middle"
+                  defaultValue="default"
+                  options={[{ label: "Default", value: "default" }]}
+                />
+                <Button icon={<CalendarOutlined />}>Date Type</Button>
+                <Button onClick={openAddModal} type="primary" icon={<PlusOutlined />}>
+                  Add Client
+                </Button>
+                <Button icon={<MoreOutlined />}>More</Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={openAddModal} type="primary" className="btn">
+                  <i className="fi fi-rr-plus-small"></i> Add
+                </Button>
+                <ClientFilterComponent onFilterChange={handleFilterChange} />
+                <Button
+                  className="mr2 export-btn"
+                  id="exportButton"
+                  disabled={pagination.total != 0 ? false : true}
+                  onClick={exportCSV}
+                >
+                  Export CSV
+                </Button>
+              </>
+            )}
           </div>
         </div>
     
       
-      <div className="block-table-content client-table-block">
+      <div className={taskLikeDesign ? "block-table-content client-table-block tasklike-table-wrap" : "block-table-content client-table-block"}>
         <Table
           columns={columns1}
           loading={isListLoading}
