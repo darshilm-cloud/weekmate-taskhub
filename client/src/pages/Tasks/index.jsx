@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, memo } from "react";
 import {
   Button,
   Menu,
@@ -3163,4 +3163,4 @@ const TasksPMS = ({ flag }) => {
   );
 };
 
-export default TasksPMS;
+export default memo(TasksPMS);
