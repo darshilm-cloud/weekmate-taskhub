@@ -1,0 +1,97 @@
+/* WeekMate Header — TaskOPad-inspired */
+
+.weekmate-header.ant-layout-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 24px !important;
+  height: 56px !important;
+  line-height: 1 !important;
+  gap: 16px;
+}
+
+.weekmate-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.weekmate-header-left .gx-linebar {
+  flex-shrink: 0;
+}
+
+.weekmate-header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.weekmate-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.weekmate-header-theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.weekmate-header-theme:hover {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.weekmate-theme-icon {
+  display: inline-block;
+  line-height: 1;
+  font-size: 20px;
+}
+
+.weekmate-header-add-task {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  flex-shrink: 0;
+}
+
+/* Ensure UserProfile row fits in header */
+.weekmate-header-right .main-heading,
+.weekmate-header-right .header-wrapper,
+.weekmate-header-right .gx-flex-row.gx-align-items-center.gx-avatar-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.weekmate-header-right .avatar-user {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .weekmate-header-title {
+    display: none;
+  }
+
+  .weekmate-header-add-task span:not(.anticon) {
+    display: none;
+  }
+}

@@ -1,21 +1,34 @@
 import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
-import { Form, Menu, Layout } from "antd";
+import { Form, Menu, Layout, Avatar, Dropdown } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
-import { useDispatch } from "react-redux";
-import { SearchOutlined, DashboardOutlined, SettingOutlined, HistoryOutlined, StarOutlined, ExclamationCircleOutlined, BarChartOutlined } from "@ant-design/icons";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  SearchOutlined,
+  DashboardOutlined,
+  SettingOutlined,
+  HistoryOutlined,
+  StarOutlined,
+  ExclamationCircleOutlined,
+  BarChartOutlined,
+  MenuOutlined,
+  DownOutlined,
+  CheckOutlined,
+  FolderOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  BellOutlined,
+} from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
 import Service from "../../service";
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
-import Taskhub from "../../assets/images/taskhubicon.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
-import AdminIcon from "../../assets/icons/AdminIcon"
 import { BiChat } from "react-icons/bi";
-
 
 const { Sider } = Layout;
 
@@ -27,6 +40,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const dispatch = useDispatch();
   const history = useHistory();
   const location = useLocation();
+  const { navCollapsed } = useSelector(({ common }) => common);
 
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,7 +162,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     setSelectedKeys([newSelectedKey]);
   }, [location.pathname]);
 
-  const item = useMemo(
+  const menuItemsRaw = useMemo(
     () => [
       {
         key: "Search Project",
@@ -156,33 +170,27 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Search",
         onClick: () => showModal(),
       },
-      // getRoles(["Admin"]) && {
-      //   key: "Admin_Dashboard",
-      //   icon: <DashboardOutlined />,
-      //   label: "Dashboard",
-      //   onClick: () => handleMenuClick("Admin_Dashboard", `/${companySlug}/admin/dashboard`)
-      // },
-      // getRoles(["Admin"]) &&  {
-      //   key: "Admin_Administrator",
-      //   icon: <AdminIcon />,
-      //   label: "Admins",
-      //   onClick: () => handleMenuClick("Admin_Administrator", `/admin/Administrator`)
-      // },
-      !getRoles(["Client"]) &&{
+      !getRoles(["Client"]) && {
         key: "Dashboard",
-        icon: <i className="fi fi-rs-house-chimney"></i>,
-        label: "Me",
+        icon: <DashboardOutlined />,
+        label: "Dashboard",
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
       {
         key: "Admin Dashboard",
-        icon: <i className="fi fi-rr-dashboard"></i>,
-        label: "Projects",
+        icon: <CheckOutlined style={{ marginRight: 4 }} />,
+        label: "Tasks",
         onClick: () => handleMenuClick("Admin Dashboard", `/${companySlug}/project-list`),
+      },
+      {
+        key: "Projects",
+        icon: <FolderOutlined />,
+        label: "Projects",
+        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
       },
       getRoles(["Admin"]) && {
         key: "Users",
-        icon: <i className="fi fi-rr-users-alt"></i>,
+        icon: <TeamOutlined />,
         label: "Users",
         onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
       },
@@ -192,15 +200,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Permissions",
         onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
       },
-      (getRoles(["Admin"]) ||
-        userData._id == sideBarContentId) && {
+      (getRoles(["Admin"]) || userData?._id == sideBarContentId) && {
         key: "Analytics-Projects-running",
         icon: <BarChartOutlined />,
         label: "Projects Running",
         onClick: () => handleMenuClick("Analytics-Projects-running", `/${companySlug}/project-runnig-reports`),
       },
-      (getRoles(["Admin"]) ||
-        userData._id == sideBarContentId) && {
+      (getRoles(["Admin"]) || userData?._id == sideBarContentId) && {
         key: "Analytics-Timesheet",
         icon: <HistoryOutlined />,
         label: "Timesheet",
@@ -218,34 +224,35 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Complaints",
         onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
       },
-      (getRoles(["Admin", "PC", "TL", "Admin"]) ||
-        userData._id == sideBarContentId2) && {
+      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id == sideBarContentId2) && {
         key: "Projectexpences",
-        icon: <i className="fi fi-rr-receipt"></i>,
+        icon: <FileTextOutlined />,
         label: "Project Expense",
         onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
       },
-      getRoles(["Admin"]) &&{
+      getRoles(["Admin"]) && {
         key: "Admin_Settings",
         icon: <SettingOutlined />,
         label: "Settings",
-        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`)
+        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`),
       },
-      getRoles(["Admin"]) &&{
+      getRoles(["Admin"]) && {
         key: "activity_logs",
         icon: <HistoryOutlined />,
         label: "Activity Logs",
-        onClick: () => handleMenuClick("activity_logs", `/${companySlug}/admin/activity-logs`)
+        onClick: () => handleMenuClick("activity_logs", `/${companySlug}/admin/activity-logs`),
       },
-      getRoles(["Admin"]) &&{
+      getRoles(["Admin"]) && {
         key: "mira_ai",
         icon: <BiChat />,
         label: "Mira AI",
-        onClick: () => handleMenuClick("mira_ai", `/${companySlug}/admin/mira-ai`)
+        onClick: () => handleMenuClick("mira_ai", `/${companySlug}/admin/mira-ai`),
       },
     ],
-    []
+    [companySlug, handleMenuClick]
   );
+
+  const item = useMemo(() => menuItemsRaw.filter(Boolean), [menuItemsRaw]);
 
   const menuComponent = useMemo(
     () => (
@@ -259,34 +266,94 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     [selectedKeys, item]
   );
 
-  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
+  const userInitials = useMemo(() => {
+    if (!userData?.name) return "U";
+    const parts = userData.name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (userData.name[0] || "U").toUpperCase();
+  }, [userData?.name]);
+
+  const userDisplayName = userData?.name?.trim() || "User";
+
+  const userDropdownItems = useMemo(
+    () => [
+      {
+        key: "dashboard",
+        label: "Dashboard",
+        onClick: () => history.push(`/${companySlug}/dashboard`),
+      },
+      {
+        key: "profile",
+        label: "Profile",
+        onClick: () => history.push(`/${companySlug}/admin/settings`),
+      },
+    ],
+    [companySlug, history]
+  );
 
   return (
     <>
-      <div className="gx-sidebar-content sidebar-menu">
-    
-        <div className="Etask-hub-logo" style={{cursor:"pointer"}} onClick={()=> history.push(`/${companySlug}/dashboard`)}>
-          <img alt="logo" src={companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : Taskhub} />{" "}
-        </div>
-        <CustomScrollbars className="gx-layout-sider-scrollbar">
-          <Sider
-            collapsible={false}
-            collapsed={false}
-            className="Sidebar"
+      <div className="gx-sidebar-content sidebar-menu weekmate-sidebar">
+        {/* Top: Hamburger + WeekMate logo */}
+        <div className="weekmate-sidebar-header">
+          <button
+            type="button"
+            className="weekmate-sidebar-trigger"
+            aria-label="Toggle menu"
+            onClick={() => dispatch(toggleCollapsedSideNav(!navCollapsed))}
           >
+            <MenuOutlined />
+          </button>
+          <div
+            className="weekmate-logo"
+            onClick={() => history.push(`/${companySlug}/dashboard`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/dashboard`)}
+          >
+            <span className="weekmate-logo-text">WeekMate</span>
+          </div>
+        </div>
+
+        {/* User profile card */}
+        <div className="weekmate-sidebar-user-card">
+          <Dropdown menu={{ items: userDropdownItems }} trigger={["click"]} placement="bottomLeft">
+            <div className="weekmate-user-card-inner">
+              <Avatar className="weekmate-user-avatar" style={{ backgroundColor: "#1677ff" }}>
+                {userInitials}
+              </Avatar>
+              <div className="weekmate-user-info">
+                <span className="weekmate-user-name">{userDisplayName}</span>
+                <span className="weekmate-user-meta">2</span>
+              </div>
+              <DownOutlined className="weekmate-user-chevron" />
+            </div>
+          </Dropdown>
+        </div>
+
+        <CustomScrollbars className="gx-layout-sider-scrollbar weekmate-sidebar-scroll">
+          <Sider collapsible={false} collapsed={false} className="Sidebar">
             {menuComponent}
           </Sider>
-          <ProjectListModal
-            projectDetails={projectDetails}
-            recentList={recentList}
-            isModalOpen={isModalOpen}
-            handleCancel={handleCancel}
-            addVisitedData={addVisitedData}
-            setIsModalOpen={setIsModalOpen}
-            form={form}
-            getProjectListing={getProjectListing}
-          />
+
+          {/* What's New - bottom of sidebar */}
+          <div className="weekmate-whats-new">
+            <BellOutlined className="weekmate-whats-new-icon" />
+            <span className="weekmate-whats-new-label">What&apos;s New</span>
+            <span className="weekmate-whats-new-badge">1</span>
+          </div>
         </CustomScrollbars>
+
+        <ProjectListModal
+          projectDetails={projectDetails}
+          recentList={recentList}
+          isModalOpen={isModalOpen}
+          handleCancel={handleCancel}
+          addVisitedData={addVisitedData}
+          setIsModalOpen={setIsModalOpen}
+          form={form}
+          getProjectListing={getProjectListing}
+        />
       </div>
     </>
   );

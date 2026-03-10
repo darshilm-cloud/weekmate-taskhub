@@ -1,7 +1,6 @@
 .project_title_main_div {
     display: flex;
     gap: 10px;
-    /* color: #000; */
 }
 
 .project_title_main_div .project_status_color {
@@ -10,7 +9,166 @@
     border-radius: 50%;
 }
 
-.right-popover-wrapper>a>p {
+.right-popover-wrapper > a > p {
     margin-bottom: 8px;
+}
+
+/* ========== WeekMate Sidebar (TaskOPad-inspired) ========== */
+.weekmate-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+}
+
+.weekmate-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
+}
+
+.weekmate-sidebar-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: #4a5568;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.weekmate-sidebar-trigger:hover {
+    background: #f0f2f5;
+    color: #1677ff;
+}
+
+.weekmate-logo {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.weekmate-logo-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    letter-spacing: -0.02em;
+}
+
+.weekmate-sidebar-user-card {
+    margin: 12px 16px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.weekmate-user-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.weekmate-user-card-inner:hover {
+    background: #e8ecf1;
+}
+
+.weekmate-user-avatar {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.weekmate-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+}
+
+.weekmate-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.3;
+}
+
+.weekmate-user-meta {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.2;
+}
+
+.weekmate-user-chevron {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.weekmate-sidebar-scroll {
+    flex: 1;
+    min-height: 0;
+}
+
+.weekmate-whats-new {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    margin: 8px 16px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #4a5568;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.weekmate-whats-new:hover {
+    background: #f0f2f5;
+    color: #1677ff;
+}
+
+.weekmate-whats-new-icon {
+    font-size: 18px;
+}
+
+.weekmate-whats-new-label {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.weekmate-whats-new-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9px;
+}
+
+/* Active nav item: full-width light blue, rounded (TaskOPad style) */
+.weekmate-sidebar .ant-menu-item.ant-menu-item-selected {
+    border-radius: 8px !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    width: calc(100% - 24px) !important;
+    border-left: none !important;
 }
 
