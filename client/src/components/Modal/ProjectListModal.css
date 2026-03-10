@@ -1,34 +1,185 @@
-/* .project-add-wrapper {
-  height: 500px !important;
-} */
-
-
-
-
-.project-add-wrapper .ant-collapse {
-  border-radius: 0px;
-  border-right: none;
-  border-left: none;
-}
-
-.project-add-wrapper .ant-modal-content {
+/* ── Modal shell ──────────────────────────────────────────── */
+.plm-modal .ant-modal-content {
+  padding: 0 !important;
+  border-radius: 16px !important;
   overflow: hidden;
-  height: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18) !important;
 }
 
-.project-add-wrapper>div {
-  height: 100%;
+/* ── Search bar ───────────────────────────────────────────── */
+.plm-search-wrap {
+  padding: 4px 16px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.project-add-wrapper .list-project .ant-collapse-content-box {
-  padding: 12px 0 !important;
+.plm-search-input.ant-input-affix-wrapper {
+  font-size: 15px !important;
+  padding: 14px 4px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.project-add-wrapper .list-project {
-  padding-left: 5px;
+.plm-search-input input {
+  font-size: 15px !important;
+  color: #1e293b !important;
 }
 
-.project-add-wrapper .ant-collapse>.ant-collapse-item:last-child,
-.project-add-wrapper .ant-collapse>.ant-collapse-item:last-child>.ant-collapse-header {
-  border-radius: unset !important;
+.plm-search-input input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.plm-search-icon {
+  font-size: 17px;
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+/* ── Body ─────────────────────────────────────────────────── */
+.plm-body {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.plm-body::-webkit-scrollbar         { width: 4px; }
+.plm-body::-webkit-scrollbar-track   { background: transparent; }
+.plm-body::-webkit-scrollbar-thumb   { background: #e2e8f0; border-radius: 4px; }
+
+/* ── Section ──────────────────────────────────────────────── */
+.plm-section {
+  margin-bottom: 4px;
+}
+
+.plm-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.plm-section-icon {
+  font-size: 12px;
+}
+
+.plm-count {
+  margin-left: auto;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── List ─────────────────────────────────────────────────── */
+.plm-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Item ─────────────────────────────────────────────────── */
+.plm-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  color: #334155;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.12s ease, color 0.12s ease;
+  border-radius: 0;
+}
+
+.plm-item:hover {
+  background: #f1f5f9;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.plm-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.plm-item:hover .plm-item-icon {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.plm-item-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.plm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.plm-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+
+.plm-empty p {
+  margin: 0;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.plm-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.plm-footer kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: inherit;
+  color: #475569;
+  font-weight: 600;
+  box-shadow: 0 1px 0 #e2e8f0;
+  margin-right: 3px;
 }

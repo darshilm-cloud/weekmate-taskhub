@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   EditOutlined,
   DeleteOutlined,
-  FilterOutlined,
-  CalendarOutlined,
-  MoreOutlined,
-  PlusOutlined
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
@@ -28,7 +24,7 @@ import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
 import ClientFilterComponent from "./ClientFilterComponent";
 
-const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
+const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) => {
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
@@ -208,7 +204,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   };
 
   // Add button modal
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     addemployee.setFieldsValue({
       first_name: "",
       last_name: "",
@@ -220,7 +216,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
     });
     setaddModal(true);
     setModalMode("add");
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addemployee]);
 
   // ✅ Updated: Export CSV with new filter format
   const exportCSV = async () => {
@@ -531,6 +528,17 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
     }
   };
 
+  /* ── expose actions to parent via ref ── */
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        openAddModal,
+        exportCSV,
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openAddModal, exportCSV]);
+
   // ✅ Updated: useEffect dependency changed from filterData to appliedFilters
   useEffect(() => {
     getClientList();
@@ -610,26 +618,20 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
           <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
             {taskLikeDesign ? (
               <>
-                <Button icon={<FilterOutlined />}>Filter</Button>
                 <Select
                   size="middle"
                   defaultValue="all"
+                  onChange={(val) => {
+                    setAppliedFilters(prev => ({ ...prev, status: val === "all" ? "" : val }));
+                    setPagination(prev => ({ ...prev, current: 1 }));
+                  }}
                   options={[
-                    { label: "Status", value: "all" },
-                    { label: "Active", value: "active" },
-                    { label: "Not Active", value: "inactive" }
+                    { label: "All Status", value: "all" },
+                    { label: "Active", value: "Active" },
+                    { label: "Not Active", value: "Not Active" },
                   ]}
+                  style={{ width: 130 }}
                 />
-                <Select
-                  size="middle"
-                  defaultValue="default"
-                  options={[{ label: "Default", value: "default" }]}
-                />
-                <Button icon={<CalendarOutlined />}>Date Type</Button>
-                <Button onClick={openAddModal} type="primary" icon={<PlusOutlined />}>
-                  Add Client
-                </Button>
-                <Button icon={<MoreOutlined />}>More</Button>
               </>
             ) : (
               <>

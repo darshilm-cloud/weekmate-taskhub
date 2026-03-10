@@ -35,7 +35,7 @@ import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
 
-const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
+const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDataLoaded = null }) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
   const companyId = user_data?.companyId;
@@ -141,15 +141,17 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
       dispatch(hideAuthLoader());
 
       if (response?.data?.data?.length > 0) {
-        setEmployees(response.data.data || []);
+        const data = response.data.data || [];
+        setEmployees(data);
         setPagination((prev) => ({
           ...prev,
           total: response.data.metadata?.total || 0,
         }));
+        if (onDataLoaded) onDataLoaded(data);
       } else {
         setEmployees([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
-      
+        if (onDataLoaded) onDataLoaded([]);
       }
     } catch (err) {
       message.error("Failed to fetch employees");
@@ -299,6 +301,18 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
     pagination.current,
     pagination.pageSize,
   ]);
+
+  // Expose internal actions to parent via ref
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        exportCSV,
+        exportSampleCSV: exportSampleCSVfile,
+        triggerImport: () => inputRef.current?.click(),
+        openAddModal: () => showAddEditModal(),
+      };
+    }
+  });
 
   // Modified showAddEditModal function to fetch roles
   const showAddEditModal = (record = null, mode = "add") => {
@@ -562,26 +576,16 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
 
         {taskLikeDesign ? (
           <div className="tasklike-toolbar-actions">
-            <Button icon={<FilterOutlined />}>Filter</Button>
             <Select
               size="middle"
               defaultValue="all"
+              style={{ minWidth: 110 }}
               options={[
-                { label: "Status", value: "all" },
+                { label: "All Status", value: "all" },
                 { label: "Active", value: "active" },
-                { label: "Deactivated", value: "inactive" }
+                { label: "Deactivated", value: "inactive" },
               ]}
             />
-            <Select
-              size="middle"
-              defaultValue="default"
-              options={[{ label: "Default", value: "default" }]}
-            />
-            <Button icon={<CalendarOutlined />}>Date Type</Button>
-            <Button icon={<PlusOutlined />} type="primary" onClick={() => showAddEditModal()}>
-              Add Employee
-            </Button>
-            <Button icon={<MoreOutlined />}>More</Button>
           </div>
         ) : (
           <div
