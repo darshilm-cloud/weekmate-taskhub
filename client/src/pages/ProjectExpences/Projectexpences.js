@@ -3,491 +3,870 @@ import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   Button,
-  Card,
   Col,
+  DatePicker,
+  Drawer,
   Form,
   Input,
   message,
-  Modal,
   Popconfirm,
   Row,
+  Select,
+  Switch,
   Table,
-  Typography
+  Tooltip,
+  Typography,
 } from "antd";
 import {
   DeleteOutlined,
+  DownloadOutlined,
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  FilterOutlined,
+  FundOutlined,
   PlusOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  WalletOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DollarCircleOutlined,
 } from "@ant-design/icons";
+import ReactApexChart from "react-apexcharts";
 import { getRoles } from "../../util/hasPermission";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import moment from "moment";
-import "../Complaints/ComplaintsForm.css";
+import "./ProjectExpense.css";
 import { sideBarContentId2 } from "../../constants";
 import ProjectExpenseFilterComponent from "./ProjectExpenseFilterComponent";
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
+const { Option } = Select;
 
-// Constants
 const USER_ROLES = {
-  ADMIN_ROLES: ["Admin", "PC", "TL", "Admin", "AM", "User"],
-  EXPENSE_ACCESS_ROLES: ["Admin", "PC", "Admin", "AM", "TL"],
-  SUPER_ADMIN: ["Admin"],
-  CLIENT_USER_ID: sideBarContentId2
+  ADMIN_ROLES:          ["Admin", "PC", "TL", "AM", "User"],
+  EXPENSE_ACCESS_ROLES: ["Admin", "PC", "AM", "TL"],
+  SUPER_ADMIN:          ["Admin"],
+  CLIENT_USER_ID:       sideBarContentId2,
 };
-
 const PAGINATION_OPTIONS = ["10", "20", "30"];
 
+/* ─── helpers ───────────────────────────────────────────────────── */
+const fmtUSD = (v) => {
+  const n = parseFloat(v) || 0;
+  return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(2)}`;
+};
+
+const statusClass = (s = "") => {
+  switch (s.toLowerCase()) {
+    case "approved": return "approved";
+    case "pending":  return "pending";
+    case "rejected": return "rejected";
+    case "paid":     return "paid";
+    default:         return "default";
+  }
+};
+
+/* ─── Stat Card ─────────────────────────────────────────────────── */
+const StatCard = ({ icon, label, value, sub, color }) => (
+  <div className={`pe-stat-card ${color}`}>
+    <div className={`pe-stat-icon ${color}`}>{icon}</div>
+    <div className="pe-stat-body">
+      <div className="pe-stat-label">{label}</div>
+      <div className="pe-stat-value">{value}</div>
+      {sub && <div className="pe-stat-sub">{sub}</div>}
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════════════ */
 const Projectexpences = () => {
-  const dispatch = useDispatch();
-  const companySlug = localStorage.getItem("companyDomain");
+  const dispatch      = useDispatch();
+  const companySlug   = localStorage.getItem("companyDomain");
 
-  const [projectexpencesList, setprojectexpencesList] = useState([]);
-  const [selectedProject, setSelectedProject] = useState([]);
-  const [createdBy, setCreatedBy] = useState([]);
-  const [technology, setTechnology] = useState([]);
-  const [manager, setManager] = useState([]);
-  const [accontManager, setAccountManager] = useState([]);
+  /* ── filter state (wired to existing FilterComponent) ── */
+  const [selectedProject, setSelectedProject]     = useState([]);
+  const [technology,       setTechnology]          = useState([]);
+  const [manager,          setManager]             = useState([]);
+  const [accontManager,    setAccountManager]      = useState([]);
   const [need_to_bill_customer, setFeedBackTypeFilter] = useState("All");
-  const [isModalOpenTopic, setIsModalOpenTopic] = useState(false);
-  const [feedBackDetails, setFeedBackDetails] = useState([]);
-  const [viewData, setViewData] = useState({});
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 20,
-  });
+  const [createdBy,        setCreatedBy]           = useState([]);
 
-  useEffect(() => {
-    getprojectexpencesList();
-  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, need_to_bill_customer,createdBy]);
+  /* ── local filter state (filter bar) ── */
+  const [statusFilter,    setStatusFilter]   = useState("All");
+  const [billableToggle,  setBillableToggle] = useState(false);
+  const [dateRange,       setDateRange]      = useState([null, null]);
 
-  const onFilterChange = (skipParams, selectedFilters) => {
-    if (skipParams.includes("skipAll")) {
-      setSelectedProject([]);
-      setTechnology([]);
-      setCreatedBy([])
-      setManager([]);
-      setAccountManager([]);
-      setFeedBackTypeFilter("All");
-      setPagination({ ...pagination, current: 1 });
-    } else {
-      if (skipParams.includes("skipProject")) {
-        setSelectedProject([]);
-      }
-      if (skipParams.includes("skipDepartment")) {
-        setTechnology([]);
-      }
-      if (skipParams.includes("skipManager")) {
-        setManager([]);
-      }
-      if (skipParams.includes("skipAccountManager")) {
-        setAccountManager([]);
-      }
-      if (skipParams.includes("skipNeedToBillCustomer")) {
-        setFeedBackTypeFilter("All");
-      }
-      if (skipParams.includes("skipCreatedBy")) {
-        setCreatedBy([]);
-      }
-    }
+  /* ── data ── */
+  const [allExpenses,          setAllExpenses]          = useState([]); // for analytics
+  const [projectexpencesList,  setprojectexpencesList]  = useState([]); // paginated table
+  const [analyticsLoading,     setAnalyticsLoading]     = useState(false);
+  const [tableLoading,         setTableLoading]         = useState(false);
+  const [pagination,           setPagination]           = useState({ current: 1, pageSize: 20 });
 
-    if (selectedFilters) {
-      setSelectedProject(selectedFilters.project || []);
-      setTechnology(selectedFilters.technology || []);
-      setManager(selectedFilters.manager || []);
-      setAccountManager(selectedFilters.accountManager || []);
-      setFeedBackTypeFilter(selectedFilters.needToBillCustomer || "All");
-      setPagination({ ...pagination, current: 1 });
-      setCreatedBy(selectedFilters.createdBy || [])
-    }
-  };
+  /* ── drawer ── */
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [viewData,   setViewData]   = useState({});
 
-  const getprojectexpencesList = async () => {
-    try {
-      dispatch(showAuthLoader());
-      const reqBody = {
-        pageNo: pagination.current,
-        limit: pagination.pageSize,
-        project_id: selectedProject,
-        technology: technology,
-        manager_id: manager,
-        acc_manager_id: accontManager,
-        createdBy:createdBy,
-        need_to_bill_customer: need_to_bill_customer === "All" ? undefined : need_to_bill_customer,
-      };
-
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getprojectexpanses,
-        body: reqBody,
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setprojectexpencesList(response.data.data);
-        setPagination({
-          ...pagination,
-          total: response.data.metadata.total,
-        });
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.error(error);
-    }
-  };
-
-  const getReviewById = async (reviewId) => {
-    try {
-      dispatch(showAuthLoader());
-      const reqBody = {
-        _id: reviewId,
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getprojectexpencesList,
-        body: reqBody,
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setFeedBackDetails(response.data.data);
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.error(error);
-    }
-  };
-
-  const deleteProjectExpences = async (deleteId) => {
-    try {
-      dispatch(showAuthLoader());
-      const params = `/${deleteId}`;
-      const response = await Service.makeAPICall({
-        methodName: Service.deleteMethod,
-        api_url: Service.deleteprojectexpanses + params,
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        getprojectexpencesList();
-        message.success(response.data.message);
-      }
-    } catch (error) {
-      dispatch(hideAuthLoader());
-      console.error(error);
-    }
-  };
-
-  const [formDetail] = Form.useForm();
+  /* ── permissions ── */
   const userData = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user_data")) || {};
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(localStorage.getItem("user_data")) || {}; }
+    catch { return {}; }
   }, []);
-
   const userPermissions = useMemo(() => ({
-    hasAccess: getRoles(USER_ROLES.ADMIN_ROLES),
+    hasAccess:       getRoles(USER_ROLES.ADMIN_ROLES),
     hasClientAccess: userData._id === USER_ROLES.CLIENT_USER_ID,
-    canAddExpense: getRoles(USER_ROLES.EXPENSE_ACCESS_ROLES),
-    isSuperAdmin: getRoles(USER_ROLES.SUPER_ADMIN)
+    canAddExpense:   getRoles(USER_ROLES.EXPENSE_ACCESS_ROLES),
+    isSuperAdmin:    getRoles(USER_ROLES.SUPER_ADMIN),
   }), [userData._id]);
 
-  const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
+  /* ─────────────────────────────────────────────────────────────
+     FETCH — full dataset for analytics (large limit, no pagination)
+  ───────────────────────────────────────────────────────────── */
+  const fetchAllForAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url:    Service.getprojectexpanses,
+        body: {
+          pageNo:  1,
+          limit:   1000,
+          project_id:          selectedProject,
+          technology,
+          manager_id:          manager,
+          acc_manager_id:      accontManager,
+          createdBy,
+          need_to_bill_customer:
+            need_to_bill_customer === "All" ? undefined : need_to_bill_customer,
+        },
+      });
+      if (response?.data?.data) {
+        setAllExpenses(response.data.data);
+      }
+    } catch (err) {
+      console.error("Analytics fetch error:", err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer]);
 
-  const getReviewForEdit = useCallback(async (review_id) => {
+  /* ─────────────────────────────────────────────────────────────
+     FETCH — paginated table data
+  ───────────────────────────────────────────────────────────── */
+  const fetchTableData = useCallback(async () => {
+    setTableLoading(true);
     try {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.getprojectexpanses,
-        body: { _id: review_id },
+        api_url:    Service.getprojectexpanses,
+        body: {
+          pageNo:   pagination.current,
+          limit:    pagination.pageSize,
+          project_id:     selectedProject,
+          technology,
+          manager_id:     manager,
+          acc_manager_id: accontManager,
+          createdBy,
+          need_to_bill_customer:
+            need_to_bill_customer === "All" ? undefined : need_to_bill_customer,
+        },
       });
-
-      if (response?.data?.data) {
-        const data = response.data.data;
-        setViewData(data);
-        formDetail.setFieldsValue({
-          purchase_request_details: data?.purchase_request_details?.replace(/<br\s*\/?>/g, "\n"),
-          details: data?.details,
-          nature_Of_expense: data?.nature_Of_expense
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching review details:", error);
-      message.error("Failed to fetch expense details");
-    } finally {
       dispatch(hideAuthLoader());
+      if (response?.data?.data) {
+        setprojectexpencesList(response.data.data);
+        setPagination((p) => ({ ...p, total: response.data.metadata?.total || 0 }));
+      }
+    } catch (err) {
+      dispatch(hideAuthLoader());
+      console.error(err);
+    } finally {
+      setTableLoading(false);
     }
-  }, [dispatch, formDetail]);
+  }, [
+    pagination.current, pagination.pageSize,
+    selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer,
+    dispatch,
+  ]);
 
-  const handleViewExpense = useCallback((expenseId) => {
-    getReviewForEdit(expenseId);
-    if (feedBackDetails) {
-      setIsModalOpenTopic(true);
+  useEffect(() => {
+    fetchAllForAnalytics();
+  }, [fetchAllForAnalytics]);
+
+  useEffect(() => {
+    fetchTableData();
+  }, [fetchTableData]);
+
+  /* ─────────────────────────────────────────────────────────────
+     ANALYTICS — computed from allExpenses
+  ───────────────────────────────────────────────────────────── */
+  const analytics = useMemo(() => {
+    let expenses = allExpenses;
+
+    /* local filters (status, billable, date range) */
+    if (statusFilter !== "All") {
+      expenses = expenses.filter(
+        (e) => e.status?.toLowerCase() === statusFilter.toLowerCase()
+      );
     }
-  }, [getReviewForEdit, feedBackDetails, setIsModalOpenTopic]);
+    if (billableToggle) {
+      expenses = expenses.filter((e) => e.need_to_bill_customer === true);
+    }
+    if (dateRange[0] && dateRange[1]) {
+      const [from, to] = dateRange;
+      expenses = expenses.filter((e) => {
+        const d = moment(e.createdAt);
+        return d.isSameOrAfter(from, "day") && d.isSameOrBefore(to, "day");
+      });
+    }
+
+    const totalAmt   = expenses.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
+    const billable   = expenses.filter((e) => e.need_to_bill_customer);
+    const billableAmt = billable.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
+    const pending    = expenses.filter((e) => e.status?.toLowerCase() === "pending");
+    const pendingAmt = pending.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
+    const approved   = expenses.filter((e) => e.status?.toLowerCase() === "approved");
+    const approvedAmt = approved.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
+
+    /* monthly trend — last 6 months */
+    const monthMap = {};
+    for (let i = 5; i >= 0; i--) {
+      const key = moment().subtract(i, "months").format("MMM YY");
+      monthMap[key] = 0;
+    }
+    expenses.forEach((e) => {
+      const key = moment(e.createdAt).format("MMM YY");
+      if (key in monthMap) monthMap[key] += parseFloat(e.cost_in_usd) || 0;
+    });
+    const monthlyLabels = Object.keys(monthMap);
+    const monthlyData   = Object.values(monthMap);
+
+    /* expense by project — top 8 */
+    const projectMap = {};
+    expenses.forEach((e) => {
+      const name = e.project?.title || "Unknown";
+      projectMap[name] = (projectMap[name] || 0) + (parseFloat(e.cost_in_usd) || 0);
+    });
+    const sorted = Object.entries(projectMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const projectLabels = sorted.map(([k]) => k);
+    const projectData   = sorted.map(([, v]) => parseFloat(v.toFixed(2)));
+
+    /* billable vs non-billable */
+    const nonBillableAmt = totalAmt - billableAmt;
+
+    return {
+      totalCount: expenses.length,
+      totalAmt,
+      billableCount: billable.length,
+      billableAmt,
+      pendingCount:  pending.length,
+      pendingAmt,
+      approvedCount: approved.length,
+      approvedAmt,
+      monthlyLabels,
+      monthlyData,
+      projectLabels,
+      projectData,
+      billableAmt2:     billableAmt,
+      nonBillableAmt,
+    };
+  }, [allExpenses, statusFilter, billableToggle, dateRange]);
+
+  /* ─────────────────────────────────────────────────────────────
+     CHART OPTIONS
+  ───────────────────────────────────────────────────────────── */
+  const lineOptions = useMemo(() => ({
+    chart:  { type: "area", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
+    stroke: { curve: "smooth", width: 2 },
+    colors: ["#2563eb"],
+    fill:   { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.02 } },
+    xaxis:  { categories: analytics.monthlyLabels, labels: { style: { fontSize: "11px" } } },
+    yaxis:  { labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
+    tooltip: { y: { formatter: (v) => `$${parseFloat(v).toFixed(2)}` } },
+  }), [analytics.monthlyLabels]);
+
+  const lineSeries = useMemo(() => [{
+    name: "Expense ($)",
+    data: analytics.monthlyData,
+  }], [analytics.monthlyData]);
+
+  const barOptions = useMemo(() => ({
+    chart:  { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "55%" } },
+    colors: ["#7c3aed"],
+    xaxis: {
+      categories: analytics.projectLabels.length ? analytics.projectLabels : ["No Data"],
+      labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } },
+    },
+    yaxis: { labels: { style: { fontSize: "11px", maxWidth: 120 } } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: "#f1f5f9" },
+    tooltip: { y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` } },
+  }), [analytics.projectLabels]);
+
+  const barSeries = useMemo(() => [{
+    name: "Total Expense ($)",
+    data: analytics.projectData.length ? analytics.projectData : [0],
+  }], [analytics.projectData]);
+
+  const donutOptions = useMemo(() => ({
+    chart:  { type: "donut", fontFamily: "inherit" },
+    labels: ["Billable", "Non-Billable"],
+    colors: ["#2563eb", "#e2e8f0"],
+    legend: { show: false },
+    plotOptions: { pie: { donut: { size: "68%" } } },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    tooltip: { y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` } },
+  }), []);
+
+  const donutSeries = useMemo(() => [
+    analytics.billableAmt2 || 0,
+    analytics.nonBillableAmt || 0,
+  ], [analytics.billableAmt2, analytics.nonBillableAmt]);
+
+  /* ─────────────────────────────────────────────────────────────
+     ACTIONS
+  ───────────────────────────────────────────────────────────── */
+  const deleteProjectExpences = useCallback(async (deleteId) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url:    `${Service.deleteprojectexpanses}/${deleteId}`,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data?.data) {
+        fetchTableData();
+        fetchAllForAnalytics();
+        message.success(response.data.message);
+      }
+    } catch (err) {
+      dispatch(hideAuthLoader());
+      console.error(err);
+    }
+  }, [dispatch, fetchTableData, fetchAllForAnalytics]);
+
+  const handleViewExpense = useCallback(async (expenseId) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url:    Service.getprojectexpanses,
+        body:       { _id: expenseId },
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data?.data) {
+        setViewData(response.data.data);
+        setDrawerOpen(true);
+      }
+    } catch (err) {
+      dispatch(hideAuthLoader());
+      message.error("Failed to fetch expense details");
+    }
+  }, [dispatch]);
 
   const exportCSV = useCallback(async () => {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.exportProjectExpenses,
-        body: {
-          exportFileType: "csv",
-          isExport: true,
-        },
+        api_url:    Service.exportProjectExpenses,
+        body:       { exportFileType: "csv", isExport: true },
       });
-
       if (response?.data?.data) {
-        const base64 = response.data.data;
-        const linkSource = "data:text/csv;base64," + base64;
-        const downloadLink = document.createElement("a");
-        downloadLink.href = linkSource;
-        downloadLink.download = "Project Expense.csv";
-        downloadLink.style.display = "none";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        const link = document.createElement("a");
+        link.href     = "data:text/csv;base64," + response.data.data;
+        link.download = "Project Expense.csv";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
         message.error(response?.data?.message || "Export failed");
       }
-    } catch (error) {
-      console.error("Export error:", error);
+    } catch (err) {
       message.error("Failed to export CSV");
     }
   }, []);
 
-  const handleModalClose = useCallback(() => {
-    setIsModalOpenTopic(false);
-    setFeedBackDetails([]);
-  }, [setIsModalOpenTopic, setFeedBackDetails]);
+  /* ─────────────────────────────────────────────────────────────
+     FILTER COMPONENT callback (existing filter component wiring)
+  ───────────────────────────────────────────────────────────── */
+  const onFilterChange = useCallback((skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setSelectedProject([]); setTechnology([]); setCreatedBy([]);
+      setManager([]); setAccountManager([]); setFeedBackTypeFilter("All");
+      setPagination((p) => ({ ...p, current: 1 }));
+    } else {
+      if (skipParams.includes("skipProject"))          setSelectedProject([]);
+      if (skipParams.includes("skipDepartment"))       setTechnology([]);
+      if (skipParams.includes("skipManager"))          setManager([]);
+      if (skipParams.includes("skipAccountManager"))   setAccountManager([]);
+      if (skipParams.includes("skipNeedToBillCustomer")) setFeedBackTypeFilter("All");
+      if (skipParams.includes("skipCreatedBy"))        setCreatedBy([]);
+    }
+    if (selectedFilters) {
+      setSelectedProject(selectedFilters.project        || []);
+      setTechnology(selectedFilters.technology           || []);
+      setManager(selectedFilters.manager                 || []);
+      setAccountManager(selectedFilters.accountManager  || []);
+      setFeedBackTypeFilter(selectedFilters.needToBillCustomer || "All");
+      setCreatedBy(selectedFilters.createdBy             || []);
+      setPagination((p) => ({ ...p, current: 1 }));
+    }
+  }, []);
 
+  /* ─────────────────────────────────────────────────────────────
+     TABLE COLUMNS
+  ───────────────────────────────────────────────────────────── */
   const columns = useMemo(() => {
-    const baseColumns = [
+    const cols = [
       {
         title: "Project",
-        render: (text) => text?.project?.title || "-",
-        width: 250,
+        key: "project",
+        width: 220,
         ellipsis: true,
+        render: (_, r) => (
+          <span className="pe-project-chip">
+            {r?.project?.title || "—"}
+          </span>
+        ),
       },
       {
         title: "Amount",
-        render: (text) =>
-          text?.cost_in_usd ? (
-            <span style={{ display: 'flex', justifyContent: 'start', gap: '5px' }}>
-              <span>$</span>
-              <span>{text.cost_in_usd}</span>
+        key: "amount",
+        width: 110,
+        render: (_, r) =>
+          r?.cost_in_usd ? (
+            <span className="pe-amount-cell">
+              <span className="pe-amount-currency">$</span>
+              {parseFloat(r.cost_in_usd).toLocaleString()}
             </span>
-          ) : "-",
-         width: 90,
-
+          ) : "—",
       },
       {
-        title: "Need to Bill Customer",
-        render: (text) => text?.need_to_bill_customer ? "YES" : "NO",
-         width: 200,
+        title: "Billable",
+        key: "billable",
+        width: 100,
+        render: (_, r) =>
+          r?.need_to_bill_customer
+            ? <span className="pe-billable-yes">Yes</span>
+            : <span className="pe-billable-no">No</span>,
       },
       {
         title: "Created By",
-        render: (text) => text?.createdBy?.full_name || "-",
-         width: 130,
-
+        key: "createdBy",
+        width: 130,
+        render: (_, r) => r?.createdBy?.full_name || "—",
       },
       {
         title: "Date",
-        render: (text) => {
-          const createdDate = moment(text.createdAt).format("DD MMM YYYY");
-          return <span>{createdDate || "-"}</span>;
-        },
-         width: 130,
-
+        key: "date",
+        width: 110,
+        render: (_, r) =>
+          r?.createdAt ? moment(r.createdAt).format("DD MMM YYYY") : "—",
       },
       {
         title: "Status",
-        render: (text) => <span>{text.status}</span>,
-         width: 130,
-
+        key: "status",
+        width: 110,
+        render: (_, r) => (
+          <span className={`pe-status-badge ${statusClass(r?.status)}`}>
+            {r?.status || "—"}
+          </span>
+        ),
       },
     ];
 
-    if (userPermissions.hasAccess) {
-      baseColumns.push({
+    if (userPermissions.hasAccess || userPermissions.hasClientAccess) {
+      cols.push({
         title: "Actions",
-        render: (text) => (
-          <div style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "start",
-            alignItems: "center",
-            gap: "20px",
-          }}>
-            <EyeOutlined
-              onClick={() => handleViewExpense(text?._id)}
-              style={{ cursor: "pointer" }}
-            />
-             <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
-              <EditOutlined style={{ color: "green" }} />
-            </Link>
-            <Popconfirm
-              icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-              title="Are you sure to delete this Expense?"
-              onConfirm={() => deleteProjectExpences(text._id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <DeleteOutlined style={{ color: "red" }} />
-            </Popconfirm>
+        key: "actions",
+        width: 120,
+        render: (_, r) => (
+          <div className="pe-actions">
+            <Tooltip title="View">
+              <button
+                className="pe-action-btn"
+                onClick={() => handleViewExpense(r?._id)}
+              >
+                <EyeOutlined />
+              </button>
+            </Tooltip>
+
+            <Tooltip title="Edit">
+              <Link to={`/${companySlug}/edit/projectexpenseform/${r._id}`}>
+                <button className="pe-action-btn edit">
+                  <EditOutlined />
+                </button>
+              </Link>
+            </Tooltip>
+
+            {userPermissions.hasAccess && (
+              <Popconfirm
+                icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                title="Delete this expense?"
+                onConfirm={() => deleteProjectExpences(r._id)}
+                okText="Delete"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+              >
+                <Tooltip title="Delete">
+                  <button className="pe-action-btn delete">
+                    <DeleteOutlined />
+                  </button>
+                </Tooltip>
+              </Popconfirm>
+            )}
           </div>
         ),
-         width: 130,
-
-      });
-    } else if (userPermissions.hasClientAccess) {
-      baseColumns.push({
-        title: "Actions",
-        render: (text) => (
-          <div style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "20px",
-          }}>
-            <EyeOutlined
-              onClick={() => handleViewExpense(text?._id)}
-              style={{ cursor: "pointer" }}
-            />
-            <Link to={`/${companySlug}/edit/projectexpenseform/${text._id}`}>
-              <EditOutlined style={{ color: "green" }} />
-            </Link>
-          </div>
-        ),
-         width: 130,
-
       });
     }
 
-    return baseColumns;
-  }, [userPermissions, handleViewExpense, deleteProjectExpences]);
+    return cols;
+  }, [userPermissions, handleViewExpense, deleteProjectExpences, companySlug]);
 
-  const handleTableChange = (page) => {
-    setPagination({ ...pagination, ...page });
-  };
-
-
+  /* ─────────────────────────────────────────────────────────────
+     RENDER
+  ───────────────────────────────────────────────────────────── */
   return (
-    <div className="ant-project-task all-project-main-wrapper positive-feedback-review">
-      <Card>
-        <div className="heading-wrapper">
-          <h2>Project Expense</h2>
+    <div className="pe-page">
+
+      {/* ══ Header ══ */}
+      <div className="pe-header">
+        <h1 className="pe-title">Project Expense</h1>
+        <div className="pe-header-actions">
+          <ProjectExpenseFilterComponent
+            onFilterChange={onFilterChange}
+            userPermissions={userPermissions}
+          />
+          <button
+            className="pe-btn"
+            disabled={!pagination.total}
+            onClick={exportCSV}
+          >
+            <DownloadOutlined /> <span>Export CSV</span>
+          </button>
           {userPermissions.canAddExpense && (
             <Link to={`/${companySlug}/add/projectexpenseform`}>
-              <Button type="primary" icon={<PlusOutlined/>} className="square-primary-btn">
-                Add Project Expense
-              </Button>
+              <button className="pe-btn primary">
+                <PlusOutlined /> <span>Add Expense</span>
+              </button>
             </Link>
           )}
         </div>
-        <div className="global-search">
-          <div className="filter-btn-wrapper">
-            <ProjectExpenseFilterComponent
-              onFilterChange={onFilterChange}
-              userPermissions={userPermissions}
-            />
-            <Button
-              className="export-btn"
-              id="exportButton"
-              disabled={pagination.total === 0}
-              onClick={exportCSV}
-            >
-              Export CSV
-            </Button>
+      </div>
+
+      {/* ══ Stats Cards ══ */}
+      <div className="pe-stats-grid">
+        <StatCard
+          icon={<WalletOutlined />}
+          label="Total Expenses"
+          value={fmtUSD(analytics.totalAmt)}
+          sub={`${analytics.totalCount} records`}
+          color="blue"
+        />
+        <StatCard
+          icon={<CheckCircleOutlined />}
+          label="Approved"
+          value={fmtUSD(analytics.approvedAmt)}
+          sub={`${analytics.approvedCount} records`}
+          color="green"
+        />
+        <StatCard
+          icon={<ClockCircleOutlined />}
+          label="Pending"
+          value={fmtUSD(analytics.pendingAmt)}
+          sub={`${analytics.pendingCount} records`}
+          color="orange"
+        />
+        <StatCard
+          icon={<DollarCircleOutlined />}
+          label="Billable"
+          value={fmtUSD(analytics.billableAmt)}
+          sub={`${analytics.billableCount} records`}
+          color="purple"
+        />
+      </div>
+
+      {/* ══ Charts ══ */}
+      <div className="pe-charts-grid">
+        {/* Monthly Trend */}
+        <div className="pe-chart-card">
+          <div className="pe-chart-header">
+            <div>
+              <div className="pe-chart-title">Monthly Expense Trend</div>
+              <div className="pe-chart-sub">Last 6 months · USD</div>
+            </div>
+          </div>
+          <ReactApexChart
+            type="area"
+            series={lineSeries}
+            options={lineOptions}
+            height={210}
+          />
+        </div>
+
+        {/* Expense by Project */}
+        <div className="pe-chart-card">
+          <div className="pe-chart-header">
+            <div>
+              <div className="pe-chart-title">Expense by Project</div>
+              <div className="pe-chart-sub">Top 8 projects · USD</div>
+            </div>
+          </div>
+          <ReactApexChart
+            type="bar"
+            series={barSeries}
+            options={barOptions}
+            height={210}
+          />
+        </div>
+
+        {/* Billable vs Non-Billable donut */}
+        <div className="pe-chart-card">
+          <div className="pe-chart-header">
+            <div>
+              <div className="pe-chart-title">Billable Split</div>
+              <div className="pe-chart-sub">Total spend allocation</div>
+            </div>
+          </div>
+          <ReactApexChart
+            type="donut"
+            series={donutSeries}
+            options={donutOptions}
+            height={180}
+          />
+          <div className="pe-legend">
+            <div className="pe-legend-row">
+              <div className="pe-legend-left">
+                <span className="pe-legend-dot" style={{ background: "#2563eb" }} />
+                Billable
+              </div>
+              <span className="pe-legend-val">{fmtUSD(analytics.billableAmt2)}</span>
+            </div>
+            <div className="pe-legend-row">
+              <div className="pe-legend-left">
+                <span className="pe-legend-dot" style={{ background: "#e2e8f0" }} />
+                Non-Billable
+              </div>
+              <span className="pe-legend-val">{fmtUSD(analytics.nonBillableAmt)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ Quick Filter Bar ══ */}
+      <div className="pe-filter-bar">
+        <span className="pe-filter-label">Status:</span>
+        <Select
+          value={statusFilter}
+          onChange={setStatusFilter}
+          style={{ width: 130 }}
+          size="middle"
+        >
+          <Option value="All">All Status</Option>
+          <Option value="Pending">Pending</Option>
+          <Option value="Approved">Approved</Option>
+          <Option value="Rejected">Rejected</Option>
+          <Option value="Paid">Paid</Option>
+        </Select>
+
+        <div className="pe-filter-divider" />
+
+        <span className="pe-filter-label">Date Range:</span>
+        <RangePicker
+          size="middle"
+          value={dateRange}
+          onChange={(v) => setDateRange(v || [null, null])}
+          allowClear
+          format="DD MMM YYYY"
+        />
+
+        <div className="pe-filter-divider" />
+
+        <span className="pe-filter-label">Billable only:</span>
+        <Switch
+          checked={billableToggle}
+          onChange={setBillableToggle}
+          size="small"
+        />
+
+        {(statusFilter !== "All" || billableToggle || dateRange[0]) && (
+          <button
+            className="pe-clear-filters-btn"
+            onClick={() => {
+              setStatusFilter("All");
+              setBillableToggle(false);
+              setDateRange([null, null]);
+            }}
+          >
+            × Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* ══ Expense Table ══ */}
+      <div className="pe-table-card">
+        <div className="pe-table-header">
+          <div>
+            <span className="pe-table-title">All Expenses</span>
+            {pagination.total > 0 && (
+              <span className="pe-table-count"> · {pagination.total} records</span>
+            )}
+          </div>
+        </div>
+        <Table
+          columns={columns}
+          dataSource={projectexpencesList}
+          rowKey="_id"
+          loading={tableLoading}
+          pagination={{
+            showSizeChanger:  true,
+            pageSizeOptions:  PAGINATION_OPTIONS,
+            current:          pagination.current,
+            pageSize:         pagination.pageSize,
+            total:            pagination.total,
+            showTotal: (total) => `Total ${total} records`,
+          }}
+          onChange={(page) => setPagination((p) => ({ ...p, ...page }))}
+          scroll={{ x: 900 }}
+        />
+      </div>
+
+      {/* ══ View Drawer ══ */}
+      <Drawer
+        className="pe-drawer"
+        title="Expense Details"
+        placement="right"
+        width={480}
+        open={drawerOpen}
+        onClose={() => { setDrawerOpen(false); setViewData({}); }}
+        destroyOnClose
+      >
+        {/* Amount highlight */}
+        <div className="pe-drawer-field">
+          <div className="pe-drawer-label">Amount</div>
+          <div className="pe-drawer-amount">
+            ${parseFloat(viewData?.cost_in_usd || 0).toLocaleString()}
           </div>
         </div>
 
-        <Table
-          pagination={{
-            showSizeChanger: true,
-            pageSizeOptions: PAGINATION_OPTIONS,
-            showTotal: showTotal,
-            ...pagination,
-          }}
-          columns={columns}
-          onChange={handleTableChange}
-          dataSource={projectexpencesList}
-        />
-      </Card>
+        <div className="pe-drawer-divider" />
 
-      <Modal
-        width="600px"
-        title="Project Expense Details"
-        destroyOnClose
-        onCancel={handleModalClose}
-        open={isModalOpenTopic}
-        footer={null}
-      >
-        <Form form={formDetail} layout="vertical" style={{ padding: '20px' }}>
-          <Form.Item 
-            label={<Text strong>Purchase Request Details</Text>} 
-            name="purchase_request_details"
-          >
-            <Input.TextArea
-              placeholder="Enter purchase request details"
-              rows={4}
-              disabled
-              className="border-gray-300"
-            />
-          </Form.Item>
+        <Row gutter={[16, 0]}>
+          <Col span={14}>
+            <div className="pe-drawer-field">
+              <div className="pe-drawer-label">Project</div>
+              <div className="pe-drawer-value">{viewData?.project?.title || "—"}</div>
+            </div>
+          </Col>
+          <Col span={10}>
+            <div className="pe-drawer-field">
+              <div className="pe-drawer-label">Status</div>
+              <div style={{ paddingTop: 6 }}>
+                <span className={`pe-status-badge ${statusClass(viewData?.status)}`}>
+                  {viewData?.status || "—"}
+                </span>
+              </div>
+            </div>
+          </Col>
+        </Row>
 
-          {viewData?.details && (
-            <Form.Item 
-              label={<Text strong>Accounting Details</Text>} 
-              name="details"
+        <Row gutter={[16, 0]}>
+          <Col span={12}>
+            <div className="pe-drawer-field">
+              <div className="pe-drawer-label">Created By</div>
+              <div className="pe-drawer-value">{viewData?.createdBy?.full_name || "—"}</div>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div className="pe-drawer-field">
+              <div className="pe-drawer-label">Date</div>
+              <div className="pe-drawer-value">
+                {viewData?.createdAt ? moment(viewData.createdAt).format("DD MMM YYYY") : "—"}
+              </div>
+            </div>
+          </Col>
+        </Row>
+
+        <div className="pe-drawer-field">
+          <div className="pe-drawer-label">Billable to Customer</div>
+          <div style={{ paddingTop: 6 }}>
+            {viewData?.need_to_bill_customer
+              ? <span className="pe-billable-yes">Yes – Billable</span>
+              : <span className="pe-billable-no">No – Non-billable</span>}
+          </div>
+        </div>
+
+        <div className="pe-drawer-divider" />
+
+        {viewData?.purchase_request_details && (
+          <div className="pe-drawer-field">
+            <div className="pe-drawer-label">Purchase Request Details</div>
+            <div className="pe-drawer-value">
+              {viewData.purchase_request_details.replace(/<br\s*\/?>/g, "\n")}
+            </div>
+          </div>
+        )}
+
+        {viewData?.details && (
+          <div className="pe-drawer-field">
+            <div className="pe-drawer-label">Accounting Details</div>
+            <div className="pe-drawer-value">{viewData.details}</div>
+          </div>
+        )}
+
+        {viewData?.nature_Of_expense && (
+          <div className="pe-drawer-field">
+            <div className="pe-drawer-label">Nature of Expense</div>
+            <div className="pe-drawer-value">{viewData.nature_Of_expense}</div>
+          </div>
+        )}
+
+        {viewData?.projectexpences?.length > 0 && (
+          <div className="pe-drawer-field">
+            <div className="pe-drawer-label">Document</div>
+            <a
+              href={`${process.env.REACT_APP_API_URL}/public/projectexpense/${viewData.projectexpences}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}
             >
-              <Input.TextArea
-                placeholder="Accounting details"
-                rows={4}
-                disabled
-                className="border-gray-300"
-              />
-            </Form.Item>
-          )}
+              <FileTextOutlined />
+              {viewData.projectexpences}
+            </a>
+          </div>
+        )}
 
-          {viewData?.nature_Of_expense && (
-            <Form.Item 
-              label={<Text strong>Nature Of Expense</Text>} 
-              name="nature_Of_expense"
+        {/* Footer actions */}
+        <div className="pe-drawer-divider" />
+        <div style={{ display: "flex", gap: 10 }}>
+          <Link to={`/${companySlug}/edit/projectexpenseform/${viewData?._id}`}>
+            <Button icon={<EditOutlined />} type="primary" size="middle">
+              Edit Expense
+            </Button>
+          </Link>
+          {userPermissions.hasAccess && (
+            <Popconfirm
+              title="Delete this expense?"
+              onConfirm={() => { deleteProjectExpences(viewData?._id); setDrawerOpen(false); }}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
             >
-              <Input.TextArea
-                placeholder="Nature Of Expense"
-                rows={4}
-                disabled
-                className="border-gray-300"
-              />
-            </Form.Item>
+              <Button icon={<DeleteOutlined />} danger size="middle">Delete</Button>
+            </Popconfirm>
           )}
-
-          {viewData?.projectexpences?.length > 0 && (
-            <Row align="middle" style={{ marginTop: 16 }}>
-              <Col>
-                <Text strong>Document: </Text>
-                <a
-                  href={`${process.env.REACT_APP_API_URL}/public/projectexpense/${viewData?.projectexpences}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-blue-500 hover:text-blue-700"
-                >
-                  <FileTextOutlined style={{ marginRight: 5 }} />
-                  {viewData?.projectexpences}
-                </a>
-              </Col>
-            </Row>
-          )}
-        </Form>
-      </Modal>
+        </div>
+      </Drawer>
     </div>
   );
 };

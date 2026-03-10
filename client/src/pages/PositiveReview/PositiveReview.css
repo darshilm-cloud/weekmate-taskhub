@@ -1,0 +1,379 @@
+/* ============================================================
+   Positive Reviews — Taskopad-style analytics dashboard
+   ============================================================ */
+
+.pr-page {
+  padding: 24px;
+  background: #f1f5f9;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.pr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pr-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.pr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pr-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.pr-btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.pr-btn.primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+/* ── Stats Grid ──────────────────────────────────────────────── */
+.pr-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.pr-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pr-stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  transform: translateY(-1px);
+}
+
+.pr-stat-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 0 0 14px 14px;
+}
+
+.pr-stat-card.blue::after   { background: #2563eb; }
+.pr-stat-card.green::after  { background: #16a34a; }
+.pr-stat-card.orange::after { background: #ea580c; }
+.pr-stat-card.purple::after { background: #7c3aed; }
+
+.pr-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.pr-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
+.pr-stat-icon.green  { background: #f0fdf4; color: #16a34a; }
+.pr-stat-icon.orange { background: #fff7ed; color: #ea580c; }
+.pr-stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+
+.pr-stat-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.pr-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+/* ── Charts Section ──────────────────────────────────────────── */
+.pr-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pr-chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.pr-chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.pr-chart-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+/* ── Table Card ──────────────────────────────────────────────── */
+.pr-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.pr-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pr-table-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pr-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Ant Table overrides */
+.pr-table-card .ant-table {
+  font-size: 13px;
+}
+
+.pr-table-card .ant-table-thead > tr > th {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 16px;
+}
+
+.pr-table-card .ant-table-tbody > tr > td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+}
+
+.pr-table-card .ant-table-tbody > tr:hover > td {
+  background: #fafbfc;
+}
+
+.pr-table-card .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* ── Project chip ────────────────────────────────────────────── */
+.pr-project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Feedback type badge ─────────────────────────────────────── */
+.pr-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pr-type-badge.clutch    { background: #eff6ff; color: #2563eb; }
+.pr-type-badge.video     { background: #faf5ff; color: #7c3aed; }
+.pr-type-badge.text      { background: #f0fdf4; color: #16a34a; }
+.pr-type-badge.feedback  { background: #fff7ed; color: #ea580c; }
+.pr-type-badge.zoho      { background: #fef2f2; color: #dc2626; }
+.pr-type-badge.default   { background: #f1f5f9; color: #64748b; }
+
+/* ── NDA badge ───────────────────────────────────────────────── */
+.pr-nda-yes {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.pr-nda-no {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+/* ── Action buttons ──────────────────────────────────────────── */
+.pr-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.pr-action-btn:hover { background: #f8fafc; color: #1e293b; }
+.pr-action-btn.view:hover   { border-color: #2563eb; color: #2563eb; }
+.pr-action-btn.edit:hover   { border-color: #16a34a; color: #16a34a; }
+.pr-action-btn.delete:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+
+.pr-action-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Drawer styles ───────────────────────────────────────────── */
+.pr-drawer-body {
+  padding: 0;
+}
+
+.pr-drawer-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pr-drawer-section:last-child {
+  border-bottom: none;
+}
+
+.pr-drawer-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.pr-drawer-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.pr-drawer-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pr-drawer-field {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.pr-feedback-content {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .pr-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .pr-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pr-page { padding: 16px; gap: 14px; }
+  .pr-stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pr-drawer-fields { grid-template-columns: 1fr; }
+}

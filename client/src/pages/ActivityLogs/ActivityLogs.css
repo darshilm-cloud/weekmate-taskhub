@@ -1,4 +1,32 @@
 /* ActivityLogs.css */
+
+/* ── Table inside card ────────────────────────────────────── */
+.al-table .ant-table {
+  border-radius: 0;
+}
+.al-table .ant-table-thead > tr > th {
+  background: #fafbfc;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 16px;
+}
+.al-table .ant-table-tbody > tr > td {
+  font-size: 13px;
+  color: #334155;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.al-table .ant-table-tbody > tr:hover > td {
+  background: #f8fafc !important;
+}
+.al-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+/* ─────────────────────────────────────────────────────────── */
 :root {
     --muted: #8c8c8c;
     --text: #000;

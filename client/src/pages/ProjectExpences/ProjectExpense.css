@@ -1,0 +1,528 @@
+/* ============================================================
+   Project Expense — Taskopad-style analytics dashboard
+   ============================================================ */
+
+.pe-page {
+  padding: 24px;
+  background: #f1f5f9;
+  min-height: 100%;
+}
+
+/* ── Page Header ─────────────────────────────────────────────── */
+.pe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pe-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.pe-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.pe-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.pe-btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.pe-btn.primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.pe-btn:disabled,
+.pe-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Stats Cards ─────────────────────────────────────────────── */
+.pe-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pe-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pe-stat-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.pe-stat-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 14px 14px;
+}
+
+.pe-stat-card.blue::after   { background: #2563eb; }
+.pe-stat-card.green::after  { background: #16a34a; }
+.pe-stat-card.orange::after { background: #ea580c; }
+.pe-stat-card.purple::after { background: #7c3aed; }
+
+.pe-stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.pe-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
+.pe-stat-icon.green  { background: #f0fdf4; color: #16a34a; }
+.pe-stat-icon.orange { background: #fff7ed; color: #ea580c; }
+.pe-stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+
+.pe-stat-body { min-width: 0; flex: 1; }
+
+.pe-stat-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.pe-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-stat-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Charts Section ──────────────────────────────────────────── */
+.pe-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 320px;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pe-chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pe-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.pe-chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.pe-chart-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Filter Bar ──────────────────────────────────────────────── */
+.pe-filter-bar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pe-filter-bar .ant-select-selector {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  font-size: 13px !important;
+}
+
+.pe-filter-bar .ant-picker {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+
+.pe-filter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.pe-filter-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pe-filter-bar .ant-switch {
+  background: #e2e8f0;
+}
+
+.pe-filter-bar .ant-switch-checked {
+  background: #2563eb;
+}
+
+.pe-clear-filters-btn {
+  margin-left: auto;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pe-clear-filters-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* ── Expense Table ───────────────────────────────────────────── */
+.pe-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pe-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pe-table-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.pe-table-count {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.pe-table-card .ant-table-thead > tr > th {
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 16px;
+}
+
+.pe-table-card .ant-table-tbody > tr > td {
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+  padding: 12px 16px;
+}
+
+.pe-table-card .ant-table-tbody > tr:hover > td {
+  background: #f8fafc !important;
+}
+
+/* ── Status Badges ───────────────────────────────────────────── */
+.pe-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.pe-status-badge.approved { background: #dcfce7; color: #16a34a; }
+.pe-status-badge.pending  { background: #fff7ed; color: #ea580c; }
+.pe-status-badge.rejected { background: #fee2e2; color: #dc2626; }
+.pe-status-badge.paid     { background: #eff6ff; color: #2563eb; }
+.pe-status-badge.default  { background: #f1f5f9; color: #64748b; }
+
+/* ── Billable Badge ──────────────────────────────────────────── */
+.pe-billable-yes {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.pe-billable-no {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+/* ── Action Buttons ──────────────────────────────────────────── */
+.pe-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pe-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.pe-action-btn:hover { background: #f1f5f9; color: #1e293b; }
+.pe-action-btn.edit:hover  { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.pe-action-btn.delete:hover{ border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+
+/* ── View Drawer ─────────────────────────────────────────────── */
+.pe-drawer-field {
+  margin-bottom: 16px;
+}
+
+.pe-drawer-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.pe-drawer-value {
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-height: 40px;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.pe-drawer-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.pe-drawer-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 20px 0;
+}
+
+.pe-drawer .ant-drawer-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 20px 24px 16px;
+}
+
+.pe-drawer .ant-drawer-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pe-drawer .ant-drawer-body {
+  padding: 24px;
+}
+
+/* ── Project name chip ───────────────────────────────────────── */
+.pe-project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2563eb;
+}
+
+.pe-amount-cell {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.pe-amount-currency {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Legend for donut ────────────────────────────────────────── */
+.pe-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pe-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.pe-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+}
+
+.pe-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pe-legend-val {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .pe-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pe-charts-grid .pe-chart-card:nth-child(3) {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1024px) {
+  .pe-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pe-page { padding: 16px; }
+
+  .pe-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .pe-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pe-charts-grid .pe-chart-card:nth-child(3) {
+    grid-column: span 1;
+  }
+
+  .pe-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .pe-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,537 +1,395 @@
-import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Col,
-  Form,
-  Input,
-  Popconfirm,
-  Row,
-  Select,
-  message,
-} from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import { Form, Input, Select, message, Popconfirm } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { Header } from "antd/es/layout/layout";
-import "./ComplaintsForm.css";
-import "../../assets/css/pms.css";
-import "../../assets/css/style.css";
-import Service from "../../service";
+import {
+  AlertOutlined,
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  MailOutlined,
+  QuestionCircleOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { useDispatch } from "react-redux";
-import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useHistory, useParams } from "react-router-dom";
-import { QuestionCircleOutlined } from "@ant-design/icons";
+import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import Service from "../../service";
+import "./ComplaintDetails.css";
 
+/* ── constants ─────────────────────────────────────────────── */
+const REASON_OPTIONS = [
+  { value: "Project Delays and Missed Deadlines",              label: "Project Delays and Missed Deadlines" },
+  { value: "Quality Issues and Buggy Software",                label: "Quality Issues and Buggy Software" },
+  { value: "Lack of Transparency and Communication",           label: "Lack of Transparency and Communication" },
+  { value: "Poor Customer Support and Responsiveness",         label: "Poor Customer Support and Responsiveness" },
+  { value: "Unmet Expectations for Digital Marketing Results", label: "Unmet Expectations for Digital Marketing Results" },
+  { value: "Lack of Strategy and Proactiveness in Marketing Efforts", label: "Lack of Strategy and Proactiveness in Marketing Efforts" },
+  { value: "Inadequate Reporting and Analytics",               label: "Inadequate Reporting and Analytics" },
+  { value: "Overpromising and Under Delivering",               label: "Overpromising and Under Delivering" },
+  { value: "Scope Creep and Unexpected Charges",               label: "Scope Creep and Unexpected Charges" },
+  { value: "Privacy and Security Concerns",                    label: "Privacy and Security Concerns" },
+  { value: "3rd Party Issue (Extension/API/Support)",          label: "3rd Party Issue (Extension/API/Support)" },
+  { value: "Downtime or Performance Issue",                    label: "Downtime or Performance Issue" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "critical", label: "Critical" },
+  { value: "high",     label: "High" },
+  { value: "medium",   label: "Medium" },
+  { value: "low",      label: "Low" },
+];
+
+const ESCALATION_OPTIONS = [
+  { value: "level1", label: "Level 1 (Director)" },
+  { value: "level2", label: "Level 2 (CEO)" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "open",          label: "Open" },
+  { value: "in_progress",   label: "In Progress" },
+  { value: "client_review", label: "Client Review" },
+  { value: "resolved",      label: "Resolved" },
+  { value: "reopened",      label: "Reopen" },
+  { value: "customer_lost", label: "Customer Lost" },
+];
+
+const PRIORITY_COLORS = {
+  critical: { bg: "#fef2f2", color: "#dc2626" },
+  high:     { bg: "#fef2f2", color: "#dc2626" },
+  medium:   { bg: "#fff7ed", color: "#ea580c" },
+  low:      { bg: "#f0fdf4", color: "#16a34a" },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   COMPONENT
+══════════════════════════════════════════════════════════════ */
 const ComplaintsForm = () => {
-  const companySlug = localStorage.getItem("companyDomain");
+  const companySlug      = localStorage.getItem("companyDomain");
   const { complaint_id } = useParams();
-  const [form] = Form.useForm();
-  const { Option } = Select;
-  const history = useHistory();
+  const [form]           = Form.useForm();
+  const dispatch         = useDispatch();
+  const history          = useHistory();
 
-  const [projects, setProjects] = useState([]);
-  const [complaintId, setComplaintId] = useState();
-  const [selectedStatus, setSelectedStatus] = useState(
-    form.getFieldValue("status")
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projects,       setProjects]       = useState([]);
+  const [complaintId,    setComplaintId]    = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [isSubmitting,   setIsSubmitting]   = useState(false);
 
+  const isEdit = Boolean(complaintId);
 
-  // Track changes in the form
-  const handleFormChange = (changedValues) => {
-    if (changedValues.status) {
-      setSelectedStatus(changedValues.status);
-    }
-  };
-
-  const formItemLayout = {
-    labelCol: {
-      xs: { span: 24 },
-      sm: { span: 8 },
-    },
-    wrapperCol: {
-      xs: { span: 24 },
-      sm: { span: 16 },
-    },
-  };
-
-  useEffect(() => {
-    getProjects();
-    if (complaint_id != undefined) {
-      getComplaintById(complaint_id);
-    }
-  }, []);
-
-  const dispatch = useDispatch();
-  const getComplaintById = async (complaint_id) => {
-    setComplaintId(complaint_id);
+  /* ── API ─────────────────────────────────────────────────── */
+  const getProjects = useCallback(async () => {
     try {
       dispatch(showAuthLoader());
-      const reqBody = {
-        _id: complaint_id,
-      };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.getComplaintList,
-        body: reqBody,
+        api_url:    Service.myProjects,
+        body:       { isComplaints: true },
       });
       dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
+      if (response?.data?.data) setProjects(response.data.data);
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.error(error);
+    }
+  }, [dispatch]);
+
+  const getComplaintById = useCallback(async (id) => {
+    setComplaintId(id);
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url:    Service.getComplaintList,
+        body:       { _id: id },
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data?.data) {
+        const d = response.data.data;
+        setSelectedStatus(d.status || "");
         form.setFieldsValue({
-          project: response.data.data?.project_id,
-          client_name: response.data.data?.client_name,
-          reason: response.data.data?.reason,
-          client_email: response.data.data?.client_email,
-          Complaint: response.data.data?.complaint,
-          priority: response.data.data?.priority,
-          escalation_level: response.data.data?.escalation_level,
-          status: response.data.data?.status,
+          project:          d.project_id,
+          client_name:      d.client_name,
+          reason:           d.reason,
+          client_email:     d.client_email,
+          Complaint:        d.complaint,
+          priority:         d.priority,
+          escalation_level: d.escalation_level,
+          status:           d.status,
+          project_manager:  d.manager?.full_name,
+          account_manager:  d.acc_manager?.full_name,
+        });
+      }
+    } catch (error) {
+      dispatch(hideAuthLoader());
+      console.error(error);
+    }
+  }, [dispatch, form]);
+
+  const getProjectDetails = useCallback(async (project_id) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url:    `${Service.getOverview}/${project_id}`,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data?.data) {
+        form.setFieldsValue({
           project_manager: response.data.data?.manager?.full_name,
           account_manager: response.data.data?.acc_manager?.full_name,
         });
       }
     } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getProjects = async () => {
-    try {
-      dispatch(showAuthLoader());
-
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.myProjects,
-        body: {
-          isComplaints: true,
-        },
-      });
       dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setProjects(response.data.data);
-      }
-    } catch (error) {
-      console.log(error);
+      console.error(error);
     }
-  };
+  }, [dispatch, form]);
 
+  useEffect(() => {
+    getProjects();
+    if (complaint_id) getComplaintById(complaint_id);
+  }, [complaint_id, getProjects, getComplaintById]);
+
+  /* ── Submit ───────────────────────────────────────────────── */
   const handleSubmit = async (values) => {
-    if (isSubmitting) return; // Prevent if already submitting
-  
-  setIsSubmitting(true);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const reqBody = {
-        project_id: values.project,
-        client_name: values.client_name,
-        reason: values.reason,
-        client_email: values.client_email,
-        complaint: values.Complaint,
-        priority: values.priority,
+        project_id:       values.project,
+        client_name:      values.client_name,
+        reason:           values.reason,
+        client_email:     values.client_email,
+        complaint:        values.Complaint,
+        priority:         values.priority,
         escalation_level: values.escalation_level,
-        status: values.status,
+        status:           values.status,
       };
+
+      let response;
       if (complaintId) {
-        const params = `/${complaintId}`;
-        const response = await Service.makeAPICall({
+        response = await Service.makeAPICall({
           methodName: Service.putMethod,
-          api_url: Service.editComplaint + params,
-          body: reqBody,
+          api_url:    `${Service.editComplaint}/${complaintId}`,
+          body:       reqBody,
         });
-        if (response.data && response.data.data) {
-          message.success(response.data.message);
-          history.push(`/${companySlug}/complaints`);
-        }
       } else {
-        const response = await Service.makeAPICall({
+        response = await Service.makeAPICall({
           methodName: Service.postMethod,
-          api_url: Service.addComplaint,
-          body: reqBody,
+          api_url:    Service.addComplaint,
+          body:       reqBody,
         });
-        if (response.data && response.data.data) {
-          message.success(response.data.message);
-          history.push(`/${companySlug}/complaints`);
-        }
+      }
+
+      if (response?.data?.data) {
+        message.success(response.data.message);
+        history.push(`/${companySlug}/complaints`);
       }
     } catch (error) {
-      console.log(error);
-    }
-    finally {
+      console.error(error);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getProjectDetails = async (project_id) => {
-    try {
-      dispatch(showAuthLoader());
-      const params = `/${project_id}`;
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getOverview + params,
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        form.setFieldsValue({
-          project_manager: response.data.data?.manager?.full_name,
-          account_manager: response.data.data?.acc_manager?.full_name,
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
+  /* ── Render ───────────────────────────────────────────────── */
   return (
-    <>
-      <div className="main-time-sheet-project-wrapper">
-        <Header className="main-header">
-          <div className="project-name">
-            <h3 style={{ textTransform: "capitalize" }}>
-              {complaintId ? "Edit" : "Add"} Complaint
-            </h3>
-          </div>
-        </Header>
-        <div className="project-wrapper new-project-overview project-running-reports">
-          <div className="peoject-page">
-            <div className="header">
-              <div className="project-running-reports-fillter-wrapper feedback-form add-complaint-wrapper">
-                <Form
-                  form={form}
-                  noValidate
-                  {...formItemLayout}
-                  onFinish={handleSubmit}
-                  onValuesChange={handleFormChange}
-                >
-                  <Row>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        name="project"
-                        label="Project"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please Select Project !",
-                          },
-                        ]}
-                      >
-                        <Select
-                          placeholder="Project"
-                          showSearch
-                          filterOption={(input, option) =>
-                            option.children
-                              ?.toLowerCase()
-                              .indexOf(input?.toLowerCase()) >= 0
-                          }
-                          filterSort={(optionA, optionB) =>
-                            optionA.children
-                              ?.toLowerCase()
-                              .localeCompare(optionB.children?.toLowerCase())
-                          }
-                          onChange={(e) => getProjectDetails(e)}
-                        >
-                          {projects.map((item, index) => (
-                            <Option
-                              key={index}
-                              value={item._id}
-                              style={{ textTransform: "capitalize" }}
-                            >
-                              {item?.title}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        name="project_manager"
-                        label="Project Manager"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please enter Project Manager name !",
-                          },
-                        ]}
-                      >
-                        <Input
-                          placeholder="Enter Project Manager name"
-                          disabled
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        name="account_manager"
-                        label="Account Manager"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please Select Account Manager !",
-                          },
-                        ]}
-                      >
-                        <Input
-                          placeholder="Enter Account Manager name"
-                          disabled
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        label="Reason"
-                        name="reason"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please enter Reason !",
-                          },
-                        ]}
-                      >
-                        <Select
-                          defaultValue="--select--"
-                          options={[
-                            {
-                              value: "Project Delays and Missed Deadlines",
-                              label: "Project Delays and Missed Deadlines",
-                            },
-                            {
-                              value: "Quality Issues and Buggy Software",
-                              label: "Quality Issues and Buggy Software",
-                            },
-                            {
-                              value: "Lack of Transparency and Communication",
-                              label: "Lack of Transparency and Communication",
-                            },
-                            {
-                              value: "Poor Customer Support and Responsiveness",
-                              label: "Poor Customer Support and Responsiveness",
-                            },
-                            {
-                              value:
-                                "Unmet Expectations for Digital Marketing Results",
-                              label:
-                                "Unmet Expectations for Digital Marketing Results",
-                            },
-                            {
-                              value:
-                                "Lack of Strategy and Proactiveness in Marketing Efforts",
-                              label:
-                                "Lack of Strategy and Proactiveness in Marketing Efforts",
-                            },
+    <div className="cad-page">
 
-                            {
-                              value: "Inadequate Reporting and Analytics",
-                              label: "Inadequate Reporting and Analytics",
-                            },
-                            {
-                              value: "Overpromising and Under Delivering",
-                              label: "Overpromising and Under Delivering",
-                            },
-                            {
-                              value: "Scope Creep and Unexpected Charges",
-                              label: "Scope Creep and Unexpected Charges",
-                            },
-                            {
-                              value: "Privacy and Security Concerns",
-                              label: "Privacy and Security Concerns",
-                            },
-                            {
-                              value: "3rd Party Issue (Extension/API/Support)",
-                              label: "3rd Party Issue (Extension/API/Support)",
-                            },
-                            {
-                              value: "Downtime or Performance Issue",
-                              label: "Downtime or Performance Issue",
-                            },
-                          ]}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        label="Client Name"
-                        name="client_name"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please enter client name !",
-                          },
-                        ]}
-                      >
-                        <Input placeholder="Enter client name" />
-                      </Form.Item>
-                      <Form.Item
-                        label="Client Email"
-                        name="client_email"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please enter client email !",
-                          },
-                        ]}
-                      >
-                        <Input placeholder="Enter client email" />
-                      </Form.Item>
-                    </Col>
-                  </Row>
+      {/* Header */}
+      <div className="cad-info-card">
+        <div className="cad-info-icon">
+          {isEdit ? <ExclamationCircleOutlined /> : <AlertOutlined />}
+        </div>
+        <div className="cad-info-body">
+          <h1 className="cad-info-title" style={{ marginBottom: 0 }}>
+            {isEdit ? "Edit Complaint" : "Add Complaint"}
+          </h1>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
+            {isEdit
+              ? "Update the complaint details below"
+              : "Fill in the details to raise a new complaint"}
+          </p>
+        </div>
+        <button
+          className="cad-btn"
+          onClick={() => history.push(`/${companySlug}/complaints`)}
+          style={{ marginLeft: "auto" }}
+        >
+          <ArrowLeftOutlined /> Back to Complaints
+        </button>
+      </div>
 
-                  <Row>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        label="Complaint"
-                        name="Complaint"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please enter your Complaint !",
-                          },
-                        ]}
-                      >
-                        <TextArea rows={4} placeholder="Enter your Complaint" />
-                      </Form.Item>
-                    </Col>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        name="priority"
-                        label="Priority"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please select priority !",
-                          },
-                        ]}
-                      >
-                        <Select
-                          defaultValue="--select--"
-                          options={[
-                            {
-                              value: "critical",
-                              label: "Critical",
-                            },
-                            {
-                              value: "high",
-                              label: "High",
-                            },
-
-                            {
-                              value: "medium",
-                              label: "Medium",
-                            },
-                            {
-                              value: "low",
-                              label: "Low",
-                            },
-                          ]}
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col sm={24} md={12}>
-                      <Form.Item
-                        name="escalation_level"
-                        label="Escalation Level"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please Escalation level !",
-                          },
-                        ]}
-                      >
-                        <Select
-                          defaultValue="--select--"
-                          options={[
-                            {
-                              value: "level1",
-                              label: "Level 1 (Director)",
-                            },
-                            {
-                              value: "level2",
-                              label: "Level 2 (CEO)",
-                            },
-                          ]}
-                        />
-                      </Form.Item>
-                    </Col>
-                    {!complaintId ? (
-                      <Col sm={24} md={12}>
-                        <Form.Item
-                          name="status"
-                          label="Status"
-                          initialValue="open"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please select status !",
-                            },
-                          ]}
-                        >
-                          <Select
-                            defaultValue="open"
-                            options={[
-                              {
-                                value: "open",
-                                label: "Open",
-                              },
-                              {
-                                value: "in_progress",
-                                label: "In Progress",
-                              },
-                              {
-                                value: "client_review",
-                                label: "Client Review",
-                              },
-                              {
-                                value: "resolved",
-                                label: "Resolved",
-                              },
-                              {
-                                value: "reopened",
-                                label: "Reopen",
-                              },
-                              {
-                                value: "customer_lost",
-                                label: "Customer Lost",
-                              },
-                            ]}
-                          />
-                        </Form.Item>
-                      </Col>
-                    ) : (
-                      ""
-                    )}
-                  </Row>
-
-                  <Form.Item>
-                    <div className="feedback-submit-button-form">
-                      {selectedStatus === "resolved" ? (
-                        <Popconfirm
-                          icon={
-                            <QuestionCircleOutlined
-                              style={{
-                                color: "red",
-                              }}
-                            />
-                          }
-                          title="Are you sure, you want to update the status of the complaint to Client Review? As the feedback mail will be sent to client."
-                          onConfirm={() => form.submit()}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <Button id="addbutton" type="primary" loading={isSubmitting} disabled={isSubmitting}>
-                            {complaintId ? "Update" : "Submit"}
-                          </Button>
-                        </Popconfirm>
-                      ) : (
-                        <Button id="addbutton" type="primary" htmlType="submit"  loading={isSubmitting} disabled={isSubmitting}>
-                          {complaintId ? "Update" : "Submit"}
-                        </Button>
-                      )}
-                    </div>
-                  </Form.Item>
-                </Form>
-              </div>
-            </div>
+      {/* Form Card */}
+      <div className="cad-section">
+        <div className="cad-section-header">
+          <div className="cad-section-title">
+            <span className="cad-section-icon"><AlertOutlined /></span>
+            Complaint Information
           </div>
         </div>
+
+        <div className="cad-section-body">
+          <Form
+            form={form}
+            layout="vertical"
+            className="cad-status-form"
+            onFinish={handleSubmit}
+            onValuesChange={(changed) => {
+              if (changed.status) setSelectedStatus(changed.status);
+            }}
+          >
+            {/* Row 1: Project + Project Manager */}
+            <div className="cad-form-grid">
+              <Form.Item
+                name="project"
+                label="Project"
+                rules={[{ required: true, message: "Please select a project" }]}
+              >
+                <Select
+                  placeholder="Select project"
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.label?.toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={getProjectDetails}
+                  options={projects.map((p) => ({ value: p._id, label: p.title }))}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="project_manager"
+                label="Project Manager"
+                rules={[{ required: true, message: "Project manager is required" }]}
+              >
+                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+              </Form.Item>
+
+              <Form.Item
+                name="account_manager"
+                label="Account Manager"
+                rules={[{ required: true, message: "Account manager is required" }]}
+              >
+                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+              </Form.Item>
+
+              <Form.Item
+                name="client_name"
+                label="Client Name"
+                rules={[{ required: true, message: "Please enter client name" }]}
+              >
+                <Input placeholder="Enter client name" prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+              </Form.Item>
+
+              <Form.Item
+                name="client_email"
+                label="Client Email"
+                rules={[
+                  { required: true, message: "Please enter client email" },
+                  { type: "email", message: "Please enter a valid email" },
+                ]}
+              >
+                <Input placeholder="Enter client email" prefix={<MailOutlined style={{ color: "#cbd5e1" }} />} />
+              </Form.Item>
+
+              <Form.Item
+                name="reason"
+                label="Reason"
+                rules={[{ required: true, message: "Please select a reason" }]}
+              >
+                <Select placeholder="Select reason" options={REASON_OPTIONS} />
+              </Form.Item>
+
+              <Form.Item
+                name="priority"
+                label="Priority"
+                rules={[{ required: true, message: "Please select priority" }]}
+              >
+                <Select
+                  placeholder="Select priority"
+                  options={PRIORITY_OPTIONS.map((o) => ({
+                    value: o.value,
+                    label: (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        color: PRIORITY_COLORS[o.value]?.color,
+                        fontWeight: 600,
+                      }}>
+                        {o.label}
+                      </span>
+                    ),
+                  }))}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="escalation_level"
+                label="Escalation Level"
+                rules={[{ required: true, message: "Please select escalation level" }]}
+              >
+                <Select placeholder="Select escalation level" options={ESCALATION_OPTIONS} />
+              </Form.Item>
+
+              {!isEdit && (
+                <Form.Item
+                  name="status"
+                  label="Status"
+                  initialValue="open"
+                  rules={[{ required: true, message: "Please select status" }]}
+                >
+                  <Select options={STATUS_OPTIONS} />
+                </Form.Item>
+              )}
+            </div>
+
+            {/* Complaint textarea — full width */}
+            <Form.Item
+              name="Complaint"
+              label="Complaint Description"
+              rules={[{ required: true, message: "Please describe the complaint" }]}
+            >
+              <TextArea
+                rows={5}
+                placeholder="Describe the complaint in detail…"
+                style={{ borderRadius: 8 }}
+              />
+            </Form.Item>
+
+            {/* Actions */}
+            <div className="cad-form-actions">
+              {selectedStatus === "resolved" ? (
+                <Popconfirm
+                  icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                  title="Marking as Resolved will send a feedback email to the client. Continue?"
+                  onConfirm={() => form.submit()}
+                  okText="Yes, resolve"
+                  cancelText="No"
+                >
+                  <button type="button" className="cad-btn primary" disabled={isSubmitting}>
+                    <CheckCircleOutlined />
+                    {isEdit ? "Update" : "Submit"}
+                  </button>
+                </Popconfirm>
+              ) : (
+                <button type="submit" className="cad-btn primary" disabled={isSubmitting}>
+                  <CheckCircleOutlined />
+                  {isSubmitting ? "Saving…" : isEdit ? "Update" : "Submit"}
+                </button>
+              )}
+              <button
+                type="button"
+                className="cad-btn"
+                onClick={() => history.push(`/${companySlug}/complaints`)}
+              >
+                Cancel
+              </button>
+            </div>
+          </Form>
+        </div>
       </div>
-    </>
+
+    </div>
   );
 };
 
