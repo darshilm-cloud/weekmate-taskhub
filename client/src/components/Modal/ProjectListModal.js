@@ -1,9 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { Modal, Collapse, Form, Input } from "antd";
-import { FieldTimeOutlined, FolderOutlined } from "@ant-design/icons";
+import { Modal, Form, Input } from "antd";
+import {
+  ClockCircleOutlined,
+  FolderOutlined,
+  SearchOutlined,
+  ProjectOutlined,
+} from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import "./ProjectListModal.css";
 import { debounce } from "lodash";
+import "./ProjectListModal.css";
 
 const ProjectListModal = ({
   projectDetails,
@@ -15,161 +20,128 @@ const ProjectListModal = ({
   form,
   getProjectListing,
 }) => {
-  const companySlug = localStorage.getItem("companyDomain");
+  const companySlug  = localStorage.getItem("companyDomain");
   const [isSearching, setIsSearching] = useState(true);
 
   const onSearch = useCallback(
     debounce((value) => {
-      if (value.trim()) {
-        getProjectListing(value);
-      }
+      if (value.trim()) getProjectListing(value);
     }, 500),
     []
   );
 
-  const handleInputChange = (event) => {
-    const { value } = event.target;
-    if (value.trim() !== "") {
-      setIsSearching(false);
-    }
+  const handleInputChange = (e) => {
+    const { value } = e.target;
+    if (value.trim() !== "") setIsSearching(false);
     onSearch(value);
   };
 
-  const formattedTitle = (title) => {
-    return title?.replace(/(?:^|\s)([a-z])/g, function (match, group1) {
-      return match?.charAt(0) + group1?.toUpperCase();
-    });
-  };
+  const formattedTitle = (title) =>
+    title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase());
 
   return (
     <Modal
       footer={false}
       open={isModalOpen}
-      width={800}
+      width={640}
       closable={false}
       onCancel={handleCancel}
-      className="project-add-wrapper"
+      className="plm-modal"
+      styles={{ body: { padding: 0 } }}
     >
-      <div
-        className="modal-header project-search-input"
-        style={{ padding: "0", borderBottom: "none" }}
-      >
+      {/* ── Search bar ───────────────────────────────────────── */}
+      <div className="plm-search-wrap">
         <Form form={form}>
-         
-            <Input
-              onChange={handleInputChange}
-              bordered={false}
-              style={{
-                boxShadow:" 0px 0px 4px 0px #eeee",
-                border:"1px solid #ccc"
-              }}
-              placeholder="Search Projects..."
-            />
-       
+          <Input
+            prefix={<SearchOutlined className="plm-search-icon" />}
+            onChange={handleInputChange}
+            placeholder="Search projects…"
+            variant="borderless"
+            className="plm-search-input"
+            autoFocus
+            allowClear
+          />
         </Form>
       </div>
-      <div className="list-project">
-        <div>
-          {recentList && recentList.length > 0 && isSearching && (
-            <Collapse
-              size="small"
-              defaultActiveKey={["1"]}
-              items={[
-                {
-                  key: "1",
-                  label: (
-                    <span>
-                      <FieldTimeOutlined />
-                      &nbsp;&nbsp;Recents
-                    </span>
-                  ),
-                  children: (
-                    <>
-                      {recentList.map((item) => (
-                        <>
-                          <div
-                            key={item.project_id}
-                            style={{
-                              marginLeft: "20px",
-                              wordBreak: "break-word",
-                              width: "100%",
-                              maxWidth: "591px",
-                            }}
-                            className="project_title_main_div"
-                          >
-                            <Link
-                              to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
-                              onClick={() => {
-                                setIsModalOpen(false);
-                                form.resetFields();
-                              }}
-                            >
-                              <span>
-                                {formattedTitle(item?.project?.title)}
-                              </span>
-                            </Link>
-                          </div>
-                          <hr />
-                        </>
-                      ))}
-                    </>
-                  ),
-                },
-              ]}
-            />
-          )}
 
-          <Collapse
-            size="small"
-            defaultActiveKey={["1"]}
-            items={[
-              {
-                key: "1",
-                label: (
-                  <>
-                    <FolderOutlined />
-                    &nbsp;&nbsp;Projects
-                  </>
-                ),
-                children: (
-                  <>
-                    {projectDetails && projectDetails.length > 0 ? (
-                      projectDetails.map((item) => (
-                        <>
-                          <div
-                            key={item._id}
-                            style={{
-                              marginLeft: "20px",
-                              wordBreak: "break-word",
-                              width: "100%",
-                              maxWidth: "591px",
-                            }}
-                            className="project_title_main_div"
-                          >
-                            <Link
-                              to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
-                              onClick={() => {
-                                setIsSearching(true);
-                                addVisitedData(item._id);
-                                setIsModalOpen(false);
-                                form.resetFields();
-                              }}
-                            >
-                              <span>{formattedTitle(item?.title)}</span>
-                            </Link>
-                          </div>
-                          <hr />
-                        </>
-                      ))
-                    ) : (
-                      <div className="no-data-div-search">No Record Found</div>
-                    )}
-                  </>
-                ),
-              },
-            ]}
-          />
+      {/* ── Results ──────────────────────────────────────────── */}
+      <div className="plm-body">
+
+        {/* Recents */}
+        {recentList?.length > 0 && isSearching && (
+          <div className="plm-section">
+            <div className="plm-section-header">
+              <ClockCircleOutlined className="plm-section-icon" />
+              <span>Recents</span>
+              <span className="plm-count">{recentList.length}</span>
+            </div>
+            <div className="plm-list">
+              {recentList.map((item) => (
+                <Link
+                  key={item.project_id}
+                  to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
+                  className="plm-item"
+                  onClick={() => { setIsModalOpen(false); form.resetFields(); }}
+                >
+                  <span className="plm-item-icon">
+                    <ClockCircleOutlined />
+                  </span>
+                  <span className="plm-item-title">
+                    {formattedTitle(item?.project?.title)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        <div className="plm-section">
+          <div className="plm-section-header">
+            <FolderOutlined className="plm-section-icon" />
+            <span>Projects</span>
+            {projectDetails?.length > 0 && (
+              <span className="plm-count">{projectDetails.length}</span>
+            )}
+          </div>
+
+          {projectDetails?.length > 0 ? (
+            <div className="plm-list">
+              {projectDetails.map((item) => (
+                <Link
+                  key={item._id}
+                  to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
+                  className="plm-item"
+                  onClick={() => {
+                    setIsSearching(true);
+                    addVisitedData(item._id);
+                    setIsModalOpen(false);
+                    form.resetFields();
+                  }}
+                >
+                  <span className="plm-item-icon">
+                    <ProjectOutlined />
+                  </span>
+                  <span className="plm-item-title">
+                    {formattedTitle(item?.title)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="plm-empty">
+              <FolderOutlined className="plm-empty-icon" />
+              <p>No projects found</p>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* ── Footer hint ──────────────────────────────────────── */}
+      <div className="plm-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>Enter</kbd> open</span>
+        <span><kbd>Esc</kbd> close</span>
       </div>
     </Modal>
   );
