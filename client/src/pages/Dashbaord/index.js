@@ -15,6 +15,7 @@ import BugFilterComponent from "./BugFilterComponent";
 import TimeFilterComponent from "./TimeFilterComponent";
 import dayjs from "dayjs";
 import ReactApexChart from "react-apexcharts";
+import { getRoles } from "../../util/hasPermission";
 import {
   AppstoreOutlined,
   UserOutlined,
@@ -26,6 +27,11 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const companySlug = localStorage.getItem("companyDomain");
   const history = useHistory();
+  const isAdmin = getRoles(["Admin", "TL"]);
+  const currentUserId = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("user_data"))?._id || ""; }
+    catch { return ""; }
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
@@ -33,6 +39,7 @@ const Dashboard = () => {
   const [projectList, setProjectList] = useState([]);
   const [myProj, setMyProj] = useState([]);
   const [myTask, setMyTask] = useState([]);
+  const [assignedToMeTasks, setAssignedToMeTasks] = useState([]);
   const [myBug, setMyBug] = useState([]);
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
@@ -54,16 +61,37 @@ const Dashboard = () => {
   // Memoized derived values — only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
 
-  const { totalTask, assignedToMe, dueToday, pastDue } = useMemo(() => ({
-    totalTask: myTask.length,
-    assignedToMe: myTask.length,
-    dueToday: myTask.filter(
-      (t) => t.due_date && dayjs(t.due_date).format("YYYY-MM-DD") === today
-    ).length,
-    pastDue: myTask.filter(
-      (t) => t.due_date && dayjs(t.due_date).isBefore(dayjs(), "day")
-    ).length,
-  }), [myTask, today]);
+  const isDone = useCallback((t) => {
+    const title = (t.task_status?.title || "").toLowerCase();
+    return title === "done" || title === "closed";
+  }, []);
+
+  const { totalTask, assignedToMe, dueToday, pastDue } = useMemo(() => {
+    const assignedCount =
+      assignedToMeTasks.length > 0
+        ? assignedToMeTasks.length
+        : isAdmin
+          ? myTask.filter((t) =>
+              (t.assignees || []).some((a) => {
+                const id = a && (a._id ?? a);
+                return id != null && String(id).trim() === String(currentUserId).trim();
+              })
+            ).length
+          : myTask.length;
+    return {
+      totalTask: myTask.length,
+      assignedToMe: assignedCount,
+      dueToday: myTask.filter(
+        (t) => t.due_date && dayjs(t.due_date).format("YYYY-MM-DD") === today
+      ).length,
+      pastDue: myTask.filter(
+        (t) =>
+          t.due_date &&
+          dayjs(t.due_date).isBefore(dayjs(), "day") &&
+          !isDone(t)
+      ).length,
+    };
+  }, [myTask, today, isAdmin, currentUserId, assignedToMeTasks.length, isDone]);
 
   // Memoized chart data — only recalculate when myTask or chartView changes
   const { labels, completedCounts, incompleteCounts } = useMemo(() => {
@@ -255,17 +283,47 @@ const Dashboard = () => {
   const myTasksFn = useCallback(async () => {
     try {
       dispatch(showAuthLoader());
-      let reqBody = {};
-      if (taskProjects?.length > 0) reqBody = { ...reqBody, project_id: taskProjects };
-      if (taskStatus && taskStatus !== "all") reqBody = { ...reqBody, status: taskStatus };
-      if (taskDates.startDate) reqBody.start_date = dayjs(taskDates.startDate).format("YYYY-MM-DD");
-      if (taskDates.endDate) reqBody.end_date = dayjs(taskDates.endDate).format("YYYY-MM-DD");
+      const reqBody = {};
+      if (taskProjects?.length > 0) reqBody.project_id = taskProjects;
+      if (taskStatus && taskStatus !== "all") reqBody.status = taskStatus;
+      if (taskDates?.startDate) reqBody.start_date = dayjs(taskDates.startDate).format("YYYY-MM-DD");
+      if (taskDates?.endDate) reqBody.end_date = dayjs(taskDates.endDate).format("YYYY-MM-DD");
+
       const response = await Service.makeAPICall({
-        methodName: Service.postMethod, api_url: Service.myTasks, body: reqBody,
+        methodName: Service.postMethod,
+        api_url: Service.myTasks,
+        body: reqBody,
       });
-      if (response?.data?.data) { dispatch(hideAuthLoader()); setMyTask(response.data.data); }
-    } catch (error) { console.log(error, "myTask error"); }
+
+      dispatch(hideAuthLoader());
+      if (response?.data?.data && Array.isArray(response.data.data)) {
+        setMyTask(response.data.data);
+      } else {
+        setMyTask([]);
+      }
+    } catch (error) {
+      console.error("myTask error", error);
+      setMyTask([]);
+      dispatch(hideAuthLoader());
+    }
   }, [dispatch, taskProjects, taskStatus, taskDates]);
+
+  const fetchAssignedToMeTasks = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: { view_all: false },
+      });
+      if (response?.data?.data && Array.isArray(response.data.data)) {
+        setAssignedToMeTasks(response.data.data);
+      } else {
+        setAssignedToMeTasks([]);
+      }
+    } catch (e) {
+      setAssignedToMeTasks([]);
+    }
+  }, []);
 
   const myBugsFn = useCallback(async () => {
     try {
@@ -316,6 +374,20 @@ const Dashboard = () => {
     } catch (error) { console.log(error); }
   }, [dispatch, companySlug, history]);
 
+  const handleStatCardClick = useCallback(
+    (filter) => {
+      const filterMap = {
+        all: "all",
+        assigned_to_me: "assigned_to_me",
+        dueToday: "due_today",
+        pastDue: "past_due",
+      };
+      const query = filterMap[filter] ? `?filter=${filterMap[filter]}` : "";
+      history.push(`/${companySlug}/tasks${query}`);
+    },
+    [companySlug, history]
+  );
+
   const addVisitedData = useCallback(async (projectId) => {
     try {
       dispatch(showAuthLoader());
@@ -360,6 +432,7 @@ const Dashboard = () => {
     getProjectList();
     myProjectsFn();
     myTasksFn();
+    fetchAssignedToMeTasks();
     myBugsFn();
     myLoggedTimeFn();
     setIsInitialLoad(false);
@@ -368,9 +441,15 @@ const Dashboard = () => {
   return (
     <div className="new-dashboard-wrapper">
 
-      {/* 4 Stat Cards */}
+      {/* 4 Stat Cards — clickable, redirect to task page with applied filter */}
       <div className="new-stat-cards-row">
-        <div className="new-stat-card">
+        <div
+          className="new-stat-card new-stat-card-clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleStatCardClick("all")}
+          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("all")}
+        >
           <div className="stat-card-icon-wrap blue">
             <AppstoreOutlined />
           </div>
@@ -380,7 +459,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="new-stat-card">
+        <div
+          className="new-stat-card new-stat-card-clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleStatCardClick("assigned_to_me")}
+          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("assigned_to_me")}
+        >
           <div className="stat-card-icon-wrap green">
             <UserOutlined />
           </div>
@@ -390,7 +475,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="new-stat-card">
+        <div
+          className="new-stat-card new-stat-card-clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleStatCardClick("dueToday")}
+          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("dueToday")}
+        >
           <div className="stat-card-icon-wrap yellow">
             <ClockCircleOutlined />
           </div>
@@ -400,7 +491,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="new-stat-card">
+        <div
+          className="new-stat-card new-stat-card-clickable"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleStatCardClick("pastDue")}
+          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("pastDue")}
+        >
           <div className="stat-card-icon-wrap red">
             <ExclamationCircleOutlined />
           </div>

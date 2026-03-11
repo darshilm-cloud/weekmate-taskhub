@@ -269,15 +269,12 @@ function App() {
   useEffect(() => {
     if (themeType === THEME_TYPE_DARK) {
       document.body.classList.add("dark-theme");
-      document.body.classList.add("dark-theme");
-      const link = document.createElement("link");
-      link.type = "text/css";
-      link.rel = "stylesheet";
-      link.href = "/css/dark_theme.css";
-      link.className = "style_dark_theme";
-      document.body.appendChild(link);
+      document.body.setAttribute("data-theme", "dark");
+    } else {
+      document.body.classList.remove("dark-theme");
+      document.body.setAttribute("data-theme", "light");
     }
-  }, []);
+  }, [themeType]);
 
   useEffect(() => {
     if(companySlug){

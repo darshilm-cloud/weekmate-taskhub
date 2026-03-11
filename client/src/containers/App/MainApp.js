@@ -27,6 +27,7 @@ import { useRouteMatch } from "react-router-dom";
 import Customizer from "../Customizer";
 import "../../assets/css/modal.css"
 import "../../assets/css/ui-remap.css"
+import "../../assets/css/dark-theme-overrides.css"
 const { Content } = Layout;
 
 // Configure message once outside component

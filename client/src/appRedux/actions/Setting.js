@@ -16,6 +16,9 @@ export function updateWindowWidth(width) {
 
 export function setThemeType(themeType) {
   return (dispatch) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("appThemeType", themeType);
+    }
     dispatch({type: THEME_TYPE, themeType});
   }
 }

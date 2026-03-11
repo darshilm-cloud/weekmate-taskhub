@@ -98,27 +98,7 @@ function CustomizerSystem() {
   };
 
   const getCustomizerContent = () => {
-
-    if (themeType === THEME_TYPE_DARK) {
-      document.body.classList.add('dark-theme');
-      const link = document.createElement('link');
-      link.type = 'text/css';
-      link.rel = 'stylesheet';
-      link.href = "/css/dark_theme.css";
-      link.className = 'style_dark_theme';
-      document.body.appendChild(link);
-    } else if (document.body.classList.contains('dark-theme')) {
-      document.body.classList.remove('dark-theme');
-      const children = document.getElementsByClassName('style_dark_theme');
-      if (children.length > 1) {
-        for (let index = 0; index < children.length; index++) {
-          if (index < children.length) {
-            const child = children[index];
-            child.parentNode.removeChild(child);
-          }
-        }
-      }
-    }
+    /* Theme (light/dark) is applied by App/index.js via body.dark-theme and data-theme. */
 
     return <CustomScrollbars className="gx-customizer">
       <div className="gx-customizer-item">

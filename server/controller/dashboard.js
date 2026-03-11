@@ -369,57 +369,42 @@ exports.getMyTasks = async (req, res) => {
         error.details[0].message
       );
     }
-    // Or filter..
+
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+
+    // Or filter: non-admin only see tasks assigned to them
     let orFilter = {};
     let mainTaskQuery = [
       { $eq: ["$_id", "$$mainTaskId"] },
       { $eq: ["$isDeleted", false] },
     ];
 
-    // get login user role ...
-    // if (!(await checkUserIsAdmin(req.user._id))) {
-    orFilter = {
-      $or: [
-        { assignees: new mongoose.Types.ObjectId(req.user._id) },
-        // { pms_clients: new mongoose.Types.ObjectId(req.user._id) },
-        // { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
-        // { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-      ],
-    };
-
-    mainTaskQuery = [
-      ...mainTaskQuery,
-      {
+    if (!isAdmin) {
+      orFilter = {
         $or: [
-          {
-            $eq: ["$isPrivateList", false],
-          },
-          {
-            $or: [
-              {
-                $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
-              },
-              {
-                $in: [
-                  new mongoose.Types.ObjectId(req.user._id),
-                  "$subscribers",
-                ],
-              },
-              {
-                $in: [
-                  new mongoose.Types.ObjectId(req.user._id),
-                  "$pms_clients",
-                ],
-              },
-            ],
-          },
+          { assignees: new mongoose.Types.ObjectId(req.user._id) },
         ],
-      },
-    ];
-    // }
+      };
+      mainTaskQuery = [
+        ...mainTaskQuery,
+        {
+          $or: [
+            { $eq: ["$isPrivateList", false] },
+            {
+              $or: [
+                { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+              ],
+            },
+          ],
+        },
+      ];
+    }
 
     let matchQuery = {
       isDeleted: false,
+      status: "active",
       ...(value.status !== "all"
         ? value.status == "completed"
           ? {
@@ -467,11 +452,18 @@ exports.getMyTasks = async (req, res) => {
       ...orFilter,
     };
 
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
     const mainQuery = [
       {
         $lookup: {
           from: "projects",
-          let: { project_id: "$project_id" },
+          let: {
+            project_id: "$project_id",
+            ...(userCompanyId ? { userCompanyId } : {}),
+          },
           pipeline: [
             {
               $match: {
@@ -479,6 +471,9 @@ exports.getMyTasks = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(userCompanyId
+                      ? [{ $eq: ["$companyId", "$$userCompanyId"] }]
+                      : []),
                   ],
                 },
               },
@@ -555,6 +550,7 @@ exports.getMyTasks = async (req, res) => {
           start_date: 1,
           due_date: 1,
           createdAt: 1,
+          assignees: 1,
           project: {
             _id: 1,
             title: 1,
@@ -580,6 +576,195 @@ exports.getMyTasks = async (req, res) => {
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Get task list for Task page (List/Kanban/Calendar). Admin can pass view_all to see all tasks.
+exports.getTaskList = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      view_all: Joi.boolean().optional().default(false),
+      search: Joi.string().allow("").optional(),
+      status: Joi.string().optional().default("all"),
+      project_id: Joi.array().optional().default([]),
+      start_date: Joi.date().optional().default(""),
+      end_date: Joi.date().optional().default(""),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+    const viewAll = value.view_all && isAdmin;
+
+    let orFilter = {};
+    let mainTaskQuery = [
+      { $eq: ["$_id", "$$mainTaskId"] },
+      { $eq: ["$isDeleted", false] },
+    ];
+
+    if (!viewAll) {
+      orFilter = {
+        $or: [
+          { assignees: new mongoose.Types.ObjectId(req.user._id) },
+        ],
+      };
+      mainTaskQuery = [
+        ...mainTaskQuery,
+        {
+          $or: [
+            { $eq: ["$isPrivateList", false] },
+            {
+              $or: [
+                { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+              ],
+            },
+          ],
+        },
+      ];
+    }
+
+    let matchQuery = {
+      isDeleted: false,
+      status: "active",
+      ...(value.status !== "all"
+        ? value.status === "completed"
+          ? { "task_status.title": DEFAULT_DATA.WORKFLOW_STATUS.DONE }
+          : { "task_status.title": { $ne: DEFAULT_DATA.WORKFLOW_STATUS.DONE } }
+        : {}),
+      ...(value.project_id.length > 0
+        ? { project_id: { $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)) } }
+        : {}),
+      ...(value.start_date !== "" && value.end_date === ""
+        ? { due_date: { $gte: moment(value.start_date).startOf("day").toDate() } }
+        : {}),
+      ...(value.start_date === "" && value.end_date !== ""
+        ? { due_date: { $lte: moment(value.end_date).startOf("day").toDate() } }
+        : {}),
+      ...(value.start_date !== "" && value.end_date !== ""
+        ? {
+            due_date: {
+              $gte: moment(value.start_date).startOf("day").toDate(),
+              $lte: moment(value.end_date).startOf("day").toDate(),
+            },
+          }
+        : {}),
+    };
+
+    matchQuery = { ...matchQuery, ...orFilter };
+
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
+    const mainQuery = [
+      {
+        $lookup: {
+          from: "projects",
+          let: {
+            project_id: "$project_id",
+            ...(userCompanyId ? { userCompanyId } : {}),
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    ...(userCompanyId
+                      ? [{ $eq: ["$companyId", "$$userCompanyId"] }]
+                      : []),
+                  ],
+                },
+              },
+            },
+          ],
+          as: "project",
+        },
+      },
+      { $unwind: { path: "$project", preserveNullAndEmptyArrays: false } },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          let: { workflow_id: "$task_status" },
+          pipeline: [
+            { $match: { $expr: { $and: [{ $eq: ["$_id", "$$workflow_id"] }, { $eq: ["$isDeleted", false] }] } } },
+          ],
+          as: "task_status",
+        },
+      },
+      { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "projectmaintasks",
+          let: {
+            mainTaskId: "$main_task_id",
+            taskCreatedBy: "$createdBy",
+            taskAssignees: "$assignees",
+            taskPmsClients: "$pms_clients",
+          },
+          pipeline: [{ $match: { $expr: { $and: mainTaskQuery } } }],
+          as: "mainTask",
+        },
+      },
+      { $unwind: { path: "$mainTask", preserveNullAndEmptyArrays: false } },
+      ...(value.search && value.search.trim()
+        ? [{ $match: { title: { $regex: value.search.trim(), $options: "i" } } }]
+        : []),
+      {
+        $lookup: {
+          from: "employees",
+          let: { assigneesIds: "$assignees" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$assigneesIds"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } },
+          ],
+          as: "assignees",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          taskId: 1,
+          start_date: 1,
+          due_date: 1,
+          createdAt: 1,
+          assignees: 1,
+          task_progress: 1,
+          project: { _id: 1, title: 1, manager: 1 },
+          mainTask: { _id: 1, title: 1, isPrivateList: 1 },
+          task_status: { _id: 1, title: 1, color: 1 },
+        },
+      },
+      { $sort: { _id: -1 } },
+    ];
+
+    const data = await ProjectTasks.aggregate(mainQuery);
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+  } catch (err) {
+    return catchBlockErrorResponse(res, err.message);
   }
 };
 

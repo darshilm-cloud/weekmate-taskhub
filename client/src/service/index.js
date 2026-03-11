@@ -355,6 +355,7 @@ export default class Service {
   //dashboard module
   static myProjects = "/dashboard/get/my-project";
   static myTasks = "/dashboard/get/my-task";
+  static taskList = "/dashboard/get/task-list";
   static myBugs = "/dashboard/get/my-bugs";
   static myLoggedTime = "/dashboard/get/my-logged-time";
 

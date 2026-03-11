@@ -6,6 +6,22 @@ p {
     padding: 0;
 }
 
+/* Clickable stat cards — redirect to task page */
+.new-stat-card-clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.new-stat-card-clickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.new-stat-card-clickable:active {
+  transform: scale(0.99);
+}
+.new-stat-card-clickable:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
 .d-flex {
     display: flex;
     flex-wrap: wrap;

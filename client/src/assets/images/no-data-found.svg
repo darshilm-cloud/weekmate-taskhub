@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" viewBox="0 0 200 160" fill="none" aria-hidden="true">
+  <!-- Background circle -->
+  <circle cx="100" cy="72" r="48" fill="#F5F7FA" stroke="#E8ECF1" stroke-width="1.5"/>
+  <!-- Document / clipboard -->
+  <path d="M72 44h56v64H72z" fill="#fff" stroke="#D1D5DB" stroke-width="2" rx="4"/>
+  <path d="M78 56h44M78 64h32M78 72h40M78 80h28" stroke="#E5E7EB" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Magnifying glass -->
+  <circle cx="118" cy="94" r="18" fill="none" stroke="#9CA3AF" stroke-width="2.5"/>
+  <path d="M128 104l14 14" stroke="#9CA3AF" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Small "no" indicator -->
+  <circle cx="130" cy="82" r="8" fill="#FEE2E2" stroke="#EF4444" stroke-width="1.5"/>
+  <path d="M126 82h8M130 78v8" stroke="#EF4444" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

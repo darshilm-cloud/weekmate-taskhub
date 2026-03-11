@@ -67,6 +67,7 @@ const PositiveReviewForm = React.lazy(() =>
 );
 
 const DashboardModule = React.lazy(() => import("../pages/Dashbaord"));
+const TaskPageModule = React.lazy(() => import("../pages/TaskPage"));
 const BillableHoursAdmin = React.lazy(() =>
   import("../pages/BillableHours/SuperAdminBillableHours.js")
 );
@@ -225,7 +226,17 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.TL,
       ],
     },
-
+    {
+      path: ":companySlug/tasks",
+      component: TaskPageModule,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
     {
       path: ":companySlug/billable-hours",
       component: BillableHoursAdmin,

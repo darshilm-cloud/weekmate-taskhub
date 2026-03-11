@@ -1,0 +1,336 @@
+/**
+ * Dark theme overrides — MUST load last. Maximum specificity (body.dark-theme.admin-user)
+ * so these win over pms.css, style.css, ui-remap light rules, and page-specific CSS.
+ * Only applies when body has .dark-theme or [data-theme="dark"].
+ */
+
+/* ─── Base & layout ─── */
+body.dark-theme.admin-user,
+body.admin-user[data-theme="dark"] {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-layout,
+body.dark-theme.admin-user .gx-app-layout,
+body.admin-user[data-theme="dark"] .ant-layout,
+body.admin-user[data-theme="dark"] .gx-app-layout {
+  background: #19202c !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content,
+body.dark-theme.admin-user .ant-layout.admin .gx-layout-content,
+body.dark-theme.admin-user .ant-layout.admin .page-layout,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content,
+body.admin-user[data-theme="dark"] .ant-layout.admin .gx-layout-content,
+body.admin-user[data-theme="dark"] .ant-layout.admin .page-layout {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .gx-main-content-wrapper,
+body.admin-user[data-theme="dark"] .gx-main-content-wrapper {
+  background-color: #19202c !important;
+}
+
+/* ─── Sidebar: logo, header, user card, menu, what's new ─── */
+body.dark-theme.admin-user .gx-app-sidebar,
+body.dark-theme.admin-user .gx-layout-sider-dark,
+body.dark-theme.admin-user .ant-layout-sider,
+body.dark-theme.admin-user .gx-sidebar-content.sidebar-menu.weekmate-sidebar,
+body.admin-user[data-theme="dark"] .gx-app-sidebar,
+body.admin-user[data-theme="dark"] .gx-layout-sider-dark,
+body.admin-user[data-theme="dark"] .ant-layout-sider,
+body.admin-user[data-theme="dark"] .gx-sidebar-content.sidebar-menu.weekmate-sidebar {
+  background: #1a202c !important;
+  border-right-color: #2d3748 !important;
+}
+
+body.dark-theme.admin-user .weekmate-sidebar-header,
+body.dark-theme.admin-user .Etask-hub-logo,
+body.dark-theme.admin-user .gx-layout-sider-header,
+body.admin-user[data-theme="dark"] .weekmate-sidebar-header,
+body.admin-user[data-theme="dark"] .Etask-hub-logo,
+body.admin-user[data-theme="dark"] .gx-layout-sider-header {
+  background: #1a202c !important;
+  border-bottom-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .weekmate-logo-text,
+body.dark-theme.admin-user .weekmate-sidebar-trigger,
+body.admin-user[data-theme="dark"] .weekmate-logo-text,
+body.admin-user[data-theme="dark"] .weekmate-sidebar-trigger {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .weekmate-sidebar-trigger:hover,
+body.admin-user[data-theme="dark"] .weekmate-sidebar-trigger:hover {
+  background: #2d3748 !important;
+  color: #93c5fd !important;
+}
+
+body.dark-theme.admin-user .weekmate-user-card-inner,
+body.admin-user[data-theme="dark"] .weekmate-user-card-inner {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .weekmate-user-name,
+body.dark-theme.admin-user .weekmate-user-meta,
+body.dark-theme.admin-user .weekmate-user-chevron,
+body.admin-user[data-theme="dark"] .weekmate-user-name,
+body.admin-user[data-theme="dark"] .weekmate-user-meta,
+body.admin-user[data-theme="dark"] .weekmate-user-chevron {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .weekmate-user-meta,
+body.admin-user[data-theme="dark"] .weekmate-user-meta {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .sidebar-menu .ant-menu,
+body.dark-theme.admin-user .admin-user .ant-layout.admin .sidebar-menu,
+body.admin-user[data-theme="dark"] .sidebar-menu .ant-menu,
+body.admin-user[data-theme="dark"] .admin-user .ant-layout.admin .sidebar-menu {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .sidebar-menu ul.ant-menu li.ant-menu-item,
+body.dark-theme.admin-user .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item,
+body.admin-user[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item,
+body.admin-user[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
+  color: #c0c0d0 !important;
+  background: transparent !important;
+}
+
+body.dark-theme.admin-user .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body.dark-theme.admin-user .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
+body.admin-user[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body.admin-user[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+
+body.dark-theme.admin-user .weekmate-whats-new,
+body.admin-user[data-theme="dark"] .weekmate-whats-new {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+/* ─── Header ─── */
+body.dark-theme.admin-user .top-header.ant-layout-header,
+body.dark-theme.admin-user .weekmate-header.ant-layout-header,
+body.admin-user[data-theme="dark"] .top-header.ant-layout-header,
+body.admin-user[data-theme="dark"] .weekmate-header.ant-layout-header {
+  background: #19202c !important;
+  border-bottom-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ─── TABLES: override all ant-table and page-layout table rules ─── */
+body.dark-theme.admin-user .ant-table-wrapper,
+body.dark-theme.admin-user .page-layout .ant-table-wrapper,
+body.dark-theme.admin-user .gx-layout-content .ant-table-wrapper,
+body.admin-user[data-theme="dark"] .ant-table-wrapper,
+body.admin-user[data-theme="dark"] .page-layout .ant-table-wrapper,
+body.admin-user[data-theme="dark"] .gx-layout-content .ant-table-wrapper {
+  background: #1a202c !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table,
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-container,
+body.dark-theme.admin-user .page-layout .ant-table-wrapper .ant-table,
+body.dark-theme.admin-user .gx-layout-content .ant-table-wrapper .ant-table,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-container,
+body.admin-user[data-theme="dark"] .page-layout .ant-table-wrapper .ant-table,
+body.admin-user[data-theme="dark"] .gx-layout-content .ant-table-wrapper .ant-table {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-title,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-title {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-bottom-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-thead > tr > th,
+body.dark-theme.admin-user .ant-table .ant-table-thead > tr > th,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-thead > tr > th,
+body.admin-user[data-theme="dark"] .ant-table .ant-table-thead > tr > th {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-bottom-color: #334155 !important;
+  border-right-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-tbody > tr > td,
+body.dark-theme.admin-user .ant-table .ant-table-tbody > tr > td,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td,
+body.admin-user[data-theme="dark"] .ant-table .ant-table-tbody > tr > td {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+  border-bottom-color: #334155 !important;
+  border-right-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-tbody > tr:hover > td,
+body.dark-theme.admin-user .ant-table .ant-table-tbody > tr.ant-table-row-hover > td,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr:hover > td,
+body.admin-user[data-theme="dark"] .ant-table .ant-table-tbody > tr.ant-table-row-hover > td {
+  background: #1e293b !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: #1e3a5f !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-footer,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-footer {
+  background: #1e293b !important;
+  border-top-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-placeholder,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-placeholder {
+  background: #1a202c !important;
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-item,
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-item a,
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-next .ant-pagination-item-link,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-item,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-item a,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-item-active,
+body.dark-theme.admin-user .ant-table-wrapper .ant-pagination .ant-pagination-item-active a,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-item-active,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+body.dark-theme.admin-user .ant-table-wrapper .ant-table-expanded-row > td,
+body.admin-user[data-theme="dark"] .ant-table-wrapper .ant-table-expanded-row > td {
+  background: #1e293b !important;
+}
+
+/* Match pms.css table structure exactly so we override their light theme */
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-container table {
+  background: #1a202c !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-tbody tr td,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-tbody tr td {
+  background-color: #1a202c !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-footer,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-footer {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+/* ─── Cards, inputs, task wrappers ─── */
+body.dark-theme.admin-user .ant-card,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-card,
+body.admin-user[data-theme="dark"] .ant-card,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .task-wrapper,
+body.dark-theme.admin-user .block-status-content,
+body.dark-theme.admin-user .task-schedule-wrapper,
+body.dark-theme.admin-user .new-dashboard-wrapper,
+body.admin-user[data-theme="dark"] .task-wrapper,
+body.admin-user[data-theme="dark"] .block-status-content,
+body.admin-user[data-theme="dark"] .task-schedule-wrapper,
+body.admin-user[data-theme="dark"] .new-dashboard-wrapper {
+  background: #19202c !important;
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .task-schedule-wrapper,
+body.admin-user[data-theme="dark"] .task-schedule-wrapper {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}
+
+body.dark-theme.admin-user .page-layout h1,
+body.dark-theme.admin-user .page-layout h2,
+body.dark-theme.admin-user .gx-layout-content h1,
+body.dark-theme.admin-user .gx-layout-content h2,
+body.admin-user[data-theme="dark"] .page-layout h1,
+body.admin-user[data-theme="dark"] .page-layout h2,
+body.admin-user[data-theme="dark"] .gx-layout-content h1,
+body.admin-user[data-theme="dark"] .gx-layout-content h2 {
+  color: #f1f5f9 !important;
+}
+
+/* Ant Design form controls */
+body.dark-theme.admin-user .ant-input,
+body.dark-theme.admin-user .ant-select-selector,
+body.dark-theme.admin-user .ant-picker,
+body.admin-user[data-theme="dark"] .ant-input,
+body.admin-user[data-theme="dark"] .ant-select-selector,
+body.admin-user[data-theme="dark"] .ant-picker {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-tabs-tab,
+body.admin-user[data-theme="dark"] .ant-tabs-tab {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body.admin-user[data-theme="dark"] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #38bdf8 !important;
+}
+
+body.dark-theme.admin-user .ant-tabs-ink-bar,
+body.admin-user[data-theme="dark"] .ant-tabs-ink-bar {
+  background: #38bdf8 !important;
+}
+
+/* Popover / dropdown menus that might stay white */
+body.dark-theme.admin-user .ant-popover-inner,
+body.dark-theme.admin-user .ant-popover-inner .ant-menu,
+body.admin-user[data-theme="dark"] .ant-popover-inner,
+body.admin-user[data-theme="dark"] .ant-popover-inner .ant-menu {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}

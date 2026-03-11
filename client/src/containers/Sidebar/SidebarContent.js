@@ -143,7 +143,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const getDefaultSelectedKey = useCallback(() => {
     const path = location.pathname;
     if (path.includes("/dashboard")) return "Dashboard";
-    if (path.includes("/project-list")) return "Admin Dashboard";
+    if (path.includes("/tasks")) return "Tasks";
+    if (path.includes("/project-list")) return "Projects";
     if (path.includes("/project-users")) return "Users";
     if (path.includes("/permission-access")) return "Permission";
     if (path.includes("/project-runnig-reports")) return "Analytics-Projects-running";
@@ -177,10 +178,10 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
       {
-        key: "Admin Dashboard",
+        key: "Tasks",
         icon: <CheckOutlined style={{ marginRight: 4 }} />,
         label: "Tasks",
-        onClick: () => handleMenuClick("Admin Dashboard", `/${companySlug}/project-list`),
+        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks`),
       },
       {
         key: "Projects",
@@ -337,11 +338,11 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           </Sider>
 
           {/* What's New - bottom of sidebar */}
-          <div className="weekmate-whats-new">
+          {/* <div className="weekmate-whats-new">
             <BellOutlined className="weekmate-whats-new-icon" />
             <span className="weekmate-whats-new-label">What&apos;s New</span>
             <span className="weekmate-whats-new-badge">1</span>
-          </div>
+          </div> */}
         </CustomScrollbars>
 
         <ProjectListModal
