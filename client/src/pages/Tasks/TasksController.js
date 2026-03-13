@@ -1642,7 +1642,6 @@ const TasksController = ({ flag }) => {
   };  
 
   useEffect(() => {
-    getProjectByID();
     getProjectMianTask();
     dispatch(getLables());
     dispatch(getFolderList(projectId));
@@ -1658,7 +1657,6 @@ const TasksController = ({ flag }) => {
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
       let data = projectMianTask.filter((ele) => listID == ele?._id);
-      getProjectByID();
       setSelectedTask(data[0]);
       getListWorkflowStatus();
       getBoardTasks(listID);
@@ -1667,7 +1665,6 @@ const TasksController = ({ flag }) => {
 
   useEffect(() => {
     getProjectByID();
-    getListWorkflowStatus();
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 

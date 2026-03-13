@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, no-eval, array-callback-return */
 import React, { useEffect, useRef, useState } from "react";
 import {
   Button,

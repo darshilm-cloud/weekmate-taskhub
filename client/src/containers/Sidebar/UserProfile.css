@@ -131,6 +131,42 @@
     /* Optional: adds a shadow for better visibility */
   }
 
+  /* Topbar user pill */
+  .user-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px;
+    background: #0b3a5b;
+    color: #ffffff;
+    border-radius: 999px;
+    cursor: pointer;
+    min-width: 184px;
+    justify-content: space-between;
+    height: 44px;
+  }
+
+  .user-pill .avatar-user {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+  }
+
+  .user-pill-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .user-pill-caret {
+    font-size: 11px;
+    color: #ffffff;
+  }
+
   .setting-main-wrapper .no-bullets {
     list-style-type: none;
     padding: 0;

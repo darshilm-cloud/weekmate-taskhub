@@ -61,6 +61,9 @@ export default class Service {
     accept: "application/json",
     "content-type": "application/json",
   };
+  static _interceptorsApplied = false;
+  static _requestInterceptorId = null;
+  static _responseInterceptorId = null;
 
   //Auth Module
   static userById = "/admin/userById";
@@ -453,7 +456,6 @@ export default class Service {
   static getDashboardData = "/superAdmin/getDashboardData"
   static addAdmin = '/superAdmin/addAdmin'
   static getAdminList = '/superAdmin/getAdminList'
-  static getAdminList = '/superAdmin/getAdminList'
   static deleteAdmin = '/superAdmin/deleteAdmin'
   static editAdminList = '/superAdmin/editAdmin'
 
@@ -492,41 +494,42 @@ export default class Service {
   }) {
     api_url = this.API_URL + api_url;
 
-    //request interceptor to add the auth token header to requests
-    axios.interceptors.request.use(
-      (config) => {
-        const accessToken = localStorage.getItem("accessToken");
-        if (accessToken) {
-          config.headers = {
-            "Access-Control-Allow-Origin": "*",
-            authorization: "Bearer " + accessToken,
-            platform: "web-admin",
-            // ...config.cachekey ?{ cachekey:config.cachekey} : {},
-            // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
-            ...options,
-          };
-        } else {
-          config.headers = {
-            platform: "web-admin",
-            ...options,
-          };
+    if (!this._interceptorsApplied) {
+      // request interceptor to add the auth token header to requests
+      this._requestInterceptorId = axios.interceptors.request.use(
+        (config) => {
+          const accessToken = localStorage.getItem("accessToken");
+          if (accessToken) {
+            config.headers = {
+              "Access-Control-Allow-Origin": "*",
+              authorization: "Bearer " + accessToken,
+              platform: "web-admin",
+              // ...config.cachekey ?{ cachekey:config.cachekey} : {},
+              // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
+              ...options,
+            };
+          } else {
+            config.headers = {
+              platform: "web-admin",
+              ...options,
+            };
+          }
+          return config;
+        },
+        (error) => Promise.reject(error)
+      );
+      // response interceptor to refresh token on receiving token expired error
+      this._responseInterceptorId = axios.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            this.logOut();
+          }
+          return Promise.reject(error);
         }
-        return config;
-      },
-      (error) => {
-        Promise.reject(error);
-      }
-    );
-    //response interceptor to refresh token on receiving token expired error
-    axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          this.logOut();
-        }
-        return Promise.reject(error);
-      }
-    );
+      );
+      this._interceptorsApplied = true;
+    }
 
     if (methodName === this.getMethod) {
       if (params) {

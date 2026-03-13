@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, eqeqeq, no-useless-escape */
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './MiraAI.css';

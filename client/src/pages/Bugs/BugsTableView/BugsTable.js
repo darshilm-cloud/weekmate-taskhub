@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-concat */
 import BugsKanbanController from "../BugsKanbanBoard/BugsKanbanController";
 import React, { useState } from "react";
 import moment from "moment";

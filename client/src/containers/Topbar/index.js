@@ -32,32 +32,30 @@ function Topbar() {
   };
 
   return (
-    <Header className="top-header top-header-icons weekmate-header taskpad-header">
-      <div className="weekmate-header-left">
-        <div className="gx-linebar">
-          <i
-            className="fi fi-rr-menu-burger icon-menu"
-            onClick={() => dispatch(toggleCollapsedSideNav(!navCollapsed))}
-            aria-hidden
-          />
+    <Header className="top-header top-header-icons weekmate-header taskpad-header weekmate-header-shell">
+      <div className="weekmate-header-card">
+        <div className="weekmate-header-left">
+          <div className="weekmate-header-title">
+            {companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech"}
+          </div>
         </div>
-      </div>
-      <div className="weekmate-header-right">
-        <div className="taskpad-expiry-badge">
-          <span className="taskpad-expiry-icon"><SwitcherTwoTone /></span>
+        <div className="weekmate-header-right">
+          <div className="taskpad-expiry-badge">
+            <span className="taskpad-expiry-icon"><SwitcherTwoTone /></span>
+          </div>
+          <button
+            type="button"
+            className={`taskpad-theme-toggle ${isLightTheme ? "theme-light" : "theme-dark"}`}
+            onClick={handleThemeToggle}
+            aria-label={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+            title={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+          >
+            <span className="taskpad-theme-sun" aria-hidden>☀</span>
+            <span className="taskpad-theme-moon" aria-hidden>🌙</span>
+            <span className="taskpad-theme-knob" />
+          </button>
+          <UserProfile />
         </div>
-        <button
-          type="button"
-          className={`taskpad-theme-toggle ${isLightTheme ? "theme-light" : "theme-dark"}`}
-          onClick={handleThemeToggle}
-          aria-label={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
-          title={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
-        >
-          <span className="taskpad-theme-sun" aria-hidden>☀</span>
-          <span className="taskpad-theme-moon" aria-hidden>🌙</span>
-          <span className="taskpad-theme-knob" />
-        </button>
-        <UserProfile />
       </div>
     </Header>
   );

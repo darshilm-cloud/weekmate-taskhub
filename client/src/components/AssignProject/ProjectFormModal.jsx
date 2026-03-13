@@ -11,6 +11,7 @@ import {
   Select,
   Space,
   message,
+  Spin,
 } from "antd";
 import {
   FolderOutlined,
@@ -402,7 +403,25 @@ const ProjectFormModal = ({
     }
   };
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <Modal
+        footer={null}
+        width={580}
+        open={isModalOpen}
+        onCancel={handleCancel}
+        className="pfm-modal"
+        destroyOnClose
+      >
+        <div className="pfm-header">
+          <h2 className="pfm-title">Loading Project Details</h2>
+        </div>
+        <div style={{ padding: "24px 0", display: "flex", justifyContent: "center" }}>
+          <Spin size="large" />
+        </div>
+      </Modal>
+    );
+  }
 
   const isEdit = modalMode !== "add";
 

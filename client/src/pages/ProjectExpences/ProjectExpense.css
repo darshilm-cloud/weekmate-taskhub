@@ -4,7 +4,7 @@
 
 .pe-page {
   padding: 24px;
-  background: #f1f5f9;
+  background: var(--app-bg);
   min-height: 100%;
 }
 
@@ -21,7 +21,7 @@
 .pe-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--app-text);
   margin: 0;
 }
 
@@ -41,29 +41,29 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #475569;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text-muted);
   transition: all 0.15s ease;
   white-space: nowrap;
   text-decoration: none;
 }
 
 .pe-btn:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  color: #1e293b;
+  border-color: var(--app-border);
+  background: var(--app-surface-2);
+  color: var(--app-text);
 }
 
 .pe-btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--app-primary);
+  border-color: var(--app-primary);
   color: #ffffff;
 }
 
 .pe-btn.primary:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--app-primary-hover);
+  border-color: var(--app-primary-hover);
   color: #ffffff;
 }
 
@@ -82,8 +82,8 @@
 }
 
 .pe-stat-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 14px;
   padding: 20px;
   display: flex;
@@ -525,4 +525,37 @@
   .pe-stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+body.dark-theme .pe-page,
+body[data-theme="dark"] .pe-page {
+  background: #07111f;
+}
+
+body.dark-theme .pe-chart-card,
+body.dark-theme .pe-filter-bar,
+body.dark-theme .pe-table-card,
+body[data-theme="dark"] .pe-chart-card,
+body[data-theme="dark"] .pe-filter-bar,
+body[data-theme="dark"] .pe-table-card {
+  background: #0c182b;
+  border-color: rgba(74, 104, 150, 0.24);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+body.dark-theme .pe-chart-title,
+body[data-theme="dark"] .pe-chart-title {
+  color: #e3ecfb;
+}
+
+body.dark-theme .pe-chart-sub,
+body.dark-theme .pe-filter-label,
+body[data-theme="dark"] .pe-chart-sub,
+body[data-theme="dark"] .pe-filter-label {
+  color: #8fa7cc;
+}
+
+body.dark-theme .pe-filter-divider,
+body[data-theme="dark"] .pe-filter-divider {
+  background: rgba(74, 104, 150, 0.24);
 }

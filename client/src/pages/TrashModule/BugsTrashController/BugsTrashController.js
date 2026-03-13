@@ -10,7 +10,7 @@ const BugsTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
 
   const dispatch = useDispatch();
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -50,7 +50,6 @@ const BugsTrashController = () => {
       render: (text, record) => {
         const Title = record?.project?.title;
         const ProjectId = record?.project?._id;
-        const color = record?.color;
         return (
           <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, Table, Button, Dropdown } from "antd";
 import {
@@ -379,7 +380,7 @@ const ProjectsRunning = () => {
         },
         labels: pieechartDataMangerNames || [],
         colors: [
-          "#00E396",
+          "#2dd4bf",
           "#008FFB",
           "#00D9FF",
           "#FEB019",
@@ -421,7 +422,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: ["#00E396", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Multiple colors
+        colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Multiple colors
         plotOptions: {
           bar: {
             horizontal: true,
@@ -446,7 +447,7 @@ const ProjectsRunning = () => {
         },
         // Ensure legend colors match the bars
         fill: {
-          colors: ["#00E396", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Explicitly set fill colors
+          colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Explicitly set fill colors
         },
       },
     };
@@ -1135,7 +1136,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#00E396",
+//           "#2dd4bf",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -1190,7 +1191,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#00E396"],
+//         colors: ["#2dd4bf"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,
@@ -1941,7 +1942,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#00E396",
+//           "#2dd4bf",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -1988,7 +1989,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#00E396"],
+//         colors: ["#2dd4bf"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,

@@ -1,16 +1,20 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import useEffectAfterMount from "../../util/useEffectAfterMount";
 import {
   Input,
   Table,
   Popconfirm,
   message,
   Button,
+  Form,
+  Skeleton,
   Select,
   Spin,
   Empty,
   Pagination,
   Dropdown,
   Modal,
+  Calendar,
 } from "antd";
 import {
   DeleteOutlined,
@@ -24,9 +28,14 @@ import {
   CheckCircleOutlined,
   DownOutlined,
   CloseCircleOutlined,
+  CalendarOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
-import { Link, useParams, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import ReactApexChart from "react-apexcharts";
+import { Link, useParams, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import moment from "moment";
+import dayjs from "dayjs";
 import Service from "../../service";
 import { hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
@@ -35,6 +44,7 @@ import MyAvatarGroup from "../AvatarGroup/MyAvatarGroup";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
+import AddTaskModal from "../../pages/Tasks/AddTaskModal";
 import "./AssignProject.css";
 
 /* ─── Donut Chart ─────────────────────────────────────────── */
@@ -248,29 +258,55 @@ const TABS = [
   { key: "my_team", label: "My Team Project", icon: <TeamOutlined /> },
 ];
 
+const TAB_FILTER_MAP = {
+  created_by_me: "all",
+  assignee_to_me: "assigned",
+  my_team: "manager",
+};
+
 /* ─── Main Component ──────────────────────────────────────── */
 const AssignProject = () => {
   const { editProjectId } = useParams();
   const companySlug = localStorage.getItem("companyDomain");
   const history = useHistory();
+  const location = useLocation();
   const searchRef = useRef();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedProject, setSelectedProject] = useState(null);
   const [isloadingProject, setIsloadingProject] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 30 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 12 });
   const [searchText, setSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [sortOption, setSortOption] = useState("createdAt");
   const [columnDetails, setColumnDetails] = useState([]);
   const [currentFilters, setCurrentFilters] = useState({});
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("list");
   const [activeTab, setActiveTab] = useState("created_by_me");
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
+  const [projectCache, setProjectCache] = useState({});
+  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
+  const [isBrowserDateFilterOpen, setIsBrowserDateFilterOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [tempCalendarDate, setTempCalendarDate] = useState(dayjs());
+  const [selectedWorkspaceProjectId, setSelectedWorkspaceProjectId] = useState(null);
+  const [workspaceMemberTab, setWorkspaceMemberTab] = useState("staff");
+  const [workspaceSubtab, setWorkspaceSubtab] = useState("overview");
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [lastCreatedTask, setLastCreatedTask] = useState(null);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState(null);
+  const [projectTasksMap, setProjectTasksMap] = useState({});
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [addTaskForm] = Form.useForm();
+  const latestRequestIdRef = useRef(0);
+  const prefetchTimeoutRef = useRef(null);
+  const idleFetchRef = useRef(null);
+  const ENABLE_TAB_PREFETCH = false;
 
   useEffect(() => {
     fetchStatusList();
@@ -280,9 +316,19 @@ const AssignProject = () => {
     if (editProjectId) getProjectByID();
   }, [editProjectId]);
 
+  const searchDebounceRef = useRef(null);
+  useEffectAfterMount(() => {
+    // Debounce search — only fires after searchText changes (not on mount)
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      getProjectListing(currentSkipFilters, currentFilters);
+    }, 400);
+    return () => clearTimeout(searchDebounceRef.current);
+  }, [searchText]);
+
   useEffect(() => {
     getProjectListing(currentSkipFilters, currentFilters);
-  }, [searchText, pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, statusFilter]);
+  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, statusFilter]);
 
   const fetchStatusList = async () => {
     try {
@@ -297,37 +343,120 @@ const AssignProject = () => {
     }
   };
 
-  const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
-    try {
-      setIsloadingProject(true);
-      const reqBody = {
-        pageNo: pagination.current,
-        limit: pagination.pageSize,
-        sortBy: "desc",
-        filterBy: activeTab === "created_by_me" ? "all" : activeTab,
-        sort: sortOption,
-      };
+  const buildReqBody = (filterBy, skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+    const reqBody = {
+      pageNo: pagination.current,
+      limit: pagination.pageSize,
+      sortBy: "desc",
+      filterBy,
+      sort: sortOption,
+    };
 
-      const shouldSkip = (filterKey) =>
-        skipFilters.includes("skipAll") || skipFilters.includes(filterKey);
+    const shouldSkip = (filterKey) =>
+      skipFilters.includes("skipAll") || skipFilters.includes(filterKey);
 
-      if (!shouldSkip("skipManager") && filterStats?.manager?.length > 0)
-        reqBody.manager_id = filterStats.manager;
-      if (!shouldSkip("skipAccountManager") && filterStats?.account_manager?.length > 0)
-        reqBody.acc_manager_id = filterStats.account_manager;
-      if (!shouldSkip("skipTechnology") && filterStats?.technology?.length > 0)
-        reqBody.technology = filterStats.technology;
-      if (!shouldSkip("skipProjectType") && filterStats?.project_type?.length > 0)
-        reqBody.project_type = filterStats.project_type;
-      if (!shouldSkip("skipAssignees") && filterStats?.assignees?.length > 0)
-        reqBody.assignee_id = filterStats.assignees;
-      if (searchText?.trim()) {
-        reqBody.search = searchText;
-        setSearchEnabled(true);
+    if (!shouldSkip("skipManager") && filterStats?.manager?.length > 0)
+      reqBody.manager_id = filterStats.manager;
+    if (!shouldSkip("skipAccountManager") && filterStats?.account_manager?.length > 0)
+      reqBody.acc_manager_id = filterStats.account_manager;
+    if (!shouldSkip("skipTechnology") && filterStats?.technology?.length > 0)
+      reqBody.technology = filterStats.technology;
+    if (!shouldSkip("skipProjectType") && filterStats?.project_type?.length > 0)
+      reqBody.project_type = filterStats.project_type;
+    if (!shouldSkip("skipAssignees") && filterStats?.assignees?.length > 0)
+      reqBody.assignee_id = filterStats.assignees;
+    if (searchText?.trim()) {
+      reqBody.search = searchText;
+      setSearchEnabled(true);
+    }
+    if (statusFilter) reqBody.project_status = statusFilter;
+
+    return reqBody;
+  };
+
+  const prefetchOtherTabs = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+    const otherTabs = TABS.map((t) => t.key).filter((k) => k !== activeTab);
+    await Promise.all(
+      otherTabs.map(async (tabKey) => {
+        const filterBy = TAB_FILTER_MAP[tabKey] || "all";
+        const reqBody = buildReqBody(filterBy, skipFilters, filterStats);
+        const Key = generateCacheKey("project", reqBody);
+        if (projectCache[Key]) return;
+        try {
+          const response = await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectdetails,
+            body: reqBody,
+            options: { cachekey: Key },
+          });
+          const projects = response?.data?.data || [];
+          const total = response?.data?.metadata?.total || 0;
+          setProjectCache((prev) => ({
+            ...prev,
+            [Key]: { projects, total, taskStats: {} },
+          }));
+        } catch (e) {
+          console.error(e);
+        }
+      })
+    );
+  };
+
+  const fetchTaskStatsForIds = useCallback(async (projectIds) => {
+    if (!Array.isArray(projectIds) || projectIds.length === 0) return;
+
+    const uniqueIds = Array.from(new Set(projectIds.filter(Boolean)));
+    const idsToFetch = uniqueIds.filter((id) => !taskStats[id]);
+    if (idsToFetch.length === 0) return;
+
+    const results = {};
+    const queue = [...idsToFetch];
+    const limit = 4;
+
+    const fetchOne = async (projectId) => {
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTaskList,
+          body: { project_id: projectId, countFor: "All" },
+        });
+        if (response?.data?.statusCode === 200) {
+          results[projectId] = response.data.data;
+        }
+      } catch (e) {
+        console.error(e);
       }
-      if (statusFilter) reqBody.project_status = statusFilter;
+    };
+
+    const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+      while (queue.length) {
+        const nextId = queue.shift();
+        await fetchOne(nextId);
+      }
+    });
+
+    await Promise.all(workers);
+
+    if (Object.keys(results).length > 0) {
+      setTaskStats((prev) => ({ ...prev, ...results }));
+    }
+  }, [taskStats]);
+
+  const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+    const requestId = ++latestRequestIdRef.current;
+    try {
+      const reqBody = buildReqBody(TAB_FILTER_MAP[activeTab] || "all", skipFilters, filterStats);
 
       const Key = generateCacheKey("project", reqBody);
+      const cached = projectCache[Key];
+      if (cached) {
+        setColumnDetails(cached.projects);
+        setPagination((prev) => ({ ...prev, total: cached.total }));
+        setIsloadingProject(false);
+        return; // skip API call — data already cached
+      }
+      setIsloadingProject(true);
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
@@ -335,51 +464,53 @@ const AssignProject = () => {
         options: { cachekey: Key },
       });
 
+      if (requestId !== latestRequestIdRef.current) return;
+
       if (response?.data?.data?.length > 0) {
         const projects = response.data.data;
         setColumnDetails(projects);
         setPagination((prev) => ({ ...prev, total: response.data.metadata.total }));
-        fetchTaskStats(projects);
+        setIsloadingProject(false);
+        setProjectCache((prev) => ({
+          ...prev,
+          [Key]: {
+            projects,
+            total: response.data.metadata.total,
+            taskStats: prev[Key]?.taskStats || {},
+          },
+        }));
       } else {
         setColumnDetails([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
         setTaskStats({});
+        setProjectCache((prev) => ({
+          ...prev,
+          [Key]: { projects: [], total: 0, taskStats: {} },
+        }));
+        setIsloadingProject(false);
+      }
+
+      if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current);
+      const hasActiveFilters =
+        Boolean(searchText?.trim()) ||
+        Boolean(statusFilter) ||
+        (filterStats && Object.keys(filterStats).length > 0);
+
+      if (ENABLE_TAB_PREFETCH && !hasActiveFilters) {
+        prefetchTimeoutRef.current = setTimeout(() => {
+          prefetchOtherTabs(skipFilters, filterStats);
+        }, 600);
       }
     } catch (error) {
       console.error(error);
     } finally {
-      setIsloadingProject(false);
+      if (requestId === latestRequestIdRef.current) {
+        setIsloadingProject(false);
+      }
     }
   };
 
-  const fetchTaskStats = async (projects) => {
-    try {
-      const results = await Promise.all(
-        projects.map(async (project) => {
-          try {
-            const response = await Service.makeAPICall({
-              methodName: Service.postMethod,
-              api_url: Service.getTaskList,
-              body: { project_id: project._id, countFor: "All" },
-            });
-            if (response?.data?.statusCode === 200) {
-              return { _id: project._id, data: response.data.data };
-            }
-          } catch (e) {
-            console.error(e);
-          }
-          return { _id: project._id, data: null };
-        })
-      );
-      const statsMap = {};
-      results.forEach((r) => {
-        statsMap[r._id] = r.data;
-      });
-      setTaskStats(statsMap);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  // Task stats are fetched lazily to keep initial page load fast.
 
   const getProjectByID = async () => {
     try {
@@ -505,6 +636,311 @@ const AssignProject = () => {
       console.error(error);
     }
   };
+
+  const doesProjectMatchDate = (record, dateValue) => {
+    if (!dateValue) return true;
+    const selectedMoment = moment(dateValue.toDate()).startOf("day");
+    const startMoment = record?.start_date ? moment(record.start_date).startOf("day") : null;
+    const endMoment = record?.end_date ? moment(record.end_date).endOf("day") : null;
+
+    if (startMoment?.isValid() && endMoment?.isValid()) {
+      return selectedMoment.isBetween(startMoment, endMoment, "day", "[]");
+    }
+    if (endMoment?.isValid()) return selectedMoment.isSame(endMoment, "day");
+    if (startMoment?.isValid()) return selectedMoment.isSame(startMoment, "day");
+    return false;
+  };
+
+  const visibleProjects = selectedDate
+    ? columnDetails.filter((record) => doesProjectMatchDate(record, selectedDate))
+    : columnDetails;
+
+  useEffect(() => {
+    if (!visibleProjects.length) return;
+
+    const isGrid = viewMode === "grid";
+    const primaryIds = isGrid
+      ? visibleProjects.slice(0, 6).map((project) => project._id)
+      : selectedWorkspaceProjectId
+      ? [selectedWorkspaceProjectId]
+      : [];
+
+    const timer = setTimeout(() => {
+      fetchTaskStatsForIds(primaryIds);
+    }, 0);
+
+    if (idleFetchRef.current) {
+      if (typeof idleFetchRef.current === "number") {
+        clearTimeout(idleFetchRef.current);
+      } else if (typeof window !== "undefined" && window.cancelIdleCallback) {
+        window.cancelIdleCallback(idleFetchRef.current);
+      }
+    }
+
+    if (isGrid && visibleProjects.length > 6) {
+      const remainingIds = visibleProjects.slice(6).map((project) => project._id);
+      if (typeof window !== "undefined" && window.requestIdleCallback) {
+        idleFetchRef.current = window.requestIdleCallback(() => {
+          fetchTaskStatsForIds(remainingIds);
+        }, { timeout: 1500 });
+      } else {
+        idleFetchRef.current = setTimeout(() => {
+          fetchTaskStatsForIds(remainingIds);
+        }, 600);
+      }
+    }
+
+    return () => {
+      clearTimeout(timer);
+      if (idleFetchRef.current) {
+        if (typeof idleFetchRef.current === "number") {
+          clearTimeout(idleFetchRef.current);
+        } else if (typeof window !== "undefined" && window.cancelIdleCallback) {
+          window.cancelIdleCallback(idleFetchRef.current);
+        }
+      }
+    };
+  }, [visibleProjects, viewMode, selectedWorkspaceProjectId, fetchTaskStatsForIds]);
+
+  useEffect(() => {
+    if (!visibleProjects.length) {
+      setSelectedWorkspaceProjectId(null);
+      return;
+    }
+    const hasSelected = visibleProjects.some((project) => project._id === selectedWorkspaceProjectId);
+    if (!selectedWorkspaceProjectId || !hasSelected) {
+      setSelectedWorkspaceProjectId(visibleProjects[0]._id);
+    }
+  }, [visibleProjects, selectedWorkspaceProjectId]);
+
+  const selectedWorkspaceProject =
+    visibleProjects.find((project) => project._id === selectedWorkspaceProjectId) || visibleProjects[0] || null;
+  const selectedWorkspaceStats = selectedWorkspaceProject ? taskStats[selectedWorkspaceProject._id] || {} : {};
+  const workspaceMembers = {
+    staff: selectedWorkspaceProject?.assignees || [],
+    manager: selectedWorkspaceProject?.manager ? [selectedWorkspaceProject.manager] : [],
+    coMember: [],
+    client: selectedWorkspaceProject?.pms_clients || [],
+  };
+
+  const workspaceTasks = selectedWorkspaceProject?._id
+    ? projectTasksMap[selectedWorkspaceProject._id] || []
+    : [];
+
+  const fetchProjectTasks = async (projectId) => {
+    if (!projectId) return;
+    if (projectTasksMap[projectId]) return;
+    setIsLoadingTasks(true);
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
+      });
+      if (response?.data?.statusCode === 200) {
+        const tasks = response.data.data || [];
+        setProjectTasksMap((prev) => ({ ...prev, [projectId]: tasks }));
+      } else {
+        setProjectTasksMap((prev) => ({ ...prev, [projectId]: [] }));
+      }
+    } catch (error) {
+      console.error(error);
+      setProjectTasksMap((prev) => ({ ...prev, [projectId]: [] }));
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const fetchProjectTasksForce = async (projectId) => {
+    if (!projectId) return;
+    setIsLoadingTasks(true);
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
+      });
+      if (response?.data?.statusCode === 200) {
+        const tasks = response.data.data || [];
+        setProjectTasksMap((prev) => ({ ...prev, [projectId]: tasks }));
+      } else {
+        setProjectTasksMap((prev) => ({ ...prev, [projectId]: [] }));
+      }
+    } catch (error) {
+      console.error(error);
+      setProjectTasksMap((prev) => ({ ...prev, [projectId]: [] }));
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const refreshTaskStatsForProject = async (projectId) => {
+    if (!projectId) return;
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTaskList,
+        body: { project_id: projectId, countFor: "All" },
+      });
+      if (response?.data?.statusCode === 200) {
+        const latestStats = response.data.data;
+        setTaskStats((prev) => ({ ...prev, [projectId]: latestStats }));
+        setProjectCache((prev) => {
+          const next = { ...prev };
+          Object.keys(next).forEach((key) => {
+            const entry = next[key];
+            if (!entry || !entry.taskStats) return;
+            next[key] = {
+              ...entry,
+              taskStats: { ...entry.taskStats, [projectId]: latestStats },
+            };
+          });
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const groupByBucket = (tasks, bucket) => {
+    if (!Array.isArray(tasks)) return [];
+    const today = dayjs().format("YYYY-MM-DD");
+    return tasks.filter((t) => {
+      const due = t?.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
+      if (!due) return false;
+      if (bucket === "today") return due === today;
+      if (bucket === "overdue") return dayjs(due).isBefore(dayjs(today), "day");
+      if (bucket === "upcoming") return dayjs(due).isAfter(dayjs(today), "day");
+      return false;
+    });
+  };
+
+  const todayTasks = groupByBucket(workspaceTasks, "today");
+  const overdueTasks = groupByBucket(workspaceTasks, "overdue");
+  const upcomingTasks = groupByBucket(workspaceTasks, "upcoming");
+  const firstAvailableTask = todayTasks[0] || overdueTasks[0] || upcomingTasks[0] || null;
+
+  useEffect(() => {
+    if (!selectedTaskForEdit && firstAvailableTask) {
+      setSelectedTaskForEdit(firstAvailableTask);
+    }
+  }, [firstAvailableTask, selectedTaskForEdit]);
+
+  const calendarBase = dayjs();
+  const calendarStart = calendarBase.startOf("month").startOf("week");
+  const calendarDays = Array.from({ length: 42 }).map((_, i) => calendarStart.add(i, "day"));
+  const tasksForDate = (date) =>
+    workspaceTasks.filter((t) => t?.due_date && dayjs(t.due_date).isSame(date, "day"));
+
+  const closedCount = selectedWorkspaceStats?.closed ?? 0;
+  const pendingCount =
+    (selectedWorkspaceStats?.today ?? 0) +
+    (selectedWorkspaceStats?.overDue ?? 0) +
+    (selectedWorkspaceStats?.upComing ?? 0);
+  const totalChartCount = closedCount + pendingCount;
+
+  const statusChartOptions = {
+    chart: { type: "donut" },
+    labels: ["Closed", "Pending"],
+    colors: ["#35C03B", "#FBBF24"],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: "Tasks",
+              formatter: () => totalChartCount.toString(),
+            },
+          },
+        },
+      },
+    },
+  };
+
+  const statusChartSeries =
+    totalChartCount === 0 ? [1, 1] : [closedCount, pendingCount];
+
+  const userDisplayName =
+    selectedWorkspaceProject?.manager?.full_name ||
+    (selectedWorkspaceProject?.assignees?.[0]?.name ?? "Team");
+
+  const completionPctRaw = selectedWorkspaceProject?.completionPercentage;
+  const completionPct =
+    typeof completionPctRaw === "number" && Number.isFinite(completionPctRaw)
+      ? Math.min(Math.max(Math.round(completionPctRaw), 0), 100)
+      : null;
+
+  const closedPct = completionPct !== null
+    ? completionPct
+    : totalChartCount === 0
+      ? 0
+      : Math.round((closedCount / totalChartCount) * 100);
+
+  const incompletePct = completionPct !== null
+    ? Math.max(0, 100 - closedPct)
+    : totalChartCount === 0
+      ? 0
+      : Math.round((pendingCount / totalChartCount) * 100);
+
+  const userAnalysisOptions = {
+    chart: { type: "bar", stacked: true, toolbar: { show: false } },
+    dataLabels: { enabled: false },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "2%",
+        borderRadius: 10,
+      },
+    },
+    colors: ["#35C03B", "#EF4444"],
+    xaxis: {
+      categories: [userDisplayName],
+      labels: { style: { colors: "#64748b" } },
+      axisBorder: { show: true, color: "#e5e7eb" },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      min: 0,
+      max: 100,
+      tickAmount: 10,
+      labels: { formatter: (val) => `${Math.round(val)}%`, style: { colors: "#64748b" } },
+    },
+    grid: { borderColor: "#eef2f7", strokeDashArray: 0 },
+    tooltip: { y: { formatter: (val) => `${Math.round(val)}%` } },
+    legend: { position: "top", horizontalAlign: "center" },
+  };
+
+  const userAnalysisSeries = [
+    { name: "Closed Tasks", data: [closedPct] },
+    { name: "Incomplete Tasks", data: [incompletePct] },
+  ];
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get("tab");
+    const listIdParam = searchParams.get("listID");
+    const taskIdParam = searchParams.get("taskID");
+
+    if (!selectedWorkspaceProject?._id) return;
+    if (!tabParam && !listIdParam && !taskIdParam) return;
+
+    const nextSearch = new URLSearchParams();
+    if (tabParam) nextSearch.set("tab", tabParam);
+    if (listIdParam) nextSearch.set("listID", listIdParam);
+    if (taskIdParam) nextSearch.set("taskID", taskIdParam);
+
+    history.replace(`/${companySlug}/project/app/${selectedWorkspaceProject._id}?${nextSearch.toString()}`);
+  }, [companySlug, history, location.search, selectedWorkspaceProject?._id]);
+
+  useEffect(() => {
+    if (selectedWorkspaceProject?._id) {
+      fetchProjectTasks(selectedWorkspaceProject._id);
+    }
+  }, [selectedWorkspaceProject?._id]);
+
 
   /* Table columns for list view */
   const columns = [
@@ -644,7 +1080,66 @@ const AssignProject = () => {
     });
   }
 
-  const totalCount = pagination.total || columnDetails.length;
+  const totalCount = selectedDate ? visibleProjects.length : (pagination.total || columnDetails.length);
+  const calendarOverlay = (
+    <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
+      <div className="ap-date-dropdown-header">
+        <span className="ap-date-dropdown-label">
+          {(tempCalendarDate || dayjs()).format("MMM YYYY").toUpperCase()}
+        </span>
+        <div className="ap-date-dropdown-nav">
+          <button
+            type="button"
+            className="ap-date-nav-btn"
+            onClick={() => setTempCalendarDate((prev) => (prev || dayjs()).subtract(1, "month"))}
+          >
+            <LeftOutlined />
+          </button>
+          <button
+            type="button"
+            className="ap-date-nav-btn"
+            onClick={() => setTempCalendarDate((prev) => (prev || dayjs()).add(1, "month"))}
+          >
+            <RightOutlined />
+          </button>
+        </div>
+      </div>
+      <Calendar
+        fullscreen={false}
+        value={tempCalendarDate}
+        onSelect={(value) => setTempCalendarDate(value)}
+        onPanelChange={(value) => setTempCalendarDate(value)}
+        headerRender={() => null}
+      />
+      <div className="ap-date-dropdown-actions">
+        <button
+          type="button"
+          className="ap-date-action ap-date-action--clear"
+          onClick={() => {
+            setSelectedDate(null);
+            setTempCalendarDate(dayjs());
+            setPagination((prev) => ({ ...prev, current: 1 }));
+            setIsDateFilterOpen(false);
+            setIsBrowserDateFilterOpen(false);
+          }}
+        >
+          Clear All
+        </button>
+        <button
+          type="button"
+          className="ap-date-action ap-date-action--apply"
+          onClick={() => {
+            setSelectedDate(tempCalendarDate);
+            setPagination((prev) => ({ ...prev, current: 1 }));
+            setIsDateFilterOpen(false);
+            setIsBrowserDateFilterOpen(false);
+          }}
+        >
+          Apply
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="ap-page-wrapper">
@@ -688,6 +1183,25 @@ const AssignProject = () => {
               handleSortFilter={handleSortFilter}
               getProjectListing={getProjectListing}
             />
+            <Dropdown
+              open={isDateFilterOpen}
+              onOpenChange={(open) => {
+                setIsDateFilterOpen(open);
+                if (open) setTempCalendarDate(selectedDate || dayjs());
+              }}
+              trigger={["click"]}
+              dropdownRender={() => calendarOverlay}
+              placement="bottomLeft"
+              overlayClassName="ap-date-dropdown-overlay"
+            >
+              <button
+                type="button"
+                className={`ap-view-btn ap-date-trigger ${selectedDate ? "active" : ""}`}
+                title="Date filter"
+              >
+                <CalendarOutlined />
+              </button>
+            </Dropdown>
             <div className="ap-view-toggle">
               <button
                 className={`ap-view-btn ${viewMode === "list" ? "active" : ""}`}
@@ -726,6 +1240,7 @@ const AssignProject = () => {
                 className={`ap-tab-btn ${activeTab === tab.key ? "active" : ""}`}
                 onClick={() => {
                   setActiveTab(tab.key);
+                  setSelectedWorkspaceProjectId(null);
                   setPagination((p) => ({ ...p, current: 1 }));
                 }}
               >
@@ -761,7 +1276,7 @@ const AssignProject = () => {
               </div>
             ) : (
               <div className="ap-cards-grid">
-                {columnDetails.map((record) => (
+                {visibleProjects.map((record) => (
                   <ProjectCard
                     key={record._id}
                     record={record}
@@ -776,12 +1291,12 @@ const AssignProject = () => {
                 ))}
               </div>
             )}
-            {!isloadingProject && columnDetails.length > 0 && (
+            {!isloadingProject && visibleProjects.length > 0 && (
               <div className="ap-grid-pagination">
                 <Pagination
                   current={pagination.current}
                   pageSize={pagination.pageSize}
-                  total={pagination.total}
+                  total={totalCount}
                   showSizeChanger
                   pageSizeOptions={["10", "20", "30"]}
                   showTotal={showTotal}
@@ -791,20 +1306,435 @@ const AssignProject = () => {
             )}
           </div>
         ) : (
-          <div className="ap-table-section">
-            <Table
-              columns={columns}
-              dataSource={columnDetails}
-              pagination={{
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                showTotal,
-                ...pagination,
-              }}
-              onChange={handleTableChange}
-              loading={isloadingProject}
-              rowKey="_id"
-            />
+          <div className="ap-browser-layout">
+            <aside className="ap-browser-sidebar">
+              <div className="ap-browser-sidebar-toolbar">
+                <Input
+                  placeholder="Type here to search"
+                  value={searchText}
+                  onChange={(e) => {
+                    setSearchText(e.target.value);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  className="ap-browser-side-search"
+                />
+                <Dropdown
+                  open={isBrowserDateFilterOpen}
+                  onOpenChange={(open) => {
+                    setIsBrowserDateFilterOpen(open);
+                    if (open) setTempCalendarDate(selectedDate || dayjs());
+                  }}
+                  trigger={["click"]}
+                  dropdownRender={() => calendarOverlay}
+                  placement="bottomLeft"
+                  overlayClassName="ap-date-dropdown-overlay"
+                >
+                  <button
+                    type="button"
+                    className={`ap-date-trigger ap-browser-date-btn ${selectedDate ? "active" : ""}`}
+                    title="Date filter"
+                  >
+                    <CalendarOutlined />
+                  </button>
+                </Dropdown>
+              </div>
+              <Select
+                placeholder="Select status"
+                allowClear
+                className="ap-browser-side-status"
+                suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
+                onChange={(val) => {
+                  setStatusFilter(val);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+                value={statusFilter}
+              >
+                {projectStatusList.map((s) => (
+                  <Select.Option key={s._id} value={s._id}>
+                    {s.title}
+                  </Select.Option>
+                ))}
+              </Select>
+              <div className="ap-browser-project-list">
+                <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
+                {isloadingProject ? (
+                  <div className="ap-browser-project-list-skeleton">
+                    {Array.from({ length: 7 }).map((_, idx) => (
+                      <div key={`proj-skel-${idx}`} className="ap-browser-project-skel-row">
+                        <Skeleton.Input active size="small" className="ap-browser-project-skel-input" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  visibleProjects.map((project) => (
+                    <button
+                      key={project._id}
+                      type="button"
+                      className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
+                      onClick={() => setSelectedWorkspaceProjectId(project._id)}
+                    >
+                      <span className="ap-browser-project-name">
+                        {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
+                      </span>
+                      <MoreOutlined className="ap-browser-project-more" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </aside>
+
+            <section className="ap-browser-workspace">
+              {isloadingProject ? (
+                <div className="ap-browser-skeleton">
+                  <div className="ap-browser-skeleton-header">
+                    <Skeleton.Input active size="default" className="ap-browser-skel-title" />
+                    <Skeleton.Button active size="small" className="ap-browser-skel-btn" />
+                  </div>
+                  <div className="ap-browser-skeleton-tabs">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <Skeleton.Button key={`tab-skel-${idx}`} active size="small" className="ap-browser-skel-tab" />
+                    ))}
+                  </div>
+                  <div className="ap-browser-skeleton-grid">
+                    <div className="ap-browser-skel-card">
+                      <Skeleton active paragraph={{ rows: 3 }} />
+                    </div>
+                    <div className="ap-browser-skel-card">
+                      <Skeleton active paragraph={{ rows: 3 }} />
+                    </div>
+                  </div>
+                  <div className="ap-browser-skel-card">
+                    <Skeleton active paragraph={{ rows: 4 }} />
+                  </div>
+                  <div className="ap-browser-skel-card">
+                    <Skeleton active paragraph={{ rows: 5 }} />
+                  </div>
+                </div>
+              ) : selectedWorkspaceProject ? (
+                <>
+                  <div className="ap-browser-workspace-header">
+                    <h2 className="ap-browser-workspace-title">
+                      {selectedWorkspaceProject?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
+                    </h2>
+                    <div className="ap-browser-workspace-actions">
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        className="ap-add-btn ap-add-task-btn"
+                        onClick={() => setIsAddTaskOpen(true)}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="ap-browser-subtabs">
+                    <button
+                      type="button"
+                      className={`ap-browser-subtab ${workspaceSubtab === "overview" ? "active" : ""}`}
+                      onClick={() => setWorkspaceSubtab("overview")}
+                    >
+                      <AppstoreOutlined />
+                      Overview
+                    </button>
+                    <button
+                      type="button"
+                      className={`ap-browser-subtab ${workspaceSubtab === "list" ? "active" : ""}`}
+                      onClick={() => setWorkspaceSubtab("list")}
+                    >
+                      <UnorderedListOutlined />
+                      List
+                    </button>
+                    <button
+                      type="button"
+                      className={`ap-browser-subtab ${workspaceSubtab === "kanban" ? "active" : ""}`}
+                      onClick={() => setWorkspaceSubtab("kanban")}
+                    >
+                      <AppstoreOutlined />
+                      Kanban
+                    </button>
+                    <button
+                      type="button"
+                      className={`ap-browser-subtab ${workspaceSubtab === "calendar" ? "active" : ""}`}
+                      onClick={() => setWorkspaceSubtab("calendar")}
+                    >
+                      <CalendarOutlined />
+                      Calendar
+                    </button>
+                    <div className="ap-browser-subtabs-spacer" />
+                    <button
+                      type="button"
+                      className="ap-browser-link-btn"
+                      onClick={() => {
+                        const taskToEdit = lastCreatedTask || selectedTaskForEdit || firstAvailableTask;
+                        if (!taskToEdit?._id || !selectedWorkspaceProject?._id) {
+                          message.info("No tasks available to edit.");
+                          return;
+                        }
+                        const listId =
+                          taskToEdit?.main_task_id ||
+                          taskToEdit?.mainTaskId ||
+                          taskToEdit?.main_task?._id ||
+                          taskToEdit?.list_id ||
+                          taskToEdit?.listId ||
+                          "";
+                        const base = `/${companySlug}/project/app/${selectedWorkspaceProject._id}?tab=Tasks`;
+                        const nextUrl = listId ? `${base}&listID=${listId}` : base;
+                        history.push(nextUrl);
+                      }}
+                    >
+                      Customize
+                    </button>
+                    <Dropdown
+                      trigger={["click"]}
+                      placement="bottomRight"
+                      menu={{
+                        items: [
+                          { key: "export", label: "Export" },
+                          { key: "share", label: "Share" },
+                          { key: "settings", label: "Settings" },
+                        ],
+                        onClick: ({ key }) => {
+                          message.info(`Action: ${key}`);
+                        },
+                      }}
+                    >
+                      <button type="button" className="ap-browser-link-btn">
+                        More
+                      </button>
+                    </Dropdown>
+                  </div>
+
+                  {workspaceSubtab === "overview" && (
+                    <div className="ap-browser-overview">
+                    <div className="ap-browser-overview-grid">
+                      <div className="ap-browser-card ap-browser-date-card">
+                        <div className="ap-browser-date-block">
+                          <div className="ap-browser-date-icon"><CalendarOutlined /></div>
+                          <div>
+                            <div className="ap-browser-card-label">Starts</div>
+                            <div className="ap-browser-card-value">
+                              {selectedWorkspaceProject?.start_date ? moment(selectedWorkspaceProject.start_date).format("DD/MM/YYYY") : "N/A"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ap-browser-arrow">→</div>
+                        <div>
+                          <div className="ap-browser-card-label">Ends</div>
+                          <div className="ap-browser-card-value">
+                            {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD/MM/YYYY") : "N/A"}
+                          </div>
+                          <div className="ap-browser-updated">
+                            Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="ap-browser-card ap-browser-priority-card">
+                        <div className="ap-browser-card-title">Task Snapshot</div>
+                        <div className="ap-browser-priority-grid">
+                          <div><span>Closed</span><strong>{selectedWorkspaceStats?.closed ?? 0}</strong></div>
+                          <div><span>Today</span><strong>{selectedWorkspaceStats?.today ?? 0}</strong></div>
+                          <div><span>Over Due</span><strong>{selectedWorkspaceStats?.overDue ?? 0}</strong></div>
+                          <div><span>Upcoming</span><strong>{selectedWorkspaceStats?.upComing ?? 0}</strong></div>
+                        </div>
+                        <div className="ap-browser-donut-wrap">
+                          <DonutChart percentage={selectedWorkspaceProject?.completionPercentage || 0} size={92} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ap-browser-card">
+                      <div className="ap-browser-card-title">Project Members ({(selectedWorkspaceProject?.assignees?.length || 0) + (selectedWorkspaceProject?.manager ? 1 : 0) + (selectedWorkspaceProject?.pms_clients?.length || 0)})</div>
+                      <div className="ap-browser-member-tabs">
+                        <span className="active">Staff member ({selectedWorkspaceProject?.assignees?.length || 0})</span>
+                        <span>Project Manager ({selectedWorkspaceProject?.manager ? 1 : 0})</span>
+                        <span>Co-member (0)</span>
+                        <span>Client ({selectedWorkspaceProject?.pms_clients?.length || 0})</span>
+                      </div>
+                      <div className="ap-browser-member-grid">
+                        {selectedWorkspaceProject?.assignees?.map((member) => (
+                          <div key={member?._id || member?.name} className="ap-browser-member-card">
+                            <MyAvatar
+                              src={member?.emp_img}
+                              alt={member?.name}
+                              userName={member?.name}
+                            />
+                            <div className="ap-browser-member-name">{member?.name}</div>
+                            <div className="ap-browser-member-role">Staff Member</div>
+                          </div>
+                        ))}
+                        {selectedWorkspaceProject?.manager && (
+                          <div className="ap-browser-member-card">
+                            <MyAvatar
+                              src={selectedWorkspaceProject.manager?.emp_img}
+                              alt={selectedWorkspaceProject.manager?.full_name}
+                              userName={selectedWorkspaceProject.manager?.full_name}
+                            />
+                            <div className="ap-browser-member-name">{selectedWorkspaceProject.manager?.full_name}</div>
+                            <div className="ap-browser-member-role">Project Manager</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="ap-browser-card ap-browser-chart-card">
+                      <div className="ap-browser-card-title">User Analysis</div>
+                      <div className="ap-browser-chart">
+                        <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
+                      </div>
+                    </div>
+
+                    <div className="ap-browser-card ap-browser-status-card">
+                      <div className="ap-browser-card-title">Status Analysis</div>
+                      <div className="ap-browser-status-row">
+                        <div className="ap-browser-status-metrics">
+                          <div className="ap-browser-status-item">
+                            <span className="ap-browser-status-bar ap-browser-status-bar--closed" />
+                            <div>
+                              <span className="ap-browser-status-label ap-browser-status-label--closed">Closed</span>
+                              <strong className="ap-browser-status-value">{closedCount}</strong>
+                            </div>
+                          </div>
+                          <div className="ap-browser-status-item">
+                            <span className="ap-browser-status-bar ap-browser-status-bar--pending" />
+                            <div>
+                              <span className="ap-browser-status-label ap-browser-status-label--pending">Pending</span>
+                              <strong className="ap-browser-status-value">{pendingCount}</strong>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ap-browser-status-donut">
+                          <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={180} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="ap-browser-card">
+                      <div className="ap-browser-card-title">Details</div>
+                      <div className="ap-browser-details-text">
+                        {selectedWorkspaceProject?.descriptions ? (
+                          <div
+                            dangerouslySetInnerHTML={{ __html: selectedWorkspaceProject.descriptions }}
+                          />
+                        ) : (
+                          "No details provided for this project."
+                        )}
+                      </div>
+                    </div>
+                    </div>
+                  )}
+
+                  {workspaceSubtab === "list" && (
+                    <div className="ap-browser-list">
+                      <div className="ap-browser-list-header">
+                        <div>Task Name</div>
+                        <div>Due Date</div>
+                        <div>Assignee(s)</div>
+                        <div>Status</div>
+                      </div>
+
+                      {isLoadingTasks ? (
+                        <div className="ap-browser-list-empty">Loading tasks...</div>
+                      ) : (
+                        [
+                          { key: "today", label: "Today", items: todayTasks },
+                          { key: "overdue", label: "Overdue", items: overdueTasks },
+                          { key: "upcoming", label: "Upcoming", items: upcomingTasks },
+                        ].map((section) => (
+                          <div key={section.key} className="ap-browser-list-group">
+                            <div className="ap-browser-list-group-title">
+                              <span>{section.label}</span>
+                              <span className="ap-browser-list-count">{section.items.length}</span>
+                            </div>
+                            {section.items.length === 0 ? (
+                              <div className="ap-browser-list-empty">No tasks</div>
+                            ) : (
+                              section.items.map((task) => (
+                                <div
+                                  key={task._id || task.id}
+                                  className={`ap-browser-list-row ${
+                                    selectedTaskForEdit?._id === (task._id || task.id) ? "ap-browser-list-row--active" : ""
+                                  }`}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => setSelectedTaskForEdit(task)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") setSelectedTaskForEdit(task);
+                                  }}
+                                >
+                                  <div className="ap-browser-task-name">{task.title || task.name || "Untitled"}</div>
+                                  <div>{task.due_date ? moment(task.due_date).format("MMM D, YYYY") : "-"}</div>
+                                  <div>-</div>
+                                  <div>
+                                    <span className="ap-browser-status-pill">Pending</span>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {workspaceSubtab === "kanban" && (
+                    <div className="ap-browser-kanban">
+                      <div className="ap-browser-kanban-toolbar">
+                        <div className="ap-browser-kanban-select">Select Pipeline</div>
+                        <div className="ap-browser-kanban-divider" />
+                        <div className="ap-browser-kanban-stages">Stages</div>
+                        <div className="ap-browser-kanban-spacer" />
+                        <div className="ap-browser-kanban-setting">Setting</div>
+                      </div>
+                      <div className="ap-browser-kanban-empty">
+                        <div className="ap-browser-kanban-icon">⋯</div>
+                        <div>Please Select OR Set Pipeline</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {workspaceSubtab === "calendar" && (
+                    <div className="ap-browser-calendar">
+                      <div className="ap-browser-calendar-header">
+                        <div className="ap-browser-calendar-title">{dayjs().format("MMMM YYYY")}</div>
+                        <div className="ap-browser-calendar-controls">
+                          <button type="button" className="ap-browser-calendar-btn">Today</button>
+                          <button type="button" className="ap-browser-calendar-btn">Month</button>
+                          <button type="button" className="ap-browser-calendar-btn">Week</button>
+                          <button type="button" className="ap-browser-calendar-btn">Day</button>
+                        </div>
+                      </div>
+                      <div className="ap-browser-calendar-grid">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                          <div key={d} className="ap-browser-calendar-cell ap-browser-calendar-head">{d}</div>
+                        ))}
+                        {calendarDays.map((day) => {
+                          const dayTasks = tasksForDate(day);
+                          const isCurrentMonth = day.month() === calendarBase.month();
+                          return (
+                            <div key={day.format("YYYY-MM-DD")} className="ap-browser-calendar-cell">
+                              <span className={`ap-browser-calendar-date ${isCurrentMonth ? "" : "muted"}`}>
+                                {day.date()}
+                              </span>
+                              {!isLoadingTasks && dayTasks.slice(0, 2).map((task) => (
+                                <div key={task._id || task.id} className="ap-browser-calendar-task">
+                                  {task.title || task.name || "Untitled"}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="ap-empty-state">
+                  <Empty description="No projects found" />
+                </div>
+              )}
+            </section>
           </div>
         )}
       </div>
@@ -819,6 +1749,106 @@ const AssignProject = () => {
           triggerRefreshList={() => getProjectListing()}
         />
       )}
+
+      <Modal
+        open={isCustomizeOpen}
+        onCancel={() => setIsCustomizeOpen(false)}
+        footer={null}
+        title="Customize"
+        destroyOnClose
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 14, color: "#475569" }}>
+            Customize options will appear here.
+          </div>
+          <Button type="primary" onClick={() => setIsCustomizeOpen(false)}>
+            Done
+          </Button>
+        </div>
+      </Modal>
+
+      <AddTaskModal
+        open={isAddTaskOpen}
+        onCancel={() => {
+          setIsAddTaskOpen(false);
+          addTaskForm.resetFields();
+        }}
+        onSuccess={(createdTask) => {
+          setIsAddTaskOpen(false);
+          addTaskForm.resetFields();
+          if (createdTask?._id) {
+            setLastCreatedTask(createdTask);
+          }
+          if (selectedWorkspaceProject?._id) {
+            if (createdTask?._id) {
+              setProjectTasksMap((prev) => {
+                const existing = prev[selectedWorkspaceProject._id] || [];
+                const already = existing.some((t) => t?._id === createdTask._id);
+                if (already) return prev;
+                return {
+                  ...prev,
+                  [selectedWorkspaceProject._id]: [createdTask, ...existing],
+                };
+              });
+
+              // Optimistically bump snapshot counts so Overview updates immediately
+              const due = createdTask?.due_date
+                ? dayjs(createdTask.due_date)
+                : createdTask?.end_date
+                  ? dayjs(createdTask.end_date)
+                  : null;
+              const todayKey = dayjs().format("YYYY-MM-DD");
+              let bumpKey = null;
+              if (due && due.isValid()) {
+                const dueKey = due.format("YYYY-MM-DD");
+                if (dueKey === todayKey) bumpKey = "today";
+                else if (due.isBefore(dayjs(), "day")) bumpKey = "overDue";
+                else if (due.isAfter(dayjs(), "day")) bumpKey = "upComing";
+              }
+              if (bumpKey) {
+                setTaskStats((prev) => {
+                  const curr = prev[selectedWorkspaceProject._id] || {};
+                  const nextStats = {
+                    ...curr,
+                    [bumpKey]: (curr[bumpKey] || 0) + 1,
+                  };
+                  return { ...prev, [selectedWorkspaceProject._id]: nextStats };
+                });
+                setProjectCache((prev) => {
+                  const next = { ...prev };
+                  Object.keys(next).forEach((key) => {
+                    const entry = next[key];
+                    if (!entry || !entry.taskStats) return;
+                    const curr = entry.taskStats[selectedWorkspaceProject._id] || {};
+                    next[key] = {
+                      ...entry,
+                      taskStats: {
+                        ...entry.taskStats,
+                        [selectedWorkspaceProject._id]: {
+                          ...curr,
+                          [bumpKey]: (curr[bumpKey] || 0) + 1,
+                        },
+                      },
+                    };
+                  });
+                  return next;
+                });
+              }
+            }
+            fetchProjectTasksForce(selectedWorkspaceProject._id);
+            refreshTaskStatsForProject(selectedWorkspaceProject._id);
+            setTimeout(() => {
+              fetchProjectTasksForce(selectedWorkspaceProject._id);
+              refreshTaskStatsForProject(selectedWorkspaceProject._id);
+            }, 600);
+          }
+        }}
+        standalone
+        projectId={selectedWorkspaceProject?._id}
+        addform={addTaskForm}
+        projectMembers={workspaceMembers}
+        projectWorkflowId={selectedWorkspaceProject?.workFlow?._id}
+      />
     </div>
   );
 };

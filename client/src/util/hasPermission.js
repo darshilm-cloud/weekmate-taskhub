@@ -16,7 +16,7 @@ export const getRoles = (roleName, useroleID = getCookie("pms_role_id") || "6620
   
   for (const role in roleMap) {
     if (roleMap.hasOwnProperty(role)) {
-      if(roleMap[role] == useroleID){
+      if (roleMap[role] === useroleID) {
        flag =roleName.includes(role)
       }
     }

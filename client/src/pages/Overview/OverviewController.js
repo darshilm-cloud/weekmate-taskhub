@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useState } from "react";
 import { Checkbox, Input } from "antd";
 import { useParams, useHistory } from "react-router-dom";

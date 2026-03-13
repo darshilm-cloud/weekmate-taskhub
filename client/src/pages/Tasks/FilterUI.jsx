@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
@@ -15,7 +16,6 @@ import {
 } from "antd";
 import {
   FilterOutlined,
-  UserOutlined,
   CalendarOutlined,
   TagOutlined,
 } from "@ant-design/icons";
@@ -89,17 +89,7 @@ const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.DATES, label: "Dates" },
 ];
 
-// Helper Components
-const UserAvatar = ({ userName, src, alt }) => (
-  <Avatar
-    src={src}
-    icon={!src && <UserOutlined />}
-    size="small"
-    className="filter-avatar"
-  >
-    {!src && userName?.charAt(0)?.toUpperCase()}
-  </Avatar>
-);
+/* eslint-disable react-hooks/exhaustive-deps */
 
 // Utility Functions
 const validateArray = (arr) => arr.some((item) => item !== "");

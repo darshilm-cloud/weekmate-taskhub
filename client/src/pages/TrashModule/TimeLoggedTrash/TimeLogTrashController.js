@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 const TimeLogTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
   
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -73,8 +73,7 @@ const TimeLogTrashController = () => {
       dataIndex: "time",
       key: "time",
       render: (text, record) => {
-        const names =
-          record.logged_hours + "h" + " " + record.logged_minutes + "m";
+        const names = `${record.logged_hours}h ${record.logged_minutes}m`;
         return <span>{names}</span>;
       },
     },

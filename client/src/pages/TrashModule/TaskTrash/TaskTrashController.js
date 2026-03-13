@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 const TaskTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
   
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });

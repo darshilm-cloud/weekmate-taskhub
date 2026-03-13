@@ -454,3 +454,80 @@
   .cad-page { padding: 16px; gap: 14px; }
   .cad-info-fields { gap: 14px; }
 }
+
+body.dark-theme .cad-page,
+body[data-theme="dark"] .cad-page {
+  background: #07111f;
+}
+
+body.dark-theme .cad-info-card,
+body.dark-theme .cad-section,
+body[data-theme="dark"] .cad-info-card,
+body[data-theme="dark"] .cad-section {
+  background: #0c182b;
+  border-color: rgba(74, 104, 150, 0.24);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+body.dark-theme .cad-info-title,
+body.dark-theme .cad-section-title,
+body.dark-theme .cad-info-value,
+body.dark-theme .cad-field-value,
+body[data-theme="dark"] .cad-info-title,
+body[data-theme="dark"] .cad-section-title,
+body[data-theme="dark"] .cad-info-value,
+body[data-theme="dark"] .cad-field-value {
+  color: #e3ecfb;
+}
+
+body.dark-theme .cad-section-header,
+body[data-theme="dark"] .cad-section-header {
+  background: #11213a;
+  border-bottom-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .cad-status-field,
+body[data-theme="dark"] .cad-status-field {
+  background: #132238;
+}
+
+body.dark-theme .cad-status-form .ant-input,
+body.dark-theme .cad-status-form .ant-input-affix-wrapper,
+body.dark-theme .cad-status-form .ant-input-affix-wrapper-disabled,
+body.dark-theme .cad-status-form .ant-select-selector,
+body.dark-theme .cad-status-form textarea,
+body[data-theme="dark"] .cad-status-form .ant-input,
+body[data-theme="dark"] .cad-status-form .ant-input-affix-wrapper,
+body[data-theme="dark"] .cad-status-form .ant-input-affix-wrapper-disabled,
+body[data-theme="dark"] .cad-status-form .ant-select-selector,
+body[data-theme="dark"] .cad-status-form textarea {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .cad-status-form .ant-input-affix-wrapper .ant-input,
+body.dark-theme .cad-status-form .ant-input::placeholder,
+body.dark-theme .cad-status-form textarea::placeholder,
+body.dark-theme .cad-status-form .ant-select-selection-placeholder,
+body.dark-theme .cad-status-form .ant-select-arrow,
+body.dark-theme .cad-status-form .ant-input-prefix,
+body[data-theme="dark"] .cad-status-form .ant-input-affix-wrapper .ant-input,
+body[data-theme="dark"] .cad-status-form .ant-input::placeholder,
+body[data-theme="dark"] .cad-status-form textarea::placeholder,
+body[data-theme="dark"] .cad-status-form .ant-select-selection-placeholder,
+body[data-theme="dark"] .cad-status-form .ant-select-arrow,
+body[data-theme="dark"] .cad-status-form .ant-input-prefix {
+  background: transparent !important;
+  color: #9bb6dd !important;
+}
+
+body.dark-theme .cad-status-form .ant-input-affix-wrapper:focus-within,
+body.dark-theme .cad-status-form .ant-select-focused .ant-select-selector,
+body.dark-theme .cad-status-form textarea:focus,
+body[data-theme="dark"] .cad-status-form .ant-input-affix-wrapper:focus-within,
+body[data-theme="dark"] .cad-status-form .ant-select-focused .ant-select-selector,
+body[data-theme="dark"] .cad-status-form textarea:focus {
+  border-color: #4d7bd6 !important;
+  box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.12) !important;
+}

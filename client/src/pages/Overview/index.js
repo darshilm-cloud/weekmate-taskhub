@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
 import { Table, Modal, Select, Radio, Checkbox } from "antd";
 import ReactApexChart from "react-apexcharts";

@@ -39,6 +39,7 @@ import {
   NAV_STYLE_INSIDE_HEADER_HORIZONTAL,
   THEME_TYPE_DARK,
 } from "../../constants/ThemeSetting";
+import { getAntdTheme } from "../../theme";
 import { SocketProvider, useSocket } from "../../context/SocketContext";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
@@ -312,7 +313,7 @@ function App() {
         <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
       </Helmet>
     <SocketProvider user={authUser}>
-      <ConfigProvider locale={currentAppLocale.antd}>
+      <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)}>
         <IntlProvider
           locale={currentAppLocale.locale}
           messages={currentAppLocale.messages}

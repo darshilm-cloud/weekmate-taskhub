@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import Service from "../../../service";
 import MyAvatar from "../../../components/Avatar/MyAvatar";
@@ -10,14 +10,10 @@ const DiscussionTrash = () => {
   const companySlug = localStorage.getItem("companyDomain");
   const dispatch = useDispatch();
 
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
-
-  useEffect(() => {
-    getDiscussionTrash();
-  }, []);
 
   const getDiscussionTrash = async (callback) => {
     try {
@@ -56,7 +52,6 @@ const DiscussionTrash = () => {
       render: (text, record) => {
         const Title = record?.project?.title;
         const ProjectId = record?.project?._id;
-        const color = record?.color;
         return (
           <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">

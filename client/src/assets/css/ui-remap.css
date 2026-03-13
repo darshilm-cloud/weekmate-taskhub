@@ -9,31 +9,36 @@
 /* Outer sider wrapper */
 .gx-app-sidebar,
 .gx-layout-sider-dark {
-  background-color: #fff !important;
-  border-right: 1px solid #e8ecef !important;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
+  background-color: #0b3a5b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Inner sider inside SidebarContent */
 .ant-layout-sider .sidebar-menu .ant-layout-sider,
 .sidebar-menu .ant-layout-sider,
 .sidebar-menu .Sidebar {
-  background: #fff !important;
+  background: #0b3a5b !important;
 }
 
 /* Ant Design sider element override */
 .admin-user .ant-layout.admin .gx-app-sidebar .ant-layout-sider,
 .admin-user .ant-layout.admin .ant-layout-sider {
-  background: #fff !important;
+  background: #0b3a5b !important;
 }
 
 /* Logo area at top of sidebar */
 .Etask-hub-logo {
-  background: #fff !important;
-  border-bottom: 1px solid #f0f2f5;
+  background: #0b3a5b !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 12px 16px !important;
   display: flex;
   align-items: center;
+}
+
+body.admin-user[data-theme="light"] .Etask-hub-logo,
+body.admin-user[data-theme="light"] .weekmate-sidebar-header {
+  background: #0b3a5b !important;
 }
 
 .Etask-hub-logo img {
@@ -41,13 +46,33 @@
   width: auto;
 }
 
+/* Force sidebar text/icons to white (highest priority) */
+body .sidebar-menu .ant-menu-item,
+body .sidebar-menu .ant-menu-item .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item a,
+body .sidebar-menu .ant-menu-submenu-title,
+body .sidebar-menu .ant-menu-submenu-title .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item .anticon,
+body .sidebar-menu .ant-menu-submenu-title .anticon,
+body .weekmate-sidebar .ant-menu-item,
+body .weekmate-sidebar .ant-menu-item .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item a,
+body .weekmate-sidebar .ant-menu-submenu-title,
+body .weekmate-sidebar .ant-menu-submenu-title .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item .anticon,
+body .weekmate-sidebar .ant-menu-submenu-title .anticon {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
 /* Ant Design Menu — make it light */
 .sidebar-menu .ant-menu,
 .sidebar-menu .ant-menu.ant-menu-dark,
 .sidebar-menu .ant-menu.ant-menu-root,
 .admin-user .ant-layout.admin .sidebar-menu {
-  background: #fff !important;
-  color: #4a5568 !important;
+  /* Keep single sidebar surface (no separate menu panel background). */
+  background: transparent !important;
+  color: #ffffff !important;
   border-right: none !important;
 }
 
@@ -56,7 +81,7 @@
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
   flex-direction: row !important;
   text-align: left !important;
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   background: transparent !important;
   border-left: 3px solid transparent !important;
   border-right: none !important;
@@ -78,7 +103,7 @@
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .anticon,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item > i,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item svg {
-  color: #6b7280 !important;
+  color: var(--app-text-subtle) !important;
   font-size: 17px !important;
   min-width: 20px !important;
   line-height: 1 !important;
@@ -88,7 +113,7 @@
 .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .ant-menu-title-content {
   font-size: 14px !important;
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   line-height: normal !important;
   font-weight: 400 !important;
   padding: 0 !important;
@@ -100,9 +125,9 @@
 /* ── Hover state ── */
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
-  background: #e8f4fd !important;
-  border-left: 3px solid #1890ff !important;
-  color: #1890ff !important;
+  background: rgba(37, 99, 235, 0.10) !important;
+  border-left: 3px solid var(--app-primary) !important;
+  color: var(--app-primary) !important;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover .ant-menu-title-content,
@@ -111,16 +136,16 @@
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .anticon,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover > i {
-  color: #1890ff !important;
+  color: var(--app-primary) !important;
 }
 
 /* ── Selected / Active state ── */
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected:hover {
-  background: #e6f4ff !important;
-  border-left: 3px solid #1890ff !important;
-  color: #1890ff !important;
+  background: rgba(37, 99, 235, 0.14) !important;
+  border-left: 3px solid var(--app-primary) !important;
+  color: var(--app-primary) !important;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
@@ -129,20 +154,20 @@
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .anticon,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected > i {
-  color: #1890ff !important;
+  color: var(--app-primary) !important;
 }
 
 /* ── Submenu ── */
 .sidebar-menu .ant-menu-submenu {
   border-left: 3px solid transparent !important;
   background: transparent !important;
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   margin-bottom: 2px !important;
 }
 
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title {
   flex-direction: row !important;
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   gap: 12px !important;
   padding: 10px 16px 10px 20px !important;
   align-items: center !important;
@@ -151,34 +176,34 @@
 
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content,
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title i {
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
 }
 
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
-  color: #6b7280 !important;
+  color: var(--app-text-subtle) !important;
 }
 
 .sidebar-menu .ant-menu-submenu:hover > .ant-menu-submenu-title,
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
-  background: #e8f4fd !important;
-  color: #1890ff !important;
+  background: rgba(37, 99, 235, 0.10) !important;
+  color: var(--app-primary) !important;
 }
 
 .sidebar-menu .ant-menu-submenu:hover {
-  border-left: 3px solid #1890ff !important;
+  border-left: 3px solid var(--app-primary) !important;
 }
 
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-selected,
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-open {
-  border-left: 3px solid #1890ff !important;
-  background: #e6f4ff !important;
-  color: #1890ff !important;
+  border-left: 3px solid var(--app-primary) !important;
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: var(--app-primary) !important;
 }
 
 .sidebar-menu .ant-menu-submenu .ant-menu-sub {
-  background: #f8fafc !important;
+  background: transparent !important;
 }
 
 .sidebar-menu .ant-menu-submenu .ant-menu-sub .ant-menu-item {
@@ -187,35 +212,20 @@
 
 /* Submenu popup on collapsed */
 .ant-menu-submenu-popup > .ant-menu {
-  background: #fff !important;
+  background: #0b3a5b !important;
 }
 
-/* ── Dark theme: keep working ── */
-[data-theme="dark"] .gx-app-sidebar,
-[data-theme="dark"] .gx-layout-sider-dark {
-  background-color: #1a1a2e !important;
-  border-right: 1px solid #2d2d3d !important;
-}
-
-[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item,
-[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
-  color: #c0c0d0 !important;
-}
-
-[data-theme="dark"] .sidebar-menu .ant-menu,
-[data-theme="dark"] .admin-user .ant-layout.admin .sidebar-menu {
-  background: #1a1a2e !important;
-}
+/* Dark theme handled via CSS variables + dark-theme-overrides.css */
 
 /* ─────────────────────────────────────────────────────────────
    TOPBAR — Light theme overrides
    ───────────────────────────────────────────────────────────── */
 
 .top-header.ant-layout-header {
-  background: #fff !important;
-  border-bottom: 1px solid #e8ecef !important;
+  background: var(--app-surface) !important;
+  border-bottom: 1px solid var(--app-border) !important;
   box-shadow: 0 1px 6px rgba(0, 21, 41, 0.07) !important;
-  color: #333 !important;
+  color: var(--app-text) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -247,7 +257,7 @@
 
 .top-header .icon-menu,
 .top-header .gx-linebar i {
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   font-size: 20px !important;
   cursor: pointer;
   line-height: 1 !important;
@@ -255,7 +265,7 @@
 
 .top-header .icon-menu:hover,
 .top-header .gx-linebar i:hover {
-  color: #1890ff !important;
+  color: var(--app-primary) !important;
 }
 
 /* ── UserProfile inline alignment ── */
@@ -298,12 +308,12 @@
 }
 
 .top-header .search-pms:hover {
-  background: #f0f2f5;
+  background: var(--app-surface-2);
 }
 
 .top-header .search-pms i {
   font-size: 17px !important;
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
   line-height: 1 !important;
 }
 
@@ -320,14 +330,14 @@
 }
 
 .new-stat-card {
-  background: #fff;
+  background: var(--app-surface);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--app-border);
 }
 
 .stat-card-icon-wrap {
@@ -341,21 +351,21 @@
   font-size: 22px;
 }
 
-.stat-card-icon-wrap.blue   { background: #e6f4ff; color: #1890ff; }
-.stat-card-icon-wrap.green  { background: #f0fff4; color: #52c41a; }
-.stat-card-icon-wrap.yellow { background: #fffbe6; color: #faad14; }
-.stat-card-icon-wrap.red    { background: #fff1f0; color: #ff4d4f; }
+.stat-card-icon-wrap.blue   { background: rgba(37, 99, 235, 0.12); color: var(--app-primary); }
+.stat-card-icon-wrap.green  { background: rgba(45, 212, 191, 0.14); color: #2dd4bf; }
+.stat-card-icon-wrap.yellow { background: rgba(250, 173, 20, 0.14); color: #d97706; }
+.stat-card-icon-wrap.red    { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
 
 .stat-card-body .stat-card-title {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--app-text-muted);
   margin-bottom: 4px;
 }
 
 .stat-card-body .stat-card-value {
   font-size: 28px;
   font-weight: 700;
-  color: #262626;
+  color: var(--app-text);
   line-height: 1.1;
 }
 
@@ -382,18 +392,38 @@
 
 /* Section card */
 .dashboard-section-card {
-  background: #fff;
+  background: var(--app-surface);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--app-border);
+  position: relative;
+  overflow: hidden;
 }
 
 .dashboard-section-card h3 {
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: var(--app-text);
   margin-bottom: 16px;
+}
+
+/* Dashboard chart watermark (dark mode) */
+body.dark-theme .dashboard-section-card .stats-watermark,
+body[data-theme="dark"] .dashboard-section-card .stats-watermark {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body.dark-theme .dashboard-section-card > :not(.stats-watermark),
+body[data-theme="dark"] .dashboard-section-card > :not(.stats-watermark) {
+  position: relative;
+  z-index: 1;
 }
 
 /* Statistics header row */
@@ -416,18 +446,18 @@
 
 .stats-toggle-btn {
   padding: 4px 14px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--app-surface);
   cursor: pointer;
   font-size: 13px;
-  color: #4a5568;
+  color: var(--app-text-muted);
   transition: all 0.2s;
 }
 
 .stats-toggle-btn.active {
-  background: #1890ff;
-  border-color: #1890ff;
+  background: var(--app-primary);
+  border-color: var(--app-primary);
   color: #fff;
 }
 
@@ -443,17 +473,17 @@
 
 /* Right panel cards */
 .right-panel-card {
-  background: #fff;
+  background: var(--app-surface);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--app-border);
 }
 
 .right-panel-card h4 {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--app-text);
   margin-bottom: 12px;
 }
 
@@ -474,25 +504,25 @@
 }
 
 .today-summary-item.new-task {
-  background: #f0fff4;
-  border: 1px solid #b7eb8f;
+  background: rgba(45, 212, 191, 0.10);
+  border: 1px solid rgba(45, 212, 191, 0.30);
 }
 
 .today-summary-item.closed-task {
-  background: #fff1f0;
-  border: 1px solid #ffa39e;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.30);
 }
 
 .today-summary-item .summary-label {
   font-size: 12px;
-  color: #595959;
+  color: var(--app-text-muted);
   font-weight: 500;
 }
 
 .today-summary-item .summary-count {
   font-size: 22px;
   font-weight: 700;
-  color: #262626;
+  color: var(--app-text);
 }
 
 /* Priority summary */
@@ -508,7 +538,7 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #4a5568;
+  color: var(--app-text-muted);
 }
 
 .priority-dot {
@@ -518,13 +548,13 @@
   flex-shrink: 0;
 }
 
-.priority-dot.low    { background: #52c41a; }
+.priority-dot.low    { background: #2dd4bf; }
 .priority-dot.medium { background: #faad14; }
 .priority-dot.high   { background: #ff4d4f; }
 
 .priority-item .priority-count {
   font-weight: 600;
-  color: #262626;
+  color: var(--app-text);
 }
 
 /* Team incomplete tasks */
@@ -538,10 +568,10 @@
 
 .team-incomplete-item {
   font-size: 13px;
-  color: #4a5568;
+  color: var(--app-text-muted);
   padding: 8px 10px;
   border-radius: 6px;
-  background: #f8fafc;
+  background: var(--app-surface-2);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -555,7 +585,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #1890ff;
+  background: var(--app-primary);
   flex-shrink: 0;
 }
 
@@ -579,7 +609,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #595959;
+  color: var(--app-text-muted);
 }
 
 .legend-dot {
@@ -588,14 +618,14 @@
   border-radius: 50%;
 }
 
-.legend-dot.completed { background: #52c41a; }
+.legend-dot.completed { background: #2dd4bf; }
 .legend-dot.incomplete { background: #ff4d4f; }
 
 /* New dashboard wrapper */
 .new-dashboard-wrapper {
   height: 100%;
   overflow-y: auto;
-  background: #f6f8fa;
+  background: var(--app-bg);
   padding: 20px;
 }
 
@@ -610,16 +640,16 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f2f5;
-  background: #fff;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
 }
 
 /* Container and content */
 .page-layout .ant-table-wrapper .ant-table,
 .gx-layout-content .ant-table-wrapper .ant-table,
 .ant-table-wrapper .ant-table {
-  background: #fff !important;
-  color: #262626;
+  background: var(--app-surface) !important;
+  color: var(--app-text);
 }
 
 .page-layout .ant-table-wrapper .ant-table-container,
@@ -634,19 +664,19 @@
   padding: 14px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
-  background: #fff;
-  border-bottom: 1px solid #f0f2f5;
+  color: var(--app-text);
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
 }
 
 /* ── Header ── */
 .ant-table-wrapper .ant-table-thead > tr > th,
 .ant-table .ant-table-thead > tr > th {
-  background: #f8fafc !important;
-  color: #262626 !important;
+  background: var(--app-surface-2) !important;
+  color: var(--app-text) !important;
   font-weight: 600 !important;
   font-size: 13px !important;
-  border-bottom: 1px solid #e8ecef !important;
+  border-bottom: 1px solid var(--app-border) !important;
   border-top: none !important;
   padding: 12px 16px !important;
   line-height: 1.4 !important;
@@ -659,13 +689,13 @@
 /* Sort / filter icons in header */
 .ant-table-thead > tr > th .ant-table-column-sorter .ant-table-column-sorter-inner .anticon,
 .ant-table-thead > tr > th .ant-table-filter-icon .anticon {
-  color: #6b7280 !important;
+  color: var(--app-text-subtle) !important;
   font-size: 12px;
 }
 
 .ant-table-thead > tr > th.ant-table-column-has-sorters:hover .ant-table-column-sorter .anticon,
 .ant-table-thead > tr > th .ant-table-filter-trigger-container:hover .anticon {
-  color: #1890ff !important;
+  color: var(--app-primary) !important;
 }
 
 /* ── Body cells ── */
@@ -673,9 +703,9 @@
 .ant-table .ant-table-tbody > tr > td {
   padding: 12px 16px !important;
   font-size: 14px !important;
-  color: #4a5568 !important;
-  border-bottom: 1px solid #f0f2f5 !important;
-  background: #fff !important;
+  color: var(--app-text-muted) !important;
+  border-bottom: 1px solid var(--app-border) !important;
+  background: var(--app-surface) !important;
   transition: background 0.2s ease;
 }
 
@@ -687,34 +717,34 @@
 /* Row hover */
 .ant-table-wrapper .ant-table-tbody > tr:hover > td,
 .ant-table .ant-table-tbody > tr.ant-table-row-hover > td {
-  background: #f6f8fa !important;
+  background: var(--app-surface-2) !important;
 }
 
 /* Selected row */
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td,
 .ant-table .ant-table-tbody > tr.ant-table-row-selected > td {
-  background: #e6f4ff !important;
-  border-bottom-color: #bae0ff !important;
+  background: rgba(37, 99, 235, 0.14) !important;
+  border-bottom-color: rgba(37, 99, 235, 0.25) !important;
 }
 
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected:hover > td {
-  background: #bae0ff !important;
+  background: rgba(37, 99, 235, 0.20) !important;
 }
 
 /* Expanded row */
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-expanded-row > td,
 .ant-table .ant-table-tbody > tr.ant-table-expanded-row > td {
-  background: #f8fafc !important;
-  border-bottom: 1px solid #e8ecef;
+  background: var(--app-surface-2) !important;
+  border-bottom: 1px solid var(--app-border);
 }
 
 /* ── Footer ── */
 .ant-table-wrapper .ant-table-footer {
-  background: #f8fafc !important;
-  border-top: 1px solid #e8ecef !important;
+  background: var(--app-surface-2) !important;
+  border-top: 1px solid var(--app-border) !important;
   padding: 10px 16px !important;
   font-size: 13px;
-  color: #4a5568;
+  color: var(--app-text-muted);
 }
 
 /* ── Pagination ── */
@@ -726,38 +756,38 @@
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item {
   border-radius: 6px !important;
-  border-color: #e8ecef !important;
+  border-color: var(--app-border) !important;
   font-size: 13px !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item a {
-  color: #4a5568 !important;
+  color: var(--app-text-muted) !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item:hover,
 .ant-table-wrapper .ant-pagination .ant-pagination-item:hover a {
-  border-color: #1890ff !important;
-  color: #1890ff !important;
+  border-color: var(--app-primary) !important;
+  color: var(--app-primary) !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item-active,
 .ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
-  background: #1890ff !important;
-  border-color: #1890ff !important;
+  background: var(--app-primary) !important;
+  border-color: var(--app-primary) !important;
   color: #fff !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
 .ant-table-wrapper .ant-pagination .ant-pagination-next .ant-pagination-item-link {
   border-radius: 6px !important;
-  border-color: #e8ecef !important;
-  color: #4a5568 !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text-muted) !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
 .ant-table-wrapper .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link {
-  border-color: #1890ff !important;
-  color: #1890ff !important;
+  border-color: var(--app-primary) !important;
+  color: var(--app-primary) !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-options .ant-select-selector {
@@ -768,9 +798,9 @@
 
 /* Empty state */
 .ant-table-wrapper .ant-table-placeholder {
-  background: #fff !important;
+  background: var(--app-surface) !important;
   border-bottom: none !important;
-  color: #8c8c8c !important;
+  color: var(--app-text-muted) !important;
   padding: 32px 16px !important;
   font-size: 14px;
 }
@@ -778,7 +808,7 @@
 /* Bordered variant: softer borders */
 .ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th,
 .ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody > tr > td {
-  border-right: 1px solid #f0f2f5 !important;
+  border-right: 1px solid var(--app-border) !important;
 }
 
 .ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th:last-child,
@@ -800,12 +830,12 @@
 
 .ant-table-wrapper .ant-table-selection-column .ant-checkbox-inner {
   border-radius: 4px !important;
-  border-color: #d9d9d9 !important;
+  border-color: var(--app-border) !important;
 }
 
 .ant-table-wrapper .ant-table-selection-column .ant-checkbox-checked .ant-checkbox-inner {
-  background: #1890ff !important;
-  border-color: #1890ff !important;
+  background: var(--app-primary) !important;
+  border-color: var(--app-primary) !important;
 }
 
 /* Scrollbar inside table body (optional polish) */
@@ -1070,6 +1100,434 @@ body[data-theme="dark"] .task-schedule-wrapper {
   background-color: #1e293b !important;
 }
 
+/* Project App (Discussion/Bugs/Notes/Files/Time): remove white surfaces in dark mode */
+body.dark-theme .project-wrapper,
+body[data-theme="dark"] .project-wrapper {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .project-wrapper .peoject-page,
+body[data-theme="dark"] .project-wrapper .peoject-page {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .project-wrapper .profileleftbar,
+body[data-theme="dark"] .project-wrapper .profileleftbar {
+  background: #0f1722 !important;
+  border-right-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body.dark-theme .project-wrapper .profileleftbar .add-project-wrapper .search-btn,
+body[data-theme="dark"] .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body[data-theme="dark"] .project-wrapper .profileleftbar .add-project-wrapper .search-btn {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search,
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button {
+  background: #16202d !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .project-wrapper .profileleftbar .ant-input::placeholder,
+body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"] .project-wrapper .profilerightbar {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Ensure text is readable across Project App pages in dark mode */
+body.dark-theme .project-wrapper .profileleftbar,
+body.dark-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"] .project-wrapper .profileleftbar,
+body[data-theme="dark"] .project-wrapper .profilerightbar {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .project-wrapper .profileleftbar h1,
+body.dark-theme .project-wrapper .profileleftbar h2,
+body.dark-theme .project-wrapper .profileleftbar h3,
+body.dark-theme .project-wrapper .profileleftbar h4,
+body.dark-theme .project-wrapper .profileleftbar h5,
+body.dark-theme .project-wrapper .profileleftbar h6,
+body.dark-theme .project-wrapper .profileleftbar p,
+body.dark-theme .project-wrapper .profileleftbar span,
+body.dark-theme .project-wrapper .profileleftbar li,
+body.dark-theme .project-wrapper .profileleftbar a,
+body.dark-theme .project-wrapper .profileleftbar label,
+body.dark-theme .project-wrapper .profilerightbar h1,
+body.dark-theme .project-wrapper .profilerightbar h2,
+body.dark-theme .project-wrapper .profilerightbar h3,
+body.dark-theme .project-wrapper .profilerightbar h4,
+body.dark-theme .project-wrapper .profilerightbar h5,
+body.dark-theme .project-wrapper .profilerightbar h6,
+body.dark-theme .project-wrapper .profilerightbar p,
+body.dark-theme .project-wrapper .profilerightbar span,
+body.dark-theme .project-wrapper .profilerightbar li,
+body.dark-theme .project-wrapper .profilerightbar a,
+body.dark-theme .project-wrapper .profilerightbar label,
+body[data-theme="dark"] .project-wrapper .profileleftbar h1,
+body[data-theme="dark"] .project-wrapper .profileleftbar h2,
+body[data-theme="dark"] .project-wrapper .profileleftbar h3,
+body[data-theme="dark"] .project-wrapper .profileleftbar h4,
+body[data-theme="dark"] .project-wrapper .profileleftbar h5,
+body[data-theme="dark"] .project-wrapper .profileleftbar h6,
+body[data-theme="dark"] .project-wrapper .profileleftbar p,
+body[data-theme="dark"] .project-wrapper .profileleftbar span,
+body[data-theme="dark"] .project-wrapper .profileleftbar li,
+body[data-theme="dark"] .project-wrapper .profileleftbar a,
+body[data-theme="dark"] .project-wrapper .profileleftbar label,
+body[data-theme="dark"] .project-wrapper .profilerightbar h1,
+body[data-theme="dark"] .project-wrapper .profilerightbar h2,
+body[data-theme="dark"] .project-wrapper .profilerightbar h3,
+body[data-theme="dark"] .project-wrapper .profilerightbar h4,
+body[data-theme="dark"] .project-wrapper .profilerightbar h5,
+body[data-theme="dark"] .project-wrapper .profilerightbar h6,
+body[data-theme="dark"] .project-wrapper .profilerightbar p,
+body[data-theme="dark"] .project-wrapper .profilerightbar span,
+body[data-theme="dark"] .project-wrapper .profilerightbar li,
+body[data-theme="dark"] .project-wrapper .profilerightbar a,
+body[data-theme="dark"] .project-wrapper .profilerightbar label {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .project-wrapper .profilerightbar .ant-empty-description,
+body.dark-theme .project-wrapper .profilerightbar .error-message,
+body[data-theme="dark"] .project-wrapper .profilerightbar .ant-empty-description,
+body[data-theme="dark"] .project-wrapper .profilerightbar .error-message {
+  color: #94a3b8 !important;
+}
+
+/* Tables inside Project App */
+body.dark-theme .project-wrapper .ant-table,
+body.dark-theme .project-wrapper .ant-table-thead > tr > th,
+body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"] .project-wrapper .ant-table,
+body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th {
+  background: #16202d !important;
+}
+
+body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+  background: transparent !important;
+}
+
+/* Muted/secondary text */
+body.dark-theme .project-wrapper .ant-typography-secondary,
+body.dark-theme .project-wrapper .ant-comment-content-author-time span,
+body[data-theme="dark"] .project-wrapper .ant-typography-secondary,
+body[data-theme="dark"] .project-wrapper .ant-comment-content-author-time span {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .project-wrapper .profilerightbar .profile-sub-head,
+body[data-theme="dark"] .project-wrapper .profilerightbar .profile-sub-head {
+  background: linear-gradient(180deg, #16202d 0%, #0f1722 100%) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+}
+
+/* Top toolbars/search blocks */
+body.dark-theme .project-wrapper .head-box-inner,
+body[data-theme="dark"] .project-wrapper .head-box-inner {
+  background: transparent !important;
+}
+
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search,
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button {
+  background: #16202d !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder,
+body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Discussion surfaces */
+body.dark-theme .discussion-wrapper .discussion-comment-block,
+body[data-theme="dark"] .discussion-wrapper .discussion-comment-block {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme .discussion-wrapper,
+body.dark-theme .discussion-wrapper .profilerightbar h3,
+body.dark-theme .discussion-wrapper span.ant-comment-content-author-name,
+body.dark-theme .discussion-wrapper .discussion-comment-block ul li > span,
+body[data-theme="dark"] .discussion-wrapper,
+body[data-theme="dark"] .discussion-wrapper .profilerightbar h3,
+body[data-theme="dark"] .discussion-wrapper span.ant-comment-content-author-name,
+body[data-theme="dark"] .discussion-wrapper .discussion-comment-block ul li > span {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .discussion-wrapper span.ant-comment-content-author-time span,
+body[data-theme="dark"] .discussion-wrapper span.ant-comment-content-author-time span {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .discussion-wrapper .status-content .anticon-more svg,
+body[data-theme="dark"] .discussion-wrapper .status-content .anticon-more svg {
+  fill: #e2e8f0 !important;
+}
+
+body.dark-theme .discussion-wrapper .ant-comment textarea,
+body[data-theme="dark"] .discussion-wrapper .ant-comment textarea {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Bugs kanban headers/body */
+body.dark-theme .bugs-task-wrapper .drag_column h4,
+body[data-theme="dark"] .bugs-task-wrapper .drag_column h4 {
+  background: #1c2938 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .drag_row,
+body[data-theme="dark"] .bugs-task-wrapper .drag_row {
+  background: linear-gradient(180deg, rgba(28, 41, 56, 0.82) 0%, rgba(15, 23, 34, 0.18) 100%) !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+/* Notes cards */
+body.dark-theme .notes-wrapper .main-notes-wrapper .notes-div .notes-box,
+body[data-theme="dark"] .notes-wrapper .main-notes-wrapper .notes-div .notes-box {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme .notes-wrapper .notes-box,
+body.dark-theme .notes-wrapper .note-inner-block,
+body.dark-theme .notes-wrapper .note-block-head,
+body[data-theme="dark"] .notes-wrapper .notes-box,
+body[data-theme="dark"] .notes-wrapper .note-inner-block,
+body[data-theme="dark"] .notes-wrapper .note-block-head {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+}
+
+/* Files (Library) surfaces */
+body.dark-theme .file-folder-wrapper,
+body[data-theme="dark"] .file-folder-wrapper {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .file-folder-wrapper.ant-card,
+body.dark-theme .file-folder-wrapper .ant-card-body,
+body[data-theme="dark"] .file-folder-wrapper.ant-card,
+body[data-theme="dark"] .file-folder-wrapper .ant-card-body {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .file-folder-wrapper .profileleftbar:nth-child(2):before,
+body[data-theme="dark"] .file-folder-wrapper .profileleftbar:nth-child(2):before {
+  background: #16202d !important;
+}
+
+body.dark-theme .file-folder-wrapper .cover-folder-list .cover-folder-item,
+body[data-theme="dark"] .file-folder-wrapper .cover-folder-list .cover-folder-item {
+  background: #16202d !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover,
+body[data-theme="dark"] .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover {
+  background: rgba(148, 163, 184, 0.10) !important;
+}
+
+body.dark-theme .file-folder-wrapper .cover-folder-wrapper h3,
+body.dark-theme .file-folder-wrapper .folder-item-tag span,
+body.dark-theme .file-folder-wrapper .all-folder-sections,
+body.dark-theme .file-folder-wrapper .profileleftbar,
+body.dark-theme .file-folder-wrapper .profile-second-bar,
+body[data-theme="dark"] .file-folder-wrapper .cover-folder-wrapper h3,
+body[data-theme="dark"] .file-folder-wrapper .folder-item-tag span,
+body[data-theme="dark"] .file-folder-wrapper .all-folder-sections,
+body[data-theme="dark"] .file-folder-wrapper .profileleftbar,
+body[data-theme="dark"] .file-folder-wrapper .profile-second-bar {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .file-folder-wrapper .ant-dropdown-trigger svg,
+body[data-theme="dark"] .file-folder-wrapper .ant-dropdown-trigger svg {
+  color: #e2e8f0 !important;
+}
+
+/* Time tab panels */
+body.dark-theme .time-wrapper-left,
+body[data-theme="dark"] .time-wrapper-left {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .time-wrapper-right,
+body[data-theme="dark"] .time-wrapper-right {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .time-wrapper-table,
+body.dark-theme .time-wrapper-table p,
+body.dark-theme .time-wrapper-table span,
+body[data-theme="dark"] .time-wrapper-table,
+body[data-theme="dark"] .time-wrapper-table p,
+body[data-theme="dark"] .time-wrapper-table span {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .time-wrapper-left .sidebar-menu-links li,
+body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .time-wrapper-left .sidebar-menu-links li.active,
+body.dark-theme .time-wrapper-left .sidebar-menu-links li:hover,
+body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li.active,
+body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li:hover {
+  background: rgba(148, 163, 184, 0.10) !important;
+}
+
+/* ApexCharts readability in dark mode (dashboard stats graph, etc.) */
+body.dark-theme .apexcharts-text,
+body[data-theme="dark"] .apexcharts-text {
+  fill: #94a3b8 !important;
+}
+
+body.dark-theme .apexcharts-title-text,
+body.dark-theme .apexcharts-subtitle-text,
+body[data-theme="dark"] .apexcharts-title-text,
+body[data-theme="dark"] .apexcharts-subtitle-text {
+  fill: #e2e8f0 !important;
+}
+
+body.dark-theme .apexcharts-xaxis text,
+body.dark-theme .apexcharts-yaxis text,
+body[data-theme="dark"] .apexcharts-xaxis text,
+body[data-theme="dark"] .apexcharts-yaxis text {
+  fill: #94a3b8 !important;
+}
+
+body.dark-theme .apexcharts-gridline,
+body[data-theme="dark"] .apexcharts-gridline {
+  stroke: rgba(148, 163, 184, 0.22) !important;
+}
+
+body.dark-theme .apexcharts-tooltip,
+body[data-theme="dark"] .apexcharts-tooltip {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .apexcharts-tooltip-title,
+body[data-theme="dark"] .apexcharts-tooltip-title {
+  background: #16202d !important;
+  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ApexCharts tooltip: ensure title/text is visible even when theme flips or CSS order changes. */
+.apexcharts-tooltip {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #e2e8f0 !important;
+}
+
+.apexcharts-tooltip * {
+  color: inherit !important;
+}
+
+.apexcharts-tooltip-title {
+  background: #16202d !important;
+  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+}
+
+/* If Apex tries to paint series background (green/red), keep tooltip surface consistent. */
+.apexcharts-tooltip-series-group {
+  background: transparent !important;
+}
+
+/* ApexCharts x-axis hover label (was default green). Keep it mint across themes. */
+.apexcharts-xaxistooltip,
+.apexcharts-xaxistooltip.apexcharts-active {
+  background: #2dd4bf !important;
+  border-color: #2dd4bf !important;
+  color: #0b1220 !important;
+}
+
+.apexcharts-xaxistooltip-bottom:before,
+.apexcharts-xaxistooltip-bottom:after {
+  border-bottom-color: #2dd4bf !important;
+}
+
+.apexcharts-xaxistooltip-top:before,
+.apexcharts-xaxistooltip-top:after {
+  border-top-color: #2dd4bf !important;
+}
+
+/* Skeletons in dark theme */
+body.dark-theme .ant-skeleton,
+body[data-theme="dark"] .ant-skeleton,
+body.dark-theme .ant-skeleton-element,
+body[data-theme="dark"] .ant-skeleton-element,
+body.dark-theme .ant-skeleton-content .ant-skeleton-title,
+body.dark-theme .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.dark-theme .ant-skeleton-avatar,
+body.dark-theme .ant-skeleton-input,
+body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-title,
+body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-paragraph > li,
+body[data-theme="dark"] .ant-skeleton-avatar,
+body[data-theme="dark"] .ant-skeleton-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
 /* Tabs in dark mode */
 body.dark-theme .ant-tabs-tab,
 body[data-theme="dark"] .ant-tabs-tab {
@@ -1084,4 +1542,33 @@ body[data-theme="dark"] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
 body.dark-theme .ant-tabs-ink-bar,
 body[data-theme="dark"] .ant-tabs-ink-bar {
   background: #38bdf8 !important;
+}
+
+/* Absolute override: force pure white sidebar text/icons */
+body .sidebar-menu .ant-menu-item,
+body .sidebar-menu .ant-menu-item .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item a,
+body .sidebar-menu .ant-menu-submenu-title,
+body .sidebar-menu .ant-menu-submenu-title .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item .anticon,
+body .sidebar-menu .ant-menu-submenu-title .anticon,
+body .weekmate-sidebar .ant-menu-item,
+body .weekmate-sidebar .ant-menu-item .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item a,
+body .weekmate-sidebar .ant-menu-submenu-title,
+body .weekmate-sidebar .ant-menu-submenu-title .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item .anticon,
+body .weekmate-sidebar .ant-menu-submenu-title .anticon {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Force SVG icons to white */
+body .sidebar-menu .ant-menu-item svg,
+body .sidebar-menu .ant-menu-submenu-title svg,
+body .weekmate-sidebar .ant-menu-item svg,
+body .weekmate-sidebar .ant-menu-submenu-title svg {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
 }

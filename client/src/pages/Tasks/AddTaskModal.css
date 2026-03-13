@@ -15,8 +15,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #fff;
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-surface);
 }
 
 .add-task-modal-header-icons {
@@ -27,7 +27,7 @@
 
 .header-icon {
   font-size: 16px;
-  color: #9ca3af;
+  color: var(--app-text-subtle);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -35,7 +35,7 @@
 }
 
 .header-icon:hover {
-  color: #374151;
+  color: var(--app-text);
 }
 
 .add-task-modal-body-tasks {
@@ -56,8 +56,8 @@
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: #e6f4ff;
-  color: #1677ff;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--app-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
 }
 
 .add-task-modal-close-btn:hover {
-  background: #bae0ff;
+  background: rgba(37, 99, 235, 0.20);
 }
 
 .add-task-modal-body {
@@ -327,4 +327,193 @@
 .add-task-btn-submit:hover {
   background: #4096ff;
   border-color: #4096ff;
+}
+
+body.dark-theme .add-task-modal-v2 .ant-modal-content,
+body[data-theme="dark"] .add-task-modal-v2 .ant-modal-content {
+  background: #07111f;
+  border: 1px solid rgba(74, 104, 150, 0.24);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-theme .add-task-modal-v2 .ant-modal-body,
+body[data-theme="dark"] .add-task-modal-v2 .ant-modal-body {
+  background: transparent;
+}
+
+body.dark-theme .add-task-modal-header,
+body[data-theme="dark"] .add-task-modal-header {
+  background: #0d1a2d;
+  border-bottom-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .add-task-modal-body,
+body[data-theme="dark"] .add-task-modal-body {
+  background: #07111f;
+}
+
+body.dark-theme .add-task-modal-left,
+body[data-theme="dark"] .add-task-modal-left {
+  background: #07111f;
+  border-right-color: rgba(74, 104, 150, 0.24);
+  color: #dce7fb;
+}
+
+body.dark-theme .add-task-modal-left .ant-form-item-label > label,
+body.dark-theme .add-task-modal-row-label,
+body.dark-theme .add-task-mandatory,
+body.dark-theme .due-row-label,
+body.dark-theme .comment-date,
+body.dark-theme .add-task-comment-placeholder,
+body.dark-theme .comment-empty,
+body[data-theme="dark"] .add-task-modal-left .ant-form-item-label > label,
+body[data-theme="dark"] .add-task-modal-row-label,
+body[data-theme="dark"] .add-task-mandatory,
+body[data-theme="dark"] .due-row-label,
+body[data-theme="dark"] .comment-date,
+body[data-theme="dark"] .add-task-comment-placeholder,
+body[data-theme="dark"] .comment-empty {
+  color: #8fa7cc;
+}
+
+body.dark-theme .due-row-icon,
+body.dark-theme .add-task-modal-row-icon,
+body.dark-theme .header-icon,
+body.dark-theme .add-task-right-input .input-icon,
+body.dark-theme .add-task-right-input .input-emoji,
+body[data-theme="dark"] .due-row-icon,
+body[data-theme="dark"] .add-task-modal-row-icon,
+body[data-theme="dark"] .header-icon,
+body[data-theme="dark"] .add-task-right-input .input-icon,
+body[data-theme="dark"] .add-task-right-input .input-emoji {
+  color: #8fa7cc;
+}
+
+body.dark-theme .input-prefix-check,
+body[data-theme="dark"] .input-prefix-check {
+  background: #314866;
+  color: #dce7fb;
+}
+
+body.dark-theme .add-task-due-row,
+body[data-theme="dark"] .add-task-due-row {
+  background: #132238;
+  border-color: #314866;
+}
+
+body.dark-theme .add-task-modal-right,
+body.dark-theme .add-task-right-content,
+body.dark-theme .add-task-right-input,
+body.dark-theme .add-task-modal-footer,
+body[data-theme="dark"] .add-task-modal-right,
+body[data-theme="dark"] .add-task-right-content,
+body[data-theme="dark"] .add-task-right-input,
+body[data-theme="dark"] .add-task-modal-footer {
+  background: #0c182b;
+  color: #dce7fb;
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-nav,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-nav {
+  border-bottom-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-tab,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab {
+  background: transparent;
+  color: #8fa7cc;
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-tab-active,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab-active {
+  background: #132238 !important;
+  border-radius: 0;
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  background: transparent !important;
+  color: #3ea6ff !important;
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-tab-btn,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab-btn {
+  background: transparent !important;
+}
+
+body.dark-theme .add-task-right-tabs .ant-tabs-tab::before,
+body.dark-theme .add-task-right-tabs .ant-tabs-tab::after,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab::before,
+body[data-theme="dark"] .add-task-right-tabs .ant-tabs-tab::after {
+  background: transparent !important;
+}
+
+body.dark-theme .add-task-right-input,
+body.dark-theme .add-task-modal-footer,
+body[data-theme="dark"] .add-task-right-input,
+body[data-theme="dark"] .add-task-modal-footer {
+  border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .add-task-modal-v2 .ant-input,
+body.dark-theme .add-task-modal-v2 .ant-input-affix-wrapper,
+body.dark-theme .add-task-modal-v2 .ant-input-number,
+body.dark-theme .add-task-modal-v2 .ant-select-selector,
+body.dark-theme .add-task-modal-v2 .ant-picker,
+body.dark-theme .add-task-modal-v2 textarea,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input-affix-wrapper,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input-number,
+body[data-theme="dark"] .add-task-modal-v2 .ant-select-selector,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker,
+body[data-theme="dark"] .add-task-modal-v2 textarea {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-modal-v2 .ant-input-prefix,
+body.dark-theme .add-task-modal-v2 .ant-select-arrow,
+body.dark-theme .add-task-modal-v2 .ant-picker-suffix,
+body.dark-theme .add-task-modal-v2 .ant-picker-separator,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input-prefix,
+body[data-theme="dark"] .add-task-modal-v2 .ant-select-arrow,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker-suffix,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker-separator {
+  color: #8fa7cc !important;
+}
+
+body.dark-theme .add-task-modal-v2 .ant-input::placeholder,
+body.dark-theme .add-task-modal-v2 textarea::placeholder,
+body.dark-theme .add-task-modal-v2 .ant-select-selection-placeholder,
+body.dark-theme .add-task-modal-v2 .ant-picker-input > input::placeholder,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input::placeholder,
+body[data-theme="dark"] .add-task-modal-v2 textarea::placeholder,
+body[data-theme="dark"] .add-task-modal-v2 .ant-select-selection-placeholder,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker-input > input::placeholder {
+  color: #8fa7cc !important;
+}
+
+body.dark-theme .add-task-modal-v2 .ant-picker-input > input,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker-input > input {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .due-row-status-select .ant-select-selector,
+body.dark-theme .due-row-priority-select .ant-select-selector,
+body[data-theme="dark"] .due-row-status-select .ant-select-selector,
+body[data-theme="dark"] .due-row-priority-select .ant-select-selector {
+  background: #132238 !important;
+  border-color: #314866 !important;
+}
+
+body.dark-theme .add-task-btn-close,
+body[data-theme="dark"] .add-task-btn-close {
+  background: transparent;
+  color: #ff7875;
+}
+
+body.dark-theme .add-task-btn-close:hover,
+body[data-theme="dark"] .add-task-btn-close:hover {
+  background: rgba(255, 77, 79, 0.12);
 }

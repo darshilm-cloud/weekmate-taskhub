@@ -1013,3 +1013,57 @@
         font-size: 12px;
     }
 }
+
+body.dark-theme .chatbot-page-container,
+body[data-theme="dark"] .chatbot-page-container {
+  background: #07111f;
+}
+
+body.dark-theme .chatbot-page-container .chatbot-input-area,
+body.dark-theme .chatbot-page-container .chatbot-input-area .input-wrapper,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .chat-question,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .chat-answer,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .chat-status,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .response-table,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .response-list,
+body[data-theme="dark"] .chatbot-page-container .chatbot-input-area,
+body[data-theme="dark"] .chatbot-page-container .chatbot-input-area .input-wrapper,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .chat-question,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .chat-answer,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .chat-status,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .response-table,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .response-list {
+  background: #0c182b;
+  border-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .chatbot-page-container .chatbot-input-area,
+body[data-theme="dark"] .chatbot-page-container .chatbot-input-area {
+  border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .chatbot-page-container .chatbot-input-area .prompt-input,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .chat-question p,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .chat-answer p,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .response-table td,
+body.dark-theme .chatbot-page-container .chatbot-messages-list .list-item,
+body[data-theme="dark"] .chatbot-page-container .chatbot-input-area .prompt-input,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .chat-question p,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .chat-answer p,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .response-table td,
+body[data-theme="dark"] .chatbot-page-container .chatbot-messages-list .list-item {
+  color: #dce7fb;
+}
+
+body.dark-theme .chatbot-page-container .chatbot-welcome .welcome-title,
+body[data-theme="dark"] .chatbot-page-container .chatbot-welcome .welcome-title {
+  background: #132238;
+  color: #dce7fb;
+  border: 1px solid rgba(74, 104, 150, 0.28);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+body.dark-theme .chatbot-page-container .chatbot-welcome .welcome-subtitle,
+body[data-theme="dark"] .chatbot-page-container .chatbot-welcome .welcome-subtitle {
+  color: #9bb6dd;
+}
