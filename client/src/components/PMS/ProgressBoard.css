@@ -4,8 +4,8 @@
 
 /* ── Top Bar (white sticky bar: header + tabs) ─────────────── */
 .pb-topbar {
-  background: #fff;
-  border-bottom: 1px solid #e8eaed;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
@@ -38,7 +38,7 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  color: #6b7280;
+  color: var(--app-text-subtle);
   font-size: 13px;
   border-radius: 7px;
   flex-shrink: 0;
@@ -47,15 +47,15 @@
 }
 
 .pb-back-btn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--app-surface-2);
+  color: var(--app-text);
 }
 
 /* Project title */
 .pb-project-title {
   font-size: 17px !important;
   font-weight: 700 !important;
-  color: #111827 !important;
+  color: var(--app-text) !important;
   margin: 0 !important;
   cursor: pointer;
   white-space: nowrap;
@@ -67,13 +67,13 @@
 }
 
 .pb-project-title:hover {
-  color: #00C4B4 !important;
+  color: var(--app-primary) !important;
 }
 
 /* Manage dropdown arrow */
 .pb-manage-arrow {
   font-size: 11px !important;
-  color: #9ca3af !important;
+  color: var(--app-text-subtle) !important;
   cursor: pointer;
   padding: 5px !important;
   border-radius: 5px;
@@ -82,8 +82,8 @@
 }
 
 .pb-manage-arrow:hover {
-  background: #f3f4f6;
-  color: #374151 !important;
+  background: var(--app-surface-2);
+  color: var(--app-text-muted) !important;
 }
 
 /* Right section (mobile tab toggle) */
@@ -97,12 +97,12 @@
 /* Mobile tabs toggle button */
 .pb-tabs-mobile-btn {
   background: transparent;
-  border: 1px solid #e4e6ea;
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
   font-size: 16px;
-  color: #374151;
+  color: var(--app-text-muted);
   outline: none;
   display: flex;
   align-items: center;
@@ -111,8 +111,8 @@
 }
 
 .pb-tabs-mobile-btn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
 }
 
 /* ── Tabs bar ───────────────────────────────────────────────── */
@@ -120,7 +120,7 @@
   display: flex;
   align-items: center;
   padding: 0 24px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--app-border);
   gap: 0;
 }
 
@@ -134,7 +134,7 @@
   padding: 12px 16px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--app-text-subtle);
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s;
   outline: none;
@@ -143,12 +143,12 @@
 }
 
 .pb-tab-btn:hover {
-  color: #00C4B4;
+  color: var(--app-primary);
 }
 
 .pb-tab-btn--active {
-  color: #00C4B4;
-  border-bottom-color: #00C4B4;
+  color: var(--app-primary);
+  border-bottom-color: var(--app-primary);
   font-weight: 600;
 }
 

@@ -1,0 +1,39 @@
+/* Central CSS variables used by custom (non-Ant) styles.
+   We key off body[data-theme="light"|"dark"] which is already set in App. */
+
+body.admin-user[data-theme="light"] {
+  --app-bg: #f6f8fb;
+  --app-surface: #ffffff;
+  --app-surface-2: #f3f6fb;
+  --app-border: #e6eaf0;
+  --app-text: #111827;
+  --app-text-muted: #4b5563;
+  --app-text-subtle: #6b7280;
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+  --app-focus: rgba(37, 99, 235, 0.28);
+  --app-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --app-shadow-md: 0 10px 24px rgba(17, 24, 39, 0.10);
+  --app-radius-sm: 10px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 14px;
+}
+
+body.admin-user[data-theme="dark"] {
+  --app-bg: #0b1220;
+  --app-surface: #111a2a;
+  --app-surface-2: #0f172a;
+  --app-border: #24324a;
+  --app-text: #e5e7eb;
+  --app-text-muted: #9aa4b2;
+  --app-text-subtle: #94a3b8;
+  --app-primary: #2563eb;
+  --app-primary-hover: #3b82f6;
+  --app-focus: rgba(59, 130, 246, 0.28);
+  --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --app-shadow-md: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --app-radius-sm: 10px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 14px;
+}
+

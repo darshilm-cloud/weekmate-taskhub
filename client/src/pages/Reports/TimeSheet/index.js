@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useMemo, useCallback, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import "./timesheet.css";

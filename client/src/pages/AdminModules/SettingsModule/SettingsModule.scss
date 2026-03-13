@@ -99,6 +99,100 @@ $breakpoints: (
   }
 }
 
+body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab,
+body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab {
+  background: #132238 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-label,
+body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-icon,
+body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-label,
+body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-icon {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-content-holder,
+body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-tabpane,
+body.dark-theme .smtp-config .file-content,
+body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-content-holder,
+body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-tabpane,
+body[data-theme="dark"] .smtp-config .file-content {
+  background: #0c182b !important;
+}
+
+body.dark-theme .smtp-config .file-header,
+body[data-theme="dark"] .smtp-config .file-header {
+  background: #0c182b !important;
+}
+
+body.dark-theme .smtp-config .file-title,
+body.dark-theme .smtp-config .file-description,
+body.dark-theme .smtp-config .file-form .ant-form-item-label > label,
+body.dark-theme .smtp-config .file-guidelines,
+body.dark-theme .smtp-config .file-guidelines .ant-alert-message,
+body.dark-theme .smtp-config .file-guidelines .ant-alert-description,
+body.dark-theme .smtp-config .guideline-item,
+body.dark-theme .smtp-config .guideline-description,
+body[data-theme="dark"] .smtp-config .file-title,
+body[data-theme="dark"] .smtp-config .file-description,
+body[data-theme="dark"] .smtp-config .file-form .ant-form-item-label > label,
+body[data-theme="dark"] .smtp-config .file-guidelines,
+body[data-theme="dark"] .smtp-config .file-guidelines .ant-alert-message,
+body[data-theme="dark"] .smtp-config .file-guidelines .ant-alert-description,
+body[data-theme="dark"] .smtp-config .guideline-item,
+body[data-theme="dark"] .smtp-config .guideline-description {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .smtp-config .file-form-card,
+body.dark-theme .smtp-config .file-guidelines,
+body[data-theme="dark"] .smtp-config .file-form-card,
+body[data-theme="dark"] .smtp-config .file-guidelines {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .smtp-config .file-form .ant-input,
+body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper,
+body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper .ant-input,
+body.dark-theme .smtp-config .smtp-form .ant-input-password,
+body.dark-theme .smtp-config .smtp-form .ant-input-password .ant-input,
+body.dark-theme .smtp-config .smtp-form .ant-input-affix-wrapper,
+body[data-theme="dark"] .smtp-config .file-form .ant-input,
+body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper,
+body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper .ant-input,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password .ant-input,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input-affix-wrapper {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .smtp-config .file-form .ant-input::placeholder,
+body.dark-theme .smtp-config .file-form .ant-input-suffix,
+body.dark-theme .smtp-config .smtp-form .ant-input::placeholder,
+body.dark-theme .smtp-config .smtp-form .ant-input-password-icon,
+body.dark-theme .smtp-config .smtp-form .ant-input-suffix,
+body[data-theme="dark"] .smtp-config .file-form .ant-input::placeholder,
+body[data-theme="dark"] .smtp-config .file-form .ant-input-suffix,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input::placeholder,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password-icon,
+body[data-theme="dark"] .smtp-config .smtp-form .ant-input-suffix {
+  color: #9bb6dd !important;
+}
+
+body.dark-theme .smtp-config .file-form .ant-input[disabled],
+body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper-disabled,
+body[data-theme="dark"] .smtp-config .file-form .ant-input[disabled],
+body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper-disabled {
+  background: #16233a !important;
+  color: #c4d4ef !important;
+  opacity: 1 !important;
+}
+
 @mixin respond-below($breakpoint) {
   @media (max-width: map-get($breakpoints, $breakpoint) - 1px) {
     @content;
@@ -155,6 +249,10 @@ $breakpoints: (
 // ============================================================================
 
 .smtp-config {
+  background: var(--app-bg);
+  color: var(--app-text);
+  min-height: 100%;
+  padding: spacing(xl);
 
 
 
@@ -195,7 +293,7 @@ $breakpoints: (
 
     .subtitle {
       font-size: clamp(1rem, 2.5vw, 1.25rem);
-      color: var(--text-chat);
+      color: var(--app-text-muted);
       font-weight: 400;
       max-width: 600px;
       margin: 0 auto;
@@ -211,7 +309,9 @@ $breakpoints: (
     max-width: 1400px;
     margin: 0 auto;
     border-radius: radius(xxl);
-    @include glass-morphism(0.1);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    box-shadow: var(--app-shadow-md);
     overflow: hidden;
     position: relative;
 
@@ -233,8 +333,7 @@ $breakpoints: (
     // Tab Navigation Styling
     .main-tabs {
       .ant-tabs-nav {
-        background: var(--ant-modal-header);
-        backdrop-filter: blur(20px);
+        background: var(--app-surface);
         margin: 0;
         padding: spacing(md) spacing(xl) 0;
         border: none;
@@ -981,4 +1080,27 @@ $breakpoints: (
       }
     }
   }
+}
+
+body.dark-theme .smtp-config .main-card,
+body.dark-theme .smtp-config .quick-setup-card,
+body.dark-theme .smtp-config .smtp-form,
+body.dark-theme .smtp-config .file-form-card,
+body[data-theme="dark"] .smtp-config .main-card,
+body[data-theme="dark"] .smtp-config .quick-setup-card,
+body[data-theme="dark"] .smtp-config .smtp-form,
+body[data-theme="dark"] .smtp-config .file-form-card {
+  background: #0c182b !important;
+  border-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+body.dark-theme .smtp-config .ant-tabs-nav,
+body[data-theme="dark"] .smtp-config .ant-tabs-nav {
+  background: #0c182b !important;
+}
+
+body.dark-theme .smtp-config .ant-tabs-tab:not(.ant-tabs-tab-active),
+body[data-theme="dark"] .smtp-config .ant-tabs-tab:not(.ant-tabs-tab-active) {
+  background: #132238 !important;
+  color: #9bb6dd !important;
 }

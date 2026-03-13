@@ -981,7 +981,7 @@ function UserProfile() {
               trigger="click"
               className="user-profile"
             >
-              <div>
+              <div className="user-pill">
                 <img
                   src={
                     authUser?.emp_img
@@ -991,6 +991,12 @@ function UserProfile() {
                   className="avatar-user"
                   alt="User"
                 />
+                <span className="user-pill-name">
+                  {authUser?.full_name ||
+                    authUser?.name ||
+                    (companySlug ? companySlug.replace(/-/g, " ") : "User")}
+                </span>
+                <DownOutlined className="user-pill-caret" />
               </div>
             </Popover>
 

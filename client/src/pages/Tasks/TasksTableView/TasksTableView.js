@@ -120,7 +120,6 @@ const TasksTableView = ({
     onChange,
     handleTabChange,
     getTaskhistory,
-    Option,
     setTempBoard,
     tempBoard,
     projectWorkflowStage,
@@ -853,7 +852,7 @@ const TasksTableView = ({
                               <div className="flex-table">
                                 {moment(value?.due_date).format(
                                   "DD-MMM-YYYY"
-                                ) == "Invalid date"
+                                ) === "Invalid date"
                                   ? "-"
                                   : moment(value?.due_date).format(
                                       "DD-MMM-YYYY"
@@ -1208,7 +1207,7 @@ const TasksTableView = ({
                               <div className="flex-table">
                                 {moment(value?.due_date).format(
                                   "DD-MMM-YYYY"
-                                ) == "Invalid date"
+                                ) === "Invalid date"
                                   ? "-"
                                   : moment(value?.due_date).format(
                                       "DD-MMM-YYYY"
@@ -1298,7 +1297,7 @@ const TasksTableView = ({
                                                                                  {moment(item.pervious_value).format("DD MMM, YY")}
                                                                                </span>
                                                                              ) : (
-                                                                               updateKey + " : " + "-"
+                                                                               `${updateKey} : -`
                                                                              )
                                                                            ) : (
                                                                              <span>
@@ -1307,7 +1306,7 @@ const TasksTableView = ({
                                                                              </span>
                                                                            )
                                                                          ) : (
-                                                                           updateKey + " : " + "-"
+                                                                           `${updateKey} : -`
                                                                          )}
                                     </h5>
                                   </div>
@@ -1325,7 +1324,7 @@ const TasksTableView = ({
                                                                                  {moment(item.new_value).format("DD MMM, YY")}
                                                                                </span>
                                                                              ) : (
-                                                                               updateKey + " : " + "-"
+                                                                               `${updateKey} : -`
                                                                              )
                                                                            ) : (
                                                                              <span>
@@ -1334,7 +1333,7 @@ const TasksTableView = ({
                                                                              </span>
                                                                            )
                                                                          ) : (
-                                                                           updateKey + " : " + "-"
+                                                                           `${updateKey} : -`
                                                                          )}
                                     </h5>
                                   </div>

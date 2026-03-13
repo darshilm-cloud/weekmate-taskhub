@@ -325,6 +325,139 @@ body.admin-user[data-theme="dark"] .ant-tabs-ink-bar {
   background: #38bdf8 !important;
 }
 
+/* ─── DASHBOARD (new layout in ui-remap.css) ─── */
+body.dark-theme.admin-user .new-stat-card,
+body.dark-theme.admin-user .dashboard-section-card,
+body.dark-theme.admin-user .right-panel-card,
+body.admin-user[data-theme="dark"] .new-stat-card,
+body.admin-user[data-theme="dark"] .dashboard-section-card,
+body.admin-user[data-theme="dark"] .right-panel-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .stat-card-body .stat-card-title,
+body.dark-theme.admin-user .legend-item,
+body.admin-user[data-theme="dark"] .stat-card-body .stat-card-title,
+body.admin-user[data-theme="dark"] .legend-item {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .stat-card-body .stat-card-value,
+body.dark-theme.admin-user .dashboard-section-card h3,
+body.dark-theme.admin-user .right-panel-card h4,
+body.admin-user[data-theme="dark"] .stat-card-body .stat-card-value,
+body.admin-user[data-theme="dark"] .dashboard-section-card h3,
+body.admin-user[data-theme="dark"] .right-panel-card h4 {
+  color: #f1f5f9 !important;
+}
+
+body.dark-theme.admin-user .stats-toggle-btn,
+body.admin-user[data-theme="dark"] .stats-toggle-btn {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme.admin-user .stats-toggle-btn.active,
+body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-panel,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-content,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-panel,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-content {
+  background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-header,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-cell::before,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-header,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-cell::before {
+  border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-mini .ant-picker-panel,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-mini .ant-picker-panel {
+  border: none !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date-today,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date-today {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-content th,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-cell,
+body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date-value,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-content th,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-cell,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date-value {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme.admin-user .dashboard-calendar .ant-select-selector,
+body.dark-theme.admin-user .dashboard-calendar .ant-radio-button-wrapper,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-select-selector,
+body.admin-user[data-theme="dark"] .dashboard-calendar .ant-radio-button-wrapper {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Keep “today summary” as tinted panels but dark-friendly */
+body.dark-theme.admin-user .today-summary-item.new-task,
+body.admin-user[data-theme="dark"] .today-summary-item.new-task {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+
+body.dark-theme.admin-user .today-summary-item.closed-task,
+body.admin-user[data-theme="dark"] .today-summary-item.closed-task {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+body.dark-theme.admin-user .today-summary-item .summary-label,
+body.admin-user[data-theme="dark"] .today-summary-item .summary-label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme.admin-user .today-summary-item .summary-count,
+body.admin-user[data-theme="dark"] .today-summary-item .summary-count {
+  color: #f8fafc !important;
+}
+
+body.dark-theme.admin-user .priority-item,
+body.admin-user[data-theme="dark"] .priority-item {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme.admin-user .priority-item .priority-count,
+body.admin-user[data-theme="dark"] .priority-item .priority-count {
+  color: #f1f5f9 !important;
+}
+
+body.dark-theme.admin-user .team-incomplete-item,
+body.admin-user[data-theme="dark"] .team-incomplete-item {
+  background: #0f172a !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme.admin-user .team-incomplete-empty,
+body.admin-user[data-theme="dark"] .team-incomplete-empty {
+  color: #94a3b8 !important;
+}
+
 /* Popover / dropdown menus that might stay white */
 body.dark-theme.admin-user .ant-popover-inner,
 body.dark-theme.admin-user .ant-popover-inner .ant-menu,
@@ -333,4 +466,74 @@ body.admin-user[data-theme="dark"] .ant-popover-inner .ant-menu {
   background: #1e293b !important;
   border-color: #334155 !important;
   color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown,
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item,
+body.dark-theme.admin-user .ant-select-dropdown .rc-virtual-list-holder,
+body.dark-theme.admin-user .ant-picker-dropdown .ant-picker-panel-container,
+body.dark-theme.admin-user .ant-dropdown .ant-dropdown-menu,
+body.admin-user[data-theme="dark"] .ant-select-dropdown,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .rc-virtual-list-holder,
+body.admin-user[data-theme="dark"] .ant-picker-dropdown .ant-picker-panel-container,
+body.admin-user[data-theme="dark"] .ant-dropdown .ant-dropdown-menu {
+  background: #0c182b !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-option-content,
+body.dark-theme.admin-user .ant-select-dropdown .ant-empty-description,
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-empty,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-option-content,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-empty-description,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-empty {
+  color: #dce7fb !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: #132238 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-option-disabled,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-option-disabled {
+  color: #6f86ab !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item-empty,
+body.dark-theme.admin-user .ant-select-dropdown .ant-empty,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item-empty,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-empty {
+  background: #0c182b !important;
+}
+
+body.dark-theme.admin-user .ant-select-dropdown .ant-select-item,
+body.admin-user[data-theme="dark"] .ant-select-dropdown .ant-select-item {
+  border-radius: 8px;
+}
+
+/* Shared white search/filter toolbars used across admin pages */
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .global-search,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .global-search,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
+  background: #0c182b !important;
+  border: 1px solid rgba(74, 104, 150, 0.24) !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-affix-wrapper,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .global-search .ant-input-group-addon,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .global-search .ant-input,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .global-search .ant-input-affix-wrapper,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .global-search .ant-input-group-addon {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
 }

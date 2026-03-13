@@ -1,11 +1,11 @@
 .new-project-overview {
   padding: 24px;
-  background-color: #f8fafc;
+  background-color: var(--app-bg);
 }
 
 .overview-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
@@ -30,7 +30,7 @@
 }
 
 .date-label {
-  color: #64748b;
+  color: var(--app-text-muted);
   font-size: 14px;
   margin-bottom: 8px;
   display: block;
@@ -39,11 +39,11 @@
 .date-value {
   font-size: 18px;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--app-text);
 }
 
 .date-arrow {
-  color: #94a3b8;
+  color: var(--app-text-subtle);
   font-size: 20px;
 }
 
@@ -57,7 +57,7 @@
 .analysis-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--app-text);
 }
 
 .priority-legend {
@@ -113,8 +113,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   padding: 12px;
   border-radius: 8px;
 }

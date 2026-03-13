@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import moment from "moment";

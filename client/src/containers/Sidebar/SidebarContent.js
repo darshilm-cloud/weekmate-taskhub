@@ -26,6 +26,7 @@ import "./SidebarContent.css";
 import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
+import WeekmateLogo from "../../assets/images/WEEKMATE_LOGO.png";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
@@ -65,19 +66,20 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const getProjectListing = async (searchText) => {
     try {
       dispatch(showAuthLoader());
+      const normalizedSearch = (searchText || "").trim();
       const defaultPayload = {
         pageNo: 1,
-        limit: 5,
-        search: searchText || "",
+        limit: 100,
+        search: normalizedSearch,
         sortBy: "desc",
         filterBy: "all",
-        isSearch: true,
+        isSearch: normalizedSearch.length > 0,
       };
       const reqBody = {
         ...defaultPayload,
       };
-      if (searchText && searchText !== "") {
-        reqBody.search = searchText;
+      if (normalizedSearch) {
+        reqBody.search = normalizedSearch;
       }
       let Key = generateCacheKey("project", reqBody);
 
@@ -201,13 +203,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Permissions",
         onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
       },
-      (getRoles(["Admin"]) || userData?._id == sideBarContentId) && {
+      (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
         key: "Analytics-Projects-running",
         icon: <BarChartOutlined />,
         label: "Projects Running",
         onClick: () => handleMenuClick("Analytics-Projects-running", `/${companySlug}/project-runnig-reports`),
       },
-      (getRoles(["Admin"]) || userData?._id == sideBarContentId) && {
+      (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
         key: "Analytics-Timesheet",
         icon: <HistoryOutlined />,
         label: "Timesheet",
@@ -225,7 +227,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Complaints",
         onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
       },
-      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id == sideBarContentId2) && {
+      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
         key: "Projectexpences",
         icon: <FileTextOutlined />,
         label: "Project Expense",
@@ -297,14 +299,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       <div className="gx-sidebar-content sidebar-menu weekmate-sidebar">
         {/* Top: Hamburger + WeekMate logo */}
         <div className="weekmate-sidebar-header">
-          <button
-            type="button"
-            className="weekmate-sidebar-trigger"
-            aria-label="Toggle menu"
-            onClick={() => dispatch(toggleCollapsedSideNav(!navCollapsed))}
-          >
-            <MenuOutlined />
-          </button>
           <div
             className="weekmate-logo"
             onClick={() => history.push(`/${companySlug}/dashboard`)}
@@ -312,7 +306,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/dashboard`)}
           >
-            <span className="weekmate-logo-text">WeekMate</span>
+            <img className="weekmate-logo-img" src={WeekmateLogo} alt="WeekMate" />
           </div>
         </div>
 

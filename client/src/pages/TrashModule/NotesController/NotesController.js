@@ -32,8 +32,6 @@ const NotesController = () => {
       key: "title",
       render: (text, record) => {
         const Title = record?.title;
-        const ProjectId = record?._id;
-        const color = record?.color;
         return (
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>
@@ -69,7 +67,7 @@ const NotesController = () => {
       },
     },
   ];
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });

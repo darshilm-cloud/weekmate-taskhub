@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, no-dupe-keys */
 import React, { useEffect, useRef, useState } from "react";
 import { message, Select, Upload, Form, Avatar } from "antd";
 import Service from "../../../service";

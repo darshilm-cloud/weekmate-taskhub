@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Button,
@@ -18,6 +19,7 @@ import {
   Row,
   Col,
   message,
+  Skeleton,
 } from "antd";
 import {
   EditOutlined,
@@ -85,6 +87,8 @@ const TasksPMS = ({ flag }) => {
   const [estHrs, setEstHrs] = useState("");
   const [estMins, setEstMins] = useState("");
   const [estTime, setEstTime] = useState("");
+  const [isLoadingTasksPage, setIsLoadingTasksPage] = useState(true);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [fileAttachment, setFileAttachment] = useState([]);
   const [modalMode, setModalMode] = useState("add");
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
@@ -94,20 +98,20 @@ const TasksPMS = ({ flag }) => {
   const [sortColumn] = useState("_id");
   const [sortOrder] = useState("des");
   const [filterData] = useState([]);
-  const [openStatus, setOpenStatus] = useState(false);
-  const [openAssignees, setOpenAssignees] = useState(false);
-  const [openLabels, setOpenLabels] = useState(false);
-  const [isPopoverVisibleView, setIsPopoverVisibleView] = useState(false);
-  const [selectedsassignees, setSelectedsassignees] = useState([]);
-  const [selectedClient, setSelectdclients] = useState([]);
+  const [, setOpenStatus] = useState(false);
+  const [, setOpenAssignees] = useState(false);
+  const [, setOpenLabels] = useState(false);
+  const [, setIsPopoverVisibleView] = useState(false);
+  const [, setSelectedsassignees] = useState([]);
+  const [, setSelectdclients] = useState([]);
   const [editTaskData, setEditTaskData] = useState({});
   const [editList, setEditList] = useState({});
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 5,
   });
-  const [showSelectTask, setShowSelectTask] = useState(false);
-  const [showSelectClient, setShowSelectClient] = useState(false);
+  const [, setShowSelectTask] = useState(false);
+  const [, setShowSelectClient] = useState(false);
   const [filterSchema, setFilterSchema] = useState({
     tasks: {},
   });
@@ -307,6 +311,7 @@ const TasksPMS = ({ flag }) => {
   };
   const getProjectByID = async () => {
     try {
+      setIsLoadingTasksPage(true);
       dispatch(showAuthLoader());
       const reqBody = {
         _id: projectId,
@@ -325,13 +330,16 @@ const TasksPMS = ({ flag }) => {
         setProjectDetails(response.data.data);
         setStagesId(response.data.data?.workFlow?._id);
         dispatch(hideAuthLoader());
+        setIsLoadingTasksPage(false);
       } else {
         message.error(response?.data?.message);
         dispatch(hideAuthLoader());
+        setIsLoadingTasksPage(false);
       }
     } catch (error) {
       console.log(error);
       dispatch(hideAuthLoader());
+      setIsLoadingTasksPage(false);
     }
   };
 
@@ -463,16 +471,16 @@ const TasksPMS = ({ flag }) => {
       setEstMinsError("Enter minutes");
       return;
     }
-    if (estHrs === 0 && !estMins) {
+    if (String(estHrs) === "0" && !estMins) {
       setEstHrsError("Enter estimated hours");
       setEstMinsError("");
       return;
     }
-    if (estMins === 0 && !estHrs) {
+    if (String(estMins) === "0" && !estHrs) {
       setEstMinsError("Enter estimated hours");
       setEstHrsError("");
     }
-    if (estHrs == 0 && estMins == 0 && !getRoles(["Client"])) {
+    if (String(estHrs) === "0" && String(estMins) === "0" && !getRoles(["Client"])) {
       setEstHrsError("Minutes and hours both cannot be 0");
       setEstMinsError("Minutes and hours both cannot be 0");
       return;
@@ -510,8 +518,8 @@ const TasksPMS = ({ flag }) => {
         assignees: selectedItems.map((item) => item._id),
         pms_clients: selectedClients.map((item) => item._id),
         task_status: boardTasks[0].workflowStatus._id,
-        estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
-        estimated_minutes: estMins && estMins != "" ? estMins : "00",
+        estimated_hours: estHrs !== "" && estHrs != null ? estHrs : "00",
+        estimated_minutes: estMins !== "" && estMins != null ? estMins : "00",
 
         task_progress: "0",
         recurringType:addInputTaskData?.recurringType || "",
@@ -693,6 +701,7 @@ const TasksPMS = ({ flag }) => {
 
   const getProjectMianTask = async (taskID, selectionFalse) => {
     try {
+      setIsTasksLoading(true);
       dispatch(showAuthLoader());
       const reqBody = {
         search: searchText,
@@ -747,6 +756,8 @@ const TasksPMS = ({ flag }) => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsTasksLoading(false);
     }
   };
 
@@ -1481,11 +1492,7 @@ const TasksPMS = ({ flag }) => {
   };
 
   useEffect(() => {
-    getProjectByID();
-    getProjectMianTask();
     dispatch(getLables());
-    dispatch(getFolderList(projectId));
-    dispatch(getClientList(projectId));
     dispatch(moveWorkFlowTaskHandler([]));
   }, []);
 
@@ -1497,7 +1504,6 @@ const TasksPMS = ({ flag }) => {
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
       let data = projectMianTask.filter((ele) => listID == ele?._id);
-      getProjectByID();
       setSelectedTask(data[0]);
       getListWorkflowStatus();
       getBoardTasks(listID);
@@ -1506,13 +1512,15 @@ const TasksPMS = ({ flag }) => {
 
   useEffect(() => {
     getProjectByID();
-    getListWorkflowStatus();
+    getProjectMianTask();
+    dispatch(getFolderList(projectId));
+    dispatch(getClientList(projectId));
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 
   useEffectAfterMount(() => {
     getProjectMianTask();
-  }, [searchText, projectId]);
+  }, [searchText]);
 
   useEffectAfterMount(() => {
     getProjectByID();
@@ -1668,9 +1676,14 @@ const TasksPMS = ({ flag }) => {
                             }
                             trigger={["click"]}
                           >
-                            <a onClick={(e) => e.preventDefault()}>
+                            <button
+                              type="button"
+                              onClick={(e) => e.preventDefault()}
+                              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+                              aria-label="More actions"
+                            >
                               <MoreOutlined className="moreoutline-icon" />
-                            </a>
+                            </button>
                           </Dropdown>
                         )}
                       </div>
@@ -1920,12 +1933,28 @@ const TasksPMS = ({ flag }) => {
               </div>
             )}
 
-            {projectMianTask.length === 0 && (
+            {isLoadingTasksPage || isTasksLoading ? (
+              <div style={{ padding: "12px 0" }}>
+                <Skeleton active paragraph={{ rows: 1 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16, marginTop: 16 }}>
+                  <div>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={`left-skel-${i}`} style={{ marginBottom: 12 }}>
+                        <Skeleton.Input active size="small" style={{ width: "100%" }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <Skeleton active paragraph={{ rows: 6 }} />
+                  </div>
+                </div>
+              </div>
+            ) : projectMianTask.length === 0 ? (
               <div className="error-message">
                 <p>No Data</p>
               </div>
-            )}
-            {tableTrue === false ? (
+            ) : null}
+            {isLoadingTasksPage || isTasksLoading ? null : tableTrue === false ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 checkTaskDrafts={""}

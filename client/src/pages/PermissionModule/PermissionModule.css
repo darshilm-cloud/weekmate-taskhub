@@ -518,6 +518,104 @@
 }
 
 /* ── Permission Loading skeleton ─────────────────────────────── */
+
+/* ── Dark theme ───────────────────────────────────────────── */
+body.dark-theme .rpm-page,
+body[data-theme="dark"] .rpm-page {
+  background: #07111f;
+}
+
+body.dark-theme .rpm-title,
+body.dark-theme .rpm-stat-value,
+body.dark-theme .rpm-panel-title,
+body.dark-theme .rpm-module-label,
+body[data-theme="dark"] .rpm-title,
+body[data-theme="dark"] .rpm-stat-value,
+body[data-theme="dark"] .rpm-panel-title,
+body[data-theme="dark"] .rpm-module-label {
+  color: #e3ecfb;
+}
+
+body.dark-theme .rpm-stat-label,
+body.dark-theme .rpm-panel-sub,
+body.dark-theme .rpm-module-sub,
+body.dark-theme .rpm-role-count,
+body[data-theme="dark"] .rpm-stat-label,
+body[data-theme="dark"] .rpm-panel-sub,
+body[data-theme="dark"] .rpm-module-sub,
+body[data-theme="dark"] .rpm-role-count {
+  color: #8fa7cc;
+}
+
+body.dark-theme .rpm-stat-card,
+body.dark-theme .rpm-role-sidebar,
+body.dark-theme .rpm-permission-panel,
+body[data-theme="dark"] .rpm-stat-card,
+body[data-theme="dark"] .rpm-role-sidebar,
+body[data-theme="dark"] .rpm-permission-panel {
+  background: #0c182b;
+  border-color: rgba(74, 104, 150, 0.24);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+body.dark-theme .rpm-role-item:hover,
+body[data-theme="dark"] .rpm-role-item:hover {
+  background: #132238;
+}
+
+body.dark-theme .rpm-role-item.active,
+body[data-theme="dark"] .rpm-role-item.active {
+  background: rgba(46, 103, 214, 0.2);
+  border-left-color: #4d7bd6;
+}
+
+body.dark-theme .rpm-role-name,
+body[data-theme="dark"] .rpm-role-name {
+  color: #dce7fb;
+}
+
+body.dark-theme .rpm-sidebar-title,
+body[data-theme="dark"] .rpm-sidebar-title {
+  color: #8fa7cc;
+  border-bottom-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .rpm-panel-header,
+body[data-theme="dark"] .rpm-panel-header {
+  border-bottom-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .rpm-matrix-wrap::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .rpm-matrix-wrap::-webkit-scrollbar-thumb {
+  background: rgba(74, 104, 150, 0.4);
+}
+
+body.dark-theme .rpm-matrix thead tr th,
+body[data-theme="dark"] .rpm-matrix thead tr th {
+  background: #11213a;
+  color: #9bb6dd;
+  border-bottom-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .rpm-matrix tbody tr,
+body[data-theme="dark"] .rpm-matrix tbody tr {
+  border-bottom-color: rgba(74, 104, 150, 0.14);
+}
+
+body.dark-theme .rpm-matrix tbody tr:hover,
+body[data-theme="dark"] .rpm-matrix tbody tr:hover {
+  background: #132238;
+}
+
+body.dark-theme .rpm-cell-na,
+body[data-theme="dark"] .rpm-cell-na {
+  color: #4c6488;
+}
+
+body.dark-theme .rpm-switch-off.ant-switch,
+body[data-theme="dark"] .rpm-switch-off.ant-switch {
+  background: #334155;
+}
 .rpm-loading-rows {
   padding: 24px;
   display: flex;
@@ -531,6 +629,12 @@
   background-size: 400% 100%;
   border-radius: 8px;
   animation: rpm-shimmer 1.4s infinite linear;
+}
+
+body.dark-theme .rpm-skeleton-row,
+body[data-theme="dark"] .rpm-skeleton-row {
+  background: linear-gradient(90deg, #132238 25%, #1a2d46 50%, #132238 75%);
+  background-size: 400% 100%;
 }
 
 @keyframes rpm-shimmer {

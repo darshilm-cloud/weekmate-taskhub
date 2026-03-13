@@ -14,7 +14,6 @@ import { sideBarContentId } from "../constants";
 import AdminDashboard from "../pages/AdminDashboard";
 import CompanyManagement from "../pages/AdminModules/CompanyManagement";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
-import CompanyEmployee from "../pages/AdminModules/CompanyEmployee";
 import Administrator from "../pages/AdminModules/Administrator";
  
 
@@ -427,7 +426,7 @@ const index = ({ match, userPermission }) => {
             key={index}
             path={`${match.url}${item.path}`}
             render={(routeProps) => {
-              const isSpecialUser = userData._id == sideBarContentId; // Static User Check
+              const isSpecialUser = userData._id === sideBarContentId; // Static User Check
               const isSpecificPath =
                 item.path === "project-runnig-reports" ||
                 item.path === "timesheet-reports"; // Check for the specific route

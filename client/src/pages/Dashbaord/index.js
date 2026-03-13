@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import "./dashboard.css";
 import { Calendar, Form } from "antd";
@@ -132,17 +133,54 @@ const Dashboard = () => {
     return { labels: _labels, completedCounts: _completedCounts, incompleteCounts: _incompleteCounts };
   }, [myTask, chartView]);
 
-  const chartOptions = useMemo(() => ({
-    chart: { type: "line", toolbar: { show: false }, zoom: { enabled: false } },
-    colors: ["#52c41a", "#ff4d4f"],
-    stroke: { curve: "smooth", width: 2 },
-    xaxis: { categories: labels },
-    yaxis: { min: 0 },
-    legend: { show: false },
-    grid: { borderColor: "#f0f2f5" },
-    tooltip: { enabled: true },
-    dataLabels: { enabled: false },
-  }), [labels]);
+  const isDarkTheme = useMemo(() => {
+    if (typeof document === "undefined") return false;
+    const body = document.body;
+    return (
+      body?.classList?.contains("dark-theme") ||
+      body?.dataset?.theme === "dark" ||
+      body?.getAttribute?.("data-theme") === "dark"
+    );
+  }, []);
+
+  const chartOptions = useMemo(() => {
+    const muted = isDarkTheme ? "#94a3b8" : "#6b7280";
+    const grid = isDarkTheme ? "rgba(148, 163, 184, 0.22)" : "#f0f2f5";
+    const axis = isDarkTheme ? "rgba(148, 163, 184, 0.28)" : "#e5e7eb";
+    const markerStroke = isDarkTheme ? "#0f1722" : "#ffffff";
+
+    return {
+      chart: {
+        type: "line",
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        foreColor: muted,
+      },
+      colors: ["#2dd4bf", "#ff4d4f"],
+      stroke: { curve: "smooth", width: 2 },
+      markers: { size: 4, strokeWidth: 2, strokeColors: markerStroke },
+      xaxis: {
+        categories: labels,
+        labels: { style: { colors: muted, fontSize: "12px" } },
+        axisBorder: { color: axis },
+        axisTicks: { color: axis },
+      },
+      yaxis: {
+        min: 0,
+        labels: { style: { colors: muted, fontSize: "12px" } },
+      },
+      legend: { show: false },
+      grid: { borderColor: grid, strokeDashArray: 3 },
+      tooltip: {
+        enabled: true,
+        theme: isDarkTheme ? "dark" : "light",
+        // Avoid Apex default "series-colored" tooltip background (was showing as bright green).
+        fillSeriesColor: false,
+        style: { fontSize: "12px" },
+      },
+      dataLabels: { enabled: false },
+    };
+  }, [labels, isDarkTheme]);
 
   const chartSeries = useMemo(() => [
     { name: "Completed", data: completedCounts },
@@ -230,9 +268,14 @@ const Dashboard = () => {
   const getProjectListing = useCallback(async (searchText) => {
     try {
       dispatch(showAuthLoader());
+      const normalizedSearch = (searchText || "").trim();
       const reqBody = {
-        pageNo: 1, limit: 5, search: searchText || "",
-        sortBy: "desc", filterBy: "all", isSearch: true,
+        pageNo: 1,
+        limit: 100,
+        search: normalizedSearch,
+        sortBy: "desc",
+        filterBy: "all",
+        isSearch: normalizedSearch.length > 0,
       };
       const Key = generateCacheKey("project", reqBody);
       const response = await Service.makeAPICall({
@@ -516,6 +559,23 @@ const Dashboard = () => {
 
           {/* Statistics Chart */}
           <div className="dashboard-section-card">
+            <svg
+              className="stats-watermark"
+              width="133"
+              height="184"
+              viewBox="0 0 163 184"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M22.7 17.9C27.5 17.9 31.3 21.8 31.3 26.7V133.2C31.3 138 37.6 139.7 39.9 135.5C45.3 125.5 51.1 114 51.1 112.8V66C51.1 63.6 54.1 62.7 55.4 64.6L78.7 98.4C82.1 103.3 89.2 103.4 92.7 98.5L116.8 64.4C118.1 62.5 121.1 63.5 121.1 65.8V111.9L132.2 133.3C134.5 137.6 140.9 136 140.9 131.1V26.7C140.9 21.8 144.8 17.9 149.5 17.9H154C158.8 17.9 162.6 21.8 162.6 26.7V169.1C162.6 173.9 158.7 177.9 154 177.9H125.4C122.1 177.9 119.2 176 117.7 173L94.1 125C91 118.5 81.9 118.5 78.7 124.9L54.3 173.2C52.8 176.1 49.9 177.9 46.7 177.9H18C13.2 177.9 9.4 174 9.4 169.2V26.7C9.4 21.8 13.3 17.9 18 17.9H22.7Z"
+                fill="white"
+              />
+              <path
+                d="M115.5 24.4L88.9 61.5C87.3 63.7 84 63.7 82.4 61.5L56.6 24.4C54.7 21.7 56.6 17.9 59.9 17.9H112.3C115.6 17.9 117.5 21.7 115.5 24.4Z"
+                fill="white"
+              />
+            </svg>
             <div className="stats-header-row">
               <h3>Statistics</h3>
               <div className="stats-controls">

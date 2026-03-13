@@ -273,3 +273,109 @@
   margin: 0;
   margin-bottom: 10px;
 }
+
+body.dark-theme .pfm-modal .ant-modal-content,
+body[data-theme="dark"] .pfm-modal .ant-modal-content {
+  background: #07111f;
+  border: 1px solid rgba(74, 104, 150, 0.24);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-theme .pfm-modal .ant-modal-body,
+body[data-theme="dark"] .pfm-modal .ant-modal-body {
+  background: #07111f;
+}
+
+body.dark-theme .pfm-title,
+body[data-theme="dark"] .pfm-title {
+  color: #dce7fb;
+}
+
+body.dark-theme .pfm-icon,
+body[data-theme="dark"] .pfm-icon {
+  color: #8fa7cc;
+}
+
+body.dark-theme .pfm-input,
+body.dark-theme .pfm-input::placeholder,
+body.dark-theme .pfm-select .ant-select-selection-placeholder,
+body.dark-theme .pfm-select .ant-select-arrow,
+body.dark-theme .pfm-no-end-date-row .ant-checkbox-wrapper,
+body.dark-theme .pfm-modal .ant-checkbox-wrapper,
+body.dark-theme .pfm-modal .ant-checkbox + span,
+body[data-theme="dark"] .pfm-input,
+body[data-theme="dark"] .pfm-input::placeholder,
+body[data-theme="dark"] .pfm-select .ant-select-selection-placeholder,
+body[data-theme="dark"] .pfm-select .ant-select-arrow,
+body[data-theme="dark"] .pfm-no-end-date-row .ant-checkbox-wrapper,
+body[data-theme="dark"] .pfm-modal .ant-checkbox-wrapper,
+body[data-theme="dark"] .pfm-modal .ant-checkbox + span {
+  color: #8fa7cc !important;
+}
+
+body.dark-theme .pfm-divider,
+body[data-theme="dark"] .pfm-divider {
+  background: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .pfm-date-divider,
+body[data-theme="dark"] .pfm-date-divider {
+  background: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .pfm-datepicker.ant-picker-disabled,
+body[data-theme="dark"] .pfm-datepicker.ant-picker-disabled {
+  background: transparent;
+  opacity: 0.65;
+}
+
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar {
+  background: #132238 !important;
+  border-color: #314866 !important;
+}
+
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck-button,
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck-button .ck-icon,
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck.ck-dropdown__button,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck-button,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck-button .ck-icon,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck.ck-dropdown__button {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck-button:hover,
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck-button.ck-on,
+body.dark-theme .pfm-editor-wrapper .ck.ck-toolbar .ck.ck-dropdown__button:hover,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck-button:hover,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck-button.ck-on,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-toolbar .ck.ck-dropdown__button:hover {
+  background: #1a2d46 !important;
+}
+
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable,
+body.dark-theme .pfm-editor-wrapper .ck.ck-content,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-content {
+  background: #0c182b !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable p,
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable li,
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable h1,
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable h2,
+body.dark-theme .pfm-editor-wrapper .ck.ck-editor__editable h3,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable p,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable li,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable h1,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable h2,
+body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable h3 {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .pfm-footer,
+body[data-theme="dark"] .pfm-footer {
+  border-top-color: rgba(74, 104, 150, 0.24);
+}

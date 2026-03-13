@@ -7,7 +7,7 @@
 }
 
 .charts-grid .chart-container {
-  background-color: #ffffff;
+  background-color: var(--app-surface);
   border-radius: 8px;
   height: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -17,12 +17,12 @@
 
 .charts-grid .chart-container .chart-header {
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .charts-grid .chart-container .chart-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--app-text);
   font-weight: 500;
 }
 
@@ -37,7 +37,7 @@
   border-radius: 4px;
   margin: 10px 0;
   box-shadow: 0 1px 2px #0000000d;
-  background-color: #fff;
+  background-color: var(--app-surface);
   flex-wrap: wrap;
 }
 
@@ -56,7 +56,7 @@
 
 .stat-item .stat-label {
   font-weight: 500;
-  color: #1f2937
+  color: var(--app-text)
 }
 
 .projects-running-card .filter-btn-wrapper .filter-select-container .ant-select {
@@ -84,7 +84,7 @@
 .project-department-chart {
   grid-column-start: 1;
   grid-column-end: 3;
-  background-color: #ffffff;
+  background-color: var(--app-surface);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -104,9 +104,9 @@
 .custom-legend {
   margin-top: 20px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--app-surface-2);
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--app-border);
 }
 
 .legend-grid {
@@ -131,7 +131,7 @@
 
 .legend-label {
   font-weight: 500;
-  color: #333;
+  color: var(--app-text);
   flex: 1;
   min-width: 0;
   word-break: break-word;
@@ -139,7 +139,7 @@
 
 .legend-value {
   font-size: 12px;
-  color: #666;
+  color: var(--app-text-muted);
   font-weight: 400;
   white-space: nowrap;
 }
@@ -165,4 +165,100 @@
 .justifyCenter {
   display: flex;
   justify-content: center;
+}
+
+body.dark-theme .projects-running-card.ant-card,
+body[data-theme="dark"] .projects-running-card.ant-card {
+  background: #07111f !important;
+  border-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+body.dark-theme .projects-running-card .ant-card-body,
+body[data-theme="dark"] .projects-running-card .ant-card-body {
+  background: transparent !important;
+}
+
+body.dark-theme .projects-running-card .global-search,
+body[data-theme="dark"] .projects-running-card .global-search {
+  background: #0c182b;
+  border: 1px solid rgba(74, 104, 150, 0.24);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .projects-running-card .global-search,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .projects-running-card .global-search {
+  background: #0c182b !important;
+  border: 1px solid rgba(74, 104, 150, 0.24) !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .projects-running-card .global-search .filter-btn-wrapper,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .projects-running-card .global-search .filter-btn-wrapper {
+  background: transparent !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table,
+body.dark-theme .projects-running-card .custom-table .ant-table-container,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-container {
+  background: #0c182b !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table-thead > tr > th,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-thead > tr > th {
+  background: #11213a !important;
+  color: #cfe0ff !important;
+  border-bottom-color: rgba(74, 104, 150, 0.24) !important;
+  border-right-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td,
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td a,
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td span,
+body.dark-theme .projects-running-card .custom-table .ant-pagination-total-text,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td a,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td span,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-pagination-total-text {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td a:hover,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td a:hover {
+  color: #35d6c6 !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(74, 104, 150, 0.16) !important;
+  border-right-color: rgba(74, 104, 150, 0.16) !important;
+  background: #0c182b !important;
+}
+
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr:hover > td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr:hover > td {
+  background: #132238 !important;
+}
+
+body.dark-theme .projects-running-card .apexcharts-tooltip,
+body.dark-theme .projects-running-card .apexcharts-xaxistooltip,
+body.dark-theme .projects-running-card .apexcharts-yaxistooltip,
+body.dark-theme .projects-running-card .apexcharts-tooltip-title,
+body[data-theme="dark"] .projects-running-card .apexcharts-tooltip,
+body[data-theme="dark"] .projects-running-card .apexcharts-xaxistooltip,
+body[data-theme="dark"] .projects-running-card .apexcharts-yaxistooltip,
+body[data-theme="dark"] .projects-running-card .apexcharts-tooltip-title {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .projects-running-card .apexcharts-tooltip *,
+body.dark-theme .projects-running-card .apexcharts-xaxistooltip *,
+body.dark-theme .projects-running-card .apexcharts-yaxistooltip *,
+body[data-theme="dark"] .projects-running-card .apexcharts-tooltip *,
+body[data-theme="dark"] .projects-running-card .apexcharts-xaxistooltip *,
+body[data-theme="dark"] .projects-running-card .apexcharts-yaxistooltip * {
+  color: #dce7fb !important;
 }

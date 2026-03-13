@@ -61,3 +61,23 @@
 .add-and-edit-client .ant-row.ant-form-item-row {
     align-items: flex-start;
 }
+
+body.dark-theme .add-and-edit-client .client-input-password .ant-input-affix-wrapper,
+body.dark-theme .add-and-edit-client .client-input-password .ant-input,
+body.dark-theme .add-and-edit-client .client-input-password .ant-input-suffix,
+body.dark-theme .add-and-edit-client .client-input-password .ant-btn-link,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-input-affix-wrapper,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-input,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-input-suffix,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-btn-link {
+    background: #132238 !important;
+    border-color: #314866 !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .add-and-edit-client .client-input-password .ant-input::placeholder,
+body.dark-theme .add-and-edit-client .client-input-password .ant-btn-link .anticon,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-input::placeholder,
+body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-btn-link .anticon {
+    color: #9bb6dd !important;
+}

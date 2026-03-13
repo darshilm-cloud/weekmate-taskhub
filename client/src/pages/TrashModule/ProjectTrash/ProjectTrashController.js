@@ -6,7 +6,7 @@ import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 
 const ProjectTrashController = () => {
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -48,8 +48,6 @@ const ProjectTrashController = () => {
       key: "projectTitle",
       render: (text, record) => {
         const Title = record?.title;
-        const ProjectId = record?._id;
-        const color = record?.color;
         return (
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>

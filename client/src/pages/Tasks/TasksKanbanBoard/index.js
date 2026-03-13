@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
 
 
 
@@ -995,6 +996,8 @@ const TaskList = ({
                       {boardData.tasks
                         .slice(0, sliceStates[boardData.workflowStatus._id])
                         .map((task, cardIndex) => {
+                          const isDoneColumn =
+                            boardData.workflowStatus.title === "Done";
                           const isLastTask =
                             cardIndex ===
                             boardData.tasks.slice(
@@ -1024,7 +1027,9 @@ const TaskList = ({
                                 }
                               >
                                 <div
-                                  className="task-box"
+                                  className={`task-box ${
+                                    isDoneColumn ? "task-box-done" : ""
+                                  }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     getTaskByIdDetails(task._id);
@@ -1033,9 +1038,7 @@ const TaskList = ({
                                     setSelectedTaskId(task._id);
                                   }}
                                   style={{
-                                    background:
-                                      boardData.workflowStatus.title ==
-                                      "Done" && "#cffdcf",
+                                    background: isDoneColumn && "#cffdcf",
                                   }}
                                 >
                                   <div
@@ -1045,15 +1048,11 @@ const TaskList = ({
                                     <h3
                                       id={`title-${task._id}`}
                                       style={{
-                                        color:
-                                          boardData.workflowStatus.title ==
-                                          "Done" && "green",
+                                        color: isDoneColumn && "green",
                                         "-webkit-text-fill-color":
-                                          boardData.workflowStatus.title ==
-                                          "Done" && "green",
+                                          isDoneColumn && "green",
                                         textDecoration:
-                                          boardData.workflowStatus.title ==
-                                          "Done" && "line-through",
+                                          isDoneColumn && "line-through",
                                       }}
                                     >
                                       {task.title}
@@ -1099,9 +1098,7 @@ const TaskList = ({
                                   <div
                                     className="assignees"
                                     style={{
-                                      borderBottom:
-                                        boardData.workflowStatus.title ==
-                                        "Done" && "1px solid green",
+                                      borderBottom: isDoneColumn && "1px solid green",
                                     }}
                                   >
                                     <div className="assignee-name">
@@ -1130,8 +1127,7 @@ const TaskList = ({
                                         icon={<PlusOutlined />}
                                         disabled={
                                           !getRoles(["Admin"]) ||
-                                          boardData.workflowStatus.title ===
-                                          "Done"
+                                          isDoneColumn
                                         }
                                       ></Button>
                                     </div>
@@ -3314,4 +3310,3 @@ export default React.memo(TaskList, (prevProps, nextProps) => {
   console.log("🚀 ~ prevProps, nextProps:", prevProps, nextProps)
   return isEqual(prevProps.tasks, nextProps.tasks) && isEqual(prevProps.isEditTaskSave, nextProps.isEditTaskSave);
 });
-

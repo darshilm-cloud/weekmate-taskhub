@@ -4,18 +4,37 @@
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 0 24px !important;
-  height: 56px !important;
+  padding: 0 20px !important;
+  height: 50px !important;
   line-height: 1 !important;
   gap: 16px;
-  background: #fff !important;
-  border-bottom: 1px solid #e5e7eb;
+  background: #f3f4f6 !important;
+  border-bottom: none;
+}
+
+.weekmate-header-shell {
+  background: #f3f4f6 !important;
+}
+
+.weekmate-header-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .weekmate-header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   flex: 1;
   min-width: 0;
 }
@@ -25,9 +44,34 @@
 }
 
 .weekmate-header-left .icon-menu {
-  font-size: 20px;
+  font-size: 22px;
   color: #374151;
   cursor: pointer;
+}
+
+.weekmate-header-logo-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #0b3a5b;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 8px;
+  text-transform: lowercase;
+}
+
+.weekmate-header-logo-text {
+  letter-spacing: 0.4px;
+}
+
+.weekmate-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  text-transform: capitalize;
 }
 
 /* Task Pad logo */
@@ -62,7 +106,7 @@
 .weekmate-header-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   flex-shrink: 0;
 }
 
@@ -71,9 +115,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
   background: #fef3c7;
-  border-radius: 10px;
+  border-radius: 999px;
   border: 1px solid #fde68a;
 }
 
@@ -106,8 +153,8 @@
 /* Theme toggle — oval switch (Task Pad style) */
 .taskpad-theme-toggle {
   position: relative;
-  width: 56px;
-  height: 28px;
+  width: 50px;
+  height: 30px;
   border: none;
   border-radius: 14px;
   background: #e5e7eb;
@@ -132,7 +179,7 @@
 }
 
 .taskpad-theme-toggle.theme-dark .taskpad-theme-knob {
-  transform: translateX(28px);
+  transform: translateX(20px);
   background: #2563eb;
 }
 
@@ -171,11 +218,11 @@
   position: absolute;
   left: 4px;
   top: 4px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #facc15;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease, background 0.2s;
   z-index: 1;
 }
@@ -189,6 +236,13 @@
   gap: 8px !important;
 }
 
+/* Topbar minimal avatar-only (match reference) */
+.weekmate-header-right .search-pms,
+.weekmate-header-right .bell-icon,
+.weekmate-header-right .gx-flex-row.gx-align-items-center.gx-avatar-row > a {
+  display: none !important;
+}
+
 .weekmate-header-right .avatar-user {
   width: 36px;
   height: 36px;
@@ -199,8 +253,22 @@
 /* ---- Dark theme header ---- */
 body.dark-theme .weekmate-header.ant-layout-header,
 [data-theme="dark"] .weekmate-header.ant-layout-header {
-  background: #19202c !important;
-  border-bottom-color: #2d3748;
+  background: #1f2937 !important;
+}
+
+body.dark-theme .weekmate-header-shell,
+[data-theme="dark"] .weekmate-header-shell {
+  background: #1f2937 !important;
+}
+
+body.dark-theme .weekmate-header-card,
+[data-theme="dark"] .weekmate-header-card {
+  background: #1f2937 !important;
+}
+
+body.dark-theme .weekmate-header-title,
+[data-theme="dark"] .weekmate-header-title {
+  color: #e5e7eb;
 }
 
 body.dark-theme .weekmate-header-left .icon-menu,

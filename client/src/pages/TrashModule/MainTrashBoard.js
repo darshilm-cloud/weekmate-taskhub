@@ -1,5 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Button, Card, Menu, Popconfirm, Popover, Table, Tooltip } from "antd";
-import { Header } from "antd/es/layout/layout";
 import React, { useState, useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import queryString from "query-string";
@@ -8,7 +8,7 @@ import ProjectTrashController from "./ProjectTrash/ProjectTrashController";
 import DiscussionTrash from "./DiscussionTrashControl/DiscussionTrash";
 import TimeLogTrashController from "./TimeLoggedTrash/TimeLogTrashController";
 import BugsTrashController from "./BugsTrashController/BugsTrashController";
-import { DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
+import { RollbackOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
@@ -26,7 +26,7 @@ const MainTrashBoard = () => {
   const { getNotesTrash, notesTrashColumns } = NotesController();
   const { getBugTrash, BugsTrashColumns } = BugsTrashController();
 
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -109,7 +109,6 @@ const MainTrashBoard = () => {
 
     {
       key: "Time",
-      label: "Time",
       label: <Menu.Item onClick={ () => handleLiClick("Time") }>Time</Menu.Item>,
     },
   ];
@@ -166,9 +165,11 @@ const MainTrashBoard = () => {
     }
   };
 
+  // updateTable is stable for our use; avoid exhaustive deps churn
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     updateTable();
-  }, [selectedTab, tab]);
+  }, [selectedTab]);
 
   const Payload = () => {
     const payload = {

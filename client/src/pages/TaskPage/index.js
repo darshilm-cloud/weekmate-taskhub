@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, DatePicker, Checkbox, Spin, Avatar, Dropdown } from "antd";
+import { Input, Select, Checkbox, Spin, Avatar, Dropdown } from "antd";
 import {
   SearchOutlined,
   FilterOutlined,
