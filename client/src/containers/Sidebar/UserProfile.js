@@ -16,6 +16,7 @@ import {
 } from "antd";
 import PropTypes from "prop-types";
 import {
+  BellOutlined,
   CloseCircleOutlined,
   DownOutlined,
   EyeOutlined,
@@ -42,6 +43,8 @@ import { notificationType } from "../../settings/notificationTypes";
 import { UserProfileBaseUrl } from "../../constants";
 import UserProfileModal from "./UserProfileModal";
 
+const LOCAL_PROJECT_NOTIFICATION_TYPE = "localProjectCreated";
+
 function UserProfile() {
   const companySlug = localStorage.getItem("companyDomain");
 
@@ -59,6 +62,7 @@ function UserProfile() {
   const [flag, setflag] = useState(false);
   const [notificationData, setNotificationData] = useState([]);
   const [notificationReadData, setNotificationReadData] = useState([]);
+  const [localNotificationData, setLocalNotificationData] = useState([]);
   const [activeTab, setActiveTab] = useState("unread");
   const [unReadId, setUnReadId] = useState([]);
   const { TabPane } = Tabs;
@@ -66,6 +70,26 @@ function UserProfile() {
 
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const getLocalProjectNotificationKey = () =>
+    `weekmate-project-notifications-${companySlug || "default"}`;
+
+  const loadLocalProjectNotifications = () => {
+    try {
+      const stored = localStorage.getItem(getLocalProjectNotificationKey());
+      const parsed = stored ? JSON.parse(stored) : [];
+      setLocalNotificationData(Array.isArray(parsed) ? parsed : []);
+    } catch (error) {
+      setLocalNotificationData([]);
+    }
+  };
+
+  const saveLocalProjectNotifications = (items) => {
+    localStorage.setItem(getLocalProjectNotificationKey(), JSON.stringify(items));
+    setLocalNotificationData(items);
+  };
+
+  const unreadNotifications = [...localNotificationData, ...notificationData];
 
   const handleCheckboxChange = (type) => {
     setSelectedCheckbox(type); // Update selected checkbox type
@@ -141,6 +165,7 @@ function UserProfile() {
     };
 
     fetchData();
+    loadLocalProjectNotifications();
     const notificationCleanup = listenEvent(socketEvents.NOTIFICATIONS, () => {
       setflag(!flag);
     });
@@ -151,14 +176,26 @@ function UserProfile() {
       }
     );
 
+    const handleLocalProjectNotification = () => {
+      loadLocalProjectNotifications();
+    };
+    window.addEventListener("weekmate:project-notification", handleLocalProjectNotification);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("weekmate:project-notification", handleLocalProjectNotification);
       if (notificationCleanup) notificationCleanup();
       if (notificationReadCleanUp) notificationReadCleanUp();
     };
   }, [authUser, history, socket, flag, visible]);
 
   const notificationMarkAsRead = async (id) => {
+    if (localNotificationData.some((item) => item?._id === id)) {
+      saveLocalProjectNotifications(
+        localNotificationData.filter((item) => item?._id !== id)
+      );
+      return;
+    }
     await emitEvent(socketEvents.READ_NOTIFICATIONS, {
       user_id: authUser._id,
       notification_ids: [id],
@@ -167,6 +204,9 @@ function UserProfile() {
   };
 
   const notificationMarkAllAsRead = async () => {
+    if (localNotificationData.length > 0) {
+      saveLocalProjectNotifications([]);
+    }
     await emitEvent(socketEvents.READ_NOTIFICATIONS, {
       user_id: authUser._id,
       notification_ids: unReadId,
@@ -724,8 +764,8 @@ function UserProfile() {
                           )}
 
                           <ul>
-                            {notificationData.length > 0 ? (
-                              notificationData.filter((ele) => {
+                            {unreadNotifications.length > 0 ? (
+                              unreadNotifications.filter((ele) => {
                                 // Filter notifications based on selected checkbox and type
                                 return (
                                   (selectedCheckbox === "All" &&
@@ -737,7 +777,7 @@ function UserProfile() {
                                   shouldShowNotification(ele.type)
                                 );
                               }).length > 0 ? (
-                                notificationData.map((ele, index) => {
+                                unreadNotifications.map((ele, index) => {
                                   // Check if the notification should be shown based on selected checkbox and type
                                   if (
                                     (selectedCheckbox === "All" &&
@@ -752,7 +792,8 @@ function UserProfile() {
                                       <li key={index}>
                                         <div className="notification-content-wrapper">
                                           <h3>
-                                            {checkNotificationType(ele?.type)
+                                            {ele?.localTitle ||
+                                              checkNotificationType(ele?.type)
                                               ?.title || "New Notification"}
                                           </h3>
                                           <div>
@@ -761,15 +802,21 @@ function UserProfile() {
                                                 notificationMarkAsRead(
                                                   ele?._id
                                                 );
-                                                goToModuleByNotification(
-                                                  ele?.project_id,
-                                                  ele?._id,
-                                                  ele?.type,
-                                                  ele?.main_task_id,
-                                                  ele?.task_id,
-                                                  ele?.bug_id,
-                                                  ele?.logged_hours_id
-                                                );
+                                                if (ele?.type === LOCAL_PROJECT_NOTIFICATION_TYPE) {
+                                                  history.push(
+                                                    `/${companySlug}/project/app/${ele?.project_id}?tab=Overview`
+                                                  );
+                                                } else {
+                                                  goToModuleByNotification(
+                                                    ele?.project_id,
+                                                    ele?._id,
+                                                    ele?.type,
+                                                    ele?.main_task_id,
+                                                    ele?.task_id,
+                                                    ele?.bug_id,
+                                                    ele?.logged_hours_id
+                                                  );
+                                                }
                                                 setVisible(false);
                                               }}
                                             >
@@ -970,8 +1017,10 @@ function UserProfile() {
               trigger="click"
             >
               <div className="bell-icon">
-                <i className="fi fi-rr-bell width-18"></i>
-                {dataCount > 0 && <span className="count">{dataCount}</span>}
+                <BellOutlined />
+                {unreadNotifications.length > 0 && (
+                  <span className="count">{unreadNotifications.length}</span>
+                )}
               </div>
             </Popover>
 

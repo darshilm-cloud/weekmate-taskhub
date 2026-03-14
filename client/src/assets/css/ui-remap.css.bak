@@ -408,23 +408,20 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   margin-bottom: 16px;
 }
 
-/* Dashboard chart watermark — always absolute so it never pushes content */
-.dashboard-section-card .stats-watermark {
+/* Dashboard chart watermark (dark mode) */
+body.dark-theme, body.light-theme .dashboard-section-card .stats-watermark,
+body[data-theme="dark"], body[data-theme="light"] .dashboard-section-card .stats-watermark {
   position: absolute;
   right: -12px;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.06;
+  opacity: 0.18;
   pointer-events: none;
   z-index: 0;
 }
 
-body.dark-theme .dashboard-section-card .stats-watermark,
-body[data-theme="dark"] .dashboard-section-card .stats-watermark {
-  opacity: 0.18;
-}
-
-.dashboard-section-card > :not(.stats-watermark) {
+body.dark-theme, body.light-theme .dashboard-section-card > :not(.stats-watermark),
+body[data-theme="dark"], body[data-theme="light"] .dashboard-section-card > :not(.stats-watermark) {
   position: relative;
   z-index: 1;
 }
@@ -979,24 +976,24 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
    Use same/higher specificity as pms.css (.admin-user .ant-layout.admin .ant-layout-content)
    so these rules win when body has .dark-theme or [data-theme="dark"].
    ============================================================ */
-body.dark-theme,
-body[data-theme="dark"] {
+body.dark-theme, body.light-theme,
+body[data-theme="dark"], body[data-theme="light"] {
   background-color: #19202c !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .ant-layout,
-body.dark-theme .gx-app-layout,
-body[data-theme="dark"] .ant-layout,
-body[data-theme="dark"] .gx-app-layout {
+body.dark-theme, body.light-theme .ant-layout,
+body.dark-theme, body.light-theme .gx-app-layout,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout,
+body[data-theme="dark"], body[data-theme="light"] .gx-app-layout {
   background: #19202c !important;
   color: #e2e8f0 !important;
 }
 
 /* Override pms.css .admin-user .ant-layout.admin .ant-layout-content { background-color: #f5f8fa } */
-body.dark-theme.admin-user .ant-layout.admin .ant-layout-content,
-body.dark-theme.admin-user .ant-layout.admin .gx-layout-content,
-body.dark-theme.admin-user .ant-layout.admin .page-layout,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .ant-layout-content,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .gx-layout-content,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .page-layout,
 body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content,
 body.admin-user[data-theme="dark"] .ant-layout.admin .gx-layout-content,
 body.admin-user[data-theme="dark"] .ant-layout.admin .page-layout {
@@ -1004,548 +1001,548 @@ body.admin-user[data-theme="dark"] .ant-layout.admin .page-layout {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .ant-layout-content,
-body.dark-theme .gx-layout-content,
-body.dark-theme .gx-main-content-wrapper,
-body.dark-theme .page-layout,
-body[data-theme="dark"] .ant-layout-content,
-body[data-theme="dark"] .gx-layout-content,
-body[data-theme="dark"] .gx-main-content-wrapper,
-body[data-theme="dark"] .page-layout {
+body.dark-theme, body.light-theme .ant-layout-content,
+body.dark-theme, body.light-theme .gx-layout-content,
+body.dark-theme, body.light-theme .gx-main-content-wrapper,
+body.dark-theme, body.light-theme .page-layout,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout-content,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content,
+body[data-theme="dark"], body[data-theme="light"] .gx-main-content-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .page-layout {
   background-color: #19202c !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .new-dashboard-wrapper,
-body[data-theme="dark"] .new-dashboard-wrapper {
+body.dark-theme, body.light-theme .new-dashboard-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .new-dashboard-wrapper {
   background: #19202c !important;
   color: #e2e8f0 !important;
 }
 
 /* Header: full width dark when dark theme */
-body.dark-theme .top-header.ant-layout-header,
-body.dark-theme .weekmate-header.ant-layout-header,
-body[data-theme="dark"] .top-header.ant-layout-header,
-body[data-theme="dark"] .weekmate-header.ant-layout-header {
+body.dark-theme, body.light-theme .top-header.ant-layout-header,
+body.dark-theme, body.light-theme .weekmate-header.ant-layout-header,
+body[data-theme="dark"], body[data-theme="light"] .top-header.ant-layout-header,
+body[data-theme="dark"], body[data-theme="light"] .weekmate-header.ant-layout-header {
   background: #19202c !important;
   border-bottom-color: #2d3748 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .top-header .icon-menu,
-body.dark-theme .top-header .gx-linebar i,
-body.dark-theme .top-header .search-pms,
-body.dark-theme .top-header .search-pms i,
-body.dark-theme .top-header .bell-icon,
-body.dark-theme .top-header .bell-icon i,
-body[data-theme="dark"] .top-header .icon-menu,
-body[data-theme="dark"] .top-header .gx-linebar i,
-body[data-theme="dark"] .top-header .search-pms,
-body[data-theme="dark"] .top-header .search-pms i,
-body[data-theme="dark"] .top-header .bell-icon,
-body[data-theme="dark"] .top-header .bell-icon i {
+body.dark-theme, body.light-theme .top-header .icon-menu,
+body.dark-theme, body.light-theme .top-header .gx-linebar i,
+body.dark-theme, body.light-theme .top-header .search-pms,
+body.dark-theme, body.light-theme .top-header .search-pms i,
+body.dark-theme, body.light-theme .top-header .bell-icon,
+body.dark-theme, body.light-theme .top-header .bell-icon i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .icon-menu,
+body[data-theme="dark"], body[data-theme="light"] .top-header .gx-linebar i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .search-pms,
+body[data-theme="dark"], body[data-theme="light"] .top-header .search-pms i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .bell-icon,
+body[data-theme="dark"], body[data-theme="light"] .top-header .bell-icon i {
   color: #e2e8f0 !important;
 }
 
 /* Sidebar: ensure dark wins over light overrides */
-body.dark-theme .gx-app-sidebar,
-body.dark-theme .gx-layout-sider-dark,
-body.dark-theme .ant-layout-sider,
-body[data-theme="dark"] .gx-app-sidebar,
-body[data-theme="dark"] .gx-layout-sider-dark,
-body[data-theme="dark"] .ant-layout-sider {
+body.dark-theme, body.light-theme .gx-app-sidebar,
+body.dark-theme, body.light-theme .gx-layout-sider-dark,
+body.dark-theme, body.light-theme .ant-layout-sider,
+body[data-theme="dark"], body[data-theme="light"] .gx-app-sidebar,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-sider-dark,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout-sider {
   background-color: #1a202c !important;
   border-right-color: #2d3748 !important;
 }
 
-body.dark-theme .sidebar-menu .ant-menu,
-body.dark-theme .admin-user .ant-layout.admin .sidebar-menu,
-body[data-theme="dark"] .sidebar-menu .ant-menu,
-body[data-theme="dark"] .admin-user .ant-layout.admin .sidebar-menu {
+body.dark-theme, body.light-theme .sidebar-menu .ant-menu,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .sidebar-menu,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu .ant-menu,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .sidebar-menu {
   background: #1a202c !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .sidebar-menu ul.ant-menu li.ant-menu-item,
-body.dark-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item,
-body[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item,
-body[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
   color: #c0c0d0 !important;
   background: transparent !important;
 }
 
-body.dark-theme .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
-body.dark-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover,
-body[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
-body[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
   background: #2d3748 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
-body.dark-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
-body[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
-body[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected {
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected {
   background: #2563eb !important;
   color: #fff !important;
 }
 
-body.dark-theme .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
-body.dark-theme .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
-body[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
-body[data-theme="dark"] .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content {
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content {
   color: inherit !important;
 }
 
 /* Cards and panels in content area (high specificity to beat pms.css) */
-body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-card,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .ant-layout-content .ant-card,
 body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-card,
-body.dark-theme .ant-card,
-body.dark-theme .gx-layout-content .ant-card,
-body[data-theme="dark"] .ant-card,
-body[data-theme="dark"] .gx-layout-content .ant-card {
+body.dark-theme, body.light-theme .ant-card,
+body.dark-theme, body.light-theme .gx-layout-content .ant-card,
+body[data-theme="dark"], body[data-theme="light"] .ant-card,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content .ant-card {
   background-color: #1e293b !important;
   border-color: #334155 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .ant-card-head,
-body.dark-theme .ant-card-body,
-body[data-theme="dark"] .ant-card-head,
-body[data-theme="dark"] .ant-card-body {
+body.dark-theme, body.light-theme .ant-card-head,
+body.dark-theme, body.light-theme .ant-card-body,
+body[data-theme="dark"], body[data-theme="light"] .ant-card-head,
+body[data-theme="dark"], body[data-theme="light"] .ant-card-body {
   color: #e2e8f0 !important;
   border-color: #334155 !important;
 }
 
 /* Typography in dark mode */
-body.dark-theme .gx-layout-content h1,
-body.dark-theme .gx-layout-content h2,
-body.dark-theme .page-layout h1,
-body.dark-theme .page-layout h2,
-body[data-theme="dark"] .gx-layout-content h1,
-body[data-theme="dark"] .gx-layout-content h2,
-body[data-theme="dark"] .page-layout h1,
-body[data-theme="dark"] .page-layout h2 {
+body.dark-theme, body.light-theme .gx-layout-content h1,
+body.dark-theme, body.light-theme .gx-layout-content h2,
+body.dark-theme, body.light-theme .page-layout h1,
+body.dark-theme, body.light-theme .page-layout h2,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content h1,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content h2,
+body[data-theme="dark"], body[data-theme="light"] .page-layout h1,
+body[data-theme="dark"], body[data-theme="light"] .page-layout h2 {
   color: #f1f5f9 !important;
 }
 
 /* Ant Design components in dark mode */
-body.dark-theme .ant-input,
-body.dark-theme .ant-select-selector,
-body.dark-theme .ant-picker,
-body[data-theme="dark"] .ant-input,
-body[data-theme="dark"] .ant-select-selector,
-body[data-theme="dark"] .ant-picker {
+body.dark-theme, body.light-theme .ant-input,
+body.dark-theme, body.light-theme .ant-select-selector,
+body.dark-theme, body.light-theme .ant-picker,
+body[data-theme="dark"], body[data-theme="light"] .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .ant-select-selector,
+body[data-theme="dark"], body[data-theme="light"] .ant-picker {
   background-color: #1e293b !important;
   border-color: #475569 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .ant-input::placeholder,
-body[data-theme="dark"] .ant-input::placeholder {
+body.dark-theme, body.light-theme .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .ant-input::placeholder {
   color: #94a3b8 !important;
 }
 
 /* Buttons and links in dark mode */
-body.dark-theme .ant-btn-default,
-body[data-theme="dark"] .ant-btn-default {
+body.dark-theme, body.light-theme .ant-btn-default,
+body[data-theme="dark"], body[data-theme="light"] .ant-btn-default {
   background-color: #1e293b !important;
   border-color: #475569 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .ant-btn-default:hover,
-body[data-theme="dark"] .ant-btn-default:hover {
+body.dark-theme, body.light-theme .ant-btn-default:hover,
+body[data-theme="dark"], body[data-theme="light"] .ant-btn-default:hover {
   border-color: #64748b !important;
   color: #f1f5f9 !important;
 }
 
 /* Task/page wrappers that may have light bg (override Tasks/style.css etc) */
-body.dark-theme .task-wrapper,
-body.dark-theme .block-status-content,
-body.dark-theme .task-schedule-wrapper,
-body.dark-theme .page-layout .task-wrapper,
-body[data-theme="dark"] .task-wrapper,
-body[data-theme="dark"] .block-status-content,
-body[data-theme="dark"] .task-schedule-wrapper,
-body[data-theme="dark"] .page-layout .task-wrapper {
+body.dark-theme, body.light-theme .task-wrapper,
+body.dark-theme, body.light-theme .block-status-content,
+body.dark-theme, body.light-theme .task-schedule-wrapper,
+body.dark-theme, body.light-theme .page-layout .task-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .task-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .block-status-content,
+body[data-theme="dark"], body[data-theme="light"] .task-schedule-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .page-layout .task-wrapper {
   background-color: transparent !important;
   background: transparent !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .task-schedule-wrapper,
-body[data-theme="dark"] .task-schedule-wrapper {
+body.dark-theme, body.light-theme .task-schedule-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .task-schedule-wrapper {
   background: #1e293b !important;
   background-color: #1e293b !important;
 }
 
 /* Project App (Discussion/Bugs/Notes/Files/Time): remove white surfaces in dark mode */
-body.dark-theme .project-wrapper,
-body[data-theme="dark"] .project-wrapper {
+body.dark-theme, body.light-theme .project-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .peoject-page,
-body[data-theme="dark"] .project-wrapper .peoject-page {
+body.dark-theme, body.light-theme .project-wrapper .peoject-page,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .peoject-page {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .profileleftbar,
-body[data-theme="dark"] .project-wrapper .profileleftbar {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar {
   background: #0f1722 !important;
   border-right-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
-body.dark-theme .project-wrapper .profileleftbar .add-project-wrapper .search-btn,
-body[data-theme="dark"] .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
-body[data-theme="dark"] .project-wrapper .profileleftbar .add-project-wrapper .search-btn {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .add-project-wrapper .search-btn,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .add-project-wrapper .search-btn {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search,
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input,
-body.dark-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button {
   background: #16202d !important;
   border-color: rgba(148, 163, 184, 0.18) !important;
   color: #e2e8f0 !important;
   box-shadow: none !important;
 }
 
-body.dark-theme .project-wrapper .profileleftbar .ant-input::placeholder,
-body[data-theme="dark"] .project-wrapper .profileleftbar .ant-input::placeholder {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input::placeholder {
   color: #94a3b8 !important;
 }
 
-body.dark-theme .project-wrapper .profilerightbar,
-body[data-theme="dark"] .project-wrapper .profilerightbar {
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
 /* Ensure text is readable across Project App pages in dark mode */
-body.dark-theme .project-wrapper .profileleftbar,
-body.dark-theme .project-wrapper .profilerightbar,
-body[data-theme="dark"] .project-wrapper .profileleftbar,
-body[data-theme="dark"] .project-wrapper .profilerightbar {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .profileleftbar h1,
-body.dark-theme .project-wrapper .profileleftbar h2,
-body.dark-theme .project-wrapper .profileleftbar h3,
-body.dark-theme .project-wrapper .profileleftbar h4,
-body.dark-theme .project-wrapper .profileleftbar h5,
-body.dark-theme .project-wrapper .profileleftbar h6,
-body.dark-theme .project-wrapper .profileleftbar p,
-body.dark-theme .project-wrapper .profileleftbar span,
-body.dark-theme .project-wrapper .profileleftbar li,
-body.dark-theme .project-wrapper .profileleftbar a,
-body.dark-theme .project-wrapper .profileleftbar label,
-body.dark-theme .project-wrapper .profilerightbar h1,
-body.dark-theme .project-wrapper .profilerightbar h2,
-body.dark-theme .project-wrapper .profilerightbar h3,
-body.dark-theme .project-wrapper .profilerightbar h4,
-body.dark-theme .project-wrapper .profilerightbar h5,
-body.dark-theme .project-wrapper .profilerightbar h6,
-body.dark-theme .project-wrapper .profilerightbar p,
-body.dark-theme .project-wrapper .profilerightbar span,
-body.dark-theme .project-wrapper .profilerightbar li,
-body.dark-theme .project-wrapper .profilerightbar a,
-body.dark-theme .project-wrapper .profilerightbar label,
-body[data-theme="dark"] .project-wrapper .profileleftbar h1,
-body[data-theme="dark"] .project-wrapper .profileleftbar h2,
-body[data-theme="dark"] .project-wrapper .profileleftbar h3,
-body[data-theme="dark"] .project-wrapper .profileleftbar h4,
-body[data-theme="dark"] .project-wrapper .profileleftbar h5,
-body[data-theme="dark"] .project-wrapper .profileleftbar h6,
-body[data-theme="dark"] .project-wrapper .profileleftbar p,
-body[data-theme="dark"] .project-wrapper .profileleftbar span,
-body[data-theme="dark"] .project-wrapper .profileleftbar li,
-body[data-theme="dark"] .project-wrapper .profileleftbar a,
-body[data-theme="dark"] .project-wrapper .profileleftbar label,
-body[data-theme="dark"] .project-wrapper .profilerightbar h1,
-body[data-theme="dark"] .project-wrapper .profilerightbar h2,
-body[data-theme="dark"] .project-wrapper .profilerightbar h3,
-body[data-theme="dark"] .project-wrapper .profilerightbar h4,
-body[data-theme="dark"] .project-wrapper .profilerightbar h5,
-body[data-theme="dark"] .project-wrapper .profilerightbar h6,
-body[data-theme="dark"] .project-wrapper .profilerightbar p,
-body[data-theme="dark"] .project-wrapper .profilerightbar span,
-body[data-theme="dark"] .project-wrapper .profilerightbar li,
-body[data-theme="dark"] .project-wrapper .profilerightbar a,
-body[data-theme="dark"] .project-wrapper .profilerightbar label {
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h1,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h2,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h3,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h4,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h5,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h6,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar p,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar span,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar li,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar a,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar label,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h1,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h2,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h3,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h4,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h5,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h6,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar p,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar span,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar li,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar a,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar label,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h1,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h2,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h3,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h4,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h5,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h6,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar p,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar li,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar a,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar label,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h1,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h2,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h3,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h4,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h5,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h6,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar p,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar li,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar a,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar label {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .profilerightbar .ant-empty-description,
-body.dark-theme .project-wrapper .profilerightbar .error-message,
-body[data-theme="dark"] .project-wrapper .profilerightbar .ant-empty-description,
-body[data-theme="dark"] .project-wrapper .profilerightbar .error-message {
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .ant-empty-description,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .error-message,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .ant-empty-description,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .error-message {
   color: #94a3b8 !important;
 }
 
 /* Tables inside Project App */
-body.dark-theme .project-wrapper .ant-table,
-body.dark-theme .project-wrapper .ant-table-thead > tr > th,
-body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
-body[data-theme="dark"] .project-wrapper .ant-table,
-body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th,
-body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+body.dark-theme, body.light-theme .project-wrapper .ant-table,
+body.dark-theme, body.light-theme .project-wrapper .ant-table-thead > tr > th,
+body.dark-theme, body.light-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-tbody > tr > td {
   color: #e2e8f0 !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .project-wrapper .ant-table-thead > tr > th,
-body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th {
+body.dark-theme, body.light-theme .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-thead > tr > th {
   background: #16202d !important;
 }
 
-body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
-body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+body.dark-theme, body.light-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-tbody > tr > td {
   background: transparent !important;
 }
 
 /* Muted/secondary text */
-body.dark-theme .project-wrapper .ant-typography-secondary,
-body.dark-theme .project-wrapper .ant-comment-content-author-time span,
-body[data-theme="dark"] .project-wrapper .ant-typography-secondary,
-body[data-theme="dark"] .project-wrapper .ant-comment-content-author-time span {
+body.dark-theme, body.light-theme .project-wrapper .ant-typography-secondary,
+body.dark-theme, body.light-theme .project-wrapper .ant-comment-content-author-time span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-typography-secondary,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-comment-content-author-time span {
   color: #94a3b8 !important;
 }
 
-body.dark-theme .project-wrapper .profilerightbar .profile-sub-head,
-body[data-theme="dark"] .project-wrapper .profilerightbar .profile-sub-head {
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .profile-sub-head,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .profile-sub-head {
   background: linear-gradient(180deg, #16202d 0%, #0f1722 100%) !important;
   border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
 }
 
 /* Top toolbars/search blocks */
-body.dark-theme .project-wrapper .head-box-inner,
-body[data-theme="dark"] .project-wrapper .head-box-inner {
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner {
   background: transparent !important;
 }
 
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search,
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input,
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button {
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button {
   background: #16202d !important;
   border-color: rgba(148, 163, 184, 0.18) !important;
   color: #e2e8f0 !important;
   box-shadow: none !important;
 }
 
-body.dark-theme .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder,
-body[data-theme="dark"] .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder {
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder {
   color: #94a3b8 !important;
 }
 
 /* Discussion surfaces */
-body.dark-theme .discussion-wrapper .discussion-comment-block,
-body[data-theme="dark"] .discussion-wrapper .discussion-comment-block {
+body.dark-theme, body.light-theme .discussion-wrapper .discussion-comment-block,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .discussion-comment-block {
   background: #16202d !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-body.dark-theme .discussion-wrapper,
-body.dark-theme .discussion-wrapper .profilerightbar h3,
-body.dark-theme .discussion-wrapper span.ant-comment-content-author-name,
-body.dark-theme .discussion-wrapper .discussion-comment-block ul li > span,
-body[data-theme="dark"] .discussion-wrapper,
-body[data-theme="dark"] .discussion-wrapper .profilerightbar h3,
-body[data-theme="dark"] .discussion-wrapper span.ant-comment-content-author-name,
-body[data-theme="dark"] .discussion-wrapper .discussion-comment-block ul li > span {
+body.dark-theme, body.light-theme .discussion-wrapper,
+body.dark-theme, body.light-theme .discussion-wrapper .profilerightbar h3,
+body.dark-theme, body.light-theme .discussion-wrapper span.ant-comment-content-author-name,
+body.dark-theme, body.light-theme .discussion-wrapper .discussion-comment-block ul li > span,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .profilerightbar h3,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper span.ant-comment-content-author-name,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .discussion-comment-block ul li > span {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .discussion-wrapper span.ant-comment-content-author-time span,
-body[data-theme="dark"] .discussion-wrapper span.ant-comment-content-author-time span {
+body.dark-theme, body.light-theme .discussion-wrapper span.ant-comment-content-author-time span,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper span.ant-comment-content-author-time span {
   color: #94a3b8 !important;
 }
 
-body.dark-theme .discussion-wrapper .status-content .anticon-more svg,
-body[data-theme="dark"] .discussion-wrapper .status-content .anticon-more svg {
+body.dark-theme, body.light-theme .discussion-wrapper .status-content .anticon-more svg,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .status-content .anticon-more svg {
   fill: #e2e8f0 !important;
 }
 
-body.dark-theme .discussion-wrapper .ant-comment textarea,
-body[data-theme="dark"] .discussion-wrapper .ant-comment textarea {
+body.dark-theme, body.light-theme .discussion-wrapper .ant-comment textarea,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .ant-comment textarea {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
 /* Bugs kanban headers/body */
-body.dark-theme .bugs-task-wrapper .drag_column h4,
-body[data-theme="dark"] .bugs-task-wrapper .drag_column h4 {
+body.dark-theme, body.light-theme .bugs-task-wrapper .drag_column h4,
+body[data-theme="dark"], body[data-theme="light"] .bugs-task-wrapper .drag_column h4 {
   background: #1c2938 !important;
   color: #e2e8f0 !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .bugs-task-wrapper .drag_row,
-body[data-theme="dark"] .bugs-task-wrapper .drag_row {
+body.dark-theme, body.light-theme .bugs-task-wrapper .drag_row,
+body[data-theme="dark"], body[data-theme="light"] .bugs-task-wrapper .drag_row {
   background: linear-gradient(180deg, rgba(28, 41, 56, 0.82) 0%, rgba(15, 23, 34, 0.18) 100%) !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
 /* Notes cards */
-body.dark-theme .notes-wrapper .main-notes-wrapper .notes-div .notes-box,
-body[data-theme="dark"] .notes-wrapper .main-notes-wrapper .notes-div .notes-box {
+body.dark-theme, body.light-theme .notes-wrapper .main-notes-wrapper .notes-div .notes-box,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .main-notes-wrapper .notes-div .notes-box {
   background: #16202d !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-body.dark-theme .notes-wrapper .notes-box,
-body.dark-theme .notes-wrapper .note-inner-block,
-body.dark-theme .notes-wrapper .note-block-head,
-body[data-theme="dark"] .notes-wrapper .notes-box,
-body[data-theme="dark"] .notes-wrapper .note-inner-block,
-body[data-theme="dark"] .notes-wrapper .note-block-head {
+body.dark-theme, body.light-theme .notes-wrapper .notes-box,
+body.dark-theme, body.light-theme .notes-wrapper .note-inner-block,
+body.dark-theme, body.light-theme .notes-wrapper .note-block-head,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .notes-box,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .note-inner-block,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .note-block-head {
   background: #16202d !important;
   color: #e2e8f0 !important;
 }
 
 /* Files (Library) surfaces */
-body.dark-theme .file-folder-wrapper,
-body[data-theme="dark"] .file-folder-wrapper {
+body.dark-theme, body.light-theme .file-folder-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .file-folder-wrapper.ant-card,
-body.dark-theme .file-folder-wrapper .ant-card-body,
-body[data-theme="dark"] .file-folder-wrapper.ant-card,
-body[data-theme="dark"] .file-folder-wrapper .ant-card-body {
+body.dark-theme, body.light-theme .file-folder-wrapper.ant-card,
+body.dark-theme, body.light-theme .file-folder-wrapper .ant-card-body,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper.ant-card,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .ant-card-body {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .file-folder-wrapper .profileleftbar:nth-child(2):before,
-body[data-theme="dark"] .file-folder-wrapper .profileleftbar:nth-child(2):before {
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar:nth-child(2):before,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar:nth-child(2):before {
   background: #16202d !important;
 }
 
-body.dark-theme .file-folder-wrapper .cover-folder-list .cover-folder-item,
-body[data-theme="dark"] .file-folder-wrapper .cover-folder-list .cover-folder-item {
+body.dark-theme, body.light-theme .file-folder-wrapper .cover-folder-list .cover-folder-item,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .cover-folder-list .cover-folder-item {
   background: #16202d !important;
   border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-body.dark-theme .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover,
-body[data-theme="dark"] .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover {
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover {
   background: rgba(148, 163, 184, 0.10) !important;
 }
 
-body.dark-theme .file-folder-wrapper .cover-folder-wrapper h3,
-body.dark-theme .file-folder-wrapper .folder-item-tag span,
-body.dark-theme .file-folder-wrapper .all-folder-sections,
-body.dark-theme .file-folder-wrapper .profileleftbar,
-body.dark-theme .file-folder-wrapper .profile-second-bar,
-body[data-theme="dark"] .file-folder-wrapper .cover-folder-wrapper h3,
-body[data-theme="dark"] .file-folder-wrapper .folder-item-tag span,
-body[data-theme="dark"] .file-folder-wrapper .all-folder-sections,
-body[data-theme="dark"] .file-folder-wrapper .profileleftbar,
-body[data-theme="dark"] .file-folder-wrapper .profile-second-bar {
+body.dark-theme, body.light-theme .file-folder-wrapper .cover-folder-wrapper h3,
+body.dark-theme, body.light-theme .file-folder-wrapper .folder-item-tag span,
+body.dark-theme, body.light-theme .file-folder-wrapper .all-folder-sections,
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar,
+body.dark-theme, body.light-theme .file-folder-wrapper .profile-second-bar,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .cover-folder-wrapper h3,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .folder-item-tag span,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .all-folder-sections,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profile-second-bar {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .file-folder-wrapper .ant-dropdown-trigger svg,
-body[data-theme="dark"] .file-folder-wrapper .ant-dropdown-trigger svg {
+body.dark-theme, body.light-theme .file-folder-wrapper .ant-dropdown-trigger svg,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .ant-dropdown-trigger svg {
   color: #e2e8f0 !important;
 }
 
 /* Time tab panels */
-body.dark-theme .time-wrapper-left,
-body[data-theme="dark"] .time-wrapper-left {
+body.dark-theme, body.light-theme .time-wrapper-left,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left {
   background: #0f1722 !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .time-wrapper-right,
-body[data-theme="dark"] .time-wrapper-right {
+body.dark-theme, body.light-theme .time-wrapper-right,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-right {
   background: #0f1722 !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .time-wrapper-table,
-body.dark-theme .time-wrapper-table p,
-body.dark-theme .time-wrapper-table span,
-body[data-theme="dark"] .time-wrapper-table,
-body[data-theme="dark"] .time-wrapper-table p,
-body[data-theme="dark"] .time-wrapper-table span {
+body.dark-theme, body.light-theme .time-wrapper-table,
+body.dark-theme, body.light-theme .time-wrapper-table p,
+body.dark-theme, body.light-theme .time-wrapper-table span,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table p,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table span {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .time-wrapper-left .sidebar-menu-links li,
-body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li {
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .time-wrapper-left .sidebar-menu-links li.active,
-body.dark-theme .time-wrapper-left .sidebar-menu-links li:hover,
-body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li.active,
-body[data-theme="dark"] .time-wrapper-left .sidebar-menu-links li:hover {
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li.active,
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li:hover,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li.active,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li:hover {
   background: rgba(148, 163, 184, 0.10) !important;
 }
 
 /* ApexCharts readability in dark mode (dashboard stats graph, etc.) */
-body.dark-theme .apexcharts-text,
-body[data-theme="dark"] .apexcharts-text {
+body.dark-theme, body.light-theme .apexcharts-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-text {
   fill: #94a3b8 !important;
 }
 
-body.dark-theme .apexcharts-title-text,
-body.dark-theme .apexcharts-subtitle-text,
-body[data-theme="dark"] .apexcharts-title-text,
-body[data-theme="dark"] .apexcharts-subtitle-text {
+body.dark-theme, body.light-theme .apexcharts-title-text,
+body.dark-theme, body.light-theme .apexcharts-subtitle-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-title-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-subtitle-text {
   fill: #e2e8f0 !important;
 }
 
-body.dark-theme .apexcharts-xaxis text,
-body.dark-theme .apexcharts-yaxis text,
-body[data-theme="dark"] .apexcharts-xaxis text,
-body[data-theme="dark"] .apexcharts-yaxis text {
+body.dark-theme, body.light-theme .apexcharts-xaxis text,
+body.dark-theme, body.light-theme .apexcharts-yaxis text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-xaxis text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-yaxis text {
   fill: #94a3b8 !important;
 }
 
-body.dark-theme .apexcharts-gridline,
-body[data-theme="dark"] .apexcharts-gridline {
+body.dark-theme, body.light-theme .apexcharts-gridline,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-gridline {
   stroke: rgba(148, 163, 184, 0.22) !important;
 }
 
-body.dark-theme .apexcharts-tooltip,
-body[data-theme="dark"] .apexcharts-tooltip {
+body.dark-theme, body.light-theme .apexcharts-tooltip,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-tooltip {
   background: #0f1722 !important;
   border-color: rgba(148, 163, 184, 0.22) !important;
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .apexcharts-tooltip-title,
-body[data-theme="dark"] .apexcharts-tooltip-title {
+body.dark-theme, body.light-theme .apexcharts-tooltip-title,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-tooltip-title {
   background: #16202d !important;
   border-bottom-color: rgba(148, 163, 184, 0.18) !important;
   color: #e2e8f0 !important;
@@ -1593,34 +1590,34 @@ body[data-theme="dark"] .apexcharts-tooltip-title {
 }
 
 /* Skeletons in dark theme */
-body.dark-theme .ant-skeleton,
-body[data-theme="dark"] .ant-skeleton,
-body.dark-theme .ant-skeleton-element,
-body[data-theme="dark"] .ant-skeleton-element,
-body.dark-theme .ant-skeleton-content .ant-skeleton-title,
-body.dark-theme .ant-skeleton-content .ant-skeleton-paragraph > li,
-body.dark-theme .ant-skeleton-avatar,
-body.dark-theme .ant-skeleton-input,
-body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-title,
-body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-paragraph > li,
-body[data-theme="dark"] .ant-skeleton-avatar,
-body[data-theme="dark"] .ant-skeleton-input {
+body.dark-theme, body.light-theme .ant-skeleton,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton,
+body.dark-theme, body.light-theme .ant-skeleton-element,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-element,
+body.dark-theme, body.light-theme .ant-skeleton-content .ant-skeleton-title,
+body.dark-theme, body.light-theme .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.dark-theme, body.light-theme .ant-skeleton-avatar,
+body.dark-theme, body.light-theme .ant-skeleton-input,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-content .ant-skeleton-title,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-content .ant-skeleton-paragraph > li,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-avatar,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-input {
   background: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Tabs in dark mode */
-body.dark-theme .ant-tabs-tab,
-body[data-theme="dark"] .ant-tabs-tab {
+body.dark-theme, body.light-theme .ant-tabs-tab,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-tab {
   color: #94a3b8 !important;
 }
 
-body.dark-theme .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
-body[data-theme="dark"] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+body.dark-theme, body.light-theme .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
   color: #38bdf8 !important;
 }
 
-body.dark-theme .ant-tabs-ink-bar,
-body[data-theme="dark"] .ant-tabs-ink-bar {
+body.dark-theme, body.light-theme .ant-tabs-ink-bar,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-ink-bar {
   background: #38bdf8 !important;
 }
 

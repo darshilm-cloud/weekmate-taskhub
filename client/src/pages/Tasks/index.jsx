@@ -19,7 +19,6 @@ import {
   Row,
   Col,
   message,
-  Skeleton,
 } from "antd";
 import {
   EditOutlined,
@@ -1566,7 +1565,7 @@ const TasksPMS = ({ flag }) => {
 
   return (
     <>
-      <div className="project-wrapper discussion-wrapper task-wrapper">
+      <div className="project-wrapper discussion-wrapper task-wrapper wm-force-dark-page">
         <div className="peoject-page">
           <div className="profileleftbar">
             <div className="add-project-wrapper">
@@ -1934,19 +1933,44 @@ const TasksPMS = ({ flag }) => {
             )}
 
             {isLoadingTasksPage || isTasksLoading ? (
-              <div style={{ padding: "12px 0" }}>
-                <Skeleton active paragraph={{ rows: 1 }} />
-                <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 16, marginTop: 16 }}>
-                  <div>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={`left-skel-${i}`} style={{ marginBottom: 12 }}>
-                        <Skeleton.Input active size="small" style={{ width: "100%" }} />
+              <div className="wm-kanban-skeleton">
+                {/* Toolbar skeleton */}
+                <div className="wm-skel-toolbar">
+                  <div className="wm-skel-line" style={{ width: 220, height: 32, borderRadius: 8 }} />
+                  <div className="wm-skel-line" style={{ width: 36, height: 32, borderRadius: 8 }} />
+                  <div className="wm-skel-line" style={{ width: 80, height: 32, borderRadius: 8, marginLeft: "auto" }} />
+                </div>
+                {/* Kanban columns */}
+                <div className="wm-skel-columns">
+                  {[
+                    { color: "#3b82f6", cards: 4 },
+                    { color: "#f59e0b", cards: 3 },
+                    { color: "#10b981", cards: 5 },
+                    { color: "#8b5cf6", cards: 2 },
+                    { color: "#ef4444", cards: 3 },
+                  ].map((col, ci) => (
+                    <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
+                      {/* Column header */}
+                      <div className="wm-skel-col-head">
+                        <div className="wm-skel-line" style={{ width: 90, height: 13 }} />
+                        <div className="wm-skel-badge" />
                       </div>
-                    ))}
-                  </div>
-                  <div>
-                    <Skeleton active paragraph={{ rows: 6 }} />
-                  </div>
+                      {/* Cards */}
+                      <div className="wm-skel-col-body">
+                        {Array.from({ length: col.cards }).map((_, ki) => (
+                          <div key={ki} className="wm-skel-card">
+                            <div className="wm-skel-line wm-skel-card-title" />
+                            <div className="wm-skel-line wm-skel-card-sub" />
+                            <div className="wm-skel-line wm-skel-card-date" />
+                            <div className="wm-skel-card-footer">
+                              <div className="wm-skel-avatar" />
+                              <div className="wm-skel-line" style={{ width: 40, height: 10 }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : projectMianTask.length === 0 ? (

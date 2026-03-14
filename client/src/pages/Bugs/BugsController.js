@@ -151,6 +151,7 @@ const BugsController = () => {
   const handleChangeData = (event, editor) => {
     const data = editor.getData();
     setEditorData(data);
+    addform.setFieldValue("descriptions", data);
   };
 
   const handleChnageDescription = (event, editor) => {
@@ -397,26 +398,7 @@ const BugsController = () => {
   };
 
   const handleTaskOps = async (values, updateType) => {
-    if (!estHrs && !estMins) {
-      setEstHrsError("Enter hours");
-      setEstMinsError("Enter minutes");
-      return;
-    }
-    if (estHrs === 0 && !estMins) {
-      setEstHrsError("Enter estimated hours");
-      setEstMinsError("");
-      return;
-    }
-    if (estMins === 0 && !estHrs) {
-      setEstMinsError("Enter estimated hours");
-      setEstHrsError("");
-    }
 
-    if (estHrs == 0 && estMins == 0) {
-      setEstHrsError("Minutes and hours both cannot be 0");
-      setEstMinsError("Minutes and hours both cannot be 0");
-      return;
-    }
     if (fileAttachment.length > 0) {
       const uploadedfile = await uploadFiles(fileAttachment, "task");
       if (uploadedfile.length > 0) {
@@ -428,12 +410,11 @@ const BugsController = () => {
         return message.error("File not uploaded something went wrong");
       }
     }
-    setEstHrsError("");
-    setEstMinsError("");
     updateType ? updateTasks(values) : addTasks(values);
   };
 
   const addTasks = async (values, uploadedFiles) => {
+
     dispatch(showAuthLoader());
     try {
       let reqBody = {
@@ -465,6 +446,7 @@ const BugsController = () => {
         api_url: Service.addBug,
         body: reqBody,
       });
+
       if (response?.data && response?.data?.data && response?.data?.status) {
         //Send Notification to assign Users:
         await emitEvent(socketEvents.ADD_BUG_ASSIGNEE, response.data.data);

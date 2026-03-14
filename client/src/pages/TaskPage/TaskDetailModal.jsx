@@ -592,7 +592,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "comments",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <CommentOutlined /> Comment
                       <span className="comment-badge">{comments.length || 0}</span>
                     </span>
@@ -602,7 +602,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "attachment",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <PaperClipOutlined /> Attachment
                     </span>
                   ),
@@ -637,7 +637,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "activity",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <HistoryOutlined /> Log Activity
                     </span>
                   ),

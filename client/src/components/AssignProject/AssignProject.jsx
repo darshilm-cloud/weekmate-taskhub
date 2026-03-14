@@ -264,6 +264,29 @@ const TAB_FILTER_MAP = {
   my_team: "manager",
 };
 
+const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const GridSkeletonCard = ({ index }) => (
+  <div className="ap-skeleton-card" key={`project-skeleton-${index}`}>
+    <div className="ap-skeleton-row ap-skeleton-row--top">
+      <span className="ap-skeleton-dot" />
+      <span className="ap-skeleton-pill" />
+      <span className="ap-skeleton-line ap-skeleton-line--meta" />
+    </div>
+    <div className="ap-skeleton-line ap-skeleton-line--title" />
+    <div className="ap-skeleton-line ap-skeleton-line--subtitle" />
+    <div className="ap-skeleton-stats">
+      {Array.from({ length: 4 }).map((_, statIdx) => (
+        <div className="ap-skeleton-stat" key={`project-skeleton-stat-${index}-${statIdx}`}>
+          <span className="ap-skeleton-line ap-skeleton-line--stat-label" />
+          <span className="ap-skeleton-line ap-skeleton-line--stat-value" />
+        </div>
+      ))}
+    </div>
+    <div className="ap-skeleton-donut" />
+  </div>
+);
+
 /* ─── Main Component ──────────────────────────────────────── */
 const AssignProject = () => {
   const { editProjectId } = useParams();
@@ -271,6 +294,7 @@ const AssignProject = () => {
   const history = useHistory();
   const location = useLocation();
   const searchRef = useRef();
+  const sessionCacheKey = `assign-project-cache-${companySlug || "default"}`;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
@@ -283,12 +307,26 @@ const AssignProject = () => {
   const [columnDetails, setColumnDetails] = useState([]);
   const [currentFilters, setCurrentFilters] = useState({});
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState("grid");
   const [activeTab, setActiveTab] = useState("created_by_me");
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
-  const [projectCache, setProjectCache] = useState({});
+  const [projectCache, setProjectCache] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(sessionCacheKey);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      const cachedAt = parsed?.cachedAt || 0;
+      if (!parsed?.data || Date.now() - cachedAt > PROJECT_CACHE_TTL_MS) {
+        sessionStorage.removeItem(sessionCacheKey);
+        return {};
+      }
+      return parsed.data;
+    } catch (error) {
+      return {};
+    }
+  });
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [isBrowserDateFilterOpen, setIsBrowserDateFilterOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -309,6 +347,17 @@ const AssignProject = () => {
   const ENABLE_TAB_PREFETCH = false;
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        sessionCacheKey,
+        JSON.stringify({ cachedAt: Date.now(), data: projectCache })
+      );
+    } catch (error) {
+      // Ignore storage failures and continue with in-memory cache.
+    }
+  }, [projectCache, sessionCacheKey]);
+
+  useEffect(() => {
     fetchStatusList();
   }, []);
 
@@ -322,7 +371,7 @@ const AssignProject = () => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
       getProjectListing(currentSkipFilters, currentFilters);
-    }, 400);
+    }, 250);
     return () => clearTimeout(searchDebounceRef.current);
   }, [searchText]);
 
@@ -1267,8 +1316,10 @@ const AssignProject = () => {
         {viewMode === "grid" ? (
           <div className="ap-grid-section">
             {isloadingProject ? (
-              <div className="ap-loading-state">
-                <Spin size="large" />
+              <div className="ap-skeleton-grid" aria-label="Loading projects">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <GridSkeletonCard key={`grid-skeleton-${index}`} index={index} />
+                ))}
               </div>
             ) : columnDetails.length === 0 ? (
               <div className="ap-empty-state">

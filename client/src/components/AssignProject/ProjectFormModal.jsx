@@ -330,6 +330,26 @@ const ProjectFormModal = ({
         message.success(response.data.message);
         form.resetFields();
         setIsModalOpen(false);
+        try {
+          const notificationKey = `weekmate-project-notifications-${companySlug || "default"}`;
+          const existingNotifications = JSON.parse(localStorage.getItem(notificationKey) || "[]");
+          const createdProject = response.data.data;
+          const nextNotifications = [
+            {
+              _id: `local-project-${createdProject?._id || Date.now()}`,
+              type: "localProjectCreated",
+              localTitle: "Project created",
+              message: `Project "${createdProject?.title || values.title.trim()}" created successfully.`,
+              createdAt: new Date().toISOString(),
+              project_id: createdProject?._id,
+            },
+            ...existingNotifications,
+          ];
+          localStorage.setItem(notificationKey, JSON.stringify(nextNotifications.slice(0, 25)));
+          window.dispatchEvent(new CustomEvent("weekmate:project-notification"));
+        } catch (notificationError) {
+          console.error("project notification save error", notificationError);
+        }
         await emitEvent(socketEvents.ADD_PROJECT_ASSIGNEE, response.data.data);
       } else {
         message.error(response?.data?.message);

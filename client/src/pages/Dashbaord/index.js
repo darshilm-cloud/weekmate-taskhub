@@ -45,6 +45,10 @@ const Dashboard = () => {
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
   const [chartView, setChartView] = useState("monthly");
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [discussions, setDiscussions] = useState([]);
+  const [discussionTab, setDiscussionTab] = useState("General");
+  const [pinnedNotes, setPinnedNotes] = useState([]);
 
   // Filter states
   const [projStatus, setProjStatus] = useState([]);
@@ -453,6 +457,43 @@ const Dashboard = () => {
     form.resetFields();
   }, [form]);
 
+  const fetchActivityLogs = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getActivityLogList,
+        body: { page: 1, limit: 5, sortBy: "createdAt", sortOrder: "desc" },
+      });
+      if (response?.data?.data?.activityLogs) {
+        setActivityLogs(response.data.data.activityLogs);
+      } else if (Array.isArray(response?.data?.data)) {
+        setActivityLogs(response.data.data.slice(0, 5));
+      }
+    } catch (e) { console.log(e); }
+  }, []);
+
+  const fetchDiscussions = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getDiscussionTopic,
+        body: { pageNo: 1, limit: 5, sortBy: "desc" },
+      });
+      if (response?.data?.data) setDiscussions(response.data.data);
+    } catch (e) { console.log(e); }
+  }, []);
+
+  const fetchPinnedNotes = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getNotes,
+        body: { isBookmark: true, pageNo: 1, limit: 5 },
+      });
+      if (response?.data?.data) setPinnedNotes(response.data.data);
+    } catch (e) { console.log(e); }
+  }, []);
+
   // useEffects
   useEffect(() => {
     if (!isInitialLoad) myProjectsFn();
@@ -478,6 +519,9 @@ const Dashboard = () => {
     fetchAssignedToMeTasks();
     myBugsFn();
     myLoggedTimeFn();
+    fetchActivityLogs();
+    fetchDiscussions();
+    fetchPinnedNotes();
     setIsInitialLoad(false);
   }, []);
 
@@ -598,7 +642,7 @@ const Dashboard = () => {
               options={chartOptions}
               series={chartSeries}
               type="line"
-              height={220}
+              height={160}
             />
 
             <div className="chart-legend">
@@ -622,25 +666,52 @@ const Dashboard = () => {
         {/* Right column */}
         <div className="dashboard-col-right">
 
-          {/* Today's Summary */}
-          <div className="right-panel-card">
-            <h4>Today's Summary</h4>
-            <div className="today-summary-items">
-              <div className="today-summary-item new-task">
-                <span className="summary-label">New task</span>
-                <span className="summary-count">{newToday}</span>
-              </div>
-              <div className="today-summary-item closed-task">
-                <span className="summary-label">Closed task</span>
-                <span className="summary-count">{closedToday}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Priority Task Summary */}
+          {/* Priority Task Summary with donut chart */}
           <div className="right-panel-card">
             <h4>Priority Task Summary</h4>
-            <div className="priority-items">
+            {(priorityLow + priorityMedium + priorityHigh) === 0 ? (
+              <div className="priority-donut-empty">
+                <svg width="150" height="150" viewBox="0 0 150 150">
+                  <circle cx="75" cy="75" r="52" fill="none" stroke={isDarkTheme ? "#2d3f55" : "#e2e8f0"} strokeWidth="22"/>
+                  <text x="75" y="82" textAnchor="middle" fontSize="26" fontWeight="700" fill={isDarkTheme ? "#94a3b8" : "#94a3b8"}>0</text>
+                </svg>
+              </div>
+            ) : (
+              <ReactApexChart
+                options={{
+                  chart: { type: "donut", toolbar: { show: false } },
+                  labels: ["Low", "Medium", "High"],
+                  colors: ["#2dd4bf", "#faad14", "#ff4d4f"],
+                  legend: { show: false },
+                  dataLabels: { enabled: false },
+                  plotOptions: {
+                    pie: {
+                      donut: {
+                        size: "68%",
+                        labels: {
+                          show: true,
+                          total: {
+                            show: true,
+                            showAlways: true,
+                            label: "",
+                            fontSize: "28px",
+                            fontWeight: 700,
+                            color: isDarkTheme ? "#e5e7eb" : "#1e293b",
+                            formatter: () => String(priorityLow + priorityMedium + priorityHigh),
+                          },
+                        },
+                      },
+                    },
+                  },
+                  stroke: { width: 0 },
+                  tooltip: { enabled: true, theme: isDarkTheme ? "dark" : "light" },
+                }}
+                series={[priorityLow, priorityMedium, priorityHigh]}
+                type="donut"
+                height={180}
+              />
+            )}
+            <div className="priority-legend-row">
               <div className="priority-item">
                 <span className="priority-dot low"></span>
                 Low <span className="priority-count">{priorityLow}</span>
@@ -661,15 +732,26 @@ const Dashboard = () => {
             <h4>Team Incomplete Task</h4>
             {teamIncomplete.length > 0 ? (
               <div className="team-incomplete-list">
-                {teamIncomplete.map((item, idx) => (
-                  <Link
-                    key={item?._id || idx}
-                    to={`/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}`}
-                    className="team-incomplete-item"
-                  >
-                    {item?.title?.charAt(0).toUpperCase() + item?.title?.slice(1)}
-                  </Link>
-                ))}
+                {teamIncomplete.map((item, idx) => {
+                  const assignee = item?.assignees?.[0];
+                  const assigneeName =
+                    (assignee?.name || assignee?.full_name || item?.assignedTo?.name || item?.title || "Task")
+                      .trim();
+                  const initials = assigneeName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+                  const colors = ["#f59e0b","#3b82f6","#10b981","#8b5cf6","#ef4444"];
+                  const bg = colors[idx % colors.length];
+                  return (
+                    <Link
+                      key={item?._id || idx}
+                      to={`/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}`}
+                      className="team-incomplete-item-v2"
+                    >
+                      <div className="ti-avatar" style={{ background: bg }}>{initials}</div>
+                      <span className="ti-name">{assigneeName.length > 22 ? assigneeName.slice(0, 21) + "…" : assigneeName}</span>
+                      <span className="ti-count">0</span>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="team-incomplete-empty">No incomplete tasks</div>
@@ -677,6 +759,237 @@ const Dashboard = () => {
           </div>
 
         </div>
+      </div>
+
+      {/* ── Standalone Add Task section (full-width centered) ─── */}
+      <div className="standalone-add-task">
+        <div className="standalone-add-task-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="6" width="18" height="22" rx="3" fill="white" opacity="0.9"/>
+            <rect x="8" y="11" width="10" height="2" rx="1" fill="#0e9f6e"/>
+            <rect x="8" y="15" width="7" height="2" rx="1" fill="#0e9f6e" opacity="0.7"/>
+            <rect x="8" y="19" width="8" height="2" rx="1" fill="#0e9f6e" opacity="0.5"/>
+            <circle cx="24" cy="24" r="6" fill="white" opacity="0.3"/>
+            <rect x="21" y="23" width="6" height="2" rx="1" fill="white"/>
+            <rect x="23" y="21" width="2" height="6" rx="1" fill="white"/>
+          </svg>
+        </div>
+        <p className="standalone-add-task-title">You haven't added any tasks.</p>
+        <p className="standalone-add-task-sub">Welcome Let's get started.</p>
+        <button
+          className="standalone-add-task-btn"
+          onClick={() => history.push(`/${companySlug}/tasks`)}
+        >
+          Add Task
+        </button>
+      </div>
+
+      {/* ── Bottom sections ──────────────────────────────────── */}
+      <div className="db-bottom-grid">
+
+        {/* Recent Projects */}
+        <div className="db-bottom-card db-recent-projects">
+          <div className="db-section-header">
+            <h3>Recent Projects</h3>
+          </div>
+          {myProj.length > 0 ? (
+            <div className="db-project-cards-row">
+              {myProj.slice(0, 4).map((proj) => {
+                const daysLeft = proj.end_date
+                  ? Math.ceil((new Date(proj.end_date) - new Date()) / 86400000)
+                  : null;
+                const completedCount = proj.completedTaskCount ?? proj.completed_task_count ?? 0;
+                const totalCount     = proj.totalTaskCount ?? proj.total_task_count ?? proj.taskCount ?? 0;
+                const progress       = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+                return (
+                  <div
+                    key={proj._id}
+                    className="db-project-card"
+                    onClick={() => getProjectMianTask(proj._id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && getProjectMianTask(proj._id)}
+                  >
+                    <div className="db-project-card-top">
+                      <span className="db-project-title">{proj.title}</span>
+                      <span className="db-project-star" aria-label="bookmark">
+                        {proj.isStarred ? "★" : "☆"}
+                      </span>
+                    </div>
+                    {proj.createdBy?.name && (
+                      <p className="db-project-author">By <strong>{proj.createdBy.name}</strong></p>
+                    )}
+                    {daysLeft !== null && (
+                      <span className={`db-project-due-badge ${daysLeft < 0 ? "overdue" : daysLeft <= 7 ? "soon" : ""}`}>
+                        {daysLeft < 0
+                          ? `${Math.abs(daysLeft)} Days Overdue`
+                          : daysLeft === 0
+                          ? "Due Today"
+                          : `${daysLeft} Days Due`}
+                      </span>
+                    )}
+                    <div className="db-project-progress-row">
+                      <span className="db-project-progress-label">
+                        Task Completed: {completedCount}/{totalCount}
+                      </span>
+                      <span className="db-project-progress-pct">{completedCount}</span>
+                    </div>
+                    <div className="db-project-progress-bar">
+                      <div className="db-project-progress-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="db-empty-state">No projects found</div>
+          )}
+        </div>
+
+        {/* Recent Discussion */}
+        <div className="db-bottom-card db-discussion">
+          <div className="db-section-header">
+            <h3>Recent Discussion</h3>
+            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/project-list`)}>
+              View All <span>›</span>
+            </button>
+          </div>
+          <div className="db-discussion-tabs">
+            <button
+              className={`db-tab-btn${discussionTab === "General" ? " active" : ""}`}
+              onClick={() => setDiscussionTab("General")}
+            >
+              General
+            </button>
+            <button
+              className={`db-tab-btn${discussionTab === "Task" ? " active" : ""}`}
+              onClick={() => setDiscussionTab("Task")}
+            >
+              Task
+            </button>
+          </div>
+          <div className="db-discussion-list">
+            {discussions.filter((d) =>
+              discussionTab === "General"
+                ? !d.task_id
+                : !!d.task_id
+            ).length > 0 ? (
+              discussions
+                .filter((d) => (discussionTab === "General" ? !d.task_id : !!d.task_id))
+                .map((d, i) => (
+                  <div key={d._id || i} className="db-discussion-item">
+                    <div className="db-discussion-avatar">
+                      {(d.createdBy?.name || d.topic || "D").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="db-discussion-body">
+                      <p className="db-discussion-topic">{d.topic || d.title || "Discussion"}</p>
+                      <span className="db-discussion-meta">{d.createdBy?.name}</span>
+                    </div>
+                  </div>
+                ))
+            ) : (
+              <div className="db-empty-state db-empty-discussion">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="6" y="8" width="36" height="26" rx="6" fill="#dbeafe"/>
+                  <rect x="14" y="40" width="8" height="4" rx="2" fill="#dbeafe"/>
+                  <rect x="14" y="38" width="8" height="6" rx="2" fill="#93c5fd"/>
+                  <circle cx="17" cy="21" r="2.5" fill="#3b82f6"/>
+                  <circle cx="24" cy="21" r="2.5" fill="#3b82f6"/>
+                  <circle cx="31" cy="21" r="2.5" fill="#3b82f6"/>
+                </svg>
+                <p>No discussions yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Activity + Pin Notes row */}
+      <div className="db-bottom-grid db-bottom-grid-2">
+
+        {/* Activity */}
+        <div className="db-bottom-card db-activity">
+          <div className="db-section-header">
+            <h3>Activity</h3>
+            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
+              View All <span>›</span>
+            </button>
+          </div>
+          <div className="db-activity-list">
+            {activityLogs.length > 0 ? activityLogs.map((log, i) => {
+              const initials = (log.user?.name || log.userName || "U")
+                .split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+              const dateStr = log.createdAt
+                ? new Date(log.createdAt).toLocaleDateString("en-IN", {
+                    day: "2-digit", month: "short", year: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })
+                : "";
+              return (
+                <div key={log._id || i} className="db-activity-item">
+                  <div className="db-activity-avatar" style={{ background: "#f59e0b" }}>{initials}</div>
+                  <div className="db-activity-body">
+                    <p className="db-activity-desc">{log.description || log.message || log.operationName}</p>
+                    <div className="db-activity-tags">
+                      {log.operationName && <span className="db-activity-tag">{log.operationName}</span>}
+                      {log.user?.name && <span className="db-activity-tag">{log.user.name}</span>}
+                    </div>
+                  </div>
+                  <div className="db-activity-meta">
+                    <span className="db-activity-date">{dateStr}</span>
+                    {log.companyName && <span className="db-activity-company">{log.companyName}</span>}
+                  </div>
+                </div>
+              );
+            }) : (
+              <div className="db-empty-state">No recent activity</div>
+            )}
+          </div>
+        </div>
+
+        {/* Pin Notes */}
+        <div className="db-bottom-card db-pin-notes">
+          <div className="db-section-header">
+            <h3>Pin Notes</h3>
+            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/project-list`)}>
+              View All <span>›</span>
+            </button>
+          </div>
+          {pinnedNotes.length > 0 ? (
+            <div className="db-notes-list">
+              {pinnedNotes.map((note, i) => (
+                <div key={note._id || i} className="db-note-item">
+                  <span className="db-note-pin">📌</span>
+                  <div className="db-note-body">
+                    <p className="db-note-title">{note.title || "Untitled Note"}</p>
+                    <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="db-pin-notes-empty">
+              <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="70" cy="70" r="60" fill="#eff6ff"/>
+                <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24"/>
+                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8"/>
+                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6"/>
+                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6"/>
+                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6"/>
+                <rect x="50" y="14" width="40" height="52" rx="6" fill="#3b82f6"/>
+                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
+                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7"/>
+                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7"/>
+                <circle cx="102" cy="98" r="18" fill="#1d4ed8"/>
+                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white"/>
+                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white"/>
+              </svg>
+              <p className="db-pin-notes-empty-text">Add your first notes</p>
+            </div>
+          )}
+        </div>
+
       </div>
 
       <ProjectListModal

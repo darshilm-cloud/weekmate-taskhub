@@ -4107,24 +4107,30 @@ span.process_bar {
   font-weight: 600;
 }
 
-.project-task-list .card {
-  background-color: #e9f3f9;
-  border: 1px solid #81b8d8;
+.project-task-list .card,
+.project-task-list .wm-task-card {
+  background-color: var(--wm-task-surface-3, #1c2938);
+  border: 1px solid var(--wm-task-border, rgba(148, 163, 184, 0.18));
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: none;
 }
 
-.project-task-list .task-box h3 {
-  color: #36a0df;
+.project-task-list .task-box h3,
+.project-task-list .wm-task-box h3 {
+  color: var(--wm-task-text, #e2e8f0);
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   margin-bottom: 12px;
 }
 
-.project-task-list .task-box {
+.project-task-list .task-box,
+.project-task-list .wm-task-box {
   font-size: 13px;
+  background: var(--wm-task-surface-3, #1c2938);
+  color: var(--wm-task-text, #e2e8f0);
 }
 
 .ant-avatar {
@@ -7119,5 +7125,3 @@ span.color-popover .ant-avatar {
     flex: 0 0 calc(50% - 20px);
   }
 }
-
-

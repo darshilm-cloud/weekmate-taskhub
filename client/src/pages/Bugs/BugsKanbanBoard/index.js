@@ -258,6 +258,19 @@ const BugList = ({
                     )}
 
                     <div className="kanbanView-bugs-data">
+                      {boardData.bugs.length === 0 && (
+                        <div style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "40px 16px",
+                          opacity: 0.45,
+                        }}>
+                          <i className="fi fi-rr-bug" style={{ fontSize: "32px", marginBottom: "10px" }} />
+                          <span style={{ fontSize: "13px" }}>No bugs here</span>
+                        </div>
+                      )}
                       {boardData.bugs.map((task) => (
                         <div
                           className={`card ${dragged ? "dragged" : ""}`}

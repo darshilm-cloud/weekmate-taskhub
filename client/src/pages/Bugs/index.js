@@ -178,6 +178,7 @@ const BugsPMS = () => {
                   { hasPermission(["bug_add"]) && (
                     <Button
                       onClick={ () => showModalTaskModal() }
+                      type="primary"
                       className=" add-btn"
                     >
                       <PlusOutlined />
@@ -631,7 +632,11 @@ const BugsPMS = () => {
             type="primary"
             size="large"
             className="square-primary-btn"
-            onClick={ () => addform.submit() }
+            onClick={ () => {
+              addform.validateFields(["title"]).then((values) => {
+                handleTaskOps({ ...addform.getFieldsValue(), ...values });
+              }).catch(() => {});
+            } }
           >
             Save
           </Button>,
@@ -696,7 +701,7 @@ const BugsPMS = () => {
                 <Form.Item
                   label="Description"
                   name="descriptions"
-                  rules={ [{ required: true }] }
+                  
                 >
                   <CKEditor
                     editor={ Custombuild }
@@ -843,14 +848,6 @@ const BugsPMS = () => {
                           <div className="flex-table">
                             <Form.Item
                               name="selectedItems"
-                              rules={ [
-                                {
-                                  required: true,
-                                  message: "Please select at least one assignee!",
-                                  type: "array",
-                                  min: 1,
-                                },
-                              ] }
                             >
                               <MultiSelect
                                 onSearch={ handleSearch }

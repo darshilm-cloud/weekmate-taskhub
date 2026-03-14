@@ -78,6 +78,10 @@ const MiraAi = React.lazy(() =>
   import("../pages/MiraAI/MiraAI")
 );
 
+const ProjectEntryRedirect = ({ match }) => (
+  <Redirect to={`/${match.params.companySlug}/project-list`} />
+);
+
 const index = ({ match, userPermission }) => {
   const routeArray = [
     {
@@ -142,6 +146,18 @@ const index = ({ match, userPermission }) => {
       path: ":companySlug/my-library",
       component: Library,
       roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/project",
+      component: ProjectEntryRedirect,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
     },
     {
       path: ":companySlug/project-list",

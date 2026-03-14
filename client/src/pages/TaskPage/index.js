@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from
 import { Input, Select, Checkbox, Spin, Avatar, Dropdown } from "antd";
 import {
   SearchOutlined,
-  FilterOutlined,
   PlusOutlined,
   UnorderedListOutlined,
   AppstoreOutlined,
@@ -10,7 +9,6 @@ import {
   DownOutlined,
   FlagOutlined,
   MessageOutlined,
-  SettingOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -26,6 +24,21 @@ const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
 const { Option } = Select;
 
 const TODAY = dayjs().format("YYYY-MM-DD");
+const DATE_PRESET_LABELS = {
+  any: "Date Type",
+  today: "Today",
+  this_week: "This Week",
+  this_month: "This Month",
+  next_7_days: "Next 7 Days",
+  overdue: "Overdue",
+};
+const SORT_MODE_LABELS = {
+  default: "Default",
+  due_asc: "Due Date ↑",
+  due_desc: "Due Date ↓",
+  title_asc: "A to Z",
+  title_desc: "Z to A",
+};
 
 /** Get display name from assignee (populated object or raw id) */
 function getAssigneeName(a) {
@@ -66,6 +79,46 @@ function getFilterStateFromSearch(search, isAdmin) {
   return { viewAll: true, statusFilter: "all", taskStartDate: null, taskEndDate: null };
 }
 
+function getDatePresetFromState(startDate, endDate) {
+  const today = dayjs().format("YYYY-MM-DD");
+  const weekStart = dayjs().startOf("week").format("YYYY-MM-DD");
+  const weekEnd = dayjs().endOf("week").format("YYYY-MM-DD");
+  const monthStart = dayjs().startOf("month").format("YYYY-MM-DD");
+  const monthEnd = dayjs().endOf("month").format("YYYY-MM-DD");
+  const next7End = dayjs().add(7, "day").format("YYYY-MM-DD");
+  const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+
+  if (!startDate && !endDate) return "any";
+  if (startDate === today && endDate === today) return "today";
+  if (startDate === weekStart && endDate === weekEnd) return "this_week";
+  if (startDate === monthStart && endDate === monthEnd) return "this_month";
+  if (startDate === today && endDate === next7End) return "next_7_days";
+  if (!startDate && endDate === yesterday) return "overdue";
+  return "any";
+}
+
+function sortTaskList(items, sortMode) {
+  if (sortMode === "default") return items;
+
+  const sorted = [...items];
+  sorted.sort((a, b) => {
+    if (sortMode === "title_asc") {
+      return String(a?.title || "").localeCompare(String(b?.title || ""));
+    }
+    if (sortMode === "title_desc") {
+      return String(b?.title || "").localeCompare(String(a?.title || ""));
+    }
+
+    const aDue = a?.due_date ? dayjs(a.due_date).valueOf() : Number.POSITIVE_INFINITY;
+    const bDue = b?.due_date ? dayjs(b.due_date).valueOf() : Number.POSITIVE_INFINITY;
+
+    if (sortMode === "due_asc") return aDue - bDue;
+    if (sortMode === "due_desc") return bDue - aDue;
+    return 0;
+  });
+  return sorted;
+}
+
 const TaskPage = () => {
   const dispatch = useDispatch();
   const history = useHistory();
@@ -85,6 +138,10 @@ const TaskPage = () => {
   const [viewAll, setViewAll] = useState(filterState.viewAll);
   const [taskStartDate, setTaskStartDate] = useState(filterState.taskStartDate);
   const [taskEndDate, setTaskEndDate] = useState(filterState.taskEndDate);
+  const [sortMode, setSortMode] = useState("default");
+  const [datePreset, setDatePreset] = useState(
+    getDatePresetFromState(filterState.taskStartDate, filterState.taskEndDate)
+  );
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
@@ -98,6 +155,7 @@ const TaskPage = () => {
     setStatusFilter(next.statusFilter);
     setTaskStartDate(next.taskStartDate);
     setTaskEndDate(next.taskEndDate);
+    setDatePreset(getDatePresetFromState(next.taskStartDate, next.taskEndDate));
   }, [location.search, isAdmin]);
 
   const fetchProjects = useCallback(async () => {
@@ -156,11 +214,45 @@ const TaskPage = () => {
     fetchTaskList();
   }, [fetchTaskList]);
 
+  const applyDatePreset = useCallback((presetKey) => {
+    const today = dayjs();
+    setDatePreset(presetKey);
+
+    switch (presetKey) {
+      case "today":
+        setTaskStartDate(today.format("YYYY-MM-DD"));
+        setTaskEndDate(today.format("YYYY-MM-DD"));
+        break;
+      case "this_week":
+        setTaskStartDate(today.startOf("week").format("YYYY-MM-DD"));
+        setTaskEndDate(today.endOf("week").format("YYYY-MM-DD"));
+        break;
+      case "this_month":
+        setTaskStartDate(today.startOf("month").format("YYYY-MM-DD"));
+        setTaskEndDate(today.endOf("month").format("YYYY-MM-DD"));
+        break;
+      case "next_7_days":
+        setTaskStartDate(today.format("YYYY-MM-DD"));
+        setTaskEndDate(today.add(7, "day").format("YYYY-MM-DD"));
+        break;
+      case "overdue":
+        setTaskStartDate(null);
+        setTaskEndDate(today.subtract(1, "day").format("YYYY-MM-DD"));
+        break;
+      default:
+        setTaskStartDate(null);
+        setTaskEndDate(null);
+        break;
+    }
+  }, []);
+
+  const sortedTasks = useMemo(() => sortTaskList(tasks, sortMode), [tasks, sortMode]);
+
   const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
     const today = [];
     const overdue = [];
     const upcoming = [];
-    tasks.forEach((t) => {
+    sortedTasks.forEach((t) => {
       const due = t.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
       if (!due) { upcoming.push(t); return; }
       if (due === TODAY) today.push(t);
@@ -169,14 +261,20 @@ const TaskPage = () => {
     });
     return {
       todayTasks: today,
-      overdueTasks: overdue.sort((a, b) => new Date(a.due_date) - new Date(b.due_date)),
-      upcomingTasks: upcoming.sort((a, b) => new Date(a.due_date) - new Date(b.due_date)),
+      overdueTasks:
+        sortMode === "default"
+          ? overdue.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          : overdue,
+      upcomingTasks:
+        sortMode === "default"
+          ? upcoming.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          : upcoming,
     };
-  }, [tasks]);
+  }, [sortedTasks, sortMode]);
 
   const kanbanColumns = useMemo(() => {
     const byStatus = {};
-    tasks.forEach((t) => {
+    sortedTasks.forEach((t) => {
       const key = t.task_status?._id ? String(t.task_status._id) : "_none_";
       if (!byStatus[key]) {
         byStatus[key] = {
@@ -189,18 +287,34 @@ const TaskPage = () => {
       byStatus[key].tasks.push(t);
     });
     return Object.values(byStatus).sort((a, b) => a.title.localeCompare(b.title));
-  }, [tasks]);
+  }, [sortedTasks]);
 
   const calendarTasksByDate = useMemo(() => {
     const map = {};
-    tasks.forEach((t) => {
+    sortedTasks.forEach((t) => {
       if (!t.due_date) return;
       const d = dayjs(t.due_date).format("YYYY-MM-DD");
       if (!map[d]) map[d] = [];
       map[d].push(t);
     });
     return map;
-  }, [tasks]);
+  }, [sortedTasks]);
+
+  const sortMenu = {
+    items: Object.entries(SORT_MODE_LABELS).map(([key, label]) => ({
+      key,
+      label,
+    })),
+    onClick: ({ key }) => setSortMode(key),
+  };
+
+  const dateMenu = {
+    items: Object.entries(DATE_PRESET_LABELS).map(([key, label]) => ({
+      key,
+      label,
+    })),
+    onClick: ({ key }) => applyDatePreset(key),
+  };
 
   const handleOpenTask = (task) => {
     setSelectedTask(task);
@@ -209,13 +323,6 @@ const TaskPage = () => {
 
   const handleOpenInProject = (path) => {
     if (path) history.push(path);
-  };
-
-  const settingsMenu = {
-    items: [
-      { key: "columns", label: "Customize columns" },
-      { key: "preferences", label: "Preferences" },
-    ],
   };
 
   return (
@@ -234,9 +341,6 @@ const TaskPage = () => {
             className="task-search"
             allowClear
           />
-          <button type="button" className="task-filter-btn">
-            <FilterOutlined /> Filter
-          </button>
           <Select
             value={statusFilter}
             onChange={setStatusFilter}
@@ -247,12 +351,16 @@ const TaskPage = () => {
               { value: "completed", label: "Completed" },
             ]}
           />
-          <button type="button" className="task-filter-btn">
-            Default <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
-          </button>
-          <button type="button" className="task-filter-btn">
-            <CalendarOutlined /> Date Type
-          </button>
+          <Dropdown menu={sortMenu} trigger={["click"]}>
+            <button type="button" className="task-filter-btn">
+              {SORT_MODE_LABELS[sortMode]} <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
+            </button>
+          </Dropdown>
+          <Dropdown menu={dateMenu} trigger={["click"]}>
+            <button type="button" className="task-filter-btn">
+              <CalendarOutlined /> {DATE_PRESET_LABELS[datePreset]}
+            </button>
+          </Dropdown>
           <button
             type="button"
             className="task-btn-add"
@@ -308,16 +416,6 @@ const TaskPage = () => {
               All tasks
             </Checkbox>
           )}
-          <Dropdown menu={settingsMenu} trigger={["click"]}>
-            <button type="button" className="task-btn-ghost">
-              <SettingOutlined /> Customize
-            </button>
-          </Dropdown>
-          <Dropdown menu={{ items: [{ key: "more", label: "More options" }] }} trigger={["click"]}>
-            <button type="button" className="task-btn-ghost">
-              More <DownOutlined />
-            </button>
-          </Dropdown>
         </div>
       </div>
 

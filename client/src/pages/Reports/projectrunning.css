@@ -1,18 +1,42 @@
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  justify-items: center;
-  align-items: start;
+.projects-running-card.ant-card {
+  width: 100% !important;
 }
 
-.charts-grid .chart-container {
+.projects-running-card .ant-card-body {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.charts-section {
+  display: block;
+  width: 100% !important;
+}
+
+.charts-grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100% !important;
+}
+
+.charts-grid > .chart-container {
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 10px);
   background-color: var(--app-surface);
   border-radius: 8px;
-  height: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  width: 100%;
   box-sizing: border-box;
+  min-width: 300px;
+}
+
+.project-department-chart {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+}
+
+.chart-content {
+  padding: 15px;
+  min-height: 350px;
 }
 
 .charts-grid .chart-container .chart-header {
@@ -81,20 +105,18 @@
   font-size: 18px;
 }
 
-.project-department-chart {
-  grid-column-start: 1;
-  grid-column-end: 3;
+.project-department-chart .chart-container {
   background-color: var(--app-surface);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-
 }
 
 @media (max-width:1200px) {
-  .charts-grid {
-    grid-template-columns: 1fr;
+  .charts-grid > .chart-container {
+    flex: 0 0 100%;
+    max-width: 100%;
   }
 }
 
@@ -205,39 +227,39 @@ body[data-theme="dark"] .projects-running-card .custom-table .ant-table-containe
   background: #0c182b !important;
 }
 
-body.dark-theme .projects-running-card .custom-table .ant-table-thead > tr > th,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-thead > tr > th {
+body.dark-theme .projects-running-card .custom-table .ant-table-thead>tr>th,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-thead>tr>th {
   background: #11213a !important;
   color: #cfe0ff !important;
   border-bottom-color: rgba(74, 104, 150, 0.24) !important;
   border-right-color: rgba(74, 104, 150, 0.24) !important;
 }
 
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td,
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td a,
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td span,
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr>td,
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr>td a,
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr>td span,
 body.dark-theme .projects-running-card .custom-table .ant-pagination-total-text,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td a,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td span,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr>td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr>td a,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr>td span,
 body[data-theme="dark"] .projects-running-card .custom-table .ant-pagination-total-text {
   color: #dce7fb !important;
 }
 
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td a:hover,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td a:hover {
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr>td a:hover,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr>td a:hover {
   color: #35d6c6 !important;
 }
 
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr > td,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr > td {
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr>td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr>td {
   border-bottom-color: rgba(74, 104, 150, 0.16) !important;
   border-right-color: rgba(74, 104, 150, 0.16) !important;
   background: #0c182b !important;
 }
 
-body.dark-theme .projects-running-card .custom-table .ant-table-tbody > tr:hover > td,
-body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody > tr:hover > td {
+body.dark-theme .projects-running-card .custom-table .ant-table-tbody>tr:hover>td,
+body[data-theme="dark"] .projects-running-card .custom-table .ant-table-tbody>tr:hover>td {
   background: #132238 !important;
 }
 

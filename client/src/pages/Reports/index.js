@@ -417,7 +417,6 @@ const ProjectsRunning = () => {
       ],
       options: {
         chart: {
-          width: "100%",
           toolbar: { show: false },
           type: "bar",
           height: 350,
@@ -467,7 +466,6 @@ const ProjectsRunning = () => {
       ],
       options: {
         chart: {
-          width: "100%",
           toolbar: { show: false },
           type: "bar",
           height: 350,
@@ -477,6 +475,7 @@ const ProjectsRunning = () => {
           bar: {
             horizontal: false,
             borderRadius: 4,
+            columnWidth: "40%",
           },
         },
         dataLabels: { enabled: true },
@@ -490,6 +489,11 @@ const ProjectsRunning = () => {
         yaxis: {
           reversed: false,
           axisTicks: { show: true },
+          min: 0,
+          tickAmount: Math.max(...(technologyReportData.length ? technologyReportData : [3])),
+          labels: {
+            formatter: (val) => Math.round(val),
+          },
         },
         tooltip: {
           fillSeriesColor: true,
@@ -628,13 +632,12 @@ const renderChart = useCallback(
         </div>
         <div className="chart-content">
           <ReactApexChart
-            className={type === "pie" ? "justifyCenter" : ""}
             key={type === "pie" ? chartKey : undefined}
             options={modifiedChartData.options}
             series={modifiedChartData.series}
             type={type}
             height={chartHeight}
-            width={type === "pie" ? chartHeight : undefined}
+            width="100%"
           />
           {(type === "pie" || title === "Projects by Type") && (
             <CustomLegend 
