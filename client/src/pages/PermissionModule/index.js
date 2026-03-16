@@ -15,6 +15,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import PermissionModuleController from "./PermissionModuleController";
+import { PermissionPageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PermissionModule.css";
 
 /* ─── Role avatar colours (deterministic from name) ────────────── */
@@ -180,6 +181,7 @@ const PermissionModule = () => {
     isDirty,
     permLoading,
     saving,
+    pageLoading,
     selectRole,
     onPermissionChange,
     savePermissions,
@@ -231,6 +233,8 @@ const PermissionModule = () => {
       return ai - bi;
     });
   }, [dynamicMatrix]);
+
+  if (pageLoading) return <PermissionPageSkeleton />;
 
   /* ── render ─────────────────────────────────────────────────── */
   return (

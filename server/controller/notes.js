@@ -151,9 +151,10 @@ exports.getNotes = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional().allow(""),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().optional().allow(""),
       notebook_id: Joi.string().optional().default(null),
-      subscribers: Joi.array().optional()
+      subscribers: Joi.array().optional(),
+      isBookmark: Joi.boolean().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -174,8 +175,8 @@ exports.getNotes = async (req, res) => {
 
     const [isAdmin, isManager, isAccManager] = await Promise.all([
       checkUserIsAdmin(req.user._id),
-      checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
+      value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
     ]);
 
     let matchQuery = {
@@ -222,6 +223,7 @@ exports.getNotes = async (req, res) => {
         : {}),
 
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value.isBookmark !== undefined ? { isBookmark: value.isBookmark } : {}),
       // ...(value.subscribers ? { subscribers: { $in: value.subscribers } } : {}),
       ...(value.subscribers && value.subscribers.length > 0
         ? value.subscribers.includes("all")

@@ -29,6 +29,7 @@ import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
+import { TimesheetSkeleton } from "../../../components/common/SkeletonLoader";
 import NoDataFoundSvg from "../../../assets/images/no-data-found.svg";
 
 dayjs.extend(quarterOfYear);
@@ -103,6 +104,7 @@ const TimeSheet = () => {
 
   // ── UI state ───────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pendingExport, setPendingExport] = useState(false);
 
@@ -176,6 +178,7 @@ const TimeSheet = () => {
         console.error(err);
       } finally {
         setLoading(false);
+        setPageLoading(false);
         dispatch(hideAuthLoader());
       }
     },
@@ -729,6 +732,8 @@ const TimeSheet = () => {
   ));
 
   // ── Render ─────────────────────────────────────────────────
+
+  if (pageLoading) return <TimesheetSkeleton />;
 
   return (
     <div className="timesheet-page">

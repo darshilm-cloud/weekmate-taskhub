@@ -59,6 +59,7 @@ import {
 } from "../../cacheDB";
 import moment from "moment";
 import NotesFilter from "./NotesFilter";
+import { NotesSkeleton } from "../common/SkeletonLoader";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -108,6 +109,7 @@ function NotesPMS() {
   const [formComment] = Form.useForm();
   const [commentVal, setCommentVal] = useState("");
   const [getDetails, setGetDetails] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [allSubscribers, setallSubscribers] = useState([]);
   const [managePeopleVisible, setManagePeopleVisible] = useState(false);
   const [manageSubscribers, setManageSubscribers] = useState([]);
@@ -374,6 +376,7 @@ function NotesPMS() {
   // get project notes api
   const getNotesById = async (id, value) => {
     try {
+      setPageLoading(true);
       const reqBody = {
         // notebook_id: id,
         subscribers: value,
@@ -400,6 +403,8 @@ function NotesPMS() {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -1162,10 +1167,11 @@ function NotesPMS() {
         </div>
       </Modal>
 
-      <div className="project-wrapper discussion-wrapper notes-wrapper">
+      {pageLoading && <NotesSkeleton />}
+      {!pageLoading && <div className="project-wrapper discussion-wrapper notes-wrapper">
         <div className="profilerightbar">
           <div className="profile-sub-head">
-            <div className="add-project-wrapper">
+            <div className="add-project-wrapper" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 10 }}>
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -1173,6 +1179,13 @@ function NotesPMS() {
                 style={{ width: 200 }}
                 className="mr2"
               />
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={openModelNotes}
+              >
+                Add a Note
+              </Button>
             </div>
             <div className="head-box-inner"></div>
             <div className="block-status-content">
@@ -1328,21 +1341,6 @@ function NotesPMS() {
 
                   return (
                     <>
-                      {index == 0 && (
-                        <div onClick={openModelNotes} className="notes-box">
-                          <div
-                            className="note-inner-block"
-                            style={{
-                              justifyContent: "center",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <h3 style={{ textAlign: "center", width: "100%" }}>
-                              Add a Note
-                            </h3>
-                          </div>
-                        </div>
-                      )}
                       <div className="main-notes-wrapper" key={note._id}>
                         <div
                           className="notes-div"
@@ -1477,16 +1475,7 @@ function NotesPMS() {
                   );
                 })
               ) : (
-                <div onClick={openModelNotes} className="notes-box">
-                  <div
-                    className="note-inner-block"
-                    style={{ justifyContent: "center", cursor: "pointer" }}
-                  >
-                    <h3 style={{ textAlign: "center", width: "100%" }}>
-                      Add a Note
-                    </h3>
-                  </div>
-                </div>
+                <div style={{ padding: "40px 0", textAlign: "center", color: "#94a3b8" }}>No notes yet</div>
               ))}
 
             <Modal
@@ -1922,7 +1911,7 @@ function NotesPMS() {
             </Modal>
           </div>
         </div>
-      </div>
+      </div>}
 
       <EditCommentModal
         open={false}

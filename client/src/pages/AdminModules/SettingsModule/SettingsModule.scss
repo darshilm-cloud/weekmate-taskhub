@@ -306,8 +306,8 @@ body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper-disable
   // ========================================================================
 
   .main-card {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
     border-radius: radius(xxl);
     background: var(--app-surface);
     border: 1px solid var(--app-border);
@@ -676,7 +676,7 @@ body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper-disable
 
     // SMTP Configuration Form
     .smtp-form {
-      background: #eee;
+      background: #fff;
       backdrop-filter: blur(20px);
       padding: spacing(xl);
       border-radius: radius(xxl);

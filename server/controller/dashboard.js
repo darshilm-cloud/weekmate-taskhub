@@ -73,8 +73,8 @@ exports.getMyProjects = async (req, res) => {
       };
     }
 
-    // Manage projects default tabs .. . ..
-    await manageAllProjectTabSetting(req.user);
+    // Manage projects default tabs in background (non-blocking)
+    manageAllProjectTabSetting(req.user).catch(() => {});
     
     let matchQuery = {
       isDeleted: false,
@@ -543,6 +543,25 @@ exports.getMyTasks = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "tasklabels",
+          let: { task_labels: "$task_labels" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", { $ifNull: ["$$task_labels", []] }] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "taskLabels"
+        }
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
@@ -551,6 +570,7 @@ exports.getMyTasks = async (req, res) => {
           due_date: 1,
           createdAt: 1,
           assignees: 1,
+          taskLabels: { _id: 1, title: 1, color: 1 },
           project: {
             _id: 1,
             title: 1,

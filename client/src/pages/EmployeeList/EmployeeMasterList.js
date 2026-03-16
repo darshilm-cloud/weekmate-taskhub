@@ -28,6 +28,7 @@ import EmployeeListTabUsers from "./EmployeeListTabUsers";
 import UserDashboard from "./UserDashboard";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 
 /* ─── avatar colour helper ──────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -89,6 +90,7 @@ const EmployeeMasterList = () => {
   /* ── employee data ── */
   const [sidebarUsers,   setSidebarUsers]   = useState([]);
   const [sidebarLoading, setSidebarLoading] = useState(false);
+  const [pageLoading,    setPageLoading]    = useState(true);
   const [analytics, setAnalytics] = useState({
     total: 0, active: 0, inactive: 0, admins: 0,
     roleBreakdown: {}, statusBreakdown: { active: 0, inactive: 0 },
@@ -124,6 +126,7 @@ const EmployeeMasterList = () => {
       } catch { /* silent */ }
     } finally {
       setSidebarLoading(false);
+      setPageLoading(false);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -278,6 +281,8 @@ const EmployeeMasterList = () => {
   };
 
   /* ── render ─────────────────────────────────────────────────────── */
+  if (pageLoading) return <UsersPageSkeleton />;
+
   return (
     <div className="users-workspace">
 

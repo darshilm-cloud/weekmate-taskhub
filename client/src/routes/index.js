@@ -74,6 +74,14 @@ const ActivityLogs = React.lazy(() =>
   import("../pages/ActivityLogs/ActivityLogs")
 );
 
+const NotesPage = React.lazy(() =>
+  import("../pages/Notes/index")
+);
+
+const DiscussionPage = React.lazy(() =>
+  import("../pages/Discussion/index")
+);
+
 const MiraAi = React.lazy(() =>
   import("../pages/MiraAI/MiraAI")
 );
@@ -430,6 +438,30 @@ const index = ({ match, userPermission }) => {
       path: ":companySlug/admin/activity-logs",
       component: ActivityLogs,
       roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/notes",
+      component: NotesPage,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/discussion",
+      component: DiscussionPage,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
     },
   ];
   let userData = JSON.parse(localStorage.getItem("user_data"));

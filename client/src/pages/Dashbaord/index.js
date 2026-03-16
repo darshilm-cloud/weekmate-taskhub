@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import "./dashboard.css";
-import { Calendar, Form } from "antd";
+import { Calendar, Form, Modal, Select, Input, message } from "antd";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
@@ -23,6 +23,8 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
+import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
+import AddTaskModal from "../Tasks/AddTaskModal";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -35,6 +37,7 @@ const Dashboard = () => {
   }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [form] = Form.useForm();
   const [projectDetails, setProjectDetails] = useState([]);
   const [projectList, setProjectList] = useState([]);
@@ -49,6 +52,17 @@ const Dashboard = () => {
   const [discussions, setDiscussions] = useState([]);
   const [discussionTab, setDiscussionTab] = useState("General");
   const [pinnedNotes, setPinnedNotes] = useState([]);
+  const [addNoteOpen, setAddNoteOpen] = useState(false);
+  const [noteForm] = Form.useForm();
+  const [noteProjects, setNoteProjects] = useState([]);
+  const [noteNotebooks, setNoteNotebooks] = useState([]);
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
+  const [noteNotebooksLoading, setNoteNotebooksLoading] = useState(false);
+  const [notebookSearch, setNotebookSearch] = useState("");
+  const [creatingNotebook, setCreatingNotebook] = useState(false);
+  const [allNotesOpen, setAllNotesOpen] = useState(false);
+  const [allNotes, setAllNotes] = useState([]);
+  const [allNotesLoading, setAllNotesLoading] = useState(false);
 
   // Filter states
   const [projStatus, setProjStatus] = useState([]);
@@ -62,6 +76,7 @@ const Dashboard = () => {
   const [timeProjects, setTimeProjects] = useState([]);
   const [timeDates, setTimeDates] = useState({ startDate: null, endDate: null });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
 
   // Memoized derived values — only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
@@ -192,10 +207,28 @@ const Dashboard = () => {
   ], [completedCounts, incompleteCounts]);
 
   // Memoized priority + today summary
+  const getTaskPriority = useCallback((t) => {
+    // Priority is stored in taskLabels array (e.g. "High Priority", "Medium Priority", "Low Priority")
+    const labels = t.taskLabels || [];
+    for (const l of labels) {
+      const title = (l.title || "").toLowerCase();
+      if (title.includes("high")) return "high";
+      if (title.includes("medium")) return "medium";
+      if (title.includes("low")) return "low";
+    }
+    // Fallback: check direct priority field
+    if (t.priority) {
+      const raw = (typeof t.priority === "string" ? t.priority : (t.priority?.title || t.priority?.name || "")).toLowerCase();
+      if (raw.includes("high")) return "high";
+      if (raw.includes("medium")) return "medium";
+      if (raw.includes("low")) return "low";
+    }
+    return "";
+  }, []);
   const { priorityLow, priorityMedium, priorityHigh, newToday, closedToday, teamIncomplete } = useMemo(() => ({
-    priorityLow: myTask.filter((t) => t.priority?.toLowerCase() === "low").length,
-    priorityMedium: myTask.filter((t) => t.priority?.toLowerCase() === "medium").length,
-    priorityHigh: myTask.filter((t) => t.priority?.toLowerCase() === "high").length,
+    priorityLow: myTask.filter((t) => getTaskPriority(t) === "low").length,
+    priorityMedium: myTask.filter((t) => getTaskPriority(t) === "medium").length,
+    priorityHigh: myTask.filter((t) => getTaskPriority(t) === "high").length,
     newToday: myTask.filter(
       (t) => t.createdAt && dayjs(t.createdAt).format("YYYY-MM-DD") === today
     ).length,
@@ -208,7 +241,7 @@ const Dashboard = () => {
     teamIncomplete: myTask
       .filter((t) => !["done", "closed"].includes(t.status?.toLowerCase()))
       .slice(0, 10),
-  }), [myTask, today]);
+  }), [myTask, today, getTaskPriority]);
 
   // Stable callbacks
   const onProjectFilterChange = useCallback((skipParams, selectedFilters) => {
@@ -315,15 +348,27 @@ const Dashboard = () => {
   }, [dispatch]);
 
   const myProjectsFn = useCallback(async () => {
+    const hasFilters = (category?.length > 0) || (projStatus?.length > 0);
+    const cacheKey = "db_my_projects";
+    // Show cached data immediately (only when no filters applied)
+    if (!hasFilters) {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try { setMyProj(JSON.parse(cached)); } catch {}
+      }
+    }
     try {
-      dispatch(showAuthLoader());
-      let reqBody = {};
+      let reqBody = { pageNo: 1, limit: 4 }; // only need 4 for Recent Projects
       if (category?.length > 0) reqBody = { ...reqBody, category };
       if (projStatus?.length > 0) reqBody = { ...reqBody, project_status: projStatus };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myProjects, body: reqBody,
       });
-      if (response?.data?.data) { dispatch(hideAuthLoader()); setMyProj(response.data.data); }
+      const projects = response?.data?.data?.data || response?.data?.data || [];
+      if (projects.length >= 0) {
+        setMyProj(projects);
+        if (!hasFilters) sessionStorage.setItem(cacheKey, JSON.stringify(projects));
+      }
     } catch (error) { console.log(error, "myProject error"); }
   }, [dispatch, category, projStatus]);
 
@@ -348,10 +393,12 @@ const Dashboard = () => {
       } else {
         setMyTask([]);
       }
+      setPageLoading(false);
     } catch (error) {
       console.error("myTask error", error);
       setMyTask([]);
       dispatch(hideAuthLoader());
+      setPageLoading(false);
     }
   }, [dispatch, taskProjects, taskStatus, taskDates]);
 
@@ -477,9 +524,10 @@ const Dashboard = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
-        body: { pageNo: 1, limit: 5, sortBy: "desc" },
+        body: { pageNo: 1, limit: 10, sortBy: "desc" },
       });
-      if (response?.data?.data) setDiscussions(response.data.data);
+      const data = response?.data?.data;
+      if (Array.isArray(data)) setDiscussions(data);
     } catch (e) { console.log(e); }
   }, []);
 
@@ -525,8 +573,114 @@ const Dashboard = () => {
     setIsInitialLoad(false);
   }, []);
 
+  const openAllNotes = () => {
+    setAllNotesOpen(true);
+    setAllNotesLoading(true);
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getNotes,
+      body: { pageNo: 1, limit: 200, sort: "_id", sortBy: "desc" },
+    }).then((res) => {
+      setAllNotes(Array.isArray(res?.data?.data) ? res.data.data : []);
+    }).catch(() => {}).finally(() => setAllNotesLoading(false));
+  };
+
+  const openAddNote = () => {
+    // Always fetch all projects (not limited to 4 recent)
+    const cached = sessionStorage.getItem("note_all_projects");
+    if (cached) { try { setNoteProjects(JSON.parse(cached)); } catch {} }
+    Service.makeAPICall({ methodName: Service.postMethod, api_url: Service.myProjects, body: { pageNo: 1, limit: 500 } })
+      .then((res) => {
+        const list = res?.data?.data?.data || res?.data?.data || [];
+        if (list.length) {
+          setNoteProjects(list);
+          sessionStorage.setItem("note_all_projects", JSON.stringify(list));
+        }
+      }).catch(() => {});
+    setAddNoteOpen(true);
+  };
+
+  const onNoteProjectChange = (pid) => {
+    noteForm.setFieldValue("noteBook_id", undefined);
+    setNoteNotebooks([]);
+    if (!pid) return;
+    setNoteNotebooksLoading(true);
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getNotebook,
+      body: { project_id: pid, pageNo: 1, sort: "_id", sortBy: "des" },
+    }).then((res) => {
+        if (Array.isArray(res?.data?.data) && res.data.data.length > 0)
+          setNoteNotebooks(res.data.data);
+      })
+      .catch(() => {}).finally(() => setNoteNotebooksLoading(false));
+  };
+
+  const createNotebook = async (title) => {
+    const pid = noteForm.getFieldValue("project_id");
+    if (!title?.trim()) return;
+    if (!pid) { message.warning("Please select a project first"); return; }
+    setCreatingNotebook(true);
+    setNotebookSearch("");
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addNotebook,
+        body: { title: title.trim(), project_id: pid },
+      });
+      const newNb = res?.data?.data;
+      if (newNb?._id) {
+        setNoteNotebooks((prev) => [...prev, newNb]);
+        noteForm.setFieldValue("noteBook_id", newNb._id);
+        message.success("Notebook created");
+      } else {
+        message.error(res?.data?.message || "Failed to create notebook");
+      }
+    } catch { message.error("Failed to create notebook"); }
+    finally { setCreatingNotebook(false); }
+  };
+
+  const handleNoteSubmit = async () => {
+    try {
+      const values = await noteForm.validateFields();
+      setNoteSubmitting(true);
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addNotes,
+        body: {
+          title: values.title.trim(),
+          project_id: values.project_id,
+          noteBook_id: values.noteBook_id,
+          color: "#000000",
+          subscribers: [],
+          isPrivate: false,
+          pms_clients: [],
+        },
+      });
+      if (res?.data?.status) {
+        message.success(res.data.message || "Note added successfully");
+        noteForm.resetFields();
+        setAddNoteOpen(false);
+        fetchPinnedNotes();
+      } else {
+        message.error(res?.data?.message || "Failed to add note");
+      }
+    } catch { /* validation */ }
+    finally { setNoteSubmitting(false); }
+  };
+
+  if (pageLoading) return <DashboardSkeleton />;
+
   return (
     <div className="new-dashboard-wrapper">
+
+      {/* Dashboard header row with Add Task button */}
+      <div className="db-header-row">
+        <h2 className="db-page-title">Dashboard</h2>
+        <button className="db-add-task-btn" onClick={() => setAddTaskOpen(true)}>
+          + Add Task
+        </button>
+      </div>
 
       {/* 4 Stat Cards — clickable, redirect to task page with applied filter */}
       <div className="new-stat-cards-row">
@@ -778,7 +932,7 @@ const Dashboard = () => {
         <p className="standalone-add-task-sub">Welcome Let's get started.</p>
         <button
           className="standalone-add-task-btn"
-          onClick={() => history.push(`/${companySlug}/tasks`)}
+          onClick={() => setAddTaskOpen(true)}
         >
           Add Task
         </button>
@@ -850,7 +1004,7 @@ const Dashboard = () => {
         <div className="db-bottom-card db-discussion">
           <div className="db-section-header">
             <h3>Recent Discussion</h3>
-            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/project-list`)}>
+            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/discussion`)}>
               View All <span>›</span>
             </button>
           </div>
@@ -879,11 +1033,14 @@ const Dashboard = () => {
                 .map((d, i) => (
                   <div key={d._id || i} className="db-discussion-item">
                     <div className="db-discussion-avatar">
-                      {(d.createdBy?.name || d.topic || "D").charAt(0).toUpperCase()}
+                      {(d.createdBy?.full_name || d.createdBy?.name || d.title || "D").charAt(0).toUpperCase()}
                     </div>
                     <div className="db-discussion-body">
-                      <p className="db-discussion-topic">{d.topic || d.title || "Discussion"}</p>
-                      <span className="db-discussion-meta">{d.createdBy?.name}</span>
+                      <p className="db-discussion-topic">{d.title || d.topic || "Discussion"}</p>
+                      <span className="db-discussion-meta">
+                        {d.createdBy?.full_name || d.createdBy?.name || d.createdBy?.email || ""}
+                        {d.project?.title ? ` · ${d.project.title}` : ""}
+                      </span>
                     </div>
                   </div>
                 ))
@@ -916,33 +1073,57 @@ const Dashboard = () => {
               View All <span>›</span>
             </button>
           </div>
-          <div className="db-activity-list">
-            {activityLogs.length > 0 ? activityLogs.map((log, i) => {
-              const initials = (log.user?.name || log.userName || "U")
-                .split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-              const dateStr = log.createdAt
-                ? new Date(log.createdAt).toLocaleDateString("en-IN", {
-                    day: "2-digit", month: "short", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  })
-                : "";
-              return (
-                <div key={log._id || i} className="db-activity-item">
-                  <div className="db-activity-avatar" style={{ background: "#f59e0b" }}>{initials}</div>
-                  <div className="db-activity-body">
-                    <p className="db-activity-desc">{log.description || log.message || log.operationName}</p>
-                    <div className="db-activity-tags">
-                      {log.operationName && <span className="db-activity-tag">{log.operationName}</span>}
-                      {log.user?.name && <span className="db-activity-tag">{log.user.name}</span>}
-                    </div>
-                  </div>
-                  <div className="db-activity-meta">
-                    <span className="db-activity-date">{dateStr}</span>
-                    {log.companyName && <span className="db-activity-company">{log.companyName}</span>}
-                  </div>
-                </div>
-              );
-            }) : (
+          <div className="db-activity-table-wrap">
+            {activityLogs.length > 0 ? (
+              <table className="db-activity-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Operation</th>
+                    <th>Module</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activityLogs.map((log, i) => {
+                    const user = log.createdBy;
+                    const userName = (user && typeof user === "object")
+                      ? (user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "-")
+                      : (log.createdByName || "-");
+                    const email = log.email || log.createdBy?.email || log.createdByEmail || "-";
+                    const operation = log.operationName || "-";
+                    const module = (log.moduleName || "-").replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2");
+                    const d = log.createdAt ? new Date(log.createdAt) : null;
+                    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                    const timestamp = d
+                      ? `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`
+                      : "-";
+                    const OP_COLORS = {
+                      LOGIN:  { bg: "#f0fdf4", color: "#16a34a" },
+                      LOGOUT: { bg: "#eff6ff", color: "#2563eb" },
+                      UPDATE: { bg: "#fff7ed", color: "#ea580c" },
+                      DELETE: { bg: "#fef2f2", color: "#dc2626" },
+                      CREATE: { bg: "#f0fdf4", color: "#16a34a" },
+                    };
+                    const opStyle = OP_COLORS[operation] || { bg: "#f1f5f9", color: "#64748b" };
+                    return (
+                      <tr key={log._id || i}>
+                        <td className="db-act-user">{userName}</td>
+                        <td className="db-act-email">{email}</td>
+                        <td>
+                          <span className="db-act-op-badge" style={{ background: opStyle.bg, color: opStyle.color }}>
+                            {operation}
+                          </span>
+                        </td>
+                        <td className="db-act-module">{module}</td>
+                        <td className="db-act-time">{timestamp}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
               <div className="db-empty-state">No recent activity</div>
             )}
           </div>
@@ -952,14 +1133,19 @@ const Dashboard = () => {
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
             <h3>Pin Notes</h3>
-            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/project-list`)}>
+            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/notes`)}>
               View All <span>›</span>
             </button>
           </div>
           {pinnedNotes.length > 0 ? (
             <div className="db-notes-list">
               {pinnedNotes.map((note, i) => (
-                <div key={note._id || i} className="db-note-item">
+                <div
+                  key={note._id || i}
+                  className="db-note-item"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
+                >
                   <span className="db-note-pin">📌</span>
                   <div className="db-note-body">
                     <p className="db-note-title">{note.title || "Untitled Note"}</p>
@@ -969,7 +1155,11 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="db-pin-notes-empty">
+            <div
+              className="db-pin-notes-empty"
+              style={{ cursor: "pointer" }}
+              onClick={openAddNote}
+            >
               <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="70" cy="70" r="60" fill="#eff6ff"/>
                 <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24"/>
@@ -986,6 +1176,7 @@ const Dashboard = () => {
                 <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white"/>
               </svg>
               <p className="db-pin-notes-empty-text">Add your first notes</p>
+              <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>Click to add a note</p>
             </div>
           )}
         </div>
@@ -1002,6 +1193,111 @@ const Dashboard = () => {
         form={form}
         getProjectListing={getProjectListing}
       />
+
+      <AddTaskModal
+        open={addTaskOpen}
+        onCancel={() => setAddTaskOpen(false)}
+        onSuccess={() => { setAddTaskOpen(false); myTasksFn(); fetchAssignedToMeTasks(); setTimeout(() => fetchActivityLogs(), 1000); }}
+        standalone={true}
+      />
+
+      {/* ── All Notes Modal ── */}
+      <Modal
+        title="All Notes"
+        open={allNotesOpen}
+        onCancel={() => setAllNotesOpen(false)}
+        footer={null}
+        width={640}
+        bodyStyle={{ maxHeight: "70vh", overflowY: "auto", padding: "12px 24px" }}
+      >
+        {allNotesLoading ? (
+          <div style={{ textAlign: "center", padding: 32, color: "#94a3b8" }}>Loading...</div>
+        ) : allNotes.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 32, color: "#94a3b8" }}>No notes found</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {allNotes.map((note, i) => (
+              <div
+                key={note._id || i}
+                onClick={() => { setAllNotesOpen(false); note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`); }}
+                style={{
+                  padding: "12px 16px", borderRadius: 8, border: "1px solid #e2e8f0",
+                  cursor: "pointer", background: "#f8fafc", transition: "background 0.15s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#eff6ff"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#f8fafc"}
+              >
+                <div style={{ fontWeight: 600, fontSize: 14, color: "#1e293b", marginBottom: 4 }}>
+                  📌 {note.title || "Untitled Note"}
+                </div>
+                {note.description && (
+                  <div style={{ fontSize: 12, color: "#64748b" }}>{note.description.slice(0, 80)}{note.description.length > 80 ? "..." : ""}</div>
+                )}
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                  {note.project_id?.title || note.project_title || ""}
+                  {note.noteBook_id?.title ? ` › ${note.noteBook_id.title}` : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Add Note Modal ── */}
+      <Modal
+        title="Add New Note"
+        open={addNoteOpen}
+        onCancel={() => { setAddNoteOpen(false); noteForm.resetFields(); }}
+        onOk={handleNoteSubmit}
+        okText="Add Note"
+        confirmLoading={noteSubmitting}
+        destroyOnClose
+      >
+        <Form form={noteForm} layout="vertical" style={{ marginTop: 12 }}>
+          <Form.Item name="title" label="Note Title" rules={[{ required: true, message: "Title is required" }]}>
+            <Input placeholder="Enter note title..." />
+          </Form.Item>
+          <Form.Item name="project_id" label="Project" rules={[{ required: true, message: "Select a project" }]}>
+            <Select placeholder="Select project" showSearch optionFilterProp="children" onChange={onNoteProjectChange}>
+              {noteProjects.map((p) => <Select.Option key={p._id} value={p._id}>{p.title}</Select.Option>)}
+            </Select>
+          </Form.Item>
+          <Form.Item name="noteBook_id" label="Notebook" rules={[{ required: true, message: "Select a notebook" }]}>
+            <Select
+              placeholder="Select or create notebook"
+              showSearch
+              optionFilterProp="children"
+              loading={noteNotebooksLoading || creatingNotebook}
+              searchValue={notebookSearch}
+              onSearch={setNotebookSearch}
+              notFoundContent={
+                notebookSearch.trim() ? (
+                  <div
+                    style={{ padding: "6px 12px", cursor: "pointer", color: "#0b3a5b", fontWeight: 500 }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const val = notebookSearch;
+                      createNotebook(val);
+                    }}
+                  >
+                    + Create notebook "{notebookSearch.trim()}"
+                  </div>
+                ) : (creatingNotebook ? "Creating..." : "No notebooks found")
+              }
+              onInputKeyDown={(e) => {
+                if (e.key === "Enter" && notebookSearch.trim()) {
+                  e.preventDefault();
+                  const val = notebookSearch;
+                  createNotebook(val);
+                }
+              }}
+            >
+              {noteNotebooks.map((n) => <Select.Option key={n._id} value={n._id}>{n.title}</Select.Option>)}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

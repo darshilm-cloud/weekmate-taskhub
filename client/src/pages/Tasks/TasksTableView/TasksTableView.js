@@ -285,25 +285,27 @@ const TasksTableView = ({
                             </td>
                             <td>
                               {item?.start_date
-                                ? new Date(
-                                    item?.start_date
-                                  ).toLocaleDateString()
+                                ? moment(item.start_date).format("MMM D, YYYY")
                                 : "-"}
                             </td>
                             <td>
                               {item?.due_date
-                                ? new Date(item?.due_date).toLocaleDateString()
+                                ? <span style={{ color: moment(item.due_date).isBefore(moment(), "day") ? "#ef4444" : "inherit" }}>
+                                    {moment(item.due_date).format("MMM D, YYYY")}
+                                  </span>
                                 : "-"}
                             </td>
-                            <td
-                              style={{
-                                background: `${boardData?.workflowStatus?.color}`,
-                                color: textColorPicker(
-                                  boardData?.workflowStatus?.color
-                                ),
-                              }}
-                            >
-                              {boardData?.workflowStatus?.title}
+                            <td>
+                              <span
+                                className="tt-stage-pill"
+                                style={{
+                                  background: `${boardData?.workflowStatus?.color}22`,
+                                  color: boardData?.workflowStatus?.color,
+                                  border: `1px solid ${boardData?.workflowStatus?.color}55`,
+                                }}
+                              >
+                                {boardData?.workflowStatus?.title}
+                              </span>
                             </td>
 
                             <td>

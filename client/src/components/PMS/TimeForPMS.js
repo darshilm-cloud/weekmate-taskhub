@@ -263,6 +263,7 @@ function TimeForPMS() {
   useEffect(() => {
     getTaskdropdown();
     getTimesheetSummary();
+    handleBuglist();
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 
@@ -651,20 +652,15 @@ function TimeForPMS() {
 
   const getTaskdropdown = async () => {
     try {
-      const reqBody = {};
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.tasksDropdownforTime + "/" + projectId,
-        body: reqBody,
+        methodName: Service.postMethod,
+        api_url: Service.getProjectMianTask,
+        body: { project_id: projectId },
       });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        const emp = response.data.data;
-        setTaskdropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data?.data?.length > 0) {
+        setTaskdropdown(response.data.data);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -672,17 +668,15 @@ function TimeForPMS() {
   const handleBuglist = async (selectedTaskId) => {
     try {
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getBuglistdropdown + selectedTaskId,
+        methodName: Service.postMethod,
+        api_url: Service.getBug,
+        body: { project_id: projectId },
       });
-      if (response.data && response.data.data && response?.data?.status) {
-        const emp = response.data.data;
-        setBuglistDropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data && response?.data?.data && response?.data?.status) {
+        const bugs = response.data.data.flatMap((stage) => stage.bugs || []);
+        setBuglistDropdown(bugs);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };

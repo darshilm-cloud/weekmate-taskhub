@@ -423,32 +423,12 @@ const ProjectFormModal = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <Modal
-        footer={null}
-        width={580}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        className="pfm-modal"
-        destroyOnClose
-      >
-        <div className="pfm-header">
-          <h2 className="pfm-title">Loading Project Details</h2>
-        </div>
-        <div style={{ padding: "24px 0", display: "flex", justifyContent: "center" }}>
-          <Spin size="large" />
-        </div>
-      </Modal>
-    );
-  }
-
   const isEdit = modalMode !== "add";
 
   return (
     <Modal
       footer={null}
-      width={580}
+      width={960}
       open={isModalOpen}
       onCancel={handleCancel}
       className="pfm-modal"
@@ -581,6 +561,9 @@ const ProjectFormModal = ({
           </Checkbox>
         </div>
         <div className="pfm-divider" />
+
+        {/* 2-col grid for all simple fields */}
+        <div className="pfm-fields-grid">
 
         {/* Department (Technology) */}
         <div className="pfm-field-row">
@@ -826,6 +809,8 @@ const ProjectFormModal = ({
             </Checkbox>
           </Form.Item>
         </div>
+
+        </div>{/* end pfm-fields-grid */}
 
         {/* Footer buttons */}
         <div className="pfm-footer">

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Spin, Avatar, Dropdown } from "antd";
+import { Input, Select, Checkbox, Avatar, Dropdown } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -17,6 +17,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { getRoles } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
+import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import "./TaskPage.css";
 
 const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
@@ -128,7 +129,7 @@ const TaskPage = () => {
 
   const filterState = getFilterStateFromSearch(location.search, isAdmin);
 
-  const [view, setView] = useState("list"); // list | kanban | calendar
+  const [view, setView] = useState("calendar"); // list | kanban | calendar
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -157,6 +158,7 @@ const TaskPage = () => {
     setTaskEndDate(next.taskEndDate);
     setDatePreset(getDatePresetFromState(next.taskStartDate, next.taskEndDate));
   }, [location.search, isAdmin]);
+
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -444,9 +446,7 @@ const TaskPage = () => {
 
       {/* ── Content ── */}
       {loading ? (
-        <div className="task-page-loading">
-          <Spin size="large" />
-        </div>
+        <TaskPageSkeleton view={view} />
       ) : view === "list" ? (
         <div className="task-list-view">
           <div className="task-list-column-header">

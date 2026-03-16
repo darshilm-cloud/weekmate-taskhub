@@ -17,6 +17,7 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import ProjectRunningFilterComponent from "./ProjectRunningFilterComponent";
+import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
 
 // Memoized components
 const SortIcon = React.memo(({ sortOrder }) =>
@@ -83,6 +84,7 @@ const ProjectsRunning = () => {
   });
   const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const getProjectReportsDetails = useCallback(
     async ({
@@ -158,11 +160,13 @@ const ProjectsRunning = () => {
           setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
         }
         dispatch(hideAuthLoader());
+        setPageLoading(false);
       } catch (error) {
         dispatch(hideAuthLoader());
         console.error(error);
         setTableData([]);
         setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        setPageLoading(false);
       }
     },
     [
@@ -684,6 +688,8 @@ const renderChart = useCallback(
       onClick: handleResetClick,
     },
   ];
+
+  if (pageLoading) return <ReportsSkeleton />;
 
   return (
     <Card className="projects-running-card">

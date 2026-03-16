@@ -22,6 +22,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import { getRoles } from "../../util/hasPermission";
 import ComplaintFilterComponent from "./ComplaintFilterComponent";
+import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
 
 /* ── constants ─────────────────────────────────────────────── */
@@ -97,6 +98,7 @@ const Complaints = () => {
   const [drawerRecord, setDrawerRecord] = useState(null);
 
   const [tableLoading, setTableLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
   const canAdd        = useMemo(() => getRoles(ADD_ROLES),    []);
@@ -146,6 +148,7 @@ const Complaints = () => {
       console.error(error);
     } finally {
       setTableLoading(false);
+      setPageLoading(false);
     }
   }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, priority, status, dispatch]);
 
@@ -361,6 +364,8 @@ const Complaints = () => {
   /* ───────────────────────────────────────────────────────────
      RENDER
   ─────────────────────────────────────────────────────────── */
+  if (pageLoading) return <TablePageSkeleton />;
+
   return (
     <div className="cmp-page">
 

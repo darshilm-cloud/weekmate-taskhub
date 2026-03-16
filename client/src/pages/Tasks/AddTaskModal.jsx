@@ -72,6 +72,7 @@ export default function AddTaskModal({
   const [form] = Form.useForm(externalForm);
   const [activeRightTab, setActiveRightTab] = useState("comment");
   const [commentText, setCommentText] = useState("");
+  const [localComments, setLocalComments] = useState([]);
   const [statusLabel, setStatusLabel] = useState("Pending");
   const [priorityLabel, setPriorityLabel] = useState("Low");
   const [projects, setProjects] = useState([]);
@@ -382,8 +383,31 @@ export default function AddTaskModal({
   useEffect(() => {
     if (open && isStandalone) {
       fetchProjects();
+      // If form already has a project selected, reload its lists
+      const existingPid = form.getFieldValue("project_id");
+      if (existingPid && mainTasks.length === 0) {
+        delete mainTaskCacheRef.current[existingPid];
+        fetchMainTasks(existingPid);
+      }
+      // Load all users upfront so Assignee/Follower dropdowns are pre-populated
+      const cached = sessionStorage.getItem("atm_all_users");
+      if (cached) {
+        try { setAssigneeOptions(JSON.parse(cached)); } catch {}
+      }
+      // Always refresh in background
+      Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getUsermaster,
+        body: { pageNo: 1, limit: 500, search: "" },
+      }).then((res) => {
+        const users = res?.data?.data || [];
+        if (users.length) {
+          setAssigneeOptions(users);
+          sessionStorage.setItem("atm_all_users", JSON.stringify(users));
+        }
+      }).catch(() => {});
     }
-  }, [open, isStandalone, fetchProjects]);
+  }, [open, isStandalone, fetchProjects, fetchMainTasks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (open && projectId && isStandalone) {
@@ -401,9 +425,7 @@ export default function AddTaskModal({
     } else {
       fetchMainTasks(effectiveProjectId);
     }
-    setLoadingAssignees(true);
-    dispatch(getSubscribersList(effectiveProjectId));
-  }, [open, isStandalone, effectiveProjectId, fetchMainTasks, dispatch]);
+  }, [open, isStandalone, effectiveProjectId, fetchMainTasks]);
 
   useEffect(() => {
     if (open) {
@@ -486,6 +508,7 @@ export default function AddTaskModal({
     });
   }, [projectMembers]);
   useEffect(() => {
+    if (isStandalone) return; // standalone uses direct API fetch in onChange
     if (open && effectiveProjectId && assigneeList.length) {
       setAssigneeOptions(assigneeList);
       setLoadingAssignees(false);
@@ -499,7 +522,7 @@ export default function AddTaskModal({
       }
       setLoadingAssignees(false);
     }
-  }, [open, effectiveProjectId, assigneeList, fallbackAssignees]);
+  }, [open, effectiveProjectId, assigneeList, fallbackAssignees, isStandalone]);
 
   useEffect(() => {
     if (!open || !projectId) return;
@@ -637,12 +660,6 @@ export default function AddTaskModal({
       >
         <div className="add-task-modal-v2-inner">
           <div className="add-task-modal-header">
-            <div className="add-task-modal-header-icons">
-              <span className="header-icon" title="Timer"><ClockCircleOutlined /></span>
-              <span className="header-icon" title="Merge"><MergeCellsOutlined /></span>
-              <span className="header-icon" title="Link"><LinkOutlined /></span>
-              <span className="header-icon" title="More"><MoreOutlined /></span>
-            </div>
             <button type="button" className="add-task-modal-close-btn" onClick={onCancel} aria-label="Close">
               <CloseOutlined />
             </button>
@@ -700,7 +717,41 @@ export default function AddTaskModal({
                           setFirstWorkflowStatusId(null);
                           if (id) {
                             fetchMainTasks(id);
-                            dispatch(getSubscribersList(id));
+                            if (!isStandalone) dispatch(getSubscribersList(id));
+                            // In standalone mode, fetch project subscribers; fallback to all users
+                            if (isStandalone) {
+                              setLoadingAssignees(true);
+                              Service.makeAPICall({
+                                methodName: Service.getMethod,
+                                api_url: `${Service.getMasterSubscribers}/${id}`,
+                              }).then((res) => {
+                                const subs = res?.data?.data;
+                                if (Array.isArray(subs) && subs.length > 0) {
+                                  setAssigneeOptions(subs);
+                                } else {
+                                  // fallback to pre-loaded all-users
+                                  try {
+                                    const cached = sessionStorage.getItem("atm_all_users");
+                                    if (cached) setAssigneeOptions(JSON.parse(cached));
+                                  } catch {}
+                                }
+                              }).catch(() => {
+                                try {
+                                  const cached = sessionStorage.getItem("atm_all_users");
+                                  if (cached) setAssigneeOptions(JSON.parse(cached));
+                                } catch {}
+                              }).finally(() => setLoadingAssignees(false));
+                            }
+                          } else {
+                            // project cleared — restore all users
+                            if (isStandalone) {
+                              try {
+                                const cached = sessionStorage.getItem("atm_all_users");
+                                if (cached) setAssigneeOptions(JSON.parse(cached));
+                              } catch {}
+                            } else {
+                              setAssigneeOptions([]);
+                            }
                           }
                         }}
                       >
@@ -713,7 +764,7 @@ export default function AddTaskModal({
                     <Select
                       placeholder="Select list"
                       allowClear
-                      disabled={!form.getFieldValue("project_id")}
+                      disabled={false}
                       loading={loadingMainTasks || creatingList}
                       showSearch
                       optionFilterProp="children"
@@ -729,11 +780,12 @@ export default function AddTaskModal({
                         const pid = form.getFieldValue("project_id");
                         if (
                           pid &&
-                          !Object.prototype.hasOwnProperty.call(mainTaskCacheRef.current, pid) &&
                           !mainTaskInFlightRef.current.has(pid) &&
                           mainTasks.length === 0 &&
                           !loadingMainTasks
                         ) {
+                          // Clear stale cache entry so fetchMainTasks re-fetches
+                          delete mainTaskCacheRef.current[pid];
                           fetchMainTasks(pid);
                         }
                       }}
@@ -884,9 +936,17 @@ export default function AddTaskModal({
               />
               <div className="add-task-right-content">
                 {activeRightTab === "comment" && (
-                  <div className="add-task-comment-placeholder">
-                    <div className="comment-date">Today</div>
-                    <div className="comment-empty">No comments yet.</div>
+                  <div className="add-task-comment-list">
+                    <div className="comment-date-divider">Today</div>
+                    {localComments.length === 0 && (
+                      <div className="comment-empty">No comments yet.</div>
+                    )}
+                    {localComments.map((c, i) => (
+                      <div key={i} className="add-task-comment-item">
+                        <div className="add-task-comment-bubble">{c.text}</div>
+                        <div className="add-task-comment-time">{c.time}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {activeRightTab === "attachment" && <div className="add-task-comment-placeholder">No attachments.</div>}
@@ -898,9 +958,30 @@ export default function AddTaskModal({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   className="add-task-message-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && commentText.trim()) {
+                      const now = new Date();
+                      const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                      setLocalComments((prev) => [...prev, { text: commentText.trim(), time }]);
+                      setCommentText("");
+                      setActiveRightTab("comment");
+                    }
+                  }}
                 />
                 <PaperClipOutlined className="input-icon" />
-                <Button type="primary" icon={<SendOutlined />} className="input-send" />
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  className="input-send"
+                  onClick={() => {
+                    if (!commentText.trim()) return;
+                    const now = new Date();
+                    const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    setLocalComments((prev) => [...prev, { text: commentText.trim(), time }]);
+                    setCommentText("");
+                    setActiveRightTab("comment");
+                  }}
+                />
               </div>
             </div>
           </div>

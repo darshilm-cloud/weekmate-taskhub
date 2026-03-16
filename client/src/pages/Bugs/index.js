@@ -44,6 +44,7 @@ import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
+import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
 
 const BugsPMS = () => {
   const {
@@ -153,7 +154,8 @@ const BugsPMS = () => {
     tableTrue,
     handleChangeTableView,
     selectedView,
-    setFilterSchema
+    setFilterSchema,
+    pageLoading,
   } = BugsController();
 
   const csvRef = document.getElementById("test-table-xls-button");
@@ -167,6 +169,8 @@ const BugsPMS = () => {
       </Menu.Item>
     </Menu>
   );
+  if (pageLoading) return tableTrue === false ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
+
   return (
     <>
       <div className="project-wrapper discussion-wrapper bugs-task-wrapper">

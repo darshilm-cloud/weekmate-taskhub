@@ -1,0 +1,759 @@
+/* ============================================================
+   Skeleton Loader — theme-aware (light & dark)
+   Uses CSS variables already defined in theme-variables.css
+   ============================================================ */
+
+/* ── Base shimmer block ── */
+.sk-block {
+  border-radius: 6px;
+  background: var(--sk-base);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.5s ease-in-out infinite;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Light theme tokens ── */
+body[data-theme="light"] .sk-block,
+body.admin-user[data-theme="light"] .sk-block {
+  --sk-base:      #e9ecef;
+  --sk-highlight: #f8f9fa;
+  background-image: linear-gradient(
+    90deg,
+    var(--sk-base) 25%,
+    var(--sk-highlight) 50%,
+    var(--sk-base) 75%
+  );
+}
+
+/* ── Dark theme tokens ── */
+body[data-theme="dark"] .sk-block,
+body.admin-user[data-theme="dark"] .sk-block {
+  --sk-base:      #1c2a3e;
+  --sk-highlight: #243450;
+  background-image: linear-gradient(
+    90deg,
+    var(--sk-base) 25%,
+    var(--sk-highlight) 50%,
+    var(--sk-base) 75%
+  );
+}
+
+@keyframes sk-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+/* ── Wrapper card that holds skeleton content ── */
+.sk-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 20px;
+}
+
+/* ── Skeleton page wrappers ── */
+.sk-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ============================================================
+   Stat Cards Row  (4 cards)
+   ============================================================ */
+.sk-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.sk-stat-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sk-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.sk-stat-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ============================================================
+   Charts Row  (2 charts)
+   ============================================================ */
+.sk-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sk-chart-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sk-chart-area {
+  height: 200px;
+  border-radius: 8px;
+}
+
+/* ============================================================
+   Table Skeleton
+   ============================================================ */
+.sk-table-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  overflow: hidden;
+}
+.sk-table-toolbar {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-table-header {
+  display: grid;
+  gap: 0;
+  padding: 12px 20px;
+  background: var(--app-surface-2, var(--app-bg));
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-table-row {
+  display: grid;
+  gap: 0;
+  padding: 14px 20px;
+  align-items: center;
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-table-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Column layouts for common tables (6 cols) ── */
+.sk-table-cols-6 .sk-table-header,
+.sk-table-cols-6 .sk-table-row {
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1fr 0.7fr;
+  column-gap: 16px;
+}
+
+/* ── Column layouts for activity/simple tables (5 cols) ── */
+.sk-table-cols-5 .sk-table-header,
+.sk-table-cols-5 .sk-table-row {
+  grid-template-columns: 1fr 1.5fr 1.5fr 2fr 0.7fr;
+  column-gap: 16px;
+}
+
+/* ============================================================
+   Dashboard Layout  (2-column: left + right)
+   ============================================================ */
+.sk-dashboard-columns {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+}
+.sk-dashboard-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================
+   Task Page Skeleton
+   ============================================================ */
+.sk-task-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.sk-task-topbar-right {
+  display: flex;
+  gap: 10px;
+}
+.sk-task-tabsbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* List view */
+.sk-task-list-header {
+  display: grid;
+  grid-template-columns: 3fr 1.2fr 1.5fr 1fr;
+  column-gap: 16px;
+  padding: 10px 16px;
+  background: var(--app-surface-2, var(--app-bg));
+  border: 1px solid var(--app-border);
+  border-radius: 8px 8px 0 0;
+}
+.sk-task-list-section {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-top: none;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sk-task-list-row {
+  display: grid;
+  grid-template-columns: 3fr 1.2fr 1.5fr 1fr;
+  column-gap: 16px;
+  align-items: center;
+}
+
+/* Kanban view */
+.sk-kanban-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.sk-kanban-col {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-top: 3px solid var(--app-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sk-kanban-card {
+  background: var(--app-surface-2, var(--app-bg));
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Calendar view */
+.sk-cal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.sk-cal-mode-btns {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.sk-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 1px;
+}
+.sk-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+.sk-cal-cell {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  min-height: 100px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ============================================================
+   User Dashboard Skeleton
+   ============================================================ */
+.sk-ud-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+}
+.sk-ud-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+.sk-ud-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.sk-ud-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+/* ============================================================
+   Reports Skeleton
+   ============================================================ */
+.sk-reports-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-reports-chart-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+}
+
+/* ============================================================
+   Users Page (EmployeeMasterList) Skeleton
+   ============================================================ */
+.sk-users-workspace {
+  display: flex;
+  height: 100%;
+  min-height: 600px;
+  gap: 0;
+}
+
+/* left sidebar */
+.sk-users-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+}
+.sk-users-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.sk-users-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* main content area */
+.sk-users-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 16px;
+  overflow: hidden;
+}
+.sk-users-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sk-users-topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+.sk-users-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.sk-users-stat-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sk-users-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sk-users-chart-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .sk-users-sidebar       { width: 200px; }
+  .sk-users-stat-row      { grid-template-columns: repeat(2, 1fr); }
+  .sk-users-charts-row    { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Permission Page Skeleton
+   ============================================================ */
+.sk-rpm-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sk-rpm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.sk-rpm-stat-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sk-rpm-workspace {
+  display: flex;
+  gap: 16px;
+  min-height: 480px;
+}
+.sk-rpm-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sk-rpm-panel {
+  flex: 1;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  overflow: hidden;
+}
+.sk-rpm-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sk-rpm-matrix-header {
+  display: grid;
+  grid-template-columns: 2fr repeat(5, 1fr);
+  column-gap: 12px;
+  padding: 12px 20px;
+  background: var(--app-surface-2, var(--app-bg));
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-rpm-matrix-row {
+  display: grid;
+  grid-template-columns: 2fr repeat(5, 1fr);
+  column-gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+.sk-rpm-matrix-row:last-child {
+  border-bottom: none;
+}
+.sk-rpm-module-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sk-rpm-toggle {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .sk-rpm-stats     { grid-template-columns: repeat(2, 1fr); }
+  .sk-rpm-workspace { flex-direction: column; }
+  .sk-rpm-sidebar   { width: 100%; }
+}
+
+/* ============================================================
+   Timesheet Skeleton
+   ============================================================ */
+.sk-ts-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sk-ts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sk-ts-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sk-ts-stat-inline {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sk-ts-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sk-ts-charts-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.sk-ts-chart-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================
+   Project Expense Skeleton
+   ============================================================ */
+.sk-pe-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sk-pe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sk-pe-header-actions {
+  display: flex;
+  gap: 8px;
+}
+.sk-pe-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.sk-pe-stat-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sk-pe-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sk-pe-chart-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================
+   Settings Skeleton
+   ============================================================ */
+.sk-settings-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sk-settings-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sk-settings-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md, 12px);
+  overflow: hidden;
+}
+.sk-settings-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--app-border);
+  padding: 0 20px;
+}
+.sk-settings-tab {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sk-settings-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sk-settings-section {
+  background: var(--app-surface-2, var(--app-bg));
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sk-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sk-settings-providers {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sk-settings-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .sk-pe-stats            { grid-template-columns: repeat(2, 1fr); }
+  .sk-pe-charts           { grid-template-columns: 1fr; }
+  .sk-ts-charts-row       { grid-template-columns: 1fr; }
+  .sk-settings-form-grid  { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 992px) {
+  .sk-stat-row           { grid-template-columns: repeat(2, 1fr); }
+  .sk-charts-row         { grid-template-columns: 1fr; }
+  .sk-dashboard-columns  { grid-template-columns: 1fr; }
+  .sk-kanban-cols        { grid-template-columns: repeat(2, 1fr); }
+  .sk-ud-charts-row      { grid-template-columns: 1fr 1fr; }
+  .sk-reports-chart-row  { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .sk-stat-row           { grid-template-columns: 1fr; }
+  .sk-ud-stats-row       { grid-template-columns: repeat(2, 1fr); }
+  .sk-kanban-cols        { grid-template-columns: 1fr; }
+  .sk-page               { padding: 14px; }
+}
+
+/* ============================================================
+   Review Form Skeleton  (sk-rf-*)
+   ============================================================ */
+.sk-rf-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+}
+
+.sk-rf-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sk-rf-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sk-rf-card {
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #e2e8f0);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sk-rf-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.sk-rf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  margin-bottom: 4px;
+}
+
+.sk-rf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sk-rf-divider {
+  height: 1px;
+  background: var(--app-border, #f1f5f9);
+  margin: 20px 0 24px;
+}
+
+.sk-rf-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 20px;
+  margin-top: 12px;
+  border-top: 1px solid var(--app-border, #f1f5f9);
+}
+
+@media (max-width: 768px) {
+  .sk-rf-page  { padding: 16px; }
+  .sk-rf-card  { padding: 20px 16px; }
+  .sk-rf-grid  { grid-template-columns: 1fr; }
+}

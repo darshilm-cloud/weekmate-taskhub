@@ -61,6 +61,7 @@ const BugsController = () => {
 
 
   const [selectedView, setSelectedView] = useState('board');
+  const [pageLoading, setPageLoading] = useState(true);
   const [isPopoverVisibleTableView, setIsPopoverVisibleTableView] =
     useState(false);
   const [tableTrue, setTableTrue] = useState(false);
@@ -224,6 +225,8 @@ const BugsController = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -1386,7 +1389,8 @@ const BugsController = () => {
     isPopoverVisibleTableView,
     setIsPopoverVisibleTableView,
     selectedView,setSelectedView,
-    setFilterSchema
+    setFilterSchema,
+    pageLoading,
   };
 };
 

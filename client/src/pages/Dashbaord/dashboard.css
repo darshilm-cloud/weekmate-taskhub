@@ -6,6 +6,33 @@ p {
     padding: 0;
 }
 
+/* Dashboard header row */
+.db-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.db-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--app-text, #1e293b);
+}
+.db-add-task-btn {
+  background: #0b3a5b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.db-add-task-btn:hover {
+  background: #0d4a73;
+}
+
 /* Clickable stat cards — redirect to task page */
 .new-stat-card-clickable {
   cursor: pointer;
@@ -665,7 +692,7 @@ tbody.showfilter {
 
 /* ── Team Incomplete v2 (avatar style) ─────────────────────── */
 .team-incomplete-list {
-  min-height: 337px;
+  min-height: 300px;
 }
 
 .team-incomplete-item-v2 {
@@ -730,7 +757,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 }
 
 .db-bottom-grid-2 {
-  margin-top: 0;
+  margin-top: 20px;
 }
 
 /* Base card for bottom sections */
@@ -878,6 +905,13 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 }
 
 /* ── Recent Discussion ────────────────────────────────────── */
+.db-discussion {
+  height: 280px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .db-discussion-tabs {
   display: flex;
   gap: 8px;
@@ -904,7 +938,18 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 .db-tab-btn:hover:not(.active) { background: #e2e8f0; }
 
-.db-discussion-list { display: flex; flex-direction: column; gap: 10px; }
+.db-discussion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.db-discussion-list::-webkit-scrollbar { width: 4px; }
+.db-discussion-list::-webkit-scrollbar-track { background: transparent; }
+.db-discussion-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.db-discussion-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 .db-discussion-item {
   display: flex;
@@ -1104,6 +1149,116 @@ body[data-theme="dark"] .db-view-all:hover {
 body.dark-theme .db-activity-item,
 body[data-theme="dark"] .db-activity-item {
   border-bottom-color: #1e293b;
+}
+
+/* ── Activity mini-table ───────────────────────────────────── */
+.db-activity-table-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
+.db-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.db-activity-table thead tr {
+  border-bottom: 2px solid var(--app-border, #f1f5f9);
+}
+
+.db-activity-table thead th {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-text-muted, #64748b);
+  background: transparent;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.db-activity-table tbody tr {
+  border-bottom: 1px solid var(--app-border, #f1f5f9);
+  transition: background 0.12s;
+}
+
+.db-activity-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.db-activity-table tbody tr:hover {
+  background: var(--app-surface-2, #f8fafc);
+}
+
+.db-activity-table tbody td {
+  padding: 10px 12px;
+  color: var(--app-text, #334155);
+  vertical-align: middle;
+}
+
+.db-act-user  { font-weight: 600; white-space: nowrap; }
+.db-act-email { color: var(--app-text-muted, #64748b); font-size: 12px; }
+.db-act-module { text-transform: capitalize; }
+.db-act-time  { white-space: nowrap; font-size: 12px; color: var(--app-text-muted, #64748b); }
+
+.db-act-op-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Dark theme */
+body.dark-theme .db-activity-table thead tr,
+body[data-theme="dark"] .db-activity-table thead tr {
+  border-bottom-color: rgba(74,104,150,0.24);
+}
+
+body.dark-theme .db-activity-table tbody tr,
+body[data-theme="dark"] .db-activity-table tbody tr {
+  border-bottom-color: rgba(74,104,150,0.14);
+}
+
+body.dark-theme .db-activity-table tbody tr:hover,
+body[data-theme="dark"] .db-activity-table tbody tr:hover {
+  background: #132238;
+}
+
+body.dark-theme .db-activity-table tbody td,
+body[data-theme="dark"] .db-activity-table tbody td {
+  color: #dce7fb;
+}
+
+body.dark-theme .db-act-email,
+body.dark-theme .db-act-time,
+body[data-theme="dark"] .db-act-email,
+body[data-theme="dark"] .db-act-time {
+  color: #8fa7cc;
+}
+
+body.dark-theme .db-act-op-badge[style*="#fff7ed"],
+body[data-theme="dark"] .db-act-op-badge[style*="#fff7ed"] {
+  background: rgba(234,88,12,0.15) !important;
+  color: #fb923c !important;
+}
+body.dark-theme .db-act-op-badge[style*="#fef2f2"],
+body[data-theme="dark"] .db-act-op-badge[style*="#fef2f2"] {
+  background: rgba(220,38,38,0.15) !important;
+  color: #f87171 !important;
+}
+body.dark-theme .db-act-op-badge[style*="#f0fdf4"],
+body[data-theme="dark"] .db-act-op-badge[style*="#f0fdf4"] {
+  background: rgba(22,163,74,0.15) !important;
+  color: #4ade80 !important;
+}
+body.dark-theme .db-act-op-badge[style*="#eff6ff"],
+body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
+  background: rgba(37,99,235,0.15) !important;
+  color: #60a5fa !important;
 }
 
 /* ── Responsive ────────────────────────────────────────────── */

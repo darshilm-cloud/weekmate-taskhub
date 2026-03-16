@@ -48,6 +48,7 @@ import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
+import { FilesSkeleton } from "../common/SkeletonLoader";
 
 function FileModule() {
   const { emitEvent } = useSocketAction();
@@ -70,6 +71,7 @@ function FileModule() {
   const [isOpenModalClients, setIsOpenModalClients] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState({});
   const [addEditFolder, setAddEditFolder] = useState("");
+  const [pageLoading, setPageLoading] = useState(true);
   const [folderList, setFolderList] = useState([]);
   const [editFolderData, setEditFolderData] = useState({});
   const [fileAttachment, setFileAttachment] = useState([]);
@@ -200,6 +202,7 @@ function FileModule() {
   // Get Folder api start
   const getFolderList = async () => {
     try {
+      setPageLoading(true);
       dispatch(showAuthLoader());
       const reqBody = {
         project_id: projectId,
@@ -225,6 +228,8 @@ function FileModule() {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -834,6 +839,8 @@ function FileModule() {
       return match?.charAt(0) + group1?.toUpperCase();
     }
   );
+  if (pageLoading) return <FilesSkeleton />;
+
   return (
     <>
       <div className="project-wrapper discussion-wrapper file-wrapper">

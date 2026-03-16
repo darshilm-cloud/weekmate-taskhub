@@ -891,7 +891,7 @@ const TaskList = ({
 
   useEffect(() => {
     const initialSliceState = tasks.reduce((acc, boardData) => {
-      acc[boardData.workflowStatus._id] = 6;
+      acc[boardData.workflowStatus?._id] = 6;
       return acc;
     }, {});
     console.log("initialSliceState", initialSliceState);
@@ -952,7 +952,7 @@ const TaskList = ({
             onDragEnter={(e) => onDragEnter(e)}
             onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
-            onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
+            onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
           >
             <section className="drag_container">
               <div className="container project-task-list">
@@ -993,23 +993,23 @@ const TaskList = ({
 
                     <div className="borad-task-data">
                       {boardData.tasks
-                        .slice(0, sliceStates[boardData.workflowStatus._id])
+                        .slice(0, sliceStates[boardData.workflowStatus?._id])
                         .map((task, cardIndex) => {
                           const isDoneColumn =
-                            boardData.workflowStatus.title === "Done";
+                            boardData.workflowStatus?.title === "Done";
                           const isLastTask =
                             cardIndex ===
                             boardData.tasks.slice(
                               0,
-                              sliceStates[boardData.workflowStatus._id]
+                              sliceStates[boardData.workflowStatus?._id]
                             ).length -
                             1;
                           return (
                             <>
                               <div
                                 className={`wm-task-card ${dragged ? "dragged" : ""}${isDoneColumn ? " wm-task-card-done" : ""}`}
-                                key={task._id}
-                                id={task._id}
+                                key={task?._id}
+                                id={task?._id}
                                 style={boardCardStyle}
                                 draggable
                                 onDragStart={(e) => onDragStart(e)}
@@ -1017,11 +1017,11 @@ const TaskList = ({
                                 ref={
                                   isLastTask &&
                                     boardData.tasks.length >
-                                    sliceStates[boardData.workflowStatus._id]
+                                    sliceStates[boardData.workflowStatus?._id]
                                     ? (node) =>
                                       lastTaskElementRef(
                                         node,
-                                        boardData.workflowStatus._id
+                                        boardData.workflowStatus?._id
                                       )
                                     : null
                                 }

@@ -30,6 +30,7 @@ import {
 import ReactApexChart from "react-apexcharts";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import "./UserDashboard.css";
 
 const { TabPane } = Tabs;
@@ -80,6 +81,7 @@ const UserDashboard = ({ user }) => {
   const [dateFilter,  setDateFilter]  = useState("all");
   const [sortFilter,  setSortFilter]  = useState("default");
   const [loading,     setLoading]     = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addForm]                      = Form.useForm();
   const [addLoading,  setAddLoading]  = useState(false);
@@ -218,6 +220,7 @@ const UserDashboard = ({ user }) => {
       console.error("UserDashboard fetchData error:", err);
     } finally {
       setLoading(false);
+      setPageLoading(false);
     }
   }, [user, dateFilter, processTaskArray]);
 
@@ -573,6 +576,8 @@ const UserDashboard = ({ user }) => {
       </span>
     </div>
   );
+
+  if (pageLoading) return <UserDashboardSkeleton />;
 
   return (
     <div className="user-dashboard">
