@@ -223,19 +223,19 @@
 .ap-view-toggle {
   display: flex;
   align-items: center;
-  border: 1px solid #d1d5db;
+  border: 1px solid #0b3a5b;
   border-radius: 8px;
   overflow: hidden;
-  background: #f9fafb;
+  background: #ffffff;
 }
 
 .ap-view-btn {
-  background: transparent;
+  background: #ffffff;
   border: none;
   padding: 0 11px;
   cursor: pointer;
   font-size: 14px;
-  color: #9ca3af;
+  color: #0b3a5b;
   line-height: 1;
   height: 34px;
   display: flex;
@@ -246,13 +246,13 @@
 }
 
 .ap-view-btn:hover {
-  color: #2563eb;
-  background: #eff6ff;
+  color: #ffffff;
+  background: #0b3a5b;
 }
 
 .ap-view-btn.active {
-  background: #2563eb;
-  color: #fff;
+  background: #0b3a5b;
+  color: #ffffff;
 }
 
 .ap-date-trigger {
@@ -1071,6 +1071,61 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
   font-weight: 600;
 }
 
+body.dark-theme .ap-browser-list-header,
+body[data-theme="dark"] .ap-browser-list-header {
+  background: #132338;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-list-group,
+body[data-theme="dark"] .ap-browser-list-group {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: #0b1626;
+}
+
+body.dark-theme .ap-browser-list-group-title,
+body[data-theme="dark"] .ap-browser-list-group-title {
+  background: #111f33;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-list-count,
+body[data-theme="dark"] .ap-browser-list-count {
+  background: #1e3350;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-list-row,
+body[data-theme="dark"] .ap-browser-list-row {
+  border-top-color: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+body.dark-theme .ap-browser-list-row--active,
+body[data-theme="dark"] .ap-browser-list-row--active {
+  background: #13233a;
+  box-shadow: inset 3px 0 0 #3b82f6;
+}
+
+body.dark-theme .ap-browser-task-name,
+body[data-theme="dark"] .ap-browser-task-name {
+  color: #f8fafc;
+}
+
+body.dark-theme .ap-browser-list-empty,
+body[data-theme="dark"] .ap-browser-list-empty {
+  color: #94a3b8;
+  border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme .ap-browser-status-pill,
+body[data-theme="dark"] .ap-browser-status-pill {
+  background: #0f172a !important;
+  border: 1px solid rgba(148, 163, 184, 0.38) !important;
+  color: #cbd5e1 !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
 .ap-browser-kanban {
   border: 1px solid #eef2f7;
   border-radius: 12px;
@@ -1198,7 +1253,6 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  min-height: 140px;
 }
 
 .ap-browser-status-metrics {
@@ -1222,11 +1276,11 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-status-bar--closed {
-  background: #35c03b;
+  background: #2dd4bf;
 }
 
 .ap-browser-status-bar--pending {
-  background: #fbbf24;
+  background: #ff4d4f;
 }
 
 .ap-browser-status-label {
@@ -1238,11 +1292,11 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-status-label--closed {
-  color: #22c55e;
+  color: #2dd4bf;
 }
 
 .ap-browser-status-label--pending {
-  color: #f59e0b;
+  color: #ff4d4f;
 }
 
 .ap-browser-status-value {
@@ -1263,10 +1317,11 @@ body[data-theme="dark"] .ap-browser-status-label {
 }
 
 .ap-browser-status-donut {
-  min-width: 220px;
+  min-width: 240px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  overflow: visible;
 }
 
 .ap-browser-placeholder {
@@ -1916,6 +1971,84 @@ body[data-theme="dark"] .ap-browser-updated {
 body.dark-theme .ap-browser-member-tabs span.active,
 body[data-theme="dark"] .ap-browser-member-tabs span.active {
   background: rgba(14, 165, 233, 0.14);
+}
+
+body.dark-theme .ap-browser-subtab:hover,
+body.dark-theme .ap-browser-link-btn:hover,
+body[data-theme="dark"] .ap-browser-subtab:hover,
+body[data-theme="dark"] .ap-browser-link-btn:hover {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.12);
+}
+
+body.dark-theme .ap-browser-subtab.active,
+body[data-theme="dark"] .ap-browser-subtab.active {
+  color: #93c5fd;
+  background: rgba(96, 165, 250, 0.12);
+  box-shadow: inset 0 -2px 0 #60a5fa;
+}
+
+body.dark-theme .ap-browser-kanban-toolbar,
+body[data-theme="dark"] .ap-browser-kanban-toolbar {
+  background: #132238;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-kanban-divider,
+body[data-theme="dark"] .ap-browser-kanban-divider {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+body.dark-theme .ap-browser-calendar-title,
+body[data-theme="dark"] .ap-browser-calendar-title {
+  color: #e3ecfb;
+}
+
+body.dark-theme .ap-browser-calendar-btn,
+body[data-theme="dark"] .ap-browser-calendar-btn {
+  background: #132238;
+  border-color: #314866;
+  color: #9bb6dd;
+}
+
+body.dark-theme .ap-browser-calendar-btn:hover,
+body[data-theme="dark"] .ap-browser-calendar-btn:hover {
+  background: #172b46;
+  border-color: #3f5f88;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-calendar-grid,
+body[data-theme="dark"] .ap-browser-calendar-grid {
+  border-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .ap-browser-calendar-cell,
+body[data-theme="dark"] .ap-browser-calendar-cell {
+  border-right-color: rgba(74, 104, 150, 0.22);
+  border-bottom-color: rgba(74, 104, 150, 0.22);
+}
+
+body.dark-theme .ap-browser-calendar-head,
+body[data-theme="dark"] .ap-browser-calendar-head {
+  background: #132238;
+  color: #dbeafe;
+}
+
+body.dark-theme .ap-browser-calendar-date,
+body[data-theme="dark"] .ap-browser-calendar-date {
+  color: #9bb6dd;
+}
+
+body.dark-theme .ap-browser-calendar-date.muted,
+body[data-theme="dark"] .ap-browser-calendar-date.muted {
+  color: #5f7697;
+}
+
+body.dark-theme .ap-browser-calendar-task,
+body[data-theme="dark"] .ap-browser-calendar-task {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde68a;
 }
 
 @media (max-width: 1200px) {

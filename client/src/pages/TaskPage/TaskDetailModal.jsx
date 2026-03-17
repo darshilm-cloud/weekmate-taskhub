@@ -473,13 +473,8 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       closeIcon={<CloseOutlined />}
       destroyOnClose
     >
-      {loading ? (
-        <div className="task-detail-modal-loading">
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div className="task-detail-modal-body">
-          <div className="task-detail-modal-left">
+      <div className="task-detail-modal-body">
+        <div className="task-detail-modal-left">
             <div className="task-detail-breadcrumb">
               {displayTask?.project?.title && (
                 <span className="task-detail-breadcrumb-project">
@@ -647,9 +642,9 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
             />
           </div>
         </div>
-      )}
     </Modal>
   );
 };
+
 
 export default TaskDetailModal;

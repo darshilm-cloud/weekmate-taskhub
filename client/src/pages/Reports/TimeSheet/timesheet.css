@@ -143,18 +143,9 @@
 /* ── Section 2: Charts ──────────────────────────────────────── */
 .timesheet-charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-
-.timesheet-chart-card-full {
-  grid-column: 1 / -1;
-  min-height: 400px;
-}
-
-.timesheet-chart-card-full .timesheet-chart-content {
-  min-height: 340px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: stretch;
 }
 
 .timesheet-chart-card {
@@ -163,26 +154,24 @@
   border: 1px solid #e8ecf1;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  min-height: 320px;
 }
 
 .timesheet-chart-header {
-  padding: 18px 20px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid #f0f2f5;
   background: #fafbfc;
 }
 
 .timesheet-chart-header h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1f2937;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
 }
 
 .timesheet-chart-content {
-  padding: 20px;
-  min-height: 280px;
+  padding: 8px 12px 12px;
 }
 
 .timesheet-chart-content .apexcharts-canvas {
@@ -400,7 +389,13 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1100px) {
+  .timesheet-charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 700px) {
   .timesheet-charts-grid {
     grid-template-columns: 1fr;
   }

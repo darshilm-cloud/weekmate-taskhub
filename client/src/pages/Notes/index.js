@@ -114,16 +114,17 @@ export default function NotesPage() {
   }, [search, fetchNotes]);
 
   const loadProjects = async () => {
-    const cached = sessionStorage.getItem("note_all_projects");
-    if (cached) { setProjects(JSON.parse(cached)); return; }
-    const res = await Service.makeAPICall({
-      methodName: Service.postMethod,
-      api_url: Service.getProjectList,
-      body: { pageNo: 1, limit: 500, sort: "_id", sortBy: "desc" },
-    });
-    const list = res?.data?.data || [];
-    setProjects(list);
-    sessionStorage.setItem("note_all_projects", JSON.stringify(list));
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getProjectList,
+      });
+      const data = res?.data?.data;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      setProjects(list);
+    } catch (e) {
+      console.error("loadProjects error", e);
+    }
   };
 
   const openAddNote = async () => { setAddOpen(true); try { await loadProjects(); } catch (e) { console.error(e); } };
@@ -136,7 +137,7 @@ export default function NotesPage() {
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.getNotebooks,
+        api_url: Service.getNotebook,
         body: { project_id: pid, pageNo: 1, limit: 200, sort: "_id", sortBy: "desc" },
       });
       const list = res?.data?.data?.data || res?.data?.data || [];
@@ -152,7 +153,7 @@ export default function NotesPage() {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addNotes,
-        body: { title: values.title, project_id: values.project_id, noteBook_id: values.noteBook_id || null, isPrivate: false, subscribers: [], pms_clients: [] },
+        body: { title: values.title, project_id: values.project_id, ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}), isPrivate: false, subscribers: [], pms_clients: [] },
       });
       if (res?.data?.status === 1 || res?.data?.success) {
         message.success("Note added successfully");
@@ -384,7 +385,7 @@ export default function NotesPage() {
       )}
 
       {/* Add Note Modal */}
-      <Modal title="Add New Note" open={addOpen} onCancel={() => { setAddOpen(false); addForm.resetFields(); setNotebooks([]); }} onOk={handleAddNote} confirmLoading={submitting} okText="Save" destroyOnClose>
+      <Modal title="Add New Note" open={addOpen} onCancel={() => { setAddOpen(false); addForm.resetFields(); setNotebooks([]); }} onOk={handleAddNote} confirmLoading={submitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
         <Form form={addForm} layout="vertical">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
             <Input placeholder="Enter note title" />
@@ -402,7 +403,7 @@ export default function NotesPage() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal title="Edit Note" open={editOpen} onCancel={() => { setEditOpen(false); editForm.resetFields(); setEditNote(null); }} onOk={handleEdit} confirmLoading={editSubmitting} okText="Save" destroyOnClose>
+      <Modal title="Edit Note" open={editOpen} onCancel={() => { setEditOpen(false); editForm.resetFields(); setEditNote(null); }} onOk={handleEdit} confirmLoading={editSubmitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
         <Form form={editForm} layout="vertical">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
             <Input placeholder="Enter note title" />
@@ -411,7 +412,7 @@ export default function NotesPage() {
       </Modal>
 
       {/* Subscribers Modal */}
-      <Modal title="Manage Subscribers" open={subOpen} onCancel={() => { setSubOpen(false); setSubNote(null); }} onOk={handleSubSave} confirmLoading={subSubmitting} okText="Save" destroyOnClose>
+      <Modal title="Manage Subscribers" open={subOpen} onCancel={() => { setSubOpen(false); setSubNote(null); }} onOk={handleSubSave} confirmLoading={subSubmitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
         <Form form={subForm} layout="vertical">
           <Form.Item name="subscribers" label="Subscribers">
             <Select

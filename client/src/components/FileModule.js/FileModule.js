@@ -221,8 +221,8 @@ function FileModule() {
       if (response?.data?.data && response?.data?.status) {
         setFolderList(response.data.data);
         setIsEdit(response.data.data.some((item) => item.isEditable));
-        getEditFolderOneId(response.data.data[0]?._id);
         setSelectedFolder(response.data.data[0]);
+        await getEditFolderOneId(response.data.data[0]?._id);
       } else {
         message.error(response.data.message);
       }
@@ -1023,87 +1023,55 @@ function FileModule() {
                             <div className="fileAttachment_box-img">
                               {fileImageSelect(file?.file_type)}
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                paddingBottom: "10px",
-                                width: "100%",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <p className="fileNameTxtellipsis">
-                                {file.name.length > 12
-                                  ? `${file.name.slice(0, 15)}.....${
-                                      file.file_type
-                                    }`
+                            <div style={{ width: "100%", borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                              <p className="fileNameTxtellipsis" style={{ flex: 1, minWidth: 0 }}>
+                                {file.name.length > 14
+                                  ? `${file.name.slice(0, 14)}...${file.file_type}`
                                   : file.name + file.file_type}
                               </p>
-                              <div>
-                                <Dropdown
-                                  overlay={
-                                    <Menu onClick={handlemenuClickEdit}>
-                                      {file.isEditable && (
-                                        <Menu.Item
-                                          key="edit"
-                                          onClick={() => getFileById(file?._id)}
-                                          icon={
-                                            <EditOutlined
-                                              style={{ color: "green" }}
-                                            />
-                                          }
-                                        >
-                                          Rename
-                                        </Menu.Item>
-                                      )}
-                                      {file.isDeletable && (
-                                        <Popconfirm
-                                          title="Do you want to delete?"
-                                          okText="Yes"
-                                          cancelText="No"
-                                          onConfirm={() => {
-                                            deleteFile(file?._id);
-                                          }}
-                                        >
-                                          <Menu.Item
-                                            key="delete"
-                                            className="ant-delete"
-                                            icon={
-                                              <DeleteOutlined
-                                                style={{ color: "red" }}
-                                              />
-                                            }
-                                          >
-                                            Delete
-                                          </Menu.Item>
-                                        </Popconfirm>
-                                      )}
-
+                              <Dropdown
+                                overlay={
+                                  <Menu onClick={handlemenuClickEdit}>
+                                    {file.isEditable && (
                                       <Menu.Item
-                                        key="properties"
-                                        onClick={() => getFileById1(file?._id)}
-                                        icon={
-                                          <EyeOutlined
-                                            style={{ color: "#187CB7" }}
-                                          />
-                                        }
+                                        key="edit"
+                                        onClick={() => getFileById(file?._id)}
+                                        icon={<EditOutlined style={{ color: "green" }} />}
                                       >
-                                        Properties
+                                        Rename
                                       </Menu.Item>
-                                    </Menu>
-                                  }
-                                  trigger={["click"]}
-                                >
-                                  <a
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                    onClick={(e) => e.preventDefault()}
-                                  >
-                                    <MoreOutlined />
-                                  </a>
-                                </Dropdown>
-                              </div>
+                                    )}
+                                    {file.isDeletable && (
+                                      <Popconfirm
+                                        title="Do you want to delete?"
+                                        okText="Yes"
+                                        cancelText="No"
+                                        onConfirm={() => deleteFile(file?._id)}
+                                      >
+                                        <Menu.Item
+                                          key="delete"
+                                          className="ant-delete"
+                                          icon={<DeleteOutlined style={{ color: "red" }} />}
+                                        >
+                                          Delete
+                                        </Menu.Item>
+                                      </Popconfirm>
+                                    )}
+                                    <Menu.Item
+                                      key="properties"
+                                      onClick={() => getFileById1(file?._id)}
+                                      icon={<EyeOutlined style={{ color: "#187CB7" }} />}
+                                    >
+                                      Properties
+                                    </Menu.Item>
+                                  </Menu>
+                                }
+                                trigger={["click"]}
+                              >
+                                <a style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "#94a3b8" }} onClick={(e) => e.preventDefault()}>
+                                  <MoreOutlined />
+                                </a>
+                              </Dropdown>
                             </div>
                           </div>
                         </a>
@@ -1131,7 +1099,7 @@ function FileModule() {
               )}
               <Modal
                 open={isModalOpenFile}
-                width={481}
+                width={800}
                 onCancel={handleModalCloseFile}
                 title={null}
                 footer={null}
@@ -1580,22 +1548,21 @@ function FileModule() {
         open={isopenModelUpload}
         onCancel={handleCancelUpload}
         title="Upload Files"
-        width={800}
+        width={1000}
         footer={[
           <Button
             key="cancel"
             onClick={handleCancelUpload}
-            className="delete-btn"
             size="large"
+            style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', boxShadow: 'none' }}
           >
             Cancel
           </Button>,
           <Button
             key="submit"
-            type="primary"
-            className="square-primary-btn"
             size="large"
             onClick={() => fileForm.submit()}
+            style={{ background: '#3b82f6', border: '1px solid #3b82f6', color: '#fff', borderRadius: '8px', boxShadow: 'none' }}
           >
             Ok
           </Button>,

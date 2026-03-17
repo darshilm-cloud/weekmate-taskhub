@@ -520,8 +520,7 @@ const SMTPConfig = () => {
                     icon={<SaveOutlined />}
                     loading={loading}
                     size="large"
-                    block
-                    className="ant-btn-primary"
+                    className="submit-btn"
                   >
                     {loading
                       ? "Verifying Configuration..."

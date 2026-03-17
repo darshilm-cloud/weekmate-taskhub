@@ -867,7 +867,7 @@ export const ReviewFormSkeleton = () => (
    NOTES PAGE SKELETON
 ────────────────────────────────────────────── */
 const NoteSkCard = () => (
-  <div style={{ background: "#fff", borderRadius: 10, padding: "16px", border: "1px solid #f0f0f0", display: "flex", flexDirection: "column", gap: 10 }}>
+  <div className="sk-note-card">
     <Sk w="70%" h={15} r={6} />
     <Sk w="100%" h={11} r={4} />
     <Sk w="85%" h={11} r={4} />
@@ -888,29 +888,87 @@ const NoteSkCard = () => (
 export const FilesSkeleton = () => (
   <div style={{ display: "flex", height: "calc(100vh - 160px)" }}>
     {/* left sidebar */}
-    <div style={{ width: 240, borderRight: "1px solid #f0f0f0", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
+    <div className="sk-card" style={{ width: 240, borderRadius: 0, borderTop: "none", borderBottom: "none", borderLeft: "none", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
       <Sk w={110} h={32} r={6} />
-      <Sk w="90%" h={32} r={6} style={{ marginTop: 8 }} />
-      {[1, 2, 3].map((i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px" }}>
-          <Sk w={18} h={18} r={4} />
-          <Sk w="65%" h={13} r={4} />
+      <Sk w="90%" h={32} r={6} style={{ marginTop: 4 }} />
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 7 }}>
+          <Sk w={16} h={16} r={4} />
+          <Sk w="65%" h={12} r={4} />
         </div>
       ))}
     </div>
     {/* right content */}
-    <div style={{ flex: 1, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {/* toolbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e2e8f0)" }}>
         <Sk w={160} h={16} r={5} />
         <Sk w={160} h={30} r={6} />
       </div>
-      {/* file cards grid */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+      {/* file card grid — 5 columns */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, padding: 16 }}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <div key={i} className="sk-card" style={{ padding: "16px 12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRadius: 12 }}>
+            <Sk w={48} h={56} r={6} />
+            <div style={{ width: "100%", borderTop: "1px solid var(--app-border, #f1f5f9)", paddingTop: 8 }}>
+              <Sk w="85%" h={11} r={4} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   TIME PAGE SKELETON
+────────────────────────────────────────────── */
+export const TimeSkeleton = () => (
+  <div style={{ display: "flex", height: "calc(100vh - 160px)" }}>
+    {/* left sidebar */}
+    <div className="sk-card" style={{ width: 240, borderRadius: 0, borderTop: "none", borderBottom: "none", borderLeft: "none", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
+      <Sk w={90} h={32} r={6} />
+      {[1, 2].map((i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--app-border, #e2e8f0)", marginTop: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+            <Sk w="75%" h={13} r={4} />
+          </div>
+          <Sk w={52} h={22} r={20} />
+        </div>
+      ))}
+    </div>
+    {/* right content */}
+    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {/* toolbar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e2e8f0)" }}>
+        <Sk w={160} h={16} r={5} />
+        <Sk w={80} h={30} r={6} />
+      </div>
+      {/* card grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, padding: 16 }}>
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} style={{ width: 140, border: "1px solid #f0f0f0", borderRadius: 8, padding: "16px 12px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            <Sk w={48} h={60} r={4} />
-            <Sk w="90%" h={11} r={4} />
+          <div key={i} className="sk-card" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
+            {/* card header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10, borderBottom: "1px solid var(--app-border, #f1f5f9)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Sk w={30} h={30} r="50%" />
+                <Sk w={90} h={12} r={4} />
+              </div>
+              <Sk w={60} h={22} r={20} />
+            </div>
+            {/* card rows */}
+            {[1, 2, 3, 4].map((j) => (
+              <div key={j} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <Sk w={55} h={10} r={4} />
+                <Sk w="55%" h={10} r={4} />
+              </div>
+            ))}
+            {/* card footer */}
+            <div style={{ display: "flex", gap: 12, paddingTop: 10, borderTop: "1px solid var(--app-border, #f1f5f9)" }}>
+              <Sk w={18} h={18} r={4} />
+              <Sk w={18} h={18} r={4} />
+              <Sk w={18} h={18} r={4} />
+            </div>
           </div>
         ))}
       </div>
@@ -979,6 +1037,125 @@ export const SettingsSkeleton = () => (
             <Sk w={90} h={36} r={8} />
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   OVERVIEW SKELETON
+────────────────────────────────────────────── */
+export const OverviewSkeleton = () => (
+  <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
+    {/* top row — 3 cards */}
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="sk-block" style={{ borderRadius: 14, height: 160, width: "100%", background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
+          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Sk w={32} h={32} r={8} />
+              <Sk w="50%" h={14} />
+            </div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 8 }}>
+              <Sk w={100} h={100} r={50} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                <Sk w="90%" h={28} r={6} />
+                <Sk w="90%" h={28} r={6} />
+                <Sk w="90%" h={28} r={6} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    {/* user analysis bar */}
+    <div className="sk-block" style={{ borderRadius: 14, padding: 20, background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 18 }}>
+        <Sk w={32} h={32} r={8} />
+        <Sk w={160} h={14} />
+      </div>
+      {[80, 60, 90, 45].map((w, i) => (
+        <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 14 }}>
+          <Sk w={90} h={12} />
+          <Sk w={`${w}%`} h={22} r={4} style={{ flex: 1 }} />
+        </div>
+      ))}
+    </div>
+    {/* bottom row — members + details */}
+    <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
+      <div className="sk-block" style={{ borderRadius: 14, padding: 20, background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16 }}>
+          <Sk w={32} h={32} r={8} />
+          <Sk w={160} h={14} />
+        </div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {[70, 80, 76, 55].map((w, i) => <Sk key={i} w={w} h={28} r={20} />)}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", padding: 10, borderRadius: 10, border: "1px solid var(--app-border)" }}>
+              <Sk w={36} h={36} r={50} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <Sk w={70} h={11} />
+                <Sk w={55} h={18} r={10} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="sk-block" style={{ borderRadius: 14, padding: 20, background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 18 }}>
+          <Sk w={32} h={32} r={8} />
+          <Sk w={100} h={14} />
+          <Sk w={60} h={28} r={8} style={{ marginLeft: "auto" }} />
+        </div>
+        {[100, 90, 100, 75, 85, 60].map((w, i) => (
+          <Sk key={i} w={`${w}%`} h={12} style={{ marginBottom: 10 }} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   DISCUSSION SKELETON
+────────────────────────────────────────────── */
+export const DiscussionSkeleton = () => (
+  <div style={{ display: "flex", height: "100%", minHeight: 500 }}>
+    {/* left sidebar */}
+    <div style={{ width: 270, flexShrink: 0, borderRight: "1px solid var(--app-border)", padding: "16px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <Sk w={80} h={32} r={6} />
+        <Sk w={140} h={32} r={6} style={{ flex: 1 }} />
+      </div>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <div key={i} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--app-border)", display: "flex", flexDirection: "column", gap: 6 }}>
+          <Sk w="70%" h={12} />
+          <Sk w="40%" h={10} />
+        </div>
+      ))}
+    </div>
+    {/* right content */}
+    <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+      <Sk w={200} h={20} />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <Sk w={36} h={36} r={50} style={{ flexShrink: 0 }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Sk w={110} h={12} />
+              <Sk w={70} h={20} r={10} />
+            </div>
+            <Sk w={i % 2 === 0 ? "60%" : "40%"} h={12} />
+          </div>
+        </div>
+      ))}
+      {/* editor placeholder */}
+      <div style={{ marginTop: "auto", borderRadius: 8, border: "1px solid var(--app-border)", padding: 12 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          {[0, 1, 2, 3, 4].map((i) => <Sk key={i} w={24} h={24} r={4} />)}
+        </div>
+        <Sk w="100%" h={80} r={6} />
       </div>
     </div>
   </div>

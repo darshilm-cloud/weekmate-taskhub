@@ -308,14 +308,14 @@
 }
 
 .header-action-btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #1e3a8a;
+  border-color: #1e3a8a;
   color: #ffffff;
 }
 
 .header-action-btn.primary:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: #1e40af;
+  border-color: #1e40af;
   color: #ffffff;
 }
 
@@ -459,7 +459,7 @@
 /* ── Charts Section ── */
 .charts-section {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr 1.6fr;
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -575,7 +575,9 @@
   .analytics-cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
 
+@media (max-width: 860px) {
   .charts-section {
     grid-template-columns: 1fr;
   }
@@ -875,8 +877,8 @@ body[data-theme="dark"] .header-action-btn:hover {
 
 body.dark-theme .header-action-btn.primary,
 body[data-theme="dark"] .header-action-btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #1e3a8a;
+  border-color: #1e3a8a;
   color: #ffffff;
 }
 

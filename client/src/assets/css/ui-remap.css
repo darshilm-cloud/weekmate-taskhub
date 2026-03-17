@@ -466,89 +466,166 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
 
 /* ── Calendar — 100% width ──────────────────────────────────── */
 .dashboard-section-card.dashboard-calendar {
-  padding: 0 !important;
+  padding: 24px 24px 20px !important;
   overflow: hidden;
 }
 
-/* Header controls (year / month / Month-Year toggle) */
-.dashboard-calendar .ant-picker-calendar-header {
-  padding: 12px 20px !important;
-  border-bottom: 1px solid var(--app-border, #e5e7eb);
-  box-sizing: border-box;
-  width: 100%;
+.dashboard-calendar .db-cal-header {
+  padding: 0 0 10px;
 }
 
-/* Strip every fixed width from the Ant Design panel chain */
-.dashboard-calendar .ant-picker-calendar,
-.dashboard-calendar .ant-picker-calendar-mini,
-.dashboard-calendar .ant-picker-panel,
-.dashboard-calendar .ant-picker-date-panel,
-.dashboard-calendar .ant-picker-body {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+.dashboard-calendar .db-cal-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.dashboard-calendar .ant-picker-calendar-mini {
-  border: none !important;
-}
-
-/* Remove horizontal padding from body wrapper */
-.dashboard-calendar .ant-picker-body {
-  padding-top: 8px !important;
-  padding-bottom: 8px !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-/* Table stretches full width */
-.dashboard-calendar .ant-picker-content {
-  width: 100% !important;
-  min-width: 0 !important;
-  table-layout: fixed !important;
-  border-collapse: collapse !important;
-  height: 280px;
-  margin: 0 !important;
-}
-
-/* Each of the 7 columns gets equal share */
-.dashboard-calendar .ant-picker-content col {
-  width: calc(100% / 7) !important;
-}
-
-.dashboard-calendar .ant-picker-content th,
-.dashboard-calendar .ant-picker-content td {
-  width: calc(100% / 7) !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: center !important;
-  box-sizing: border-box !important;
-}
-
-/* Day-name header row */
-.dashboard-calendar .ant-picker-content th {
-  height: 36px;
-  font-size: 13px;
+.dashboard-calendar .db-cal-title {
+  font-size: 16px;
   font-weight: 600;
+  color: var(--app-text, #1e293b);
 }
 
-/* Date cells */
-.dashboard-calendar .ant-picker-cell {
-  padding: 6px 0 !important;
+.dashboard-calendar .db-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Today / selected circle */
-.dashboard-calendar .ant-picker-cell .ant-picker-cell-inner {
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
-  font-size: 13px !important;
-  border-radius: 50% !important;
-  margin: 0 auto !important;
-  display: block !important;
+.dashboard-calendar .db-cal-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--app-text-muted, #64748b);
+  transition: background 0.15s, color 0.15s;
+}
+
+.dashboard-calendar .db-cal-nav-btn:hover {
+  background: #f1f5f9;
+  color: var(--app-text, #1e293b);
+}
+
+.dashboard-calendar .db-cal-strip {
+  display: flex;
+  gap: 22px;
+  padding: 18px 0 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.dashboard-calendar .db-cal-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboard-calendar .db-cal-strip-item {
+  min-width: 54px;
+  padding: 12px 0 10px;
+  border: 1px solid var(--app-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--app-surface, #fff);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.dashboard-calendar .db-cal-strip-item:hover {
+  background: var(--app-surface-2, #f8fafc);
+}
+
+.dashboard-calendar .db-cal-strip-item.active {
+  border-color: #dbe4ef;
+  box-shadow: none;
+}
+
+.dashboard-calendar .db-cal-strip-dow {
+  font-size: 12px;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.dashboard-calendar .db-cal-strip-day {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--app-text, #1e293b);
+  margin-top: 6px;
+}
+
+.dashboard-calendar .db-cal-strip-rule {
+  height: 4px;
+  width: 294px;
+  border-radius: 999px;
+  background: #a8a29e;
+  margin-top: 2px;
+}
+
+.dashboard-calendar .db-cal-grid {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 8px;
+}
+
+.dashboard-calendar .db-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background: #e4f0ff;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.dashboard-calendar .db-cal-weekday {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-calendar .db-cal-dates {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 4px;
+  padding: 14px 0 0;
+}
+
+.dashboard-calendar .db-cal-date {
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8b8b8b;
+}
+
+.dashboard-calendar .db-cal-date-label {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.dashboard-calendar .db-cal-date.selected .db-cal-date-label {
+  background: #38bdf8;
+  color: #fff;
+}
+
+.dashboard-calendar .db-cal-date.muted {
+  color: #d1d5db;
+}
+
+.dashboard-calendar .db-cal-date:hover .db-cal-date-label {
+  background: #eff6ff;
 }
 
 /* Right panel cards */

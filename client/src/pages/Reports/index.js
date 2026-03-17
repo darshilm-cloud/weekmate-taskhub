@@ -381,6 +381,8 @@ const ProjectsRunning = () => {
       options: {
         chart: {
           type: "pie",
+          fontFamily: "inherit",
+          toolbar: { show: false },
         },
         labels: pieechartDataMangerNames || [],
         colors: [
@@ -396,6 +398,12 @@ const ProjectsRunning = () => {
           "#F44336",
           "#2196F3"
         ],
+        plotOptions: {
+          pie: {
+            startAngle: 0,
+            endAngle: 360,
+          },
+        },
         legend: {
           show: false,
         },
@@ -430,12 +438,14 @@ const ProjectsRunning = () => {
           bar: {
             horizontal: true,
             borderRadius: 4,
-            distributed: true, // Distribute colors to each bar
+            barHeight: "45%",
+            distributed: true,
           },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
         xaxis: {
           categories: projectTypeLabels,
+          labels: { style: { fontSize: "12px" } },
         },
         grid: {
           xaxis: { lines: { show: true } },
@@ -443,7 +453,8 @@ const ProjectsRunning = () => {
         },
         yaxis: {
           reversed: false,
-          axisTicks: { show: true },
+          axisTicks: { show: false },
+          labels: { style: { fontSize: "12px" } },
         },
         tooltip: {
           fillSeriesColor: true,
@@ -479,20 +490,23 @@ const ProjectsRunning = () => {
           bar: {
             horizontal: false,
             borderRadius: 4,
-            columnWidth: "40%",
+            columnWidth: "35%",
           },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
         xaxis: {
           categories: technologyLabels,
+          labels: { style: { fontSize: "11px" } },
         },
         grid: {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
+          borderColor: "#f1f5f9",
         },
         yaxis: {
           reversed: false,
-          axisTicks: { show: true },
+          axisTicks: { show: false },
+          labels: { style: { fontSize: "12px" } },
           min: 0,
           tickAmount: Math.max(...(technologyReportData.length ? technologyReportData : [3])),
           labels: {
@@ -587,7 +601,7 @@ const renderChart = useCallback(
     if (!chartData) return null;
 
     const colors = chartData.options.colors || [];
-    const chartHeight = type === "pie" ? 300 : 350;
+    const chartHeight = type === "pie" ? 200 : 210;
 
     // Helper function to capitalize each word
     const capitalizeWords = (str) => {
@@ -634,14 +648,14 @@ const renderChart = useCallback(
         <div className="chart-header">
           <h3>{title}</h3>
         </div>
-        <div className="chart-content">
+        <div className={`chart-content${type === "pie" ? " pie-chart-content" : ""}`}>
           <ReactApexChart
             key={type === "pie" ? chartKey : undefined}
             options={modifiedChartData.options}
             series={modifiedChartData.series}
             type={type}
-            height={chartHeight}
-            width="100%"
+            height={type === "pie" ? 250 : chartHeight}
+            width={type === "pie" ? 260 : "100%"}
           />
           {(type === "pie" || title === "Projects by Type") && (
             <CustomLegend 

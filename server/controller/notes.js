@@ -92,7 +92,7 @@ exports.addNotes = async (req, res) => {
       color: Joi.string().allow("").optional(),
       isPrivate: Joi.boolean().optional().default(false),
       project_id: Joi.string().required(),
-      noteBook_id: Joi.string().optional().default(null),
+      noteBook_id: Joi.string().allow("", null).optional(),
       subscribers: Joi.array().allow("").optional(),
       pms_clients: Joi.array().optional().default([])
     });
@@ -111,7 +111,7 @@ exports.addNotes = async (req, res) => {
       let data = new Notes({
         title: value.title,
         project_id: value.project_id,
-        noteBook_id: value.noteBook_id,
+        ...(value.noteBook_id ? { noteBook_id: value.noteBook_id } : {}),
         isPrivate: value.isPrivate,
         color: value.color,
         subscribers: value.subscribers || [],

@@ -23,6 +23,9 @@ import {
   DeleteOutlined,
   PlusOutlined,
   CloseCircleOutlined,
+  UserOutlined,
+  DownloadOutlined,
+  PushpinOutlined,
 } from "@ant-design/icons";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { debounce } from "lodash";
@@ -1045,7 +1048,7 @@ function NotesPMS() {
         onCancel={handleCancelNote}
         title={modelModeNotes === "add" ? "Add Note" : "Edit Note"}
         className="add-task-modal add-list-modal"
-        width="800"
+        width={1000}
         footer={[
           <Button
             key="cancel"
@@ -1346,7 +1349,7 @@ function NotesPMS() {
                           className="notes-div"
                           style={{ marginBottom: "0px" }}
                         >
-                          <div className="notes-box">
+                          <div className={`notes-box note-color-${index % 7}`}>
                             <div className="note-inner-block">
                               <div className="note-block-head">
                                 <h1
@@ -1364,107 +1367,44 @@ function NotesPMS() {
                                     ? `${Title.slice(0, 22)}...`
                                     : Title}{" "}
                                   {(commentDrafts[note._id] ||
-                                    commentDrafts[note._id] ||
                                     hasUnsavedChanges[note._id]) && (
                                     <span style={{ color: "red" }}>Draft</span>
                                   )}
                                 </h1>
+                                <PushpinOutlined className="note-pin-icon" />
+                              </div>
+                              {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
                                 <div
+                                  className="note-content-preview"
                                   dangerouslySetInnerHTML={{
                                     __html:
-                                      note?.notesInfo.length > 50
-                                        ? `${note?.notesInfo.slice(
-                                            0,
-                                            50
-                                          )}........`
+                                      note?.notesInfo.length > 100
+                                        ? `${note?.notesInfo.slice(0, 100)}...`
                                         : note?.notesInfo,
                                   }}
                                 />
-                              </div>
+                              ) : (
+                                <p className="note-no-content">No content</p>
+                              )}
                               <footer>
-                                <div className="notes-item">
-                                  <div className="footer-subscribers">
-                                    <Avatar.Group
-                                      maxCount={2}
-                                      maxPopoverTrigger="click"
-                                      size="default"
-                                      maxStyle={{
-                                        color: "#f56a00",
-                                        backgroundColor: "#fde3cf",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {note.client_sub.map((client_sub) => (
-                                        <Tooltip
-                                          title={removeTitle(
-                                            client_sub.full_name
-                                          )}
-                                          key={client_sub._id}
-                                        >
-                                          <MyAvatar
-                                            key={client_sub._id}
-                                            userName={client_sub.full_name}
-                                            alt={client_sub.full_name}
-                                            src={client_sub.emp_img}
-                                          />
-                                        </Tooltip>
-                                      ))}
-                                    </Avatar.Group>
-                                    {
-                                      <PlusOutlined
-                                        onClick={() => {
-                                          openModelList(note._id);
-                                          setIsOpenTechnicalModal(true);
-                                        }}
-                                      />
-                                    }
-                                  </div>
-                                </div>
-                                <div className="time-icon-note">
-                                  <div className="note-time">
-                                    <p>
-                                      {calculateTimeDifference(note.createdAt)}
-                                    </p>
-                                  </div>
-
-                                  <div className="note-view">
-                                    <div
-                                      className="note-btn-edit"
-                                      onClick={(e) => {
-                                        showEditModalNote(note);
-                                        setIopenNotes(true);
-                                      }}
-                                    >
-                                      {isCreatedBy(note?.createdBy) && (
-                                        <EditOutlined
-                                          style={{
-                                            color: "green",
-                                            cursor: "pointer",
-                                            marginLeft: "10px",
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                    {isCreatedBy(note?.createdBy) && (
-                                      <Popconfirm
-                                        title="Do you want to delete?"
-                                        okText="Yes"
-                                        cancelText="No"
-                                        onConfirm={() => {
-                                          deleteProjectNotes(note._id);
-                                        }}
-                                      >
-                                        <div className="note-btn-delete">
-                                          <AiOutlineDelete
-                                            style={{
-                                              color: "red",
-                                              cursor: "pointer",
-                                            }}
-                                          />
-                                        </div>
-                                      </Popconfirm>
-                                    )}
-                                  </div>
+                                <div className="note-footer-icons">
+                                  <UserOutlined
+                                    className="note-icon note-icon-person"
+                                    onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
+                                  />
+                                  <EditOutlined
+                                    className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
+                                    onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
+                                  />
+                                  <Popconfirm
+                                    title="Do you want to delete?"
+                                    okText="Yes"
+                                    cancelText="No"
+                                    onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
+                                    disabled={!isCreatedBy(note?.createdBy)}
+                                  >
+                                    <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
+                                  </Popconfirm>
                                 </div>
                               </footer>
                             </div>

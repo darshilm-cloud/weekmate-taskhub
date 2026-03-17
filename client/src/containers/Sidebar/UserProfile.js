@@ -31,6 +31,8 @@ import {
   showAuthLoader,
   hideAuthLoader,
 } from "../../appRedux/actions/Auth";
+import { setThemeType } from "../../appRedux/actions/Setting";
+import { THEME_TYPE_LITE, THEME_TYPE_DARK } from "../../constants/ThemeSetting";
 import { FaRegFileArchive } from "react-icons/fa";
 import "./UserProfile.css";
 import { useSocket } from "../../context/SocketContext";
@@ -49,9 +51,14 @@ function UserProfile() {
   const companySlug = localStorage.getItem("companyDomain");
 
   const { authUser } = useSelector(({ auth }) => auth);
+  const { themeType } = useSelector(({ settings }) => settings);
   const history = useHistory();
   const [emailSetting] = Form.useForm();
   const dispatch = useDispatch();
+  const isLightTheme = themeType === THEME_TYPE_LITE;
+  const handleThemeToggle = () => {
+    dispatch(setThemeType(isLightTheme ? THEME_TYPE_DARK : THEME_TYPE_LITE));
+  };
   const socket = useSocket();
   const { emitEvent, listenEvent } = useSocketAction();
 
@@ -676,6 +683,18 @@ function UserProfile() {
                 </a>
               </Dropdown>
             )}
+
+            <button
+              type="button"
+              className={`taskpad-theme-toggle ${isLightTheme ? "theme-light" : "theme-dark"}`}
+              onClick={handleThemeToggle}
+              aria-label={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+              title={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+            >
+              <span className="taskpad-theme-sun" aria-hidden>☀</span>
+              <span className="taskpad-theme-moon" aria-hidden>🌙</span>
+              <span className="taskpad-theme-knob" />
+            </button>
 
             <Popover
               placement="bottomRight"

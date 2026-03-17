@@ -1029,6 +1029,11 @@ body.dark-theme .wm-force-dark-page .ant-picker,
 body.dark-theme .wm-force-dark-page .dropdown-trigger,
 body.dark-theme .wm-force-dark-page .filter-btn,
 body.dark-theme .wm-force-dark-page .ant-btn:not(.ant-btn-primary),
+body.dark-theme .wm-force-dark-page button.ant-btn,
+body.dark-theme .wm-force-dark-page .ant-btn-default,
+body.dark-theme .wm-force-dark-page .ant-btn-variant-outlined,
+body.dark-theme .wm-force-dark-page .ant-btn-variant-filled,
+body.dark-theme .wm-force-dark-page .ant-dropdown-trigger.ant-btn,
 body[data-theme="dark"] .wm-force-dark-page .ant-input,
 body[data-theme="dark"] .wm-force-dark-page .ant-input-affix-wrapper,
 body[data-theme="dark"] .wm-force-dark-page .ant-input-group-addon,
@@ -1037,7 +1042,12 @@ body[data-theme="dark"] .wm-force-dark-page .ant-select-selector,
 body[data-theme="dark"] .wm-force-dark-page .ant-picker,
 body[data-theme="dark"] .wm-force-dark-page .dropdown-trigger,
 body[data-theme="dark"] .wm-force-dark-page .filter-btn,
-body[data-theme="dark"] .wm-force-dark-page .ant-btn:not(.ant-btn-primary) {
+body[data-theme="dark"] .wm-force-dark-page .ant-btn:not(.ant-btn-primary),
+body[data-theme="dark"] .wm-force-dark-page button.ant-btn,
+body[data-theme="dark"] .wm-force-dark-page .ant-btn-default,
+body[data-theme="dark"] .wm-force-dark-page .ant-btn-variant-outlined,
+body[data-theme="dark"] .wm-force-dark-page .ant-btn-variant-filled,
+body[data-theme="dark"] .wm-force-dark-page .ant-dropdown-trigger.ant-btn {
     background: var(--wm-task-surface-2) !important;
     background-color: var(--wm-task-surface-2) !important;
     color: var(--wm-task-text) !important;
@@ -1112,6 +1122,139 @@ body[data-theme="dark"] .wm-force-dark-page i {
     color: var(--wm-task-text) !important;
     -webkit-text-fill-color: var(--wm-task-text) !important;
     opacity: 1 !important;
+}
+
+body.dark-theme .discussion-wrapper .ant-tag,
+body.dark-theme .discussion-wrapper .status-badge,
+body.dark-theme .task-wrapper .ant-tag,
+body.dark-theme .task-wrapper .status-badge,
+body.dark-theme .task-wrapper .tasks-table-view-wrapper .ant-tag,
+body[data-theme="dark"] .discussion-wrapper .ant-tag,
+body[data-theme="dark"] .discussion-wrapper .status-badge,
+body[data-theme="dark"] .task-wrapper .ant-tag,
+body[data-theme="dark"] .task-wrapper .status-badge,
+body[data-theme="dark"] .task-wrapper .tasks-table-view-wrapper .ant-tag {
+    background: #0f172a !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    color: #cbd5e1 !important;
+    -webkit-text-fill-color: #cbd5e1 !important;
+    border-radius: 999px !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+body.dark-theme .discussion-wrapper .ant-tag-red,
+body.dark-theme .discussion-wrapper .ant-tag-error,
+body.dark-theme .task-wrapper .ant-tag-red,
+body.dark-theme .task-wrapper .ant-tag-error,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-red,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-error,
+body[data-theme="dark"] .task-wrapper .ant-tag-red,
+body[data-theme="dark"] .task-wrapper .ant-tag-error {
+    background: rgba(127, 29, 29, 0.35) !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+    color: #f87171 !important;
+    -webkit-text-fill-color: #f87171 !important;
+}
+
+body.dark-theme .discussion-wrapper .ant-tag-green,
+body.dark-theme .discussion-wrapper .ant-tag-success,
+body.dark-theme .task-wrapper .ant-tag-green,
+body.dark-theme .task-wrapper .ant-tag-success,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-green,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-success,
+body[data-theme="dark"] .task-wrapper .ant-tag-green,
+body[data-theme="dark"] .task-wrapper .ant-tag-success {
+    background: rgba(20, 83, 45, 0.32) !important;
+    border-color: rgba(74, 222, 128, 0.5) !important;
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+}
+
+body.dark-theme .discussion-wrapper .ant-tag-blue,
+body.dark-theme .discussion-wrapper .ant-tag-processing,
+body.dark-theme .task-wrapper .ant-tag-blue,
+body.dark-theme .task-wrapper .ant-tag-processing,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-blue,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-processing,
+body[data-theme="dark"] .task-wrapper .ant-tag-blue,
+body[data-theme="dark"] .task-wrapper .ant-tag-processing {
+    background: rgba(30, 64, 175, 0.3) !important;
+    border-color: rgba(96, 165, 250, 0.5) !important;
+    color: #60a5fa !important;
+    -webkit-text-fill-color: #60a5fa !important;
+}
+
+body.dark-theme .discussion-wrapper .ant-tag-gold,
+body.dark-theme .discussion-wrapper .ant-tag-orange,
+body.dark-theme .discussion-wrapper .ant-tag-warning,
+body.dark-theme .task-wrapper .ant-tag-gold,
+body.dark-theme .task-wrapper .ant-tag-orange,
+body.dark-theme .task-wrapper .ant-tag-warning,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-gold,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-orange,
+body[data-theme="dark"] .discussion-wrapper .ant-tag-warning,
+body[data-theme="dark"] .task-wrapper .ant-tag-gold,
+body[data-theme="dark"] .task-wrapper .ant-tag-orange,
+body[data-theme="dark"] .task-wrapper .ant-tag-warning {
+    background: rgba(120, 53, 15, 0.32) !important;
+    border-color: rgba(251, 191, 36, 0.5) !important;
+    color: #fbbf24 !important;
+    -webkit-text-fill-color: #fbbf24 !important;
+}
+
+body.dark-theme span.ant-tag,
+body.dark-theme span.ant-tag.ant-tag-has-color,
+body.dark-theme span.ant-tag[class*="ant-tag-"],
+body[data-theme="dark"] span.ant-tag,
+body[data-theme="dark"] span.ant-tag.ant-tag-has-color,
+body[data-theme="dark"] span.ant-tag[class*="ant-tag-"] {
+    background-color: #0f172a !important;
+    background: #0f172a !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    color: #cbd5e1 !important;
+    -webkit-text-fill-color: #cbd5e1 !important;
+    border-radius: 999px !important;
+}
+
+body.dark-theme span.ant-tag.ant-tag-red,
+body.dark-theme span.ant-tag.ant-tag-error,
+body[data-theme="dark"] span.ant-tag.ant-tag-red,
+body[data-theme="dark"] span.ant-tag.ant-tag-error {
+    background-color: rgba(127, 29, 29, 0.35) !important;
+    background: rgba(127, 29, 29, 0.35) !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+    color: #f87171 !important;
+    -webkit-text-fill-color: #f87171 !important;
+}
+
+body.dark-theme span.ant-tag.ant-tag-green,
+body.dark-theme span.ant-tag.ant-tag-success,
+body[data-theme="dark"] span.ant-tag.ant-tag-green,
+body[data-theme="dark"] span.ant-tag.ant-tag-success {
+    background-color: rgba(20, 83, 45, 0.32) !important;
+    background: rgba(20, 83, 45, 0.32) !important;
+    border-color: rgba(74, 222, 128, 0.5) !important;
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+}
+
+body.dark-theme span.ant-tag.ant-tag-blue,
+body.dark-theme span.ant-tag.ant-tag-processing,
+body[data-theme="dark"] span.ant-tag.ant-tag-blue,
+body[data-theme="dark"] span.ant-tag.ant-tag-processing {
+    background-color: rgba(30, 64, 175, 0.3) !important;
+    background: rgba(30, 64, 175, 0.3) !important;
+    border-color: rgba(96, 165, 250, 0.5) !important;
+    color: #60a5fa !important;
+    -webkit-text-fill-color: #60a5fa !important;
+}
+
+body.dark-theme .wm-force-dark-page button.ant-btn span,
+body.dark-theme .wm-force-dark-page .ant-dropdown-trigger.ant-btn span,
+body[data-theme="dark"] .wm-force-dark-page button.ant-btn span,
+body[data-theme="dark"] .wm-force-dark-page .ant-dropdown-trigger.ant-btn span {
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
 }
 
 body.dark-theme .wm-force-dark-page .small-box,
@@ -1211,6 +1354,394 @@ body[data-theme="dark"] .wm-force-dark-page .assignees,
 body[data-theme="dark"] .wm-force-dark-page .task-due-date-wrapper,
 body[data-theme="dark"] .wm-force-dark-page .task-comment-hour-detail-wrapper {
     border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel,
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar,
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab,
+body.dark-theme .task-model .right-task-detail-panel .task-detail-inner,
+body.dark-theme .task-model .right-task-detail-panel .comment-list-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .main-comment-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .comment-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .comment-textarea,
+body.dark-theme .task-model .right-task-detail-panel .task-history,
+body.dark-theme .task-model .right-task-detail-panel .task-history-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .table-schedule-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .tab-schedule-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .ant-empty,
+body[data-theme="dark"] .task-model .right-task-detail-panel,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-detail-inner,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-list-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .main-comment-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-textarea,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-history,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-history-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .table-schedule-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .tab-schedule-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .ant-empty {
+    background: #16202d !important;
+    background-color: #16202d !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label,
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label span,
+body.dark-theme .task-model .right-task-detail-panel .task-no-comments,
+body.dark-theme .task-model .right-task-detail-panel .comment-sender-name h4,
+body.dark-theme .task-model .right-task-detail-panel .comment-wrapper,
+body.dark-theme .task-model .right-task-detail-panel .comment-wrapper p,
+body.dark-theme .task-model .right-task-detail-panel .table-schedule-wrapper .flex-table,
+body.dark-theme .task-model .right-task-detail-panel .table-schedule-wrapper .flex-table a,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label span,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-no-comments,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-sender-name h4,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-wrapper p,
+body[data-theme="dark"] .task-model .right-task-detail-panel .table-schedule-wrapper .flex-table,
+body[data-theme="dark"] .task-model .right-task-detail-panel .table-schedule-wrapper .flex-table a {
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label.active,
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label:hover,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label.active,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label:hover {
+    color: #f8fafc !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label {
+    background: transparent !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label.active,
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label:hover,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label.active,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label:hover {
+    background: #16202d !important;
+    border-bottom-color: #3b82f6 !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .comment-badge,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-badge {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper ul,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper li,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-left,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-right,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .flex-table,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment h5,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment input,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .ant-input,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .ant-select-selector,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper ul,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper li,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-left,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-right,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .flex-table,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment h5,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment input,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .ant-input,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .ant-select-selector {
+    background: #16202d !important;
+    background-color: #16202d !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-left,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-right,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-left,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-right {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment input::placeholder,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment input::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel,
+body.dark-theme .task-model .left-task-detail-panel .task-inner-card,
+body.dark-theme .task-model .left-task-detail-panel .item-inner,
+body.dark-theme .task-model .left-task-detail-panel .item-inner p,
+body.dark-theme .task-model .left-task-detail-panel .item-inner h1,
+body.dark-theme .task-model .left-task-detail-panel .item-inner h2,
+body.dark-theme .task-model .left-task-detail-panel .item-inner h3,
+body.dark-theme .task-model .left-task-detail-panel .item-inner h4,
+body.dark-theme .task-model .left-task-detail-panel .item-inner h5,
+body.dark-theme .task-model .left-task-detail-panel .flex-table,
+body.dark-theme .task-model .left-task-detail-panel .flex-table div,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment h5,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table a,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input[name=\"issue\"],
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input-affix-wrapper,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-select-selection-item,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-select-selection-placeholder,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper i,
+body[data-theme="dark"] .task-model .left-task-detail-panel,
+body[data-theme="dark"] .task-model .left-task-detail-panel .task-inner-card,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner p,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner h1,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner h2,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner h3,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner h4,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner h5,
+body[data-theme="dark"] .task-model .left-task-detail-panel .flex-table,
+body[data-theme="dark"] .task-model .left-task-detail-panel .flex-table div,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment h5,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table a,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input[name=\"issue\"],
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input-affix-wrapper,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-select-selection-item,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-select-selection-placeholder,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper i {
+    color: #dbe7f3 !important;
+    -webkit-text-fill-color: #dbe7f3 !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .item-inner > p,
+body.dark-theme .task-model .left-task-detail-panel .item-inner > span,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table small,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner > p,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner > span,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table small {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input::placeholder,
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input::placeholder,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper input::placeholder,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .ant-input::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .task-model .task-detail-panel,
+body[data-theme="dark"] .task-model .task-detail-panel {
+    background: linear-gradient(180deg, #0f1722 0%, #121c2a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.16) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 45px rgba(2, 6, 23, 0.35) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .task-inner-card,
+body[data-theme="dark"] .task-model .left-task-detail-panel .task-inner-card {
+    padding: 20px !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .item-inner,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner {
+    background: rgba(22, 32, 45, 0.72) !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
+    backdrop-filter: blur(8px);
+}
+
+body.dark-theme .task-model .left-task-detail-panel .item-inner .table-left,
+body.dark-theme .task-model .left-task-detail-panel .item-inner .table-right,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner .table-left,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner .table-right {
+    padding: 14px 16px !important;
+    border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .item-inner .table-left {
+    background: rgba(15, 23, 34, 0.32) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment {
+    margin-top: 18px !important;
+    padding: 16px !important;
+    background: rgba(22, 32, 45, 0.76) !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    border-radius: 14px !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment h5,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment h5 {
+    margin-bottom: 14px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper ul li:first-child,
+body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper ul li:first-child {
+    background: rgba(15, 23, 34, 0.55) !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar {
+    padding: 0 18px !important;
+    min-height: 54px !important;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+    background: linear-gradient(180deg, rgba(22, 32, 45, 0.98) 0%, rgba(22, 32, 45, 0.92) 100%) !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .right-toolbar-tab label,
+body[data-theme="dark"] .task-model .right-task-detail-panel .right-toolbar-tab label {
+    padding: 16px 14px 14px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .task-detail-inner,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-detail-inner {
+    padding: 18px !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .comment-list-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-list-wrapper {
+    padding: 6px 2px 0 !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .main-comment-wrapper,
+body[data-theme="dark"] .task-model .right-task-detail-panel .main-comment-wrapper {
+    padding: 14px !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    border-radius: 12px !important;
+    background: rgba(15, 23, 34, 0.28) !important;
+    margin-bottom: 12px !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .comment-sender-name h1,
+body[data-theme="dark"] .task-model .right-task-detail-panel .comment-sender-name h1 {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+body.dark-theme .task-model .right-task-detail-panel .task-no-comments,
+body[data-theme="dark"] .task-model .right-task-detail-panel .task-no-comments {
+    opacity: 0.72 !important;
+    font-size: 14px !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-editor,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar__items,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-editor__main,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-editor,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar__items,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-editor__main,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content {
+    background: #16202d !important;
+    background-color: #16202d !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: none !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable {
+    min-height: 180px !important;
+    border-radius: 0 0 12px 12px !important;
+    line-height: 1.6 !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar button,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar .ck-icon,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable p,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable li,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable span,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable strong,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable em,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar button,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar .ck-icon,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable p,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable li,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable span,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable strong,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable em {
+    color: #e2e8f0 !important;
+    fill: #e2e8f0 !important;
+    stroke: #e2e8f0 !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar button:hover,
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-toolbar button.ck-on,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar button:hover,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-toolbar button.ck-on {
+    background: #1c2938 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable::placeholder,
+body[data-theme="dark"] .task-model .left-task-detail-panel .ck.ck-content.ck-editor__editable::placeholder {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .task-model .square-primary-btn,
+body.dark-theme .task-model button.square-primary-btn.ant-btn,
+body[data-theme="dark"] .task-model .square-primary-btn,
+body[data-theme="dark"] .task-model button.square-primary-btn.ant-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28) !important;
+}
+
+body.dark-theme .task-model .square-primary-btn:hover,
+body.dark-theme .task-model button.square-primary-btn.ant-btn:hover,
+body[data-theme="dark"] .task-model .square-primary-btn:hover,
+body[data-theme="dark"] .task-model button.square-primary-btn.ant-btn:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
 }
 
 /* Dark theme overrides for task-wrapper variables */

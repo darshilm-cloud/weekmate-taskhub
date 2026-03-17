@@ -1,3 +1,280 @@
+/* ===== ENHANCED TIME PAGE ===== */
+
+/* Left sidebar */
+.times-wrapper .profileleftbar,
+.task-time-wrapper .profileleftbar {
+    background: var(--app-surface, #f8fafc);
+    border-right: 1px solid var(--app-border, #e2e8f0);
+    padding: 0;
+}
+
+.times-wrapper .add-project-wrapper,
+.task-time-wrapper .add-project-wrapper {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--app-border, #e2e8f0);
+    margin-bottom: 0;
+}
+
+/* Sidebar list items */
+.times-wrapper .sidebar-menu-links,
+.task-time-wrapper .sidebar-menu-links {
+    padding: 8px 8px;
+    margin: 0;
+}
+
+.times-wrapper .sidebar-menu-links li,
+.task-time-wrapper .sidebar-menu-links li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--app-text, #374151);
+    gap: 8px;
+}
+
+.times-wrapper .sidebar-menu-links li:hover,
+.task-time-wrapper .sidebar-menu-links li:hover {
+    background: rgba(24, 124, 183, 0.08);
+}
+
+.times-wrapper .sidebar-menu-links li.active,
+.task-time-wrapper .sidebar-menu-links li.active {
+    background: rgba(24, 124, 183, 0.13);
+    color: #187CB7;
+    font-weight: 600;
+}
+
+.time-module-hour-bar small {
+    display: inline-flex;
+    align-items: center;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.times-wrapper .sidebar-menu-links li.active .time-module-hour-bar small {
+    background: #187CB7;
+    color: #fff;
+}
+
+/* Right panel header */
+.times-wrapper .profile-sub-head,
+.task-time-wrapper .profile-sub-head {
+    border-bottom: 1px solid var(--app-border, #e2e8f0);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--app-surface, #fff);
+}
+
+.times-wrapper .profile-sub-head h3,
+.task-time-wrapper .profile-sub-head h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--app-text, #1e293b);
+    margin: 0;
+}
+
+/* Table enhancements */
+.time-block-table .ant-table {
+    border-radius: 0;
+}
+
+.time-block-table .ant-table-thead > tr > th {
+    background: var(--app-surface, #f1f5f9) !important;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1.5px solid var(--app-border, #e2e8f0) !important;
+    padding: 10px 16px;
+}
+
+.time-block-table .ant-table-tbody > tr > td {
+    font-size: 13px;
+    color: var(--app-text, #374151);
+    padding: 11px 16px !important;
+    border-bottom: 1px solid var(--app-border, #f1f5f9);
+}
+
+.time-block-table .ant-table-tbody > tr:hover > td {
+    background: rgba(24, 124, 183, 0.04) !important;
+}
+
+.time-block-table .ant-table-tbody > tr:nth-child(even) > td {
+    background: #fafbfc;
+}
+
+/* Actions column icons */
+.time-block-table .ant-table-tbody [class="anticon anticon-eye"] {
+    color: #187CB7;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.time-block-table .ant-table-tbody [class="anticon anticon-eye"]:hover {
+    color: #0e5a8a;
+}
+
+.time-block-table .ant-table-tbody [class="anticon anticon-delete"] {
+    color: #ef4444;
+    font-size: 16px;
+}
+
+/* ─── Time log card grid ─── */
+
+.time-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.time-log-card {
+  background: var(--app-surface, #fff);
+  border: 1.5px solid var(--app-border, #e2e8f0);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.18s, border-color 0.18s, transform 0.15s;
+  cursor: pointer;
+}
+
+.time-log-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+  border-color: #187CB7;
+  transform: translateY(-2px);
+}
+
+.time-log-card--selected {
+  border-color: #187CB7;
+  box-shadow: 0 0 0 3px rgba(24,124,183,0.15);
+}
+
+.time-log-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--app-border, #f1f5f9);
+  gap: 8px;
+}
+
+.time-log-card__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.time-log-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time-log-card__badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.time-log-card__body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.time-log-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.time-log-card__label {
+  color: #94a3b8;
+  font-weight: 500;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.time-log-card__value {
+  color: var(--app-text, #374151);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.time-log-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--app-border, #f1f5f9);
+}
+
+.time-log-card__action-icon {
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.12s;
+  color: #94a3b8;
+}
+
+.time-log-card__action-icon:hover {
+  transform: scale(1.15);
+}
+
+.time-log-card__action-icon--view:hover { color: #187CB7; }
+.time-log-card__action-icon--edit:hover { color: #16a34a; }
+.time-log-card__action-icon--delete { color: #ef4444 !important; }
+.time-log-card__action-icon--delete:hover { color: #dc2626 !important; }
+
+.time-cards-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+@media screen and (max-width: 1400px) {
+  .time-cards-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media screen and (max-width: 1100px) {
+  .time-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media screen and (max-width: 768px) {
+  .time-cards-grid { grid-template-columns: 1fr; }
+}
+
+/* ================================ */
+
 .log-time-modal .ant-form-item-label {
   min-width: 88px;
 }

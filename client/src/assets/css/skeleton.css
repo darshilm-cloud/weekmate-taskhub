@@ -52,6 +52,17 @@ body.admin-user[data-theme="dark"] .sk-block {
   padding: 20px;
 }
 
+/* ── Note skeleton card ── */
+.sk-note-card {
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #f0f0f0);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ── Skeleton page wrappers ── */
 .sk-page {
   padding: 24px;

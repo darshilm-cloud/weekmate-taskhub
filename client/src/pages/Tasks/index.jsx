@@ -698,6 +698,28 @@ const TasksPMS = ({ flag }) => {
     setBoardTasks(updatedTasks);
   };
 
+  const updateBoardTaskLocally = useCallback((updatedTask) => {
+    if (!updatedTask?._id) return;
+
+    setBoardTasks((prevBoards) =>
+      prevBoards.map((column) => ({
+        ...column,
+        tasks: column.tasks.map((task) =>
+          task._id === updatedTask._id
+            ? {
+                ...task,
+                ...updatedTask,
+                hasDraft:
+                  typeof task.hasDraft === "boolean"
+                    ? task.hasDraft
+                    : updatedTask.hasDraft,
+              }
+            : task
+        ),
+      }))
+    );
+  }, []);
+
   const getProjectMianTask = async (taskID, selectionFalse) => {
     try {
       setIsTasksLoading(true);
@@ -1981,6 +2003,7 @@ const TasksPMS = ({ flag }) => {
             {isLoadingTasksPage || isTasksLoading ? null : tableTrue === false ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
+                updateBoardTaskLocally={updateBoardTaskLocally}
                 checkTaskDrafts={""}
                 boardTasks={boardTasks}
                 tasks={filterTasks(boardTasks, filterSchema)}
@@ -1996,6 +2019,7 @@ const TasksPMS = ({ flag }) => {
               />
             ) : (
               <TasksTableView
+                updateBoardTaskLocally={updateBoardTaskLocally}
                 tasks={filterTasks(boardTasks, filterSchema)}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
@@ -2017,7 +2041,7 @@ const TasksPMS = ({ flag }) => {
         onOk={handleOkList}
         title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
-        width={800}
+        width={1000}
         footer={[
           <Button
             key="cancel"
@@ -2234,7 +2258,7 @@ const TasksPMS = ({ flag }) => {
         open={isModalOpenTaskModal}
         onCancel={handleCancelTaskModal}
         className="add-task-modal edit-details-task-model"
-        width={800}
+        width={1000}
         footer={[
           <Button
             key="cancel"
@@ -2661,7 +2685,7 @@ const TasksPMS = ({ flag }) => {
         onCancel={handleCancelTaskModal}
         title="Edit Task"
         className="edit-task-modal edit-details-task-model"
-        width={800}
+        width={1000}
         zIndex={2000}
         footer={[
           <Button

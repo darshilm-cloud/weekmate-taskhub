@@ -83,7 +83,7 @@ const ProjectFormModal = ({
     const fetchAllData = async () => {
       try {
         dispatch(showAuthLoader());
-        const apiCalls = [
+        await Promise.all([
           getTechnologyList(),
           getProjectType(),
           getStatus(),
@@ -93,9 +93,12 @@ const ProjectFormModal = ({
           getAccountManager(),
           getWorkflow(),
           getProjectTypeSlug(),
-          selectedProject ? fetchProjectDetails(selectedProject._id) : Promise.resolve(),
-        ];
-        await Promise.all(apiCalls);
+        ]);
+        // Fetch project details AFTER all dropdown lists are loaded so that
+        // form.setFieldsValue can resolve IDs to labels correctly.
+        if (selectedProject) {
+          await fetchProjectDetails(selectedProject._id);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

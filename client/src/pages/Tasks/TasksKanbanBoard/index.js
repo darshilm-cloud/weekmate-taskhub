@@ -80,6 +80,7 @@ const TaskList = ({
   getBoardTasks,
   updateTasks,
   updateTaskDraftStatus,
+  updateBoardTaskLocally,
   projectDetails,
   isEditTaskSave,
   setEditTaskSave
@@ -237,6 +238,7 @@ const TaskList = ({
     getProjectMianTask,
     getBoardTasks,
     updateTasks,
+    updateBoardTaskLocally,
   });
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;

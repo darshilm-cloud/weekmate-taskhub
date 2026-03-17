@@ -1,3 +1,165 @@
+/* ===== ENHANCED FILES PAGE ===== */
+
+/* Left sidebar */
+.file-wrapper .profileleftbar {
+    background: var(--app-surface, #f8fafc);
+    border-right: 1px solid var(--app-border, #e2e8f0);
+    padding: 0;
+}
+
+.file-wrapper .add-project-wrapper {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--app-border, #e2e8f0);
+    background: var(--app-surface, #f8fafc);
+}
+
+.file-wrapper .profileleftbar > ul {
+    padding: 8px 6px;
+}
+
+.profileleftbar li.project-list {
+    padding: 0 4px;
+    border-radius: 7px;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+.profileleftbar li.project-list:hover {
+    background: rgba(24, 124, 183, 0.08);
+    border-radius: 7px;
+}
+
+.profileleftbar li.project-list .design-graph,
+.profileleftbar li.project-list .design-graph-inactive {
+    padding: 8px 6px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profileleftbar li.project-list .design-graph {
+    background: rgba(24, 124, 183, 0.12);
+    color: #187CB7;
+    font-weight: 600;
+}
+
+.profileleftbar li.project-list .design-graph .anticon,
+.profileleftbar li.project-list .design-graph > .anticon-folder-add {
+    color: #187CB7;
+}
+
+/* File cards grid */
+.upload-file-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 14px;
+    padding: 16px !important;
+}
+
+.upload-file-left > span {
+    flex: 0 0 calc(20% - 12px) !important;
+    max-width: calc(20% - 12px) !important;
+    margin: 0 !important;
+}
+
+/* Enhanced file card */
+.profilerightbar .fileAttachment_Box {
+    background: var(--app-surface, #ffffff);
+    border: 1.5px solid var(--app-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 16px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 160px;
+    max-height: 160px;
+    min-width: unset;
+    width: 100%;
+    transition: box-shadow 0.18s, border-color 0.18s, transform 0.15s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.profilerightbar .fileAttachment_Box:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    border-color: #187CB7;
+    transform: translateY(-2px);
+}
+
+.profilerightbar .fileAttachment_Box .fileAttachment_box-img {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.fileAttachment_box-img .anticon-file-pdf,
+.fileAttachment_box-img .anticon-file-image,
+.fileAttachment_box-img .anticon-file,
+.fileAttachment_box-img .anticon-file-text,
+.fileAttachment_box-img .anticon-file-excel,
+.fileAttachment_box-img .anticon-file-word,
+.fileAttachment_box-img .anticon-file-ppt {
+    font-size: 48px !important;
+}
+
+.fileAttachment_Box .fileNameTxtellipsis {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--app-text, #374151);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 2px;
+}
+
+/* Right content header */
+.file-wrapper .profile-sub-head {
+    border-bottom: 1px solid var(--app-border, #e2e8f0);
+    padding: 12px 16px;
+    background: var(--app-surface, #fff);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-wrapper .profile-sub-head h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--app-text, #1e293b);
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+
+/* Empty state */
+.upload-file-wrapper {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.upload-file-wrapper .anticon-folder-open {
+    font-size: 56px !important;
+    color: #94a3b8 !important;
+    margin-bottom: 16px;
+}
+
+.upload-file-wrapper p {
+    color: #64748b;
+    font-size: 13px;
+    max-width: 320px;
+    margin: 0 auto 16px;
+    line-height: 1.6;
+}
+
+/* ============================= */
+
 .peoject-page .block-status-content {
     align-items: baseline;
 }
@@ -408,9 +570,9 @@
     word-wrap: break-word;
 }
 @media screen and (max-width: 1400px) {
-    .upload-file-left>span {
-        flex-basis: calc(33.33% - 10px);
-        max-width: 33.33%;
+    .upload-file-left > span {
+        flex: 0 0 calc(25% - 12px) !important;
+        max-width: calc(25% - 12px) !important;
     }
 }
 
@@ -428,9 +590,9 @@
         max-width: 40%;
     }
 
-    .upload-file-left>span {
-        flex-basis: calc(50% - 10px);
-        max-width: 50%;
+    .upload-file-left > span {
+        flex: 0 0 calc(33.33% - 12px) !important;
+        max-width: calc(33.33% - 12px) !important;
     }
 }
 

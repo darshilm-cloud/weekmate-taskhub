@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import "./dashboard.css";
-import { Calendar, Form, Modal, Select, Input, message } from "antd";
+import { Form, Modal, Select, Input, message } from "antd";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
@@ -22,6 +22,8 @@ import {
   UserOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
@@ -77,6 +79,8 @@ const Dashboard = () => {
   const [timeDates, setTimeDates] = useState({ startDate: null, endDate: null });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
+  const [calendarValue, setCalendarValue] = useState(() => dayjs());
+  const calendarWeekdays = useMemo(() => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], []);
 
   // Memoized derived values — only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
@@ -112,6 +116,27 @@ const Dashboard = () => {
       ).length,
     };
   }, [myTask, today, isAdmin, currentUserId, assignedToMeTasks.length, isDone]);
+
+  const monthDays = useMemo(() => {
+    const monthStart = calendarValue.startOf("month");
+    return Array.from({ length: monthStart.daysInMonth() }, (_, idx) =>
+      monthStart.add(idx, "day")
+    );
+  }, [calendarValue]);
+
+  const visibleStripDays = useMemo(() => monthDays.slice(0, 9), [monthDays]);
+
+  const calendarGrid = useMemo(() => {
+    const monthStart = calendarValue.startOf("month");
+    const gridStart = monthStart.startOf("week");
+    return Array.from({ length: 42 }, (_, idx) => gridStart.add(idx, "day"));
+  }, [calendarValue]);
+
+  const goToCalendarMonth = useCallback((delta) => {
+    const next = calendarValue.add(delta, "month");
+    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
+    setCalendarValue(next.date(safeDay));
+  }, [calendarValue]);
 
   // Memoized chart data — only recalculate when myTask or chartView changes
   const { labels, completedCounts, incompleteCounts } = useMemo(() => {
@@ -312,7 +337,7 @@ const Dashboard = () => {
         search: normalizedSearch,
         sortBy: "desc",
         filterBy: "all",
-        isSearch: normalizedSearch.length > 0,
+        isSearch: true,
       };
       const Key = generateCacheKey("project", reqBody);
       const response = await Service.makeAPICall({
@@ -674,12 +699,9 @@ const Dashboard = () => {
   return (
     <div className="new-dashboard-wrapper">
 
-      {/* Dashboard header row with Add Task button */}
+      {/* Dashboard header row */}
       <div className="db-header-row">
         <h2 className="db-page-title">Dashboard</h2>
-        <button className="db-add-task-btn" onClick={() => setAddTaskOpen(true)}>
-          + Add Task
-        </button>
       </div>
 
       {/* 4 Stat Cards — clickable, redirect to task page with applied filter */}
@@ -757,23 +779,6 @@ const Dashboard = () => {
 
           {/* Statistics Chart */}
           <div className="dashboard-section-card">
-            <svg
-              className="stats-watermark"
-              width="133"
-              height="184"
-              viewBox="0 0 163 184"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M22.7 17.9C27.5 17.9 31.3 21.8 31.3 26.7V133.2C31.3 138 37.6 139.7 39.9 135.5C45.3 125.5 51.1 114 51.1 112.8V66C51.1 63.6 54.1 62.7 55.4 64.6L78.7 98.4C82.1 103.3 89.2 103.4 92.7 98.5L116.8 64.4C118.1 62.5 121.1 63.5 121.1 65.8V111.9L132.2 133.3C134.5 137.6 140.9 136 140.9 131.1V26.7C140.9 21.8 144.8 17.9 149.5 17.9H154C158.8 17.9 162.6 21.8 162.6 26.7V169.1C162.6 173.9 158.7 177.9 154 177.9H125.4C122.1 177.9 119.2 176 117.7 173L94.1 125C91 118.5 81.9 118.5 78.7 124.9L54.3 173.2C52.8 176.1 49.9 177.9 46.7 177.9H18C13.2 177.9 9.4 174 9.4 169.2V26.7C9.4 21.8 13.3 17.9 18 17.9H22.7Z"
-                fill="white"
-              />
-              <path
-                d="M115.5 24.4L88.9 61.5C87.3 63.7 84 63.7 82.4 61.5L56.6 24.4C54.7 21.7 56.6 17.9 59.9 17.9H112.3C115.6 17.9 117.5 21.7 115.5 24.4Z"
-                fill="white"
-              />
-            </svg>
             <div className="stats-header-row">
               <h3>Statistics</h3>
               <div className="stats-controls">
@@ -796,7 +801,7 @@ const Dashboard = () => {
               options={chartOptions}
               series={chartSeries}
               type="line"
-              height={160}
+              height={240}
             />
 
             <div className="chart-legend">
@@ -813,7 +818,76 @@ const Dashboard = () => {
 
           {/* Calendar */}
           <div className="dashboard-section-card dashboard-calendar">
-            <Calendar fullscreen={false} />
+            <div className="db-cal-header">
+              <div className="db-cal-header-top">
+                <div className="db-cal-title">{calendarValue.format("MMMM YYYY")}</div>
+                <div className="db-cal-nav">
+                  <button
+                    type="button"
+                    className="db-cal-nav-btn"
+                    onClick={() => goToCalendarMonth(-1)}
+                    aria-label="Previous month"
+                  >
+                    <LeftOutlined />
+                  </button>
+                  <button
+                    type="button"
+                    className="db-cal-nav-btn"
+                    onClick={() => goToCalendarMonth(1)}
+                    aria-label="Next month"
+                  >
+                    <RightOutlined />
+                  </button>
+                </div>
+              </div>
+
+              <div className="db-cal-strip" role="list" aria-label="Month days">
+                {visibleStripDays.map((day) => {
+                  const isActive = day.isSame(calendarValue, "day");
+                  return (
+                    <button
+                      key={day.format("YYYY-MM-DD")}
+                      type="button"
+                      className={`db-cal-strip-item${isActive ? " active" : ""}`}
+                      onClick={() => setCalendarValue(day)}
+                      role="listitem"
+                    >
+                      <div className="db-cal-strip-dow">{day.format("ddd")}</div>
+                      <div className="db-cal-strip-day">{day.format("DD")}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="db-cal-strip-rule" />
+            </div>
+
+            <div className="db-cal-grid">
+              <div className="db-cal-weekdays">
+                {calendarWeekdays.map((weekday) => (
+                  <div key={weekday} className="db-cal-weekday">
+                    {weekday}
+                  </div>
+                ))}
+              </div>
+
+              <div className="db-cal-dates">
+                {calendarGrid.map((day) => {
+                  const isSelected = day.isSame(calendarValue, "day");
+                  const isCurrentMonth = day.month() === calendarValue.month();
+                  return (
+                    <button
+                      key={day.format("YYYY-MM-DD")}
+                      type="button"
+                      className={`db-cal-date${isSelected ? " selected" : ""}${isCurrentMonth ? "" : " muted"}`}
+                      onClick={() => setCalendarValue(day)}
+                    >
+                      <span className="db-cal-date-label">{day.format("D")}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -821,7 +895,7 @@ const Dashboard = () => {
         <div className="dashboard-col-right">
 
           {/* Priority Task Summary with donut chart */}
-          <div className="right-panel-card">
+          <div className="right-panel-card priority-summary-card">
             <h4>Priority Task Summary</h4>
             {(priorityLow + priorityMedium + priorityHigh) === 0 ? (
               <div className="priority-donut-empty">
@@ -831,39 +905,44 @@ const Dashboard = () => {
                 </svg>
               </div>
             ) : (
-              <ReactApexChart
-                options={{
-                  chart: { type: "donut", toolbar: { show: false } },
-                  labels: ["Low", "Medium", "High"],
-                  colors: ["#2dd4bf", "#faad14", "#ff4d4f"],
-                  legend: { show: false },
-                  dataLabels: { enabled: false },
-                  plotOptions: {
-                    pie: {
-                      donut: {
-                        size: "68%",
-                        labels: {
-                          show: true,
-                          total: {
+              <div className="priority-chart-wrap">
+                <ReactApexChart
+                  options={{
+                    chart: { type: "donut", toolbar: { show: false } },
+                    labels: ["Low", "Medium", "High"],
+                    colors: ["#2dd4bf", "#faad14", "#ff4d4f"],
+                    legend: { show: false },
+                    dataLabels: { enabled: false },
+                    plotOptions: {
+                      pie: {
+                        startAngle: 0,
+                        endAngle: 360,
+                        offsetY: -6,
+                        donut: {
+                          size: "70%",
+                          labels: {
                             show: true,
-                            showAlways: true,
-                            label: "",
-                            fontSize: "28px",
-                            fontWeight: 700,
-                            color: isDarkTheme ? "#e5e7eb" : "#1e293b",
-                            formatter: () => String(priorityLow + priorityMedium + priorityHigh),
+                            total: {
+                              show: true,
+                              showAlways: true,
+                              label: "",
+                              fontSize: "24px",
+                              fontWeight: 700,
+                              color: isDarkTheme ? "#e5e7eb" : "#1e293b",
+                              formatter: () => String(priorityLow + priorityMedium + priorityHigh),
+                            },
                           },
                         },
                       },
                     },
-                  },
-                  stroke: { width: 0 },
-                  tooltip: { enabled: true, theme: isDarkTheme ? "dark" : "light" },
-                }}
-                series={[priorityLow, priorityMedium, priorityHigh]}
-                type="donut"
-                height={180}
-              />
+                    stroke: { width: 0 },
+                    tooltip: { enabled: true, theme: isDarkTheme ? "dark" : "light" },
+                  }}
+                  series={[priorityLow, priorityMedium, priorityHigh]}
+                  type="donut"
+                  height={240}
+                />
+              </div>
             )}
             <div className="priority-legend-row">
               <div className="priority-item">
@@ -882,7 +961,7 @@ const Dashboard = () => {
           </div>
 
           {/* Team Incomplete Task */}
-          <div className="right-panel-card">
+          <div className="right-panel-card team-incomplete-card">
             <h4>Team Incomplete Task</h4>
             {teamIncomplete.length > 0 ? (
               <div className="team-incomplete-list">

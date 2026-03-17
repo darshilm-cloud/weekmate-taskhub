@@ -212,14 +212,30 @@ const EmployeeMasterList = () => {
     tooltip: { y: { formatter: (v) => `${v} users` } },
   };
   const barOptions = {
-    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
-    plotOptions: { bar: { borderRadius: 6, horizontal: false, columnWidth: "45%" } },
-    colors: ["#16a34a", "#dc2626"],
-    xaxis: { categories: ["Active", "Inactive"] },
-    yaxis: { labels: { style: { fontSize: "12px" } } },
-    dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9" },
-    tooltip: { y: { formatter: (v) => `${v} users` } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
+    plotOptions: {
+      bar: {
+        borderRadius: 6,
+        horizontal: true,
+        barHeight: "40%",
+        distributed: true,
+      },
+    },
+    colors: ["#2dd4bf", "#dc2626"],
+    xaxis: {
+      categories: ["Active", "Inactive"],
+      labels: { style: { fontSize: "12px" } },
+    },
+    yaxis: { labels: { style: { fontSize: "13px", fontWeight: 500 } } },
+    dataLabels: {
+      enabled: true,
+      formatter: (v) => v,
+      style: { fontSize: "13px", fontWeight: 600, colors: ["#fff"] },
+      offsetX: -4,
+    },
+    legend: { show: false },
+    grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+    tooltip: { y: { formatter: (v) => `${v} employees` } },
   };
 
   /* ── sidebar employee item ─────────────────────────────────────── */
@@ -545,7 +561,7 @@ const EmployeeMasterList = () => {
                         type="donut"
                         series={roleSeries.length ? roleSeries : [1]}
                         options={donutOptions}
-                        height={240}
+                        height={280}
                       />
                     </div>
                     <div className="chart-card">
@@ -557,7 +573,7 @@ const EmployeeMasterList = () => {
                           data: [analytics.statusBreakdown.active, analytics.statusBreakdown.inactive],
                         }]}
                         options={barOptions}
-                        height={240}
+                        height={280}
                       />
                     </div>
                   </div>

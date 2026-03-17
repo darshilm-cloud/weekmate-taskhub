@@ -418,8 +418,6 @@ const AssignProject = () => {
       reqBody.search = searchText;
       setSearchEnabled(true);
     }
-    if (statusFilter) reqBody.project_status = statusFilter;
-
     return reqBody;
   };
 
@@ -504,7 +502,7 @@ const AssignProject = () => {
         setIsloadingProject(false);
         return; // skip API call — data already cached
       }
-      setIsloadingProject(true);
+      setIsloadingProject(columnDetails.length === 0);
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -601,14 +599,14 @@ const AssignProject = () => {
   };
 
   const onSearch = (value) => {
-    setSearchText(value);
-    setPagination({ ...pagination, current: 1 });
+    setSearchText(value?.trimStart?.() ?? "");
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
-    if ((keyCode === 8 || keyCode === 46) && searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-      searchRef.current.state.value = "";
+    const currentValue = e?.target?.value ?? searchText;
+    if ((keyCode === 8 || keyCode === 46) && currentValue.length <= 1 && seachEnabled) {
       setSearchText("");
       setSearchEnabled(false);
     }
@@ -700,23 +698,62 @@ const AssignProject = () => {
     return false;
   };
 
-  const visibleProjects = selectedDate
-    ? columnDetails.filter((record) => doesProjectMatchDate(record, selectedDate))
-    : columnDetails;
+  const selectedStatusMeta = statusFilter
+    ? projectStatusList.find((status) => status._id === statusFilter)
+    : null;
+
+  const visibleProjects = columnDetails.filter((record) => {
+    const matchesDate = selectedDate ? doesProjectMatchDate(record, selectedDate) : true;
+    if (!matchesDate) return false;
+
+    const normalizedSearch = searchText?.trim().toLowerCase();
+    if (normalizedSearch) {
+      const projectTitle = record?.title?.toLowerCase?.() || "";
+      const projectCode = record?.project_id?.toLowerCase?.() || "";
+      const projectStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
+      const ownerName =
+        record?.created_by?.full_name?.toLowerCase?.() ||
+        record?.created_by?.name?.toLowerCase?.() ||
+        "";
+
+      const matchesSearch =
+        projectTitle.includes(normalizedSearch) ||
+        projectCode.includes(normalizedSearch) ||
+        projectStatusTitle.includes(normalizedSearch) ||
+        ownerName.includes(normalizedSearch);
+
+      if (!matchesSearch) return false;
+    }
+
+    if (!statusFilter) return true;
+
+    const recordStatusId = record?.project_status?._id || record?.project_status;
+    const recordStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
+    const selectedStatusTitle = selectedStatusMeta?.title?.toLowerCase?.() || "";
+
+    return recordStatusId === statusFilter || (!!selectedStatusTitle && recordStatusTitle === selectedStatusTitle);
+  });
+  const showInitialProjectSkeleton = isloadingProject && columnDetails.length === 0;
+  const hasActiveProjectFilters =
+    Boolean(searchText?.trim()) ||
+    Boolean(statusFilter) ||
+    Boolean(selectedDate) ||
+    (currentFilters && Object.keys(currentFilters).length > 0);
+  const emptyProjectsMessage = hasActiveProjectFilters ? "No matches found" : "No projects found";
 
   useEffect(() => {
     if (!visibleProjects.length) return;
 
     const isGrid = viewMode === "grid";
     const primaryIds = isGrid
-      ? visibleProjects.slice(0, 6).map((project) => project._id)
+      ? []
       : selectedWorkspaceProjectId
       ? [selectedWorkspaceProjectId]
       : [];
 
     const timer = setTimeout(() => {
-      fetchTaskStatsForIds(primaryIds);
-    }, 0);
+      if (primaryIds.length) fetchTaskStatsForIds(primaryIds);
+    }, 350);
 
     if (idleFetchRef.current) {
       if (typeof idleFetchRef.current === "number") {
@@ -726,16 +763,24 @@ const AssignProject = () => {
       }
     }
 
-    if (isGrid && visibleProjects.length > 6) {
-      const remainingIds = visibleProjects.slice(6).map((project) => project._id);
+    const gridIds = isGrid ? visibleProjects.slice(0, 6).map((project) => project._id) : [];
+    const remainingIds = isGrid ? visibleProjects.slice(6).map((project) => project._id) : [];
+
+    if (isGrid && (gridIds.length || remainingIds.length)) {
       if (typeof window !== "undefined" && window.requestIdleCallback) {
         idleFetchRef.current = window.requestIdleCallback(() => {
-          fetchTaskStatsForIds(remainingIds);
-        }, { timeout: 1500 });
+          if (gridIds.length) fetchTaskStatsForIds(gridIds);
+          if (remainingIds.length) {
+            setTimeout(() => fetchTaskStatsForIds(remainingIds), 300);
+          }
+        }, { timeout: 2000 });
       } else {
         idleFetchRef.current = setTimeout(() => {
-          fetchTaskStatsForIds(remainingIds);
-        }, 600);
+          if (gridIds.length) fetchTaskStatsForIds(gridIds);
+          if (remainingIds.length) {
+            setTimeout(() => fetchTaskStatsForIds(remainingIds), 300);
+          }
+        }, 900);
       }
     }
 
@@ -888,19 +933,25 @@ const AssignProject = () => {
   const totalChartCount = closedCount + pendingCount;
 
   const statusChartOptions = {
-    chart: { type: "donut" },
+    chart: { type: "donut", toolbar: { show: false } },
     labels: ["Closed", "Pending"],
-    colors: ["#35C03B", "#FBBF24"],
+    colors: ["#2dd4bf", "#ff4d4f"],
     legend: { show: false },
     dataLabels: { enabled: false },
+    stroke: { width: 0 },
     plotOptions: {
       pie: {
+        startAngle: -180,
+        endAngle: 180,
         donut: {
+          size: "68%",
           labels: {
             show: true,
             total: {
               show: true,
               label: "Tasks",
+              fontSize: "13px",
+              fontWeight: 600,
               formatter: () => totalChartCount.toString(),
             },
           },
@@ -944,7 +995,7 @@ const AssignProject = () => {
         borderRadius: 10,
       },
     },
-    colors: ["#35C03B", "#EF4444"],
+    colors: ["#2dd4bf", "#ff4d4f"],
     xaxis: {
       categories: [userDisplayName],
       labels: { style: { colors: "#64748b" } },
@@ -1129,7 +1180,8 @@ const AssignProject = () => {
     });
   }
 
-  const totalCount = selectedDate ? visibleProjects.length : (pagination.total || columnDetails.length);
+  const totalCount =
+    selectedDate || statusFilter ? visibleProjects.length : (pagination.total || columnDetails.length);
   const calendarOverlay = (
     <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="ap-date-dropdown-header">
@@ -1203,8 +1255,14 @@ const AssignProject = () => {
             <Input.Search
               ref={searchRef}
               placeholder="Search..."
+              value={searchText}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setPagination((prev) => ({ ...prev, current: 1 }));
+              }}
               onSearch={onSearch}
               onKeyUp={resetSearchFilter}
+              allowClear
               className="ap-search-input"
             />
             <AssignProjectFilter
@@ -1217,10 +1275,14 @@ const AssignProject = () => {
               className="ap-status-select"
               suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
               onChange={(val) => {
-                setStatusFilter(val);
+                setStatusFilter(val || undefined);
                 setPagination((p) => ({ ...p, current: 1 }));
               }}
+              value={statusFilter}
             >
+              <Select.Option key="all-projects" value="">
+                All Projects
+              </Select.Option>
               {projectStatusList.map((s) => (
                 <Select.Option key={s._id} value={s._id}>
                   {s.title}
@@ -1315,15 +1377,15 @@ const AssignProject = () => {
       <div className="ap-content-area">
         {viewMode === "grid" ? (
           <div className="ap-grid-section">
-            {isloadingProject ? (
+            {showInitialProjectSkeleton ? (
               <div className="ap-skeleton-grid" aria-label="Loading projects">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <GridSkeletonCard key={`grid-skeleton-${index}`} index={index} />
                 ))}
               </div>
-            ) : columnDetails.length === 0 ? (
+            ) : visibleProjects.length === 0 ? (
               <div className="ap-empty-state">
-                <Empty description="No projects found" />
+                <Empty description={emptyProjectsMessage} />
               </div>
             ) : (
               <div className="ap-cards-grid">
@@ -1395,11 +1457,14 @@ const AssignProject = () => {
                 className="ap-browser-side-status"
                 suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
                 onChange={(val) => {
-                  setStatusFilter(val);
+                  setStatusFilter(val || undefined);
                   setPagination((p) => ({ ...p, current: 1 }));
                 }}
                 value={statusFilter}
               >
+                <Select.Option key="all-projects-browser" value="">
+                  All Projects
+                </Select.Option>
                 {projectStatusList.map((s) => (
                   <Select.Option key={s._id} value={s._id}>
                     {s.title}
@@ -1408,7 +1473,7 @@ const AssignProject = () => {
               </Select>
               <div className="ap-browser-project-list">
                 <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
-                {isloadingProject ? (
+                {showInitialProjectSkeleton ? (
                   <div className="ap-browser-project-list-skeleton">
                     {Array.from({ length: 7 }).map((_, idx) => (
                       <div key={`proj-skel-${idx}`} className="ap-browser-project-skel-row">
@@ -1435,7 +1500,7 @@ const AssignProject = () => {
             </aside>
 
             <section className="ap-browser-workspace">
-              {isloadingProject ? (
+              {showInitialProjectSkeleton ? (
                 <div className="ap-browser-skeleton">
                   <div className="ap-browser-skeleton-header">
                     <Skeleton.Input active size="default" className="ap-browser-skel-title" />
@@ -1536,24 +1601,6 @@ const AssignProject = () => {
                     >
                       Customize
                     </button>
-                    <Dropdown
-                      trigger={["click"]}
-                      placement="bottomRight"
-                      menu={{
-                        items: [
-                          { key: "export", label: "Export" },
-                          { key: "share", label: "Share" },
-                          { key: "settings", label: "Settings" },
-                        ],
-                        onClick: ({ key }) => {
-                          message.info(`Action: ${key}`);
-                        },
-                      }}
-                    >
-                      <button type="button" className="ap-browser-link-btn">
-                        More
-                      </button>
-                    </Dropdown>
                   </div>
 
                   {workspaceSubtab === "overview" && (
@@ -1626,6 +1673,17 @@ const AssignProject = () => {
                             <div className="ap-browser-member-role">Project Manager</div>
                           </div>
                         )}
+                        {selectedWorkspaceProject?.pms_clients?.map((client) => (
+                          <div key={client?._id || client?.full_name} className="ap-browser-member-card">
+                            <MyAvatar
+                              src={client?.emp_img}
+                              alt={client?.full_name}
+                              userName={client?.full_name}
+                            />
+                            <div className="ap-browser-member-name">{client?.full_name}</div>
+                            <div className="ap-browser-member-role">Client</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
@@ -1636,9 +1694,9 @@ const AssignProject = () => {
                       </div>
                     </div>
 
-                    <div className="ap-browser-card ap-browser-status-card">
-                      <div className="ap-browser-card-title">Status Analysis</div>
-                      <div className="ap-browser-status-row">
+                    <div className="ap-browser-card ap-browser-status-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, overflow: "visible", paddingBottom: 30 }}>
+                      <div>
+                        <div className="ap-browser-card-title">Status Analysis</div>
                         <div className="ap-browser-status-metrics">
                           <div className="ap-browser-status-item">
                             <span className="ap-browser-status-bar ap-browser-status-bar--closed" />
@@ -1655,9 +1713,9 @@ const AssignProject = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="ap-browser-status-donut">
-                          <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={180} />
-                        </div>
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
                       </div>
                     </div>
 

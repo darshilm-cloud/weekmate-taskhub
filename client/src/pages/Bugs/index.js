@@ -342,7 +342,7 @@ const BugsPMS = () => {
       {/* Modals */ }
       <Modal
         open={ isModalOpenImport }
-        width={ 600 }
+        width={ 720 }
         title={ null }
         footer={ null }
         onCancel={ () => handleImportClose(false) }
@@ -621,7 +621,7 @@ const BugsPMS = () => {
         onCancel={ handleCancelTaskModal }
         title="Add Task Bug"
         className="add-task-modal edit-details-task-model"
-        width={ 800 }
+        width={ 960 }
         footer={ [
           <Button
             key="cancel"
@@ -1005,7 +1005,7 @@ const BugsPMS = () => {
         onCancel={ handleCancelTaskModal }
         title="Edit Task Bug"
         className="add-task-modal edit-details-task-model"
-        width={ 800 }
+        width={ 960 }
         footer={ [
           <Button
             key="cancel"

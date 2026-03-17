@@ -135,16 +135,17 @@ export default function DiscussionPage() {
   };
 
   const loadProjects = async () => {
-    const cached = sessionStorage.getItem("note_all_projects");
-    if (cached) { setProjects(JSON.parse(cached)); return; }
-    const res = await Service.makeAPICall({
-      methodName: Service.postMethod,
-      api_url: Service.getProjectList,
-      body: { pageNo: 1, limit: 500, sort: "_id", sortBy: "desc" },
-    });
-    const list = res?.data?.data || [];
-    setProjects(list);
-    sessionStorage.setItem("note_all_projects", JSON.stringify(list));
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getProjectList,
+      });
+      const data = res?.data?.data;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      setProjects(list);
+    } catch (e) {
+      console.error("loadProjects error", e);
+    }
   };
 
   const openAdd = async (type) => {
@@ -409,6 +410,8 @@ export default function DiscussionPage() {
         confirmLoading={addSubmitting}
         okText="Create"
         destroyOnClose
+        className="global-app-modal"
+        width={640}
       >
         <Form form={addForm} layout="vertical">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
