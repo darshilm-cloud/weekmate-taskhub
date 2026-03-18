@@ -78,8 +78,32 @@
 
 
 .task-wrapper .add-project-wrapper .add-btn {
-    padding: 0px 10px;
-    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 10px;
+    min-height: 36px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.task-wrapper .add-project-wrapper .add-btn .anticon,
+.task-wrapper .add-project-wrapper .add-btn i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.task-wrapper .add-project-wrapper .add-btn .add-btn-leading-icon,
+.task-wrapper .add-project-wrapper .add-btn .fi-br-plus {
+    font-size: 14px;
+}
+
+.task-wrapper .add-project-wrapper .add-btn .add-btn-trailing-icon,
+.task-wrapper .add-project-wrapper .add-btn .fi-ss-angle-small-down {
+    font-size: 12px;
 }
 
 .task-model .table-right .flex-table {

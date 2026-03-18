@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Input, Avatar, Tooltip } from "antd";
+import { Input, Avatar, Tooltip, Select } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -76,6 +76,7 @@ const EmployeeMasterList = () => {
   /* ── sidebar ui ── */
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [sidebarSearch, setSidebarSearch] = useState("");
+  const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
 
   /* ── employee favorites ── */
   const [favorites, setFavorites] = useState(() => {
@@ -176,7 +177,12 @@ const EmployeeMasterList = () => {
   /* ── filtered lists ────────────────────────────────────────────── */
   const filteredUsers = sidebarUsers.filter((u) => {
     const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`).toLowerCase();
-    return name.includes(sidebarSearch.toLowerCase());
+    const matchesSearch = name.includes(sidebarSearch.toLowerCase());
+    const matchesStatus =
+      employeeStatusFilter === "all" ||
+      (employeeStatusFilter === "active" && u.isActivate) ||
+      (employeeStatusFilter === "inactive" && !u.isActivate);
+    return matchesSearch && matchesStatus;
   });
   const filteredClients = sidebarClients.filter((c) => {
     const name = (c.full_name || `${c.first_name || ""} ${c.last_name || ""}`).toLowerCase();
@@ -185,6 +191,33 @@ const EmployeeMasterList = () => {
 
   const favoriteUsers = filteredUsers.filter((u) =>  favorites.includes(u._id));
   const regularUsers  = filteredUsers.filter((u) => !favorites.includes(u._id));
+
+  const filteredAnalytics = (() => {
+    const roleBreakdown = {};
+    let active = 0, inactive = 0, admins = 0;
+
+    filteredUsers.forEach((u) => {
+      if (u.isActivate) active++; else inactive++;
+      const role = u?.pms_role?.role_name || "N/A";
+      roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
+      if (role.toLowerCase().includes("admin")) admins++;
+    });
+
+    return {
+      total: filteredUsers.length,
+      active,
+      inactive,
+      admins,
+      roleBreakdown,
+      statusBreakdown: { active, inactive },
+    };
+  })();
+
+  useEffect(() => {
+    if (selectedUserId && !filteredUsers.some((u) => u._id === selectedUserId)) {
+      setSelectedUserId(null);
+    }
+  }, [filteredUsers, selectedUserId]);
 
   /* ── selected objects ──────────────────────────────────────────── */
   const selectedUser   = selectedUserId   ? sidebarUsers.find((u) => u._id === selectedUserId)   : null;
@@ -315,6 +348,7 @@ const EmployeeMasterList = () => {
                 setSidebarMode("employees");
                 setSelectedClientId(null);
                 setSidebarSearch("");
+                setEmployeeStatusFilter("all");
               }}
             >
               Employees
@@ -339,6 +373,19 @@ const EmployeeMasterList = () => {
             onChange={(e) => setSidebarSearch(e.target.value)}
             allowClear
           />
+
+          {sidebarMode === "employees" && (
+            <Select
+              className="sidebar-status-filter"
+              value={employeeStatusFilter}
+              onChange={setEmployeeStatusFilter}
+              options={[
+                { label: "All Status", value: "all" },
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
+              ]}
+            />
+          )}
         </div>
 
         <div className="sidebar-user-list">
@@ -547,20 +594,25 @@ const EmployeeMasterList = () => {
             {sidebarMode === "employees" ? (
               <>
                 <div className="analytics-cards-grid">
-                  <AnalyticsCard icon={<TeamOutlined />}        value={analytics.total}    label="Total Employees" colorClass="blue" />
-                  <AnalyticsCard icon={<CheckCircleOutlined />} value={analytics.active}   label="Active"          colorClass="green" />
-                  <AnalyticsCard icon={<CloseCircleOutlined />} value={analytics.inactive} label="Inactive"        colorClass="red" />
-                  <AnalyticsCard icon={<CrownOutlined />}       value={analytics.admins}   label="Admins"          colorClass="purple" />
+                  <AnalyticsCard icon={<TeamOutlined />}        value={filteredAnalytics.total}    label="Total Employees" colorClass="blue" />
+                  <AnalyticsCard icon={<CheckCircleOutlined />} value={filteredAnalytics.active}   label="Active"          colorClass="green" />
+                  <AnalyticsCard icon={<CloseCircleOutlined />} value={filteredAnalytics.inactive} label="Inactive"        colorClass="red" />
+                  <AnalyticsCard icon={<CrownOutlined />}       value={filteredAnalytics.admins}   label="Admins"          colorClass="purple" />
                 </div>
 
-                {analytics.total > 0 && (
+                {filteredAnalytics.total > 0 && (
                   <div className="charts-section">
                     <div className="chart-card">
                       <div className="chart-card-title">Role Distribution</div>
                       <ReactApexChart
                         type="donut"
-                        series={roleSeries.length ? roleSeries : [1]}
-                        options={donutOptions}
+                        series={Object.values(filteredAnalytics.roleBreakdown).length ? Object.values(filteredAnalytics.roleBreakdown) : [1]}
+                        options={{
+                          ...donutOptions,
+                          labels: Object.keys(filteredAnalytics.roleBreakdown).length
+                            ? Object.keys(filteredAnalytics.roleBreakdown)
+                            : ["No Data"],
+                        }}
                         height={280}
                       />
                     </div>
@@ -570,7 +622,7 @@ const EmployeeMasterList = () => {
                         type="bar"
                         series={[{
                           name: "Employees",
-                          data: [analytics.statusBreakdown.active, analytics.statusBreakdown.inactive],
+                          data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
                         }]}
                         options={barOptions}
                         height={280}

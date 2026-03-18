@@ -21,6 +21,8 @@ import {
   message,
 } from "antd";
 import {
+  PlusOutlined,
+  DownOutlined,
   EditOutlined,
   MoreOutlined,
   DeleteOutlined,
@@ -1446,6 +1448,11 @@ const TasksPMS = ({ flag }) => {
     };
   };
 
+  const filteredBoardTasks = filterTasks(boardTasks, filterSchema);
+  const hasVisibleTasks = filteredBoardTasks.some(
+    (board) => (board?.tasks?.length || 0) > 0
+  );
+
   const exportSampleCSVfile = () => {
     const link = document.createElement("a");
     link.setAttribute("href", taskCSV);
@@ -1594,8 +1601,9 @@ const TasksPMS = ({ flag }) => {
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
                   <Button className="add-btn ant-btn-primary">
-                    <i className="fi fi-br-plus"></i> Add
-                    <i className="fi fi-ss-angle-small-down"></i>
+                    <PlusOutlined className="add-btn-leading-icon" />
+                    <span>Add</span>
+                    <DownOutlined className="add-btn-trailing-icon" />
                   </Button>
                 </Dropdown>
               )}
@@ -1999,14 +2007,18 @@ const TasksPMS = ({ flag }) => {
               <div className="error-message">
                 <p>No Data</p>
               </div>
+            ) : !hasVisibleTasks ? (
+              <div className="error-message">
+                <p>No task found</p>
+              </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading ? null : tableTrue === false ? (
+            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : tableTrue === false ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
                 checkTaskDrafts={""}
                 boardTasks={boardTasks}
-                tasks={filterTasks(boardTasks, filterSchema)}
+                tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -2020,7 +2032,7 @@ const TasksPMS = ({ flag }) => {
             ) : (
               <TasksTableView
                 updateBoardTaskLocally={updateBoardTaskLocally}
-                tasks={filterTasks(boardTasks, filterSchema)}
+                tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}

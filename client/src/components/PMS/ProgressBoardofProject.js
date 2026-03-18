@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Menu,
-  Popconfirm,
   Popover,
   message,
   Modal,
@@ -24,9 +23,7 @@ import BugsPMS from "../../pages/Bugs/index";
 import FileModule from "../FileModule.js/FileModule";
 import queryString from "query-string";
 import {
-  DeleteOutlined,
   DownOutlined,
-  EditOutlined,
   LeftOutlined,
   StarFilled,
   StarOutlined,
@@ -37,10 +34,9 @@ import {
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import { getRoles, hasPermission } from "../../util/hasPermission";
+import { hasPermission } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
-import DrawerComponent from "../Drawer/DrawerComponent";
 import "./ProgressBoard.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
@@ -62,7 +58,6 @@ function ProgressBoardofProject() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [manageModal, setManageModal] = useState(false);
   const [manageTabs, setTabsModal] = useState(false);
-  const [popOver, setPopOver] = useState(false);
   const [managerList, setManager] = useState([]);
   const [accountManagerList, setAccountManagerList] = useState([]);
   const [clientList, setClientList] = useState([]);
@@ -220,9 +215,6 @@ function ProgressBoardofProject() {
     });
   };
 
-  const goToEditProjectPage = () => {
-    history.push(`/${companySlug}/project-list/edit/${projectId}`);
-  };
   const getProjectByID = async () => {
     try {
       const reqBody = {
@@ -243,23 +235,6 @@ function ProgressBoardofProject() {
         setInitialDetails(response.data.data);
       } else {
         message.error(response?.data?.message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.deleteMethod,
-        api_url: Service.deleteProjectdetails + `/${projectId}`,
-      });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        message.success(response.data.message);
-        history.push(`/${companySlug}/project-list`);
-      } else {
-        message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
@@ -594,6 +569,53 @@ function ProgressBoardofProject() {
     return 0;
   });
 
+  const projectSwitcherContent = (
+    <div className="pb-project-switcher-menu">
+      <div className="pb-project-switcher-search">
+        <Input
+          type="text"
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      <div className="pb-project-switcher-list">
+        {sortedProjectList.length === 0 ? (
+          <p className="no-data-found-drawer-antd">No data found</p>
+        ) : (
+          sortedProjectList.map((item, index) => (
+            <div key={index} className="project-name-drawers pb-project-switcher-item">
+              <span
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleBookmark(item);
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                {item.isStarred ? (
+                  <StarFilled style={{ color: "#ffd200" }} />
+                ) : (
+                  <StarOutlined />
+                )}
+              </span>
+              <Link
+                to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
+                onClick={() => closeDrawer()}
+              >
+                <p>
+                  {item.title?.length > 36
+                    ? `${item.title.slice(0, 35)}...`
+                    : item.title}
+                </p>
+              </Link>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       {/* ── Project Top Bar ── */}
@@ -611,114 +633,31 @@ function ProgressBoardofProject() {
               <LeftOutlined />
             </Link>
 
-            {/* Project title (opens project-switcher drawer) */}
-            <h3 className="pb-project-title" onClick={showDrawer}>
-              {formattedTitle?.length > 59
-                ? `${formattedTitle.slice(0, 59)}...`
-                : formattedTitle}
-            </h3>
-
-            {/* Project switcher drawer */}
-            <DrawerComponent
+            <Popover
+              trigger="click"
+              placement="bottomLeft"
+              arrow={false}
+              overlayClassName="pb-project-switcher-popover"
               visible={drawerVisible}
-              onClose={closeDrawer}
-              title="Projects"
-            >
-              <div style={{ marginBottom: "16px" }} className="project-list">
-                <Input
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-                />
-              </div>
-              {sortedProjectList.length === 0 ? (
-                <p className="no-data-found-drawer-antd">No data found</p>
-              ) : (
-                sortedProjectList.map((item, index) => (
-                  <div key={index} className="project-name-drawers">
-                    <span onClick={() => handleBookmark(item)} style={{ cursor: "pointer" }}>
-                      {item.isStarred ? (
-                        <StarFilled style={{ color: "#ffd200" }} />
-                      ) : (
-                        <StarOutlined />
-                      )}
-                    </span>
-                    <Link to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}>
-                      <p onClick={() => { setDrawerVisible(false); setSearchQuery(""); }}>
-                        {item.title?.length > 24 ? `${item.title.slice(0, 23)}...` : item.title}
-                      </p>
-                    </Link>
-                  </div>
-                ))
-              )}
-            </DrawerComponent>
-
-            {/* Manage dropdown (edit / delete / manage people / manage tabs) */}
-            {(hasPermission(["project_edit"]) || hasPermission(["project_delete"])) && (
-              <Popover
-                trigger="click"
-                placement="bottom"
-                arrow={false}
-                visible={popOver}
-                onVisibleChange={setPopOver}
-                content={
-                  <div className="progressboard-pop">
-                    <Menu>
-                      {hasPermission(["manage_people"]) && (
-                        <Menu.Item
-                          onClick={() => {
-                            setPopOver(false);
-                            setManageModal(true);
-                            managePeopleForm.setFieldsValue({
-                              clients: projectData?.pms_clients?.map(
-                                (client) => clientList.find((item) => item.full_name === client.full_name)._id
-                              ),
-                              manager: projectData?.manager?._id,
-                              acc_manager: projectData?.acc_manager?._id,
-                              assignees: projectData?.assignees?.map(
-                                (assignee) => assignees.find((item) => item.full_name === assignee.name)?._id
-                              ),
-                            });
-                          }}
-                        >
-                          <i className="fi fi-rr-users"></i> <span>Manage People</span>
-                        </Menu.Item>
-                      )}
-                      {hasPermission(["project_edit"]) && (
-                        <Menu.Item onClick={goToEditProjectPage}>
-                          <span><EditOutlined /><span> Edit</span></span>
-                        </Menu.Item>
-                      )}
-                      {hasPermission(["project_delete"]) && (
-                        <Menu.Item>
-                          <Popconfirm
-                            title="Are you sure you want to delete this?"
-                            onConfirm={handleDeleteProject}
-                            okText="Yes"
-                            cancelText="No"
-                            placement="bottom"
-                            arrow={false}
-                            className="ant-delete"
-                          >
-                            <span><DeleteOutlined /><span> Delete</span></span>
-                          </Popconfirm>
-                        </Menu.Item>
-                      )}
-                      {getRoles(["Admin"]) && (
-                        <Menu.Item onClick={() => { setPopOver(false); setTabsModal(true); }}>
-                          <i className="fa-solid fa-bars-staggered"></i>
-                          <span> Manage Tabs</span>
-                        </Menu.Item>
-                      )}
-                    </Menu>
-                  </div>
+              onVisibleChange={(visible) => {
+                if (visible) {
+                  showDrawer();
+                } else {
+                  closeDrawer();
                 }
-              >
-                <DownOutlined className="pb-manage-arrow" />
-              </Popover>
-            )}
+              }}
+              content={projectSwitcherContent}
+            >
+              <button type="button" className="pb-project-switcher-trigger">
+                <span className="pb-project-title">
+                  {formattedTitle?.length > 59
+                    ? `${formattedTitle.slice(0, 59)}...`
+                    : formattedTitle}
+                </span>
+                <DownOutlined className={`pb-project-switcher-icon ${drawerVisible ? "is-open" : ""}`} />
+              </button>
+            </Popover>
+
           </div>
 
           {/* Mobile: show tab switcher in header-right */}

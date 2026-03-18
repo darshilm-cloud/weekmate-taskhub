@@ -79,6 +79,10 @@ const SMTPConfig = () => {
     return size > 80 ? (size / 1024).toFixed(0) : size.toFixed(0);
   }, [userData?.companyDetails?.fileUploadSize]);
 
+  useEffect(() => {
+    fileForm.setFieldsValue({ maxFileLimit: fileLimit });
+  }, [fileForm, fileLimit]);
+
   // Fetch existing config
   const fetchConfig = useCallback(async () => {
     try {
@@ -102,6 +106,13 @@ const SMTPConfig = () => {
           smtpSecure: config.smtpSecure,
           fromName: config.fromName,
         });
+
+        const matchedProvider = Object.entries(PROVIDERS).find(
+          ([, provider]) =>
+            provider.host === config.smtpHost &&
+            String(provider.port) === String(config.smtpPort)
+        );
+        setSelectedProvider(matchedProvider?.[0] || null);
       } else {
         // Auto-select Gmail as default if no config exists
         handleProviderSelect("gmail");
@@ -190,14 +201,16 @@ const SMTPConfig = () => {
   const handleFileSubmit = useCallback(async ({ maxFileLimit }) => {
     setFileLoading(true);
     try {
+      const normalizedLimit = Number(maxFileLimit);
       const res = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: Service.fileSizeUpload,
-        body: { fileUploadSize: maxFileLimit },
+        body: { fileUploadSize: normalizedLimit },
       });
 
-      if (res.data.status === 1) {
-        message.success(res.message);
+      if (res?.data?.status === 1) {
+        const successMessage =
+          res?.data?.message || "File size limit updated successfully";
 
         // Update localStorage
         const currentUserData =
@@ -205,28 +218,32 @@ const SMTPConfig = () => {
         const newUserData = {
           ...currentUserData,
           companyDetails: {
-            ...currentUserData.currentUserData,
-            fileUploadSize: maxFileLimit * 1024,
+            ...currentUserData.companyDetails,
+            fileUploadSize: normalizedLimit * 1024,
           },
         };
         localStorage.setItem("user_data", JSON.stringify(newUserData));
 
-        message.success("File size limit updated successfully");
+        message.success(successMessage);
+        setIsEditing(false);
+        return true;
       } else {
-        throw new Error("Unexpected status code: " + res.statusCode);
+        throw new Error(
+          res?.data?.message || "Failed to update file size limit"
+        );
       }
     } catch (err) {
       console.error("File size update failed:", err);
-      message.error("Failed to update file size limit");
+      message.error(err?.message || "Failed to update file size limit");
+      return false;
     } finally {
       setFileLoading(false);
     }
   }, []);
 
   const handleFileFormFinish = useCallback(
-    (values) => {
-      handleFileSubmit(values);
-      setIsEditing(false);
+    async (values) => {
+      await handleFileSubmit(values);
     },
     [handleFileSubmit]
   );
@@ -241,9 +258,6 @@ const SMTPConfig = () => {
           <SettingOutlined className="title-icon" />
           System Settings
         </Title>
-        <Text type="secondary" className="subtitle">
-          Configure your email and file sharing settings
-        </Text>
       </div>
 
       <Card className="main-card">
@@ -263,37 +277,6 @@ const SMTPConfig = () => {
             key="1"
           >
             <div className="smtp-content">
-              {/* Quick Setup Section */}
-              <Card className="quick-setup-card">
-                <div className="quick-setup-content">
-                  <Title level={4} className="quick-setup-title">
-                    <CloudServerOutlined className="section-icon" />
-                    Quick Setup
-                  </Title>
-                  <Text className="quick-setup-description">
-                    Choose a provider to auto-configure SMTP settings
-                  </Text>
-                  <Row gutter={[12, 12]} className="provider-buttons">
-                    {Object.entries(PROVIDERS).map(([key, provider]) => (
-                      <Col key={key}>
-                        <Button
-                          type={
-                            selectedProvider === key ? "primary" : "default"
-                          }
-                          size="large"
-                          onClick={() => handleProviderSelect(key)}
-                          className={`provider-btn ${
-                            selectedProvider === key ? "selected" : ""
-                          } ${provider.color}`}
-                        >
-                          {provider.name}
-                        </Button>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              </Card>
-
               {/* Current Configuration Status */}
               {currentConfig && (
                 <Alert
@@ -354,179 +337,211 @@ const SMTPConfig = () => {
                 size="large"
                 className="smtp-form"
               >
-                <Row gutter={24}>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <Space>
-                          <CloudServerOutlined />
-                          <span>SMTP Host</span>
-                        </Space>
-                      }
-                      name="smtpHost"
-                      rules={[
-                        { required: true, message: "SMTP host is required" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="smtp.gmail.com"
-                        className="form-input"
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <Space>
-                          <span>Port</span>
-                          <Tooltip title="Common ports: 465 (SSL), 587 (TLS), 25 (Unsecured)">
-                            <InfoCircleOutlined className="info-icon" />
-                          </Tooltip>
-                        </Space>
-                      }
-                      name="smtpPort"
-                      rules={[{ required: true, message: "Port is required" }]}
-                    >
-                      <Select
-                        placeholder="Select port"
-                        onChange={handlePortChange}
-                        className="form-select"
-                        disabled
-                      >
-                        <Option value="465">
-                          <Space>
-                            <LockOutlined className="ssl-icon" />
-                            465 (SSL - Gmail/Yahoo)
-                          </Space>
-                        </Option>
-                        <Option value="587">
-                          <Space>
-                            <SecurityScanOutlined className="tls-icon" />
-                            587 (TLS - Outlook)
-                          </Space>
-                        </Option>
-                        <Option value="25">
-                          <Space>
-                            <span className="warning-icon">⚠️</span>
-                            25 (Unsecured)
-                          </Space>
-                        </Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={24}>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <Space>
-                          <SecurityScanOutlined />
-                          <span>Security Protocol</span>
-                        </Space>
-                      }
-                      name="smtpSecure"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Security setting is required",
-                        },
-                      ]}
-                    >
-                      <Select
-                        placeholder="Select security protocol"
-                        className="form-select"
-                        disabled
-                      >
-                        <Option value={true}>
-                          <Space>
-                            <LockOutlined className="ssl-icon" />
-                            SSL/TLS (Recommended)
-                          </Space>
-                        </Option>
-                        <Option value={false}>
-                          <Space>
-                            <span className="warning-icon">⚠️</span>
-                            None (Not Recommended)
-                          </Space>
-                        </Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label="From Name (Display Name)"
-                      name="fromName"
-                      rules={[
-                        { required: true, message: "From name is required" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Your Company Name"
-                        className="form-input"
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                <div className="settings-form-flow">
+                  <div className="settings-form-section">
+                    <div className="section-heading">
+                      <span className="section-step">1</span>
+                      <div>
+                        <Title level={5}>Connection Details</Title>
+                        <Text>Set the outgoing mail server and protocol values.</Text>
+                      </div>
+                    </div>
 
-                <Row gutter={24}>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <Space>
-                          <MailOutlined />
-                          <span>Email Address</span>
-                        </Space>
-                      }
-                      name="smtpEmail"
-                      rules={[
-                        { required: true, message: "Email is required" },
-                        { type: "email", message: "Invalid email format" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="your-email@gmail.com"
-                        className="form-input"
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <Space>
-                          <LockOutlined />
-                          <span>Password</span>
-                          <Tooltip title="Use App Password for Gmail/Yahoo">
-                            <InfoCircleOutlined className="info-icon" />
-                          </Tooltip>
-                        </Space>
-                      }
-                      name="smtpPassword"
-                      rules={[
-                        { required: true, message: "Password is required" },
-                      ]}
-                    >
-                      <Password
-                        placeholder="App password or account password"
-                        className="form-input"
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <Space>
+                              <CloudServerOutlined />
+                              <span>SMTP Host</span>
+                            </Space>
+                          }
+                          name="smtpHost"
+                          rules={[
+                            { required: true, message: "SMTP host is required" },
+                          ]}
+                        >
+                          <Input
+                            placeholder="smtp.gmail.com"
+                            className="form-input"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <Space>
+                              <span>Port</span>
+                              <Tooltip title="Common ports: 465 (SSL), 587 (TLS), 25 (Unsecured)">
+                                <InfoCircleOutlined className="info-icon" />
+                              </Tooltip>
+                            </Space>
+                          }
+                          name="smtpPort"
+                          rules={[{ required: true, message: "Port is required" }]}
+                        >
+                          <Select
+                            placeholder="Select port"
+                            onChange={handlePortChange}
+                            className="form-select"
+                          >
+                            <Option value="465">
+                              <Space>
+                                <LockOutlined className="ssl-icon" />
+                                465 (SSL - Gmail/Yahoo)
+                              </Space>
+                            </Option>
+                            <Option value="587">
+                              <Space>
+                                <SecurityScanOutlined className="tls-icon" />
+                                587 (TLS - Outlook)
+                              </Space>
+                            </Option>
+                            <Option value="25">
+                              <Space>
+                                <span className="warning-icon">⚠️</span>
+                                25 (Unsecured)
+                              </Space>
+                            </Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                    </Row>
 
-                <Form.Item className="submit-section">
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    icon={<SaveOutlined />}
-                    loading={loading}
-                    size="large"
-                    className="submit-btn"
-                  >
-                    {loading
-                      ? "Verifying Configuration..."
-                      : "Test & Save Configuration"}
-                  </Button>
-                </Form.Item>
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <Space>
+                              <SecurityScanOutlined />
+                              <span>Security Protocol</span>
+                            </Space>
+                          }
+                          name="smtpSecure"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Security setting is required",
+                            },
+                          ]}
+                        >
+                          <Select
+                            placeholder="Select security protocol"
+                            className="form-select"
+                          >
+                            <Option value={true}>
+                              <Space>
+                                <LockOutlined className="ssl-icon" />
+                                SSL/TLS (Recommended)
+                              </Space>
+                            </Option>
+                            <Option value={false}>
+                              <Space>
+                                <span className="warning-icon">⚠️</span>
+                                None (Not Recommended)
+                              </Space>
+                            </Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  <div className="settings-form-section">
+                    <div className="section-heading">
+                      <span className="section-step">2</span>
+                      <div>
+                        <Title level={5}>Sender Identity</Title>
+                        <Text>Enter the display name and mailbox credentials used to send emails.</Text>
+                      </div>
+                    </div>
+
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label="From Name (Display Name)"
+                          name="fromName"
+                          rules={[
+                            { required: true, message: "From name is required" },
+                          ]}
+                        >
+                          <Input
+                            placeholder="Your Company Name"
+                            className="form-input"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <Space>
+                              <MailOutlined />
+                              <span>Email Address</span>
+                            </Space>
+                          }
+                          name="smtpEmail"
+                          rules={[
+                            { required: true, message: "Email is required" },
+                            { type: "email", message: "Invalid email format" },
+                          ]}
+                        >
+                          <Input
+                            placeholder="your-email@gmail.com"
+                            className="form-input"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <Space>
+                              <LockOutlined />
+                              <span>Password</span>
+                              <Tooltip title="Use App Password for Gmail/Yahoo">
+                                <InfoCircleOutlined className="info-icon" />
+                              </Tooltip>
+                            </Space>
+                          }
+                          name="smtpPassword"
+                          rules={[
+                            { required: true, message: "Password is required" },
+                          ]}
+                        >
+                          <Password
+                            placeholder="App password or account password"
+                            className="form-input"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+
+                  <Form.Item className="submit-section">
+                    <div className="submit-panel">
+                      <div className="submit-copy">
+                        <Text strong>Save after verifying the SMTP values.</Text>
+                        <Text type="secondary">
+                          We will test the configuration before storing it.
+                        </Text>
+                      </div>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        icon={<SaveOutlined />}
+                        loading={loading}
+                        size="large"
+                        className="submit-btn"
+                      >
+                        {loading
+                          ? "Verifying Configuration..."
+                          : "Test & Save Configuration"}
+                      </Button>
+                    </div>
+                  </Form.Item>
+                </div>
               </Form>
             </div>
           </TabPane>
@@ -541,16 +556,6 @@ const SMTPConfig = () => {
             key="2"
           >
             <div className="file-content">
-              <div className="file-header">
-                <Title level={3} className="file-title">
-                  File Upload Configuration
-                </Title>
-                <Text type="secondary" className="file-description">
-                  Set the maximum file size allowed for uploads in your chat
-                  system
-                </Text>
-              </div>
-
               <Card className="file-form-card">
                 <Form
                   form={fileForm}
@@ -560,70 +565,96 @@ const SMTPConfig = () => {
                   size="large"
                   className="file-form"
                 >
-                  <Form.Item
-                    label={
-                      <Space>
-                        <FileOutlined />
-                        <span>Maximum File Size (MB)</span>
-                      </Space>
-                    }
-                    name="maxFileLimit"
-                    rules={[
-                      { required: true, message: "File size is required" },
-                      {
-                        pattern: /^\d*\.?\d+$/,
-                        message: "Only numbers are allowed",
-                      },
-                      {
-                        validator: (_, value) => {
-                          if (parseFloat(value) > 80) {
-                            return Promise.reject(
-                              "File size must not exceed 80 MB"
-                            );
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]}
-                  >
-                    <Input
-                      disabled={!isEditing}
-                      placeholder="Enter maximum file size in MB"
-                      className="file-input"
-                      suffix="MB"
-                    />
-                  </Form.Item>
+                  <div className="settings-form-section compact">
+                    <div className="section-heading">
+                      <span className="section-step">1</span>
+                      <div>
+                        <Title level={5}>Upload Limit</Title>
+                        <Text>Define the maximum single-file size allowed across chat uploads.</Text>
+                      </div>
+                    </div>
 
-                  <Form.Item>
-                    {isEditing ? (
-                      <Space className="file-actions">
+                    <Form.Item
+                      label={
+                        <Space>
+                          <FileOutlined />
+                          <span>Maximum File Size (MB)</span>
+                        </Space>
+                      }
+                      name="maxFileLimit"
+                      rules={[
+                        { required: true, message: "File size is required" },
+                        {
+                          pattern: /^\d*\.?\d+$/,
+                          message: "Only numbers are allowed",
+                        },
+                        {
+                          validator: (_, value) => {
+                            if (!value) return Promise.resolve();
+                            if (parseFloat(value) <= 0) {
+                              return Promise.reject(
+                                "File size must be greater than 0"
+                              );
+                            }
+                            return Promise.resolve();
+                          },
+                        },
+                        {
+                          validator: (_, value) => {
+                            if (parseFloat(value) > 80) {
+                              return Promise.reject(
+                                "File size must not exceed 80 MB"
+                              );
+                            }
+                            return Promise.resolve();
+                          },
+                        },
+                      ]}
+                    >
+                      <Input
+                        disabled={!isEditing}
+                        placeholder="Enter maximum file size in MB"
+                        className="file-input"
+                        suffix="MB"
+                      />
+                    </Form.Item>
+
+                    <Form.Item>
+                      {isEditing ? (
+                        <Space className="file-actions">
+                          <Button
+                            type="primary"
+                            htmlType="submit"
+                            icon={<SaveOutlined />}
+                            loading={fileLoading}
+                            className="save-btn"
+                          >
+                            Save Changes
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              fileForm.setFieldsValue({
+                                maxFileLimit: fileLimit,
+                              });
+                              setIsEditing(false);
+                            }}
+                            className="delete-btn"
+                          >
+                            Cancel
+                          </Button>
+                        </Space>
+                      ) : (
                         <Button
                           type="primary"
-                          htmlType="submit"
-                          icon={<SaveOutlined />}
-                          loading={fileLoading}
-                          className="save-btn"
+                          icon={<EditOutlined />}
+                          onClick={() => setIsEditing(true)}
+                          className="edit-btn"
                         >
-                          Save Changes
+                          Edit File Limit
                         </Button>
-                        <Button
-                          onClick={() => setIsEditing(false)}
-                          className="delete-btn"
-                        >
-                          Cancel
-                        </Button>
-                      </Space>
-                    ) : (
-                      <Button
-                        type="primary"
-                        icon={<EditOutlined />}
-                        onClick={() => setIsEditing(true)}
-                        className="edit-btn"
-                      >
-                        Edit File Limit
-                      </Button>
-                    )}
-                  </Form.Item>
+                      )}
+                    </Form.Item>
+                  </div>
                 </Form>
               </Card>
 

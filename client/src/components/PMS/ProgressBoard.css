@@ -70,6 +70,96 @@
   color: var(--app-primary) !important;
 }
 
+.pb-project-switcher-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(460px, 100%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pb-project-switcher-icon {
+  color: var(--app-text-subtle);
+  font-size: 11px;
+  transition: transform 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.pb-project-switcher-trigger:hover .pb-project-switcher-icon,
+.pb-project-switcher-trigger:focus .pb-project-switcher-icon {
+  color: var(--app-primary);
+}
+
+.pb-project-switcher-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.pb-project-switcher-popover .ant-popover-inner {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+}
+
+.pb-project-switcher-popover .ant-popover-inner-content {
+  padding: 0;
+}
+
+.pb-project-switcher-menu {
+  width: min(360px, calc(100vw - 32px));
+  background: var(--app-surface);
+}
+
+.pb-project-switcher-search {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.pb-project-switcher-search .ant-input {
+  border-radius: 10px;
+  height: 36px;
+}
+
+.pb-project-switcher-list {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.pb-project-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.pb-project-switcher-item:hover {
+  background: var(--app-surface-2);
+}
+
+.pb-project-switcher-item a {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+}
+
+.pb-project-switcher-item p {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Manage dropdown arrow */
 .pb-manage-arrow {
   font-size: 11px !important;
@@ -171,6 +261,11 @@
   .pb-project-title {
     font-size: 15px !important;
     max-width: 200px;
+  }
+
+  .pb-project-switcher-trigger {
+    max-width: 240px;
+    gap: 6px;
   }
 
   .pb-header {
