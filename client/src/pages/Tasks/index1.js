@@ -20,6 +20,8 @@ import {
   Col,
 } from "antd";
 import {
+  PlusOutlined,
+  DownOutlined,
   CalendarOutlined,
   RightOutlined,
   EditOutlined,
@@ -237,8 +239,9 @@ function TasksPMS({ flag }) {
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
                   <Button className="add-btn ant-btn-primary">
-                    <i className="fi fi-br-plus"></i> Add
-                    <i className="fi fi-ss-angle-small-down"></i>
+                    <PlusOutlined className="add-btn-leading-icon" />
+                    <span>Add</span>
+                    <DownOutlined className="add-btn-trailing-icon" />
                   </Button>
                 </Dropdown>
               )}

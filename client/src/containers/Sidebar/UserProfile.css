@@ -159,6 +159,15 @@
     border: 2px solid #ffffff;
   }
 
+  .user-pill .avatar-user-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 15px;
+  }
+
   .user-pill-name {
     font-size: 16px;
     font-weight: 600;

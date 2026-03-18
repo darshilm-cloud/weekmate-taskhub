@@ -1331,14 +1331,14 @@ function NotesPMS() {
             </div>
           </div>
           <div className="notes">
-            {getDetails.length == 0 && (
+            {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
-                <p>No Data</p>
+                <p>No notes yet</p>
               </div>
             )}
 
             {projectNotebook.length == 0 &&
-              (getDetails.length > 0 ? (
+              getDetails.length > 0 &&
                 getDetails?.map((note, index) => {
                   const Title = note.title;
 
@@ -1413,10 +1413,7 @@ function NotesPMS() {
                       </div>
                     </>
                   );
-                })
-              ) : (
-                <div style={{ padding: "40px 0", textAlign: "center", color: "#94a3b8" }}>No notes yet</div>
-              ))}
+                })}
 
             <Modal
               destroyOnClose

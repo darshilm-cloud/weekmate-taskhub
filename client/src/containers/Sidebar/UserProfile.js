@@ -16,13 +16,13 @@ import {
 } from "antd";
 import PropTypes from "prop-types";
 import {
+  UserOutlined,
   BellOutlined,
   CloseCircleOutlined,
   DownOutlined,
   EyeOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-import ProfileImage from "../../assets/images/default_profile.jpg";
 import { Link, withRouter, useHistory } from "react-router-dom";
 import Service from "../../service";
 
@@ -77,6 +77,15 @@ function UserProfile() {
 
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+
+  const avatarSrc = authUser?.emp_img
+    ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
+    : "";
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [authUser?.emp_img]);
 
   const getLocalProjectNotificationKey = () =>
     `weekmate-project-notifications-${companySlug || "default"}`;
@@ -1050,15 +1059,18 @@ function UserProfile() {
               className="user-profile"
             >
               <div className="user-pill">
-                <img
-                  src={
-                    authUser?.emp_img
-                      ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
-                      : ProfileImage
-                  }
-                  className="avatar-user"
-                  alt="User"
-                />
+                {avatarSrc && !avatarLoadFailed ? (
+                  <img
+                    src={avatarSrc}
+                    className="avatar-user"
+                    alt="User"
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
+                ) : (
+                  <span className="avatar-user avatar-user-fallback" aria-label="User">
+                    <UserOutlined />
+                  </span>
+                )}
                 <span className="user-pill-name">
                   {authUser?.full_name ||
                     authUser?.name ||
