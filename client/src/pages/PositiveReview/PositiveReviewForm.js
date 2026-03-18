@@ -1,14 +1,21 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Button, Checkbox, Col, Form, Input, message, Row, Select } from "antd";
-import { Header } from "antd/es/layout/layout";
-import { useDispatch } from "react-redux";
+import {
+  ProjectOutlined,
+  UserOutlined,
+  TeamOutlined,
+  MessageOutlined,
+  ArrowLeftOutlined,
+  StarOutlined,
+} from "@ant-design/icons";
 import { useHistory, useParams } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 
 import Service from "../../service";
-import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import { ReviewFormSkeleton } from "../../components/common/SkeletonLoader";
 import "../Complaints/ComplaintsForm.css";
+import "./PositiveReview.css";
 import "../../assets/css/pms.css";
 import "../../assets/css/style.css";
 
@@ -21,123 +28,46 @@ const FEEDBACK_TYPE_OPTIONS = [
   { value: "Zoho Partner Profile", label: "Zoho Partner Profile" },
 ];
 
-const FORM_LAYOUT = {
-  labelCol: { xs: { span: 24 }, sm: { span: 8 } },
-  wrapperCol: { xs: { span: 24 }, sm: { span: 16 } },
-};
-
 const PositiveReviewForm = () => {
-  // Hooks
   const { review_id } = useParams();
   const companySlug = localStorage.getItem("companyDomain");
   const [form] = Form.useForm();
-  const dispatch = useDispatch();
   const history = useHistory();
 
-  // State
   const [projects, setProjects] = useState([]);
   const [selectedFeedbackType, setSelectedFeedbackType] = useState("");
   const [reviewId, setReviewId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [projectsLoading, setProjectsLoading] = useState(true);  // project dropdown loading
+  const [detailLoading, setDetailLoading] = useState(false);     // on project select
+  const [submitting, setSubmitting] = useState(false);           // form submit only
+  const [pageLoading, setPageLoading] = useState(!!review_id);   // skeleton only in edit mode
 
-  // Memoized values
   const isEditMode = useMemo(() => Boolean(reviewId), [reviewId]);
   const headerTitle = useMemo(() => `${isEditMode ? "Edit" : "Add"} Review`, [isEditMode]);
-  const submitButtonText = useMemo(() => isEditMode ? "Update" : "Submit", [isEditMode]);
+  const submitButtonText = useMemo(() => (isEditMode ? "Update" : "Submit"), [isEditMode]);
 
-  // API calls with error handling
-  const handleApiCall = useCallback(async (apiCall, errorMessage = "An error occurred") => {
-    try {
-      setLoading(true);
-      dispatch(showAuthLoader());
-      const response = await apiCall();
-      return response;
-    } catch (error) {
-      console.error(errorMessage, error);
-      message.error(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
-      dispatch(hideAuthLoader());
-    }
-  }, [dispatch]);
-
-  // Fetch projects
-  const getProjects = useCallback(async () => {
-    await handleApiCall(
-      async () => {
-        const response = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.myProjects,
-        });
-
-        if (response?.data?.data) {
-          setProjects(response.data.data);
-        }
-        return response;
-      },
-      "Failed to fetch projects"
-    );
-  }, [handleApiCall]);
-
-  // Fetch project details
   const getProjectDetails = useCallback(async (projectId) => {
     if (!projectId) return;
-
-    await handleApiCall(
-      async () => {
-        const response = await Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: `${Service.getOverview}/${projectId}`,
+    try {
+      setDetailLoading(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getOverview}/${projectId}`,
+      });
+      if (response?.data?.data) {
+        const { manager, acc_manager } = response.data.data;
+        form.setFieldsValue({
+          project_manager: manager?.full_name || "",
+          account_manager: acc_manager?.full_name || "",
         });
+      }
+    } catch (error) {
+      console.error("Failed to fetch project details", error);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [form]);
 
-        if (response?.data?.data) {
-          const { manager, acc_manager } = response.data.data;
-          form.setFieldsValue({
-            project_manager: manager?.full_name || "",
-            account_manager: acc_manager?.full_name || "",
-          });
-        }
-        return response;
-      },
-      "Failed to fetch project details"
-    );
-  }, [form, handleApiCall]);
-
-  // Fetch review for editing
-  const getReviewForEdit = useCallback(async (reviewId) => {
-    if (!reviewId) return;
-
-    setReviewId(reviewId);
-    await handleApiCall(
-      async () => {
-        const response = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getReviewList,
-          body: { _id: reviewId },
-        });
-
-        if (response?.data?.data) {
-          const reviewData = response.data.data;
-          setSelectedFeedbackType(reviewData.feedback_type || "");
-          
-          form.setFieldsValue({
-            project: reviewData.project_id,
-            client_name: reviewData.client_name,
-            feedback: reviewData.feedback,
-            feedback_type: reviewData.feedback_type,
-            project_manager: reviewData.manager?.full_name || "",
-            account_manager: reviewData.acc_manager?.full_name || "",
-            client_nda_sign: reviewData.client_nda_sign || false,
-          });
-        }
-        return response;
-      },
-      "Failed to fetch review details"
-    );
-  }, [form, handleApiCall]);
-
-  // Handle form submission
   const handleSubmit = useCallback(async (values) => {
     const reqBody = {
       project_id: values.project,
@@ -146,27 +76,22 @@ const PositiveReviewForm = () => {
       feedback: values.feedback,
       client_nda_sign: values.client_nda_sign || false,
     };
-
     try {
-      setLoading(true);
+      setSubmitting(true);
       let response;
-
       if (reviewId) {
-        // Update existing review
         response = await Service.makeAPICall({
           methodName: Service.putMethod,
           api_url: `${Service.updateReview}/${reviewId}`,
           body: reqBody,
         });
       } else {
-        // Create new review
         response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.addReview,
           body: reqBody,
         });
       }
-
       if (response?.data?.data && (response.data.statusCode === 201 || response.data.statusCode === 200)) {
         message.success(response.data.message || "Review saved successfully");
         history.push(`/${companySlug}/positive-review`);
@@ -177,11 +102,10 @@ const PositiveReviewForm = () => {
       console.error("Submit error:", error);
       message.error("An error occurred while saving the review");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }, [selectedFeedbackType, reviewId, history]);
 
-  // Event handlers
   const handleFeedbackTypeChange = useCallback((value) => {
     setSelectedFeedbackType(value);
   }, []);
@@ -194,20 +118,65 @@ const PositiveReviewForm = () => {
     history.push(`/${companySlug}/positive-review`);
   }, [history]);
 
-  // Effects
   useEffect(() => {
-    const initializeForm = async () => {
-      await getProjects();
-      if (review_id) {
-        await getReviewForEdit(review_id);
+    // Fetch projects in background — don't block page render
+    const fetchProjects = async () => {
+      try {
+        // Check session cache first to avoid slow repeated fetches
+        const cached = sessionStorage.getItem("prf_projects");
+        if (cached) {
+          setProjects(JSON.parse(cached));
+          setProjectsLoading(false);
+          return;
+        }
+        const res = await Service.makeAPICall({ methodName: Service.postMethod, api_url: Service.myProjects });
+        if (res?.data?.data) {
+          setProjects(res.data.data);
+          sessionStorage.setItem("prf_projects", JSON.stringify(res.data.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch projects", error);
+      } finally {
+        setProjectsLoading(false);
       }
     };
 
-    initializeForm();
-  }, [review_id, getProjects, getReviewForEdit]);
+    // Fetch review data (fast) — only in edit mode, this drives the skeleton
+    const fetchReview = async () => {
+      if (!review_id) return;
+      try {
+        setReviewId(review_id);
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getReviewList,
+          body: { _id: review_id },
+        });
+        if (res?.data?.data) {
+          const d = res.data.data;
+          setSelectedFeedbackType(d.feedback_type || "");
+          form.setFieldsValue({
+            project: d.project_id,
+            client_name: d.client_name,
+            feedback: d.feedback,
+            feedback_type: d.feedback_type,
+            project_manager: d.manager?.full_name || "",
+            account_manager: d.acc_manager?.full_name || "",
+            client_nda_sign: d.client_nda_sign || false,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch review", error);
+      } finally {
+        setPageLoading(false);
+      }
+    };
 
-  // Memoized project options
-  const projectOptions = useMemo(() => 
+    // Both run in parallel — projects loads quietly, review unblocks skeleton fast
+    fetchProjects();
+    fetchReview();
+  }, [review_id]);
+
+  const projectOptions = useMemo(() =>
     projects.map((project, index) => (
       <Select.Option
         key={`${project._id}-${index}`}
@@ -220,177 +189,152 @@ const PositiveReviewForm = () => {
     [projects]
   );
 
+  if (pageLoading) return <ReviewFormSkeleton />;
+
   return (
-    <div className="main-time-sheet-project-wrapper pr-form-page">
-      <Header className="main-header">
-        <div className="project-name">
-          <h3 style={{ textTransform: "capitalize" }}>
-            {headerTitle}
-          </h3>
-        </div>
-      </Header>
-      
-      <div className="project-wrapper new-project-overview project-running-reports">
-        <div className="peoject-page">
-          <div className="header">
-            <div className="project-running-reports-fillter-wrapper feedback-form">
-              <Form
-                form={form}
-                noValidate
- labelCol={{ xs: 24, sm: 24, md: 8, lg: 8 }}
-  wrapperCol={{ xs: 24, sm: 24, md: 16, lg: 16 }}
-  labelWrap
-                // {...FORM_LAYOUT}
-                  labelAlign="left"
-                onFinish={handleSubmit}
-              >
-                <Row>
-                  <Col span={12}>
-                    <Form.Item
-                      name="project"
-                      label="Project"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please Select Project !",
-                        },
-                      ]}
-                    >
-                      <Select
-                        placeholder="Project"
-                        showSearch
-                        loading={loading}
-                        filterOption={(input, option) =>
-                          option.children
-                            ?.toLowerCase()
-                            .indexOf(input?.toLowerCase()) >= 0
-                        }
-                        filterSort={(optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            .localeCompare(optionB.children?.toLowerCase())
-                        }
-                        onChange={handleProjectChange}
-                      >
-                        {projectOptions}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="project_manager"
-                      label="Project Manager"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter Project Manager name !",
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Enter Project Manager name"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col span={12}>
-                    <Form.Item
-                      name="account_manager"
-                      label="Account Manager"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please Select Account Manager !",
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Enter Account Manager name"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      label="Client Name"
-                      name="client_name"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter client name !",
-                        },
-                      ]}
-                    >
-                      <Input placeholder="Enter client name" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col span={12}>
-                    <Form.Item name="feedback_type" label="Feedback Type">
-                      <Select
-                        onChange={handleFeedbackTypeChange}
-                        defaultValue="--select--"
-                        options={FEEDBACK_TYPE_OPTIONS}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col span={12}>
-                    <Form.Item
-                      label="Did the client sign the NDA?"
-                      name="client_nda_sign"
-                      valuePropName="checked"
-                    >
-                      <Checkbox />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      label="Feedback"
-                      name="feedback"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please fill the feedback!",
-                        },
-                      ]}
-                    >
-                      <TextArea rows={4} placeholder="Enter your feedback" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Form.Item>
-                  <div className="feedback-submit-button-form">
-                    <Button 
-                      id="addbutton" 
-                      type="primary" 
-                      htmlType="submit"
-                      loading={loading}
-                    >
-                      {submitButtonText}
-                    </Button>
-                    <Button
-                      className="ant-delete delete-btn"
-          
-                      onClick={handleCancel}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </Form.Item>
-              </Form>
-            </div>
+    <div className="prf-page">
+      {/* Page Header */}
+      <div className="prf-header">
+        <button className="prf-back-btn" onClick={handleCancel}>
+          <ArrowLeftOutlined />
+        </button>
+        <div className="prf-header-text">
+          <div className="prf-header-icon">
+            <StarOutlined />
+          </div>
+          <div>
+            <h2 className="prf-title">{headerTitle}</h2>
+            <p className="prf-subtitle">Fill in the details to record client feedback</p>
           </div>
         </div>
+      </div>
+
+      {/* Form Card */}
+      <div className="prf-card">
+        <Form
+          form={form}
+          noValidate
+          layout="vertical"
+          onFinish={handleSubmit}
+          className="prf-form"
+        >
+          {/* Section: Project Info */}
+          <div className="prf-section">
+            <div className="prf-section-title">
+              <ProjectOutlined /> Project Information
+            </div>
+            <Row gutter={[24, 0]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="project"
+                  label="Project"
+                  rules={[{ required: true, message: "Please select a project!" }]}
+                >
+                  <Select
+                    placeholder="Select a project"
+                    showSearch
+                    loading={projectsLoading}
+                    filterOption={(input, option) =>
+                      option.children?.toLowerCase().indexOf(input?.toLowerCase()) >= 0
+                    }
+                    filterSort={(a, b) =>
+                      a.children?.toLowerCase().localeCompare(b.children?.toLowerCase())
+                    }
+                    onChange={handleProjectChange}
+                  >
+                    {projectOptions}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="project_manager"
+                  label="Project Manager"
+                  rules={[{ required: true, message: "Please enter Project Manager name!" }]}
+                >
+                  <Input prefix={<UserOutlined />} placeholder="Auto-filled on project select" disabled suffix={detailLoading ? <span className="ant-spin-dot" style={{width:12,height:12}} /> : null} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="account_manager"
+                  label="Account Manager"
+                  rules={[{ required: true, message: "Please select Account Manager!" }]}
+                >
+                  <Input prefix={<TeamOutlined />} placeholder="Auto-filled on project select" disabled suffix={detailLoading ? <span className="ant-spin-dot" style={{width:12,height:12}} /> : null} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Client Name"
+                  name="client_name"
+                  rules={[{ required: true, message: "Please enter client name!" }]}
+                >
+                  <Input prefix={<UserOutlined />} placeholder="Enter client name" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Divider */}
+          <div className="prf-divider" />
+
+          {/* Section: Feedback Details */}
+          <div className="prf-section">
+            <div className="prf-section-title">
+              <MessageOutlined /> Feedback Details
+            </div>
+            <Row gutter={[24, 0]}>
+              <Col xs={24} md={12}>
+                <Form.Item name="feedback_type" label="Feedback Type">
+                  <Select
+                    onChange={handleFeedbackTypeChange}
+                    placeholder="Select feedback type"
+                    options={FEEDBACK_TYPE_OPTIONS}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Did the client sign the NDA?"
+                  name="client_nda_sign"
+                  valuePropName="checked"
+                  className="prf-nda-item"
+                >
+                  <Checkbox>Yes, client signed NDA</Checkbox>
+                </Form.Item>
+              </Col>
+              <Col xs={24}>
+                <Form.Item
+                  label="Feedback"
+                  name="feedback"
+                  rules={[{ required: true, message: "Please fill the feedback!" }]}
+                >
+                  <TextArea rows={5} placeholder="Enter the client's feedback here..." />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Actions */}
+          <div className="prf-actions">
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitting}
+              className="prf-submit-btn"
+            >
+              {submitButtonText}
+            </Button>
+            <Button
+              className="prf-cancel-btn"
+              onClick={handleCancel}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </Form>
       </div>
     </div>
   );

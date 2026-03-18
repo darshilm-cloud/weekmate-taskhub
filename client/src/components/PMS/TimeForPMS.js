@@ -61,6 +61,7 @@ import { isCreatedBy } from "../../util/isCreatedBy";
 import { fileImageSelect } from "../../util/FIleSelection";
 import EditCommentModal from "../Modal/EditCommentModal";
 import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
+import { TimeSkeleton } from "../common/SkeletonLoader";
 
 function TimeForPMS() {
   const { emitEvent } = useSocketAction();
@@ -89,6 +90,7 @@ function TimeForPMS() {
   const [taskdropdown, setTaskdropdown] = useState([]);
   const [buglistdropdown, setBuglistDropdown] = useState([]);
   const [timesheetdropdownById, setTimesheetdropdownById] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [selectedTimesheet, setSelectedTimesheet] = useState({});
   const [timesheetList, setTimesheetList] = useState([]);
   const [radioValue, setRadioValue] = useState("this_month");
@@ -263,6 +265,7 @@ function TimeForPMS() {
   useEffect(() => {
     getTaskdropdown();
     getTimesheetSummary();
+    handleBuglist();
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 
@@ -290,6 +293,7 @@ function TimeForPMS() {
   }, [loggedID, timesheetdropdownById]);
   const getTimesheet = async () => {
     try {
+      setPageLoading(true);
       dispatch(showAuthLoader());
 
       const reqBody = {
@@ -305,13 +309,15 @@ function TimeForPMS() {
       if (response?.data?.data && response?.data?.status) {
         const emp = response.data.data;
         setTimesheetList(response.data.data);
-        getTimesheetById(response.data?.data[0]?._id);
         setSelectedTimesheet(response.data.data[0]);
+        await getTimesheetById(response.data?.data[0]?._id);
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -651,20 +657,15 @@ function TimeForPMS() {
 
   const getTaskdropdown = async () => {
     try {
-      const reqBody = {};
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.tasksDropdownforTime + "/" + projectId,
-        body: reqBody,
+        methodName: Service.postMethod,
+        api_url: Service.getProjectMianTask,
+        body: { project_id: projectId },
       });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        const emp = response.data.data;
-        setTaskdropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data?.data?.length > 0) {
+        setTaskdropdown(response.data.data);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -672,17 +673,15 @@ function TimeForPMS() {
   const handleBuglist = async (selectedTaskId) => {
     try {
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getBuglistdropdown + selectedTaskId,
+        methodName: Service.postMethod,
+        api_url: Service.getBug,
+        body: { project_id: projectId },
       });
-      if (response.data && response.data.data && response?.data?.status) {
-        const emp = response.data.data;
-        setBuglistDropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data && response?.data?.data && response?.data?.status) {
+        const bugs = response.data.data.flatMap((stage) => stage.bugs || []);
+        setBuglistDropdown(bugs);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -1538,6 +1537,8 @@ function TimeForPMS() {
     </Menu>
   );
 
+  if (pageLoading) return <TimeSkeleton />;
+
   return (
     <>
       <AddTimeModal
@@ -1563,7 +1564,7 @@ function TimeForPMS() {
 
       <Modal
         open={isModalOpenTimesheet}
-        width={481}
+        width={800}
         onCancel={handleModalOpenTimesheet}
         title={null}
         footer={null}
@@ -1864,15 +1865,80 @@ function TimeForPMS() {
             </div>
           </div>
 
-          <Table
-            className="time-block-table"
-            rowClassName="pointer-row"
-            rowSelection={rowSelection}
-            columns={columns}
-            dataSource={timesheetdropdownById}
-            pagination={false}
-            style={{ overflowY: "auto" }}
-          />
+          <div className="time-cards-grid">
+            {timesheetdropdownById?.length > 0 ? (
+              timesheetdropdownById.map((record, index) => {
+                const date = moment(record.logged_date, "DD-MM-YYYY");
+                const formattedDate = date.isValid() ? date.format("DD MMMM YYYY") : record.logged_date;
+                const isSelected = selectedRowKeys.includes(record._id);
+                return (
+                  <div
+                    key={record._id || index}
+                    className={`time-log-card${isSelected ? " time-log-card--selected" : ""}`}
+                    onClick={() => {
+                      const newKeys = isSelected
+                        ? selectedRowKeys.filter((k) => k !== record._id)
+                        : [...selectedRowKeys, record._id];
+                      onSelectChange(newKeys);
+                    }}
+                  >
+                    <div className="time-log-card__header">
+                      <div className="time-log-card__user">
+                        <MyAvatar userName={record.loggedBy} src={record.emp_img} />
+                        <span className="time-log-card__name">{record.loggedBy ? removeTitle(record.loggedBy) : "-"}</span>
+                      </div>
+                      <span className="time-log-card__badge">{record.time || "-"}</span>
+                    </div>
+                    <div className="time-log-card__body">
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Date</span>
+                        <span className="time-log-card__value">{formattedDate}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Project</span>
+                        <span className="time-log-card__value">{record.project || "-"}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Tasklist</span>
+                        <span className="time-log-card__value">{record.main_taskList || "-"}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Task</span>
+                        <span className="time-log-card__value">{record.task || "-"}</span>
+                      </div>
+                      {record.bug && (
+                        <div className="time-log-card__row">
+                          <span className="time-log-card__label">Bug</span>
+                          <span className="time-log-card__value">{record.bug}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="time-log-card__footer" onClick={(e) => e.stopPropagation()}>
+                      <EyeOutlined
+                        className="time-log-card__action-icon time-log-card__action-icon--view"
+                        onClick={() => { handleRowClick(record); setSelectedId(record._id); }}
+                      />
+                      <EditOutlined
+                        className="time-log-card__action-icon time-log-card__action-icon--edit"
+                        onClick={() => { setSelectedId(record._id); handleRowClick(record); setOnEditClick(true); }}
+                      />
+                      <Popconfirm
+                        icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                        title="Are you sure to delete this Logged Hours?"
+                        onConfirm={() => { setSelectedId(record._id); deleteTime2(record._id); }}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <DeleteOutlined className="time-log-card__action-icon time-log-card__action-icon--delete" />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="time-cards-empty">No logged time entries</div>
+            )}
+          </div>
         </div>
       </div>
 

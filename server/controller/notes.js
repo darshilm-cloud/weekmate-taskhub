@@ -92,7 +92,7 @@ exports.addNotes = async (req, res) => {
       color: Joi.string().allow("").optional(),
       isPrivate: Joi.boolean().optional().default(false),
       project_id: Joi.string().required(),
-      noteBook_id: Joi.string().optional().default(null),
+      noteBook_id: Joi.string().allow("", null).optional(),
       subscribers: Joi.array().allow("").optional(),
       pms_clients: Joi.array().optional().default([])
     });
@@ -111,7 +111,7 @@ exports.addNotes = async (req, res) => {
       let data = new Notes({
         title: value.title,
         project_id: value.project_id,
-        noteBook_id: value.noteBook_id,
+        ...(value.noteBook_id ? { noteBook_id: value.noteBook_id } : {}),
         isPrivate: value.isPrivate,
         color: value.color,
         subscribers: value.subscribers || [],
@@ -151,9 +151,10 @@ exports.getNotes = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional().allow(""),
-      project_id: Joi.string().required(),
+      project_id: Joi.string().optional().allow(""),
       notebook_id: Joi.string().optional().default(null),
-      subscribers: Joi.array().optional()
+      subscribers: Joi.array().optional(),
+      isBookmark: Joi.boolean().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -174,8 +175,8 @@ exports.getNotes = async (req, res) => {
 
     const [isAdmin, isManager, isAccManager] = await Promise.all([
       checkUserIsAdmin(req.user._id),
-      checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
+      value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
     ]);
 
     let matchQuery = {
@@ -222,6 +223,7 @@ exports.getNotes = async (req, res) => {
         : {}),
 
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value.isBookmark !== undefined ? { isBookmark: value.isBookmark } : {}),
       // ...(value.subscribers ? { subscribers: { $in: value.subscribers } } : {}),
       ...(value.subscribers && value.subscribers.length > 0
         ? value.subscribers.includes("all")

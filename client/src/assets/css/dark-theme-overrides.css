@@ -4,6 +4,203 @@
  * Only applies when body has .dark-theme or [data-theme="dark"].
  */
 
+/* ================================================================
+   GLOBAL MODAL OVERRIDES — applies in BOTH light & dark
+   Loaded last → wins all specificity battles against pms.css
+   ================================================================ */
+
+/* ── Remove inner scrollbar from all project modals ── */
+.admin-user .add-task-modal .overview-modal-wrapper,
+.admin-user .add-list-modal .overview-modal-wrapper,
+.admin-user .copy-task-modal .overview-modal-wrapper,
+.admin-user .edit-details-task-model .overview-modal-wrapper,
+.admin-user .disscusion-pop-wrapper .overview-modal-wrapper,
+.admin-user .upload-modal .overview-modal-wrapper,
+.admin-user .log-time-modal .overview-modal-wrapper,
+.admin-user .time-for-pms-modal .overview-modal-wrapper {
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow: visible !important;
+}
+
+/* ── Increase modal widths (overrides inline style via !important) ── */
+.admin-user .ant-modal.add-task-modal,
+.admin-user .ant-modal.add-list-modal,
+.admin-user .ant-modal.copy-task-modal,
+.admin-user .ant-modal.edit-details-task-model,
+.admin-user .ant-modal.disscusion-pop-wrapper,
+.admin-user .ant-modal.upload-modal,
+.admin-user .ant-modal.log-time-modal,
+.admin-user .ant-modal.time-for-pms-modal {
+  width: 1000px !important;
+  max-width: 96vw !important;
+}
+
+/* ── Cancel buttons inside project modals → neutral grey ── */
+.admin-user .add-task-modal .ant-btn.ant-delete,
+.admin-user .add-task-modal .ant-btn.delete-btn,
+.admin-user .add-task-modal .ant-btn.square-outline-btn,
+.admin-user .add-list-modal .ant-btn.ant-delete,
+.admin-user .add-list-modal .ant-btn.delete-btn,
+.admin-user .add-list-modal .ant-btn.square-outline-btn,
+.admin-user .copy-task-modal .ant-btn.ant-delete,
+.admin-user .copy-task-modal .ant-btn.delete-btn,
+.admin-user .copy-task-modal .ant-btn.square-outline-btn,
+.admin-user .notes-project-modal .ant-btn.ant-delete,
+.admin-user .notes-project-modal .ant-btn.delete-btn,
+.admin-user .log-time-modal .ant-btn.ant-delete,
+.admin-user .log-time-modal .ant-btn.delete-btn,
+.admin-user .time-for-pms-modal .ant-btn.ant-delete,
+.admin-user .time-for-pms-modal .ant-btn.delete-btn,
+.admin-user .disscusion-pop-wrapper .ant-btn.ant-delete,
+.admin-user .disscusion-pop-wrapper .ant-btn.delete-btn,
+.admin-user .upload-modal .ant-btn.ant-delete,
+.admin-user .upload-modal .ant-btn.delete-btn,
+.admin-user .edit-details-task-model .ant-btn.ant-delete,
+.admin-user .edit-details-task-model .ant-btn.delete-btn,
+.admin-user .edit-details-task-model .ant-btn.square-outline-btn {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.admin-user .add-task-modal .ant-btn.ant-delete:hover,
+.admin-user .add-task-modal .ant-btn.delete-btn:hover,
+.admin-user .add-task-modal .ant-btn.square-outline-btn:hover,
+.admin-user .add-list-modal .ant-btn.ant-delete:hover,
+.admin-user .add-list-modal .ant-btn.delete-btn:hover,
+.admin-user .copy-task-modal .ant-btn.ant-delete:hover,
+.admin-user .copy-task-modal .ant-btn.square-outline-btn:hover,
+.admin-user .disscusion-pop-wrapper .ant-btn.delete-btn:hover,
+.admin-user .edit-details-task-model .ant-btn.ant-delete:hover,
+.admin-user .edit-details-task-model .ant-btn.square-outline-btn:hover {
+  background: #e2e8f0 !important;
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* ── Save / primary buttons inside modals → vibrant blue ── */
+.admin-user .add-task-modal .ant-btn.ant-btn-primary,
+.admin-user .add-task-modal .ant-btn.square-primary-btn,
+.admin-user .add-list-modal .ant-btn.ant-btn-primary,
+.admin-user .add-list-modal .ant-btn.square-primary-btn,
+.admin-user .copy-task-modal .ant-btn.square-primary-btn,
+.admin-user .notes-project-modal .ant-btn.square-primary-btn,
+.admin-user .log-time-modal .ant-btn.square-primary-btn,
+.admin-user .time-for-pms-modal .ant-btn.square-primary-btn,
+.admin-user .disscusion-pop-wrapper .ant-btn.square-primary-btn,
+.admin-user .upload-modal .ant-btn.ant-btn-primary,
+.admin-user .edit-details-task-model .ant-btn.square-primary-btn,
+.admin-user .edit-details-task-model .ant-btn.ant-btn-primary {
+  background: #3b82f6 !important;
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.admin-user .add-task-modal .ant-btn.ant-btn-primary:hover,
+.admin-user .add-task-modal .ant-btn.square-primary-btn:hover,
+.admin-user .add-list-modal .ant-btn.ant-btn-primary:hover,
+.admin-user .add-list-modal .ant-btn.square-primary-btn:hover,
+.admin-user .edit-details-task-model .ant-btn.square-primary-btn:hover,
+.admin-user .edit-details-task-model .ant-btn.ant-btn-primary:hover,
+.admin-user .disscusion-pop-wrapper .ant-btn.square-primary-btn:hover,
+.admin-user .upload-modal .ant-btn.ant-btn-primary:hover {
+  background: #2563eb !important;
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+/* ── Modal footer border & padding ── */
+.admin-user .add-task-modal .ant-modal-footer,
+.admin-user .add-list-modal .ant-modal-footer,
+.admin-user .copy-task-modal .ant-modal-footer,
+.admin-user .edit-details-task-model .ant-modal-footer {
+  padding: 14px 24px !important;
+  border-top: 1px solid #e8ecf0 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+
+/* ── Modal title bar ── */
+.admin-user .add-task-modal .ant-modal-header,
+.admin-user .add-list-modal .ant-modal-header,
+.admin-user .edit-details-task-model .ant-modal-header,
+.admin-user .disscusion-pop-wrapper .ant-modal-header {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #e8ecf0 !important;
+  margin-bottom: 0 !important;
+}
+
+.admin-user .add-task-modal .ant-modal-title,
+.admin-user .add-list-modal .ant-modal-title,
+.admin-user .edit-details-task-model .ant-modal-title,
+.admin-user .disscusion-pop-wrapper .ant-modal-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+/* ── Modal content shell ── */
+.admin-user .add-task-modal .ant-modal-content,
+.admin-user .add-list-modal .ant-modal-content,
+.admin-user .edit-details-task-model .ant-modal-content,
+.admin-user .disscusion-pop-wrapper .ant-modal-content,
+.admin-user .upload-modal .ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.14) !important;
+  padding: 0 !important;
+}
+
+/* ── Modal body padding ── */
+.admin-user .add-task-modal .ant-modal-body,
+.admin-user .add-list-modal .ant-modal-body,
+.admin-user .edit-details-task-model .ant-modal-body,
+.admin-user .disscusion-pop-wrapper .ant-modal-body {
+  padding: 20px 24px !important;
+}
+
+/* ── Close button ── */
+.admin-user .add-task-modal .ant-modal-close,
+.admin-user .add-list-modal .ant-modal-close,
+.admin-user .edit-details-task-model .ant-modal-close,
+.admin-user .disscusion-pop-wrapper .ant-modal-close {
+  top: 14px !important;
+  right: 16px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: #f1f5f9 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.admin-user .add-task-modal .ant-modal-close:hover,
+.admin-user .add-list-modal .ant-modal-close:hover,
+.admin-user .edit-details-task-model .ant-modal-close:hover,
+.admin-user .disscusion-pop-wrapper .ant-modal-close:hover {
+  background: #e2e8f0 !important;
+}
+
+.admin-user .add-task-modal .ant-modal-close-x,
+.admin-user .add-list-modal .ant-modal-close-x,
+.admin-user .edit-details-task-model .ant-modal-close-x,
+.admin-user .disscusion-pop-wrapper .ant-modal-close-x {
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 13px !important;
+}
+
 /* ─── Base & layout ─── */
 body.dark-theme.admin-user,
 body.admin-user[data-theme="dark"] {
@@ -281,10 +478,94 @@ body.admin-user[data-theme="dark"] .new-dashboard-wrapper {
   color: #e2e8f0 !important;
 }
 
+body.dark-theme .task-wrapper,
+body.dark-theme .block-status-content,
+body.dark-theme .task-schedule-wrapper,
+body.dark-theme .new-dashboard-wrapper,
+body[data-theme="dark"] .task-wrapper,
+body[data-theme="dark"] .block-status-content,
+body[data-theme="dark"] .task-schedule-wrapper,
+body[data-theme="dark"] .new-dashboard-wrapper {
+  background: #19202c !important;
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
 body.dark-theme.admin-user .task-schedule-wrapper,
 body.admin-user[data-theme="dark"] .task-schedule-wrapper {
   background: #1e293b !important;
   background-color: #1e293b !important;
+}
+
+body.dark-theme .task-schedule-wrapper,
+body[data-theme="dark"] .task-schedule-wrapper {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}
+
+/* Task kanban board: override legacy main.css light cards/columns */
+body.dark-theme .task-wrapper .project-task-section,
+body.dark-theme .task-wrapper .project-task-list,
+body.dark-theme .task-wrapper .drag_container,
+body.dark-theme .task-wrapper .drag_column,
+body.dark-theme .task-wrapper .drag_row,
+body.dark-theme .task-wrapper .order.small-box,
+body.dark-theme .task-wrapper .borad-task-data,
+body[data-theme="dark"] .task-wrapper .project-task-section,
+body[data-theme="dark"] .task-wrapper .project-task-list,
+body[data-theme="dark"] .task-wrapper .drag_container,
+body[data-theme="dark"] .task-wrapper .drag_column,
+body[data-theme="dark"] .task-wrapper .drag_row,
+body[data-theme="dark"] .task-wrapper .order.small-box,
+body[data-theme="dark"] .task-wrapper .borad-task-data {
+  background: #16202d !important;
+  background-color: #16202d !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .task-wrapper .drag_column h4,
+body[data-theme="dark"] .task-wrapper .drag_column h4 {
+  background: #1c2938 !important;
+  background-color: #1c2938 !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .task-wrapper .project-task-list .card,
+body.dark-theme .task-wrapper .project-task-list .task-box,
+body[data-theme="dark"] .task-wrapper .project-task-list .card,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box {
+  background: #1c2938 !important;
+  background-color: #1c2938 !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .task-wrapper .project-task-list .task-box h3,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-due-date,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-due-date > span,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-due-date > a,
+body.dark-theme .task-wrapper .project-task-list .task-box .assignee-name,
+body.dark-theme .task-wrapper .project-task-list .task-box .assignee-name p,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-time,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-time > span,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-comment-hour-detail-wrapper,
+body.dark-theme .task-wrapper .project-task-list .task-box .task-comment-hour-detail-wrapper a,
+body.dark-theme .task-wrapper .project-task-list .task-box i,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box h3,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-due-date,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-due-date > span,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-due-date > a,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .assignee-name,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .assignee-name p,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-time,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-time > span,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-comment-hour-detail-wrapper,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box .task-comment-hour-detail-wrapper a,
+body[data-theme="dark"] .task-wrapper .project-task-list .task-box i {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
 }
 
 body.dark-theme.admin-user .page-layout h1,
@@ -536,4 +817,922 @@ body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .global
   background: #132238 !important;
   border-color: #314866 !important;
   color: #dce7fb !important;
+}
+
+/* ── Bug detail modal tabs header — dark theme ── */
+body.dark-theme.admin-user .task-detail-popup .ant-modal-content,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-content,
+body.dark-theme .task-detail-popup .ant-modal-content,
+body[data-theme="dark"] .task-detail-popup .ant-modal-content {
+  background: #0f172a !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+body.dark-theme.admin-user .task-detail-popup .ant-modal-close,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-close,
+body.dark-theme .task-detail-popup .ant-modal-close,
+body[data-theme="dark"] .task-detail-popup .ant-modal-close {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .task-detail-popup .ant-modal-close svg,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-close svg,
+body.dark-theme .task-detail-popup .ant-modal-close svg,
+body[data-theme="dark"] .task-detail-popup .ant-modal-close svg {
+  fill: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .task-detail-popup .ant-modal-close:hover,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-close:hover,
+body.dark-theme .task-detail-popup .ant-modal-close:hover,
+body[data-theme="dark"] .task-detail-popup .ant-modal-close:hover {
+  background: #1e293b !important;
+}
+
+body.dark-theme.admin-user .task-detail-popup .ant-modal-body,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-body,
+body.dark-theme .task-detail-popup .ant-modal-body,
+body[data-theme="dark"] .task-detail-popup .ant-modal-body {
+  padding: 0 !important;
+  background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav,
+body.dark-theme .bug-task-panel .ant-tabs-nav,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-nav,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav-wrap,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav-wrap,
+body.dark-theme .bug-task-panel .ant-tabs-nav-wrap,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-nav-wrap,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav-list,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav-list,
+body.dark-theme .bug-task-panel .ant-tabs-nav-list,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-nav-list {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-tab,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-tab,
+body.dark-theme .bug-task-panel .ant-tabs-tab,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-tab {
+  background: transparent !important;
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn,
+body.dark-theme .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #3b82f6 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs,
+body.dark-theme .bug-task-panel .ant-tabs,
+body[data-theme="dark"] .bug-task-panel .ant-tabs,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-content-holder,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-content-holder,
+body.dark-theme .bug-task-panel .ant-tabs-content-holder,
+body[data-theme="dark"] .bug-task-panel .ant-tabs-content-holder,
+body.dark-theme.admin-user .bug-task-panel .right-bug-panel,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-bug-panel,
+body.dark-theme .bug-task-panel .right-bug-panel,
+body[data-theme="dark"] .bug-task-panel .right-bug-panel {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-bug-panel .right-toolbar,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar,
+body.dark-theme .bug-task-panel .right-bug-panel .right-toolbar,
+body[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar {
+  background: #0f172a !important;
+  border-bottom-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-bug-panel .right-toolbar-tab label,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar-tab label,
+body.dark-theme .bug-task-panel .right-bug-panel .right-toolbar-tab label,
+body[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar-tab label {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-bug-panel .right-toolbar-tab label.active,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar-tab label.active,
+body.dark-theme .bug-task-panel .right-bug-panel .right-toolbar-tab label.active,
+body[data-theme="dark"] .bug-task-panel .right-bug-panel .right-toolbar-tab label.active {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── "Add Task Bug" header button — Light Blue ONLY in dark themes ── */
+body.dark-theme .bugs-task-wrapper .head-box-inner .add-btn,
+body.dark-theme .bugs-task-wrapper .head-box-inner button.ant-btn-primary.add-btn,
+body.dark-theme.admin-user .bugs-task-wrapper .head-box-inner .add-btn,
+body.dark-theme.admin-user .bugs-task-wrapper .head-box-inner button.ant-btn-primary.add-btn,
+body[data-theme="dark"] .bugs-task-wrapper .head-box-inner .add-btn,
+body[data-theme="dark"] .bugs-task-wrapper .head-box-inner button.ant-btn-primary.add-btn,
+body.admin-user[data-theme="dark"] .bugs-task-wrapper .head-box-inner .add-btn,
+body.admin-user[data-theme="dark"] .bugs-task-wrapper .head-box-inner button.ant-btn-primary.add-btn {
+  background-image: none !important;
+  background-color: #0ea5e9 !important;
+  border-color: #0284c7 !important;
+  color: #fff !important;
+}
+
+body.dark-theme .bugs-task-wrapper .head-box-inner .add-btn:hover,
+body.dark-theme.admin-user .bugs-task-wrapper .head-box-inner .add-btn:hover,
+body[data-theme="dark"] .bugs-task-wrapper .head-box-inner .add-btn:hover,
+body.admin-user[data-theme="dark"] .bugs-task-wrapper .head-box-inner .add-btn:hover {
+  background-image: none !important;
+  background-color: #0284c7 !important;
+  border-color: #0369a1 !important;
+  color: #fff !important;
+}
+
+
+/* ─── Notes page filter button (dark theme) ─── */
+body.dark-theme .filter-btn-wrapper .filter-btn,
+body.dark-theme.admin-user .filter-btn-wrapper .filter-btn,
+body[data-theme="dark"] .filter-btn-wrapper .filter-btn,
+body.admin-user[data-theme="dark"] .filter-btn-wrapper .filter-btn {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .filter-btn-wrapper .filter-btn:hover,
+body.dark-theme.admin-user .filter-btn-wrapper .filter-btn:hover,
+body[data-theme="dark"] .filter-btn-wrapper .filter-btn:hover,
+body.admin-user[data-theme="dark"] .filter-btn-wrapper .filter-btn:hover {
+  background: #2d3f55 !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+/* ─── Time page dark theme ─── */
+body.dark-theme .time-module-hour-bar small,
+body.dark-theme.admin-user .time-module-hour-bar small,
+body[data-theme="dark"] .time-module-hour-bar small,
+body.admin-user[data-theme="dark"] .time-module-hour-bar small {
+  background: #1e3a52 !important;
+  color: #7dd3fc !important;
+}
+
+body.dark-theme .times-wrapper .sidebar-menu-links li.active .time-module-hour-bar small,
+body.dark-theme.admin-user .times-wrapper .sidebar-menu-links li.active .time-module-hour-bar small,
+body[data-theme="dark"] .times-wrapper .sidebar-menu-links li.active .time-module-hour-bar small,
+body.admin-user[data-theme="dark"] .times-wrapper .sidebar-menu-links li.active .time-module-hour-bar small {
+  background: #187CB7 !important;
+  color: #fff !important;
+}
+
+body.dark-theme .time-block-table .ant-table-thead > tr > th,
+body.dark-theme.admin-user .time-block-table .ant-table-thead > tr > th,
+body[data-theme="dark"] .time-block-table .ant-table-thead > tr > th,
+body.admin-user[data-theme="dark"] .time-block-table .ant-table-thead > tr > th {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #334155 !important;
+}
+
+body.dark-theme .time-block-table .ant-table-tbody > tr > td,
+body.dark-theme.admin-user .time-block-table .ant-table-tbody > tr > td,
+body[data-theme="dark"] .time-block-table .ant-table-tbody > tr > td,
+body.admin-user[data-theme="dark"] .time-block-table .ant-table-tbody > tr > td {
+  border-bottom-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .time-block-table .ant-table-tbody > tr:nth-child(even) > td,
+body.dark-theme.admin-user .time-block-table .ant-table-tbody > tr:nth-child(even) > td,
+body[data-theme="dark"] .time-block-table .ant-table-tbody > tr:nth-child(even) > td,
+body.admin-user[data-theme="dark"] .time-block-table .ant-table-tbody > tr:nth-child(even) > td {
+  background: #1a2233 !important;
+}
+
+/* ─── Time log cards dark theme ─── */
+body.dark-theme .time-log-card,
+body.dark-theme.admin-user .time-log-card,
+body[data-theme="dark"] .time-log-card,
+body.admin-user[data-theme="dark"] .time-log-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+body.dark-theme .time-log-card:hover,
+body.dark-theme.admin-user .time-log-card:hover,
+body[data-theme="dark"] .time-log-card:hover,
+body.admin-user[data-theme="dark"] .time-log-card:hover {
+  border-color: #187CB7 !important;
+}
+
+body.dark-theme .time-log-card__header,
+body.dark-theme .time-log-card__footer,
+body.dark-theme.admin-user .time-log-card__header,
+body.dark-theme.admin-user .time-log-card__footer,
+body[data-theme="dark"] .time-log-card__header,
+body[data-theme="dark"] .time-log-card__footer,
+body.admin-user[data-theme="dark"] .time-log-card__header,
+body.admin-user[data-theme="dark"] .time-log-card__footer {
+  border-color: #334155 !important;
+}
+
+body.dark-theme .time-log-card__name,
+body.dark-theme.admin-user .time-log-card__name,
+body[data-theme="dark"] .time-log-card__name,
+body.admin-user[data-theme="dark"] .time-log-card__name {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .time-log-card__value,
+body.dark-theme.admin-user .time-log-card__value,
+body[data-theme="dark"] .time-log-card__value,
+body.admin-user[data-theme="dark"] .time-log-card__value {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .time-log-card__badge,
+body.dark-theme.admin-user .time-log-card__badge,
+body[data-theme="dark"] .time-log-card__badge,
+body.admin-user[data-theme="dark"] .time-log-card__badge {
+  background: #1e3a52 !important;
+  color: #7dd3fc !important;
+}
+
+/* ─── Files page dark theme ─── */
+body.dark-theme .profilerightbar .fileAttachment_Box,
+body.dark-theme.admin-user .profilerightbar .fileAttachment_Box,
+body[data-theme="dark"] .profilerightbar .fileAttachment_Box,
+body.admin-user[data-theme="dark"] .profilerightbar .fileAttachment_Box {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+body.dark-theme .profilerightbar .fileAttachment_Box:hover,
+body.dark-theme.admin-user .profilerightbar .fileAttachment_Box:hover,
+body[data-theme="dark"] .profilerightbar .fileAttachment_Box:hover,
+body.admin-user[data-theme="dark"] .profilerightbar .fileAttachment_Box:hover {
+  border-color: #187CB7 !important;
+}
+
+body.dark-theme .fileAttachment_Box .fileNameTxtellipsis,
+body.dark-theme.admin-user .fileAttachment_Box .fileNameTxtellipsis,
+body[data-theme="dark"] .fileAttachment_Box .fileNameTxtellipsis,
+body.admin-user[data-theme="dark"] .fileAttachment_Box .fileNameTxtellipsis {
+  color: #cbd5e1 !important;
+}
+
+/* ─── Enhanced modal dark theme ─── */
+body.dark-theme .add-task-modal .ant-modal-content,
+body.dark-theme .add-list-modal .ant-modal-content,
+body.dark-theme .copy-task-modal .ant-modal-content,
+body.dark-theme .notes-project-modal .ant-modal-content,
+body.dark-theme .timer-modal .ant-modal-content,
+body.dark-theme .log-time-modal .ant-modal-content,
+body.dark-theme .time-for-pms-modal .ant-modal-content,
+body.dark-theme.admin-user .add-task-modal .ant-modal-content,
+body.dark-theme.admin-user .add-list-modal .ant-modal-content,
+body.dark-theme.admin-user .copy-task-modal .ant-modal-content,
+body.dark-theme.admin-user .notes-project-modal .ant-modal-content,
+body.dark-theme.admin-user .timer-modal .ant-modal-content,
+body.dark-theme.admin-user .log-time-modal .ant-modal-content,
+body[data-theme="dark"] .add-task-modal .ant-modal-content,
+body[data-theme="dark"] .add-list-modal .ant-modal-content,
+body[data-theme="dark"] .copy-task-modal .ant-modal-content,
+body[data-theme="dark"] .notes-project-modal .ant-modal-content,
+body[data-theme="dark"] .timer-modal .ant-modal-content,
+body[data-theme="dark"] .log-time-modal .ant-modal-content,
+body[data-theme="dark"] .time-for-pms-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .add-list-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .copy-task-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .notes-project-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .timer-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .log-time-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .time-for-pms-modal .ant-modal-content {
+  background: #1e293b !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .add-task-modal .modal-header,
+body.dark-theme .add-list-modal .modal-header,
+body.dark-theme .copy-task-modal .modal-header,
+body.dark-theme .notes-project-modal .modal-header,
+body.dark-theme .timer-modal .modal-header,
+body.dark-theme .log-time-modal .modal-header,
+body.dark-theme.admin-user .add-task-modal .modal-header,
+body.dark-theme.admin-user .add-list-modal .modal-header,
+body[data-theme="dark"] .add-task-modal .modal-header,
+body[data-theme="dark"] .add-list-modal .modal-header,
+body[data-theme="dark"] .copy-task-modal .modal-header,
+body[data-theme="dark"] .notes-project-modal .modal-header,
+body[data-theme="dark"] .timer-modal .modal-header,
+body[data-theme="dark"] .log-time-modal .modal-header,
+body.admin-user[data-theme="dark"] .add-task-modal .modal-header,
+body.admin-user[data-theme="dark"] .add-list-modal .modal-header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+
+body.dark-theme .add-task-modal .modal-header h1,
+body.dark-theme .add-list-modal .modal-header h1,
+body.dark-theme.admin-user .add-task-modal .modal-header h1,
+body[data-theme="dark"] .add-task-modal .modal-header h1,
+body[data-theme="dark"] .add-list-modal .modal-header h1,
+body.admin-user[data-theme="dark"] .add-task-modal .modal-header h1 {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .add-task-modal .overview-modal-wrapper,
+body.dark-theme .add-list-modal .overview-modal-wrapper,
+body.dark-theme.admin-user .add-task-modal .overview-modal-wrapper,
+body.dark-theme.admin-user .add-list-modal .overview-modal-wrapper,
+body[data-theme="dark"] .add-task-modal .overview-modal-wrapper,
+body[data-theme="dark"] .add-list-modal .overview-modal-wrapper,
+body.admin-user[data-theme="dark"] .add-task-modal .overview-modal-wrapper,
+body.admin-user[data-theme="dark"] .add-list-modal .overview-modal-wrapper {
+  background: #1e293b !important;
+}
+
+body.dark-theme .add-task-modal .modal-footer-flex,
+body.dark-theme .add-list-modal .modal-footer-flex,
+body.dark-theme.admin-user .add-task-modal .modal-footer-flex,
+body[data-theme="dark"] .add-task-modal .modal-footer-flex,
+body[data-theme="dark"] .add-list-modal .modal-footer-flex,
+body.admin-user[data-theme="dark"] .add-task-modal .modal-footer-flex {
+  border-top-color: #334155 !important;
+}
+
+body.dark-theme .add-task-modal .ant-modal-footer,
+body.dark-theme .add-list-modal .ant-modal-footer,
+body.dark-theme.admin-user .add-task-modal .ant-modal-footer,
+body[data-theme="dark"] .add-task-modal .ant-modal-footer,
+body[data-theme="dark"] .add-list-modal .ant-modal-footer,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-footer {
+  background: #1e293b !important;
+  border-top-color: #334155 !important;
+}
+
+/* ── Overview page — dark theme ── */
+body.dark-theme .date-icon,
+body.dark-theme.admin-user .date-icon,
+body[data-theme="dark"] .date-icon,
+body.admin-user[data-theme="dark"] .date-icon {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+body.dark-theme .priority-icon,
+body.dark-theme.admin-user .priority-icon,
+body[data-theme="dark"] .priority-icon,
+body.admin-user[data-theme="dark"] .priority-icon {
+  background: rgba(217, 119, 6, 0.15) !important;
+}
+body.dark-theme .status-icon,
+body.dark-theme.admin-user .status-icon,
+body[data-theme="dark"] .status-icon,
+body.admin-user[data-theme="dark"] .status-icon {
+  background: rgba(22, 163, 74, 0.15) !important;
+}
+body.dark-theme .user-icon,
+body.dark-theme.admin-user .user-icon,
+body[data-theme="dark"] .user-icon,
+body.admin-user[data-theme="dark"] .user-icon {
+  background: rgba(124, 58, 237, 0.15) !important;
+}
+body.dark-theme .members-icon,
+body.dark-theme.admin-user .members-icon,
+body[data-theme="dark"] .members-icon,
+body.admin-user[data-theme="dark"] .members-icon {
+  background: rgba(234, 88, 12, 0.15) !important;
+}
+body.dark-theme .details-icon,
+body.dark-theme.admin-user .details-icon,
+body[data-theme="dark"] .details-icon,
+body.admin-user[data-theme="dark"] .details-icon {
+  background: rgba(2, 132, 199, 0.15) !important;
+}
+body.dark-theme .no-end-badge,
+body.dark-theme.admin-user .no-end-badge,
+body[data-theme="dark"] .no-end-badge,
+body.admin-user[data-theme="dark"] .no-end-badge {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+body.dark-theme .member-role-badge,
+body.dark-theme.admin-user .member-role-badge,
+body[data-theme="dark"] .member-role-badge,
+body.admin-user[data-theme="dark"] .member-role-badge {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+}
+
+/* ── Modal Cancel buttons — dark theme ── */
+body.dark-theme.admin-user .add-task-modal .ant-btn.ant-delete,
+body.dark-theme.admin-user .add-task-modal .ant-btn.delete-btn,
+body.dark-theme.admin-user .add-task-modal .ant-btn.square-outline-btn,
+body.dark-theme.admin-user .add-list-modal .ant-btn.ant-delete,
+body.dark-theme.admin-user .add-list-modal .ant-btn.delete-btn,
+body.dark-theme.admin-user .add-list-modal .ant-btn.square-outline-btn,
+body.dark-theme.admin-user .copy-task-modal .ant-btn.ant-delete,
+body.dark-theme.admin-user .edit-details-task-model .ant-btn.ant-delete,
+body.dark-theme.admin-user .edit-details-task-model .ant-btn.delete-btn,
+body.dark-theme.admin-user .edit-details-task-model .ant-btn.square-outline-btn,
+body.dark-theme.admin-user .disscusion-pop-wrapper .ant-btn.delete-btn,
+body.dark-theme.admin-user .upload-modal .ant-btn.delete-btn,
+body.dark-theme.admin-user .upload-modal .ant-btn.ant-delete,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-btn.ant-delete,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-btn.delete-btn,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-btn.square-outline-btn,
+body.admin-user[data-theme="dark"] .add-list-modal .ant-btn.ant-delete,
+body.admin-user[data-theme="dark"] .add-list-modal .ant-btn.delete-btn,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-btn.ant-delete,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-btn.square-outline-btn,
+body.admin-user[data-theme="dark"] .disscusion-pop-wrapper .ant-btn.delete-btn {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #94a3b8 !important;
+  border-radius: 8px !important;
+}
+
+/* ── Modal Save/primary buttons — dark theme ── */
+body.dark-theme.admin-user .add-task-modal .ant-btn.ant-btn-primary,
+body.dark-theme.admin-user .add-task-modal .ant-btn.square-primary-btn,
+body.dark-theme.admin-user .add-list-modal .ant-btn.ant-btn-primary,
+body.dark-theme.admin-user .add-list-modal .ant-btn.square-primary-btn,
+body.dark-theme.admin-user .edit-details-task-model .ant-btn.square-primary-btn,
+body.dark-theme.admin-user .edit-details-task-model .ant-btn.ant-btn-primary,
+body.dark-theme.admin-user .disscusion-pop-wrapper .ant-btn.square-primary-btn,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-btn.square-primary-btn,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-btn.square-primary-btn {
+  background: #3b82f6 !important;
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+/* ── Modal content — dark theme ── */
+body.dark-theme.admin-user .add-task-modal .ant-modal-content,
+body.dark-theme.admin-user .add-list-modal .ant-modal-content,
+body.dark-theme.admin-user .edit-details-task-model .ant-modal-content,
+body.dark-theme.admin-user .disscusion-pop-wrapper .ant-modal-content,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-modal-content {
+  background: #1e293b !important;
+}
+
+/* ── Modal footer — dark theme ── */
+body.dark-theme.admin-user .add-task-modal .ant-modal-footer,
+body.dark-theme.admin-user .add-list-modal .ant-modal-footer,
+body.dark-theme.admin-user .edit-details-task-model .ant-modal-footer,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-footer,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-modal-footer {
+  border-top-color: #334155 !important;
+  background: #1e293b !important;
+}
+
+/* ── Modal header — dark theme ── */
+body.dark-theme.admin-user .add-task-modal .ant-modal-header,
+body.dark-theme.admin-user .add-list-modal .ant-modal-header,
+body.dark-theme.admin-user .edit-details-task-model .ant-modal-header,
+body.dark-theme.admin-user .disscusion-pop-wrapper .ant-modal-header,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-header,
+body.admin-user[data-theme="dark"] .add-list-modal .ant-modal-header,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-modal-header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-title,
+body.dark-theme.admin-user .add-list-modal .ant-modal-title,
+body.dark-theme.admin-user .edit-details-task-model .ant-modal-title,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-title,
+body.admin-user[data-theme="dark"] .edit-details-task-model .ant-modal-title {
+  color: #e2e8f0 !important;
+}
+
+/* ================================================================
+   DISCUSSION PAGE — dark theme backgrounds
+   ================================================================ */
+
+/* Main wrapper */
+body.dark-theme.admin-user .discussion-wrapper,
+body.dark-theme.admin-user .discussion-module,
+body.dark-theme.admin-user .project-wrapper.discussion-wrapper .peoject-page,
+body.dark-theme.admin-user .profileleftbar,
+body.dark-theme.admin-user .profilerightbar,
+body.dark-theme.admin-user .discussion-comment-block,
+body.dark-theme.admin-user .discusstion-main-btn,
+body.dark-theme.admin-user .comment-module,
+body.admin-user[data-theme="dark"] .discussion-wrapper,
+body.admin-user[data-theme="dark"] .discussion-module,
+body.admin-user[data-theme="dark"] .profileleftbar,
+body.admin-user[data-theme="dark"] .profilerightbar,
+body.admin-user[data-theme="dark"] .discussion-comment-block,
+body.admin-user[data-theme="dark"] .comment-module {
+  background: var(--app-bg) !important;
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+/* Profile sub-header (topic title bar) */
+body.dark-theme.admin-user .profile-sub-head,
+body.dark-theme.admin-user .peoject-page .profilerightbar .profile-sub-head,
+body.admin-user[data-theme="dark"] .profile-sub-head,
+body.admin-user[data-theme="dark"] .peoject-page .profilerightbar .profile-sub-head {
+  background: var(--app-bg) !important;
+  background-color: var(--app-bg) !important;
+  border-bottom-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+/* Sidebar border */
+body.dark-theme.admin-user .profileleftbar,
+body.admin-user[data-theme="dark"] .profileleftbar {
+  border-right-color: var(--app-border) !important;
+}
+
+/* Comment mention text box + editor */
+body.dark-theme.admin-user .comment-mention-textbox,
+body.dark-theme.admin-user .mention-field-btn-wrapper,
+body.dark-theme.admin-user .main-btn-wrapper,
+body.admin-user[data-theme="dark"] .comment-mention-textbox,
+body.admin-user[data-theme="dark"] .mention-field-btn-wrapper {
+  background: var(--app-surface) !important;
+  background-color: var(--app-surface) !important;
+}
+
+/* CkEditor / Tiptap editor body in discussion */
+body.dark-theme.admin-user .comment-mention-textbox .ck.ck-editor__main,
+body.dark-theme.admin-user .comment-mention-textbox .ck-editor__editable,
+body.dark-theme.admin-user .comment-mention-textbox .ck-content,
+body.dark-theme.admin-user .comment-mention-textbox .ck.ck-content,
+body.dark-theme.admin-user .comment-mention-textbox .ck-editor__editable_inline,
+body.admin-user[data-theme="dark"] .comment-mention-textbox .ck.ck-editor__main,
+body.admin-user[data-theme="dark"] .comment-mention-textbox .ck-editor__editable,
+body.admin-user[data-theme="dark"] .comment-mention-textbox .ck-content {
+  background: var(--app-surface) !important;
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* CkEditor toolbar */
+body.dark-theme.admin-user .comment-mention-textbox .ck.ck-toolbar,
+body.dark-theme.admin-user .comment-mention-textbox header.editor-action-icons,
+body.admin-user[data-theme="dark"] .comment-mention-textbox .ck.ck-toolbar,
+body.admin-user[data-theme="dark"] .comment-mention-textbox header.editor-action-icons {
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  border-color: var(--app-border) !important;
+}
+
+/* CkEditor toolbar buttons/icons */
+body.dark-theme.admin-user .comment-mention-textbox .ck.ck-button,
+body.dark-theme.admin-user .comment-mention-textbox .ck.ck-toolbar__separator,
+body.admin-user[data-theme="dark"] .comment-mention-textbox .ck.ck-button {
+  color: var(--app-text-muted) !important;
+  background: transparent !important;
+}
+
+/* Discussion topic items in sidebar */
+body.dark-theme.admin-user .design-graph,
+body.dark-theme.admin-user .design-graph-inactive,
+body.admin-user[data-theme="dark"] .design-graph,
+body.admin-user[data-theme="dark"] .design-graph-inactive {
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+body.dark-theme.admin-user .design-graph,
+body.admin-user[data-theme="dark"] .design-graph {
+  background: var(--app-surface-2) !important;
+  border-left: 3px solid #3b82f6 !important;
+}
+
+/* Comment sender name, text */
+body.dark-theme.admin-user .discussion-name-edit,
+body.dark-theme.admin-user .main-comment-wrapper,
+body.dark-theme.admin-user .main-avatar-wrapper .comment-sender-name,
+body.admin-user[data-theme="dark"] .discussion-name-edit,
+body.admin-user[data-theme="dark"] .main-comment-wrapper {
+  color: var(--app-text) !important;
+  background: transparent !important;
+}
+
+/* ================================================================
+   OVERVIEW PAGE — dark theme
+   ================================================================ */
+body.dark-theme.admin-user .new-project-overview,
+body.admin-user[data-theme="dark"] .new-project-overview {
+  background: var(--app-bg) !important;
+}
+
+body.dark-theme.admin-user .overview-card,
+body.admin-user[data-theme="dark"] .overview-card {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+body.dark-theme.admin-user .legend-pill,
+body.admin-user[data-theme="dark"] .legend-pill {
+  background: var(--app-bg) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+body.dark-theme.admin-user .member-card,
+body.admin-user[data-theme="dark"] .member-card {
+  background: var(--app-bg) !important;
+  border-color: var(--app-border) !important;
+}
+
+body.dark-theme.admin-user .member-tab-btn,
+body.admin-user[data-theme="dark"] .member-tab-btn {
+  background: var(--app-bg) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+body.dark-theme.admin-user .member-tab-btn.active,
+body.admin-user[data-theme="dark"] .member-tab-btn.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+}
+
+body.dark-theme.admin-user .edit-btn,
+body.admin-user[data-theme="dark"] .edit-btn {
+  background: var(--app-bg) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text-muted) !important;
+}
+
+body.dark-theme.admin-user .date-val,
+body.admin-user[data-theme="dark"] .date-val {
+  color: var(--app-text) !important;
+}
+
+body.dark-theme.admin-user .details-body,
+body.admin-user[data-theme="dark"] .details-body {
+  color: var(--app-text-muted) !important;
+}
+
+/* ================================================================
+   ALL MODALS — dark theme background
+   ================================================================ */
+body.dark-theme.admin-user .ant-modal-content,
+body.dark-theme.admin-user .ant-modal-header,
+body.dark-theme.admin-user .ant-modal-body,
+body.dark-theme.admin-user .ant-modal-footer,
+body.admin-user[data-theme="dark"] .ant-modal-content,
+body.admin-user[data-theme="dark"] .ant-modal-header,
+body.admin-user[data-theme="dark"] .ant-modal-body,
+body.admin-user[data-theme="dark"] .ant-modal-footer {
+  background: #111a2a !important;
+  background-color: #111a2a !important;
+  border-color: #24324a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-theme.admin-user .ant-modal-title,
+body.admin-user[data-theme="dark"] .ant-modal-title {
+  color: #e5e7eb !important;
+}
+
+body.dark-theme.admin-user .ant-modal-close,
+body.admin-user[data-theme="dark"] .ant-modal-close {
+  color: #9aa4b2 !important;
+  background: #1e2d42 !important;
+}
+
+body.dark-theme.admin-user .ant-modal-close:hover,
+body.admin-user[data-theme="dark"] .ant-modal-close:hover {
+  background: #24324a !important;
+  color: #e5e7eb !important;
+}
+
+/* Form labels & inputs inside modals */
+body.dark-theme.admin-user .ant-modal-body label,
+body.dark-theme.admin-user .ant-modal-body .ant-form-item-label > label,
+body.admin-user[data-theme="dark"] .ant-modal-body label,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-form-item-label > label {
+  color: #9aa4b2 !important;
+}
+
+body.dark-theme.admin-user .ant-modal-body .ant-input,
+body.dark-theme.admin-user .ant-modal-body .ant-input-outlined,
+body.dark-theme.admin-user .ant-modal-body .ant-select-selector,
+body.dark-theme.admin-user .ant-modal-body .ant-picker,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-input,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-select-selector,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-picker {
+  background: #0b1220 !important;
+  background-color: #0b1220 !important;
+  border-color: #24324a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-theme.admin-user .ant-modal-body .ant-input::placeholder,
+body.dark-theme.admin-user .ant-modal-body .ant-select-selection-placeholder,
+body.dark-theme.admin-user .ant-modal-body .ant-picker-input input::placeholder,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-input::placeholder,
+body.admin-user[data-theme="dark"] .ant-modal-body .ant-select-selection-placeholder {
+  color: #4a5568 !important;
+}
+
+/* Modal footer divider */
+body.dark-theme.admin-user .ant-modal-footer,
+body.admin-user[data-theme="dark"] .ant-modal-footer {
+  border-top: 1px solid #24324a !important;
+}
+
+/* Overview modal wrapper inside modal */
+body.dark-theme.admin-user .ant-modal-body .overview-modal-wrapper,
+body.admin-user[data-theme="dark"] .ant-modal-body .overview-modal-wrapper {
+  background: #111a2a !important;
+}
+
+/* Modal header custom div */
+body.dark-theme.admin-user .ant-modal-body .modal-header,
+body.admin-user[data-theme="dark"] .ant-modal-body .modal-header {
+  background: #111a2a !important;
+  border-bottom-color: #24324a !important;
+  color: #e5e7eb !important;
+}
+
+body.dark-theme.admin-user .ant-modal-body .modal-header h1,
+body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
+  color: #e5e7eb !important;
+}
+
+/* ================================================================
+   GLOBAL APP MODAL — light + dark design
+   Covers: Add New Note, Edit Note, New Group/Member Chat,
+           Add Employee, Manage Subscribers
+   ================================================================ */
+
+/* ── Shell ── */
+.admin-user .ant-modal.global-app-modal .ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.13) !important;
+}
+
+/* ── Header ── */
+.admin-user .global-app-modal .ant-modal-header {
+  padding: 18px 24px !important;
+  border-bottom: 1px solid #e8ecf0 !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+}
+
+.admin-user .global-app-modal .ant-modal-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+/* ── Close btn ── */
+.admin-user .global-app-modal .ant-modal-close {
+  top: 14px !important;
+  right: 16px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: #f1f5f9 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.admin-user .global-app-modal .ant-modal-close:hover {
+  background: #e2e8f0 !important;
+}
+.admin-user .global-app-modal .ant-modal-close-x {
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 13px !important;
+}
+
+/* ── Body ── */
+.admin-user .global-app-modal .ant-modal-body {
+  padding: 20px 24px !important;
+}
+
+/* ── Footer ── */
+.admin-user .global-app-modal .ant-modal-footer {
+  padding: 14px 24px !important;
+  border-top: 1px solid #e8ecf0 !important;
+  margin-top: 0 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
+
+/* ── Cancel button (built-in Ant default btn) → grey ── */
+.admin-user .global-app-modal .ant-modal-footer .ant-btn-default {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+.admin-user .global-app-modal .ant-modal-footer .ant-btn-default:hover {
+  background: #e2e8f0 !important;
+  background-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* ── OK / Save / Create button → blue ── */
+.admin-user .global-app-modal .ant-modal-footer .ant-btn-primary {
+  background: #3b82f6 !important;
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+.admin-user .global-app-modal .ant-modal-footer .ant-btn-primary:hover {
+  background: #2563eb !important;
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+/* ── Form inputs inside ── */
+.admin-user .global-app-modal .ant-input,
+.admin-user .global-app-modal .ant-select-selector,
+.admin-user .global-app-modal .ant-picker {
+  border-radius: 8px !important;
+  border-color: #e2e8f0 !important;
+}
+.admin-user .global-app-modal .ant-input:focus,
+.admin-user .global-app-modal .ant-select-selector:focus-within {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12) !important;
+}
+
+/* ── Dark theme overrides ── */
+body.dark-theme.admin-user .global-app-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-content {
+  background: #111a2a !important;
+  background-color: #111a2a !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-header,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-header {
+  background: #111a2a !important;
+  background-color: #111a2a !important;
+  border-bottom-color: #24324a !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-title,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-title {
+  color: #e5e7eb !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-body,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-body {
+  background: #111a2a !important;
+  background-color: #111a2a !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-footer,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-footer {
+  background: #111a2a !important;
+  background-color: #111a2a !important;
+  border-top-color: #24324a !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-close,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-close {
+  background: #1e2d42 !important;
+  color: #9aa4b2 !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-input,
+body.dark-theme.admin-user .global-app-modal .ant-select-selector,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-input,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-select-selector {
+  background: #0b1220 !important;
+  background-color: #0b1220 !important;
+  border-color: #24324a !important;
+  color: #e5e7eb !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-form-item-label > label,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-form-item-label > label {
+  color: #9aa4b2 !important;
+}
+body.dark-theme.admin-user .global-app-modal .ant-modal-footer .ant-btn-default,
+body.admin-user[data-theme="dark"] .global-app-modal .ant-modal-footer .ant-btn-default {
+  background: #1e2d42 !important;
+  background-color: #1e2d42 !important;
+  border-color: #24324a !important;
+  color: #9aa4b2 !important;
 }

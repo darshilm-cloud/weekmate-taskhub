@@ -95,6 +95,11 @@
     /* Adjust size as needed */
   }
 
+  .bell-icon .anticon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
   .notidication-modal p {
     word-break: break-word;
     white-space: normal;

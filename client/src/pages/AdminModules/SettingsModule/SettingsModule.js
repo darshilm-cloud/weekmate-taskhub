@@ -30,6 +30,7 @@ import {
   LockOutlined,
 } from "@ant-design/icons";
 import Service from "../../../service";
+import { SettingsSkeleton } from "../../../components/common/SkeletonLoader";
 import "./SettingsModule.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -130,7 +131,6 @@ const SMTPConfig = () => {
           smtpPort: provider.port.toString(),
           smtpSecure: provider.secure,
         });
-        message.success(`${provider.name} settings applied`);
       }
     },
     [form]
@@ -232,23 +232,7 @@ const SMTPConfig = () => {
   );
 
   // Loading state
-  if (fetchLoading) {
-    return (
-      <div className="smtp-config">
-        <Card className="loading-card">
-          <div className="loading-content">
-            <Spin size="large" />
-            <Title level={4} className="loading-title">
-              Loading Configuration...
-            </Title>
-            <Text type="secondary">
-              Please wait while we fetch your settings
-            </Text>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  if (fetchLoading) return <SettingsSkeleton />;
 
   return (
     <div className="smtp-config">
@@ -536,8 +520,7 @@ const SMTPConfig = () => {
                     icon={<SaveOutlined />}
                     loading={loading}
                     size="large"
-                    block
-                    className="ant-btn-primary"
+                    className="submit-btn"
                   >
                     {loading
                       ? "Verifying Configuration..."

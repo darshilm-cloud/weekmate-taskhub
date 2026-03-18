@@ -41,6 +41,7 @@ import moment from "moment";
 import "./ProjectExpense.css";
 import { sideBarContentId2 } from "../../constants";
 import ProjectExpenseFilterComponent from "./ProjectExpenseFilterComponent";
+import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -107,6 +108,7 @@ const Projectexpences = () => {
   const [projectexpencesList,  setprojectexpencesList]  = useState([]); // paginated table
   const [analyticsLoading,     setAnalyticsLoading]     = useState(false);
   const [tableLoading,         setTableLoading]         = useState(false);
+  const [pageLoading,          setPageLoading]          = useState(true);
   const [pagination,           setPagination]           = useState({ current: 1, pageSize: 20 });
 
   /* ── drawer ── */
@@ -188,6 +190,7 @@ const Projectexpences = () => {
       console.error(err);
     } finally {
       setTableLoading(false);
+      setPageLoading(false);
     }
   }, [
     pagination.current, pagination.pageSize,
@@ -537,6 +540,8 @@ const Projectexpences = () => {
   /* ─────────────────────────────────────────────────────────────
      RENDER
   ───────────────────────────────────────────────────────────── */
+  if (pageLoading) return <ProjectExpenseSkeleton />;
+
   return (
     <div className="pe-page">
 

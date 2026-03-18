@@ -29,6 +29,7 @@ import { Comment } from "@ant-design/compatible";
 import React, { useEffect, useRef, useState } from "react";
 
 import CkEditorSuperBuild from "../CkEditorSuperBuild";
+import { DiscussionSkeleton } from "../common/SkeletonLoader";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -99,6 +100,7 @@ function DiscussionForm() {
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [editedFiles, setEditedFiles] = useState([]);
   const [discussionTopic, setDiscussionTopic] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [editDiscussionTopic, setEditDiscussionTopic] = useState({});
   const [addEditDiscussion, setAddEditDiscussion] = useState("");
   const [textAreaValue, setTextAreaValue] = useState("");
@@ -312,6 +314,8 @@ function DiscussionForm() {
       dispatch(hideAuthLoader());
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -857,6 +861,8 @@ function DiscussionForm() {
 
   const userColors = useUserColors(discussionComments);
 
+  if (pageLoading) return <DiscussionSkeleton />;
+
   return (
     <div className="project-wrapper discussion-wrapper discussion-module">
       <div className="peoject-page">
@@ -1282,7 +1288,7 @@ function DiscussionForm() {
         onCancel={ () => handleCancelTopic() }
         title={ addEditDiscussion === "Add Topic" ? "Add Topic" : "Edit Topic" }
         className="add-task-modal add-list-modal disscusion-pop-wrapper"
-        width={800}
+        width={1000}
         footer={ [
           <Button
             key="cancel"

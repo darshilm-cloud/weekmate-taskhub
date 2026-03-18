@@ -1,0 +1,199 @@
+/* ── Overlay ──────────────────────────────────────── */
+.qat-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── Modal Container ──────────────────────────────── */
+.qat-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: qat-slide-in 0.2s ease;
+}
+
+@keyframes qat-slide-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ───────────────────────────────────────── */
+.qat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid #e8ecf0;
+  background: #0b3a5b;
+  border-radius: 12px 12px 0 0;
+}
+
+.qat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qat-header-icon {
+  width: 34px;
+  height: 34px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+}
+
+.qat-header-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.qat-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.qat-close-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Body ─────────────────────────────────────────── */
+.qat-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.qat-title-input {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  border-color: #d0d7de !important;
+}
+.qat-title-input:focus {
+  border-color: #0b3a5b !important;
+  box-shadow: 0 0 0 2px rgba(11,58,91,0.1) !important;
+}
+
+/* ── Row layout ───────────────────────────────────── */
+.qat-row {
+  display: flex;
+  gap: 16px;
+}
+.qat-field-half {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Priority labels ──────────────────────────────── */
+.qat-priority { font-weight: 500; }
+.qat-priority.low    { color: #22c55e; }
+.qat-priority.medium { color: #f59e0b; }
+.qat-priority.high   { color: #ef4444; }
+
+/* ── Ant Form overrides ───────────────────────────── */
+.qat-body .ant-form-item {
+  margin-bottom: 16px;
+}
+.qat-body .ant-form-item-label > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  gap: 5px;
+}
+.qat-body .ant-input,
+.qat-body .ant-picker,
+.qat-body .ant-select-selector,
+.qat-body textarea {
+  border-radius: 8px !important;
+}
+.qat-body .ant-select-selector:focus-within,
+.qat-body .ant-picker:focus-within {
+  border-color: #0b3a5b !important;
+  box-shadow: 0 0 0 2px rgba(11,58,91,0.1) !important;
+}
+
+/* ── Footer ───────────────────────────────────────── */
+.qat-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid #e8ecf0;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+}
+
+.qat-btn-cancel {
+  border-radius: 8px !important;
+  border-color: #d0d7de !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+  height: 38px !important;
+  padding: 0 20px !important;
+}
+.qat-btn-cancel:hover {
+  border-color: #94a3b8 !important;
+  color: #1e293b !important;
+}
+
+.qat-btn-submit {
+  border-radius: 8px !important;
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  height: 38px !important;
+  padding: 0 24px !important;
+}
+.qat-btn-submit:hover {
+  background: #0d4a73 !important;
+  border-color: #0d4a73 !important;
+}
+
+/* ── Dark theme ───────────────────────────────────── */
+body.dark-theme .qat-modal,
+[data-theme="dark"] .qat-modal {
+  background: #1a2d42;
+}
+body.dark-theme .qat-header,
+[data-theme="dark"] .qat-header {
+  background: #0b2a3d;
+  border-color: #1e3352;
+}
+body.dark-theme .qat-body,
+[data-theme="dark"] .qat-body {
+  background: #1a2d42;
+}
+body.dark-theme .qat-body .ant-form-item-label > label,
+[data-theme="dark"] .qat-body .ant-form-item-label > label {
+  color: #94a3b8;
+}
+body.dark-theme .qat-footer,
+[data-theme="dark"] .qat-footer {
+  background: #152336;
+  border-color: #1e3352;
+}

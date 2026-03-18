@@ -531,3 +531,106 @@ body[data-theme="dark"] .cad-status-form textarea:focus {
   border-color: #4d7bd6 !important;
   box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.12) !important;
 }
+
+/* ── All form inputs / textareas / selects on cad-page ─────── */
+body.dark-theme .cad-page .ant-input,
+body.dark-theme .cad-page .ant-input-affix-wrapper,
+body.dark-theme .cad-page textarea,
+body.dark-theme .cad-page .ant-select-selector,
+body[data-theme="dark"] .cad-page .ant-input,
+body[data-theme="dark"] .cad-page .ant-input-affix-wrapper,
+body[data-theme="dark"] .cad-page textarea,
+body[data-theme="dark"] .cad-page .ant-select-selector {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .cad-page .ant-input::placeholder,
+body.dark-theme .cad-page textarea::placeholder,
+body.dark-theme .cad-page .ant-select-selection-placeholder,
+body.dark-theme .cad-page .ant-select-arrow,
+body[data-theme="dark"] .cad-page .ant-input::placeholder,
+body[data-theme="dark"] .cad-page textarea::placeholder,
+body[data-theme="dark"] .cad-page .ant-select-selection-placeholder,
+body[data-theme="dark"] .cad-page .ant-select-arrow {
+  color: #6b8ab5 !important;
+}
+
+body.dark-theme .cad-page .ant-input:focus,
+body.dark-theme .cad-page textarea:focus,
+body.dark-theme .cad-page .ant-select-focused .ant-select-selector,
+body[data-theme="dark"] .cad-page .ant-input:focus,
+body[data-theme="dark"] .cad-page textarea:focus,
+body[data-theme="dark"] .cad-page .ant-select-focused .ant-select-selector {
+  border-color: #4d7bd6 !important;
+  box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.12) !important;
+}
+
+/* ── Upload button ─────────────────────────────────────────── */
+body.dark-theme .cad-upload-btn,
+body[data-theme="dark"] .cad-upload-btn {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #9bb6dd !important;
+}
+
+body.dark-theme .cad-upload-btn:hover,
+body[data-theme="dark"] .cad-upload-btn:hover {
+  background: #1a2f4a !important;
+  border-color: #4d7bd6 !important;
+  color: #4d7bd6 !important;
+}
+
+/* ── Clear / default buttons ───────────────────────────────── */
+body.dark-theme .cad-btn:not(.primary):not(.danger),
+body[data-theme="dark"] .cad-btn:not(.primary):not(.danger) {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #9bb6dd !important;
+}
+
+body.dark-theme .cad-btn:not(.primary):not(.danger):hover,
+body[data-theme="dark"] .cad-btn:not(.primary):not(.danger):hover {
+  background: #1a2f4a !important;
+  color: #dce7fb !important;
+}
+
+/* ── Section / card backgrounds ────────────────────────────── */
+body.dark-theme .cad-page .ant-card,
+body.dark-theme .cad-page .ant-card-body,
+body[data-theme="dark"] .cad-page .ant-card,
+body[data-theme="dark"] .cad-page .ant-card-body {
+  background: #0c182b !important;
+  border-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+/* ── Form labels ───────────────────────────────────────────── */
+body.dark-theme .cad-page .ant-form-item-label > label,
+body[data-theme="dark"] .cad-page .ant-form-item-label > label {
+  color: #9bb6dd !important;
+}
+
+/* ── Comment textarea ──────────────────────────────────────── */
+body.dark-theme .cad-comment-form textarea,
+body[data-theme="dark"] .cad-comment-form textarea {
+  background: #132238 !important;
+  border-color: #314866 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .cad-comment-form textarea::placeholder,
+body[data-theme="dark"] .cad-comment-form textarea::placeholder {
+  color: #6b8ab5 !important;
+}
+
+body.dark-theme .cad-comment-panel-title,
+body[data-theme="dark"] .cad-comment-panel-title {
+  color: #9bb6dd !important;
+  border-bottom-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+body.dark-theme .cad-comment-form .ant-form-item-label > label,
+body[data-theme="dark"] .cad-comment-form .ant-form-item-label > label {
+  color: #9bb6dd !important;
+}

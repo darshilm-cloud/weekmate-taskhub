@@ -208,13 +208,26 @@ const BugList = ({
     }));
   };
 
+  const bugColColor = (title, fallback) => {
+    const t = (title || "").toLowerCase();
+    if (t.includes("open"))       return "#3b82f6";
+    if (t.includes("progress"))   return "#f59e0b";
+    if (t.includes("test"))       return "#22c55e";
+    if (t.includes("hold"))       return "#8b5cf6";
+    if (t.includes("close"))      return "#ef4444";
+    return fallback || "#3b82f6";
+  };
+
   return (
     <>
       <div className="container project-task-section">
-        {tasks.map((boardData, index) => (
+        {tasks.map((boardData, index) => {
+          const colColor = bugColColor(boardData.title, boardData.color);
+          return (
           <div
             key={boardData._id}
             className={`order small-box ${dragged ? "dragged-over" : ""}`}
+            style={{ "--wm-col-border-color": colColor }}
             onDragLeave={(e) => onDragLeave(e)}
             onDragEnter={(e) => onDragEnter(e)}
             onDragEnd={(e) => onDragEnd(e)}
@@ -225,14 +238,18 @@ const BugList = ({
               <div className="container project-task-list">
                 <div className="drag_column">
                   <h4>
-                    {boardData.title}
+                    <span className="wm-col-title" style={{ color: colColor }}>
+                      {boardData.title}
+                    </span>
                     <span
+                      className="wm-col-count"
                       style={{
-                        background: boardData.color,
-                        color: "black",
+                        background: `${colColor}22`,
+                        color: colColor,
+                        border: `1px solid ${colColor}55`,
                       }}
                     >
-                      ({boardData.bugs.length})
+                      {boardData.bugs.length}
                     </span>
                   </h4>
                   
@@ -258,211 +275,163 @@ const BugList = ({
                     )}
 
                     <div className="kanbanView-bugs-data">
+                      {boardData.bugs.length === 0 && (
+                        <div style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "40px 16px",
+                          opacity: 0.45,
+                        }}>
+                          <i className="fi fi-rr-bug" style={{ fontSize: "32px", marginBottom: "10px" }} />
+                          <span style={{ fontSize: "13px" }}>No bugs here</span>
+                        </div>
+                      )}
                       {boardData.bugs.map((task) => (
                         <div
-                          className={`card ${dragged ? "dragged" : ""}`}
+                          className={`wm-task-card ${dragged ? "dragged" : ""}${boardData?.title === "Closed" ? " wm-task-card-done" : ""}`}
                           key={task._id}
                           id={task._id}
                           draggable
                           onDragStart={(e) => onDragStart(e)}
                           onDragEnd={(e) => onDragEnd(e)}
+                          style={{ position: "relative" }}
                         >
                           <div
-                            className="task-box"
-                            onClick={() => {
+                            className={`wm-task-box ${boardData?.title === "Closed" ? "wm-task-box-done" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
                               getTaskByIdDetails(task._id);
                               getComment(task._id);
                               setTempBoard(boardData);
                               setSelectedBugId(task._id);
                             }}
-                            style={{
-                              background:
-                                boardData?.title == "Closed" && "#cffdcf",
-                            }}
                           >
-                            <div className="taskHeader">
-                              <h3
-                                id={`bug-${task._id}`}
-                                style={{
-                                  color:
-                                    boardData?.title == "Closed" && "green",
-                                  "-webkit-text-fill-color":
-                                    boardData?.title == "Closed" && "green",
-                                  textDecoration:
-                                    boardData?.title == "Closed" &&
-                                    "line-through",
-                                }}
-                              >
-                                {task.title}
-                              </h3>
-                            </div>
-                            <span
-                              className="highlabel"
-                              style={{
-                                backgroundColor: task.bug_labels.map(
-                                  (item) => item.color
-                                ),
-                                textTransform: "capitalize",
-                              }}
-                            >
-                              {task.bug_labels.map((item) => item.title)}
-                            </span>
-                            {task.due_date && (
-                              <div className="task-due-date-wrapper">
-                                <div className="task-due-date">
-                                  <a href="">
-                                    <i class="fa-regular fa-calendar-days"></i>{" "}
-                                    Due date
-                                  </a>
-                                </div>
-                                <div
-                                  className="task-due-date"
-                                  style={{
-                                    color: moment(task.due_date).isBefore(
-                                      currDate,
-                                      "day"
-                                    )
-                                      ? "red"
-                                      : "inherit",
-                                  }}
-                                >
-                                  {moment(task.due_date).format("D MMM")}
-                                </div>
+                            {/* Labels */}
+                            {task.bug_labels?.length > 0 && (
+                              <div className="wm-card-labels">
+                                {task.bug_labels.map((item) => (
+                                  <span
+                                    key={item._id}
+                                    className="wm-card-label"
+                                    style={{
+                                      background: item.color || "#e5e7eb",
+                                      color: item.color ? "#fff" : "#374151",
+                                    }}
+                                  >
+                                    {item.title}
+                                  </span>
+                                ))}
                               </div>
                             )}
-                            
+
+                            {/* Title */}
                             <div
-                              className="assignees"
+                              className="wm-card-title"
+                              id={`bug-${task._id}`}
                               style={{
-                                borderBottom:
-                                  boardData?.title == "Closed" &&
-                                  "1px solid green",
+                                textDecoration: boardData?.title === "Closed" ? "line-through" : "none",
                               }}
                             >
-                              <div className="assignee-name">
-                                <i className="fi fi-rr-users"></i>
-                                <p>Assignees</p>
-                              </div>
-                              <div className="avtar-group">
-                                <Avatar.Group
-                                  maxCount={2}
-                                  maxPopoverTrigger="click"
-                                  size="default"
-                                  maxStyle={{
-                                    color: "#f56a00",
-                                    backgroundColor: "#fde3cf",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {task.assignees &&
-                                    task.assignees.map((data) => (
-                                      <MyAvatar
-                                        userName={data.full_name}
-                                        alt={data.full_name}
-                                        key={data._id}
-                                        src={data.emp_img}
-                                      />
-                                    ))}
-                                </Avatar.Group>
-                                <Button
-                                  onClick={() =>
-                                    getTaskByIdDetails(task._id, {
-                                      editFlag: true,
-                                      boardID: boardData?._id,
-                                    })
-                                  }
-                                  icon={<PlusOutlined />}
-                                  disabled={
-                                    !getRoles(["Admin"]) ||
-                                    boardData?.title == "Closed" || !hasPermission(["bug_edit"])
-                                  }
-                                />
-                              </div>
+                              {task.title}
                             </div>
 
-                            <div className="assignee-name">
-                              {((task?.total_logged_hours !== "" &&
-                                parseInt(task?.total_logged_hours) > 0) ||
-                                (task?.total_logged_minutes !== "" &&
-                                  parseInt(task?.total_logged_minutes) > 0) ||
-                                (task?.estimated_hours !== "" &&
-                                  parseInt(task?.estimated_hours) > 0) ||
-                                (task?.estimated_minutes !== "" &&
-                                  parseInt(task?.estimated_minutes) > 0)) && (
-                                <div className="assignee-task-time">
-                                  <i className="fi fi-rr-clock"></i>
-                                  <p>Logged Time</p>
-                                </div>
-                              )}
-                              <div className="task-time">
-                                <Tooltip
-                                  placement="topLeft"
-                                  title={"Logged Time"}
-                                  arrow={false}
-                                >
-                                  {task?.total_logged_hours !== "" &&
-                                  parseInt(task?.total_logged_hours) > 0 ? (
-                                    <span>{task?.total_logged_hours}h </span>
-                                  ) : (
-                                    ""
-                                  )}
-                                  {task?.total_logged_minutes !== "" &&
-                                  parseInt(task?.total_logged_minutes) > 0 ? (
-                                    <span>{task?.total_logged_minutes}m </span>
-                                  ) : (
-                                    ""
-                                  )}
-                                  {(parseInt(task?.total_logged_hours) > 0 ||
-                                    parseInt(task?.total_logged_minutes) > 0) &&
-                                  (parseInt(task?.estimated_hours) > 0 ||
-                                    parseInt(task?.estimated_minutes) > 0)
-                                    ? " / "
-                                    : ""}
-                                </Tooltip>
-                                <Tooltip
-                                  placement="topLeft"
-                                  title={"Estimated Time"}
-                                  arrow={false}
-                                >
-                                  {task?.estimated_hours !== "" &&
-                                  parseInt(task?.estimated_hours) > 0 ? (
-                                    <span>{task?.estimated_hours}h </span>
-                                  ) : (
-                                    ""
-                                  )}
-                                  {task?.estimated_minutes !== "" &&
-                                  parseInt(task?.estimated_minutes) > 0 ? (
-                                    <span>{task?.estimated_minutes}m </span>
-                                  ) : (
-                                    ""
-                                  )}
-                                </Tooltip>
+                            {/* Project name */}
+                            {selectedTask?.title && (
+                              <div className="wm-card-list">{selectedTask.title}</div>
+                            )}
+
+                            {/* Due date */}
+                            {task.due_date && (
+                              <div
+                                className="wm-card-due"
+                                style={{
+                                  color: moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
+                                }}
+                              >
+                                <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                {moment(task.due_date).format("MMM D, YYYY")}
                               </div>
+                            )}
+
+                            {/* Footer: assignees + comments */}
+                            <div className="wm-card-footer">
+                              <span className="wm-card-assignees">
+                                {task.assignees?.length > 0
+                                  ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ")
+                                  : "Unassigned"}
+                              </span>
+                              <span className="wm-card-meta">
+                                <i className="fa-regular fa-comment" style={{ marginRight: 3 }}></i>
+                                {task.comments || 0}
+                                {commentDrafts[task._id] && (
+                                  <span className="draft-indicator" style={{ color: "#ff4d4f", marginLeft: 4 }}>Draft</span>
+                                )}
+                              </span>
                             </div>
-                            
-                            <div className="task-comment-hour-detail-wrapper">
-                              <div className="task-comment-bar">
-                                <Tooltip title="Comments" placement="right">
-                                  <div className="bug-comment-icon">
-                                    <a href="#">
-                                      <i class="fa-regular fa-comment"></i>
-                                    </a>
-                                    {task.comments}
-                                    {commentDrafts[task._id] && (
-                                      <span
-                                        className="draft-indicator"
-                                        style={{
-                                          color: "#ff4d4f",
-                                          marginLeft: "4px",
-                                        }}
-                                      >
-                                        Draft
-                                      </span>
-                                    )}
-                                  </div>
-                                </Tooltip>
-                              </div>
-                            </div>
+
+                          </div>
+                          {/* Checkbox + 3-dot menu */}
+                          <div>
+                            <input
+                              type="checkbox"
+                              style={{
+                                position: "absolute",
+                                top: "17px",
+                                right: "34px",
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                              }}
+                            />
+                            <Dropdown
+                              overlay={
+                                <Menu>
+                                  {hasPermission(["bug_edit"]) && (
+                                    <Menu.Item
+                                      onClick={(e) => {
+                                        e.domEvent.stopPropagation();
+                                        getTaskByIdDetails(task._id, {
+                                          editFlag: true,
+                                          boardID: boardData?._id,
+                                        });
+                                      }}
+                                    >
+                                      <EditOutlined style={{ color: "green" }} /> Edit
+                                    </Menu.Item>
+                                  )}
+                                  {hasPermission(["bug_delete"]) && (
+                                    <Popconfirm
+                                      title="Are you sure you want to delete this bug?"
+                                      onConfirm={() => handleTaskDelete(task._id)}
+                                      okText="Yes"
+                                      cancelText="No"
+                                    >
+                                      <Menu.Item className="ant-delete" onClick={(e) => e.domEvent.stopPropagation()}>
+                                        <DeleteOutlined style={{ color: "red" }} /> Delete
+                                      </Menu.Item>
+                                    </Popconfirm>
+                                  )}
+                                </Menu>
+                              }
+                              trigger={["click"]}
+                            >
+                              <a
+                                style={{
+                                  position: "absolute",
+                                  top: "14px",
+                                  right: "10px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  color: "#94a3b8",
+                                }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              >
+                                <MoreOutlined style={{ fontSize: "16px" }} />
+                              </a>
+                            </Dropdown>
                           </div>
                         </div>
                       ))}
@@ -472,7 +441,8 @@ const BugList = ({
               </div>
             </section>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <Modal

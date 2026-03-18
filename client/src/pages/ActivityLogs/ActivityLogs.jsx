@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import "./ActivityLogs.css";
 import "../Complaints/ComplaintDetails.css";
 import ActivityLogFilter from "./ActivityLogFilter";
+import { SimpleTableSkeleton } from "../../components/common/SkeletonLoader";
 import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import ViewIcon from "../../assets/icons/ViewIcon";
@@ -43,6 +44,7 @@ const ActivityLogs = () => {
   const [selectedLog,     setSelectedLog]     = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [loading,         setLoading]         = useState(false);
+  const [pageLoading,     setPageLoading]     = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
   const [filters,    setFilters]    = useState({ operation: [], dateRange: null });
 
@@ -109,6 +111,7 @@ const ActivityLogs = () => {
       setPagination((prev) => ({ ...prev, total: 0 }));
     } finally {
       setLoading(false);
+      setPageLoading(false);
     }
   }, [pagination.current, pagination.pageSize, filters, dispatch]);
 
@@ -305,6 +308,8 @@ const ActivityLogs = () => {
       ),
     },
   ];
+
+  if (pageLoading) return <SimpleTableSkeleton rows={8} cols={5} />;
 
   /* ── Render ──────────────────────────────────────────────── */
   return (

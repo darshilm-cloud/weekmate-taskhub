@@ -29,6 +29,7 @@ import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
+import { TimesheetSkeleton } from "../../../components/common/SkeletonLoader";
 import NoDataFoundSvg from "../../../assets/images/no-data-found.svg";
 
 dayjs.extend(quarterOfYear);
@@ -103,6 +104,7 @@ const TimeSheet = () => {
 
   // ── UI state ───────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pendingExport, setPendingExport] = useState(false);
 
@@ -176,6 +178,7 @@ const TimeSheet = () => {
         console.error(err);
       } finally {
         setLoading(false);
+        setPageLoading(false);
         dispatch(hideAuthLoader());
       }
     },
@@ -353,16 +356,12 @@ const TimeSheet = () => {
   const chartTheme = useMemo(
     () => ({
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      colors: [
-        "#1677ff",
-        "#52c41a",
-        "#13c2c2",
-        "#fa8c16",
-        "#eb2f96",
-        "#722ed1",
-        "#597ef7",
-        "#36cfc9",
-      ],
+      // Teal palette — Hours by Manager
+      managerColors: ["#36cfc9", "#13c2c2", "#08979c", "#006d75", "#4dd9d0", "#87e8de"],
+      // Orange palette — Hours by Project Type
+      projectTypeColors: ["#ffa940", "#ff7a45", "#fa8c16", "#d46b08", "#ffbb96", "#ffd591"],
+      // Purple palette — Hours by User
+      userColors: ["#9254de", "#722ed1", "#b37feb", "#531dab", "#d3adf7", "#efdbff"],
     }),
     []
   );
@@ -375,18 +374,18 @@ const TimeSheet = () => {
       options: {
         chart: {
           type: "pie",
-          height: 320,
+          height: 230,
           fontFamily: chartTheme.fontFamily,
           toolbar: { show: false },
         },
         labels: pieechartDataMangerNames,
-        colors: chartTheme.colors,
+        colors: chartTheme.managerColors,
         stroke: { width: 1, colors: "#fff" },
         legend: {
           position: "bottom",
-          fontSize: "13px",
+          fontSize: "11px",
           fontWeight: 500,
-          itemMargin: { horizontal: 12, vertical: 6 },
+          itemMargin: { horizontal: 8, vertical: 4 },
           labels: { colors: "#4a5568" },
         },
         dataLabels: {
@@ -425,15 +424,16 @@ const TimeSheet = () => {
         chart: {
           toolbar: { show: false },
           type: "bar",
-          height: 320,
+          height: 230,
           fontFamily: chartTheme.fontFamily,
         },
-        colors: ["#1677ff"],
+        colors: chartTheme.projectTypeColors.slice(0, chartData.projectTypeReportData.length),
         plotOptions: {
           bar: {
             horizontal: true,
             borderRadius: 6,
-            barHeight: "70%",
+            barHeight: "60%",
+            distributed: true,
           },
         },
         dataLabels: {
@@ -466,13 +466,13 @@ const TimeSheet = () => {
   const verticalBarChartHoursConfig = useMemo(() => {
     if (usersData.length === 0) return null;
 
-    const baseColors = chartTheme.colors;
+    const baseColors = chartTheme.userColors;
     const generateColors = (count) => {
       if (count <= baseColors.length) return baseColors.slice(0, count);
       const out = [...baseColors];
       for (let i = baseColors.length; i < count; i++) {
-        const hue = (i * 137.508) % 360;
-        out.push(`hsl(${hue}, 55%, 52%)`);
+        const hue = (i * 137.508) % 300;
+        out.push(`hsl(${hue}, 55%, 65%)`);
       }
       return out;
     };
@@ -483,7 +483,7 @@ const TimeSheet = () => {
         chart: {
           toolbar: { show: false },
           type: "bar",
-          height: 380,
+          height: 230,
           fontFamily: chartTheme.fontFamily,
         },
         colors: generateColors(chartData.usersLogedHours.length),
@@ -709,7 +709,7 @@ const TimeSheet = () => {
               options={config.options}
               series={config.series}
               type={type}
-              height={350}
+              height={230}
             />
           </div>
         </div>
@@ -729,6 +729,8 @@ const TimeSheet = () => {
   ));
 
   // ── Render ─────────────────────────────────────────────────
+
+  if (pageLoading) return <TimesheetSkeleton />;
 
   return (
     <div className="timesheet-page">
@@ -785,24 +787,7 @@ const TimeSheet = () => {
           <div className="timesheet-charts-grid">
             {renderChart(pieChartConfig, "pie", "Hours by Manager")}
             {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
-            <div className="timesheet-chart-card timesheet-chart-card-full">
-              {verticalBarChartHoursConfig && (
-                <>
-                  <div className="timesheet-chart-header">
-                    <h3>Hours by User</h3>
-                  </div>
-                  <div className="timesheet-chart-content">
-                    <ReactApexChart
-                      key={chartKey}
-                      options={verticalBarChartHoursConfig.options}
-                      series={verticalBarChartHoursConfig.series}
-                      type="bar"
-                      height={380}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
           </div>
         </div>
       )}

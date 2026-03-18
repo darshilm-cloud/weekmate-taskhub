@@ -472,6 +472,7 @@
   border-top: 1px solid #f0f0f0;
 }
 
+.task-card-assignees,
 .task-card-progress { font-size: 12px; color: #666; }
 
 /* ── Calendar ── */
@@ -585,6 +586,10 @@
 .calendar-task-bar:hover { background: #bae0ff; }
 
 .calendar-more { font-size: 12px; color: #666; padding-left: 4px; }
+
+.task-calendar-view .calendar-day-cell:hover {
+  background: #f8fafc;
+}
 
 /* ── Dark theme ───────────────────────────────────────────── */
 body.dark-theme .task-page,
@@ -741,6 +746,138 @@ body[data-theme="dark"] .task-status-pill {
 body.dark-theme .task-view-all,
 body[data-theme="dark"] .task-view-all {
   color: #8fa7cc;
+}
+
+body.dark-theme .task-kanban-view,
+body[data-theme="dark"] .task-kanban-view {
+  background: #07111f;
+}
+
+body.dark-theme .kanban-column,
+body[data-theme="dark"] .kanban-column {
+  background: #16202d;
+  border-left: 1px solid rgba(69, 99, 145, 0.18);
+  border-right: 1px solid rgba(69, 99, 145, 0.18);
+  border-bottom: 1px solid rgba(69, 99, 145, 0.18);
+}
+
+body.dark-theme .kanban-column-header,
+body[data-theme="dark"] .kanban-column-header {
+  border-bottom-color: rgba(69, 99, 145, 0.24);
+  color: #d8e5fb;
+}
+
+body.dark-theme .kanban-column-count,
+body[data-theme="dark"] .kanban-column-count,
+body.dark-theme .task-card-project,
+body[data-theme="dark"] .task-card-project,
+body.dark-theme .task-card-due,
+body[data-theme="dark"] .task-card-due,
+body.dark-theme .task-card-assignees,
+body[data-theme="dark"] .task-card-assignees,
+body.dark-theme .task-card-progress,
+body[data-theme="dark"] .task-card-progress {
+  color: #8fa7cc;
+}
+
+body.dark-theme .task-card,
+body[data-theme="dark"] .task-card {
+  background: #1c2938;
+  box-shadow: none;
+  border-color: rgba(69, 99, 145, 0.18);
+}
+
+body.dark-theme .task-card:hover,
+body[data-theme="dark"] .task-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+body.dark-theme .task-card-title,
+body[data-theme="dark"] .task-card-title {
+  color: #f8fbff;
+}
+
+body.dark-theme .task-card-footer,
+body[data-theme="dark"] .task-card-footer {
+  border-top-color: rgba(69, 99, 145, 0.18);
+}
+
+body.dark-theme .task-calendar-view,
+body[data-theme="dark"] .task-calendar-view {
+  background: #0f1728;
+  border-color: rgba(69, 99, 145, 0.18);
+  color: #dce8fb;
+}
+
+body.dark-theme .calendar-toolbar button,
+body[data-theme="dark"] .calendar-toolbar button {
+  border-color: rgba(69, 99, 145, 0.28);
+  background: #132238;
+  color: #dce8fb;
+}
+
+body.dark-theme .calendar-toolbar button:hover,
+body[data-theme="dark"] .calendar-toolbar button:hover {
+  border-color: #4d7bd6;
+  color: #4d7bd6;
+}
+
+body.dark-theme .calendar-title,
+body[data-theme="dark"] .calendar-title {
+  color: #f8fbff;
+}
+
+body.dark-theme .calendar-mode button.active,
+body[data-theme="dark"] .calendar-mode button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+body.dark-theme .calendar-grid,
+body[data-theme="dark"] .calendar-grid {
+  border-color: rgba(69, 99, 145, 0.18);
+  background: #0b1628;
+}
+
+body.dark-theme .calendar-weekdays,
+body[data-theme="dark"] .calendar-weekdays {
+  background: #111c31;
+  color: #8fa7cc;
+}
+
+body.dark-theme .calendar-weekday,
+body[data-theme="dark"] .calendar-weekday,
+body.dark-theme .calendar-day-cell,
+body[data-theme="dark"] .calendar-day-cell {
+  border-color: rgba(69, 99, 145, 0.18);
+}
+
+body.dark-theme .calendar-day-cell,
+body[data-theme="dark"] .calendar-day-cell {
+  background: #0f1728;
+}
+
+body.dark-theme .calendar-day-num,
+body[data-theme="dark"] .calendar-day-num,
+body.dark-theme .calendar-more,
+body[data-theme="dark"] .calendar-more {
+  color: #8fa7cc;
+}
+
+body.dark-theme .calendar-task-bar,
+body[data-theme="dark"] .calendar-task-bar {
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+}
+
+body.dark-theme .calendar-task-bar:hover,
+body[data-theme="dark"] .calendar-task-bar:hover {
+  background: rgba(37, 99, 235, 0.28);
+}
+
+body.dark-theme .task-calendar-view .calendar-day-cell:hover,
+body[data-theme="dark"] .task-calendar-view .calendar-day-cell:hover {
+  background: #132238;
 }
 
 /* ── Responsive ── */

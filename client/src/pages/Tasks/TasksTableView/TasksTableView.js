@@ -44,6 +44,37 @@ import EditCommentModal from "../../../components/Modal/EditCommentModal";
 import textColorPicker from "../../../util/textColorPicker";
 import isEqual from "lodash/isEqual";
 
+const normalizeStageTitle = (title = "") =>
+  title.toLowerCase().trim().replace(/\s+/g, "-");
+
+const withAlpha = (color, alpha, fallback = "rgba(148, 163, 184, 0.2)") => {
+  if (!color) return fallback;
+
+  if (color.startsWith("#")) {
+    let hex = color.slice(1);
+    if (hex.length === 3) {
+      hex = hex
+        .split("")
+        .map((char) => char + char)
+        .join("");
+    }
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+  }
+
+  const rgb = color.match(/\d+/g);
+  if (rgb && rgb.length >= 3) {
+    const [r, g, b] = rgb.map(Number);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return fallback;
+};
+
 const TasksTableView = ({
   tasks,
   showModalTaskModal,
@@ -53,6 +84,7 @@ const TasksTableView = ({
   getProjectMianTask,
   getBoardTasks,
   updateTasks,
+  updateBoardTaskLocally,
 }) => {
   const companySlug = localStorage.getItem("companyDomain");
   
@@ -166,6 +198,7 @@ const TasksTableView = ({
     getProjectMianTask,
     getBoardTasks,
     updateTasks,
+    updateBoardTaskLocally,
   });
 
   const observer = useRef();
@@ -285,25 +318,29 @@ const TasksTableView = ({
                             </td>
                             <td>
                               {item?.start_date
-                                ? new Date(
-                                    item?.start_date
-                                  ).toLocaleDateString()
+                                ? moment(item.start_date).format("MMM D, YYYY")
                                 : "-"}
                             </td>
                             <td>
                               {item?.due_date
-                                ? new Date(item?.due_date).toLocaleDateString()
+                                ? <span style={{ color: moment(item.due_date).isBefore(moment(), "day") ? "#ef4444" : "inherit" }}>
+                                    {moment(item.due_date).format("MMM D, YYYY")}
+                                  </span>
                                 : "-"}
                             </td>
-                            <td
-                              style={{
-                                background: `${boardData?.workflowStatus?.color}`,
-                                color: textColorPicker(
-                                  boardData?.workflowStatus?.color
-                                ),
-                              }}
-                            >
-                              {boardData?.workflowStatus?.title}
+                            <td>
+                              <span
+                                className={`tt-stage-pill tt-stage-pill--${normalizeStageTitle(boardData?.workflowStatus?.title)}`}
+                                style={{
+                                  "--tt-stage-color": boardData?.workflowStatus?.color || "#94a3b8",
+                                  "--tt-stage-bg": withAlpha(boardData?.workflowStatus?.color, 0.12),
+                                  "--tt-stage-border": withAlpha(boardData?.workflowStatus?.color, 0.28),
+                                  "--tt-stage-dark-bg": withAlpha(boardData?.workflowStatus?.color, 0.18, "rgba(15, 23, 42, 0.88)"),
+                                  "--tt-stage-dark-border": withAlpha(boardData?.workflowStatus?.color, 0.52),
+                                }}
+                              >
+                                {boardData?.workflowStatus?.title}
+                              </span>
                             </td>
 
                             <td>
@@ -325,7 +362,14 @@ const TasksTableView = ({
                                 return (
                                   <span
                                     className="highlabel"
-                                    style={{ background: t.color }}
+                                    style={{
+                                      "--tt-label-color": t.color || "#94a3b8",
+                                      "--tt-label-bg": withAlpha(t.color, 0.14),
+                                      "--tt-label-border": withAlpha(t.color, 0.3),
+                                      "--tt-label-dark-bg": withAlpha(t.color, 0.18, "rgba(15, 23, 42, 0.88)"),
+                                      "--tt-label-dark-border": withAlpha(t.color, 0.5),
+                                      color: textColorPicker(t.color) === "#000000" ? "#0f172a" : "#ffffff",
+                                    }}
                                   >
                                     {t.title}
                                   </span>

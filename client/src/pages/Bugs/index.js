@@ -44,6 +44,7 @@ import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
+import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
 
 const BugsPMS = () => {
   const {
@@ -153,7 +154,8 @@ const BugsPMS = () => {
     tableTrue,
     handleChangeTableView,
     selectedView,
-    setFilterSchema
+    setFilterSchema,
+    pageLoading,
   } = BugsController();
 
   const csvRef = document.getElementById("test-table-xls-button");
@@ -167,6 +169,8 @@ const BugsPMS = () => {
       </Menu.Item>
     </Menu>
   );
+  if (pageLoading) return tableTrue === false ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
+
   return (
     <>
       <div className="project-wrapper discussion-wrapper bugs-task-wrapper">
@@ -178,6 +182,7 @@ const BugsPMS = () => {
                   { hasPermission(["bug_add"]) && (
                     <Button
                       onClick={ () => showModalTaskModal() }
+                      type="primary"
                       className=" add-btn"
                     >
                       <PlusOutlined />
@@ -337,7 +342,7 @@ const BugsPMS = () => {
       {/* Modals */ }
       <Modal
         open={ isModalOpenImport }
-        width={ 600 }
+        width={ 720 }
         title={ null }
         footer={ null }
         onCancel={ () => handleImportClose(false) }
@@ -616,7 +621,7 @@ const BugsPMS = () => {
         onCancel={ handleCancelTaskModal }
         title="Add Task Bug"
         className="add-task-modal edit-details-task-model"
-        width={ 800 }
+        width={ 960 }
         footer={ [
           <Button
             key="cancel"
@@ -631,7 +636,11 @@ const BugsPMS = () => {
             type="primary"
             size="large"
             className="square-primary-btn"
-            onClick={ () => addform.submit() }
+            onClick={ () => {
+              addform.validateFields(["title"]).then((values) => {
+                handleTaskOps({ ...addform.getFieldsValue(), ...values });
+              }).catch(() => {});
+            } }
           >
             Save
           </Button>,
@@ -696,7 +705,7 @@ const BugsPMS = () => {
                 <Form.Item
                   label="Description"
                   name="descriptions"
-                  rules={ [{ required: true }] }
+                  
                 >
                   <CKEditor
                     editor={ Custombuild }
@@ -843,14 +852,6 @@ const BugsPMS = () => {
                           <div className="flex-table">
                             <Form.Item
                               name="selectedItems"
-                              rules={ [
-                                {
-                                  required: true,
-                                  message: "Please select at least one assignee!",
-                                  type: "array",
-                                  min: 1,
-                                },
-                              ] }
                             >
                               <MultiSelect
                                 onSearch={ handleSearch }
@@ -1004,7 +1005,7 @@ const BugsPMS = () => {
         onCancel={ handleCancelTaskModal }
         title="Edit Task Bug"
         className="add-task-modal edit-details-task-model"
-        width={ 800 }
+        width={ 960 }
         footer={ [
           <Button
             key="cancel"

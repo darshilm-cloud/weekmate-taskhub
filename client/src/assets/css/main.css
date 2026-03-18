@@ -4107,24 +4107,30 @@ span.process_bar {
   font-weight: 600;
 }
 
-.project-task-list .card {
-  background-color: #e9f3f9;
-  border: 1px solid #81b8d8;
+.project-task-list .card,
+.project-task-list .wm-task-card {
+  background-color: var(--wm-task-surface-3, #1c2938);
+  border: 1px solid var(--wm-task-border, rgba(148, 163, 184, 0.18));
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: none;
 }
 
-.project-task-list .task-box h3 {
-  color: #36a0df;
+.project-task-list .task-box h3,
+.project-task-list .wm-task-box h3 {
+  color: var(--wm-task-text, #e2e8f0);
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   margin-bottom: 12px;
 }
 
-.project-task-list .task-box {
+.project-task-list .task-box,
+.project-task-list .wm-task-box {
   font-size: 13px;
+  background: var(--wm-task-surface-3, #1c2938);
+  color: var(--wm-task-text, #e2e8f0);
 }
 
 .ant-avatar {
@@ -7120,4 +7126,285 @@ span.color-popover .ant-avatar {
   }
 }
 
+/* ============================================================
+   ENHANCED MODAL DESIGN — matches Add Task style
+   Applies to: add-task-modal, add-list-modal, copy-task-modal,
+               notes-project-modal, timer-modal, log-time-modal
+   ============================================================ */
 
+/* ── Modal content shell ── */
+.add-task-modal .ant-modal-content,
+.add-list-modal .ant-modal-content,
+.copy-task-modal .ant-modal-content,
+.notes-project-modal .ant-modal-content,
+.timer-modal .ant-modal-content,
+.log-time-modal .ant-modal-content,
+.time-for-pms-modal .ant-modal-content {
+  padding: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.13) !important;
+}
+
+/* ── Close button ── */
+.add-task-modal .ant-modal-close,
+.add-list-modal .ant-modal-close,
+.copy-task-modal .ant-modal-close,
+.notes-project-modal .ant-modal-close,
+.timer-modal .ant-modal-close,
+.log-time-modal .ant-modal-close,
+.time-for-pms-modal .ant-modal-close {
+  top: 14px !important;
+  right: 14px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: rgba(37, 99, 235, 0.10) !important;
+  color: #187CB7 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s !important;
+}
+
+.add-task-modal .ant-modal-close:hover,
+.add-list-modal .ant-modal-close:hover,
+.copy-task-modal .ant-modal-close:hover,
+.notes-project-modal .ant-modal-close:hover,
+.timer-modal .ant-modal-close:hover,
+.log-time-modal .ant-modal-close:hover,
+.time-for-pms-modal .ant-modal-close:hover {
+  background: rgba(37, 99, 235, 0.20) !important;
+}
+
+.add-task-modal .ant-modal-close-x,
+.add-list-modal .ant-modal-close-x,
+.copy-task-modal .ant-modal-close-x,
+.notes-project-modal .ant-modal-close-x,
+.timer-modal .ant-modal-close-x,
+.log-time-modal .ant-modal-close-x,
+.time-for-pms-modal .ant-modal-close-x {
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 13px !important;
+}
+
+/* ── Modal header ── */
+.add-task-modal .modal-header,
+.add-list-modal .modal-header,
+.copy-task-modal .modal-header,
+.notes-project-modal .modal-header,
+.timer-modal .modal-header,
+.log-time-modal .modal-header,
+.time-for-pms-modal .modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 20px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--app-border, #e8ecf0) !important;
+  background: var(--app-surface, #fff) !important;
+}
+
+.add-task-modal .modal-header h1,
+.add-list-modal .modal-header h1,
+.copy-task-modal .modal-header h1,
+.notes-project-modal .modal-header h1,
+.timer-modal .modal-header h1,
+.log-time-modal .modal-header h1,
+.time-for-pms-modal .modal-header h1 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--app-text, #1e293b) !important;
+  margin: 0 !important;
+  letter-spacing: 0.01em;
+}
+
+/* ── Modal body / form area ── */
+.add-task-modal .ant-modal-body,
+.add-list-modal .ant-modal-body,
+.copy-task-modal .ant-modal-body,
+.notes-project-modal .ant-modal-body,
+.timer-modal .ant-modal-body,
+.log-time-modal .ant-modal-body,
+.time-for-pms-modal .ant-modal-body {
+  padding: 0 !important;
+}
+
+.add-task-modal .overview-modal-wrapper,
+.add-list-modal .overview-modal-wrapper,
+.copy-task-modal .overview-modal-wrapper,
+.notes-project-modal .overview-modal-wrapper,
+.timer-modal .overview-modal-wrapper {
+  padding: 20px !important;
+  background: var(--app-surface, #fff);
+}
+
+/* ── Form labels ── */
+.add-task-modal .modal-header ~ * label,
+.add-list-modal .modal-header ~ * label,
+.copy-task-modal .modal-header ~ * label {
+  font-weight: 500;
+  color: var(--app-text, #374151);
+}
+
+/* ── Form inputs ── */
+.add-task-modal .ant-form-item input,
+.add-list-modal .ant-form-item input,
+.copy-task-modal .ant-form-item input {
+  border-radius: 8px !important;
+}
+
+/* ── Footer buttons area ── */
+.add-task-modal .modal-footer-flex,
+.add-list-modal .modal-footer-flex,
+.copy-task-modal .modal-footer-flex {
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border, #e8ecf0);
+  margin-top: 8px;
+}
+
+/* ── Ant Design footer (if used) ── */
+.add-task-modal .ant-modal-footer,
+.add-list-modal .ant-modal-footer,
+.copy-task-modal .ant-modal-footer {
+  border-top: 1px solid var(--app-border, #e8ecf0) !important;
+  padding: 12px 20px !important;
+  margin: 0 !important;
+  background: var(--app-surface, #fff);
+}
+
+/* ============================================================
+   MODAL IMPROVEMENTS — wider size + neutral Cancel buttons
+   ============================================================ */
+
+/* ── Make modals bigger ── */
+.ant-modal.add-task-modal,
+.ant-modal.add-list-modal,
+.ant-modal.copy-task-modal,
+.ant-modal.notes-project-modal,
+.ant-modal.log-time-modal,
+.ant-modal.time-for-pms-modal,
+.ant-modal.disscusion-pop-wrapper,
+.ant-modal.upload-modal,
+.ant-modal.edit-details-task-model {
+  width: 920px !important;
+  max-width: 95vw !important;
+}
+
+/* ── Style the default Ant Design modal header (title= prop) ── */
+.add-task-modal .ant-modal-header,
+.add-list-modal .ant-modal-header,
+.copy-task-modal .ant-modal-header,
+.notes-project-modal .ant-modal-header,
+.log-time-modal .ant-modal-header,
+.time-for-pms-modal .ant-modal-header {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid var(--app-border, #e8ecf0) !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+}
+
+.add-task-modal .ant-modal-title,
+.add-list-modal .ant-modal-title,
+.copy-task-modal .ant-modal-title,
+.notes-project-modal .ant-modal-title,
+.log-time-modal .ant-modal-title,
+.time-for-pms-modal .ant-modal-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--app-text, #1e293b) !important;
+}
+
+/* ── Cancel / Delete buttons inside modals → neutral grey ── */
+.add-task-modal .ant-btn.ant-delete,
+.add-list-modal .ant-btn.ant-delete,
+.copy-task-modal .ant-btn.ant-delete,
+.notes-project-modal .ant-btn.ant-delete,
+.log-time-modal .ant-btn.ant-delete,
+.time-for-pms-modal .ant-btn.ant-delete,
+.add-task-modal .ant-btn.square-outline-btn.ant-delete,
+.add-list-modal .ant-btn.square-outline-btn.ant-delete,
+.copy-task-modal .ant-btn.square-outline-btn.ant-delete,
+.add-task-modal .ant-btn.delete-btn,
+.add-list-modal .ant-btn.delete-btn,
+.copy-task-modal .ant-btn.delete-btn,
+.notes-project-modal .ant-btn.delete-btn,
+.log-time-modal .ant-btn.delete-btn,
+.time-for-pms-modal .ant-btn.delete-btn,
+.disscusion-pop-wrapper .ant-btn.delete-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+}
+
+.add-task-modal .ant-btn.ant-delete:hover,
+.add-list-modal .ant-btn.ant-delete:hover,
+.copy-task-modal .ant-btn.ant-delete:hover,
+.notes-project-modal .ant-btn.ant-delete:hover,
+.log-time-modal .ant-btn.ant-delete:hover,
+.time-for-pms-modal .ant-btn.ant-delete:hover,
+.add-task-modal .ant-btn.square-outline-btn.ant-delete:hover,
+.add-list-modal .ant-btn.square-outline-btn.ant-delete:hover,
+.copy-task-modal .ant-btn.square-outline-btn.ant-delete:hover,
+.add-task-modal .ant-btn.delete-btn:hover,
+.add-list-modal .ant-btn.delete-btn:hover,
+.copy-task-modal .ant-btn.delete-btn:hover,
+.notes-project-modal .ant-btn.delete-btn:hover,
+.log-time-modal .ant-btn.delete-btn:hover,
+.time-for-pms-modal .ant-btn.delete-btn:hover,
+.disscusion-pop-wrapper .ant-btn.delete-btn:hover {
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* ── Primary / Save buttons inside modals → vibrant blue ── */
+.add-task-modal .ant-btn.square-primary-btn,
+.add-list-modal .ant-btn.square-primary-btn,
+.copy-task-modal .ant-btn.square-primary-btn,
+.notes-project-modal .ant-btn.square-primary-btn,
+.log-time-modal .ant-btn.square-primary-btn,
+.time-for-pms-modal .ant-btn.square-primary-btn,
+.disscusion-pop-wrapper .ant-btn.square-primary-btn {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.add-task-modal .ant-btn.square-primary-btn:hover,
+.add-list-modal .ant-btn.square-primary-btn:hover,
+.copy-task-modal .ant-btn.square-primary-btn:hover,
+.notes-project-modal .ant-btn.square-primary-btn:hover,
+.log-time-modal .ant-btn.square-primary-btn:hover,
+.time-for-pms-modal .ant-btn.square-primary-btn:hover,
+.disscusion-pop-wrapper .ant-btn.square-primary-btn:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+/* Upload Files modal primary/cancel override */
+.upload-modal .ant-btn.ant-btn-primary {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  border-radius: 8px !important;
+}
+.upload-modal .ant-btn.ant-btn-primary:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+.upload-modal .ant-btn.delete-btn,
+.upload-modal .ant-btn.ant-delete {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+}
+.upload-modal .ant-btn.delete-btn:hover,
+.upload-modal .ant-btn.ant-delete:hover {
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+}

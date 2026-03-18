@@ -656,18 +656,24 @@ const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDat
         }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
+        className="global-app-modal"
+        width={640}
         footer={
           modalMode === "view"
             ? null
             : [
                 <Button
                   key="cancel"
-                  className="delete-btn"
                   onClick={() => setModalVisible(false)}
+                  style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', boxShadow: 'none' }}
                 >
                   Cancel
                 </Button>,
-                <Button key="submit" type="primary" onClick={handleSubmit}>
+                <Button
+                  key="submit"
+                  type="primary"
+                  onClick={handleSubmit}
+                >
                   {editData ? "Update" : "Add"}
                 </Button>,
               ]

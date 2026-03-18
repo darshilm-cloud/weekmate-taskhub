@@ -21,6 +21,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import { getRoles } from "../../util/hasPermission";
 import GenericFilterComponent from "./PositiveReviewFilter";
+import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 
 /* ── constants ─────────────────────────────────────────────── */
@@ -79,6 +80,7 @@ const PositiveReview = () => {
   const [drawerOpen,   setDrawerOpen]   = useState(false);
   const [drawerRecord, setDrawerRecord] = useState(null);
   const [tableLoading, setTableLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
   const canAddReview  = useMemo(() => getRoles(ADMIN_ROLES),  []);
@@ -123,6 +125,7 @@ const PositiveReview = () => {
       console.error(error);
     } finally {
       setTableLoading(false);
+      setPageLoading(false);
     }
   }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, feedBackTypeFilter, dispatch]);
 
@@ -174,30 +177,35 @@ const PositiveReview = () => {
     return { total, ndaSigned, thisMonth, typeMap, monthlyMap };
   }, [allReviews]);
 
+  const isDark = document.body.classList.contains("dark-theme") ||
+                 document.body.getAttribute("data-theme") === "dark";
+  const chartTextColor  = isDark ? "#ffffff" : "#64748b";
+  const chartGridColor  = isDark ? "#1e3352" : "#f1f5f9";
+
   const donutSeries  = Object.values(analytics.typeMap);
   const donutLabels  = Object.keys(analytics.typeMap);
   const donutOptions = useMemo(() => ({
     chart:       { type: "donut", fontFamily: "inherit" },
     labels:      donutLabels.length ? donutLabels : ["No Data"],
     colors:      ["#2563eb", "#7c3aed", "#16a34a", "#ea580c", "#dc2626", "#0891b2"],
-    legend:      { position: "bottom", fontSize: "12px" },
+    legend:      { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels:  { enabled: false },
     stroke:      { width: 0 },
     tooltip:     { y: { formatter: (v) => `${v} reviews` } },
-  }), [donutLabels]);
+  }), [donutLabels, chartTextColor]);
 
   const barSeries  = [{ name: "Reviews", data: Object.values(analytics.monthlyMap) }];
   const barOptions = useMemo(() => ({
     chart:       { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
     colors:      ["#2563eb"],
-    xaxis:       { categories: Object.keys(analytics.monthlyMap) },
-    yaxis:       { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
+    xaxis:       { categories: Object.keys(analytics.monthlyMap), labels: { style: { colors: chartTextColor, fontSize: "11px" } } },
+    yaxis:       { labels: { style: { colors: chartTextColor, fontSize: "11px" } }, tickAmount: 3 },
     dataLabels:  { enabled: false },
-    grid:        { borderColor: "#f1f5f9" },
+    grid:        { borderColor: chartGridColor },
     tooltip:     { y: { formatter: (v) => `${v} reviews` } },
-  }), [analytics.monthlyMap]);
+  }), [analytics.monthlyMap, chartTextColor, chartGridColor]);
 
   /* ── filter handler ── */
   const onFilterChange = useCallback((skipParams, selectedFilters) => {
@@ -308,6 +316,8 @@ const PositiveReview = () => {
 
     return base;
   }, [userHasAccess, deleteReview]);
+
+  if (pageLoading) return <TablePageSkeleton />;
 
   /* ── render ── */
   return (

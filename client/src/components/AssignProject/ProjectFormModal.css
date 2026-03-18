@@ -114,6 +114,20 @@
   margin: 2px 0;
 }
 
+/* ── Two-column fields grid ────────────────────────────────── */
+.pfm-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.pfm-fields-grid .pfm-field-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pfm-fields-grid .pfm-divider {
+  display: none;
+}
+
 /* ── Date fields ───────────────────────────────────────────── */
 .pfm-dates-row {
   display: flex;
@@ -218,14 +232,16 @@
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
-  background: #ef4444 !important;
-  border-color: #ef4444 !important;
-  color: #fff !important;
-  transition: opacity 0.2s;
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+  transition: background 0.2s, color 0.2s;
 }
 
 .pfm-cancel-btn:hover {
-  opacity: 0.85;
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #1e293b !important;
 }
 
 .pfm-submit-btn {
@@ -234,10 +250,10 @@
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
-  background: linear-gradient(135deg, #00C4B4 0%, #00a896 100%) !important;
-  border-color: #00C4B4 !important;
+  background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%) !important;
+  border-color: #1677ff !important;
   color: #fff !important;
-  box-shadow: 0 4px 12px rgba(0, 196, 180, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3) !important;
   transition: opacity 0.2s, transform 0.1s;
 }
 
@@ -316,6 +332,11 @@ body[data-theme="dark"] .pfm-modal .ant-checkbox + span {
 body.dark-theme .pfm-divider,
 body[data-theme="dark"] .pfm-divider {
   background: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .pfm-fields-grid .pfm-field-row,
+body[data-theme="dark"] .pfm-fields-grid .pfm-field-row {
+  border-bottom-color: rgba(74, 104, 150, 0.24);
 }
 
 body.dark-theme .pfm-date-divider,

@@ -413,3 +413,70 @@ body.dark-theme .cmp-table-card .ant-table-tbody > tr:hover > td,
 body[data-theme="dark"] .cmp-table-card .ant-table-tbody > tr:hover > td {
   background: #132238;
 }
+
+/* ── Drawer dark mode ──────────────────────────────────────── */
+body.dark-theme .ant-drawer-content,
+body.dark-theme .ant-drawer-body,
+body[data-theme="dark"] .ant-drawer-content,
+body[data-theme="dark"] .ant-drawer-body {
+  background: #0c182b !important;
+}
+
+body.dark-theme .ant-drawer-header,
+body[data-theme="dark"] .ant-drawer-header {
+  background: #0c182b !important;
+  border-bottom-color: rgba(74, 104, 150, 0.24) !important;
+}
+
+body.dark-theme .ant-drawer-title,
+body[data-theme="dark"] .ant-drawer-title {
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .ant-drawer-close,
+body[data-theme="dark"] .ant-drawer-close {
+  color: #9bb6dd !important;
+}
+
+body.dark-theme .cmp-drawer-section,
+body[data-theme="dark"] .cmp-drawer-section {
+  border-bottom-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .cmp-drawer-field,
+body.dark-theme .cmp-complaint-content,
+body[data-theme="dark"] .cmp-drawer-field,
+body[data-theme="dark"] .cmp-complaint-content {
+  background: #132238 !important;
+  border: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .cmp-drawer-value,
+body[data-theme="dark"] .cmp-drawer-value {
+  color: #dce7fb !important;
+}
+
+body.dark-theme .cmp-drawer-label,
+body[data-theme="dark"] .cmp-drawer-label {
+  color: #6b8ab5 !important;
+}
+
+body.dark-theme .ant-drawer-wrapper-body,
+body.dark-theme .ant-drawer-content-wrapper,
+body[data-theme="dark"] .ant-drawer-wrapper-body,
+body[data-theme="dark"] .ant-drawer-content-wrapper {
+  background: #0c182b !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .ant-drawer-header-title .ant-drawer-title,
+body[data-theme="dark"] .ant-drawer-header-title .ant-drawer-title {
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .ant-drawer .ant-btn-default,
+body[data-theme="dark"] .ant-drawer .ant-btn-default {
+  background: #132238 !important;
+  border-color: rgba(74, 104, 150, 0.3) !important;
+  color: #9bb6dd !important;
+}

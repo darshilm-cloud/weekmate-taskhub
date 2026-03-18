@@ -189,10 +189,11 @@ exports.getDiscussionsTopics = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       search: Joi.string().allow("").optional(),
-      // sort: Joi.string().default("_id"),
-      // sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      project_id: Joi.string().required()
+      project_id: Joi.string().optional().allow(""),
+      limit: Joi.number().integer().min(1).default(20),
+      pageNo: Joi.number().integer().min(1).default(1),
+      sortBy: Joi.string().optional().default("desc")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -206,15 +207,16 @@ exports.getDiscussionsTopics = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value.project_id),
-      // For details
+      ...(value.project_id
+        ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
+        : {}),
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
     };
 
     const [isAdmin, isManager, isAccManager] = await Promise.all([
       checkUserIsAdmin(req?.user?._id),
-      checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
+      value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
     ]);
 
     if (!isManager && !isAdmin && !isAccManager) {

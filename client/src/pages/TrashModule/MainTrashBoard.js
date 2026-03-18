@@ -14,6 +14,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import NotesController from "./NotesController/NotesController";
+import { TrashSkeleton } from "../../components/common/SkeletonLoader";
 import "./trashstyle.css";
 
 const MainTrashBoard = () => {
@@ -37,6 +38,7 @@ const MainTrashBoard = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const { tab, taskID, listID } = queryString.parse(location.search);
   const [selectedTab, setSelectedTab] = useState(tab || "Project");
+  const [pageLoading, setPageLoading] = useState(true);
   const history = useHistory();
   useEffect(() => {
     const handleResize = () => {
@@ -168,7 +170,7 @@ const MainTrashBoard = () => {
   // updateTable is stable for our use; avoid exhaustive deps churn
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    updateTable();
+    updateTable().finally(() => setPageLoading(false));
   }, [selectedTab]);
 
   const Payload = () => {
@@ -249,6 +251,7 @@ const MainTrashBoard = () => {
     }
   };
   const isAnyRowSelected = selectedRowKeys.length > 0;
+  if (pageLoading) return <TrashSkeleton />;
   return (
     <>
       <div className="main-trash-wrapper">

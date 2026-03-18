@@ -1698,9 +1698,11 @@ button.ant-btn>.fi-ss-link:before {
 
 .drag_row {
     border-radius: 3px;
-    background: linear-gradient(180deg, rgba(147, 152, 154, 0.05) 0%, rgba(147, 152, 154, 0.00) 100%);
+    background: #fff;
     padding: 0px;
     height: calc(100% - 50px);
+    border: 1px solid #f0f0f0;
+    border-top: none;
 }
 
 .drag_row button.ant-btn.add-task {
@@ -1710,13 +1712,16 @@ button.ant-btn>.fi-ss-link:before {
 }
 
 .drag_column h4 {
-    color: #131313;
-    background-color: #eee;
+    color: #000;
+    background-color: #f5f5f5;
     padding: 10px;
+    border: 1px solid #f0f0f0;
+    margin: 0;
 }
 
+
 .drag_column h4 span {
-    background: #E8F2F8;
+    background: rgba(56, 189, 248, 0.14);
     font-size: 13px;
     padding: 4px;
     border-radius: 100%;
@@ -1724,23 +1729,35 @@ button.ant-btn>.fi-ss-link:before {
     height: 22px;
     display: inline-block;
     font-weight: 500;
-    color: #36A0DF;
+    color: #38bdf8;
     text-align: center;
     margin-left: 8px;
 }
 
-.task-box {
+.task-box,
+.wm-task-box {
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
-    background: linear-gradient(285deg, rgb(24 124 183 / 6%) 25.9%, rgb(54 160 223 / 14%) 94.4%);
+    background: #fff;
     margin-bottom: 16px;
     padding: 16px;
-    box-shadow: -1px 3px 2px 0px #36a0df66;
-    border-left: 3px solid #187CB7;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 3px solid #38bdf8;
     cursor: pointer;
+    color: #1e293b;
 }
 
-.task-box .highlabel {
+body.dark-theme .task-box,
+body.dark-theme .wm-task-box,
+body[data-theme="dark"] .task-box,
+body[data-theme="dark"] .wm-task-box {
+    background: #1c2938;
+    color: #e2e8f0;
+    box-shadow: none;
+}
+
+.task-box .highlabel,
+.wm-task-box .highlabel {
     /* background: #ff0000e3; */
     border-radius: 3px;
     padding: 2px 5px;
@@ -1752,15 +1769,25 @@ button.ant-btn>.fi-ss-link:before {
 }
 
 
-.task-box h3 {
-    background: #000;
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.task-box h3,
+.wm-task-box h3 {
+    background: none;
+    background-clip: initial;
+    -webkit-background-clip: initial;
+    -webkit-text-fill-color: #1e293b;
+    color: #1e293b;
     font-weight: 500;
     font-size: 13px;
     cursor: pointer;
     line-break: anywhere;
+}
+
+body.dark-theme .task-box h3,
+body.dark-theme .wm-task-box h3,
+body[data-theme="dark"] .task-box h3,
+body[data-theme="dark"] .wm-task-box h3 {
+    -webkit-text-fill-color: #f8fafc;
+    color: #f8fafc;
 }
 
 .assignees {
@@ -2091,7 +2118,14 @@ section.drag_container {
 
 .container.project-task-list {
     height: 100%;
+    background: var(--app-surface, #fff);
 }
+
+body.dark-theme .container.project-task-list,
+body[data-theme="dark"] .container.project-task-list {
+    background: #16202d;
+}
+
 
 /*Time Tab css*/
 
@@ -3519,6 +3553,7 @@ span.anticon.anticon-down svg {
     overflow-y: auto;
     padding: 0 5px;
     overflow-x: hidden;
+    background: #16202d;
 }
 
 .profilerightbar .notes-box {

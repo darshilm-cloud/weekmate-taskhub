@@ -80,6 +80,7 @@ const TaskList = ({
   getBoardTasks,
   updateTasks,
   updateTaskDraftStatus,
+  updateBoardTaskLocally,
   projectDetails,
   isEditTaskSave,
   setEditTaskSave
@@ -237,6 +238,7 @@ const TaskList = ({
     getProjectMianTask,
     getBoardTasks,
     updateTasks,
+    updateBoardTaskLocally,
   });
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;
@@ -891,7 +893,7 @@ const TaskList = ({
 
   useEffect(() => {
     const initialSliceState = tasks.reduce((acc, boardData) => {
-      acc[boardData.workflowStatus._id] = 6;
+      acc[boardData.workflowStatus?._id] = 6;
       return acc;
     }, {});
     console.log("initialSliceState", initialSliceState);
@@ -937,6 +939,8 @@ const TaskList = ({
 
 
   const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"])
+  const boardCardStyle = {};
+  const taskBoxStyle = {};
 
   return (
     <>
@@ -945,30 +949,27 @@ const TaskList = ({
           <div
             key={`${boardData._id}_${index}`}
             className={`order small-box ${dragged ? "dragged-over" : ""}`}
+            style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6" }}
             onDragLeave={(e) => onDragLeave(e)}
             onDragEnter={(e) => onDragEnter(e)}
             onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
-            onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
-
-
-
+            onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
           >
-            {console.log(boardData, "boardData")}
             <section className="drag_container">
               <div className="container project-task-list">
                 <div className="drag_column">
                   <h4>
-                    {boardData?.workflowStatus?.title}{" "}
+                    <span className="wm-col-title" style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}>{boardData?.workflowStatus?.title}</span>
                     <span
+                      className="wm-col-count"
                       style={{
-                        background: boardData?.workflowStatus?.color,
-                        color: textColorPicker(
-                          boardData?.workflowStatus?.color
-                        ),
+                        background: `${boardData?.workflowStatus?.color || "#3b82f6"}22`,
+                        color: boardData?.workflowStatus?.color || "#3b82f6",
+                        border: `1px solid ${boardData?.workflowStatus?.color || "#3b82f6"}55`,
                       }}
                     >
-                      ({boardData.tasks.length})
+                      {boardData.tasks.length}
                     </span>
                   </h4>
 
@@ -994,42 +995,41 @@ const TaskList = ({
 
                     <div className="borad-task-data">
                       {boardData.tasks
-                        .slice(0, sliceStates[boardData.workflowStatus._id])
+                        .slice(0, sliceStates[boardData.workflowStatus?._id])
                         .map((task, cardIndex) => {
                           const isDoneColumn =
-                            boardData.workflowStatus.title === "Done";
+                            boardData.workflowStatus?.title === "Done";
                           const isLastTask =
                             cardIndex ===
                             boardData.tasks.slice(
                               0,
-                              sliceStates[boardData.workflowStatus._id]
+                              sliceStates[boardData.workflowStatus?._id]
                             ).length -
                             1;
                           return (
                             <>
                               <div
-                                className={`card ${dragged ? "dragged" : ""}`}
-                                key={task._id}
-                                id={task._id}
+                                className={`wm-task-card ${dragged ? "dragged" : ""}${isDoneColumn ? " wm-task-card-done" : ""}`}
+                                key={task?._id}
+                                id={task?._id}
+                                style={boardCardStyle}
                                 draggable
                                 onDragStart={(e) => onDragStart(e)}
                                 onDragEnd={(e) => onDragEnd(e)}
                                 ref={
                                   isLastTask &&
                                     boardData.tasks.length >
-                                    sliceStates[boardData.workflowStatus._id]
+                                    sliceStates[boardData.workflowStatus?._id]
                                     ? (node) =>
                                       lastTaskElementRef(
                                         node,
-                                        boardData.workflowStatus._id
+                                        boardData.workflowStatus?._id
                                       )
                                     : null
                                 }
                               >
                                 <div
-                                  className={`task-box ${
-                                    isDoneColumn ? "task-box-done" : ""
-                                  }`}
+                                  className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     getTaskByIdDetails(task._id);
@@ -1037,222 +1037,57 @@ const TaskList = ({
                                     setTempBoard(boardData);
                                     setSelectedTaskId(task._id);
                                   }}
-                                  style={{
-                                    background: isDoneColumn && "#cffdcf",
-                                  }}
                                 >
-                                  <div
-                                    className="taskHeader"
-                                    style={{ maxWidth: "90%" }}
-                                  >
-                                    <h3
-                                      id={`title-${task._id}`}
-                                      style={{
-                                        color: isDoneColumn && "green",
-                                        "-webkit-text-fill-color":
-                                          isDoneColumn && "green",
-                                        textDecoration:
-                                          isDoneColumn && "line-through",
-                                      }}
-                                    >
-                                      {task.title}
-                                    </h3>
-                                    <span></span>
-                                  </div>
-
-                                  <span
-                                    className="highlabel"
-                                    style={{
-                                      backgroundColor: task.task_labels.map(
-                                        (item) => item.color
-                                      ),
-                                      textTransform: "capitalize",
-                                    }}
-                                  >
-                                    {task.task_labels.map((item) => item.title)}
-                                  </span>
-                                  {task.due_date && (
-                                    <div className="task-due-date-wrapper">
-                                      <div className="task-due-date">
-                                        <span>
-                                          <i className="fa-regular fa-calendar-days"></i>{" "}
-                                          Due date
+                                  {/* Task labels */}
+                                  {task.task_labels?.length > 0 && (
+                                    <div className="wm-card-labels">
+                                      {task.task_labels.map((lbl) => (
+                                        <span
+                                          key={lbl._id}
+                                          className="wm-card-label"
+                                          style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
+                                        >
+                                          {lbl.title}
                                         </span>
-                                      </div>
-                                      <div
-                                        className="task-due-date"
-                                        style={{
-                                          color: moment(task.due_date).isBefore(
-                                            currDate,
-                                            "day"
-                                          )
-                                            ? "red"
-                                            : "inherit",
-                                        }}
-                                      >
-                                        {moment(task.due_date).format("D MMM")}
-                                      </div>
+                                      ))}
                                     </div>
                                   )}
 
-                                  <div
-                                    className="assignees"
-                                    style={{
-                                      borderBottom: isDoneColumn && "1px solid green",
-                                    }}
-                                  >
-                                    <div className="assignee-name">
-                                      <i className="fi fi-rr-users"></i>
-                                      <p>Assignees</p>
-                                    </div>
-                                    <div className="avtar-group">
-                                      <MyAvatarGroup
-                                        record={task.assignees.map((ele) => {
-                                          let obj = {
-                                            ...ele,
-                                            name: ele?.full_name,
-                                          };
-                                          return obj;
-                                        })}
-                                      />
-
-                                      <Button
-                                        onClick={() =>
-                                          getTaskByIdDetails(task._id, {
-                                            editFlag: true,
-                                            boardID:
-                                              boardData.workflowStatus._id,
-                                          })
-                                        }
-                                        icon={<PlusOutlined />}
-                                        disabled={
-                                          !getRoles(["Admin"]) ||
-                                          isDoneColumn
-                                        }
-                                      ></Button>
-                                    </div>
+                                  {/* Title */}
+                                  <div className="wm-card-title" style={{ textDecoration: isDoneColumn ? "line-through" : "none" }}>
+                                    {task.title}
                                   </div>
 
-                                  {hasPermission(["view_timesheet"]) && (
-                                    <div className="assignee-name">
-                                      {(
-                                        (task?.total_logged_hours !== "" &&
-                                          parseInt(task?.total_logged_hours) >
-                                          0) ||
-                                        (task?.total_logged_minutes !== "" &&
-                                          parseInt(task?.total_logged_minutes) >
-                                          0) ||
-                                        (task?.estimated_hours !== "" &&
-                                          parseInt(task?.estimated_hours) >
-                                          0) ||
-                                        (task?.estimated_minutes !== "" &&
-                                          parseInt(task?.estimated_minutes) >
-                                          0)) && (
-                                          <div className="assignee-task-time">
-                                            <i className="fi fi-rr-clock"></i>
-                                            <p>Logged Time</p>
-                                          </div>
-                                        )}
-                                      {console.log(task, "tasktask")}
-                                      <div className="task-time">
-                                        <Tooltip
-                                          placement="topLeft"
-                                          title={"Logged Time"}
-                                          arrow={false}
-                                        >
-                                          {task?.total_logged_hours !== "" &&
-                                            parseInt(task?.total_logged_hours) > 0 ? (
-                                            <span>
-                                              {task?.total_logged_hours}h{" "}
-                                            </span>
-                                          ) : (
-                                            ""
-                                          )}
-                                          {task?.total_logged_minutes !== "" &&
-                                            parseInt(task?.total_logged_minutes) > 0 ? (
-                                            <span>
-                                              {task?.total_logged_minutes}m{" "}
-                                            </span>
-                                          ) : (
-                                            ""
-                                          )}
-                                          {task?.total_logged_seconds !== "" &&
-                                            parseInt(task?.total_logged_seconds) > 0 ? (
-                                            <span>
-                                              {task?.total_logged_seconds}s{" "}
-                                            </span>
-                                          ) : (
-                                            ""
-                                          )}
-                                          {(parseInt(task?.total_logged_hours) > 0 ||
-                                            parseInt(task?.total_logged_minutes) > 0 ||
-                                            parseInt(task?.total_logged_seconds) > 0) &&
-                                            (parseInt(task?.estimated_hours) > 0 ||
-                                              parseInt(task?.estimated_minutes) > 0)
-                                            ? " / "
-                                            : ""}
-                                        </Tooltip>
-                                        <Tooltip
-                                          placement="topLeft"
-                                          title={"Estimated Time"}
-                                          arrow={false}
-                                        >
-                                          {task?.estimated_hours !== "" &&
-                                            parseInt(task?.estimated_hours) >
-                                            0 ? (
-                                            <span>
-                                              {task?.estimated_hours}h{" "}
-                                            </span>
-                                          ) : (
-                                            ""
-                                          )}
-                                          {task?.estimated_minutes !== "" &&
-                                            parseInt(task?.estimated_minutes) >
-                                            0 ? (
-                                            <span>
-                                              {task?.estimated_minutes}m{" "}
-                                            </span>
-                                          ) : (
-                                            ""
-                                          )}
-                                        </Tooltip>
-                                      </div>
+                                  {/* List name */}
+                                  {selectedTask?.title && (
+                                    <div className="wm-card-list">{selectedTask.title}</div>
+                                  )}
+
+                                  {/* Due date */}
+                                  {task.due_date && (
+                                    <div
+                                      className="wm-card-due"
+                                      style={{ color: moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                    >
+                                      <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                      {moment(task.due_date).format("MMM D, YYYY")}
                                     </div>
                                   )}
 
-                                  <div className="task-comment-hour-detail-wrapper">
-                                    <div className="task-comment-bar">
-                                      <Tooltip
-                                        title="Comments"
-                                        placement="right"
-                                      >
-                                        <div className="task-comment-icon">
-                                          <a href="#">
-                                            <i class="fa-regular fa-comment"></i>
-                                          </a>
-                                          {task.comments}{" "}
-                                          {(taskDrafts[task._id] ||
-                                            task.hasDraft) && (
-                                              <span
-                                                className="draft-indicator"
-                                                style={{ color: "#ff4d4f" }}
-                                              >
-                                                Draft
-                                              </span>
-                                            )}
-                                        </div>
-                                      </Tooltip>
-
-                                      <Tooltip
-                                        placement="topLeft"
-                                        title={`Created On: ${moment(
-                                          task?.createdAt
-                                        ).format("DD-MM-YYYY")}`}
-                                        arrow={false}
-                                      >
-                                        {moment(task?.createdAt).fromNow()}
-                                      </Tooltip>
-                                    </div>
+                                  {/* Footer: assignees + comments */}
+                                  <div className="wm-card-footer">
+                                    <span className="wm-card-assignees">
+                                      {task.assignees?.length > 0
+                                        ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
+                                        : "Unassigned"}
+                                    </span>
+                                    <span className="wm-card-meta">
+                                      <i className="fa-regular fa-comment" style={{ marginRight: 3 }}></i>
+                                      {task.comments || 0}
+                                      {(taskDrafts[task._id] || task.hasDraft) && (
+                                        <span className="draft-indicator" style={{ color: "#ff4d4f", marginLeft: 4 }}>Draft</span>
+                                      )}
+                                    </span>
                                   </div>
                                 </div>
                                 <div>

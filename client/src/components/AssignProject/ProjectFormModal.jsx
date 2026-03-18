@@ -83,7 +83,7 @@ const ProjectFormModal = ({
     const fetchAllData = async () => {
       try {
         dispatch(showAuthLoader());
-        const apiCalls = [
+        await Promise.all([
           getTechnologyList(),
           getProjectType(),
           getStatus(),
@@ -93,9 +93,12 @@ const ProjectFormModal = ({
           getAccountManager(),
           getWorkflow(),
           getProjectTypeSlug(),
-          selectedProject ? fetchProjectDetails(selectedProject._id) : Promise.resolve(),
-        ];
-        await Promise.all(apiCalls);
+        ]);
+        // Fetch project details AFTER all dropdown lists are loaded so that
+        // form.setFieldsValue can resolve IDs to labels correctly.
+        if (selectedProject) {
+          await fetchProjectDetails(selectedProject._id);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -330,6 +333,26 @@ const ProjectFormModal = ({
         message.success(response.data.message);
         form.resetFields();
         setIsModalOpen(false);
+        try {
+          const notificationKey = `weekmate-project-notifications-${companySlug || "default"}`;
+          const existingNotifications = JSON.parse(localStorage.getItem(notificationKey) || "[]");
+          const createdProject = response.data.data;
+          const nextNotifications = [
+            {
+              _id: `local-project-${createdProject?._id || Date.now()}`,
+              type: "localProjectCreated",
+              localTitle: "Project created",
+              message: `Project "${createdProject?.title || values.title.trim()}" created successfully.`,
+              createdAt: new Date().toISOString(),
+              project_id: createdProject?._id,
+            },
+            ...existingNotifications,
+          ];
+          localStorage.setItem(notificationKey, JSON.stringify(nextNotifications.slice(0, 25)));
+          window.dispatchEvent(new CustomEvent("weekmate:project-notification"));
+        } catch (notificationError) {
+          console.error("project notification save error", notificationError);
+        }
         await emitEvent(socketEvents.ADD_PROJECT_ASSIGNEE, response.data.data);
       } else {
         message.error(response?.data?.message);
@@ -403,32 +426,12 @@ const ProjectFormModal = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <Modal
-        footer={null}
-        width={580}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        className="pfm-modal"
-        destroyOnClose
-      >
-        <div className="pfm-header">
-          <h2 className="pfm-title">Loading Project Details</h2>
-        </div>
-        <div style={{ padding: "24px 0", display: "flex", justifyContent: "center" }}>
-          <Spin size="large" />
-        </div>
-      </Modal>
-    );
-  }
-
   const isEdit = modalMode !== "add";
 
   return (
     <Modal
       footer={null}
-      width={580}
+      width={960}
       open={isModalOpen}
       onCancel={handleCancel}
       className="pfm-modal"
@@ -561,6 +564,9 @@ const ProjectFormModal = ({
           </Checkbox>
         </div>
         <div className="pfm-divider" />
+
+        {/* 2-col grid for all simple fields */}
+        <div className="pfm-fields-grid">
 
         {/* Department (Technology) */}
         <div className="pfm-field-row">
@@ -806,6 +812,8 @@ const ProjectFormModal = ({
             </Checkbox>
           </Form.Item>
         </div>
+
+        </div>{/* end pfm-fields-grid */}
 
         {/* Footer buttons */}
         <div className="pfm-footer">

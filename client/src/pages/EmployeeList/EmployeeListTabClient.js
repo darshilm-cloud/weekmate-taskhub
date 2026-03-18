@@ -534,6 +534,10 @@ const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) =>
     if (actionsRef) {
       actionsRef.current = {
         openAddModal,
+        openEditModal: (id) => {
+          showModal(id);
+          setModalMode("Edit");
+        },
         exportCSV,
       };
     }

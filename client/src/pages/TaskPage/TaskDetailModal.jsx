@@ -473,13 +473,8 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       closeIcon={<CloseOutlined />}
       destroyOnClose
     >
-      {loading ? (
-        <div className="task-detail-modal-loading">
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div className="task-detail-modal-body">
-          <div className="task-detail-modal-left">
+      <div className="task-detail-modal-body">
+        <div className="task-detail-modal-left">
             <div className="task-detail-breadcrumb">
               {displayTask?.project?.title && (
                 <span className="task-detail-breadcrumb-project">
@@ -592,7 +587,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "comments",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <CommentOutlined /> Comment
                       <span className="comment-badge">{comments.length || 0}</span>
                     </span>
@@ -602,7 +597,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "attachment",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <PaperClipOutlined /> Attachment
                     </span>
                   ),
@@ -637,7 +632,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                 {
                   key: "activity",
                   label: (
-                    <span>
+                    <span className="task-detail-tab-label">
                       <HistoryOutlined /> Log Activity
                     </span>
                   ),
@@ -647,9 +642,9 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
             />
           </div>
         </div>
-      )}
     </Modal>
   );
 };
+
 
 export default TaskDetailModal;

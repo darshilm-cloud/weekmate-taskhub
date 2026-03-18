@@ -18,6 +18,8 @@ import {
   FileTextOutlined,
   TeamOutlined,
   BellOutlined,
+  ReadOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
@@ -147,6 +149,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/dashboard")) return "Dashboard";
     if (path.includes("/tasks")) return "Tasks";
     if (path.includes("/project-list")) return "Projects";
+    if (path.includes("/notes")) return "Notes";
+    if (path.includes("/discussion")) return "Discussion";
     if (path.includes("/project-users")) return "Users";
     if (path.includes("/permission-access")) return "Permission";
     if (path.includes("/project-runnig-reports")) return "Analytics-Projects-running";
@@ -190,6 +194,18 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <FolderOutlined />,
         label: "Projects",
         onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
+      },
+      {
+        key: "Notes",
+        icon: <ReadOutlined />,
+        label: "Notes",
+        onClick: () => handleMenuClick("Notes", `/${companySlug}/notes`),
+      },
+      {
+        key: "Discussion",
+        icon: <MessageOutlined />,
+        label: "Discussion",
+        onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`),
       },
       getRoles(["Admin"]) && {
         key: "Users",

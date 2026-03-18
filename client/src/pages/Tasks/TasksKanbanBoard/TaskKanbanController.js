@@ -25,6 +25,7 @@ const TaskKanbanController = ({
   deleteTasks,
   getProjectMianTask,
   getBoardTasks,
+  updateBoardTaskLocally,
 }) => {
   const location = useLocation();
   const history = useHistory();
@@ -381,7 +382,12 @@ useEffect(() => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        getBoardTasks(taskDetails?.mainTask?._id);
+        const updatedTask = response.data.data;
+        setTaskDetails(updatedTask);
+        setFileViewAttachment(updatedTask.attachments || []);
+        setViewTask(updatedTask);
+        setSelectedTaskStatusTitle(updatedTask.task_status?.title);
+        updateBoardTaskLocally?.(updatedTask);
         setIsEditable({
           title: false,
           proj_description: false,

@@ -11,7 +11,8 @@ const Notes = new Schema({
   },
   color: {
     type: String,
-    required: true,
+    required: false,
+    default: "#e0f7fa",
   },
   subscribers: {
     type: [{ type: Schema.Types.ObjectId, ref: "employees" }],

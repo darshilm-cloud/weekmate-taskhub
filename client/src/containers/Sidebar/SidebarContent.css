@@ -639,3 +639,48 @@ body.admin-user[data-theme="light"] .gx-layout-sider-dark .gx-layout-sider-heade
     background-image: none !important;
     box-shadow: none !important;
 }
+
+/* Hide scrollbar track/thumb elements inside the sidebar scroll area */
+.weekmate-sidebar-scroll > div:not(:first-child),
+.gx-layout-sider-scrollbar.weekmate-sidebar-scroll > div:not(:first-child) {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Ensure ant-layout-sider-trigger never shows in weekmate sidebar */
+.weekmate-sidebar .ant-layout-sider-trigger,
+.weekmate-sidebar .ant-layout-sider-has-trigger,
+.sidebar-menu .ant-layout-sider-trigger {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+}
+
+/* Remove has-trigger padding that creates empty space at the bottom */
+.weekmate-sidebar .ant-layout-sider-has-trigger,
+.gx-app-sidebar.ant-layout-sider-has-trigger {
+    padding-bottom: 0 !important;
+}
+
+/* ── Fix light-blue bands above/below menu in dark mode ──────────────────────
+   ui-remap.css has `.admin-user .ant-layout.admin .ant-layout-sider { background: #0b3a5b !important; }`
+   (4-class specificity). We beat it with 5-class selectors to force the correct dark bg. */
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-sider,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-sider-children,
+body.dark-theme.admin-user .ant-layout.admin .sidebar-menu .Sidebar,
+body.dark-theme.admin-user .ant-layout.admin .weekmate-sidebar,
+body[data-theme="dark"].admin-user .ant-layout.admin .ant-layout-sider,
+body[data-theme="dark"].admin-user .ant-layout.admin .ant-layout-sider-children,
+body[data-theme="dark"].admin-user .ant-layout.admin .sidebar-menu .Sidebar,
+body[data-theme="dark"].admin-user .ant-layout.admin .weekmate-sidebar {
+    background: var(--wm-sidebar-bg) !important;
+    background-color: var(--wm-sidebar-bg) !important;
+    color: var(--wm-sidebar-text) !important;
+}
+
+/* Ensure inner Sider fills full scroll height so no background bleeds at bottom */
+.weekmate-sidebar-scroll .ant-layout-sider.Sidebar,
+.weekmate-sidebar-scroll .Sidebar {
+    min-height: 100%;
+}

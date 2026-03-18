@@ -189,6 +189,7 @@ const OverviewController = () => {
     }
   };
 
+  const [pageLoading, setPageLoading] = useState(true);
   const [allTasks, setAllTasks] = useState([]);
   const [priorityAnalysis, setPriorityAnalysis] = useState({ low: 0, medium: 0, high: 0, total: 0 });
   const [userAnalysis, setUserAnalysis] = useState([]);
@@ -197,13 +198,11 @@ const OverviewController = () => {
   const { projectOverviewData } = useSelector((state) => state.apiData);
 
   const fetchAllTasks = async () => {
-    dispatch(showAuthLoader());
     try {
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
         api_url: `${Service.getTaskDropdown}/${projectId}`,
       });
-      dispatch(hideAuthLoader());
       if (response?.data && response?.data?.statusCode === 200) {
         const tasks = response.data.data;
         setAllTasks(tasks);
@@ -211,7 +210,8 @@ const OverviewController = () => {
       }
     } catch (error) {
       console.log(error, "fetchAllTasks");
-      dispatch(hideAuthLoader());
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -328,7 +328,8 @@ const OverviewController = () => {
     priorityAnalysis,
     userAnalysis,
     statusAnalysis,
-    allTasks
+    allTasks,
+    pageLoading,
   };
 };
 

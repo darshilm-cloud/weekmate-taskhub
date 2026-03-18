@@ -25,14 +25,14 @@ const ProjectListModal = ({
 
   const onSearch = useCallback(
     debounce((value) => {
-      if (value.trim()) getProjectListing(value);
+      getProjectListing(value);
     }, 500),
-    []
+    [getProjectListing]
   );
 
   const handleInputChange = (e) => {
     const { value } = e.target;
-    if (value.trim() !== "") setIsSearching(false);
+    setIsSearching(value.trim() === "");
     onSearch(value);
   };
 

@@ -21,6 +21,7 @@ const PermissionModuleController = () => {
   const [isDirty,          setIsDirty]          = useState(false);
   const [permLoading,      setPermLoading]      = useState(false);
   const [saving,           setSaving]           = useState(false);
+  const [pageLoading,      setPageLoading]      = useState(true);
 
   /* legacy modal state kept so old import still compiles */
   const [PermissionModalOpen, setPermissionModalOpen] = useState(false);
@@ -47,10 +48,12 @@ const PermissionModuleController = () => {
           fetchPermissionsForRoleInner(first._id);
         }
       }
+      setPageLoading(false);
     } catch (error) {
       dispatch(hideAuthLoader());
       console.error(error);
       message.error("Failed to load roles");
+      setPageLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
@@ -220,6 +223,7 @@ const PermissionModuleController = () => {
     isDirty,
     permLoading,
     saving,
+    pageLoading,
     /* actions */
     selectRole,
     getPermissionByRole,

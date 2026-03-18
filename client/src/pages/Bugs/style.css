@@ -1,6 +1,314 @@
+/* ══════════════════════════════════════════════════════════════
+   Bug Kanban Board — Tasks-style redesign
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Column outer wrapper ─────────────────────────────────── */
+.bugs-task-wrapper .order.small-box {
+    min-width: 272px !important;
+    max-width: 272px !important;
+    flex: 0 0 272px !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+    border: 1px solid #e5e7eb !important;
+    border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06) !important;
+    background: #ffffff !important;
+}
+
+/* ── Column header ─────────────────────────────────────────── */
+.bugs-task-wrapper .drag_column h4 {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 14px 11px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    margin-bottom: 0 !important;
+    background: #ffffff;
+}
+
+.bugs-task-wrapper .wm-col-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.bugs-task-wrapper .wm-col-count {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 1px 8px !important;
+    border-radius: 20px !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    line-height: 18px !important;
+    height: auto !important;
+    display: inline-block !important;
+    margin-left: auto !important;
+}
+
+/* ── Column drag area ─────────────────────────────────────── */
+.bugs-task-wrapper .drag_row {
+    padding: 10px 8px 4px !important;
+    min-height: 80px;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #ffffff;
+}
+
+.bugs-task-wrapper .kanbanView-bugs-data {
+    max-height: calc(100vh - 270px);
+    overflow-y: auto;
+    padding: 0 !important;
+}
+
+/* ── Card outer wrapper ────────────────────────────────────── */
+.bugs-task-wrapper .wm-task-card {
+    position: relative;
+    margin-bottom: 8px;
+}
+
+/* ── Bug Kanban Card ───────────────────────────────────────── */
+.bugs-task-wrapper .project-task-list .wm-task-box {
+    background: #fff !important;
+    border: 1px solid #e8ecf0 !important;
+    border-left: 3px solid var(--wm-col-border-color, #38bdf8) !important;
+    border-radius: 8px !important;
+    padding: 12px 50px 12px 14px !important;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.1s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+.bugs-task-wrapper .project-task-list .wm-task-box:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    transform: translateY(-1px);
+}
+
+.bugs-task-wrapper .project-task-list .wm-task-box.wm-task-box-done {
+    border-left-color: #22c55e !important;
+    opacity: 0.82;
+}
+
+/* Label chips */
+.bugs-task-wrapper .wm-card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.bugs-task-wrapper .wm-card-label {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+    line-height: 1.6;
+}
+
+/* Card title */
+.bugs-task-wrapper .wm-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.45;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+/* Project / list name */
+.bugs-task-wrapper .wm-card-list {
+    font-size: 11px;
+    color: #3b82f6;
+    font-weight: 600;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Due date */
+.bugs-task-wrapper .wm-card-due {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+/* Footer */
+.bugs-task-wrapper .wm-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+    font-size: 11px;
+}
+
+.bugs-task-wrapper .wm-card-assignees {
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 65%;
+}
+
+.bugs-task-wrapper .wm-card-meta {
+    color: #6b7280;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+/* Checkbox in card */
+.bugs-task-wrapper .wm-task-card input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+/* ── Dark theme overrides ──────────────────────────────────── */
+body.dark-theme .bugs-task-wrapper .order.small-box,
+body[data-theme="dark"] .bugs-task-wrapper .order.small-box {
+    background: #1c2938 !important;
+    border-color: rgba(74, 104, 150, 0.32) !important;
+    border-top-color: var(--wm-col-border-color, #38bdf8) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .drag_column h4,
+body[data-theme="dark"] .bugs-task-wrapper .drag_column h4 {
+    background: #1c2938 !important;
+    border-bottom-color: rgba(74, 104, 150, 0.32) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .bugs-task-wrapper .drag_row,
+body[data-theme="dark"] .bugs-task-wrapper .drag_row {
+    background: #1c2938 !important;
+}
+
+body.dark-theme .bugs-task-wrapper .project-task-list .wm-task-box,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .wm-task-box {
+    background: #0f1e30 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    border-left: 3px solid var(--wm-col-border-color, #38bdf8) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .project-task-list .wm-task-box.wm-task-box-done,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .wm-task-box.wm-task-box-done {
+    border-left-color: #22c55e !important;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-title,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-title {
+    color: #e2e8f0;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-due,
+body.dark-theme .bugs-task-wrapper .wm-card-assignees,
+body.dark-theme .bugs-task-wrapper .wm-card-meta,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-due,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-assignees,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-meta {
+    color: #94a3b8;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-footer,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-footer {
+    border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-list,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-list {
+    color: #60a5fa;
+}
+
+/* ── Add Task Bug header button — Light Theme: White/Outlined */
+.bugs-task-wrapper .head-box-inner .add-btn,
+.bugs-task-wrapper .head-box-inner button.ant-btn.add-btn {
+    background-color: #fff !important;
+    background-image: none !important;
+    color: #185d87 !important;
+    border-color: #185d87 !important;
+    border-style: solid !important;
+    border-width: 1px !important;
+}
+
+.bugs-task-wrapper .head-box-inner .add-btn:hover,
+.bugs-task-wrapper .head-box-inner button.ant-btn.add-btn:hover {
+    background-color: #f0f7ff !important;
+    color: #0c4a6e !important;
+    border-color: #0c4a6e !important;
+}
+
 .bug-comment-model .ant-mentions {
     border: 1px solid #d9d9d9;
 }
+
+/* Kanban Cards Light Theme Overrides */
+.bugs-task-wrapper .project-task-list .task-box,
+.bugs-task-wrapper .project-task-list .wm-task-box {
+    background: #fff !important;
+    color: #1e293b !important;
+    border: 1px solid #f0f0f0 !important;
+    border-left: 3px solid #38bdf8 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.bugs-task-wrapper .project-task-list .task-box h3,
+.bugs-task-wrapper .project-task-list .wm-task-box h3 {
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+}
+
+.bugs-task-wrapper .project-task-list .task-box .assignee-name p,
+.bugs-task-wrapper .project-task-list .task-box .task-due-date,
+.bugs-task-wrapper .project-task-list .task-box .task-time p {
+    color: #64748b !important;
+}
+
+.bugs-task-wrapper .project-task-list .task-box i {
+    color: #38bdf8 !important;
+}
+
+/* Kanban Cards Dark Theme Overrides */
+body.dark-theme .bugs-task-wrapper .project-task-list .task-box,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .task-box,
+body.dark-theme .bugs-task-wrapper .project-task-list .wm-task-box,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .wm-task-box {
+    background: var(--wm-task-surface-3, #1c2938) !important;
+    color: var(--wm-task-text, #e2e8f0) !important;
+    border: 1px solid var(--wm-task-border, rgba(148, 163, 184, 0.18)) !important;
+    border-left: 3px solid #38bdf8 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .project-task-list .task-box h3,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .task-box h3,
+body.dark-theme .bugs-task-wrapper .project-task-list .wm-task-box h3,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .wm-task-box h3 {
+    color: var(--wm-task-text, #e2e8f0) !important;
+    -webkit-text-fill-color: var(--wm-task-text, #e2e8f0) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .project-task-list .task-box .assignee-name p,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .task-box .assignee-name p,
+body.dark-theme .bugs-task-wrapper .project-task-list .task-box .task-due-date,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .task-box .task-due-date,
+body.dark-theme .bugs-task-wrapper .project-task-list .task-box .task-time p,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .task-box .task-time p {
+    color: #94a3b8 !important;
+}
+
 
 .bug-comment-model .ant-modal-content .ant-form-horizontal .ant-row {
     margin: 0;
@@ -31,6 +339,40 @@
     align-items: center;
 }
 
+/* Filter button & view toggle dark theme */
+body.dark-theme .bugs-task-wrapper .filter-btn,
+body[data-theme="dark"] .bugs-task-wrapper .filter-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .bugs-task-wrapper .filter-btn:hover,
+body[data-theme="dark"] .bugs-task-wrapper .filter-btn:hover {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .bugs-task-wrapper .dropdown-trigger,
+body[data-theme="dark"] .bugs-task-wrapper .dropdown-trigger {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark-theme .bugs-task-wrapper .dropdown-trigger:hover,
+body[data-theme="dark"] .bugs-task-wrapper .dropdown-trigger:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
 .bugs-task-wrapper .drag_container .project-task-list .kanbanView-bugs-data {
     max-height: calc(100vh - 270px);
     overflow-y: auto;
@@ -43,10 +385,12 @@
 }
 
 .bugs-task-wrapper .profilerightbar .project-task-section {
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     max-height: calc(100vh - 196px);
     height: 100%;
 }
+
 
 .bugs-task-wrapper .peoject-page {
     height: 100% !important;
@@ -354,4 +698,489 @@
         max-height: calc(100vh - 223px);
         ;
     }
+}
+
+/* ── Bug detail modal — dark theme ── */
+body.dark-theme.admin-user .task-detail-popup .ant-modal-content,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-content {
+    background: #0f172a !important;
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+body.dark-theme.admin-user .task-detail-popup .ant-modal-body,
+body.admin-user[data-theme="dark"] .task-detail-popup .ant-modal-body {
+    padding: 0 !important;
+    background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel,
+body.admin-user[data-theme="dark"] .bug-task-panel {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+/* Ant Tabs — full dark */
+body.dark-theme.admin-user .bug-task-panel .ant-tabs,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-content,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-content,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-content-holder,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-content-holder,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-tabpane,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-tabpane {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav-wrap,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav-wrap,
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav-list,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav-list {
+    background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-nav::before,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-nav::before {
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-tab,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-tab {
+    background: transparent !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #3b82f6 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-tabs-ink-bar,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-tabs-ink-bar {
+    background: #3b82f6 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-task-detail-panel,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-task-detail-panel,
+body.dark-theme.admin-user .bug-task-panel .left-task-detail-panel,
+body.admin-user[data-theme="dark"] .bug-task-panel .left-task-detail-panel,
+body.dark-theme.admin-user .bug-task-panel .right-bug-panel,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-bug-panel {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+.bug-task-panel .btn-close-icon {
+    display: none;
+}
+
+.bug-task-panel .right-bug-panel .ant-btn-primary {
+    background: #3b82f6 !important;
+    background-image: none !important;
+    border-color: #3b82f6 !important;
+    color: #fff !important;
+}
+
+.bug-task-panel .right-bug-panel .ant-btn-primary:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .head-toolbar,
+body.admin-user[data-theme="dark"] .bug-task-panel .head-toolbar {
+    border-bottom-color: #334155 !important;
+    background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel button.square-outline-btn,
+body.admin-user[data-theme="dark"] .bug-task-panel button.square-outline-btn {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel button.square-outline-btn:hover,
+body.admin-user[data-theme="dark"] .bug-task-panel button.square-outline-btn:hover {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .task-detail-inner,
+body.admin-user[data-theme="dark"] .bug-task-panel .task-detail-inner,
+body.dark-theme.admin-user .bug-task-panel .comment-list-wrapper,
+body.admin-user[data-theme="dark"] .bug-task-panel .comment-list-wrapper {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .bug-no-comments,
+body.admin-user[data-theme="dark"] .bug-task-panel .bug-no-comments {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .comment-textarea,
+body.admin-user[data-theme="dark"] .bug-task-panel .comment-textarea,
+body.dark-theme.admin-user .bug-task-panel .ck.ck-editor__main>.ck-editor__editable,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-editor__main>.ck-editor__editable,
+body.dark-theme.admin-user .bug-task-panel .ck-editor__editable_inline,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck-editor__editable_inline {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-button,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-button {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-button:hover,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-button:hover,
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-button.ck-on,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-button.ck-on {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-dropdown__panel,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-dropdown__panel {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-list__item .ck-button,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-list__item .ck-button {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ck.ck-toolbar .ck-list__item .ck-button:hover,
+body.admin-user[data-theme="dark"] .bug-task-panel .ck.ck-toolbar .ck-list__item .ck-button:hover {
+    background: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .table-schedule-wrapper,
+body.admin-user[data-theme="dark"] .bug-task-panel .table-schedule-wrapper,
+body.dark-theme.admin-user .bug-task-panel .table-schedule-wrapper ul li,
+body.admin-user[data-theme="dark"] .bug-task-panel .table-schedule-wrapper ul li {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .table-schedule-wrapper .table-left,
+body.admin-user[data-theme="dark"] .bug-task-panel .table-schedule-wrapper .table-left,
+body.dark-theme.admin-user .bug-task-panel .table-schedule-wrapper .table-right,
+body.admin-user[data-theme="dark"] .bug-task-panel .table-schedule-wrapper .table-right {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table span.schedule-label,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table span.schedule-label,
+body.dark-theme.admin-user .bug-task-panel .flex-table i,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table i {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-picker input,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-picker input,
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-picker input::placeholder,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-picker input::placeholder {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-picker,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-picker {
+    background: transparent !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-select .ant-select-selector,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-select .ant-select-selector {
+    background: transparent !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-select .ant-select-selection-item,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-select .ant-select-selection-item,
+body.dark-theme.admin-user .bug-task-panel .flex-table .ant-select .ant-select-selection-placeholder,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .ant-select .ant-select-selection-placeholder {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .flex-table .list-add-btn,
+body.admin-user[data-theme="dark"] .bug-task-panel .flex-table .list-add-btn {
+    background: #334155 !important;
+    border-color: #94a3b8 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .ant-input-number,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-input-number,
+body.dark-theme.admin-user .bug-task-panel .ant-input-number input,
+body.admin-user[data-theme="dark"] .bug-task-panel .ant-input-number input {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .pop-bug-title,
+body.admin-user[data-theme="dark"] .bug-task-panel .pop-bug-title,
+body.dark-theme.admin-user .bug-task-panel h1,
+body.admin-user[data-theme="dark"] .bug-task-panel h1,
+body.dark-theme.admin-user .bug-task-panel h2,
+body.admin-user[data-theme="dark"] .bug-task-panel h2,
+body.dark-theme.admin-user .bug-task-panel h3,
+body.admin-user[data-theme="dark"] .bug-task-panel h3,
+body.dark-theme.admin-user .bug-task-panel h4,
+body.admin-user[data-theme="dark"] .bug-task-panel h4,
+body.dark-theme.admin-user .bug-task-panel h5,
+body.admin-user[data-theme="dark"] .bug-task-panel h5,
+body.dark-theme.admin-user .bug-task-panel p,
+body.admin-user[data-theme="dark"] .bug-task-panel p,
+body.dark-theme.admin-user .bug-task-panel span,
+body.admin-user[data-theme="dark"] .bug-task-panel span,
+body.dark-theme.admin-user .bug-task-panel label,
+body.admin-user[data-theme="dark"] .bug-task-panel label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-task-detail-panel .right-toolbar,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-task-detail-panel .right-toolbar,
+body.dark-theme.admin-user .bug-task-panel .task-detail-panel .right-toolbar,
+body.admin-user[data-theme="dark"] .bug-task-panel .task-detail-panel .right-toolbar {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-toolbar-tab label,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-toolbar-tab label {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel button.link-btn,
+body.admin-user[data-theme="dark"] .bug-task-panel button.link-btn {
+    background: transparent !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .file-upload h5,
+body.admin-user[data-theme="dark"] .bug-task-panel .file-upload h5 {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .bug-task-panel .right-toolbar-tab label.active,
+body.admin-user[data-theme="dark"] .bug-task-panel .right-toolbar-tab label.active {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+/* Add Task Bug modal - dark theme */
+body.dark-theme.admin-user .add-task-modal .ant-modal-content,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-content {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-header,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-header {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-title,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-body,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-body {
+    background: #0f172a !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-footer,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-footer {
+    background: #0f172a !important;
+    border-top-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-close,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-close {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-modal-close svg,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-modal-close svg {
+    fill: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-form-item-label label,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-form-item-label label,
+body.dark-theme.admin-user .add-task-modal .ant-form-item-label,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-form-item-label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-input,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-input,
+body.dark-theme.admin-user .add-task-modal .ant-input-outlined,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-input-outlined {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-input::placeholder,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-input::placeholder {
+    color: #64748b !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-select .ant-select-selector,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-select .ant-select-selector {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-select .ant-select-selection-placeholder,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-select .ant-select-selection-placeholder,
+body.dark-theme.admin-user .add-task-modal .ant-select .ant-select-selection-item,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-select .ant-select-selection-item {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-select .ant-select-arrow,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-select .ant-select-arrow {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ck.ck-editor__main > .ck-editor__editable,
+body.admin-user[data-theme="dark"] .add-task-modal .ck.ck-editor__main > .ck-editor__editable,
+body.dark-theme.admin-user .add-task-modal .ck-editor__editable_inline,
+body.admin-user[data-theme="dark"] .add-task-modal .ck-editor__editable_inline {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ck.ck-toolbar,
+body.admin-user[data-theme="dark"] .add-task-modal .ck.ck-toolbar {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ck.ck-toolbar .ck-button,
+body.admin-user[data-theme="dark"] .add-task-modal .ck.ck-toolbar .ck-button {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ck.ck-toolbar .ck-button:hover,
+body.admin-user[data-theme="dark"] .add-task-modal .ck.ck-toolbar .ck-button:hover {
+    background: #1e293b !important;
+}
+
+body.dark-theme.admin-user .add-task-modal button.square-outline-btn,
+body.admin-user[data-theme="dark"] .add-task-modal button.square-outline-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+/* Add Task Bug modal — table-schedule-wrapper dark theme */
+body.dark-theme.admin-user .add-task-modal .table-schedule-wrapper,
+body.admin-user[data-theme="dark"] .add-task-modal .table-schedule-wrapper,
+body.dark-theme.admin-user .add-task-modal .table-schedule-wrapper ul li,
+body.admin-user[data-theme="dark"] .add-task-modal .table-schedule-wrapper ul li {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .table-schedule-wrapper .table-left,
+body.admin-user[data-theme="dark"] .add-task-modal .table-schedule-wrapper .table-left,
+body.dark-theme.admin-user .add-task-modal .table-schedule-wrapper .table-right,
+body.admin-user[data-theme="dark"] .add-task-modal .table-schedule-wrapper .table-right {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table span.schedule-label,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table span.schedule-label,
+body.dark-theme.admin-user .add-task-modal .flex-table i,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table i {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-picker,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-picker {
+    background: transparent !important;
+    border-color: #334155 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-picker input,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-picker input,
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-picker input::placeholder,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-picker input::placeholder {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-picker .ant-picker-suffix,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-picker .ant-picker-suffix {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-select .ant-select-selector,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-select .ant-select-selector {
+    background: transparent !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-select .ant-select-selection-item,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-select .ant-select-selection-item,
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-select .ant-select-selection-placeholder,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-select .ant-select-selection-placeholder {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .flex-table .ant-select .ant-select-arrow,
+body.admin-user[data-theme="dark"] .add-task-modal .flex-table .ant-select .ant-select-arrow {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .hours_input,
+body.admin-user[data-theme="dark"] .add-task-modal .hours_input {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .hours_input::placeholder,
+body.admin-user[data-theme="dark"] .add-task-modal .hours_input::placeholder {
+    color: #64748b !important;
+}
+
+body.dark-theme.admin-user .add-task-modal .ant-checkbox-wrapper span,
+body.admin-user[data-theme="dark"] .add-task-modal .ant-checkbox-wrapper span {
+    color: #e2e8f0 !important;
 }

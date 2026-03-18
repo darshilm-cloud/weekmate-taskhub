@@ -23,6 +23,9 @@ import {
   DeleteOutlined,
   PlusOutlined,
   CloseCircleOutlined,
+  UserOutlined,
+  DownloadOutlined,
+  PushpinOutlined,
 } from "@ant-design/icons";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { debounce } from "lodash";
@@ -59,6 +62,7 @@ import {
 } from "../../cacheDB";
 import moment from "moment";
 import NotesFilter from "./NotesFilter";
+import { NotesSkeleton } from "../common/SkeletonLoader";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -108,6 +112,7 @@ function NotesPMS() {
   const [formComment] = Form.useForm();
   const [commentVal, setCommentVal] = useState("");
   const [getDetails, setGetDetails] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [allSubscribers, setallSubscribers] = useState([]);
   const [managePeopleVisible, setManagePeopleVisible] = useState(false);
   const [manageSubscribers, setManageSubscribers] = useState([]);
@@ -374,6 +379,7 @@ function NotesPMS() {
   // get project notes api
   const getNotesById = async (id, value) => {
     try {
+      setPageLoading(true);
       const reqBody = {
         // notebook_id: id,
         subscribers: value,
@@ -400,6 +406,8 @@ function NotesPMS() {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -1040,7 +1048,7 @@ function NotesPMS() {
         onCancel={handleCancelNote}
         title={modelModeNotes === "add" ? "Add Note" : "Edit Note"}
         className="add-task-modal add-list-modal"
-        width="800"
+        width={1000}
         footer={[
           <Button
             key="cancel"
@@ -1162,10 +1170,11 @@ function NotesPMS() {
         </div>
       </Modal>
 
-      <div className="project-wrapper discussion-wrapper notes-wrapper">
+      {pageLoading && <NotesSkeleton />}
+      {!pageLoading && <div className="project-wrapper discussion-wrapper notes-wrapper">
         <div className="profilerightbar">
           <div className="profile-sub-head">
-            <div className="add-project-wrapper">
+            <div className="add-project-wrapper" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 10 }}>
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -1173,6 +1182,13 @@ function NotesPMS() {
                 style={{ width: 200 }}
                 className="mr2"
               />
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={openModelNotes}
+              >
+                Add a Note
+              </Button>
             </div>
             <div className="head-box-inner"></div>
             <div className="block-status-content">
@@ -1328,27 +1344,12 @@ function NotesPMS() {
 
                   return (
                     <>
-                      {index == 0 && (
-                        <div onClick={openModelNotes} className="notes-box">
-                          <div
-                            className="note-inner-block"
-                            style={{
-                              justifyContent: "center",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <h3 style={{ textAlign: "center", width: "100%" }}>
-                              Add a Note
-                            </h3>
-                          </div>
-                        </div>
-                      )}
                       <div className="main-notes-wrapper" key={note._id}>
                         <div
                           className="notes-div"
                           style={{ marginBottom: "0px" }}
                         >
-                          <div className="notes-box">
+                          <div className={`notes-box note-color-${index % 7}`}>
                             <div className="note-inner-block">
                               <div className="note-block-head">
                                 <h1
@@ -1366,107 +1367,44 @@ function NotesPMS() {
                                     ? `${Title.slice(0, 22)}...`
                                     : Title}{" "}
                                   {(commentDrafts[note._id] ||
-                                    commentDrafts[note._id] ||
                                     hasUnsavedChanges[note._id]) && (
                                     <span style={{ color: "red" }}>Draft</span>
                                   )}
                                 </h1>
+                                <PushpinOutlined className="note-pin-icon" />
+                              </div>
+                              {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
                                 <div
+                                  className="note-content-preview"
                                   dangerouslySetInnerHTML={{
                                     __html:
-                                      note?.notesInfo.length > 50
-                                        ? `${note?.notesInfo.slice(
-                                            0,
-                                            50
-                                          )}........`
+                                      note?.notesInfo.length > 100
+                                        ? `${note?.notesInfo.slice(0, 100)}...`
                                         : note?.notesInfo,
                                   }}
                                 />
-                              </div>
+                              ) : (
+                                <p className="note-no-content">No content</p>
+                              )}
                               <footer>
-                                <div className="notes-item">
-                                  <div className="footer-subscribers">
-                                    <Avatar.Group
-                                      maxCount={2}
-                                      maxPopoverTrigger="click"
-                                      size="default"
-                                      maxStyle={{
-                                        color: "#f56a00",
-                                        backgroundColor: "#fde3cf",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {note.client_sub.map((client_sub) => (
-                                        <Tooltip
-                                          title={removeTitle(
-                                            client_sub.full_name
-                                          )}
-                                          key={client_sub._id}
-                                        >
-                                          <MyAvatar
-                                            key={client_sub._id}
-                                            userName={client_sub.full_name}
-                                            alt={client_sub.full_name}
-                                            src={client_sub.emp_img}
-                                          />
-                                        </Tooltip>
-                                      ))}
-                                    </Avatar.Group>
-                                    {
-                                      <PlusOutlined
-                                        onClick={() => {
-                                          openModelList(note._id);
-                                          setIsOpenTechnicalModal(true);
-                                        }}
-                                      />
-                                    }
-                                  </div>
-                                </div>
-                                <div className="time-icon-note">
-                                  <div className="note-time">
-                                    <p>
-                                      {calculateTimeDifference(note.createdAt)}
-                                    </p>
-                                  </div>
-
-                                  <div className="note-view">
-                                    <div
-                                      className="note-btn-edit"
-                                      onClick={(e) => {
-                                        showEditModalNote(note);
-                                        setIopenNotes(true);
-                                      }}
-                                    >
-                                      {isCreatedBy(note?.createdBy) && (
-                                        <EditOutlined
-                                          style={{
-                                            color: "green",
-                                            cursor: "pointer",
-                                            marginLeft: "10px",
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                    {isCreatedBy(note?.createdBy) && (
-                                      <Popconfirm
-                                        title="Do you want to delete?"
-                                        okText="Yes"
-                                        cancelText="No"
-                                        onConfirm={() => {
-                                          deleteProjectNotes(note._id);
-                                        }}
-                                      >
-                                        <div className="note-btn-delete">
-                                          <AiOutlineDelete
-                                            style={{
-                                              color: "red",
-                                              cursor: "pointer",
-                                            }}
-                                          />
-                                        </div>
-                                      </Popconfirm>
-                                    )}
-                                  </div>
+                                <div className="note-footer-icons">
+                                  <UserOutlined
+                                    className="note-icon note-icon-person"
+                                    onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
+                                  />
+                                  <EditOutlined
+                                    className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
+                                    onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
+                                  />
+                                  <Popconfirm
+                                    title="Do you want to delete?"
+                                    okText="Yes"
+                                    cancelText="No"
+                                    onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
+                                    disabled={!isCreatedBy(note?.createdBy)}
+                                  >
+                                    <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
+                                  </Popconfirm>
                                 </div>
                               </footer>
                             </div>
@@ -1477,16 +1415,7 @@ function NotesPMS() {
                   );
                 })
               ) : (
-                <div onClick={openModelNotes} className="notes-box">
-                  <div
-                    className="note-inner-block"
-                    style={{ justifyContent: "center", cursor: "pointer" }}
-                  >
-                    <h3 style={{ textAlign: "center", width: "100%" }}>
-                      Add a Note
-                    </h3>
-                  </div>
-                </div>
+                <div style={{ padding: "40px 0", textAlign: "center", color: "#94a3b8" }}>No notes yet</div>
               ))}
 
             <Modal
@@ -1922,7 +1851,7 @@ function NotesPMS() {
             </Modal>
           </div>
         </div>
-      </div>
+      </div>}
 
       <EditCommentModal
         open={false}
