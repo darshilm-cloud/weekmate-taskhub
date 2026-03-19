@@ -409,6 +409,174 @@ export const ReportsSkeleton = () => (
 );
 
 /* ──────────────────────────────────────────────
+   REPORTS DETAIL SKELETON (ReportsHub /reports/:reportKey)
+────────────────────────────────────────────── */
+export const ReportsDetailSkeleton = () => (
+  <div className="sk-page">
+    {/* filters */}
+    <div className="sk-card" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      {[150, 170, 160, 150, 150].map((w, i) => (
+        <Sk key={i} w={w} h={34} r={10} />
+      ))}
+      <Sk w={110} h={34} r={10} style={{ marginLeft: "auto" }} />
+    </div>
+
+    {/* result summary */}
+    <div className="sk-card" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            border: "1px solid var(--app-border, #e8ecf0)",
+            borderRadius: 12,
+            background: "var(--app-surface, #fff)",
+            padding: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <Sk w={44} h={44} r={12} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <Sk w="55%" h={12} />
+            <Sk w="35%" h={22} />
+          </div>
+          <Sk w={60} h={28} r={999} />
+        </div>
+      ))}
+    </div>
+
+    {/* table */}
+    <TableSk cols={["2fr", "1.5fr", "1fr", "1fr", "1fr", "1fr"]} rows={8} />
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   REPORTS HUB SKELETON  (cards grid)
+────────────────────────────────────────────── */
+export const ReportsHubSkeleton = () => (
+  <div className="sk-page">
+    <div className="sk-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <Sk w={140} h={22} />
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <Sk w={160} h={34} r={10} />
+        <Sk w={120} h={34} r={10} />
+      </div>
+    </div>
+
+    <div
+      className="sk-card"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+        gap: 14,
+        padding: 16,
+      }}
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            border: "1px solid var(--app-border, #e8ecf0)",
+            borderRadius: 14,
+            padding: 16,
+            background: "var(--app-surface, #fff)",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <Sk w={44} h={44} r={12} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <Sk w="70%" h={14} />
+            <Sk w="45%" h={12} />
+          </div>
+          <Sk w={70} h={28} r={999} style={{ opacity: 0.6 }} />
+          <Sk
+            w={120}
+            h={120}
+            r="50%"
+            style={{
+              position: "absolute",
+              right: -50,
+              bottom: -55,
+              opacity: 0.25,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   PROJECT LIST SKELETON  (grid cards)
+────────────────────────────────────────────── */
+export const ProjectListSkeleton = () => (
+  <div className="sk-page">
+    <div className="sk-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <Sk w={130} h={22} />
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <Sk w={220} h={34} r={10} />
+        <Sk w={110} h={34} r={10} />
+        <Sk w={110} h={34} r={10} />
+        <Sk w={120} h={34} r={10} />
+      </div>
+    </div>
+
+    <div
+      className="sk-card"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+        gap: 14,
+        padding: 16,
+      }}
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            border: "1px solid var(--app-border, #e8ecf0)",
+            borderRadius: 14,
+            padding: 16,
+            background: "var(--app-surface, #fff)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Sk w={18} h={18} r="50%" />
+            <Sk w={70} h={22} r={999} />
+            <Sk w={120} h={10} style={{ marginLeft: "auto" }} />
+          </div>
+          <Sk w="55%" h={16} />
+          <Sk w="35%" h={12} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, paddingTop: 8 }}>
+            {Array.from({ length: 4 }).map((_, j) => (
+              <div key={j} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <Sk w={3} h={22} r={3} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Sk w="45%" h={10} />
+                  <Sk w="30%" h={14} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8 }}>
+            <Sk w={150} h={22} r={999} />
+            <Sk w={64} h={64} r="50%" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
    BUGS SKELETON  (table view with toolbar)
 ────────────────────────────────────────────── */
 export const BugsSkeleton = () => (

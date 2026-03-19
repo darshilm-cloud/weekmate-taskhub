@@ -54,7 +54,7 @@ const MultiSelect = ({
 
   const tagRender = (props) => {
     const { value, closable, onClose } = props;
-    const item = listData.find((item) => item._id === value);
+    const item = listData.find((item) => item?._id === value);
     return (
       <>
         <MyAvatar
@@ -82,22 +82,25 @@ const MultiSelect = ({
 
   const filteredOptions = listData
     .filter((ele) =>
-      ele.full_name?.toLowerCase()?.includes(search?.toLowerCase())
+      (ele?.full_name || ele?.name || "")
+        .toLowerCase()
+        .includes((search || "").toLowerCase())
     )
     .map((ele) => ({
-      value: ele._id,
+      value: ele?._id,
       label: (
         <>
           <MyAvatar
-            userName={ele?.full_name}
+            userName={ele?.full_name || ele?.name || "-"}
             src={ele?.emp_img}
             key={ele?._id}
-            alt={ele?.full_name}
+            alt={ele?.full_name || ele?.name}
           />
-          {removeTitle(ele.full_name)}
+          {removeTitle(ele?.full_name || ele?.name || "-")}
         </>
       ),
-    }));
+    }))
+    .filter((option) => option.value);
 
   const selectedOptions = filteredOptions.filter((option) =>
     values.includes(option.value)
@@ -129,4 +132,3 @@ const MultiSelect = ({
 };
 
 export default MultiSelect;
-

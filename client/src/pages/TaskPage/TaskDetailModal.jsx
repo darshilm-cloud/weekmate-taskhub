@@ -264,11 +264,16 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
 
   const displayTask = details || task;
   const taskId = details?._id || task?._id;
+  const taskStatusTitle = displayTask?.task_status?.title || "Open";
+  const taskStatusColor = displayTask?.task_status?.color || "#2563eb";
   const assigneeNames = displayTask?.assignees
     ? Array.isArray(displayTask.assignees)
       ? displayTask.assignees.map((a) => getAssigneeName(a)).filter(Boolean)
       : []
     : [];
+  const labelNames = details?.taskLabels?.length > 0 ? details.taskLabels.map((l) => l.title) : [];
+  const attachmentCount = details?.attachments?.length || 0;
+  const descriptionHtml = displayTask?.descriptions || "<p>No detailed description has been added yet.</p>";
 
   const renderCommentsTab = () => (
     <div className="task-detail-tab-content task-detail-comments">
@@ -306,7 +311,12 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                       </Menu>
                     }
                   >
-                    <Button type="text" size="small" icon={<MoreOutlined />} />
+                    <Button
+                      className="task-detail-comment-menu"
+                      type="text"
+                      size="small"
+                      icon={<MoreOutlined />}
+                    />
                   </Dropdown>
                 )}
               </div>
@@ -349,22 +359,28 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
         )}
       </div>
       <div className="task-detail-add-comment">
+        <div className="task-detail-composer-title">Add to the conversation</div>
         <TextArea
-          rows={3}
-          placeholder="Write a comment..."
+          rows={4}
+          placeholder="Share an update, mention blockers, or document the next step..."
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           disabled={!taskId}
         />
-        <Button
-          type="primary"
-          onClick={handleAddComment}
-          loading={submittingComment}
-          disabled={!commentText.trim()}
-          style={{ marginTop: 8 }}
-        >
-          Add comment
-        </Button>
+        <div className="task-detail-composer-actions">
+          <span className="task-detail-composer-hint">
+            Comments stay attached to this task for the team.
+          </span>
+          <Button
+            className="task-detail-comment-submit"
+            type="primary"
+            onClick={handleAddComment}
+            loading={submittingComment}
+            disabled={!commentText.trim()}
+          >
+            Post update
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -469,179 +485,256 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       open={open}
       onCancel={onClose}
       footer={null}
-      width={960}
+      width={1180}
       closeIcon={<CloseOutlined />}
       destroyOnClose
     >
       <div className="task-detail-modal-body">
         <div className="task-detail-modal-left">
-            <div className="task-detail-breadcrumb">
-              {displayTask?.project?.title && (
-                <span className="task-detail-breadcrumb-project">
-                  {displayTask.project.title}
+          <div className="task-detail-hero">
+            <div className="task-detail-topbar">
+              <div className="task-detail-topbar-left">
+                <span
+                  className="task-detail-status-pill"
+                  style={{
+                    borderColor: `${taskStatusColor}22`,
+                    color: taskStatusColor,
+                    background: `${taskStatusColor}12`,
+                  }}
+                >
+                  {taskStatusTitle}
                 </span>
-              )}
-              {displayTask?.mainTask?.title && (
-                <>
-                  <span className="task-detail-breadcrumb-sep"> / </span>
-                  <span className="task-detail-breadcrumb-list">
-                    {displayTask.mainTask.title}
+                {displayTask?._id && (
+                  <span className="task-detail-task-id">TASK-{String(displayTask._id).slice(-6)}</span>
+                )}
+              </div>
+
+              <div className="task-detail-topbar-actions">
+                <Button
+                  className="task-detail-icon-btn"
+                  type="text"
+                  onClick={() => setActiveTab("comments")}
+                  icon={<CommentOutlined />}
+                />
+                <Button
+                  className="task-detail-icon-btn"
+                  type="text"
+                  onClick={() => setActiveTab("attachment")}
+                  icon={<PaperClipOutlined />}
+                />
+                <Button
+                  className="task-detail-icon-btn"
+                  type="text"
+                  onClick={() => setActiveTab("activity")}
+                  icon={<HistoryOutlined />}
+                />
+                <Button
+                  className="task-detail-icon-btn"
+                  type="text"
+                  onClick={handleOpenInProject}
+                  icon={<LinkOutlined />}
+                />
+              </div>
+            </div>
+
+            <div className="task-detail-breadcrumb">
+              <div className="task-detail-breadcrumb-trail">
+                {displayTask?.project?.title && (
+                  <span className="task-detail-breadcrumb-project">
+                    {displayTask.project.title}
                   </span>
-                </>
-              )}
+                )}
+                {displayTask?.mainTask?.title && (
+                  <>
+                    <span className="task-detail-breadcrumb-sep">/</span>
+                    <span className="task-detail-breadcrumb-list">
+                      {displayTask.mainTask.title}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             <h2 className="task-detail-title">{displayTask?.title || "—"}</h2>
 
             <div className="task-detail-meta">
-              {displayTask?.task_status && (
-                <span
-                  className="task-detail-status-pill"
-                  style={{
-                    borderColor: displayTask.task_status.color || "#d9d9d9",
-                    color: displayTask.task_status.color || "#666",
-                  }}
-                >
-                  {displayTask.task_status.title}
+              <div className="task-detail-metric-card">
+                <span className="task-detail-metric-label">Due date</span>
+                <span className="task-detail-metric-value">
+                  <CalendarOutlined />
+                  {displayTask?.due_date
+                    ? dayjs(displayTask.due_date).format("MMM D, YYYY")
+                    : "Not set"}
                 </span>
-              )}
-              {displayTask?.due_date && (
-                <span className="task-detail-due">
-                  <CalendarOutlined /> {dayjs(displayTask.due_date).format("MMM D, YYYY")}
+              </div>
+              <div className="task-detail-metric-card">
+                <span className="task-detail-metric-label">Assignees</span>
+                <span className="task-detail-metric-value">
+                  {assigneeNames.length || 0} member{assigneeNames.length === 1 ? "" : "s"}
                 </span>
-              )}
-            </div>
-
-            {displayTask?.descriptions && (
-              <div
-                className="task-detail-description"
-                dangerouslySetInnerHTML={{ __html: displayTask.descriptions }}
-              />
-            )}
-
-            <div className="task-detail-section">
-              <div className="task-detail-label">Project</div>
-              <div className="task-detail-value">{displayTask?.project?.title || "—"}</div>
-            </div>
-
-            <div className="task-detail-section">
-              <div className="task-detail-label">Assignee(s)</div>
-              <div className="task-detail-value task-detail-assignees">
-                {assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"}
+              </div>
+              <div className="task-detail-metric-card">
+                <span className="task-detail-metric-label">Assets</span>
+                <span className="task-detail-metric-value">
+                  {attachmentCount} attachment{attachmentCount === 1 ? "" : "s"}
+                </span>
               </div>
             </div>
+          </div>
 
-            {details?.start_date && (
+          <div className="task-detail-content-grid">
+            <div className="task-detail-section task-detail-section-featured">
+              <div className="task-detail-section-head">
+                <div>
+                  <div className="task-detail-label">Task brief</div>
+                  <div className="task-detail-section-title">Description</div>
+                </div>
+              </div>
+              <div
+                className="task-detail-description"
+                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+              />
+            </div>
+
+            <div className="task-detail-section-grid">
+              <div className="task-detail-section">
+                <div className="task-detail-label">Project</div>
+                <div className="task-detail-value">{displayTask?.project?.title || "—"}</div>
+              </div>
+
+              <div className="task-detail-section">
+                <div className="task-detail-label">Assignee(s)</div>
+                <div className="task-detail-value task-detail-assignees">
+                  {assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"}
+                </div>
+              </div>
+
               <div className="task-detail-section">
                 <div className="task-detail-label">Start date</div>
                 <div className="task-detail-value">
-                  {dayjs(details.start_date).format("MMM D, YYYY")}
+                  {details?.start_date ? dayjs(details.start_date).format("MMM D, YYYY") : "—"}
                 </div>
               </div>
-            )}
 
-            {details?.taskLabels?.length > 0 && (
               <div className="task-detail-section">
                 <div className="task-detail-label">Labels</div>
                 <div className="task-detail-value">
-                  {details.taskLabels.map((l) => l.title).join(", ")}
+                  {labelNames.length > 0 ? labelNames.join(", ") : "—"}
                 </div>
               </div>
-            )}
+            </div>
 
-            {details?.attachments?.length > 0 && (
-              <div className="task-detail-section">
-                <div className="task-detail-label">
-                  <PaperClipOutlined /> Attachments
+            <div className="task-detail-section">
+              <div className="task-detail-section-head">
+                <div>
+                  <div className="task-detail-label">Files</div>
+                  <div className="task-detail-section-title">Attachments</div>
                 </div>
+                <span className="task-detail-section-count">{attachmentCount}</span>
+              </div>
+              {details?.attachments?.length > 0 ? (
                 <div className="task-detail-attachments">
                   {details.attachments.map((att, i) => (
-                    <a
-                      key={i}
-                      href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="task-detail-attachment-link"
-                    >
-                      {att?.name || "File"}
-                    </a>
+                    <div className="task-detail-attachment-card" key={i}>
+                      <a
+                        href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="task-detail-attachment-link"
+                      >
+                        {att?.name || "File"}
+                      </a>
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        onClick={() => handleDownloadFile(att)}
+                      />
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="task-detail-empty-state">No attachments added yet.</div>
+              )}
+            </div>
 
             <div className="task-detail-modal-footer-actions">
-              <Button type="primary" onClick={handleOpenInProject}>
+              <Button className="task-detail-primary-btn" type="primary" onClick={handleOpenInProject}>
                 <LinkOutlined /> Open in project
               </Button>
-              <Button onClick={onClose}>Close</Button>
+              <Button className="task-detail-secondary-btn" onClick={onClose}>Close</Button>
             </div>
           </div>
-
-          <div className="task-detail-modal-right">
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              className="task-detail-tabs"
-              items={[
-                {
-                  key: "comments",
-                  label: (
-                    <span className="task-detail-tab-label">
-                      <CommentOutlined /> Comment
-                      <span className="comment-badge">{comments.length || 0}</span>
-                    </span>
-                  ),
-                  children: renderCommentsTab(),
-                },
-                {
-                  key: "attachment",
-                  label: (
-                    <span className="task-detail-tab-label">
-                      <PaperClipOutlined /> Attachment
-                    </span>
-                  ),
-                  children: (
-                    <div className="task-detail-tab-content">
-                      {details?.attachments?.length > 0 ? (
-                        <ul className="task-detail-attachment-list">
-                          {details.attachments.map((att, i) => (
-                            <li key={i}>
-                              <a
-                                href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {att?.name || "File"}
-                              </a>
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<DownloadOutlined />}
-                                onClick={() => handleDownloadFile(att)}
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="task-detail-tab-hint">No attachments.</p>
-                      )}
-                    </div>
-                  ),
-                },
-                {
-                  key: "activity",
-                  label: (
-                    <span className="task-detail-tab-label">
-                      <HistoryOutlined /> Log Activity
-                    </span>
-                  ),
-                  children: renderHistoryTab(),
-                },
-              ]}
-            />
-          </div>
         </div>
+
+        <div className="task-detail-modal-right">
+          <div className="task-detail-sidebar-head">
+            <div className="task-detail-sidebar-kicker">Workspace</div>
+            <div className="task-detail-sidebar-title">Discussion and activity</div>
+          </div>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            className="task-detail-tabs"
+            items={[
+              {
+                key: "comments",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <CommentOutlined /> Comments
+                    <span className="comment-badge">{comments.length || 0}</span>
+                  </span>
+                ),
+                children: renderCommentsTab(),
+              },
+              {
+                key: "attachment",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <PaperClipOutlined /> Files
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content">
+                    {details?.attachments?.length > 0 ? (
+                      <ul className="task-detail-attachment-list">
+                        {details.attachments.map((att, i) => (
+                          <li key={i}>
+                            <a
+                              href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {att?.name || "File"}
+                            </a>
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<DownloadOutlined />}
+                              onClick={() => handleDownloadFile(att)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="task-detail-tab-hint">No attachments yet.</p>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: "activity",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <HistoryOutlined /> Activity
+                  </span>
+                ),
+                children: renderHistoryTab(),
+              },
+            ]}
+          />
+          </div>
+      </div>
     </Modal>
   );
 };

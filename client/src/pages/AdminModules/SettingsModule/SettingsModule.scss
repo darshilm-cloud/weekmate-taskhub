@@ -1,1672 +1,432 @@
-// SMTPConfig.scss - Modern Attractive Responsive Styles
-
-// ============================================================================
-// VARIABLES & DESIGN TOKENS
-// ============================================================================
-
-// Modern Color Palette
-$primary-gradient: linear-gradient(135deg, #09568b 0%, #2d9ded 100%);
-;
-$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-$warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-$glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
-
-// Brand Colors with Gradients
-$gmail-gradient: #2890da;
-$outlook-gradient: #2890da;
-$yahoo-gradient: #2890da;
-
-// Neutral Colors
-$bg-primary: #0f0f23;
-$bg-secondary: #16213e;
-$bg-tertiary: #1a1d3a;
-$text-primary: #ffffff;
-$text-secondary: #b4b8c5;
-$text-muted: #6c7293;
-
-// Button dark blue
-$btn-dark-blue: #0d2f5e;
-$btn-dark-blue-hover: #0a2549;
-
-// Spacing System
-$spacing: (
-  xs: 0.25rem,
-  // 4px
-  sm: 0.5rem,
-  // 8px
-  md: 1rem,
-  // 16px
-  lg: 1.5rem,
-  // 24px
-  xl: 2rem,
-  // 32px
-  xxl: 3rem,
-  // 48px
-  xxxl: 4rem // 64px
-);
-
-// Border Radius System
-$radius: (
-  sm: 0.375rem,
-  // 6px
-  md: 0.5rem,
-  // 8px
-  lg: 0.75rem,
-  // 12px
-  xl: 1rem,
-  // 16px
-  xxl: 1.5rem,
-  // 24px
-  full: 50%
-);
-
-// Shadow System
-$shadows: (
-  sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
-  md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-  lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-  xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-  glow: 0 0 20px rgba(102, 126, 234, 0.3),
-  neon: 0 0 30px rgba(102, 126, 234, 0.5)
-);
-
-// Breakpoints
-$breakpoints: (
-  xs: 0,
-  sm: 576px,
-  md: 768px,
-  lg: 992px,
-  xl: 1200px,
-  xxl: 1400px
-);
-
-// ============================================================================
-// MIXINS & UTILITIES
-// ============================================================================
-
-@function spacing($key) {
-  @return map-get($spacing, $key);
-}
-
-@function radius($key) {
-  @return map-get($radius, $key);
-}
-
-@function shadow($key) {
-  @return map-get($shadows, $key);
-}
-
-@mixin respond-above($breakpoint) {
-  @media (min-width: map-get($breakpoints, $breakpoint)) {
-    @content;
-  }
-}
-
-body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab,
-body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab {
-  background: #132238 !important;
-  color: #dce7fb !important;
-}
-
-body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-label,
-body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-icon,
-body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-label,
-body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-nav .ant-tabs-tab .tab-icon {
-  color: #dce7fb !important;
-}
-
-body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-content-holder,
-body.dark-theme .smtp-config .main-card .main-tabs .ant-tabs-tabpane,
-body.dark-theme .smtp-config .file-content,
-body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-content-holder,
-body[data-theme="dark"] .smtp-config .main-card .main-tabs .ant-tabs-tabpane,
-body[data-theme="dark"] .smtp-config .file-content {
-  background: #0c182b !important;
-}
-
-body.dark-theme .smtp-config .file-header,
-body[data-theme="dark"] .smtp-config .file-header {
-  background: #0c182b !important;
-}
-
-body.dark-theme .smtp-config .file-title,
-body.dark-theme .smtp-config .file-description,
-body.dark-theme .smtp-config .file-form .ant-form-item-label > label,
-body.dark-theme .smtp-config .file-guidelines,
-body.dark-theme .smtp-config .file-guidelines .ant-alert-message,
-body.dark-theme .smtp-config .file-guidelines .ant-alert-description,
-body.dark-theme .smtp-config .guideline-item,
-body.dark-theme .smtp-config .guideline-description,
-body[data-theme="dark"] .smtp-config .file-title,
-body[data-theme="dark"] .smtp-config .file-description,
-body[data-theme="dark"] .smtp-config .file-form .ant-form-item-label > label,
-body[data-theme="dark"] .smtp-config .file-guidelines,
-body[data-theme="dark"] .smtp-config .file-guidelines .ant-alert-message,
-body[data-theme="dark"] .smtp-config .file-guidelines .ant-alert-description,
-body[data-theme="dark"] .smtp-config .guideline-item,
-body[data-theme="dark"] .smtp-config .guideline-description {
-  color: #dce7fb !important;
-}
-
-body.dark-theme .smtp-config .file-form-card,
-body.dark-theme .smtp-config .file-guidelines,
-body[data-theme="dark"] .smtp-config .file-form-card,
-body[data-theme="dark"] .smtp-config .file-guidelines {
-  background: #132238 !important;
-  border-color: #314866 !important;
-  box-shadow: none !important;
-}
-
-body.dark-theme .smtp-config .file-form .ant-input,
-body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper,
-body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper .ant-input,
-body.dark-theme .smtp-config .smtp-form .ant-input-password,
-body.dark-theme .smtp-config .smtp-form .ant-input-password .ant-input,
-body.dark-theme .smtp-config .smtp-form .ant-input-affix-wrapper,
-body[data-theme="dark"] .smtp-config .file-form .ant-input,
-body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper,
-body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper .ant-input,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password .ant-input,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input-affix-wrapper {
-  background: #132238 !important;
-  border-color: #314866 !important;
-  color: #dce7fb !important;
-}
-
-body.dark-theme .smtp-config .file-form .ant-input::placeholder,
-body.dark-theme .smtp-config .file-form .ant-input-suffix,
-body.dark-theme .smtp-config .smtp-form .ant-input::placeholder,
-body.dark-theme .smtp-config .smtp-form .ant-input-password-icon,
-body.dark-theme .smtp-config .smtp-form .ant-input-suffix,
-body[data-theme="dark"] .smtp-config .file-form .ant-input::placeholder,
-body[data-theme="dark"] .smtp-config .file-form .ant-input-suffix,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input::placeholder,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input-password-icon,
-body[data-theme="dark"] .smtp-config .smtp-form .ant-input-suffix {
-  color: #9bb6dd !important;
-}
-
-body.dark-theme .smtp-config .file-form .ant-input[disabled],
-body.dark-theme .smtp-config .file-form .ant-input-affix-wrapper-disabled,
-body[data-theme="dark"] .smtp-config .file-form .ant-input[disabled],
-body[data-theme="dark"] .smtp-config .file-form .ant-input-affix-wrapper-disabled {
-  background: #16233a !important;
-  color: #c4d4ef !important;
-  opacity: 1 !important;
-}
-
-@mixin respond-below($breakpoint) {
-  @media (max-width: map-get($breakpoints, $breakpoint) - 1px) {
-    @content;
-  }
-}
-
-@mixin glass-morphism($opacity: 0.25) {
-  background: linear-gradient(135deg,
-      rgba(255, 255, 255, $opacity) 0%,
-      rgba(255, 255, 255, $opacity * 0.2) 100%);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-@mixin neo-morphism($inset: false) {
-  @if $inset {
-    box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.3),
-      inset -8px -8px 16px rgba(255, 255, 255, 0.1);
-  }
-
-  @else {
-    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.3),
-      -8px -8px 16px rgba(255, 255, 255, 0.1);
-  }
-}
-
-@mixin gradient-text($gradient) {
-  background: $gradient;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-@mixin floating-animation($duration: 3s) {
-  animation: floating $duration ease-in-out infinite;
-}
-
-@mixin pulse-glow($color: rgba(102, 126, 234, 0.5)) {
-  animation: pulse-glow 2s ease-in-out infinite alternate;
-
-  @keyframes pulse-glow {
-    from {
-      box-shadow: 0 0 20px $color;
-    }
-
-    to {
-      box-shadow: 0 0 30px $color, 0 0 40px $color;
-    }
-  }
-}
-
-// ============================================================================
-// MAIN COMPONENT STYLES
-// ============================================================================
-
-.smtp-config {
-  background: var(--app-bg);
-  color: var(--app-text);
+.settings-overview {
   min-height: 100%;
-  padding: spacing(xl);
+  padding: 24px 32px;
+  background: var(--app-bg);
+  font-family: 'Inter', sans-serif;
 
+  .settings-overview-header {
+    margin-bottom: 24px;
+    .ant-typography {
+      margin: 0;
+      color: var(--app-text);
+      font-weight: 700;
+    }
+  }
 
+  .settings-overview-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-  // ========================================================================
-  // HEADER SECTION
-  // ========================================================================
+  .section-main-title {
+    margin: 12px 0 8px !important;
+    color: var(--app-text-muted);
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
 
-  .header-section {
-    text-align: center;
-    margin-bottom: spacing(xl);
-    position: relative;
+  .smtp-section-title {
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    color: var(--app-text);
+    letter-spacing: 0.2px;
+  }
 
-    .main-title {
-      @include gradient-text($primary-gradient);
-      font-size: clamp(1.5rem, 5vw, 2.5rem);
-      font-weight: 800;
-      margin-bottom: spacing(md);
+  .mt-40 {
+    margin-top: 32px !important;
+  }
+
+  .smtp-config-card {
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    
+    .ant-card-body {
+      padding: 0;
+    }
+  }
+
+  .smtp-section-container {
+    padding: 0;
+  }
+
+  .quick-setup-section {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--app-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .quick-setup-text {
+      .ant-typography {
+        margin: 0 0 4px;
+        color: var(--app-text);
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .ant-typography-secondary {
+        font-size: 13px;
+        color: var(--app-text-muted);
+      }
+    }
+
+    .provider-btn {
+      height: 38px;
+      border-radius: 6px;
+      padding: 0 16px;
+      font-weight: 600;
+      font-size: 13px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: spacing(md);
-      letter-spacing: -0.02em;
-
-      .title-icon {
-        background: $primary-gradient;
-        border-radius: radius(lg);
-        padding: spacing(sm);
-        color: #ffff;
-        font-size: 0.7em;
-
-      }
-
-      @include respond-below(md) {
-        flex-direction: column;
-        gap: spacing(md);
-      }
-    }
-
-    .subtitle {
-      font-size: clamp(1rem, 2.5vw, 1.25rem);
-      color: var(--app-text-muted);
-      font-weight: 400;
-      max-width: 600px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-  }
-
-  // ========================================================================
-  // MAIN CARD CONTAINER
-  // ========================================================================
-
-  .main-card {
-    max-width: 100%;
-    margin: 0;
-    border-radius: radius(xxl);
-    background: var(--app-surface);
-    border: 1px solid var(--app-border);
-    box-shadow: var(--app-shadow-md);
-    overflow: hidden;
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: $primary-gradient;
-    }
-
-    .ant-card-body {
-      padding: 0 !important;
-      background: transparent;
-    }
-
-    // Tab Navigation Styling
-    .main-tabs {
-      .ant-tabs-nav {
-        background: var(--app-surface);
-        margin: 0;
-        padding: spacing(md) spacing(xl) 0;
-        border: none;
-        position: relative;
-
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: linear-gradient(90deg,
-              transparent 0%,
-              rgba(102, 126, 234, 0.3) 50%,
-              transparent 100%);
-        }
-
-        @include respond-below(md) {
-          padding: spacing(lg) spacing(lg) 0;
-        }
-
-        .ant-tabs-tab {
-          padding: spacing(md) spacing(lg);
-          margin: 0 spacing(sm);
-          border-radius: radius(lg) radius(lg) 0 0;
-          // transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-          background: #fff;
-          color: var(--text-chat);
-
-          .ant-space {
-            column-gap: 5px;
-          }
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg,
-                transparent,
-                rgba(255, 255, 255, 0.1),
-                transparent);
-            transition: left 0.6s;
-          }
-
-          &:hover::before {
-            left: 100%;
-          }
-
-          @include respond-below(md) {
-            padding: spacing(md) spacing(lg);
-            margin: 0 spacing(xs);
-          }
-
-          &.ant-tabs-tab-active {
-            background: $primary-gradient;
-            transform: translateY(-2px);
-
-            .tab-label,
-            .tab-icon {
-              color: #ffff;
-            }
-
-            .ant-badge {
-              .ant-badge-dot {
-                background: rgba(255, 255, 255, 0.8);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-              }
-            }
-          }
-
-          .tab-icon {
-            font-size: 1.3em;
-            margin-right: spacing(sm);
-            transition: transform 0.3s ease;
-          }
-
-          .tab-label {
-            font-weight: 600;
-            font-size: clamp(0.875rem, 2vw, 1rem);
-            color: $text-secondary;
-            // transition: color 0.3s ease;
-            color: var(--text-chat);
-          }
-
-          &:hover {
-            .tab-icon {
-              transform: scale(1.1);
-            }
-          }
+      transition: all 0.2s;
+      
+      &.gmail-btn {
+        background: #0b3a5b !important;
+        background-image: none !important;
+        border-color: #0b3a5b !important;
+        color: #ffffff !important;
+        &:hover {
+          background: #082f4a !important;
+          border-color: #082f4a !important;
         }
       }
 
-      .ant-tabs-content-holder {
-        background: #fff;
-
-        .smtp-content {
-          padding: spacing(sm);
+      &.outlook-btn {
+        background: transparent !important;
+        background-image: none !important;
+        border-color: #0b3a5b !important;
+        color: #8ecbff !important;
+        &:hover {
+          background: rgba(11, 58, 91, 0.18) !important;
         }
-      }
-
-      .ant-tabs-tabpane {
-        .file-content {
-          padding: spacing(md);
-        }
-
-        @include respond-below(md) {
-          // padding: spacing(xl);
-        }
-      }
-    }
-
-    .ant-tabs {
-      .ant-tabs-ink-bar {
-        background: #2670a6;
       }
     }
   }
 
-  // ========================================================================
-  // LOADING STATE
-  // ========================================================================
+  .manual-config-section {
+    padding: 24px 32px 32px;
 
-  .loading-card {
-    max-width: 500px;
-    margin: 0 auto;
-    text-align: center;
-    border-radius: radius(xxl);
-    @include glass-morphism(0.15);
-    border: 1px solid rgba(102, 126, 234, 0.2);
-
-    .loading-content {
-      padding: spacing(xxxl);
-
-      .ant-spin {
-        margin-bottom: spacing(xl);
-
-        .ant-spin-dot {
-          i {
-            background: $primary-gradient;
-            border-radius: radius(full);
-          }
-        }
-      }
-
-      .loading-title {
-        @include gradient-text($primary-gradient);
-        margin-bottom: spacing(md);
-        font-weight: 700;
-      }
-
+    .section-header {
+      margin-bottom: 24px;
       .ant-typography {
-        color: $text-secondary;
-      }
-    }
-  }
-}
-
-// ============================================================================
-// SMTP CONFIGURATION TAB
-// ============================================================================
-
-.smtp-config {
-  .smtp-content {
-
-    // Quick Setup Section
-    .quick-setup-card {
-      padding: spacing((lg));
-      border-radius: radius(xl);
-      @include glass-morphism(0.1);
-      border: 1px solid rgba(102, 126, 234, 0.2);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
-      .ant-card-body {
-        padding: spacing(xxxl);
-        background: transparent;
-        overflow: hidden;
-
-        @include respond-below(md) {
-          padding: spacing(xl);
-        }
-      }
-
-      .quick-setup-content {
-        padding: 10px;
-        .quick-setup-title {
-          @include gradient-text($success-gradient);
-          margin-bottom: spacing(md);
-          display: flex;
-          align-items: center;
-          gap: spacing(md);
-          font-weight: 700;
-          font-size: 1.5rem;
-
-          .section-icon {
-            background: $success-gradient;
-            border-radius: radius(lg);
-            padding: spacing(sm);
-            color: #ffff;
-            font-size: 0.8em;
-          }
-        }
-
-        .quick-setup-description {
-          color: var(--text-chat);
-          margin-bottom: spacing(md);
-          display: block;
-          font-size: 1.1rem;
-          line-height: 1.6;
-        }
-
-        .provider-buttons {
-          .provider-btn {
-            border-radius: radius(sm);
-            font-weight: 600;
-            font-size: 1rem;
-            padding: 10px 30px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgb(0 39 66);
-            background: #fff;
-            color: var(--text-chat);
-
-            &:hover::before {
-              left: 100%;
-            }
-
-
-            &.gmail {
-              line-height: normal;
-              height: auto;
-
-              &.selected,
-              &:hover {
-                background: $gmail-gradient;
-                border: 1px solid $outlook-gradient;
-                color: #ffff;
-
-              }
-            }
-
-            &.outlook {
-
-              &.selected,
-              &:hover {
-                background: $outlook-gradient;
-                border: 1px solid $outlook-gradient;
-                color: #ffff;
-
-              }
-            }
-
-            &.yahoo {
-
-              &.selected,
-              &:hover {
-                background: $yahoo-gradient;
-                color: #ffff;
-                border: 1px solid $outlook-gradient;
-              }
-            }
-
-            @include respond-below(md) {
-              width: 100%;
-              margin-bottom: spacing(md);
-            }
-          }
-        }
-      }
-    }
-
-    // Configuration Status Alert
-    .config-alert {
-      margin-bottom: spacing(xl);
-      border-radius: radius(xl);
-      @include glass-morphism(0.1);
-      border: 2px solid #b7eb8f;
-      position: relative;
-      overflow: hidden;
-
-      .ant-alert-icon {
-        font-size: 1.5em;
-        color: #4bc08e;
-      }
-
-      .ant-alert-message {
-        color: var(--text-chat);
+        margin: 0 0 4px;
+        color: var(--app-text);
         font-weight: 600;
+        font-size: 16px;
       }
-
-      .ant-alert-description {
-        color: $text-secondary;
-
-        .ant-typography {
-          color: var(--text-chat);
-
-          strong {
-            color: var(--text-chat);
-          }
-        }
-      }
-
-      .security-tag {
-        margin-left: spacing(sm);
-        border-radius: radius(md);
-        font-weight: 600;
+      .ant-typography-secondary {
+        font-size: 13px;
+        color: var(--app-text-muted);
       }
     }
 
-    // Error Alert
-    .error-alert {
-      margin-bottom: spacing(xl);
-      border-radius: radius(xl);
-      @include glass-morphism(0.1);
-      border: 2px solid rgba(245, 87, 108, 0.3);
-      position: relative;
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
 
-
-      .ant-alert-icon {
-        color: #f5576c;
-      }
-
-      .ant-alert-message {
-        color: var(--text-chat);
-        font-weight: 600;
-      }
-
-      .ant-alert-description {
-        color: #f5576c;
-      }
-    }
-
-    // SMTP Configuration Form
-    .smtp-form {
-      background: #fff;
-      backdrop-filter: blur(20px);
-      padding: spacing(xl);
-      border-radius: radius(xxl);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-
-      @include respond-below(md) {
-        padding: spacing(xl);
-      }
-
-      .ant-form-item-label {
-        label {
-          font-weight: 600;
-          color: var(--text-chat);
-          font-size: 1rem;
-          display: flex;
-          align-items: center;
-          gap: spacing(sm);
-
-          .anticon {
-            color: var(--text-chat);
-            font-size: 1.1em;
-          }
+      label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--app-text-muted);
+        
+        &.required-label::before {
+          content: "* ";
+          color: #ef4444;
         }
       }
 
-      .ant-select-dropdown {
-        border-radius: radius(lg);
-        background: rgba(22, 33, 62, 0.95);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: shadow(xl);
-
-        .ant-select-item {
-          padding: spacing(md) spacing(lg);
-          border-radius: radius(md);
-          margin: spacing(xs);
-          color: $text-secondary;
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: $text-primary;
-          }
-
-          &.ant-select-item-option-selected {
-            background: $primary-gradient;
-            color: #ffff;
-          }
-
-          .ssl-icon {
-            color: #4bc08e;
-          }
-
-          .tls-icon {
-            color: #4facfe;
-          }
-
-          .warning-icon {
-            color: #fcb69f;
-          }
+      .ant-input, 
+      .ant-select-selector, 
+      .ant-input-password,
+      .ant-input-affix-wrapper {
+        height: 38px;
+        border-radius: 6px;
+        background: var(--app-surface-2);
+        border-color: var(--app-border);
+        color: var(--app-text);
+        display: flex;
+        align-items: center;
+        padding-top: 0;
+        padding-bottom: 0;
+        
+        &:hover, &:focus, &.ant-input-affix-wrapper-focused {
+          border-color: #0b3a5b !important;
+          box-shadow: none;
         }
-      }
 
-      .ant-input-password {
         .ant-input {
           background: transparent;
+          color: var(--app-text);
+          height: 100%;
           border: none;
-          color: var(--text-chat);
-        }
-
-        .ant-input-suffix {
-          .anticon {
-            color: $text-muted;
-          }
-        }
-      }
-
-      .info-icon {
-        color: $text-muted;
-        cursor: help;
-        transition: color 0.3s ease;
-
-        &:hover {
-          color: rgba(102, 126, 234, 0.8);
-        }
-      }
-
-      .submit-section {
-        margin-top: spacing(xl);
-        margin-bottom: 0;
-      }
-
-      .submit-btn {
-        height: auto;
-        border-radius: radius(sm);
-        font-size: 1rem;
-        font-weight: 600;
-        background: $btn-dark-blue !important;
-        border: 1px solid $btn-dark-blue !important;
-        color: #fff !important;
-        padding: 10px 30px;
-        width: auto !important;
-        max-width: fit-content !important;
-        transition: none !important;
-        box-shadow: none !important;
-
-        &::before, &::after { display: none !important; }
-        &:hover { background: $btn-dark-blue-hover !important; border-color: $btn-dark-blue-hover !important; box-shadow: 0 4px 12px rgba(13, 47, 94, 0.4) !important; }
-        &:focus, &:active { background: $btn-dark-blue !important; border-color: $btn-dark-blue !important; box-shadow: none !important; }
-      }
-    }
-
-    // Help Guide Section
-    .help-guide {
-      border-radius: radius(xxl);
-      @include glass-morphism(0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: $warning-gradient;
-        border-radius: radius(xxl) radius(xxl) 0 0;
-      }
-
-      .ant-card-body {
-        padding: spacing(xxxl);
-        background: transparent;
-
-        @include respond-below(md) {
-          padding: spacing(xl);
-        }
-      }
-
-      .guide-title {
-        @include gradient-text($warning-gradient);
-        margin-bottom: spacing(xl);
-        text-align: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-      }
-
-      .provider-info {
-        padding: spacing(xl);
-        border-radius: radius(xl);
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        height: 100%;
-        position: relative;
-        overflow: hidden;
-
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          bottom: 0;
-          width: 4px;
-          transition: width 0.3s ease;
-        }
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: shadow(lg);
-          background: rgba(255, 255, 255, 0.08);
-
-          &::before {
-            width: 8px;
-          }
-        }
-
-        &.gmail::before {
-          background: $gmail-gradient;
-        }
-
-        &.outlook::before {
-          background: $outlook-gradient;
-        }
-
-        &.yahoo::before {
-          background: $yahoo-gradient;
-        }
-
-        .provider-name {
-          display: block;
-          font-size: 1.25rem;
-          color: $text-primary;
-          margin-bottom: spacing(md);
-          font-weight: 700;
-        }
-
-        .provider-details {
-          font-size: 0.95rem;
-          color: $text-secondary;
-          line-height: 1.8;
-
-          div {
-            margin-bottom: spacing(xs);
-            display: flex;
-            align-items: center;
-            gap: spacing(sm);
-          }
-
-          .app-password-note {
-            color: #fcb69f;
-            font-weight: 600;
-            margin-top: spacing(md);
-            padding: spacing(sm);
-            background: rgba(252, 182, 159, 0.1);
-            border-radius: radius(md);
-            border-left: 3px solid #fcb69f;
-          }
-        }
-      }
-    }
-  }
-
-  .ant-btn-primary {
-    max-width: fit-content;
-  }
-}
-
-// ============================================================================
-// FILE UPLOAD TAB
-// ============================================================================
-
-.smtp-config {
-  .file-content {
-    .file-header {
-      text-align: center;
-      padding-top: spacing(xl);
-      margin-bottom: spacing(xl);
-
-      .file-title {
-        @include gradient-text($primary-gradient);
-        margin-bottom: spacing(sm);
-        font-weight: 700;
-        font-size: 2rem;
-      }
-
-      .file-description {
-        color: var(--text-chat);
-        font-size: 1.125rem;
-        line-height: 1.6;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-    }
-
-    .file-form-card {
-      background: rgba(22, 33, 62, 0.4);
-      backdrop-filter: blur(20px);
-      border-radius: radius(xxl);
-      padding: 0 spacing(md);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: spacing(xl);
-      position: relative;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
-
-      .ant-card-body {
-        padding: spacing(xxxl);
-        background: transparent;
-
-        @include respond-below(md) {
-          padding: spacing(xl);
-        }
-      }
-
-      .file-form {
-        .ant-form-item-label {
-          label {
-            font-weight: 700;
-            color: var(--text-chat);
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: spacing(sm);
-
-            .anticon {
-              color: rgba(79, 172, 254, 0.8);
-              font-size: 1.2em;
-            }
-          }
-        }
-
-        .file-input {
-          border-radius: radius(sm);
-          border: 1px solid #eee;
-          max-width: fit-content;
-          backdrop-filter: blur(10px);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          color: var(--text-chat);
-          font-size: 1rem;
-          height: 52px;
-
-          .ant-input {
-
-            &[disabled] {
-              background: rgba(255, 255, 255, 0.02);
-              border-color: rgba(255, 255, 255, 0.05);
-
-              cursor: not-allowed;
-            }
-
-          }
-
-          &::placeholder {
-            color: $text-muted;
-          }
-
-          &:hover:not([disabled]) {
-            color: var(--text-chat);
-
-          }
-
           &:focus {
-            border-color: #eee;
-            background: #fff;
-
-          }
-
-          &[disabled] {
-            background: rgba(255, 255, 255, 0.02);
-            border-color: rgba(255, 255, 255, 0.05);
-            color: #eee;
-            cursor: not-allowed;
-          }
-
-          .ant-input-suffix {
-            color: $text-muted;
-            font-weight: 600;
+            box-shadow: none;
           }
         }
 
-        .file-actions {
+        input::placeholder {
+          color: var(--app-text-subtle);
+        }
+      }
+
+      .ant-input-affix-wrapper {
+        padding-left: 12px;
+        padding-right: 12px;
+
+        .ant-input-prefix {
+          margin-right: 8px;
           display: flex;
+          align-items: center;
         }
-
-        // Edit File Limit button — dark blue
-        .edit-btn,
-        .save-btn {
-          background: $btn-dark-blue !important;
-          border-color: $btn-dark-blue !important;
-          color: #fff !important;
-          transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-
-          &:hover {
-            background: $btn-dark-blue-hover !important;
-            border-color: $btn-dark-blue-hover !important;
-            box-shadow: 0 8px 20px rgba(13, 47, 94, 0.4);
-            transform: translateY(-1px);
-          }
-
-          &:active {
-            transform: translateY(0);
+        .ant-input-suffix {
+          margin-left: 8px;
+          display: flex;
+          align-items: center;
+          
+          .anticon {
+            color: var(--app-text-subtle);
+            cursor: pointer;
+            &:hover {
+              color: var(--app-text-muted);
+            }
           }
         }
+
+        .ant-input {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+      }
+
+      .ant-select {
+        color: var(--app-text);
+      }
+
+      .ant-select-arrow,
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        color: var(--app-text-subtle);
+      }
+
+      .ant-select-selection-item {
+        color: var(--app-text);
+      }
+    }
+
+    .config-tips-alert {
+      border-radius: 8px;
+      background-color: #f0f7ff;
+      border: 1px solid #e0efff;
+      padding: 16px 20px;
+      margin: 24px 0;
+
+      .alert-content {
+        .alert-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          color: #0b3a5b;
+          font-weight: 600;
+          font-size: 14px;
+          
+          .bulb-icon {
+            font-size: 16px;
+          }
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 20px;
+          li {
+            color: #3b82f6;
+            font-size: 13px;
+            margin-bottom: 4px;
+            &::marker {
+              color: #60a5fa;
+            }
+          }
+        }
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+
+      .left-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .secondary-btn {
+        height: 36px;
+        border-radius: 6px;
+        padding: 0 16px;
+        color: var(--app-text-muted);
+        border-color: var(--app-border);
+        background: transparent;
+        font-size: 13px;
+        
+        &:hover {
+          color: var(--app-text);
+          background: var(--app-surface-2);
+        }
+      }
+
+      .primary-action-btn {
+        height: 40px;
+        border-radius: 6px;
+        padding: 0 24px;
+        background: #0b3a5b !important;
+        background-image: none !important;
+        border-color: #0b3a5b !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 14px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          background: #082f4a !important;
+          border-color: #082f4a !important;
+        }
+      }
+    }
+  }
+
+  .file-limit-card {
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    
+    .ant-card-body {
+      padding: 24px 32px;
+    }
+    
+    .input-with-suffix {
+      .ant-input,
+      .ant-input-affix-wrapper {
+        border-radius: 6px;
+        background: var(--app-surface-2);
+        border-color: var(--app-border);
+        color: var(--app-text);
+      }
+
+      .ant-input-affix-wrapper {
+        padding-right: 0;
+      }
+
+      .ant-input-affix-wrapper .ant-input {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .ant-input-suffix {
+        margin: 0;
+      }
+      .suffix-text {
+        height: 38px;
+        background: var(--app-surface-2);
+        border: 1px solid var(--app-border);
+        border-left: 1px solid var(--app-border);
+        border-radius: 0 6px 6px 0;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        color: var(--app-text-subtle);
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+
+    .save-limit-btn {
+      height: 38px;
+      border-radius: 6px;
+      background: #0b3a5b !important;
+      background-image: none !important;
+      border-color: #0b3a5b !important;
+      color: #ffffff !important;
+      
+      &:hover {
+        background: #082f4a !important;
+        border-color: #082f4a !important;
       }
     }
   }
 }
 
-body.dark-theme .smtp-config .main-card,
-body.dark-theme .smtp-config .quick-setup-card,
-body.dark-theme .smtp-config .smtp-form,
-body.dark-theme .smtp-config .file-form-card,
-body[data-theme="dark"] .smtp-config .main-card,
-body[data-theme="dark"] .smtp-config .quick-setup-card,
-body[data-theme="dark"] .smtp-config .smtp-form,
-body[data-theme="dark"] .smtp-config .file-form-card {
-  background: #0c182b !important;
-  border-color: rgba(74, 104, 150, 0.24) !important;
+body:not(.dark-theme) .settings-overview,
+body[data-theme="light"] .settings-overview {
+  background: #ffffff;
 }
 
-body.dark-theme .smtp-config .ant-tabs-nav,
-body[data-theme="dark"] .smtp-config .ant-tabs-nav {
-  background: #0c182b !important;
-}
+// Dark theme support
+body.dark-theme .settings-overview,
+body[data-theme="dark"] .settings-overview {
+  background: var(--app-bg);
 
-body.dark-theme .smtp-config .ant-tabs-tab:not(.ant-tabs-tab-active),
-body[data-theme="dark"] .smtp-config .ant-tabs-tab:not(.ant-tabs-tab-active) {
-  background: #132238 !important;
-  color: #9bb6dd !important;
-}
-
-// ============================================================================
-// SETTINGS PAGE REFINEMENT OVERRIDES
-// ============================================================================
-
-.smtp-config {
-  max-width: 1360px;
-  margin: 0 auto;
-  background: #ffffff !important;
-  position: relative;
-
-  .header-section {
-    margin-bottom: 4px;
-    text-align: center;
-    padding: 2px 0 4px;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .main-card {
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
-    background: #ffffff !important;
-    border: 1px solid #e7eef7;
-  }
-
-  .main-card .main-tabs .ant-tabs-nav {
-    padding: 3px 5px;
-    background: #ffffff;
-    border-bottom: 1px solid #e7eef7;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab {
-    min-height: 20px;
-    border: 1px solid #77afdb;
-    background: #dceeff;
-    border-radius: 7px;
-    margin-right: 4px;
-    padding: 0 8px;
-    transition: all 0.2s ease;
-    box-shadow: none;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active {
-    background: #0b3a5b !important;
-    background-image: none !important;
-    border-color: #0b3a5b !important;
-    box-shadow: 0 3px 8px rgba(11, 58, 91, 0.18) !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: #ffffff !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab .tab-label,
-  .main-card .main-tabs .ant-tabs-tab .tab-icon {
-    color: #0b3a5b !important;
-    font-size: 11px;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .tab-label,
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .tab-icon {
-    color: #ffffff !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-content-holder,
-  .main-card .main-tabs .ant-tabs-tabpane,
-  .smtp-content,
-  .file-content {
-    background: #ffffff;
-  }
-
-  .smtp-content,
-  .file-content {
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .quick-setup-card,
-  .smtp-form,
-  .file-form-card,
-  .file-guidelines {
-    background: var(--app-surface) !important;
-    border: 1px solid var(--app-border) !important;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.025) !important;
-    border-radius: 12px !important;
-  }
-
-  .quick-setup-card .ant-card-body,
-  .file-form-card .ant-card-body {
-    padding: 6px 10px !important;
-  }
-
-  .quick-setup-content,
-  .file-header {
-    padding: 0;
-  }
-
-  .quick-setup-card {
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%) !important;
-  }
-
-  .quick-setup-title,
-  .file-title {
-    background: none;
-    -webkit-text-fill-color: initial;
-    color: var(--app-text);
-    font-size: 12px;
-    margin-bottom: 1px;
-  }
-
-  .file-header {
-    text-align: center;
-    padding: 6px 2px 2px;
-  }
-
-  .file-title {
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-
-  .file-description {
-    font-size: 11px !important;
-    line-height: 1.3;
-    max-width: 520px;
-    margin: 0 auto;
-  }
-
-  .quick-setup-description,
-  .file-description,
-  .subtitle {
-    color: var(--app-text-muted) !important;
-  }
-
-  .main-title {
-    background: none;
-    -webkit-text-fill-color: initial;
-    color: #0b3a5b;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    justify-content: center;
-    margin-bottom: 1px;
-    gap: 6px;
-  }
-
-  .main-title .title-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    background: linear-gradient(135deg, #1b5d87 0%, #2f88c2 100%);
-    color: #ffffff;
-    padding: 0;
-    font-size: 11px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(47, 136, 194, 0.14);
-  }
-
-  .subtitle {
-    display: none;
-  }
-
-  .provider-buttons {
-    margin-top: 0;
-  }
-
-  .quick-setup-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-  }
-
-  .quick-setup-content .provider-buttons .provider-btn {
-    min-width: 74px;
-    height: 24px;
-    padding: 0 8px;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #0f172a;
-    border: 1px solid #cbd5e1;
-    box-shadow: none;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .quick-setup-content .provider-buttons .provider-btn.gmail.selected,
-  .quick-setup-content .provider-buttons .provider-btn.gmail:hover {
-    background: #0b3a5b;
-    border-color: #0b3a5b;
-    color: #ffffff;
-  }
-
-  .smtp-form,
-  .file-form {
-    padding: 18px;
-  }
-
-  .file-form {
-    padding: 10px;
-  }
-
-  .settings-form-flow {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .settings-form-section {
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid #e8eef6;
-    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-  }
-
-  .settings-form-section.compact {
-    padding-bottom: 8px;
-  }
-
-  .section-heading {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--app-border);
-  }
-
-  .section-step {
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #edf5ff 0%, #dcecff 100%);
-    color: #0b3a5b;
-    font-weight: 700;
-    flex-shrink: 0;
-    font-size: 12px;
-    border: 1px solid #d3e4f5;
-  }
-
-  .section-heading .ant-typography {
-    display: block;
-    margin-bottom: 2px;
+  .settings-overview-header .ant-typography {
     color: var(--app-text);
   }
 
-  .section-heading .ant-typography h5,
-  .section-heading h5.ant-typography {
-    font-size: 15px;
-    margin-bottom: 2px;
-  }
-
-  .section-heading .ant-typography.ant-typography-secondary,
-  .section-heading .ant-typography + .ant-typography,
-  .section-heading .ant-typography div + span,
-  .section-heading .ant-typography div + .ant-typography,
-  .section-heading > div > span {
-    color: var(--app-text-muted);
-    font-size: 12px;
-    line-height: 1.45;
-  }
-
-  .smtp-form .ant-form-item,
-  .file-form .ant-form-item {
-    margin-bottom: 14px;
-  }
-
-  .file-form .ant-form-item {
-    margin-bottom: 10px;
-  }
-
-  .smtp-form .ant-form-item-label > label,
-  .file-form .ant-form-item-label > label {
-    color: var(--app-text) !important;
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  .file-form .ant-form-item-label > label {
-    font-size: 12px;
-  }
-
-  .smtp-form .form-input,
-  .smtp-form .form-select .ant-select-selector,
-  .smtp-form .ant-input-affix-wrapper,
-  .smtp-form .ant-input,
-  .file-form .file-input,
-  .file-form .ant-input-affix-wrapper,
-  .file-form .ant-input {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    font-size: 13px !important;
-  }
-
-  .smtp-form .ant-input,
-  .smtp-form .ant-input-affix-wrapper,
-  .smtp-form .form-select .ant-select-selector,
-  .file-form .ant-input,
-  .file-form .ant-input-affix-wrapper {
-    min-height: 40px;
-  }
-
-  .file-form .ant-input,
-  .file-form .ant-input-affix-wrapper {
-    min-height: 34px;
-  }
-
-  .smtp-form .ant-input-affix-wrapper .ant-input,
-  .file-form .ant-input-affix-wrapper .ant-input,
-  .smtp-form .ant-input-password .ant-input,
-  .file-form .ant-input-password .ant-input {
-    min-height: auto !important;
-    height: auto !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-  }
-
-  .smtp-form .ant-input-affix-wrapper,
-  .file-form .ant-input-affix-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 12px !important;
-  }
-
-  .smtp-form .ant-input-affix-wrapper .ant-input-suffix,
-  .file-form .ant-input-affix-wrapper .ant-input-suffix {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-left: 0 !important;
-  }
-
-  .file-form .ant-input-affix-wrapper .ant-input-suffix {
-    min-width: 28px;
-  }
-
-  .smtp-form .ant-input::placeholder,
-  .smtp-form .ant-input-password-icon,
-  .smtp-form .ant-select-selection-placeholder,
-  .file-form .ant-input::placeholder,
-  .file-form .ant-input-suffix {
-    color: #94a3b8 !important;
-    font-size: 13px !important;
-  }
-
-  .smtp-form .ant-select-selection-item,
-  .file-form .ant-input,
-  .smtp-form .ant-input,
-  .smtp-form .ant-input-password input {
-    font-size: 13px !important;
-  }
-
-  .submit-panel {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid #dbe8f5;
-    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-  }
-
-  .submit-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .submit-copy .ant-typography {
-    margin: 0;
-    color: var(--app-text);
-  }
-
-  .submit-copy .ant-typography-secondary {
+  .section-main-title {
     color: var(--app-text-muted);
   }
 
-  .submit-btn,
-  .file-form .edit-btn,
-  .file-form .save-btn {
-    min-height: 38px;
-    border-radius: 8px !important;
-    background: #0b3a5b !important;
-    border-color: #0b3a5b !important;
-    color: #ffffff !important;
-    font-size: 13px !important;
-    padding: 0 14px !important;
+  .settings-card {
+    background: var(--app-surface);
+    border-color: var(--app-border);
   }
 
-  .file-form .delete-btn {
-    min-height: 38px;
-    border-radius: 8px;
-    font-size: 13px;
+  .ant-card {
+    box-shadow: var(--app-shadow-md);
   }
 
-  .file-form .edit-btn,
-  .file-form .save-btn,
-  .file-form .delete-btn {
-    min-height: 32px;
-    font-size: 11px !important;
-    padding: 0 12px !important;
-    border-radius: 7px !important;
-    box-shadow: none !important;
-  }
+  .manual-config-section {
+    .input-group {
+      label {
+        color: var(--app-text-muted);
+      }
 
-  .tab-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-  }
-
-  .tab-icon {
-    font-size: 11px !important;
-    margin-right: 3px !important;
-  }
-
-  .config-alert,
-  .error-alert,
-  .file-guidelines {
-    margin-bottom: 0;
-    border-radius: 12px !important;
-  }
-
-  .file-guidelines .ant-alert-message {
-    font-size: 12px;
-  }
-
-  .file-guidelines .ant-alert-description,
-  .guideline-item,
-  .guideline-description {
-    font-size: 11px !important;
-    line-height: 1.45;
-  }
-}
-
-body.dark-theme .smtp-config,
-body[data-theme="dark"] .smtp-config {
-  background: #0f172a !important;
-
-  .header-section {
-    background:
-      radial-gradient(circle at right top, rgba(59, 130, 246, 0.14), transparent 35%),
-      linear-gradient(180deg, #0f172a 0%, #101a2f 100%);
-    border-color: #253247;
-  }
-
-  .main-card,
-  .quick-setup-card,
-  .smtp-form,
-  .file-form-card,
-  .file-guidelines,
-  .settings-form-section,
-  .submit-panel,
-  .main-card .main-tabs .ant-tabs-content-holder,
-  .main-card .main-tabs .ant-tabs-tabpane,
-  .smtp-content,
-  .file-content {
-    background: #0f172a !important;
-    border-color: #253247 !important;
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28) !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-nav,
-  .main-card .main-tabs .ant-tabs-tab:not(.ant-tabs-tab-active) {
-    background: #111c30 !important;
-    border-color: #253247 !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active {
-    background: #0b3a5b !important;
-    background-image: none !important;
-    border-color: #0b3a5b !important;
-    box-shadow: 0 3px 8px rgba(11, 58, 91, 0.22) !important;
-  }
-
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .tab-label,
-  .main-card .main-tabs .ant-tabs-tab.ant-tabs-tab-active .tab-icon {
-    color: #ffffff !important;
-  }
-
-  .quick-setup-card {
-    background: linear-gradient(180deg, #111c30 0%, #0f172a 100%) !important;
-  }
-
-  .quick-setup-content .provider-buttons .provider-btn {
-    background: #111c30 !important;
-    color: #e2e8f0 !important;
-    border-color: #31425d !important;
-  }
-
-  .quick-setup-content .provider-buttons .provider-btn.gmail.selected,
-  .quick-setup-content .provider-buttons .provider-btn.gmail:hover {
-    background: #072b44 !important;
-    border-color: #072b44 !important;
-    color: #ffffff !important;
-  }
-
-  .smtp-form .form-input,
-  .smtp-form .form-select .ant-select-selector,
-  .smtp-form .ant-input-affix-wrapper,
-  .smtp-form .ant-input,
-  .file-form .file-input,
-  .file-form .ant-input-affix-wrapper,
-  .file-form .ant-input {
-    background: #111c30 !important;
-    color: #e2e8f0 !important;
-    border-color: #31425d !important;
-  }
-
-  .smtp-form .ant-input::placeholder,
-  .smtp-form .ant-input-password-icon,
-  .smtp-form .ant-select-selection-placeholder,
-  .file-form .ant-input::placeholder,
-  .file-form .ant-input-suffix,
-  .quick-setup-description,
-  .file-description,
-  .subtitle,
-  .section-heading > div > span,
-  .submit-copy .ant-typography-secondary {
-    color: #94a3b8 !important;
-  }
-
-  .smtp-form .ant-form-item-label > label,
-  .file-form .ant-form-item-label > label,
-  .section-heading .ant-typography,
-  .main-title,
-  .submit-copy .ant-typography,
-  .file-title,
-  .quick-setup-title {
-    color: #f8fafc !important;
-  }
-
-  .section-step {
-    background: rgba(59, 130, 246, 0.16);
-    color: #bfdbfe;
-    border-color: rgba(96, 165, 250, 0.18);
-  }
-
-  .settings-form-section {
-    background: linear-gradient(180deg, #0f172a 0%, #111c30 100%) !important;
-  }
-
-  .submit-panel {
-    background: linear-gradient(180deg, #101a2f 0%, #0f172a 100%) !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .smtp-config {
-    padding: 16px;
-
-    .smtp-content,
-    .file-content,
-    .smtp-form,
-    .file-form {
-      padding: 16px;
+      .ant-input,
+      .ant-select-selector,
+      .ant-input-password,
+      .ant-input-affix-wrapper {
+        background: var(--app-surface-2);
+        border-color: var(--app-border);
+        color: var(--app-text);
+      }
     }
 
-    .submit-panel {
-      flex-direction: column;
-      align-items: stretch;
-    }
+    .config-tips-alert {
+      background-color: #1b2740;
+      border-color: #314766;
 
-    .submit-btn {
-      width: 100%;
-      max-width: none !important;
-    }
+      .alert-content {
+        .alert-title {
+          color: #bfdbfe;
+        }
 
-    .quick-setup-content {
-      flex-direction: column;
-      align-items: flex-start;
+        ul li {
+          color: #cbd5e1;
+        }
+      }
+    }
+  }
+
+  .file-limit-card .input-with-suffix {
+    .ant-input,
+    .suffix-text {
+      background: var(--app-surface-2);
+      border-color: var(--app-border);
+      color: var(--app-text);
     }
   }
 }

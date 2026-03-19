@@ -222,6 +222,31 @@
   padding: 30px 16px;
 }
 
+.disc-error {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+/* Pagination */
+.disc-pagination {
+  padding: 12px 0;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.disc-pagination .ant-pagination {
+  font-size: 13px;
+}
+
+
 /* ── Right Panel ─────────────────────────────────────────── */
 .disc-right {
   flex: 1;
@@ -504,6 +529,13 @@ body[data-theme="dark"] .disc-icon-btn {
   color: #94a3b8;
 }
 
+body.dark-theme .disc-error,
+body[data-theme="dark"] .disc-error {
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.35);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 body.dark-theme .disc-icon-btn:hover,
 body[data-theme="dark"] .disc-icon-btn:hover {
   background: #334155;
@@ -606,6 +638,11 @@ body[data-theme="dark"] .disc-msg-row.me .disc-msg-bubble {
   background: #1d4ed8;
   border-color: #1d4ed8;
   color: #fff;
+}
+body.dark-theme .disc-pagination,
+body[data-theme="dark"] .disc-pagination {
+  background: #1e293b;
+  border-top-color: #334155;
 }
 
 body.dark-theme .disc-input-bar,

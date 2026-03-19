@@ -336,7 +336,9 @@ exports.getProjects = async (req, res) => {
       project_type: Joi.array().optional().default([]),
       isArchived: Joi.boolean().optional().default(false),
       isSearch: Joi.boolean().default(false),
-      isBillable: Joi.boolean().optional()
+      isBillable: Joi.boolean().optional(),
+      includeMetrics: Joi.boolean().optional().default(true),
+      countOnly: Joi.boolean().optional().default(false)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -349,12 +351,146 @@ exports.getProjects = async (req, res) => {
       );
     }
 
+    const cacheTtlSeconds = 15;
+    const cacheKey =
+      value?.includeMetrics === false &&
+      !value?._id &&
+      !value?.isSearch &&
+      !value?.countOnly
+        ? `projects:get:${generateCacheKey({
+            companyId: String(decodedCompanyId || ""),
+            userId: String(decodedUserId || ""),
+            value
+          })}`
+        : null;
+
+    if (cacheKey) {
+      const cached = getCache(cacheKey);
+      if (cached) {
+        return successResponse(
+          res,
+          statusCode.SUCCESS,
+          messages.LISTING,
+          cached.data,
+          cached.metadata
+        );
+      }
+    }
+
     const pagination = getPagination({
       pageLimit: value?.limit,
       pageNum: value?.pageNo,
       sort: value?.sort,
       sortBy: value?.sortBy
     });
+
+    if (value?.countOnly) {
+      const loginUserId = new mongoose.Types.ObjectId(req.user._id);
+      const companyId = newObjectId(decodedCompanyId);
+      const isAdminUser = await checkUserIsAdmin(req?.user?._id);
+      const archivedStatuses = await ProjectStatus.find({
+        isDeleted: false,
+        companyId,
+        title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+      })
+        .select("_id")
+        .lean();
+
+      const archivedStatusIds = archivedStatuses.map((item) => item._id);
+
+      let countMatchQuery = {
+        isDeleted: false,
+        companyId,
+        ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+        ...(value?.color ? { color: value?.color } : {}),
+        ...(value?.technology?.length > 0
+          ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...(value?.project_type?.length > 0
+          ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...(value?.category?.length > 0
+          ? { project_type: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...(value?.manager_id?.length > 0
+          ? { manager: { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...(value?.acc_manager_id?.length > 0
+          ? { acc_manager: { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...(value?.assignee_id?.length > 0
+          ? { assignees: { $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+          : {}),
+        ...("isBillable" in value && typeof value?.isBillable === "boolean"
+          ? { isBillable: value.isBillable }
+          : {})
+      };
+
+      if (!value?._id) {
+        if (value?.project_status?.length > 0) {
+          countMatchQuery.project_status = {
+            $in: value.project_status.map((s) => new mongoose.Types.ObjectId(s))
+          };
+        } else if (archivedStatusIds.length > 0) {
+          countMatchQuery.project_status = value?.isArchived
+            ? { $in: archivedStatusIds }
+            : { $nin: archivedStatusIds };
+        }
+      }
+
+      if (value?.filterBy !== "all") {
+        countMatchQuery = {
+          ...countMatchQuery,
+          ...(value?.filterBy === "assigned"
+            ? {
+                $or: [
+                  { assignees: loginUserId },
+                  { pms_clients: loginUserId }
+                ]
+              }
+            : { manager: loginUserId })
+        };
+      } else if (!isAdminUser) {
+        countMatchQuery = {
+          ...countMatchQuery,
+          $or: [
+            { assignees: loginUserId },
+            { pms_clients: loginUserId },
+            { manager: loginUserId },
+            { createdBy: loginUserId },
+            { acc_manager: loginUserId }
+          ]
+        };
+      }
+
+      if (value?.search) {
+        countMatchQuery.$and = countMatchQuery.$and || [];
+        countMatchQuery.$and.push({
+          $or: [
+            { title: { $regex: value.search, $options: "i" } },
+            { projectId: { $regex: value.search, $options: "i" } },
+            { descriptions: { $regex: value.search, $options: "i" } }
+          ]
+        });
+      }
+
+      const totalCount = await Project.countDocuments(countMatchQuery);
+      const metaData = {
+        total: totalCount,
+        limit: value?.limit,
+        pageNo: value?.pageNo,
+        totalPages: value?.limit > 0 ? Math.ceil(totalCount / value.limit) : 1,
+        currentPage: value?.pageNo
+      };
+
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        messages.LISTING,
+        [],
+        metaData
+      );
+    }
 
     // Manage projects default tabs .. . .
     await manageAllProjectTabSetting(req.user);
@@ -772,45 +908,59 @@ exports.getProjects = async (req, res) => {
     // Need to check project status..(we need Active and Archived status default)
     // await this.checkDefaultProjectAndBugStatus(req.user._id);
 
-    // check project have project id or not...
-    await this.addProjectRandomId(data);
+    // Backfill missing projectId in background (do not block the listing response).
+    // This used to run sequential DB writes on every listing, which slows down the UI a lot.
+    setImmediate(() => {
+      this.addProjectRandomId(data).catch(() => {});
+    });
+
+    if (value?.includeMetrics === false) {
+      if (cacheKey) {
+        storeCache(
+          cacheKey,
+          value?._id ? data[0] : data,
+          !value?._id && metaData,
+          cacheTtlSeconds
+        );
+      }
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        messages.LISTING,
+        value?._id ? data[0] : data,
+        !value?._id && metaData
+      );
+    }
 
     const updatedData = await Promise.all(
       data.map(async (project) => {
         const projectId = project._id;
-    
-        // 1. Fetch tasks for the project with lean() for speed
+
         const allTasks = await ProjectTasks.find({ project_id: projectId })
-          .populate("task_status", "title") // only fetch 'title' field from task_status
+          .populate("task_status", "title")
           .lean();
-    
-        // 2. Filter tasks with status "Done"
-        const doneTasks = allTasks.filter(task => task.task_status?.title === "Done");
-    
-        // 3. Calculate task completion percentage
+
+        const doneTasks = allTasks.filter((task) => task.task_status?.title === "Done");
+
         const completionPercentage = allTasks.length > 0
           ? Math.round((doneTasks.length / allTasks.length) * 100)
           : 0;
-    
-        // 4. Fetch total logged time (lean + only required fields)
+
         const loggedHoursData = await LoggedHours.find({
           project_id: projectId,
           isDeleted: false
         }).select("logged_hours logged_minutes").lean();
-    
+
         const totalMinutes = loggedHoursData.reduce((acc, entry) => {
-          const hours = parseInt(entry.logged_hours || '0', 10);
-          const minutes = parseInt(entry.logged_minutes || '0', 10);
+          const hours = parseInt(entry.logged_hours || "0", 10);
+          const minutes = parseInt(entry.logged_minutes || "0", 10);
           return acc + (hours * 60) + minutes;
         }, 0);
-    
+
         const finalHours = totalMinutes / 60;
-    
-        // 5. Compare against estimated hours
-        const estimated = parseFloat(project.estimatedHours || '0');
+        const estimated = parseFloat(project.estimatedHours || "0");
         const projectHoursExceeded = finalHours > estimated;
-    
-        // 6. Return enriched project object
+
         return {
           ...(typeof project.toObject === "function" ? project.toObject() : project),
           totalTasks: allTasks.length,
@@ -3393,20 +3543,19 @@ exports.addProjectRandomId = async (data) => {
   try {
     if (data && data.length > 0) {
       const projectWithoutId = data.filter(
-        (d) => !d.projectId || d.projectId == ""
+        (d) => !d.projectId || d.projectId === ""
       );
 
       if (projectWithoutId && projectWithoutId.length > 0) {
-        for (let i = 0; i < projectWithoutId.length; i++) {
-          const element = projectWithoutId[i];
-          await Project.findOneAndUpdate(
-            { _id: element._id },
-            {
-              $set: {
-                projectId: generateRandomId()
-              }
-            }
-          );
+        const ops = projectWithoutId.slice(0, 50).map((element) => ({
+          updateOne: {
+            filter: { _id: element._id, $or: [{ projectId: { $exists: false } }, { projectId: "" }] },
+            update: { $set: { projectId: generateRandomId() } }
+          }
+        }));
+
+        if (ops.length) {
+          await Project.bulkWrite(ops, { ordered: false });
         }
       }
     }

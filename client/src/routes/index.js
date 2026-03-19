@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { Route, Redirect } from "react-router-dom";
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import config from "../settings/config.json";
 import Workflows from "../components/PMS/Workflows";
 import ProjectStatus from "../components/PMS/ProjectStatus";
@@ -10,6 +11,17 @@ import MylogtimeWidget from "../pages/Mylogtime/MylogtimeWidget";
 import Projectexpences from "../pages/ProjectExpences/Projectexpences.js";
 import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js";
 import { sideBarContentId } from "../constants";
+import {
+  DashboardSkeleton,
+  DiscussionSkeleton,
+  ProjectListSkeleton,
+  ReportsHubSkeleton,
+  ReportsDetailSkeleton,
+  ReportsSkeleton,
+  SettingsSkeleton,
+  TimesheetSkeleton,
+  UsersPageSkeleton,
+} from "../components/common/SkeletonLoader";
 
 import AdminDashboard from "../pages/AdminDashboard";
 import CompanyManagement from "../pages/AdminModules/CompanyManagement";
@@ -38,7 +50,6 @@ const Resource = React.lazy(() =>
 const ProjectArchieved = React.lazy(() =>
   import("../components/PMS/ProjectArchieved/index")
 );
-
 const AssignProject = React.lazy(() =>
   import("../components/AssignProject/AssignProject")
 );
@@ -46,8 +57,7 @@ const Library = React.lazy(() => import("../components/PMS/Library"));
 const EmployeeMasterList = React.lazy(() =>
   import("../pages/EmployeeList/EmployeeMasterList")
 );
-const ProjectsRunningReports = React.lazy(() => import("../pages/Reports"));
-const TimeSheetReports = React.lazy(() => import("../pages/Reports/TimeSheet"));
+const ReportsHub = React.lazy(() => import("../pages/ReportsHub"));
 const PermissionModule = React.lazy(() => import("../pages/PermissionModule"));
 const ResourcePermission = React.lazy(() =>
   import("../components/PMS/Resources/ResourcePermission")
@@ -82,6 +92,11 @@ const DiscussionPage = React.lazy(() =>
   import("../pages/Discussion/index")
 );
 
+
+
+const ProjectsRunning = React.lazy(() => import("../pages/Reports"));
+const TimeSheet = React.lazy(() => import("../pages/Reports/TimeSheet"));
+
 const MiraAi = React.lazy(() =>
   import("../pages/MiraAI/MiraAI")
 );
@@ -89,6 +104,22 @@ const MiraAi = React.lazy(() =>
 const ProjectEntryRedirect = ({ match }) => (
   <Redirect to={`/${match.params.companySlug}/project-list`} />
 );
+
+const RouteSkeletonFallback = () => {
+  const location = useLocation();
+  const path = (location?.pathname || "").toLowerCase();
+
+  if (path.includes("/admin/settings")) return <SettingsSkeleton />;
+  if (path.includes("/project-users")) return <UsersPageSkeleton />;
+  if (path.includes("/project-list")) return <ProjectListSkeleton />;
+  if (path.includes("/timesheet-reports")) return <TimesheetSkeleton />;
+  if (path.includes("/project-runnig-reports")) return <ReportsSkeleton />;
+  if (path.includes("/reports/")) return <ReportsDetailSkeleton />;
+  if (path.endsWith("/reports")) return <ReportsHubSkeleton />;
+  if (path.includes("/discussion")) return <DiscussionSkeleton />;
+
+  return <DashboardSkeleton />;
+};
 
 const index = ({ match, userPermission }) => {
   const routeArray = [
@@ -224,14 +255,44 @@ const index = ({ match, userPermission }) => {
       ],
     },
     {
+      path: ":companySlug/reports",
+      component: ReportsHub,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.AM,
+      ],
+    },
+    {
+      path: ":companySlug/reports/:reportKey",
+      component: ReportsHub,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.AM,
+      ],
+    },
+    {
       path: ":companySlug/project-runnig-reports",
-      component: ProjectsRunningReports,
-      roleName: [config.PMS_ROLES.ADMIN],
+      component: ProjectsRunning,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.AM,
+      ],
     },
     {
       path: ":companySlug/timesheet-reports",
-      component: TimeSheetReports,
-      roleName: [config.PMS_ROLES.ADMIN],
+      component: TimeSheet,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.TL,
+        config.PMS_ROLES.AM,
+      ],
     },
     {
       path: ":companySlug/permission-access",
@@ -467,7 +528,7 @@ const index = ({ match, userPermission }) => {
   let userData = JSON.parse(localStorage.getItem("user_data"));
   return (
     <>
-      <Suspense fallback={<></>}>
+      <Suspense fallback={<RouteSkeletonFallback />}>
         {routeArray.map((item, index) => (
           <Route
             exact
@@ -476,8 +537,9 @@ const index = ({ match, userPermission }) => {
             render={(routeProps) => {
               const isSpecialUser = userData._id === sideBarContentId; // Static User Check
               const isSpecificPath =
-                item.path === "project-runnig-reports" ||
-                item.path === "timesheet-reports"; // Check for the specific route
+                item.path.includes("/reports") ||
+                item.path === ":companySlug/project-runnig-reports" ||
+                item.path === ":companySlug/timesheet-reports";
 
               // ✅ Normal Role-Based Access (For Users With Proper Permissions)
               if (getRoles(item.roleName)) {

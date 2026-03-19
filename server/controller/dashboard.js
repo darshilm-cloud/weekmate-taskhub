@@ -562,6 +562,33 @@ exports.getMyTasks = async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: "employees",
+          let: { createdById: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$createdById"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] }
+                  ]
+                }
+              }
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } }
+          ],
+          as: "createdBy"
+        }
+      },
+      {
+        $unwind: {
+          path: "$createdBy",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
@@ -569,6 +596,7 @@ exports.getMyTasks = async (req, res) => {
           start_date: 1,
           due_date: 1,
           createdAt: 1,
+          createdBy: 1,
           assignees: 1,
           taskLabels: { _id: 1, title: 1, color: 1 },
           project: {
@@ -764,6 +792,28 @@ exports.getTaskList = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "employees",
+          let: { createdById: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$createdById"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } },
+          ],
+          as: "createdBy",
+        },
+      },
+      { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           _id: 1,
           title: 1,
@@ -771,6 +821,7 @@ exports.getTaskList = async (req, res) => {
           start_date: 1,
           due_date: 1,
           createdAt: 1,
+          createdBy: 1,
           assignees: 1,
           task_progress: 1,
           project: { _id: 1, title: 1, manager: 1 },

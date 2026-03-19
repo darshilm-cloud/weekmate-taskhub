@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton
+  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination
 } from "antd";
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
@@ -42,6 +42,10 @@ export default function DiscussionPage() {
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [folderId, setFolderId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTopics, setTotalTopics] = useState(0);
+  const [topicsError, setTopicsError] = useState("");
+  const pageSize = 15;
   const bottomRef = useRef(null);
 
   // Add Topic modal
@@ -51,26 +55,57 @@ export default function DiscussionPage() {
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addType, setAddType] = useState("General"); // General or Member
 
-  const fetchTopics = useCallback(async (searchVal = "") => {
+  const fetchTopics = useCallback(async (searchVal = "", page = 1) => {
     setLoadingTopics(true);
+    setTopicsError("");
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
-        body: { pageNo: 1, limit: 200, sortBy: "desc", ...(searchVal ? { search: searchVal } : {}) },
+        body: {
+          pageNo: page,
+          limit: pageSize,
+          sortBy: "desc",
+          ...(searchVal ? { search: searchVal } : {}),
+        },
       });
       const data = res?.data?.data;
       setTopics(Array.isArray(data) ? data : []);
-    } catch (e) { console.error(e); }
-    finally { setLoadingTopics(false); }
-  }, []);
-
-  useEffect(() => { fetchTopics(); }, []);
+      // Backend doesn't return totalCount for this API; keep pagination deterministic.
+      setTotalTopics(Array.isArray(data) ? data.length : 0);
+    } catch (e) {
+      console.error(e);
+      setTopics([]);
+      setTotalTopics(0);
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Failed to load discussions";
+      setTopicsError(msg);
+    } finally {
+      setLoadingTopics(false);
+    }
+  }, [pageSize]);
 
   useEffect(() => {
-    const t = setTimeout(() => fetchTopics(search), 400);
+    fetchTopics(search, currentPage);
+  }, [currentPage, fetchTopics]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        fetchTopics(search, 1);
+      }
+    }, 400);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [search, fetchTopics]); // debounce search only
+
+  useEffect(() => {
+    // Server doesn't support Task vs General filtering; keep it client-side.
+    setCurrentPage(1);
+  }, [activeTab]);
 
 
   const fetchComments = async (topicId, projectId, showLoader = true) => {
@@ -295,6 +330,9 @@ export default function DiscussionPage() {
 
         {/* Topic List */}
         <div className="disc-topic-list">
+          {topicsError ? (
+            <div className="disc-error">{topicsError}</div>
+          ) : null}
           {filteredTopics.length === 0 ? (
             <div className="disc-empty-topics">No {activeTab} Discussion found</div>
           ) : (
@@ -321,6 +359,20 @@ export default function DiscussionPage() {
             })
           )}
         </div>
+
+        {/* Pagination */}
+        {totalTopics > pageSize && (
+          <div className="disc-pagination">
+            <Pagination
+              size="small"
+              current={currentPage}
+              total={totalTopics}
+              pageSize={pageSize}
+              onChange={(p) => setCurrentPage(p)}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </div>
 
       {/* Right Panel */}

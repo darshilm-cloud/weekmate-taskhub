@@ -110,6 +110,30 @@
   flex-shrink: 0;
 }
 
+.weekmate-navbar-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.weekmate-navbar-search-btn:hover,
+.weekmate-navbar-search-btn:focus-visible {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0b3a5b;
+  outline: none;
+}
+
 /* Subscription expiry badge */
 .taskpad-expiry-badge {
   display: flex;
@@ -258,6 +282,22 @@
   font-size: 18px;
 }
 
+body.dark-theme .weekmate-navbar-search-btn,
+body[data-theme="dark"] .weekmate-navbar-search-btn {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+body.dark-theme .weekmate-navbar-search-btn:hover,
+body.dark-theme .weekmate-navbar-search-btn:focus-visible,
+body[data-theme="dark"] .weekmate-navbar-search-btn:hover,
+body[data-theme="dark"] .weekmate-navbar-search-btn:focus-visible {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(100, 116, 139, 0.9);
+  color: #ffffff;
+}
+
 .weekmate-header-right .bell-icon .count {
   top: -6px;
   right: -6px;
@@ -273,17 +313,17 @@
 /* ---- Dark theme header ---- */
 body.dark-theme .weekmate-header.ant-layout-header,
 [data-theme="dark"] .weekmate-header.ant-layout-header {
-  background: #1f2937 !important;
+  background: transparent !important;
 }
 
 body.dark-theme .weekmate-header-shell,
 [data-theme="dark"] .weekmate-header-shell {
-  background: #1f2937 !important;
+  background: transparent !important;
 }
 
 body.dark-theme .weekmate-header-card,
 [data-theme="dark"] .weekmate-header-card {
-  background: #1f2937 !important;
+  background: transparent !important;
 }
 
 body.dark-theme .weekmate-header-title,

@@ -448,3 +448,42 @@ exports.getRecentVisitedData = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
+exports.removeRecentVisitedData = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      recent_id: Joi.string().required(),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, 400, error.details[0].message);
+    }
+
+    const recentItem = await RecentVisitedData.findOne({
+      _id: new mongoose.Types.ObjectId(value.recent_id),
+      createdBy: new mongoose.Types.ObjectId(req.user._id),
+      isDeleted: false,
+    });
+
+    if (!recentItem) {
+      return errorResponse(res, 404, messages.NOT_FOUND);
+    }
+
+    await RecentVisitedData.findByIdAndUpdate(
+      recentItem._id,
+      {
+        $set: {
+          isDeleted: true,
+          updatedAt: configs.utcDefault(),
+          updatedBy: req.user._id,
+        },
+      },
+      { new: true, useFindAndModify: false }
+    );
+
+    return successResponse(res, statusCode.SUCCESS, messages.DELETED, {});
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};

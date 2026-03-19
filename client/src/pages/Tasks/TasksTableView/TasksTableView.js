@@ -189,6 +189,8 @@ const TasksTableView = ({
     handleCancelManagePeople,
     setDetailsClientSubs,
     deleteTime,
+    viewTask,
+    updateviewTask,
   } = TaskKanbanController({
     tasks,
     showModalTaskModal,
@@ -394,7 +396,7 @@ const TasksTableView = ({
         <Modal
           className="task-detail-popup"
           open={modalIsOpen}
-          width={1000}
+          width={1120}
           footer={null}
           onCancel={() => {
             handleCancel();
@@ -913,6 +915,25 @@ const TasksTableView = ({
                       })}
                     </ul>
                   </div>
+                </div>
+
+                <div className="task-popup-actions">
+                  <Button
+                    className="square-primary-btn task-popup-save-btn"
+                    onClick={() => updateviewTask(viewTask)}
+                    disabled={!taskId}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    className="square-outline-btn task-popup-close-btn"
+                    onClick={() => {
+                      handleCancel();
+                      setSelectedTaskId(null);
+                    }}
+                  >
+                    Close
+                  </Button>
                 </div>
               </div>
             </div>

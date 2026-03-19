@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, no-dupe-keys */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { message, Select, Upload, Form, Avatar } from "antd";
 import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions/Auth";
@@ -38,11 +38,28 @@ const TaskKanbanController = ({
   const {
     foldersList,
     subscribersList,
+    employeeList,
     taggedUserList,
     projectWorkflowStage,
     projectLabels,
     clientsList,
   } = useSelector((state) => state.apiData);
+
+  const assigneeOptions = useMemo(() => {
+    const mergedUsers = [...(subscribersList || []), ...(employeeList || [])];
+    const uniqueUsers = new Map();
+
+    mergedUsers.forEach((user) => {
+      if (!user?._id) return;
+
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [employeeList, subscribersList]);
 
   const [editModalDescription, seteditModalDescription] = useState("");
   const attachmentfileRef = useRef();
@@ -250,14 +267,22 @@ useEffect(() => {
         getBoardTasks(selectedTask?._id);
 
         let assignee = new Set(
-          initialDetails?.assignees.map((item) => item._id)
+          (initialDetails?.assignees || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newAssignees = values.assignees.filter((id) => !assignee.has(id));
+        let newAssignees = (values?.assignees || []).filter(
+          (id) => !assignee.has(id)
+        );
 
         let client = new Set(
-          initialDetails?.pms_clients.map((item) => item._id)
+          (initialDetails?.pms_clients || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newClients = values.clients.filter((id) => !client.has(id));
+        let newClients = (values?.clients || []).filter(
+          (id) => !client.has(id)
+        );
         await emitEvent(socketEvents.EDIT_TASK_ASSIGNEE, {
           _id: taskId,
           assignees: newAssignees,
@@ -335,7 +360,9 @@ useEffect(() => {
         task_labels: _viewTask?.taskLabels[0]?._id
           ? _viewTask?.taskLabels[0]?._id
           : "",
-        assignees: _viewTask.assignees.map((item) => item._id),
+        assignees: (_viewTask?.assignees || [])
+          .map((item) => item?._id)
+          .filter(Boolean),
         estimated_hours:
           _viewTask.estimated_hours && _viewTask.estimated_hours != ""
             ? _viewTask.estimated_hours.toString()
@@ -1386,7 +1413,7 @@ useEffect(() => {
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
-    const updatedAssignees = subscribersList.filter((item) =>
+    const updatedAssignees = assigneeOptions.filter((item) =>
       selectedItemIds.includes(item._id)
     );
     setViewTask((prevTaskDetails) => ({
@@ -1445,6 +1472,7 @@ useEffect(() => {
     isLoggedHoursMoreThanEstimated,
     textAreaValue,
     subscribersList,
+    assigneeOptions,
     taggedUserList,
     activeClass,
     activeClass1,
@@ -1563,6 +1591,7 @@ useEffect(() => {
     handleViewEdit,
     viewTask,
     handleViewTask,
+    updateviewTask,
     handleFieldClick,
     editorDataEditdesc,
     handlePasteEditdescription,

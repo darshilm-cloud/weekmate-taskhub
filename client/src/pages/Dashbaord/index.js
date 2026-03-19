@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
-import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import "./dashboard.css";
 import { Form, Modal, Select, Input, message } from "antd";
 import { Link } from "react-router-dom";
@@ -9,7 +9,6 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { useHistory } from "react-router-dom";
-import { generateCacheKey } from "../../util/generateCacheKey";
 import ProjectFilterComponent from "./ProjectFilterComponent";
 import TaskFilterComponent from "./TaskFilterComponent";
 import BugFilterComponent from "./BugFilterComponent";
@@ -24,6 +23,7 @@ import {
   ExclamationCircleOutlined,
   LeftOutlined,
   RightOutlined,
+  FolderOutlined,
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
@@ -32,7 +32,7 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const companySlug = localStorage.getItem("companyDomain");
   const history = useHistory();
-  const isAdmin = getRoles(["Admin", "TL"]);
+  const isAdmin = getRoles(["Admin"]);
   const currentUserId = useMemo(() => {
     try { return JSON.parse(localStorage.getItem("user_data"))?._id || ""; }
     catch { return ""; }
@@ -41,8 +41,12 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [form] = Form.useForm();
-  const [projectDetails, setProjectDetails] = useState([]);
   const [projectList, setProjectList] = useState([]);
+  const [projectTotalCount, setProjectTotalCount] = useState(() => {
+    const cachedCount = sessionStorage.getItem("dashboard_project_total_count_v1");
+    const parsedCount = Number(cachedCount);
+    return Number.isNaN(parsedCount) ? 0 : parsedCount;
+  });
   const [myProj, setMyProj] = useState([]);
   const [myTask, setMyTask] = useState([]);
   const [assignedToMeTasks, setAssignedToMeTasks] = useState([]);
@@ -80,7 +84,21 @@ const Dashboard = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
   const [calendarValue, setCalendarValue] = useState(() => dayjs());
+  const [isCalendarPickerOpen, setIsCalendarPickerOpen] = useState(false);
+  const [hoveredChartIndex, setHoveredChartIndex] = useState(null);
+  const calendarPickerRef = useRef(null);
   const calendarWeekdays = useMemo(() => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], []);
+  const calendarMonths = useMemo(
+    () => Array.from({ length: 12 }, (_, monthIndex) => ({
+      label: dayjs().month(monthIndex).format("MMMM"),
+      value: monthIndex,
+    })),
+    []
+  );
+  const calendarYearOptions = useMemo(() => {
+    const selectedYear = calendarValue.year();
+    return Array.from({ length: 15 }, (_, idx) => selectedYear - 7 + idx);
+  }, [calendarValue]);
 
   // Memoized derived values — only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
@@ -91,17 +109,18 @@ const Dashboard = () => {
   }, []);
 
   const { totalTask, assignedToMe, dueToday, pastDue } = useMemo(() => {
-    const assignedCount =
-      assignedToMeTasks.length > 0
-        ? assignedToMeTasks.length
-        : isAdmin
-          ? myTask.filter((t) =>
-              (t.assignees || []).some((a) => {
-                const id = a && (a._id ?? a);
-                return id != null && String(id).trim() === String(currentUserId).trim();
-              })
-            ).length
-          : myTask.length;
+    const assignedCount = isAdmin
+      ? (
+          assignedToMeTasks.length > 0
+            ? assignedToMeTasks.length
+            : myTask.filter((t) =>
+                (t.assignees || []).some((a) => {
+                  const id = a && (a._id ?? a);
+                  return id != null && String(id).trim() === String(currentUserId).trim();
+                })
+              ).length
+        )
+      : myTask.length;
     return {
       totalTask: myTask.length,
       assignedToMe: assignedCount,
@@ -116,6 +135,16 @@ const Dashboard = () => {
       ).length,
     };
   }, [myTask, today, isAdmin, currentUserId, assignedToMeTasks.length, isDone]);
+
+  const totalProjects = useMemo(() => {
+    if (typeof projectTotalCount === "number" && projectTotalCount >= 0) {
+      return projectTotalCount;
+    }
+    if (Array.isArray(projectList) && projectList.length > 0) {
+      return projectList.length;
+    }
+    return 0;
+  }, [projectTotalCount, projectList]);
 
   const monthDays = useMemo(() => {
     const monthStart = calendarValue.startOf("month");
@@ -137,6 +166,33 @@ const Dashboard = () => {
     const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
     setCalendarValue(next.date(safeDay));
   }, [calendarValue]);
+
+  const updateCalendarMonth = useCallback((month) => {
+    const next = calendarValue.month(month);
+    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
+    setCalendarValue(next.date(safeDay));
+  }, [calendarValue]);
+
+  const updateCalendarYear = useCallback((year) => {
+    const next = calendarValue.year(year);
+    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
+    setCalendarValue(next.date(safeDay));
+  }, [calendarValue]);
+
+  useEffect(() => {
+    if (!isCalendarPickerOpen) {
+      return undefined;
+    }
+
+    const handleCalendarOutsideClick = (event) => {
+      if (!calendarPickerRef.current?.contains(event.target)) {
+        setIsCalendarPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleCalendarOutsideClick);
+    return () => document.removeEventListener("mousedown", handleCalendarOutsideClick);
+  }, [isCalendarPickerOpen]);
 
   // Memoized chart data — only recalculate when myTask or chartView changes
   const { labels, completedCounts, incompleteCounts } = useMemo(() => {
@@ -199,15 +255,27 @@ const Dashboard = () => {
         toolbar: { show: false },
         zoom: { enabled: false },
         foreColor: muted,
+        events: {
+          dataPointMouseEnter: (_event, _chartContext, config) => {
+            setHoveredChartIndex(config?.dataPointIndex ?? null);
+          },
+          dataPointMouseLeave: () => {
+            setHoveredChartIndex(null);
+          },
+          mouseLeave: () => {
+            setHoveredChartIndex(null);
+          },
+        },
       },
       colors: ["#2dd4bf", "#ff4d4f"],
-      stroke: { curve: "smooth", width: 2 },
+      stroke: { curve: "straight", width: 2 },
       markers: { size: 4, strokeWidth: 2, strokeColors: markerStroke },
       xaxis: {
         categories: labels,
         labels: { style: { colors: muted, fontSize: "12px" } },
         axisBorder: { color: axis },
         axisTicks: { color: axis },
+        crosshairs: { show: false },
       },
       yaxis: {
         min: 0,
@@ -230,6 +298,36 @@ const Dashboard = () => {
     { name: "Completed", data: completedCounts },
     { name: "Incomplete", data: incompleteCounts },
   ], [completedCounts, incompleteCounts]);
+
+  const chartConnectors = useMemo(() => {
+    const chartHeight = 240;
+    const plotTop = 18;
+    const plotBottom = 26;
+    const plotLeft = 34;
+    const plotRight = 22;
+    const usableHeight = chartHeight - plotTop - plotBottom;
+    const usableWidth = 100 - ((plotLeft + plotRight) / 4.6);
+    const maxValue = Math.max(1, ...completedCounts, ...incompleteCounts);
+
+    return labels.map((label, index) => {
+      const xPercent = labels.length === 1
+        ? 50
+        : 7.5 + (index * usableWidth) / Math.max(labels.length - 1, 1);
+
+      const completedValue = completedCounts[index] || 0;
+      const incompleteValue = incompleteCounts[index] || 0;
+      const completedTop = plotTop + usableHeight - (completedValue / maxValue) * usableHeight;
+      const incompleteTop = plotTop + usableHeight - (incompleteValue / maxValue) * usableHeight;
+
+      return {
+        key: `${label}-${index}`,
+        index,
+        left: `${xPercent}%`,
+        top: `${Math.min(completedTop, incompleteTop)}px`,
+        height: `${Math.abs(completedTop - incompleteTop)}px`,
+      };
+    });
+  }, [completedCounts, incompleteCounts, labels]);
 
   // Memoized priority + today summary
   const getTaskPriority = useCallback((t) => {
@@ -327,37 +425,52 @@ const Dashboard = () => {
   }, []);
 
   // API calls
-  const getProjectListing = useCallback(async (searchText) => {
+  const getProjectList = useCallback(async ({ countOnly = false } = {}) => {
     try {
-      dispatch(showAuthLoader());
-      const normalizedSearch = (searchText || "").trim();
-      const reqBody = {
-        pageNo: 1,
-        limit: 100,
-        search: normalizedSearch,
-        sortBy: "desc",
-        filterBy: "all",
-        isSearch: true,
-      };
-      const Key = generateCacheKey("project", reqBody);
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod, api_url: Service.getProjectdetails,
-        body: reqBody, options: { cachekey: Key },
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data?.data) setProjectDetails(response.data.data);
-    } catch (error) { console.log(error); }
-  }, [dispatch]);
+      const cacheKey = countOnly ? "dashboard_project_total_count_v1" : "dashboard_project_list_v1";
 
-  const getProjectList = useCallback(async () => {
-    try {
-      dispatch(showAuthLoader());
+      if (countOnly) {
+        const cachedCount = sessionStorage.getItem(cacheKey);
+        if (cachedCount !== null && cachedCount !== undefined) {
+          const parsedCount = Number(cachedCount);
+          if (!Number.isNaN(parsedCount)) {
+            setProjectTotalCount(parsedCount);
+          }
+        }
+      }
+
+      if (!countOnly) {
+        dispatch(showAuthLoader());
+      }
+
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod, api_url: Service.getProjectList,
+        methodName: Service.postMethod,
+        api_url: Service.getProjectListForSearch,
+        body: {
+          pageNo: 1,
+          limit: countOnly ? 1 : 500,
+          sortBy: "desc",
+          filterBy: "all",
+          countOnly,
+        },
       });
-      dispatch(hideAuthLoader());
-      if (response?.data?.data) setProjectList(response.data.data);
+
+      const total = Number(response?.data?.metadata?.total);
+      if (!Number.isNaN(total)) {
+        setProjectTotalCount(total);
+        sessionStorage.setItem("dashboard_project_total_count_v1", String(total));
+      }
+
+      if (!countOnly && response?.data?.data) {
+        setProjectList(response.data.data);
+        sessionStorage.setItem("dashboard_project_list_v1", JSON.stringify(response.data.data));
+      }
     } catch (error) { console.log(error); }
+    finally {
+      if (!countOnly) {
+        dispatch(hideAuthLoader());
+      }
+    }
   }, [dispatch]);
 
   const getVisitedData = useCallback(async () => {
@@ -518,11 +631,38 @@ const Dashboard = () => {
     } catch (error) { console.log("add project error"); }
   }, [dispatch]);
 
+  const removeVisitedData = useCallback(async (recentId) => {
+    try {
+      setRecentList((prev) => prev.filter((item) => item._id !== recentId));
+      await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.removerecentVisited,
+        body: { recent_id: recentId },
+      });
+    } catch (error) {
+      console.log("remove recent project error");
+      getVisitedData();
+    }
+  }, [getVisitedData]);
+
   const showModal = useCallback(async () => {
     setIsModalOpen(true);
-    getProjectListing();
+    if (projectList.length === 0) {
+      const cachedProjects = sessionStorage.getItem("dashboard_project_list_v1");
+      if (cachedProjects) {
+        try {
+          const parsedProjects = JSON.parse(cachedProjects);
+          if (Array.isArray(parsedProjects) && parsedProjects.length > 0) {
+            setProjectList(parsedProjects);
+          }
+        } catch (error) {
+          sessionStorage.removeItem("dashboard_project_list_v1");
+        }
+      }
+    }
+    getProjectList({ countOnly: false });
     getVisitedData();
-  }, [getProjectListing, getVisitedData]);
+  }, [getProjectList, getVisitedData, projectList.length]);
 
   const handleCancel = useCallback(() => {
     setIsModalOpen(false);
@@ -561,7 +701,7 @@ const Dashboard = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getNotes,
-        body: { isBookmark: true, pageNo: 1, limit: 5 },
+        body: { isBookmark: true, pageNo: 1, limit: 200 },
       });
       if (response?.data?.data) setPinnedNotes(response.data.data);
     } catch (e) { console.log(e); }
@@ -585,8 +725,7 @@ const Dashboard = () => {
   }, [timeProjects, timeDates]);
 
   useEffect(() => {
-    getProjectListing();
-    getProjectList();
+    getProjectList({ countOnly: true });
     myProjectsFn();
     myTasksFn();
     fetchAssignedToMeTasks();
@@ -597,6 +736,39 @@ const Dashboard = () => {
     fetchPinnedNotes();
     setIsInitialLoad(false);
   }, []);
+
+  useEffect(() => {
+    const handlePinnedNotesRefresh = () => {
+      fetchPinnedNotes();
+    };
+
+    window.addEventListener("weekmate:notes-bookmark-updated", handlePinnedNotesRefresh);
+    return () => window.removeEventListener("weekmate:notes-bookmark-updated", handlePinnedNotesRefresh);
+  }, [fetchPinnedNotes]);
+
+  useEffect(() => {
+    const refreshProjectCount = () => {
+      sessionStorage.removeItem("dashboard_project_total_count_v1");
+      sessionStorage.removeItem("dashboard_project_list_v1");
+      getProjectList({ countOnly: !isModalOpen });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshProjectCount();
+      }
+    };
+
+    window.addEventListener("focus", refreshProjectCount);
+    window.addEventListener("weekmate:projects-changed", refreshProjectCount);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", refreshProjectCount);
+      window.removeEventListener("weekmate:projects-changed", refreshProjectCount);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [getProjectList, isModalOpen]);
 
   const openAllNotes = () => {
     setAllNotesOpen(true);
@@ -710,6 +882,22 @@ const Dashboard = () => {
           className="new-stat-card new-stat-card-clickable"
           role="button"
           tabIndex={0}
+          onClick={() => history.push(`/${companySlug}/project-list`)}
+          onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/project-list`)}
+        >
+          <div className="stat-card-icon-wrap blue">
+            <FolderOutlined />
+          </div>
+          <div className="stat-card-body">
+            <div className="stat-card-title">Total Projects</div>
+            <div className="stat-card-value">{totalProjects}</div>
+          </div>
+        </div>
+
+        <div
+          className="new-stat-card new-stat-card-clickable"
+          role="button"
+          tabIndex={0}
           onClick={() => handleStatCardClick("all")}
           onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("all")}
         >
@@ -797,12 +985,29 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <ReactApexChart
-              options={chartOptions}
-              series={chartSeries}
-              type="line"
-              height={240}
-            />
+            <div className="stats-chart-wrap">
+              <div className="stats-chart-connectors" aria-hidden="true">
+                {chartConnectors
+                  .filter((connector) => connector.index === hoveredChartIndex)
+                  .map((connector) => (
+                  <span
+                    key={connector.key}
+                    className="stats-chart-connector"
+                    style={{
+                      left: connector.left,
+                      top: connector.top,
+                      height: connector.height,
+                    }}
+                  />
+                ))}
+              </div>
+              <ReactApexChart
+                options={chartOptions}
+                series={chartSeries}
+                type="line"
+                height={240}
+              />
+            </div>
 
             <div className="chart-legend">
               <div className="legend-item">
@@ -820,7 +1025,37 @@ const Dashboard = () => {
           <div className="dashboard-section-card dashboard-calendar">
             <div className="db-cal-header">
               <div className="db-cal-header-top">
-                <div className="db-cal-title">{calendarValue.format("MMMM YYYY")}</div>
+                <div className="db-cal-title-wrap" ref={calendarPickerRef}>
+                  <button
+                    type="button"
+                    className={`db-cal-title${isCalendarPickerOpen ? " active" : ""}`}
+                    onClick={() => setIsCalendarPickerOpen((prev) => !prev)}
+                    aria-label="Select month and year"
+                    aria-expanded={isCalendarPickerOpen}
+                  >
+                    <span>{calendarValue.format("MMMM YYYY")}</span>
+                    <span className="db-cal-title-caret">{isCalendarPickerOpen ? "˄" : "˅"}</span>
+                  </button>
+
+                  {isCalendarPickerOpen ? (
+                    <div className="db-cal-picker-panel">
+                      <Select
+                        value={calendarValue.month()}
+                        onChange={updateCalendarMonth}
+                        options={calendarMonths}
+                        className="db-cal-picker-select"
+                        popupMatchSelectWidth={false}
+                      />
+                      <Select
+                        value={calendarValue.year()}
+                        onChange={updateCalendarYear}
+                        options={calendarYearOptions.map((year) => ({ label: String(year), value: year }))}
+                        className="db-cal-picker-select"
+                        popupMatchSelectWidth={false}
+                      />
+                    </div>
+                  ) : null}
+                </div>
                 <div className="db-cal-nav">
                   <button
                     type="button"
@@ -907,14 +1142,24 @@ const Dashboard = () => {
             ) : (
               <div className="priority-chart-wrap">
                 <ReactApexChart
+                  key={`priority-donut-${chartView}-${isDarkTheme ? "dark" : "light"}`}
                   options={{
-                    chart: { type: "donut", toolbar: { show: false } },
+                    chart: {
+                      type: "donut",
+                      toolbar: { show: false },
+                      animations: {
+                        enabled: false,
+                        animateGradually: { enabled: false },
+                        dynamicAnimation: { enabled: false },
+                      },
+                    },
                     labels: ["Low", "Medium", "High"],
                     colors: ["#2dd4bf", "#faad14", "#ff4d4f"],
                     legend: { show: false },
                     dataLabels: { enabled: false },
                     plotOptions: {
                       pie: {
+                        expandOnClick: false,
                         startAngle: 0,
                         endAngle: 360,
                         offsetY: -6,
@@ -940,6 +1185,7 @@ const Dashboard = () => {
                   }}
                   series={[priorityLow, priorityMedium, priorityHigh]}
                   type="donut"
+                  width="100%"
                   height={240}
                 />
               </div>
@@ -1230,6 +1476,7 @@ const Dashboard = () => {
                     <p className="db-note-title">{note.title || "Untitled Note"}</p>
                     <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>
                   </div>
+                  <span className="db-note-arrow">›</span>
                 </div>
               ))}
             </div>
@@ -1263,14 +1510,14 @@ const Dashboard = () => {
       </div>
 
       <ProjectListModal
-        projectDetails={projectDetails}
+        projectList={projectList}
         recentList={recentList}
         isModalOpen={isModalOpen}
         handleCancel={handleCancel}
         addVisitedData={addVisitedData}
+        removeVisitedData={removeVisitedData}
         setIsModalOpen={setIsModalOpen}
         form={form}
-        getProjectListing={getProjectListing}
       />
 
       <AddTaskModal

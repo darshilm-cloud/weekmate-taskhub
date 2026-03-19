@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Button,
   Menu,
@@ -73,8 +73,8 @@ const TasksPMS = ({ flag }) => {
   let { taskID, listID } = queryString.parse(location.search);
   const { emitEvent } = useSocketAction();
 
-  const [selectedView, setSelectedView] = useState("board");
-  const [tableTrue, setTableTrue] = useState(false);
+  const [selectedView, setSelectedView] = useState("table");
+  const [tableTrue, setTableTrue] = useState(true);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
 
 
@@ -162,7 +162,12 @@ const TasksPMS = ({ flag }) => {
       const parsedView = JSON.parse(savedView);
       setSelectedView(parsedView);
       setTableTrue(parsedView === "table");
+      return;
     }
+
+    setSelectedView("table");
+    setTableTrue(true);
+    setCookie("view_tasks", JSON.stringify("table"), { expires: 365 });
   }, []);
 
   const handleSearch = (searchValue) => {
@@ -231,7 +236,7 @@ const TasksPMS = ({ flag }) => {
 
   const handleSelectedItemsChange = (selectedItemIds) => {
     setSelectedItems(
-      subscribersList.filter((item) => selectedItemIds.includes(item._id))
+      assigneeOptions.filter((item) => selectedItemIds.includes(item._id))
     );
     setSearchKeyword("");
   };
@@ -285,8 +290,25 @@ const TasksPMS = ({ flag }) => {
     projectLabels,
     projectWorkflowStage,
     subscribersList,
+    employeeList,
     clientsList,
   } = useSelector((state) => state.apiData);
+
+  const assigneeOptions = useMemo(() => {
+    const mergedUsers = [...(subscribersList || []), ...(employeeList || [])];
+    const uniqueUsers = new Map();
+
+    mergedUsers.forEach((user) => {
+      if (!user?._id) return;
+
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [employeeList, subscribersList]);
 
   const { task_ids } = useSelector(({ common }) => common);
 
@@ -1241,35 +1263,39 @@ const TasksPMS = ({ flag }) => {
   const showEditTaskModal = (data, workflowID) => {
     setIsEditTaskModalOpen(true);
     setShowSelectClient(true);
-    setEditTaskData({ id: data._id, workflow_id: workflowID });
+    setEditTaskData({ id: data?._id, workflow_id: workflowID });
     setPopulatedFiles(data?.attachments || []);
-    seteditModalDescription(data.descriptions);
+    seteditModalDescription(data?.descriptions);
     editform.setFieldsValue({
-      title: data.title,
-      descriptions: removeHTMLTags(data.descriptions ? data.descriptions : ""),
-      labels: data.taskLabels.map((item) => item.title),
+      title: data?.title,
+      descriptions: removeHTMLTags(data?.descriptions ? data.descriptions : ""),
+      labels: (data?.taskLabels || []).map((item) => item?.title).filter(Boolean),
     });
 
     setAddInputTaskData({
-      start_date: data.start_date,
-      end_date: data.due_date,
-      labels: data.taskLabels.map((item) => item._id).join(","),
-      assignees: data.assignees?.map((value) => value._id),
+      start_date: data?.start_date,
+      end_date: data?.due_date,
+      labels: (data?.taskLabels || []).map((item) => item?._id).filter(Boolean).join(","),
+      assignees: (data?.assignees || []).map((value) => value?._id).filter(Boolean),
       clients: addInputTaskData?.clients
         ? addInputTaskData?.clients.map((val) => val?._id)
-        : data.pms_clients?.map((value) => value._id),
+        : (data?.pms_clients || []).map((value) => value?._id).filter(Boolean),
         recurringType: data?.recurringType || null,
     });
-    setSelectedItems(data.assignees);
-    setSelectedClients(data.pms_clients);
-    setNewFilteredAssignees(data.assignees?.map((value) => value._id));
-    setNewFilteredClients(data.pms_clients?.map((value) => value._id));
+    setSelectedItems(data?.assignees || []);
+    setSelectedClients(data?.pms_clients || []);
+    setNewFilteredAssignees(
+      (data?.assignees || []).map((value) => value?._id).filter(Boolean)
+    );
+    setNewFilteredClients(
+      (data?.pms_clients || []).map((value) => value?._id).filter(Boolean)
+    );
 
-    setEstHrs(data.estimated_hours);
-    setEstMins(data.estimated_minutes);
-    setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
+    setEstHrs(data?.estimated_hours);
+    setEstMins(data?.estimated_minutes);
+    setEstTime(`${data?.estimated_hours || "00"}:${data?.estimated_minutes || "00"}`);
     setIsAlterEstimatedTime(false);
-    if (data.assignees.length > 0) {
+    if ((data?.assignees || []).length > 0) {
       setShowSelectTask(true);
     } else {
       setShowSelectTask(false);
@@ -1521,6 +1547,7 @@ const TasksPMS = ({ flag }) => {
 
   useEffect(() => {
     dispatch(getLables());
+    dispatch(getEmployeeList());
     dispatch(moveWorkFlowTaskHandler([]));
   }, []);
 
@@ -2494,7 +2521,7 @@ const TasksPMS = ({ flag }) => {
                                   ? selectedItems.map((item) => item?._id)
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                             />
                           </div>
@@ -2925,7 +2952,7 @@ const TasksPMS = ({ flag }) => {
                                   ? selectedItems.map((item) => item?._id)
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                             />
                           </div>

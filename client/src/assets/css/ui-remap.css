@@ -9,28 +9,52 @@
 /* Outer sider wrapper */
 .gx-app-sidebar,
 .gx-layout-sider-dark {
-  background-color: #0b3a5b !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: var(--wm-sidebar-bg) !important;
+  border-right: none !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
+  padding: 0 !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  flex: 0 0 140px !important;
+}
+
+.gx-app-sidebar .ant-layout-sider-children,
+.gx-app-sidebar .gx-sidebar-content,
+.gx-app-sidebar .sidebar-menu,
+.gx-app-sidebar .weekmate-sidebar,
+.gx-app-sidebar .weekmate-sidebar-scroll,
+.gx-app-sidebar .Sidebar {
+  background: var(--wm-sidebar-bg) !important;
+  background-color: var(--wm-sidebar-bg) !important;
+  border-right: none !important;
+  box-shadow: none !important;
 }
 
 /* Inner sider inside SidebarContent */
 .ant-layout-sider .sidebar-menu .ant-layout-sider,
 .sidebar-menu .ant-layout-sider,
 .sidebar-menu .Sidebar {
-  background: #0b3a5b !important;
+  background: var(--wm-sidebar-bg) !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  flex: 0 0 140px !important;
+  border-right: none !important;
+  box-shadow: none !important;
 }
 
 /* Ant Design sider element override */
 .admin-user .ant-layout.admin .gx-app-sidebar .ant-layout-sider,
 .admin-user .ant-layout.admin .ant-layout-sider {
-  background: #0b3a5b !important;
+  background: var(--wm-sidebar-bg) !important;
+  border-right: none !important;
 }
 
 /* Logo area at top of sidebar */
 .Etask-hub-logo {
-  background: #0b3a5b !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--wm-sidebar-bg) !important;
+  border-bottom: 1px solid var(--wm-sidebar-border);
   padding: 12px 16px !important;
   display: flex;
   align-items: center;
@@ -38,7 +62,7 @@
 
 body.admin-user[data-theme="light"] .Etask-hub-logo,
 body.admin-user[data-theme="light"] .weekmate-sidebar-header {
-  background: #0b3a5b !important;
+  background: var(--wm-sidebar-bg) !important;
 }
 
 .Etask-hub-logo img {
@@ -76,23 +100,28 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   border-right: none !important;
 }
 
-/* ── Menu items: row layout (icon left + text right) ── */
+/* ── Menu items: stacked layout (icon top + text bottom) ── */
 .sidebar-menu ul.ant-menu li.ant-menu-item,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
-  flex-direction: row !important;
-  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  inset-inline-start: 0 !important;
+  text-align: center !important;
   color: var(--app-text-muted) !important;
   background: transparent !important;
   border-left: 3px solid transparent !important;
   border-right: none !important;
-  padding: 10px 16px 10px 20px !important;
-  gap: 12px !important;
-  /* justify-content: flex-start !important; */
-  /* align-items: center !important; */
+  padding: 12px 8px !important;
+  gap: 8px !important;
   border-radius: 0 !important;
   margin-bottom: 2px !important;
   margin-inline: 0 !important;
   line-height: normal !important;
+  min-height: 76px !important;
   height: auto !important;
 }
 
@@ -104,30 +133,43 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item > i,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item svg {
   color: var(--app-text-subtle) !important;
-  font-size: 17px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
   min-width: 20px !important;
   line-height: 1 !important;
+  margin: 0 !important;
 }
 
 /* Title content in menu item */
 .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .ant-menu-title-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
   font-size: 14px !important;
   color: var(--app-text-muted) !important;
-  line-height: normal !important;
+  line-height: 1.2 !important;
   font-weight: 400 !important;
   padding: 0 !important;
   border-left: none !important;
-  margin: 0 !important;
-  white-space: nowrap;
+  margin: 0 auto !important;
+  white-space: normal !important;
+  text-align: center !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
 }
 
 /* ── Hover state ── */
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
-  background: rgba(37, 99, 235, 0.10) !important;
-  border-left: 3px solid var(--app-primary) !important;
-  color: var(--app-primary) !important;
+  background: var(--wm-sidebar-hover) !important;
+  border-left: 3px solid var(--wm-sidebar-accent) !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover .ant-menu-title-content,
@@ -136,16 +178,16 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .anticon,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover > i {
-  color: var(--app-primary) !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 /* ── Selected / Active state ── */
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected:hover {
-  background: rgba(37, 99, 235, 0.14) !important;
-  border-left: 3px solid var(--app-primary) !important;
-  color: var(--app-primary) !important;
+  background: var(--wm-sidebar-active) !important;
+  border-left: 3px solid var(--wm-sidebar-accent) !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
@@ -154,7 +196,7 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .anticon,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected > i {
-  color: var(--app-primary) !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 /* ── Submenu ── */
@@ -166,11 +208,18 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 }
 
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title {
-  flex-direction: row !important;
+  display: flex !important;
+  flex-direction: column !important;
   color: var(--app-text-muted) !important;
-  gap: 12px !important;
-  padding: 10px 16px 10px 20px !important;
+  gap: 8px !important;
+  padding: 12px 8px !important;
   align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  inset-inline-start: 0 !important;
+  text-align: center !important;
+  min-height: 76px !important;
   height: auto !important;
 }
 
@@ -183,23 +232,25 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 .sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
   color: var(--app-text-subtle) !important;
+  margin: 0 !important;
 }
 
 .sidebar-menu .ant-menu-submenu:hover > .ant-menu-submenu-title,
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
-  background: rgba(37, 99, 235, 0.10) !important;
-  color: var(--app-primary) !important;
+  background: var(--wm-sidebar-hover) !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 .sidebar-menu .ant-menu-submenu:hover {
-  border-left: 3px solid var(--app-primary) !important;
+  border-left: 3px solid var(--wm-sidebar-accent) !important;
+  background: transparent !important;
 }
 
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-selected,
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-open {
-  border-left: 3px solid var(--app-primary) !important;
-  background: rgba(37, 99, 235, 0.12) !important;
-  color: var(--app-primary) !important;
+  border-left: 3px solid var(--wm-sidebar-accent) !important;
+  background: transparent !important;
+  color: var(--wm-sidebar-text-strong) !important;
 }
 
 .sidebar-menu .ant-menu-submenu .ant-menu-sub {
@@ -212,7 +263,56 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 /* Submenu popup on collapsed */
 .ant-menu-submenu-popup > .ant-menu {
-  background: #0b3a5b !important;
+  background: var(--wm-sidebar-bg) !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup {
+  padding-left: 10px !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup > .ant-menu {
+  min-width: 150px !important;
+  padding: 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--wm-sidebar-border) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28) !important;
+  background: var(--wm-sidebar-bg) !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup .ant-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  min-height: 44px !important;
+  height: auto !important;
+  margin: 0 0 6px !important;
+  padding: 10px 14px !important;
+  border-left: 3px solid transparent !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup .ant-menu-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup .ant-menu-item .ant-menu-title-content {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+}
+
+.weekmate-sidebar-popup.ant-menu-submenu-popup .ant-menu-item:hover,
+.weekmate-sidebar-popup.ant-menu-submenu-popup .ant-menu-item.ant-menu-item-selected {
+  background: var(--wm-sidebar-hover) !important;
+  border-left-color: var(--wm-sidebar-text-strong) !important;
 }
 
 /* Dark theme handled via CSS variables + dark-theme-overrides.css */
@@ -324,7 +424,7 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 /* Stat cards */
 .new-stat-cards-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -459,8 +559,16 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
 }
 
 .stats-toggle-btn.active {
-  background: var(--app-primary);
-  border-color: var(--app-primary);
+  background: var(--wm-sidebar-bg);
+  border-color: var(--wm-sidebar-bg);
+  color: #fff;
+}
+
+body.dark-theme .stats-toggle-btn.active,
+body[data-theme="dark"] .stats-toggle-btn.active,
+body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
+  background: #19202c;
+  border-color: #19202c;
   color: #fff;
 }
 
@@ -1058,7 +1166,7 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
    ============================================================ */
 body.dark-theme,
 body[data-theme="dark"] {
-  background-color: #19202c !important;
+  background-color: #090a0b !important;
   color: #e2e8f0 !important;
 }
 
@@ -1066,7 +1174,7 @@ body.dark-theme .ant-layout,
 body.dark-theme .gx-app-layout,
 body[data-theme="dark"] .ant-layout,
 body[data-theme="dark"] .gx-app-layout {
-  background: #19202c !important;
+  background: #090a0b !important;
   color: #e2e8f0 !important;
 }
 
@@ -1077,7 +1185,7 @@ body.dark-theme.admin-user .ant-layout.admin .page-layout,
 body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content,
 body.admin-user[data-theme="dark"] .ant-layout.admin .gx-layout-content,
 body.admin-user[data-theme="dark"] .ant-layout.admin .page-layout {
-  background-color: #19202c !important;
+  background-color: #090a0b !important;
   color: #e2e8f0 !important;
 }
 
@@ -1089,13 +1197,13 @@ body[data-theme="dark"] .ant-layout-content,
 body[data-theme="dark"] .gx-layout-content,
 body[data-theme="dark"] .gx-main-content-wrapper,
 body[data-theme="dark"] .page-layout {
-  background-color: #19202c !important;
+  background-color: #090a0b !important;
   color: #e2e8f0 !important;
 }
 
 body.dark-theme .new-dashboard-wrapper,
 body[data-theme="dark"] .new-dashboard-wrapper {
-  background: #19202c !important;
+  background: #090a0b !important;
   color: #e2e8f0 !important;
 }
 
@@ -1104,9 +1212,26 @@ body.dark-theme .top-header.ant-layout-header,
 body.dark-theme .weekmate-header.ant-layout-header,
 body[data-theme="dark"] .top-header.ant-layout-header,
 body[data-theme="dark"] .weekmate-header.ant-layout-header {
-  background: #19202c !important;
-  border-bottom-color: #2d3748 !important;
+  background: #090a0b !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
   color: #e2e8f0 !important;
+}
+
+body.dark-theme .ant-layout,
+body.dark-theme .ant-layout-content,
+body.dark-theme .gx-layout-content,
+body.dark-theme .gx-main-content-wrapper,
+body.admin-user[data-theme="dark"] .ant-layout,
+body.admin-user[data-theme="dark"] .ant-layout-content,
+body.admin-user[data-theme="dark"] .gx-layout-content,
+body.admin-user[data-theme="dark"] .gx-main-content-wrapper,
+body[data-theme="dark"] .ant-layout,
+body[data-theme="dark"] .ant-layout-content,
+body[data-theme="dark"] .gx-layout-content,
+body[data-theme="dark"] .gx-main-content-wrapper {
+  background: #090a0b !important;
+  background-color: #090a0b !important;
 }
 
 body.dark-theme .top-header .icon-menu,
@@ -1616,23 +1741,23 @@ body[data-theme="dark"] .apexcharts-gridline {
 
 body.dark-theme .apexcharts-tooltip,
 body[data-theme="dark"] .apexcharts-tooltip {
-  background: #0f1722 !important;
+  background: #1f2937 !important;
   border-color: rgba(148, 163, 184, 0.22) !important;
-  color: #e2e8f0 !important;
+  color: #e5e7eb !important;
 }
 
 body.dark-theme .apexcharts-tooltip-title,
 body[data-theme="dark"] .apexcharts-tooltip-title {
-  background: #16202d !important;
+  background: #1f2937 !important;
   border-bottom-color: rgba(148, 163, 184, 0.18) !important;
-  color: #e2e8f0 !important;
+  color: #e5e7eb !important;
 }
 
 /* ApexCharts tooltip: ensure title/text is visible even when theme flips or CSS order changes. */
 .apexcharts-tooltip {
-  background: #0f1722 !important;
-  border-color: rgba(148, 163, 184, 0.22) !important;
-  color: #e2e8f0 !important;
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #111827 !important;
 }
 
 .apexcharts-tooltip * {
@@ -1640,9 +1765,9 @@ body[data-theme="dark"] .apexcharts-tooltip-title {
 }
 
 .apexcharts-tooltip-title {
-  background: #16202d !important;
-  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
-  color: #e2e8f0 !important;
+  background: #ffffff !important;
+  border-bottom-color: #e5e7eb !important;
+  color: #111827 !important;
   font-weight: 600 !important;
 }
 

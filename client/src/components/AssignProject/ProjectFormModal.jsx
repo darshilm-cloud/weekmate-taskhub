@@ -131,6 +131,7 @@ const ProjectFormModal = ({
         setIsBillable(p?.isBillable || false);
         const technologyIds = p?.technology?.map((item) => item?._id) || [];
         setProjectTech(technologyIds);
+        setProjectTypeselect(p?.project_type?._id || "");
         if (!p?.end_date) setNoEndDate(true);
         form.setFieldsValue({
           title: p?.title?.trim(),
@@ -283,10 +284,12 @@ const ProjectFormModal = ({
   const handleBillable = (e) => setIsBillable(e.target.checked);
   const handleProjectTech = (val) => setProjectTech(val);
 
-  function generatePattern(projectTypeSlug) {
-    const patternString = `^[A-Z]{2}\\d+\\/(?:${projectTypeSlug})\\/[\\s\\S]+$`;
+  function generatePattern() {
+    const patternString = "^[A-Z]{2}\\d+\\/[A-Z]{2,10}\\/[^/]+$";
     return new RegExp(patternString);
   }
+
+  const getTitleFormatExample = () => "AB1234/TM/ABC";
 
   const getProjectTypeIdByName = (name) =>
     projectTypeList.find((t) => t.project_type === name);
@@ -333,6 +336,11 @@ const ProjectFormModal = ({
         message.success(response.data.message);
         form.resetFields();
         setIsModalOpen(false);
+        sessionStorage.removeItem("dashboard_project_total_count_v1");
+        sessionStorage.removeItem("dashboard_project_list_v1");
+        window.dispatchEvent(new CustomEvent("weekmate:projects-changed", {
+          detail: { action: "add", projectId: response.data.data?._id },
+        }));
         try {
           const notificationKey = `weekmate-project-notifications-${companySlug || "default"}`;
           const existingNotifications = JSON.parse(localStorage.getItem(notificationKey) || "[]");
@@ -401,6 +409,11 @@ const ProjectFormModal = ({
       if (response.data?.data && response?.data?.status) {
         message.success(response.data.message);
         setIsModalOpen(false);
+        sessionStorage.removeItem("dashboard_project_total_count_v1");
+        sessionStorage.removeItem("dashboard_project_list_v1");
+        window.dispatchEvent(new CustomEvent("weekmate:projects-changed", {
+          detail: { action: "edit", projectId: id },
+        }));
         let filterAssignees = assignees.filter(
           (id) => !newFilteredAssignees.some((user) => user._id === id)
         );
@@ -460,14 +473,24 @@ const ProjectFormModal = ({
             className="pfm-form-item"
             rules={[
               { required: true, whitespace: true, message: "Please enter a valid title" },
-              {
-                pattern: generatePattern(projectTypeSlug),
-                message: "Title must be in the format AB1234/TM/ABC",
-              },
+              () => ({
+                validator(_, value) {
+                  const trimmedValue = (value || "").trim();
+                  if (!trimmedValue) return Promise.resolve();
+
+                  if (generatePattern().test(trimmedValue)) {
+                    return Promise.resolve();
+                  }
+
+                  return Promise.reject(
+                    new Error(`Title must be in the format ${getTitleFormatExample()}`)
+                  );
+                },
+              }),
             ]}
           >
             <Input
-              placeholder="Project Title (AB1234/TM/ABC)"
+              placeholder={`Project Title (${getTitleFormatExample()})`}
               className="pfm-input"
               bordered={false}
             />

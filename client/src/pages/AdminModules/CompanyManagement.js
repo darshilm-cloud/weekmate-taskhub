@@ -126,6 +126,7 @@ const AssetCard = ({
 
       {!disabled && (
         <Upload
+          className="asset-upload"
           showUploadList={false}
           maxCount={1}
           beforeUpload={(file) => {
@@ -138,7 +139,7 @@ const AssetCard = ({
           }}
           accept=".png,.jpg,.jpeg,.webp"
         >
-          <Button icon={<UploadOutlined />}>
+          <Button className="asset-upload-btn" icon={<UploadOutlined />}>
             {displayImageUrl ? "Replace" : "Upload"} {title}
           </Button>
         </Upload>
@@ -467,9 +468,13 @@ export default function CompanyManagement() {
   return (
     <Card className="company-profile-card">
       <div className="company-header">
-        <h1>Company Management</h1>
+        <div className="company-header-copy">
+          <h1>Company Management</h1>
+          <p>Manage your workspace identity, branding assets, and public company information.</p>
+        </div>
         <Button
           type="primary"
+          className="company-edit-btn"
           icon={<EditOutlined />}
           disabled={!company}
           onClick={showEditModal}
@@ -503,7 +508,10 @@ export default function CompanyManagement() {
       </Row>
 
       <div className="company-assets">
-        <h3>Company Assets</h3>
+        <div className="company-section-head">
+          <h3>Company Assets</h3>
+          <span>Logo and favicon used across the workspace.</span>
+        </div>
         <Row gutter={[24, 24]}>
           <Col xs={24} sm={12}>
             <div className="asset-container">
@@ -537,11 +545,13 @@ export default function CompanyManagement() {
       {/* Edit Modal */}
       <Modal
         title="Edit Company"
+        className="company-edit-modal"
         open={isModalVisible}
         onCancel={handleModalClose}
         footer={[
           <Button
             key="cancel"
+            className="company-modal-cancel"
             onClick={handleModalClose}
             disabled={modalLoading}
           >
@@ -550,6 +560,7 @@ export default function CompanyManagement() {
           <Button
             key="save"
             type="primary"
+            className="company-modal-save"
             loading={modalLoading}
             onClick={handleSave}
           >

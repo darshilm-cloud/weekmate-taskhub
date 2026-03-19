@@ -333,6 +333,7 @@ export default class Service {
 
   //Reports module
   static getProjectList = "/master/get/projects";
+  static getProjectListForSearch = "/projects/get";
   static getProjectRunningReportsDetails = "/projects/getprojectReports";
   static exportProjectRunningReportCSV = "/projects/getprojectReportsCSV";
   static getEmployeesDepartmentWise = "/employees/dropdownDeptwiseUsers";
@@ -387,6 +388,7 @@ export default class Service {
   //recent visited
   static addrecentVisited = "/recent-visited-data/add"
   static getrecentVisited = "/recent-visited-data/get"
+  static removerecentVisited = "/recent-visited-data/remove"
 
   //api key details
   static getApiKey = "/xapikeys/get"

@@ -113,6 +113,7 @@ const TaskList = ({
     isLoggedHoursMoreThanEstimated,
     textAreaValue,
     subscribersList,
+    assigneeOptions,
     taggedUserList,
     activeClass,
     activeClass1,
@@ -229,6 +230,7 @@ const TaskList = ({
     setPopulatedFiles,
     deleteTime,
     setTextAreaValue,
+    updateviewTask,
   } = TaskKanbanController({
     tasks,
     showModalTaskModal,
@@ -1476,7 +1478,7 @@ const TaskList = ({
         className="task-detail-popup"
         open={modalIsOpen && taggedUserList.length > 0}
         destroyOnClose
-        width={1000}
+        width={1120}
         footer={null}
         onCancel={() => {
           dispatch(setData({ stateName: "taggedUserList", data: [] }));
@@ -2083,7 +2085,7 @@ const TaskList = ({
                                   )
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                               bordered={false}
                             />
@@ -2553,6 +2555,25 @@ const TaskList = ({
                     })}
                   </ul>
                 </div>
+              </div>
+
+              <div className="task-popup-actions">
+                <Button
+                  className="square-primary-btn task-popup-save-btn"
+                  onClick={() => updateviewTask(viewTask)}
+                  disabled={!taskId}
+                >
+                  Save
+                </Button>
+                <Button
+                  className="square-outline-btn task-popup-close-btn"
+                  onClick={() => {
+                    handleCancel();
+                    setSelectedTaskId(null);
+                  }}
+                >
+                  Close
+                </Button>
               </div>
             </div>
           </div>

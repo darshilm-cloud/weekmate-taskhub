@@ -709,6 +709,7 @@ function UserProfile() {
               placement="bottomRight"
               visible={visible}
               onVisibleChange={handleVisibleChange}
+              overlayClassName="weekmate-notification-popover"
               content={
                 <div>
                   <div className="notifiction-pop">

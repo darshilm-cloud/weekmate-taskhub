@@ -129,7 +129,7 @@ const TaskPage = () => {
 
   const filterState = getFilterStateFromSearch(location.search, isAdmin);
 
-  const [view, setView] = useState("calendar"); // list | kanban | calendar
+  const [view, setView] = useState("list"); // list | kanban | calendar
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);

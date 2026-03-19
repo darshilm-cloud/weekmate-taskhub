@@ -634,19 +634,53 @@ tbody.showfilter {
 }
 
 .priority-summary-card {
-  overflow: visible;
+  overflow: hidden;
   min-height: 360px;
 }
 
 .priority-chart-wrap {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 8px;
   margin-bottom: 8px;
   padding: 4px 0 8px;
+  overflow: hidden;
 }
 
 .priority-summary-card .apexcharts-canvas,
 .priority-summary-card .apexcharts-svg,
 .priority-summary-card .apexcharts-inner {
-  overflow: visible !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.stats-chart-wrap {
+  position: relative;
+}
+
+.stats-chart-connectors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.stats-chart-connector {
+  position: absolute;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.45);
+}
+
+body.dark-theme .stats-chart-connector,
+body[data-theme="dark"] .stats-chart-connector {
+  background: rgba(148, 163, 184, 0.32);
+}
+
+.stats-chart-wrap .apexcharts-canvas {
+  position: relative;
+  z-index: 2;
 }
 
 /* ── Standalone Add Task (full-width centered) ─────────────── */
@@ -815,10 +849,53 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   gap: 12px;
 }
 
+.dashboard-calendar .db-cal-title-wrap {
+  position: relative;
+}
+
 .dashboard-calendar .db-cal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
   font-size: 16px;
   font-weight: 600;
   color: var(--app-text, #1e293b);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.dashboard-calendar .db-cal-title:hover,
+.dashboard-calendar .db-cal-title.active {
+  color: #0ea5e9;
+}
+
+.dashboard-calendar .db-cal-title-caret {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--app-text-muted, #64748b);
+}
+
+.dashboard-calendar .db-cal-picker-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-calendar .db-cal-picker-select {
+  flex: 1;
 }
 
 .dashboard-calendar .db-cal-nav {
@@ -1341,29 +1418,97 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
 }
 
 /* ── Pin Notes ────────────────────────────────────────────── */
-.db-notes-list { display: flex; flex-direction: column; gap: 8px; }
+.db-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 270px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.db-notes-list::-webkit-scrollbar { width: 4px; }
+.db-notes-list::-webkit-scrollbar-track { background: transparent; }
+.db-notes-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.db-notes-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 .db-note-item {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px 8px 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.db-note-item::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 999px;
+  background: #fda4af;
+}
+
+.db-note-item:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+.db-note-item:last-child {
+  border-bottom: none;
+}
+
+.db-note-pin {
+  width: 24px;
+  height: 24px;
   border-radius: 8px;
-  background: var(--app-surface-2, #f8fafc);
-  border: 1px solid var(--app-border, #e5e7eb);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff5f5;
+  border: 1px solid #ffe3e3;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.db-note-body {
+  min-width: 0;
+  flex: 1;
 }
 
 .db-note-title {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--app-text, #1e293b);
-  margin: 0 0 2px;
+  margin: 0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .db-note-desc {
-  font-size: 12px;
-  color: var(--app-text-muted, #64748b);
-  margin: 0;
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-note-arrow {
+  color: #c0cad7;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .db-pin-notes-empty {
@@ -1397,7 +1542,32 @@ body.dark-theme .db-discussion-item,
 body.dark-theme .db-note-item,
 body[data-theme="dark"] .db-discussion-item,
 body[data-theme="dark"] .db-note-item {
-  background: #0f1c2e;
+  background: transparent;
+  border-bottom-color: rgba(71, 85, 105, 0.32);
+  box-shadow: none;
+}
+
+body.dark-theme .db-note-item::before,
+body[data-theme="dark"] .db-note-item::before {
+  background: #fb7185;
+}
+
+body.dark-theme .db-note-item:hover,
+body[data-theme="dark"] .db-note-item:hover {
+  background: transparent;
+  border-bottom-color: rgba(100, 116, 139, 0.45);
+  box-shadow: none;
+}
+
+body.dark-theme .db-note-pin,
+body[data-theme="dark"] .db-note-pin {
+  background: rgba(127, 29, 29, 0.18);
+  border-color: rgba(251, 113, 133, 0.14);
+}
+
+body.dark-theme .db-note-arrow,
+body[data-theme="dark"] .db-note-arrow {
+  color: #516173;
 }
 
 body.dark-theme .db-tab-btn:not(.active),
@@ -1502,6 +1672,30 @@ body[data-theme="dark"] .db-activity-table tbody tr:hover {
 body.dark-theme .db-activity-table tbody td,
 body[data-theme="dark"] .db-activity-table tbody td {
   color: #dce7fb;
+}
+
+body.dark-theme .dashboard-calendar .db-cal-title,
+body[data-theme="dark"] .dashboard-calendar .db-cal-title {
+  color: #e2e8f0;
+}
+
+body.dark-theme .dashboard-calendar .db-cal-title:hover,
+body.dark-theme .dashboard-calendar .db-cal-title.active,
+body[data-theme="dark"] .dashboard-calendar .db-cal-title:hover,
+body[data-theme="dark"] .dashboard-calendar .db-cal-title.active {
+  color: #38bdf8;
+}
+
+body.dark-theme .dashboard-calendar .db-cal-title-caret,
+body[data-theme="dark"] .dashboard-calendar .db-cal-title-caret {
+  color: #94a3b8;
+}
+
+body.dark-theme .dashboard-calendar .db-cal-picker-panel,
+body[data-theme="dark"] .dashboard-calendar .db-cal-picker-panel {
+  border-color: #334155;
+  background: #0f172a;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
 }
 
 body.dark-theme .db-act-email,

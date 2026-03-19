@@ -1,0 +1,1657 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeftOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  DownloadOutlined,
+  DownOutlined,
+  FundProjectionScreenOutlined,
+  HistoryOutlined,
+  LineChartOutlined,
+  ProjectOutlined,
+  SaveOutlined,
+  SearchOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Collapse,
+  DatePicker,
+  Dropdown,
+  Empty,
+  Input,
+  message,
+  Progress,
+  Select,
+  Spin,
+  Table,
+  Tabs,
+  Tag,
+} from "antd";
+import moment from "moment";
+import ReactApexChart from "react-apexcharts";
+import { Link, useHistory, useParams } from "react-router-dom";
+import Service from "../../service";
+import NoDataFoundSvg from "../../assets/images/no-data-found.svg";
+import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
+import "./reports-hub.css";
+
+const DONE_STATUSES = ["done", "closed"];
+
+const getProgressColor = (value) => {
+  if (value === 100) return "#22c55e"; // Success Green
+  if (value >= 70) return "#3b82f6"; // Blue
+  if (value >= 40) return "#f6b940"; // Yellow/Orange
+  return "#ef4444"; // Red for low progress
+};
+
+const reportCards = [
+  { key: "user-report", title: "User Wise Report", icon: <UserOutlined />, colorClass: "blue" },
+  { key: "project-report", title: "Project Wise Report", icon: <ProjectOutlined />, colorClass: "coral" },
+  { key: "status-report", title: "Status Wise Report", icon: <FundProjectionScreenOutlined />, colorClass: "yellow" },
+  { key: "activity-report", title: "User Activity Report", icon: <LineChartOutlined />, colorClass: "lavender" },
+  { key: "user-performance-report", title: "User Wise Performance", icon: <TeamOutlined />, colorClass: "mint" },
+  { key: "daily-report", title: "Daily Report", icon: <CalendarOutlined />, colorClass: "blue" },
+];
+
+const pageMeta = {
+  "user-report": { title: "User Report", emptyTitle: "No Report Found" },
+  "status-report": { title: "Status Report", emptyTitle: "No Report Found" },
+  "activity-report": { title: "Activity Report", emptyTitle: "No Report Found" },
+  "user-performance-report": { title: "User Performance Report", emptyTitle: "No Report Found" },
+  "project-report": { title: "Project Report" },
+  "daily-report": { title: "Daily Report" },
+};
+
+const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "completed", label: "Completed" },
+  { value: "pending", label: "Pending" },
+  { value: "overdue", label: "Overdue" },
+];
+
+const activityOptions = [
+  { value: "", label: "All Activity" },
+  { value: "LOGIN", label: "Login" },
+  { value: "LOGOUT", label: "Logout" },
+  { value: "UPDATE", label: "Update" },
+  { value: "DELETE", label: "Delete" },
+];
+
+const reportTypeOptions = [
+  { value: "all-projects", label: "All Projects" },
+  { value: "project-wise", label: "Project Wise" },
+];
+
+const dailyTabs = [
+  { key: "pending", label: "Today’s Pending Tasks Report" },
+  { key: "completed", label: "Today’s Completed Tasks Report" },
+  { key: "morning", label: "Morning Reports" },
+  { key: "evening", label: "Evening Reports" },
+];
+
+const defaultFilters = {
+  reportType: "all-projects",
+  userId: "all",
+  status: "all",
+  date: null,
+  activity: "",
+};
+
+function ReportsHub() {
+  const { reportKey } = useParams();
+  const history = useHistory();
+  const companySlug = localStorage.getItem("companyDomain");
+  const [filters, setFilters] = useState(defaultFilters);
+  const [dailyTab, setDailyTab] = useState("pending");
+  const [loading, setLoading] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [reportData, setReportData] = useState({
+    project: {
+      summary: {
+        totalProjects: 0,
+        totalTasks: 0,
+        completedTasks: 0,
+        incompleteTasks: 0,
+      },
+      rows: [],
+    },
+    user: [],
+    status: [],
+    activity: [],
+    performance: {
+      summary: { totalHours: 0, totalEntries: 0 },
+      rows: [],
+    },
+    daily: {
+      pending: [],
+      completed: [],
+      morning: [],
+      evening: [],
+    },
+  });
+
+  const currentPage = pageMeta[reportKey];
+
+  const userMap = useMemo(
+    () =>
+      users.reduce((acc, user) => {
+        acc[user.value] = user;
+        return acc;
+      }, {}),
+    [users]
+  );
+
+  const loadDropdowns = useCallback(async () => {
+    try {
+      setOptionsLoading(true);
+      const [projectResponse, employeeResponse] = await Promise.all([
+        Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: Service.getProjectList,
+          params: "limit=200&includeClosed=false",
+        }),
+        Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: "/master/get/employees",
+          params: "limit=200",
+        }),
+      ]);
+
+      const projectList = Array.isArray(projectResponse?.data?.data)
+        ? projectResponse.data.data
+        : [];
+      const employeeList = Array.isArray(employeeResponse?.data?.data)
+        ? employeeResponse.data.data
+        : [];
+
+      setProjects(
+        projectList.map((project) => ({
+          value: project._id,
+          label: project.title,
+        }))
+      );
+
+      setUsers(
+        [
+          { value: "all", label: "All Users", firstName: "All" },
+          ...employeeList.map((employee) => ({
+            value: employee._id,
+            label: employee.full_name || employee.first_name || "Unknown",
+            firstName: employee.first_name || "",
+          })),
+        ]
+      );
+    } finally {
+      setOptionsLoading(false);
+    }
+  }, []);
+
+  const loadReportData = useCallback(async () => {
+    if (!reportKey) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const selectedDate = filters.date ? moment(filters.date) : null;
+      const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
+      const endDate = selectedDate ? selectedDate.clone().endOf("day") : moment().endOf("day");
+      const selectedUser =
+        filters.userId && filters.userId !== "all" ? userMap[filters.userId] : null;
+
+      const commonTaskPayload = buildTaskPayload({
+        viewAll: true,
+        status: "all",
+        startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
+        endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+      });
+
+      if (reportKey === "project-report") {
+        const [projectsResponse, tasksResponse] = await Promise.all([
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectRunningReportsDetails,
+            body: {
+              technologies: [],
+              types: [],
+              managers: [],
+              pageNo: 1,
+              limit: 100,
+              sort: "title",
+              sortBy: "asc",
+              isExport: false,
+            },
+          }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: commonTaskPayload,
+          }),
+        ]);
+
+        const projectRows = Array.isArray(projectsResponse?.data?.data?.data)
+          ? projectsResponse.data.data.data
+          : [];
+        const taskRows = Array.isArray(tasksResponse?.data?.data) ? tasksResponse.data.data : [];
+
+        const groupedTasks = taskRows.reduce((acc, task) => {
+          const key = task?.project?._id || "unknown";
+          if (!acc[key]) {
+            acc[key] = { total: 0, completed: 0 };
+          }
+          acc[key].total += 1;
+          if (isCompletedTask(task)) {
+            acc[key].completed += 1;
+          }
+          return acc;
+        }, {});
+
+        const rows = projectRows.map((project) => {
+          const stats = groupedTasks[project._id] || { total: 0, completed: 0 };
+          return {
+            key: project._id,
+            taskName: project.title,
+            progress: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+            startDate: formatDate(project.start_date),
+            endDate: formatDate(project.end_date),
+            status: project.project_statusName || "-",
+          };
+        });
+
+        const totalTasks = taskRows.length;
+        const completedTasks = taskRows.filter(isCompletedTask).length;
+
+        setReportData((prev) => ({
+          ...prev,
+          project: {
+            summary: {
+              totalProjects: projectRows.length,
+              totalTasks,
+              completedTasks,
+              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+            },
+            rows,
+          },
+        }));
+        return;
+      }
+
+      if (reportKey === "activity-report") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getActivityLogList,
+          body: {
+            page: 1,
+            limit: 100,
+            operationName: filters.activity || "",
+            fromDate: filters.date ? startDate.toISOString() : undefined,
+            toDate: filters.date ? endDate.toISOString() : undefined,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+          },
+        });
+
+        const logs = Array.isArray(response?.data?.data?.activityLogs)
+          ? response.data.data.activityLogs
+          : Array.isArray(response?.data?.data)
+          ? response.data.data
+          : [];
+
+        const rows = logs
+          .filter((log) => {
+            if (!selectedUser) return true;
+            const actor = log?.createdBy?.full_name || log?.email || "";
+            return actor.toLowerCase().includes(selectedUser.label.toLowerCase());
+          })
+          .map((log) => ({
+            key: log._id,
+            user: log?.createdBy?.full_name || log?.email || "-",
+            operation: log?.operationName || "-",
+            module: formatText(log?.moduleName),
+            createdAt: formatDateTime(log?.createdAt),
+          }));
+
+        setReportData((prev) => ({ ...prev, activity: rows }));
+        return;
+      }
+
+      if (reportKey === "user-performance-report") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTimeSheetReportsDetails,
+          body: {
+            startDate: startDate.format("YYYY-MM-DD"),
+            endDate: endDate.format("YYYY-MM-DD"),
+            technologies: [],
+            types: [],
+            managers: [],
+            projects: [],
+            departments: [],
+            users:
+              filters.userId && filters.userId !== "all" ? [filters.userId] : [],
+            pageNo: 1,
+            limit: 100,
+            sort: "logged_date",
+            sortBy: "desc",
+            isExport: false,
+          },
+        });
+
+        const entries = Array.isArray(response?.data?.data?.data) ? response.data.data.data : [];
+        const userStats = entries.reduce((acc, entry) => {
+          const key = entry.employee_id || entry.user || "unknown";
+          const hours = Number(entry.logged_hours || 0) + Number(entry.logged_minutes || 0) / 60;
+          if (!acc[key]) {
+            acc[key] = {
+              key,
+              user: entry.user || "-",
+              loggedHours: 0,
+              entries: 0,
+              projects: new Set(),
+            };
+          }
+          acc[key].loggedHours += hours;
+          acc[key].entries += 1;
+          if (entry.project) {
+            acc[key].projects.add(entry.project);
+          }
+          return acc;
+        }, {});
+
+        const rows = Object.values(userStats).map((row) => ({
+          key: row.key,
+          user: row.user,
+          loggedHours: row.loggedHours.toFixed(2),
+          entries: row.entries,
+          projects: row.projects.size,
+        }));
+
+        setReportData((prev) => ({
+          ...prev,
+          performance: {
+            summary: {
+              totalHours: Number(response?.data?.data?.totalHours || 0),
+              totalEntries: entries.length,
+            },
+            rows,
+          },
+        }));
+        return;
+      }
+
+      if (reportKey === "daily-report") {
+        const dailyTasksResponse = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.myTasks,
+          body: buildTaskPayload({ status: "all" }),
+        });
+
+        let dailyTaskRows = Array.isArray(dailyTasksResponse?.data?.data)
+          ? dailyTasksResponse.data.data
+          : [];
+
+        if (dailyTaskRows.length === 0) {
+          try {
+            const fallbackTasksResponse = await Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.taskList,
+              body: buildTaskPayload({ viewAll: true, status: "all" }),
+            });
+
+            dailyTaskRows = Array.isArray(fallbackTasksResponse?.data?.data)
+              ? fallbackTasksResponse.data.data
+              : [];
+          } catch (error) {
+            console.error("Daily report fallback task fetch failed", error);
+          }
+        }
+
+        setReportData((prev) => ({
+          ...prev,
+          daily: buildDailyData(dailyTaskRows, moment(), userMap),
+        }));
+        return;
+      }
+
+      if (reportKey === "user-report") {
+        const [tasksResponse, myTasksResponse] = await Promise.allSettled([
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: commonTaskPayload,
+          }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.myTasks,
+            body: buildTaskPayload({
+              status: "all",
+              startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
+              endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+            }),
+          }),
+        ]);
+
+        const taskRows = extractTaskRows(tasksResponse);
+        const myTaskRows = extractTaskRows(myTasksResponse);
+        const mergedTaskRows = mergeUniqueTasks([...taskRows, ...myTaskRows]);
+        const rows = buildUserRows(mergedTaskRows, filters, selectedDate, userMap, users);
+        setReportData((prev) => ({ ...prev, user: rows }));
+        return;
+      }
+
+      const tasksResponse = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: commonTaskPayload,
+      });
+
+      const taskRows = Array.isArray(tasksResponse?.data?.data) ? tasksResponse.data.data : [];
+
+      if (reportKey === "status-report") {
+        const rows = buildStatusRows(taskRows, filters, selectedDate, userMap);
+        setReportData((prev) => ({ ...prev, status: rows }));
+        return;
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, reportKey, userMap, users]);
+
+  useEffect(() => {
+    loadDropdowns();
+  }, [loadDropdowns]);
+
+  useEffect(() => {
+    setFilters(defaultFilters);
+    setDailyTab("pending");
+  }, [reportKey]);
+
+  useEffect(() => {
+    if (reportKey) {
+      loadReportData();
+    }
+  }, [reportKey, loadReportData]);
+
+  const handleDownload = (key) => {
+    let items = [];
+    let headers = [];
+    let filename = `report_${key}_${moment().format("YYYY-MM-DD")}.csv`;
+
+    if (key === "daily-report") {
+      items = reportData.daily[dailyTab] || [];
+      headers = ["Member Name", "Today", "Overdue", "Upcoming", "Total"];
+      filename = `daily_report_${dailyTab}_${moment().format("YYYY-MM-DD")}.csv`;
+      const rows = items.map((item) => [
+        item.name,
+        item.today,
+        item.overdue,
+        item.upcoming,
+        item.total,
+      ]);
+      downloadCSV(headers, rows, filename);
+    } else if (key === "user-report") {
+      items = reportData.user || [];
+      headers = ["User", "Project", "Total", "Completed", "Pending", "Due Today", "Overdue", "Incomplete"];
+      const rows = items.map((item) => [
+        item.user,
+        item.project,
+        item.total,
+        item.completed,
+        item.pending,
+        item.dueToday,
+        item.overdue,
+        item.incomplete,
+      ]);
+      downloadCSV(headers, rows, filename);
+    } else if (key === "project-report") {
+      items = reportData.project || [];
+      headers = ["Project Name", "Project Manager", "Total", "Completed", "Pending", "Overdue", "Incomplete"];
+      const rows = items.map((item) => [
+        item.project,
+        item.manager,
+        item.total,
+        item.completed,
+        item.pending,
+        item.overdue,
+        item.incomplete,
+      ]);
+      downloadCSV(headers, rows, filename);
+    } else if (key === "status-report") {
+      items = reportData.status || [];
+      headers = ["Status", "Tasks", "Projects", "Users"];
+      const rows = items.map((item) => [
+        item.status,
+        item.tasks,
+        item.projects,
+        item.users,
+      ]);
+      downloadCSV(headers, rows, filename);
+    } else {
+      message.info("Download for this report type will be available soon.");
+    }
+  };
+
+  const downloadCSV = (headers, rows, filename) => {
+    if (rows.length === 0) {
+      message.warning("No data available to download");
+      return;
+    }
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    message.success("Download started");
+  };
+
+  const handleSave = (key) => {
+    message.success(`${formatText(key)} has been saved successfully!`);
+  };
+
+  const handleHistory = (key) => {
+    message.info(`Viewing History for ${formatText(key)}...`);
+  };
+
+  const handleSchedule = (key) => {
+    message.success(`${formatText(key)} has been scheduled successfully!`);
+  };
+
+  if (!reportKey) {
+    return (
+      <div className="reports-hub-page">
+        <div className="reports-hub-header">
+          <h1>Reports</h1>
+        </div>
+        <div className="reports-hub-grid">
+          {reportCards.map((card) => (
+            <Link
+              key={card.key}
+              to={`/${companySlug}/reports/${card.key}`}
+              className={`reports-hub-card ${card.colorClass}`}
+            >
+              <span className="reports-hub-card-accent reports-hub-card-accent-top" />
+              <span className="reports-hub-card-accent reports-hub-card-accent-bottom" />
+              <div className="reports-hub-card-icon">{card.icon}</div>
+              <h3>{card.title}</h3>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentPage) {
+    history.replace(`/${companySlug}/reports`);
+    return null;
+  }
+
+  return (
+    <div className="reports-detail-page">
+      <div className="reports-detail-topbar">
+        <div className="reports-detail-heading">
+          <button
+            type="button"
+            className="reports-back-button"
+            onClick={() => history.push(`/${companySlug}/reports`)}
+          >
+            <ArrowLeftOutlined />
+          </button>
+          <h1>{currentPage.title}</h1>
+        </div>
+        <DetailActions
+          reportKey={reportKey}
+          onDownload={() => handleDownload(reportKey)}
+          onSchedule={() => handleSchedule(reportKey)}
+          onSave={() => handleSave(reportKey)}
+          onHistory={() => handleHistory(reportKey)}
+        />
+      </div>
+
+      <div className="reports-hub-main">
+        {loading || optionsLoading ? (
+          <ReportsDetailSkeleton />
+        ) : (
+          <>
+            {reportKey === "project-report" ? (
+              <ProjectReportContent data={reportData.project} />
+            ) : reportKey === "daily-report" ? (
+              <DailyReportContent
+                activeKey={dailyTab}
+                onChange={setDailyTab}
+                items={reportData.daily[dailyTab] || []}
+              />
+            ) : (
+              <DynamicReportContent
+                reportKey={reportKey}
+                filters={filters}
+                setFilters={setFilters}
+                users={users}
+                data={reportData}
+                onSearch={loadReportData}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DynamicReportContent({ reportKey, filters, setFilters, users, data, onSearch }) {
+  const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
+
+  const fieldsByReport = {
+    "user-report": [
+      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
+      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
+    "status-report": [
+      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
+      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
+    "activity-report": [
+      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
+      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "activity", placeholder: "Select Activity", options: activityOptions },
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
+    "user-performance-report": [
+      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
+      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
+  };
+
+  const rowsByReport = {
+    "user-report": data.user,
+    "status-report": data.status,
+    "activity-report": data.activity,
+    "user-performance-report": data.performance.rows,
+  };
+
+  const rowData = rowsByReport[reportKey] || [];
+
+  return (
+    <>
+      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} onSearch={onSearch} />
+      {reportKey === "user-report" && rowData.length > 0 ? (
+        <UserReportResults rows={rowData} filters={filters} />
+      ) : rowData.length > 0 ? (
+        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance.summary} />
+      ) : (
+        <EmptyReportState />
+      )}
+    </>
+  );
+}
+
+function CommonFilters({ fields, filters, setFilters, onSearch }) {
+  return (
+    <div className="reports-filter-bar">
+      {fields.map((field) =>
+        field.type === "date" ? (
+          <DatePicker
+            key={field.key}
+            placeholder={field.placeholder}
+            className="reports-filter-control"
+            suffixIcon={<CalendarOutlined />}
+            value={filters[field.key] ? moment(filters[field.key]) : null}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                [field.key]: value ? value.toISOString() : null,
+              }))
+            }
+          />
+        ) : (
+          <Select
+            key={field.key}
+            value={filters[field.key]}
+            placeholder={field.placeholder}
+            className="reports-filter-control"
+            options={field.options}
+            allowClear={field.key !== "reportType" && field.key !== "status"}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                [field.key]:
+                  field.key === "status" && !value
+                    ? "all"
+                    : field.key === "userId" && !value
+                    ? "all"
+                    : field.key === "reportType" && !value
+                    ? "project-wise"
+                    : value,
+              }))
+            }
+          />
+        )
+      )}
+      <Button type="primary" className="reports-search-button" icon={<SearchOutlined />} onClick={onSearch}>
+        Search
+      </Button>
+    </div>
+  );
+}
+
+function ProjectReportContent({ data }) {
+  const columns = [
+    { title: "Task Name", dataIndex: "taskName", key: "taskName" },
+    {
+      title: "Progress",
+      dataIndex: "progress",
+      key: "progress",
+      render: (value) => (
+        <div className="project-report-progress">
+          <Progress percent={value} showInfo={false} strokeColor={getProgressColor(value)} />
+          <span>{value}%</span>
+        </div>
+      ),
+    },
+    { title: "Start Date", dataIndex: "startDate", key: "startDate" },
+    { title: "End Date", dataIndex: "endDate", key: "endDate" },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (value) => <Tag color={value === "Active" ? "green" : "default"}>{value || "-"}</Tag>,
+    },
+  ];
+
+  return (
+    <>
+      <div className="project-report-stats">
+        <MetricCard color="#22b3c3" value={String(data.summary.totalProjects)} label="Total Projects" solid />
+        <MetricCard color="#ea3030" value={`${data.summary.incompleteTasks}/${data.summary.totalTasks || 0}`} label="Task In-completed" />
+        <MetricCard
+          color="#dedede"
+          value={`${data.summary.completedTasks}/${data.summary.totalTasks || 0}`}
+          label="Task Completed"
+          secondaryValueColor="#22c55e"
+        />
+      </div>
+
+      <div className="project-report-table-card">
+        <div className="project-report-table-header">
+          <h2>Project List</h2>
+          <Input prefix={<SearchOutlined />} placeholder="Type here to search" className="project-report-search" />
+        </div>
+        <Table columns={columns} dataSource={data.rows} pagination={false} rowClassName={() => "project-report-row"} locale={{ emptyText: <Empty description="No project data found" /> }} />
+      </div>
+    </>
+  );
+}
+
+function ReportResults({ reportKey, rows, summary }) {
+  const reportConfigs = {
+    "user-report": {
+      title: "User Summary",
+      columns: [
+        { title: "User", dataIndex: "user", key: "user" },
+        { title: "Project", dataIndex: "project", key: "project" },
+        { title: "Total Tasks", dataIndex: "total", key: "total" },
+        { title: "Completed", dataIndex: "completed", key: "completed" },
+        { title: "Incomplete", dataIndex: "incomplete", key: "incomplete" },
+        { title: "Pending", dataIndex: "pending", key: "pending" },
+        { title: "Overdue", dataIndex: "overdue", key: "overdue" },
+      ],
+    },
+    "status-report": {
+      title: "Status Summary",
+      columns: [
+        { title: "Status", dataIndex: "status", key: "status" },
+        { title: "Tasks", dataIndex: "tasks", key: "tasks" },
+        { title: "Projects", dataIndex: "projects", key: "projects" },
+        { title: "Users", dataIndex: "users", key: "users" },
+      ],
+    },
+    "activity-report": {
+      title: "Activity Logs",
+      columns: [
+        { title: "User", dataIndex: "user", key: "user" },
+        { title: "Operation", dataIndex: "operation", key: "operation" },
+        { title: "Module", dataIndex: "module", key: "module" },
+        { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+      ],
+    },
+    "user-performance-report": {
+      title: "User Performance",
+      columns: [
+        { title: "User", dataIndex: "user", key: "user" },
+        { title: "Logged Hours", dataIndex: "loggedHours", key: "loggedHours" },
+        { title: "Entries", dataIndex: "entries", key: "entries" },
+        { title: "Projects", dataIndex: "projects", key: "projects" },
+      ],
+    },
+  };
+
+  const config = reportConfigs[reportKey];
+
+  return (
+    <div className="reports-result-card">
+      {reportKey === "user-performance-report" ? (
+        <div className="reports-result-summary">
+          <div className="reports-mini-stat">
+            <span>Total Hours</span>
+            <strong>{Number(summary.totalHours || 0).toFixed(2)}</strong>
+          </div>
+          <div className="reports-mini-stat">
+            <span>Total Entries</span>
+            <strong>{summary.totalEntries || 0}</strong>
+          </div>
+        </div>
+      ) : null}
+      <Table columns={config.columns} dataSource={rows} pagination={{ pageSize: 10 }} rowKey="key" locale={{ emptyText: <Empty description="No report data found" /> }} />
+    </div>
+  );
+}
+
+function UserReportResults({ rows, filters }) {
+  const [viewMode, setViewMode] = useState("chart");
+  const [selectedMember, setSelectedMember] = useState(() => rows[0]?.key || null);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const firstMeaningfulRow =
+      rows.find((row) => row.total > 0) || rows[0] || null;
+    setSelectedMember(firstMeaningfulRow?.key || null);
+  }, [rows]);
+
+  const filteredMembers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return rows;
+    }
+    return rows.filter((row) => String(row.user || "").toLowerCase().includes(query));
+  }, [rows, search]);
+
+  const selectedRow =
+    filteredMembers.find((row) => row.key === selectedMember) ||
+    filteredMembers[0] ||
+    rows.find((row) => row.key === selectedMember) ||
+    rows[0] ||
+    null;
+
+  const chartRows = useMemo(() => {
+    const source = filteredMembers.length > 0 ? filteredMembers : rows;
+    return source.slice(0, 10);
+  }, [filteredMembers, rows]);
+
+  const chartSeries = useMemo(
+    () => [
+      {
+        name: "Closed",
+        data: chartRows.map((row) => row.completed || 0),
+      },
+      {
+        name: "Pending",
+        data: chartRows.map((row) => row.pending || 0),
+      },
+      {
+        name: "Incomplete",
+        data: chartRows.map((row) => row.incomplete || 0),
+      },
+    ],
+    [chartRows]
+  );
+
+  const hasChartData = useMemo(
+    () =>
+      chartRows.some(
+        (row) =>
+          Number(row.completed || 0) > 0 ||
+          Number(row.pending || 0) > 0 ||
+          Number(row.incomplete || 0) > 0 ||
+          Number(row.dueToday || 0) > 0 ||
+          Number(row.overdue || 0) > 0
+      ),
+    [chartRows]
+  );
+
+  const totalSummary = useMemo(
+    () =>
+      rows.reduce(
+        (acc, row) => {
+          acc.members += 1;
+          acc.total += Number(row.total || 0);
+          acc.completed += Number(row.completed || 0);
+          acc.pending += Number(row.pending || 0);
+          acc.incomplete += Number(row.incomplete || 0);
+          acc.dueToday += Number(row.dueToday || 0);
+          acc.overdue += Number(row.overdue || 0);
+          return acc;
+        },
+        { members: 0, total: 0, completed: 0, pending: 0, incomplete: 0, dueToday: 0, overdue: 0 }
+      ),
+    [rows]
+  );
+
+  const chartOptions = useMemo(
+    () => ({
+      chart: {
+        type: "bar",
+        stacked: true,
+        toolbar: { show: false },
+        fontFamily: "inherit",
+      },
+      colors: ["#22c55e", "#f6b940", "#38bdf8"],
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          barHeight: "26%",
+          borderRadius: 6,
+        },
+      },
+      dataLabels: { enabled: false },
+      stroke: {
+        show: true,
+        width: 1,
+        colors: ["#ffffff"],
+      },
+      legend: { show: false },
+      grid: {
+        borderColor: "#edf2f7",
+        xaxis: { lines: { show: true } },
+      },
+      xaxis: {
+        categories: chartRows.map((row) => row.user),
+        min: 0,
+        labels: {
+          style: { colors: "#718096", fontSize: "12px" },
+        },
+      },
+      yaxis: {
+        labels: {
+          style: { colors: "#5d7190", fontSize: "13px", fontWeight: 500 },
+        },
+      },
+      tooltip: {
+        shared: true,
+        intersect: false,
+      },
+    }),
+    [chartRows]
+  );
+
+  const memberTableRows = selectedRow
+    ? [
+        { label: "Project", value: selectedRow.project || "-" },
+        { label: "Total Task", value: selectedRow.total || 0 },
+        { label: "Pending Task", value: selectedRow.pending || 0 },
+        { label: "Due Today", value: selectedRow.dueToday || 0 },
+        { label: "Past Due Tasks", value: selectedRow.overdue || 0 },
+        { label: "Completed", value: selectedRow.completed || 0 },
+        { label: "Incomplete", value: selectedRow.incomplete || 0 },
+      ]
+    : [];
+
+  return (
+    <div className="user-report-layout">
+      <div className="user-report-chart-card">
+        <div className="user-report-card-head">
+          <div>
+            <h2>{filters.date ? moment(filters.date).format("MMM D, YYYY") : moment().format("MMM D, YYYY")} to</h2>
+            <div className="user-report-legend-note">
+              <span><i className="closed" />Closed</span>
+              <span><i className="pending" />Pending</span>
+              <span><i className="incomplete" />Incomplete</span>
+            </div>
+          </div>
+          <div className="user-report-view-toggle">
+            <Button
+              type="default"
+              className={viewMode === "chart" ? "active" : ""}
+              onClick={() => setViewMode("chart")}
+            >
+              <LineChartOutlined />
+            </Button>
+            <Button
+              type="default"
+              className={viewMode === "table" ? "active" : ""}
+              onClick={() => setViewMode("table")}
+            >
+              <FundProjectionScreenOutlined />
+            </Button>
+          </div>
+        </div>
+
+        {viewMode === "chart" ? (
+          <>
+            <div className="user-report-summary-strip">
+              <div className="user-report-summary-pill">
+                <span>Members</span>
+                <strong>{totalSummary.members}</strong>
+              </div>
+              <div className="user-report-summary-pill">
+                <span>Total Tasks</span>
+                <strong>{totalSummary.total}</strong>
+              </div>
+              <div className="user-report-summary-pill success">
+                <span>Closed</span>
+                <strong>{totalSummary.completed}</strong>
+              </div>
+              <div className="user-report-summary-pill warning">
+                <span>Pending</span>
+                <strong>{totalSummary.pending}</strong>
+              </div>
+              <div className="user-report-summary-pill accent">
+                <span>Due Today</span>
+                <strong>{totalSummary.dueToday}</strong>
+              </div>
+              <div className="user-report-summary-pill danger">
+                <span>Past Due</span>
+                <strong>{totalSummary.overdue}</strong>
+              </div>
+              <div className="user-report-summary-pill info">
+                <span>Incomplete</span>
+                <strong>{totalSummary.incomplete}</strong>
+              </div>
+            </div>
+
+            {chartRows.length > 0 && hasChartData ? (
+              <div className="user-report-chart-wrap">
+                <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+              </div>
+            ) : (
+              <div className="user-report-chart-empty">
+                <div className="user-report-chart-empty-graphic">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <h3>No task distribution found</h3>
+                <p>Change the filters or select a date range with user task activity.</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="user-report-table-view" style={{ padding: "20px" }}>
+            <Table
+              dataSource={rows}
+              pagination={false}
+              columns={[
+                { title: "User", dataIndex: "user", key: "user" },
+                { title: "Project", dataIndex: "project", key: "project" },
+                { title: "Total", dataIndex: "total", key: "total" },
+                { title: "Closed", dataIndex: "completed", key: "completed" },
+                { title: "Pending", dataIndex: "pending", key: "pending" },
+                { title: "Due Today", dataIndex: "dueToday", key: "dueToday" },
+                { title: "Past Due", dataIndex: "overdue", key: "overdue" },
+                { title: "Incomplete", dataIndex: "incomplete", key: "incomplete" },
+              ]}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="user-report-members-card">
+        <div className="user-report-member-header">
+          <h2>Member</h2>
+          <div className="user-report-member-actions">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              prefix={<SearchOutlined />}
+              placeholder="Type here to search"
+              className="user-report-member-search"
+            />
+            <Button className="user-report-customize">
+              Customize
+            </Button>
+          </div>
+        </div>
+
+        <div className="user-report-member-tabs">
+          {filteredMembers.slice(0, 11).map((row) => (
+            <button
+              key={row.key}
+              type="button"
+              className={`user-report-member-tab ${selectedRow?.key === row.key ? "active" : ""}`}
+              onClick={() => setSelectedMember(row.key)}
+            >
+              <span className="user-report-member-tab-name">{row.user}</span>
+              <span className="user-report-member-tab-count">{row.total || 0}</span>
+            </button>
+          ))}
+          {filteredMembers.length > 11 && (
+            <Dropdown
+              menu={{
+                items: filteredMembers.slice(11).map((m) => ({
+                  key: m.key,
+                  label: (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "150px" }}>
+                      <span>{m.user}</span>
+                      <small style={{ color: "#94a3b8" }}>{m.total || 0}</small>
+                    </div>
+                  ),
+                  onClick: () => setSelectedMember(m.key),
+                })),
+                style: { maxHeight: "300px", overflowY: "auto" },
+              }}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <button
+                type="button"
+                className={`user-report-member-tab more-tab ${
+                  filteredMembers.slice(11).some((m) => m.key === selectedMember) ? "active" : ""
+                }`}
+              >
+                <span className="user-report-member-tab-name">
+                  {filteredMembers.slice(11).some((m) => m.key === selectedMember)
+                    ? filteredMembers.find((m) => m.key === selectedMember)?.user
+                    : "More"}
+                </span>
+                <DownOutlined style={{ fontSize: "10px", marginLeft: "4px" }} />
+              </button>
+            </Dropdown>
+          )}
+        </div>
+
+        {selectedRow ? (
+          <div className="user-report-member-grid">
+            {memberTableRows.map((item) => (
+              <div key={item.label} className="user-report-member-stat">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="reports-empty-inline">
+            <Empty description="No member selected" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DailyReportContent({ activeKey, onChange, items }) {
+  return (
+    <>
+      <div className="daily-report-toolbar">
+        <Tabs activeKey={activeKey} onChange={onChange} items={dailyTabs.map((tab) => ({ key: tab.key, label: tab.label }))} className="daily-report-tabs" />
+        <Button className="daily-report-collapse-button" icon={<ArrowLeftOutlined rotate={90} />} />
+      </div>
+
+      <div className="daily-report-table-wrap">
+        <div className="daily-report-table-head">
+          <span>Member Name</span>
+          <span>Today</span>
+          <span>Overdue</span>
+          <span>Upcoming</span>
+          <span>Total</span>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="reports-empty-inline">
+            <Empty description="No daily report data found" />
+          </div>
+        ) : (
+          <Collapse
+            accordion={false}
+            className="daily-report-collapse"
+            defaultActiveKey={items.map((_, index) => String(index))}
+            items={items.map((item, index) => ({
+              key: String(index),
+              label: (
+                <div className="daily-report-summary-row">
+                  <span className="daily-report-member">
+                    <span className="daily-report-avatar">
+                      {item.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </span>
+                    {item.name}
+                  </span>
+                  <span>{item.today}</span>
+                  <span>{item.overdue}</span>
+                  <span>{item.upcoming}</span>
+                  <span>{item.total}</span>
+                </div>
+              ),
+              children: (
+                <div className="daily-report-expanded-grid">
+                  <DailyMetric label="Today’s task" value={item.today} color="#4caf50" />
+                  <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
+                  <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
+                  <DailyMetric label="Total" value={item.total} color="#dc2626" />
+                </div>
+              ),
+            }))}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+function EmptyReportState() {
+  return (
+    <div className="reports-empty-state">
+      <img src={NoDataFoundSvg} alt="No report found" />
+      <h3>No Report Found</h3>
+      <p>Apply Filter To Generate Reports</p>
+    </div>
+  );
+}
+
+function DetailActions({ reportKey, onDownload, onSchedule, onSave, onHistory }) {
+  if (reportKey === "project-report") {
+    return null;
+  }
+
+  if (reportKey === "daily-report") {
+    return (
+      <div className="reports-actions">
+        <Button className="reports-action-button" onClick={onSchedule}>
+          Schedule <ClockCircleOutlined />
+        </Button>
+        <Button className="reports-action-button" onClick={onDownload}>
+          Download <DownloadOutlined />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="reports-actions">
+      <Button className="reports-action-button" onClick={onSave}>
+        Save Report <SaveOutlined />
+      </Button>
+      <Button className="reports-action-button" onClick={onHistory}>
+        History <HistoryOutlined />
+      </Button>
+      <Button className="reports-action-button" onClick={onDownload}>
+        Download <DownloadOutlined />
+      </Button>
+    </div>
+  );
+}
+
+function MetricCard({ color, value, label, solid, secondaryValueColor }) {
+  const number = typeof value === "string" && value.includes("/") ? Number(value.split("/")[0]) : Number(value);
+  const total = typeof value === "string" && value.includes("/") ? Number(value.split("/")[1]) : 1;
+  const percent = total > 0 ? Math.round((number / total) * 100) : 0;
+
+  return (
+    <div className="project-report-stat-card">
+      <div className="project-report-pattern" />
+      {solid ? (
+        <div className="project-report-solid-dot" style={{ backgroundColor: color }}>
+          {value}
+        </div>
+      ) : (
+        <Progress
+          type="circle"
+          percent={percent}
+          strokeColor={color}
+          trailColor="#f1f5f9"
+          size={130}
+          format={() => <span style={{ color: secondaryValueColor || color, fontWeight: 700 }}>{value}</span>}
+        />
+      )}
+      <h3>{label}</h3>
+    </div>
+  );
+}
+
+function DailyMetric({ label, value, color }) {
+  return (
+    <div className="daily-report-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <div className="daily-report-line" style={{ backgroundColor: color }} />
+    </div>
+  );
+}
+
+function isCompletedTask(task) {
+  return DONE_STATUSES.includes(String(task?.task_status?.title || "").trim().toLowerCase());
+}
+
+function isSameDay(dateValue, targetMoment) {
+  if (!dateValue || !targetMoment) {
+    return false;
+  }
+  return moment(dateValue).isSame(targetMoment, "day");
+}
+
+function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
+  const today = selectedDate || moment();
+  const selectedUser =
+    filters.userId && filters.userId !== "all" ? userMap[filters.userId] : null;
+
+  const grouped = {};
+
+  const seedUsers = selectedUser
+    ? [selectedUser]
+    : users.filter((user) => user.value && user.value !== "all");
+
+  seedUsers.forEach((user) => {
+    const userKey = String(user.value);
+    grouped[userKey] = {
+      key: userKey,
+      user: user.label || "Unknown",
+      project: "Multiple",
+      total: 0,
+      completed: 0,
+      incomplete: 0,
+      pending: 0,
+      dueToday: 0,
+      overdue: 0,
+    };
+  });
+
+  tasks.forEach((task) => {
+    const due = task?.due_date ? moment(task.due_date) : null;
+    const overdue = due && due.isBefore(today.clone().startOf("day")) && !isCompletedTask(task);
+    const matchStatus =
+      filters.status === "all" ||
+      (filters.status === "completed" && isCompletedTask(task)) ||
+      (filters.status === "pending" && !isCompletedTask(task)) ||
+      (filters.status === "overdue" && overdue);
+
+    if (!matchStatus) {
+      return;
+    }
+
+    normalizeTaskOwners(task, userMap).forEach((assignee) => {
+      if (selectedUser && assignee.id !== String(selectedUser.value)) {
+        return;
+      }
+
+      const key = String(assignee.id || "unknown");
+      if (!grouped[key]) {
+        grouped[key] = {
+          key,
+          user: assignee.name || "Unassigned",
+          project: "Multiple",
+          total: 0,
+          completed: 0,
+          incomplete: 0,
+          pending: 0,
+          dueToday: 0,
+          overdue: 0,
+        };
+      }
+      grouped[key].total += 1;
+      if (isCompletedTask(task)) {
+        grouped[key].completed += 1;
+      } else {
+        grouped[key].pending += 1;
+      }
+      if (due && due.isSame(today, "day")) {
+        grouped[key].dueToday += 1;
+      }
+      if (overdue) {
+        grouped[key].overdue += 1;
+      }
+      grouped[key].incomplete = Math.max(grouped[key].total - grouped[key].completed, 0);
+    });
+  });
+
+  return Object.values(grouped);
+}
+
+function buildStatusRows(tasks, filters, selectedDate, userMap) {
+  const today = selectedDate || moment();
+  const selectedUser =
+    filters.userId && filters.userId !== "all" ? userMap[filters.userId] : null;
+  const grouped = {};
+
+  tasks.forEach((task) => {
+    const hasUser =
+      !selectedUser ||
+      normalizeTaskOwners(task, userMap).some((assignee) => assignee.id === String(selectedUser.value));
+    if (!hasUser) {
+      return;
+    }
+
+    const due = task?.due_date ? moment(task.due_date) : null;
+    const overdue = due && due.isBefore(today.clone().startOf("day")) && !isCompletedTask(task);
+    const statusName = task?.task_status?.title || "Unknown";
+
+    if (
+      filters.status !== "all" &&
+      !(
+        (filters.status === "completed" && isCompletedTask(task)) ||
+        (filters.status === "pending" && !isCompletedTask(task)) ||
+        (filters.status === "overdue" && overdue)
+      )
+    ) {
+      return;
+    }
+
+    if (!grouped[statusName]) {
+      grouped[statusName] = {
+        key: statusName,
+        status: statusName,
+        tasks: 0,
+        projects: new Set(),
+        users: new Set(),
+      };
+    }
+
+    grouped[statusName].tasks += 1;
+    if (task?.project?.title) {
+      grouped[statusName].projects.add(task.project.title);
+    }
+    normalizeTaskOwners(task, userMap).forEach((assignee) => {
+      if (!selectedUser || assignee.id === String(selectedUser.value)) {
+        grouped[statusName].users.add(assignee.name || "Unassigned");
+      }
+    });
+  });
+
+  return Object.values(grouped).map((row) => ({
+    key: row.key,
+    status: row.status,
+    tasks: row.tasks,
+    projects: row.projects.size,
+    users: row.users.size,
+  }));
+}
+
+function buildTaskPayload({ viewAll = false, status = "all", startDate = null, endDate = null, projectIds = [] } = {}) {
+  const payload = {};
+
+  if (viewAll) {
+    payload.view_all = true;
+  }
+
+  if (status && status !== "all") {
+    payload.status = status;
+  }
+
+  if (Array.isArray(projectIds) && projectIds.length > 0) {
+    payload.project_id = projectIds;
+  }
+
+  if (startDate) {
+    payload.start_date = startDate;
+  }
+
+  if (endDate) {
+    payload.end_date = endDate;
+  }
+
+  return payload;
+}
+
+function extractTaskRows(result) {
+  if (result?.status !== "fulfilled") {
+    return [];
+  }
+
+  const rows = result?.value?.data?.data;
+  return Array.isArray(rows) ? rows : [];
+}
+
+function mergeUniqueTasks(tasks) {
+  const seen = new Map();
+
+  tasks.forEach((task, index) => {
+    const key =
+      String(task?._id || "") ||
+      String(task?.taskId || "") ||
+      `${task?.title || "task"}-${task?.due_date || ""}-${index}`;
+
+    if (!seen.has(key)) {
+      seen.set(key, task);
+    }
+  });
+
+  return Array.from(seen.values());
+}
+
+function buildDailyData(tasks, selectedDate, userMap) {
+  const day = selectedDate || moment();
+
+  const makeGroups = (predicate) => {
+    const grouped = {};
+    const filteredTasks = tasks.filter(predicate);
+
+    filteredTasks.forEach((task) => {
+      const assignees = normalizeTaskOwners(task, userMap);
+      assignees.forEach((assignee) => {
+        const key = assignee.id || assignee.name || "unassigned";
+        const due = task?.due_date ? moment(task.due_date) : null;
+        if (!grouped[key]) {
+          grouped[key] = {
+            name: assignee.name || "Unassigned",
+            today: 0,
+            overdue: 0,
+            upcoming: 0,
+            total: 0,
+          };
+        }
+
+        if (due && due.isSame(day, "day")) {
+          grouped[key].today += 1;
+        } else if (due && due.isBefore(day.clone().startOf("day"))) {
+          grouped[key].overdue += 1;
+        } else {
+          grouped[key].upcoming += 1;
+        }
+
+        grouped[key].total += 1;
+      });
+    });
+
+    const rows = Object.values(grouped);
+    if (rows.length > 0 || filteredTasks.length === 0) {
+      return rows;
+    }
+
+    const fallback = filteredTasks.reduce(
+      (acc, task) => {
+        const due = task?.due_date ? moment(task.due_date) : null;
+        if (due && due.isSame(day, "day")) {
+          acc.today += 1;
+        } else if (due && due.isBefore(day.clone().startOf("day"))) {
+          acc.overdue += 1;
+        } else {
+          acc.upcoming += 1;
+        }
+        acc.total += 1;
+        return acc;
+      },
+      { name: "All Members", today: 0, overdue: 0, upcoming: 0, total: 0 }
+    );
+
+    return [fallback];
+  };
+
+  return {
+    pending: makeGroups((task) => !isCompletedTask(task)),
+    completed: makeGroups((task) => isCompletedTask(task)),
+    morning: makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() < 12),
+    evening: makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() >= 12),
+  };
+}
+
+function normalizeUsers(rawUsers, userMap) {
+  if (!Array.isArray(rawUsers) || rawUsers.length === 0) {
+    return [];
+  }
+
+  return rawUsers.map((assignee, index) => {
+    if (typeof assignee === "string") {
+      const mappedUser = userMap && userMap[assignee];
+      return {
+        id: String(assignee),
+        name: mappedUser?.label || "Assigned User",
+      };
+    }
+
+    if (assignee && typeof assignee === "object") {
+      const id = String(assignee._id || assignee.id || `assignee-${index}`);
+      const mappedUser = userMap && userMap[id];
+      return {
+        id,
+        name:
+          assignee.full_name ||
+          assignee.name ||
+          assignee.first_name ||
+          mappedUser?.label ||
+          "Assigned User",
+      };
+    }
+
+    return { id: String(`assignee-${index}`), name: "Assigned User" };
+  });
+}
+
+function normalizeTaskOwners(task, userMap) {
+  const assignees = normalizeUsers(task?.assignees, userMap);
+  if (assignees.length > 0) {
+    return assignees;
+  }
+
+  const creators = normalizeUsers(task?.createdBy ? [task.createdBy] : [], userMap);
+  if (creators.length > 0) {
+    return creators;
+  }
+
+  return [{ id: "unassigned", name: "Unassigned" }];
+}
+
+function formatDate(dateValue) {
+  return dateValue ? moment(dateValue).format("MMM D, YYYY") : "-";
+}
+
+function formatDateTime(dateValue) {
+  return dateValue ? moment(dateValue).format("DD MMM YYYY HH:mm:ss") : "-";
+}
+
+function formatText(value) {
+  if (!value) {
+    return "-";
+  }
+  return String(value)
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export default ReportsHub;
