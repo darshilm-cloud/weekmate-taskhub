@@ -88,12 +88,35 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const menuItemsRaw = useMemo(
     () => [
+      // 1. Dashboard
       !getRoles(["Client"]) && {
         key: "Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
+      // 2. Projects
+      {
+        key: "Projects",
+        icon: <FolderOutlined />,
+        label: "Projects",
+        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
+      },
+      // 3. Users
+      getRoles(["Admin"]) && {
+        key: "Users",
+        icon: <TeamOutlined />,
+        label: "Users",
+        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
+      },
+      // 4. Permissions
+      getRoles(["Admin"]) && {
+        key: "Permission",
+        icon: <i className="fi fi-rr-lock"></i>,
+        label: "Permissions",
+        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
+      },
+      // 5. Analytics
       getRoles(["Admin", "PC", "TL", "AM"]) && {
         key: "Analytics",
         icon: <LineChartOutlined />,
@@ -111,17 +134,33 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           },
         ],
       },
+      // 6. Feedback - Positive Reviews
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Positive Reviews",
+        icon: <StarOutlined />,
+        label: "Positive Reviews",
+        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
+      },
+      // 7. Feedback - Complaints
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Complaints",
+        icon: <ExclamationCircleOutlined />,
+        label: "Complaints",
+        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
+      },
+      // 8. Project Expense
+      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
+        key: "Projectexpences",
+        icon: <FileTextOutlined />,
+        label: "Project Expense",
+        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
+      },
+      // --- rest remaining ---
       {
         key: "Tasks",
         icon: <CheckOutlined style={{ marginRight: 4 }} />,
         label: "Tasks",
         onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
-      },
-      {
-        key: "Projects",
-        icon: <FolderOutlined />,
-        label: "Projects",
-        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
       },
       {
         key: "Notes",
@@ -135,41 +174,11 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Discussion",
         onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`),
       },
-      getRoles(["Admin"]) && {
-        key: "Users",
-        icon: <TeamOutlined />,
-        label: "Users",
-        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
-      },
-      getRoles(["Admin"]) && {
-        key: "Permission",
-        icon: <i className="fi fi-rr-lock"></i>,
-        label: "Permissions",
-        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
-      },
       (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
         key: "Reports",
         icon: <BarChartOutlined />,
         label: "Reports",
         onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`),
-      },
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Positive Reviews",
-        icon: <StarOutlined />,
-        label: "Positive Reviews",
-        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
-      },
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Complaints",
-        icon: <ExclamationCircleOutlined />,
-        label: "Complaints",
-        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
-      },
-      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
-        key: "Projectexpences",
-        icon: <FileTextOutlined />,
-        label: "Project Expense",
-        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
       },
       getRoles(["Admin"]) && {
         key: "Admin_Settings",

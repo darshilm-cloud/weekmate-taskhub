@@ -1,0 +1,225 @@
+/* ── Modal shell ── */
+.upm-modal .ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(11, 58, 91, 0.18) !important;
+  border: 1px solid #e0e8f0;
+}
+
+.upm-modal .ant-modal-header {
+  padding: 0 !important;
+  border-bottom: none !important;
+}
+
+.upm-modal .ant-modal-body {
+  padding: 0 !important;
+}
+
+.upm-modal .ant-modal-footer {
+  padding: 14px 24px !important;
+  border-top: 1px solid #edf0f4 !important;
+  background: #f8fafb !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Header banner ── */
+.upm-header {
+  background: linear-gradient(135deg, #0b3a5b 0%, #1260a4 100%);
+  padding: 24px 24px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upm-header::before {
+  content: "";
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.upm-header::after {
+  content: "";
+  position: absolute;
+  bottom: -40px;
+  right: 80px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.upm-header-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  z-index: 1;
+  position: relative;
+}
+
+.upm-header-sub {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 2px 0 0;
+  z-index: 1;
+  position: relative;
+}
+
+/* ── Avatar ── */
+.upm-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  margin: -36px auto 0;
+  z-index: 2;
+}
+
+.upm-avatar {
+  width: 80px !important;
+  height: 80px !important;
+  border: 3px solid #fff !important;
+  box-shadow: 0 4px 16px rgba(11, 58, 91, 0.2) !important;
+  font-size: 30px !important;
+}
+
+.upm-avatar-edit {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  background: #0b3a5b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: background 0.15s;
+}
+
+.upm-avatar-edit:hover {
+  background: #1260a4;
+}
+
+.upm-avatar-edit .anticon {
+  color: #fff;
+  font-size: 11px;
+}
+
+.upm-avatar-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ── Body ── */
+.upm-body {
+  padding: 0 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upm-form {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.upm-form .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.upm-form .ant-form-item-label > label {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+.upm-form .ant-input,
+.upm-form .ant-input-affix-wrapper {
+  border-radius: 8px !important;
+  border-color: #d0dce8 !important;
+  height: 38px;
+  font-size: 13.5px;
+}
+
+.upm-form .ant-input:hover,
+.upm-form .ant-input:focus {
+  border-color: #0b3a5b !important;
+  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.1) !important;
+}
+
+.upm-form .ant-input[disabled] {
+  background: #f8fafb !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+}
+
+/* ── Footer buttons ── */
+.upm-cancel-btn.ant-btn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 8px !important;
+  border-color: #d0dce8 !important;
+  color: #4b5563 !important;
+  font-weight: 500 !important;
+  background: #fff !important;
+}
+
+.upm-cancel-btn.ant-btn:hover {
+  border-color: #0b3a5b !important;
+  color: #0b3a5b !important;
+}
+
+.upm-save-btn.ant-btn {
+  height: 36px;
+  padding: 0 22px;
+  border-radius: 8px !important;
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
+}
+
+.upm-save-btn.ant-btn:hover {
+  background: #0e4a73 !important;
+  border-color: #0e4a73 !important;
+}
+
+/* Dark theme */
+body.dark-theme .upm-modal .ant-modal-content,
+body[data-theme="dark"] .upm-modal .ant-modal-content {
+  background: #1e293b;
+  border-color: rgba(71, 85, 105, 0.3);
+}
+
+body.dark-theme .upm-modal .ant-modal-footer,
+body[data-theme="dark"] .upm-modal .ant-modal-footer {
+  background: #0f172a !important;
+  border-top-color: rgba(71, 85, 105, 0.2) !important;
+}
+
+body.dark-theme .upm-form .ant-form-item-label > label,
+body[data-theme="dark"] .upm-form .ant-form-item-label > label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .upm-form .ant-input,
+body[data-theme="dark"] .upm-form .ant-input {
+  background: #0f172a !important;
+  border-color: rgba(71, 85, 105, 0.4) !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .upm-avatar-hint,
+body[data-theme="dark"] .upm-avatar-hint {
+  color: #64748b;
+}

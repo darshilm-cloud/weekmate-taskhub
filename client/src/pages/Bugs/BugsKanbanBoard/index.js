@@ -244,9 +244,9 @@ const BugList = ({
                     <span
                       className="wm-col-count"
                       style={{
-                        background: `${colColor}22`,
+                        background: "transparent",
                         color: colColor,
-                        border: `1px solid ${colColor}55`,
+                        border: `1.5px solid ${colColor}`,
                       }}
                     >
                       {boardData.bugs.length}
@@ -343,19 +343,21 @@ const BugList = ({
                             )}
 
                             {/* Due date */}
-                            {task.due_date && (
-                              <div
-                                className="wm-card-due"
-                                style={{
-                                  color: moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
-                                }}
-                              >
-                                <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
-                                {moment(task.due_date).format("MMM D, YYYY")}
-                              </div>
-                            )}
+                            <div
+                              className="wm-card-due"
+                              style={{
+                                color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
+                              }}
+                            >
+                              {task.due_date ? (
+                                <>
+                                  <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                  {moment(task.due_date).format("MMM D, YYYY")}
+                                </>
+                              ) : "—"}
+                            </div>
 
-                            {/* Footer: assignees + comments */}
+                            {/* Footer: assignees + progress */}
                             <div className="wm-card-footer">
                               <span className="wm-card-assignees">
                                 {task.assignees?.length > 0
@@ -363,11 +365,7 @@ const BugList = ({
                                   : "Unassigned"}
                               </span>
                               <span className="wm-card-meta">
-                                <i className="fa-regular fa-comment" style={{ marginRight: 3 }}></i>
-                                {task.comments || 0}
-                                {commentDrafts[task._id] && (
-                                  <span className="draft-indicator" style={{ color: "#ff4d4f", marginLeft: 4 }}>Draft</span>
-                                )}
+                                {task.progress || "0"}%
                               </span>
                             </div>
 

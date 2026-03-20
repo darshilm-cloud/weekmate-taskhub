@@ -1,7 +1,22 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Layout, Form } from "antd";
+import { Layout, Form, Popover } from "antd";
 import { useDispatch } from "react-redux";
-import { SearchOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  SettingOutlined,
+  ApartmentOutlined,
+  AppstoreOutlined,
+  BankOutlined,
+  BellOutlined,
+  ClusterOutlined,
+  DeleteOutlined,
+  InboxOutlined,
+  LockOutlined,
+  NodeIndexOutlined,
+  TagsOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import { useHistory, useLocation } from "react-router-dom";
 import UserProfile from "../Sidebar/UserProfile";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
 import Service from "../../service";
@@ -12,6 +27,67 @@ const { Header } = Layout;
 
 function Topbar() {
   const companySlug = typeof localStorage !== "undefined" ? localStorage.getItem("companyDomain") : "";
+  const history = useHistory();
+  const location = useLocation();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const SETTINGS_MENU = [
+    {
+      group: "GENERAL",
+      items: [
+        { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
+        { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
+        { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
+      ],
+    },
+    {
+      group: "PROJECT SETTINGS",
+      items: [
+        { label: "WorkFlow",           icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflows` },
+        { label: "Departments",        icon: <ApartmentOutlined />,    path: `/${companySlug}/project-technologies` },
+        { label: "Project Types",      icon: <AppstoreOutlined />,     path: `/${companySlug}/manage-project-type` },
+        { label: "Status",             icon: <ClusterOutlined />,      path: `/${companySlug}/project-status` },
+        { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
+        { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },
+        { label: "Archived Project",   icon: <InboxOutlined />,        path: `/${companySlug}/project-archieved` },
+        { label: "Trash",              icon: <DeleteOutlined />,       path: `/${companySlug}/trash` },
+      ],
+    },
+  ];
+
+  // paths that appear more than once should never be highlighted
+  const allPaths = SETTINGS_MENU.flatMap(s => s.items.map(i => i.path));
+  const uniquePaths = new Set(allPaths.filter((p, _, arr) => arr.indexOf(p) === arr.lastIndexOf(p)));
+
+  const settingsContent = (
+    <div className="wm-settings-dropdown">
+      {SETTINGS_MENU.map((section) => (
+        <div key={section.group} className="wm-settings-group">
+          <div className="wm-settings-group-header">
+            <div className="wm-settings-group-title">{section.group}</div>
+          </div>
+          <ul className="wm-settings-list">
+            {section.items.map((item) => {
+              const isActive = location.pathname === item.path && uniquePaths.has(item.path);
+              return (
+                <li
+                  key={item.label}
+                  className={`wm-settings-item${isActive ? " active" : ""}`}
+                  onClick={() => {
+                    history.push(item.path);
+                    setSettingsOpen(false);
+                  }}
+                >
+                  <span className="wm-settings-item-icon">{item.icon}</span>
+                  <span className="wm-settings-item-label">{item.label}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -162,6 +238,22 @@ function Topbar() {
               <SearchOutlined />
               <span>Search</span>
             </button>
+            <Popover
+              content={settingsContent}
+              trigger="click"
+              placement="bottomRight"
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+              overlayClassName="wm-settings-popover"
+              arrow={false}
+            >
+              <button
+                type="button"
+                className={`weekmate-header-icon-btn${settingsOpen ? " active" : ""}`}
+              >
+                <SettingOutlined />
+              </button>
+            </Popover>
             <UserProfile />
           </div>
         </div>

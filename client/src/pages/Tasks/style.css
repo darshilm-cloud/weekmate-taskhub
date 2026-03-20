@@ -2203,24 +2203,26 @@ body.admin-user[data-theme="dark"] .task-wrapper .wm-task-box {
 body.dark-theme .task-wrapper .drag_column h4,
 body[data-theme="dark"] .task-wrapper .drag_column h4,
 body.admin-user[data-theme="dark"] .task-wrapper .drag_column h4 {
-    background-color: var(--wm-task-surface-2) !important;
+    background-color: transparent !important;
     color: var(--wm-task-text) !important;
+    border-bottom: none !important;
 }
 
 /* Dark theme: kanban column outer container */
 body.dark-theme .task-wrapper .order.small-box,
 body[data-theme="dark"] .task-wrapper .order.small-box,
 body.admin-user[data-theme="dark"] .task-wrapper .order.small-box {
-    background-color: var(--wm-task-surface-2) !important;
-    border-radius: 8px;
-    overflow: hidden;
-    border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    overflow: visible;
+    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
     border-left: none !important;
     border-right: none !important;
     border-bottom: none !important;
+    box-shadow: none !important;
 }
 
-/* Dark theme: keep kanban column body/list wrappers dark too */
+/* Dark theme: column body wrappers transparent */
 body.dark-theme .task-wrapper .drag_container,
 body.dark-theme .task-wrapper .project-task-list,
 body.dark-theme .task-wrapper .borad-task-data,
@@ -2233,14 +2235,8 @@ body.admin-user[data-theme="dark"] .task-wrapper .drag_container,
 body.admin-user[data-theme="dark"] .task-wrapper .project-task-list,
 body.admin-user[data-theme="dark"] .task-wrapper .borad-task-data,
 body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container {
-    background: var(--wm-task-surface-2) !important;
-    background-color: var(--wm-task-surface-2) !important;
-}
-
-body.dark-theme .task-wrapper .borad-task-data,
-body[data-theme="dark"] .task-wrapper .borad-task-data,
-body.admin-user[data-theme="dark"] .task-wrapper .borad-task-data {
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* ============================================================
@@ -2257,19 +2253,20 @@ body.admin-user[data-theme="dark"] .task-wrapper .borad-task-data {
 
 /* ── Column outer shell ── */
 .task-wrapper .order.small-box {
-    min-width: 272px;
-    max-width: 272px;
-    flex: 0 0 272px;
-    border-radius: 10px !important;
-    overflow: hidden;
+    min-width: 260px;
+    max-width: 260px;
+    flex: 0 0 260px;
+    border-radius: 0 !important;
+    overflow: visible;
     border: none !important;
-    border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
+    box-shadow: none !important;
+    background: transparent !important;
 }
 
 /* ── Column header ── */
 .task-wrapper .drag_column h4 {
-    padding: 12px 14px 11px !important;
+    padding: 10px 4px 10px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     letter-spacing: 0 !important;
@@ -2279,8 +2276,8 @@ body.admin-user[data-theme="dark"] .task-wrapper .borad-task-data {
     justify-content: space-between !important;
     border-radius: 0 !important;
     border: none !important;
-    border-bottom: 1px solid var(--wm-task-border) !important;
     margin-bottom: 0 !important;
+    background: transparent !important;
 }
 
 .task-wrapper .drag_column h4 .wm-col-title {
@@ -2288,47 +2285,47 @@ body.admin-user[data-theme="dark"] .task-wrapper .borad-task-data {
     font-weight: 600;
 }
 
-/* Column count badge — small pill matching column color */
-.task-wrapper .drag_column h4 .wm-col-count {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    padding: 1px 8px !important;
-    border-radius: 20px !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-    line-height: 18px !important;
-    height: auto !important;
-    display: inline-block !important;
-    margin-left: auto !important;
+/* Column count — inline text matching title color */
+.task-wrapper .drag_column h4 .wm-col-count-inline {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    opacity: 0.85;
 }
 
 /* ── Column body (drag area) ── */
 .task-wrapper .drag_row {
-    padding: 10px 8px 4px !important;
+    padding: 6px 0 4px !important;
     min-height: 80px;
     border: none !important;
     border-radius: 0 !important;
+    background: transparent !important;
+}
+
+/* ── Task cards container ── */
+.task-wrapper .borad-task-data {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
 }
 
 /* ── Task card wrapper ── */
 .task-wrapper .wm-task-card,
 .task-wrapper .project-task-list .card {
     border-radius: 10px !important;
-    margin-bottom: 8px !important;
+    margin-bottom: 0 !important;
     padding: 0 !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border: 1px solid var(--wm-task-border) !important;
-    border-left: 3px solid var(--wm-task-accent) !important;
+    border-left: 1px solid var(--wm-task-border) !important;
     overflow: hidden;
     position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .task-wrapper .wm-task-card:hover,
 .task-wrapper .project-task-list .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
-    border-color: var(--wm-task-accent) !important;
-    border-left-color: var(--wm-task-accent) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* ── Task box inner ── */
@@ -2548,10 +2545,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper i {
     opacity: 1 !important;
 }
 
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-col-title,
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 .wm-col-count {
-    color: #374151 !important;
-}
+/* wm-col-title and wm-col-count use inline status color — no override */
 
 /* Clear button in light mode (header is now white) */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head.update-task .ant-btn.ant-delete,
@@ -2568,39 +2562,37 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head.u
     color: #b91c1c !important;
 }
 
-/* column drag row (kanban body bg) — all white */
+/* column drag row (kanban body bg) — open/transparent like image 2 */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 {
-    background: #ffffff !important;
-    color: #374151 !important;
-    border-bottom: 1px solid #e5e7eb !important;
+    background: transparent !important;
+    border-bottom: none !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .order.small-box {
-    background: #ffffff !important;
-    border-left: 1px solid #e5e7eb !important;
-    border-right: 1px solid #e5e7eb !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06) !important;
+    background: transparent !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
+    box-shadow: none !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_row {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
+    background: transparent !important;
+    border-color: transparent !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .borad-task-data,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .small-box {
-    background: #ffffff !important;
+    background: transparent !important;
     color: #1e293b !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-card {
     background: #ffffff !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
-    border-color: #e5e7eb !important;
-    border-left-color: #3b82f6 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #e5e7eb !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-box h3,

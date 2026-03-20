@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Button,
-  Card,
   Form,
   message,
   Table,
@@ -15,11 +14,13 @@ import {
   EditOutlined,
   SaveTwoTone,
   CloseCircleTwoTone,
+  PlusOutlined,
+  ApartmentOutlined,
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import { useDispatch } from "react-redux";
 import Service from "../../service";
-import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
+import { hideAuthLoader } from "../../appRedux/actions/Auth";
 import "../PMS/settings.css";
 
 const ProjectTechnologies = () => {
@@ -62,10 +63,12 @@ const ProjectTechnologies = () => {
     }
   }, [searchEnabled]);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // API calls
   const getProjectTechList = useCallback(async () => {
     try {
-      dispatch(showAuthLoader());
+      setIsLoading(true);
 
       const reqBody = {
         pageNo: pagination.current,
@@ -101,6 +104,7 @@ const ProjectTechnologies = () => {
       message.error("Failed to fetch project technologies");
     } finally {
       dispatch(hideAuthLoader());
+      setIsLoading(false);
     }
   }, [dispatch, pagination.current, pagination.pageSize, searchText]);
 
@@ -290,110 +294,90 @@ const ProjectTechnologies = () => {
     },
   ];
 
-  const tableFooter = useCallback(() => (
-    <label>
-      Total Records Count is { pagination.total }
-    </label>
-  ), [pagination.total]);
+  const SkeletonTable = () => (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
+      </div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 30}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <Card className="employee-card">
-      <div className="project-technology-container">
-
-        <div className="heading-wrapper">
-          <h2>Project Departments</h2>
-          <Button
-            className="addleave-btn"
-            type="primary"
-            onClick={ () => setIsModalOpen(true) }
-          >
-            + Add
-          </Button>
+    <div className="ps-page">
+      <div className="ps-card">
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><ApartmentOutlined /></span>
+            Departments
+          </h2>
+          <div className="ps-header-right">
+            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+              Add Department
+            </Button>
+          </div>
         </div>
-        <div className="global-search">
+
+        <div className="ps-search">
           <Input.Search
-            ref={ searchRef }
-            placeholder="Search..."
-            onSearch={ handleSearch }
-            onKeyUp={ resetSearchFilter }
-            style={ { width: 200 } }
+            ref={searchRef}
+            placeholder="Search departments..."
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+            allowClear
+            style={{ width: 260 }}
           />
         </div>
+
+        {isLoading ? (
+          <SkeletonTable />
+        ) : (
+          <div className="ps-table-wrap">
+            <Table
+              columns={columns}
+              dataSource={projectList}
+              rowKey="_id"
+              footer={() => <span>Total Records: {pagination.total}</span>}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              onChange={handleTableChange}
+            />
+          </div>
+        )}
       </div>
 
       <Modal
-        open={ isModalOpen }
-        onCancel={ handleModalClose }
-        title="Add Departments"
-        className="project-add-wrapper edit-details-task-model"
-        width={ 600 }
-        footer={ [
-          <Button
-            key="cancel"
-            onClick={ handleModalClose }
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={ () => form.submit() }
-          >
-            Save
-          </Button>,
-        ] }
+        open={isModalOpen}
+        onCancel={handleModalClose}
+        title={<><ApartmentOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Department</>}
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
+          <Button key="submit" className="ps-modal-save" onClick={() => form.submit()}>Save</Button>,
+        ]}
       >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={ form }
-            layout="vertical"
-            onFinish={ addProjectTechnology }
+        <Form form={form} layout="vertical" onFinish={addProjectTechnology}>
+          <Form.Item
+            name="project_tech"
+            label="Department Name"
+            rules={[{ required: true, whitespace: true, message: "Please enter a valid department name" }]}
           >
-            <Row gutter={ [0, 0] }>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  name="project_tech"
-                  label="Project Departments"
-                  rules={ [
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ] }
-                >
-                  <Input
-                    autoComplete="off"
-                    onChange={ (e) => setProjectTech(e.target.value) }
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </div>
+            <Input
+              autoComplete="off"
+              onChange={(e) => setProjectTech(e.target.value)}
+              size="large"
+              placeholder="e.g. Engineering, Marketing"
+            />
+          </Form.Item>
+        </Form>
       </Modal>
-
-      <div className="block-table-content">
-        <Table
-          columns={ columns }
-          dataSource={ projectList }
-          rowKey="_id"
-          footer={ tableFooter }
-          pagination={ {
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "30"],
-            ...pagination,
-          } }
-          onChange={ handleTableChange }
-        />
-      </div>
-
-    </Card>
+    </div>
   );
 };
 

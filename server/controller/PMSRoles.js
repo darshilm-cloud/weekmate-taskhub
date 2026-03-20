@@ -211,18 +211,23 @@ exports.addResourcePermission = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
+    console.log("[addResourcePermission] body:", JSON.stringify(req.body));
+
     const validationSchema = Joi.object({
       pms_role_id: Joi.string().required(),
-      resource_ids: Joi.any().optional().default([]),
+      resource_ids: Joi.array().items(Joi.string()).optional().default([]),
+      permission_names: Joi.array().items(Joi.string()).optional().default([]),
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
+      console.log("[addResourcePermission] validation error:", error.details[0].message);
       return errorResponse(
         res,
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
     }
+    console.log("[addResourcePermission] validated:", JSON.stringify(value));
 
     const role = await PMSRoles.findOne({
       _id: new mongoose.Types.ObjectId(value.pms_role_id),
@@ -233,26 +238,45 @@ exports.addResourcePermission = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND, []);
     }
 
+    // Resolve permission_names → resource IDs (find or create Resource records)
+    const resolvedIds = [...value.resource_ids];
+    if (value.permission_names && value.permission_names.length > 0) {
+      for (const name of value.permission_names) {
+        let resource = await Resource.findOne({ resource_name: name, isDeleted: false });
+        if (!resource) {
+          resource = new Resource({
+            resource_name: name,
+            createdBy: req.user._id,
+            updatedBy: req.user._id,
+          });
+          await resource.save();
+        }
+        resolvedIds.push(resource._id.toString());
+      }
+    }
+
+    console.log("[addResourcePermission] resolvedIds:", resolvedIds);
+
     // delete exists data..
-    await RolePermissions.deleteMany({
+    const deleted = await RolePermissions.deleteMany({
       companyId:newObjectId(decodedCompanyId),
       pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
-    })
-    
-    if (value.resource_ids && value.resource_ids.length > 0) {
-      let obj = {
+    });
+    console.log("[addResourcePermission] deleted count:", deleted.deletedCount);
+
+    if (resolvedIds.length > 0) {
+      const obj = {
         pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
         createdBy: req.user._id,
         updatedBy: req.user._id,
       };
-      
-      for (let i = 0; i < value.resource_ids.length; i++) {
-        const resource_id = new mongoose.Types.ObjectId(value.resource_ids[i]);
 
+      for (const id of resolvedIds) {
+        const resource_id = new mongoose.Types.ObjectId(id);
         const isExist = await RolePermissions.findOne({
           companyId:newObjectId(decodedCompanyId),
           pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
-          resource_id: new mongoose.Types.ObjectId(resource_id),
+          resource_id,
           isDeleted: false,
         });
 
@@ -263,9 +287,11 @@ exports.addResourcePermission = async (req, res) => {
             ...obj,
           });
           await newData.save();
+          console.log("[addResourcePermission] created RolePermission for resource_id:", id);
         }
       }
     }
+    console.log("[addResourcePermission] DONE, total saved:", resolvedIds.length);
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -292,10 +318,13 @@ exports.getRolePermissions = async (req, res) => {
       isDeleted: false,
     });
 
+    console.log("[getRolePermissions] roleId:", req.params.roleId, "companyId:", decodedCompanyId, "found permissions:", rolePermissions.length);
+
     let resources = [];
     if (rolePermissions) {
       resources = rolePermissions?.map((p) => p.resource_id?.toString());
     }
+    console.log("[getRolePermissions] active resource_ids:", resources);
 
     const allResource = await Resource.find({ isDeleted: false });
     let response = [];

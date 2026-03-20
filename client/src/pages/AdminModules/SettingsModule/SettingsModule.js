@@ -36,7 +36,7 @@ const SettingsModule = () => {
   const [savingLoading, setSavingLoading] = useState(false);
   const [fileSizeLoading, setFileSizeLoading] = useState(false);
   const [company, setCompany] = useState(null);
-  
+
   // SMTP States
   const [smtpHost, setSmtpHost] = useState("");
   const [smtpPort, setSmtpPort] = useState("");

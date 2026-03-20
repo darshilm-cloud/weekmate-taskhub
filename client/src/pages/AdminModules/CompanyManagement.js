@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  Card,
   Row,
   Col,
   Button,
@@ -9,13 +8,17 @@ import {
   Input,
   Upload,
   message,
-  Spin,
 } from "antd";
 import {
   EditOutlined,
   UploadOutlined,
   CloseOutlined,
   LinkOutlined,
+  BankOutlined,
+  TeamOutlined,
+  CalendarOutlined,
+  GlobalOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import Service from "../../service";
@@ -158,6 +161,8 @@ export default function CompanyManagement() {
   const [company, setCompany] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const [faviconError, setFaviconError] = useState(false);
 
   // File states
   const [pendingLogo, setPendingLogo] = useState(null);
@@ -454,140 +459,145 @@ export default function CompanyManagement() {
     []
   );
 
+  const initials = company?.companyName
+    ? company.companyName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+    : "C";
+
+  const logoSrc = company?.companyLogoUrl
+    ? `${process.env.REACT_APP_API_URL}/public/${company.companyLogoUrl}`
+    : null;
+
+  const faviconSrc = company?.companyFavIcoUrl
+    ? `${process.env.REACT_APP_API_URL}/public/${company.companyFavIcoUrl}`
+    : null;
+
+  const STATS = [
+    { label: "Company Name",     value: company?.companyName || "—",                         icon: <BankOutlined />,     color: "#e8f0f8", iconColor: "#0b3a5b" },
+    { label: "Company Slug",     value: company?.companyDomain || "—",                       icon: <GlobalOutlined />,   color: "#e8f5e9", iconColor: "#2e7d32" },
+    { label: "Total Employees",  value: company?.employeeCount ?? 0,                          icon: <TeamOutlined />,     color: "#fff3e0", iconColor: "#e65100" },
+    { label: "Created At",       value: company ? moment(company.createdAt).format("MMM DD, YYYY") : "—", icon: <CalendarOutlined />, color: "#f3e5f5", iconColor: "#6a1b9a" },
+  ];
+
   if (loading && !company) {
     return (
-      <div
-        className="company-loading"
-        style={{ textAlign: "center", padding: "50px" }}
-      >
-        <Spin size="large" />
+      <div className="cm-page">
+        <div className="cm-shimmer cm-skeleton-hero" />
+        <div className="cm-skeleton-stats">
+          {[1,2,3,4].map(i => <div key={i} className="cm-shimmer cm-skeleton-stat" />)}
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div className="cm-shimmer" style={{ width: 140, height: 14, marginBottom: 8 }} />
+          <div className="cm-shimmer" style={{ width: 260, height: 12 }} />
+        </div>
+        <div className="cm-skeleton-assets">
+          {[1,2].map(i => <div key={i} className="cm-shimmer cm-skeleton-asset" />)}
+        </div>
       </div>
     );
   }
 
   return (
-    <Card className="company-profile-card">
-      <div className="company-header">
-        <div className="company-header-copy">
-          <h1>Company Management</h1>
-          <p>Manage your workspace identity, branding assets, and public company information.</p>
+    <div className="cm-page">
+      {/* Hero */}
+      <div className="cm-hero">
+        <div className="cm-hero-left">
+          <div className="cm-hero-avatar">
+            {logoSrc && !logoError
+              ? <img src={logoSrc} alt="logo" onError={() => setLogoError(true)} />
+              : <BankOutlined style={{ fontSize: 32 }} />}
+          </div>
+          <div>
+            <h1 className="cm-hero-name">{company?.companyName || "Company"}</h1>
+            <p className="cm-hero-sub">Manage your workspace identity &amp; branding</p>
+            <div className="cm-hero-badge">
+              <GlobalOutlined style={{ fontSize: 11 }} />
+              {company?.companyDomain || companySlug}
+            </div>
+          </div>
         </div>
-        <Button
-          type="primary"
-          className="company-edit-btn"
-          icon={<EditOutlined />}
-          disabled={!company}
-          onClick={showEditModal}
-          loading={loading}
-        >
-          Edit
-        </Button>
+        <div className="cm-hero-right">
+          <Button
+            className="cm-edit-btn"
+            icon={<EditOutlined />}
+            disabled={!company}
+            onClick={showEditModal}
+            loading={loading}
+          >
+            Edit Profile
+          </Button>
+        </div>
       </div>
 
-      <Row gutter={[24, 24]} className="info-cards">
-        <Col xs={24} sm={12}>
-          <InfoCard label="COMPANY NAME" value={company?.companyName} />
-        </Col>
-        <Col xs={24} sm={12}>
-          <InfoCard label="COMPANY SLUG" value={company?.companyDomain} />
-        </Col>
-        <Col xs={24} sm={12}>
-          <InfoCard
-            label="TOTAL EMPLOYEES"
-            value={company?.employeeCount ?? 0}
-          />
-        </Col>
-        <Col xs={24} sm={12}>
-          <InfoCard
-            label="CREATED AT"
-            value={
-              company ? moment(company.createdAt).format("MMM DD, YYYY") : ""
-            }
-          />
-        </Col>
-      </Row>
+      {/* Stats */}
+      <div className="cm-stats">
+        {STATS.map(s => (
+          <div className="cm-stat-card" key={s.label}>
+            <div className="cm-stat-icon" style={{ background: s.color, color: s.iconColor }}>
+              {s.icon}
+            </div>
+            <div className="cm-stat-body">
+              <div className="cm-stat-label">{s.label}</div>
+              <div className="cm-stat-value">{s.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <div className="company-assets">
-        <div className="company-section-head">
-          <h3>Company Assets</h3>
-          <span>Logo and favicon used across the workspace.</span>
-        </div>
-        <Row gutter={[24, 24]}>
-          <Col xs={24} sm={12}>
-            <div className="asset-container">
-              <div className="asset-label">COMPANY LOGO</div>
-              <AssetCard
-                title="Logo"
-                imageUrl={company?.companyLogoUrl}
-                placeholder="No logo"
-                disabled={true} // Assets are read-only in main view
-                onUpload={handleLogoUpload}
-                onRemove={handleLogoRemove}
-              />
+      {/* Assets */}
+      <p className="cm-section-title">Company Assets</p>
+      <p className="cm-section-sub">Logo and favicon used across the workspace.</p>
+      <div className="cm-assets-grid">
+        {[
+          { label: "COMPANY LOGO",    src: logoSrc,    fallback: "No logo uploaded",    hasError: logoError,    onErr: () => setLogoError(true) },
+          { label: "COMPANY FAVICON", src: faviconSrc, fallback: "No favicon uploaded", hasError: faviconError, onErr: () => setFaviconError(true) },
+        ].map(({ label, src, fallback, hasError, onErr }) => (
+          <div className="cm-asset-card" key={label}>
+            <div className="cm-asset-header">
+              <span className="cm-asset-label">{label}</span>
             </div>
-          </Col>
-          <Col xs={24} sm={12}>
-            <div className="asset-container">
-              <div className="asset-label">COMPANY FAVICON</div>
-              <AssetCard
-                title="Favicon"
-                imageUrl={company?.companyFavIcoUrl}
-                placeholder="No favicon"
-                disabled={true} // Assets are read-only in main view
-                onUpload={handleFaviconUpload}
-                onRemove={handleFaviconRemove}
-              />
+            <div className="cm-asset-body">
+              {src && !hasError ? (
+                <img src={src} alt={label} className="cm-asset-img" onError={onErr} />
+              ) : (
+                <div className="cm-asset-empty">
+                  <PictureOutlined className="cm-asset-empty-icon" />
+                  <span className="cm-asset-empty-text">{fallback}</span>
+                </div>
+              )}
             </div>
-          </Col>
-        </Row>
+          </div>
+        ))}
       </div>
 
       {/* Edit Modal */}
       <Modal
-        title="Edit Company"
-        className="company-edit-modal"
+        title={<><EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Edit Company</>}
+        className="cm-modal"
         open={isModalVisible}
         onCancel={handleModalClose}
         footer={[
-          <Button
-            key="cancel"
-            className="company-modal-cancel"
-            onClick={handleModalClose}
-            disabled={modalLoading}
-          >
+          <Button key="cancel" className="cm-modal-cancel" onClick={handleModalClose} disabled={modalLoading}>
             Cancel
           </Button>,
-          <Button
-            key="save"
-            type="primary"
-            className="company-modal-save"
-            loading={modalLoading}
-            onClick={handleSave}
-          >
+          <Button key="save" className="cm-modal-save" loading={modalLoading} onClick={handleSave}>
             Save Changes
           </Button>,
         ]}
-        width={700}
+        width={640}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="companyName"
-            label="Company Name"
-            rules={formRules.companyName}
-          >
+          <Form.Item name="companyName" label="Company Name" rules={formRules.companyName}>
             <Input placeholder="Enter company name" />
           </Form.Item>
-
           <Form.Item
             label="Company Slug"
             name="companySlug"
             rules={formRules.companySlug}
-            extra="This will be used to create your company's unique domain. Only lowercase letters, numbers, and hyphens are allowed."
+            extra="Only lowercase letters, numbers, and hyphens are allowed."
           >
             <Input prefix={<LinkOutlined />} placeholder="my-company" />
           </Form.Item>
-
-          <Row gutter={24}>
+          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item label="Logo">
                 <AssetCard
@@ -617,6 +627,6 @@ export default function CompanyManagement() {
           </Row>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 }

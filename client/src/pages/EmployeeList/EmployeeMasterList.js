@@ -270,7 +270,11 @@ const EmployeeMasterList = () => {
   const roleLabels  = Object.keys(analytics.roleBreakdown);
   const roleSeries  = Object.values(analytics.roleBreakdown);
   const donutOptions = {
-    chart: { type: "donut", fontFamily: "inherit" },
+    chart: {
+      type: "donut",
+      fontFamily: "inherit",
+      animations: { enabled: false },
+    },
     labels: roleLabels.length ? roleLabels : ["No Data"],
     colors: ["#2563eb", "#7c3aed", "#16a34a", "#f59e0b", "#dc2626", "#0891b2"],
     legend: { position: "bottom", fontSize: "12px" },

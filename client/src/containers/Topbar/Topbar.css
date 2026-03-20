@@ -1,5 +1,195 @@
 /* Task Pad style header — light & dark */
 
+/* ══════════════════════════════════════════
+   Settings Dropdown Popover
+   ══════════════════════════════════════════ */
+.wm-settings-popover .ant-popover-inner {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  overflow: hidden;
+  border: 1px solid #e9ecf0 !important;
+}
+
+.wm-settings-popover .ant-popover-inner-content {
+  padding: 0 !important;
+}
+
+.wm-settings-dropdown {
+  display: flex;
+  gap: 0;
+  min-width: 540px;
+}
+
+.wm-settings-group {
+  flex: 1;
+  padding: 0;
+  border-right: 1px solid #f0f2f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.wm-settings-group:last-child {
+  border-right: none;
+}
+
+.wm-settings-group-header {
+  padding: 16px 20px 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e9ecf0;
+}
+
+.wm-settings-group-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wm-settings-group-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #3b82f6, #6366f1);
+}
+
+.wm-settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.wm-settings-item {
+  padding: 9px 18px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+  border-left: 2px solid transparent;
+  margin: 1px 8px;
+  border-radius: 8px;
+}
+
+.wm-settings-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wm-settings-item-label {
+  flex: 1;
+  font-weight: 450;
+}
+
+.wm-settings-item:hover {
+  background: #f0f7ff;
+  color: #1d4ed8;
+  border-left-color: #bfdbfe;
+}
+
+.wm-settings-item:hover .wm-settings-item-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.wm-settings-item.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 500;
+  border-left-color: #3b82f6;
+}
+
+.wm-settings-item.active .wm-settings-item-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+/* Active settings button */
+.weekmate-header-icon-btn.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Dark theme */
+body.dark-theme .wm-settings-popover .ant-popover-inner,
+body[data-theme="dark"] .wm-settings-popover .ant-popover-inner {
+  background: #1e293b !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0,0,0,0.3) !important;
+  border-color: rgba(71, 85, 105, 0.3) !important;
+}
+
+body.dark-theme .wm-settings-group,
+body[data-theme="dark"] .wm-settings-group {
+  border-right-color: rgba(71, 85, 105, 0.25);
+}
+
+body.dark-theme .wm-settings-group-header,
+body[data-theme="dark"] .wm-settings-group-header {
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom-color: rgba(71, 85, 105, 0.25);
+}
+
+body.dark-theme .wm-settings-group-title,
+body[data-theme="dark"] .wm-settings-group-title {
+  color: #64748b;
+}
+
+body.dark-theme .wm-settings-item,
+body[data-theme="dark"] .wm-settings-item {
+  color: #cbd5e1;
+}
+
+body.dark-theme .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item-icon {
+  background: rgba(51, 65, 85, 0.6);
+  color: #94a3b8;
+}
+
+body.dark-theme .wm-settings-item:hover,
+body[data-theme="dark"] .wm-settings-item:hover {
+  background: rgba(37, 99, 235, 0.12);
+  color: #93c5fd;
+  border-left-color: rgba(96, 165, 250, 0.4);
+}
+
+body.dark-theme .wm-settings-item:hover .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item:hover .wm-settings-item-icon {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+body.dark-theme .wm-settings-item.active,
+body[data-theme="dark"] .wm-settings-item.active {
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+  border-left-color: #3b82f6;
+}
+
+body.dark-theme .wm-settings-item.active .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
+  background: rgba(37, 99, 235, 0.25);
+  color: #60a5fa;
+}
+
 .weekmate-header.ant-layout-header {
   display: flex !important;
   align-items: center !important;
@@ -280,6 +470,43 @@
 .weekmate-header-right .bell-icon .fi {
   color: #d97706;
   font-size: 18px;
+}
+
+/* ── Settings icon button ── */
+.weekmate-header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  color: #374151;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.weekmate-header-icon-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0b3a5b;
+}
+
+body.dark-theme .weekmate-header-icon-btn,
+body[data-theme="dark"] .weekmate-header-icon-btn {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+body.dark-theme .weekmate-header-icon-btn:hover,
+body[data-theme="dark"] .weekmate-header-icon-btn:hover {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(100, 116, 139, 0.9);
+  color: #ffffff;
 }
 
 body.dark-theme .weekmate-navbar-search-btn,

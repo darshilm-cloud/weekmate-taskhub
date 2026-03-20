@@ -7,7 +7,6 @@ import {
   Form,
   message,
   Modal,
-  Card,
   Row,
   Col,
 } from "antd";
@@ -20,6 +19,8 @@ import {
   CloseCircleTwoTone,
   SaveTwoTone,
   EditOutlined,
+  PlusOutlined,
+  NodeIndexOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import "./settings.css";
@@ -43,6 +44,7 @@ function Workflows() {
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortColumn, setSortColumn] = useState("project_workflow");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const columns = [
     {
@@ -171,36 +173,30 @@ function Workflows() {
   // get workflow list
   const getListWorkflow = async () => {
     try {
-      dispatch(showAuthLoader());
-
+      setIsLoading(true);
       const reqBody = {
         isDropdown: false,
         pageNo: pagination.current,
         limit: pagination.pageSize,
         search: searchText,
       };
-      if (searchText && searchText !== "") {
-        reqBody.search = searchText;
-      }
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getworkflow,
         body: reqBody,
       });
-      dispatch(hideAuthLoader());
       if (response?.data?.data?.length > 0) {
-        setPagination({
-          ...pagination,
-          total: response.data.metadata.total,
-        });
+        setPagination({ ...pagination, total: response.data.metadata.total });
         setWorkflowList(response.data.data);
         setIsModalOpen(false);
       } else {
         setWorkflowList([]);
-        setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        setPagination(p => ({ ...p, total: 0 }));
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleOk = async (value) => {
@@ -300,100 +296,85 @@ function Workflows() {
     sortOrder,
     sortColumn,
   ]);
-  return (
-    <>
-      <Card className="employee-card">
-        <div className="workflow-container">
+  const SkeletonTable = () => (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
+      </div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 30}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
 
-          <div className="heading-wrapper">
-            <h2>Workflow</h2>
-            <Button
-              className="addleave-btn"
-              type="primary"
-              onClick={ showModal }
-            >
-              + Add
+  return (
+    <div className="ps-page">
+      <div className="ps-card">
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><NodeIndexOutlined /></span>
+            WorkFlows
+          </h2>
+          <div className="ps-header-right">
+            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={showModal}>
+              Add Workflow
             </Button>
           </div>
-          <div className="global-search">
-            <Search
-              ref={ searchRef }
-              placeholder="Search..."
-              onSearch={ onSearch }
-              style={ { width: 200 } }
-              className="mr2"
-            />
-          </div>
-
-
-          <div className="block-table-content">
-            <Table
-              columns={ columns }
-              pagination={ {
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                ...pagination,
-              } }
-              footer={ getFooterDetails }
-              onChange={ handleTableChange }
-              dataSource={ workflowList }
-            />
-          </div>
-          <Modal
-            open={ isModalOpen }
-            onCancel={ handleCancel }
-            title="Add Workflow"
-            className="project-add-wrapper edit-details-task-model"
-            width={ 600 }
-            footer={ [
-              <Button
-                key="cancel"
-                onClick={ handleCancel }
-                size="large"
-                className="square-outline-btn ant-delete"
-              >
-                Cancel
-              </Button>,
-              <Button
-                key="submit"
-                type="primary"
-                size="large"
-                className="square-primary-btn"
-                onClick={ () => addform.submit() }
-              >
-                Save
-              </Button>,
-            ] }
-          >
-            <div className="overview-modal-wrapper task-overview-modal-wrapper">
-              <Form
-                form={ addform }
-                layout="vertical"
-                onFinish={ addWorkflowDetails }
-              >
-                <Row gutter={ [0, 0] }>
-                  <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                    <Form.Item
-                      name="project_workflow"
-                      label="Add WorkFlow"
-                      rules={ [
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please enter a valid title",
-                        },
-                      ] }
-                    >
-                      <Input autoComplete="off" size="large" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Form>
-            </div>
-          </Modal>
         </div>
-      </Card>
-    </>
+
+        <div className="ps-search">
+          <Search
+            ref={searchRef}
+            placeholder="Search workflows..."
+            onSearch={onSearch}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
+            style={{ width: 260 }}
+          />
+        </div>
+
+        {isLoading ? (
+          <SkeletonTable />
+        ) : (
+          <div className="ps-table-wrap">
+            <Table
+              columns={columns}
+              dataSource={workflowList}
+              rowKey="_id"
+              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              onChange={handleTableChange}
+            />
+          </div>
+        )}
+      </div>
+
+      <Modal
+        open={isModalOpen}
+        onCancel={handleCancel}
+        title={<><NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add WorkFlow</>}
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
+          <Button key="submit" className="ps-modal-save" onClick={() => addform.submit()}>Save</Button>,
+        ]}
+      >
+        <Form form={addform} layout="vertical" onFinish={addWorkflowDetails}>
+          <Form.Item
+            name="project_workflow"
+            label="Workflow Name"
+            rules={[{ required: true, whitespace: true, message: "Please enter a valid workflow name" }]}
+          >
+            <Input autoComplete="off" size="large" placeholder="e.g. Development, Testing" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 }
 

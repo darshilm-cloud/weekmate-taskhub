@@ -4,6 +4,7 @@
 
 .rpm-page {
   padding: 24px;
+  padding-bottom: 80px;
   background: #f1f5f9;
   min-height: 100%;
   display: flex;
@@ -426,20 +427,29 @@
 
 /* ── Sticky Save Bar ─────────────────────────────────────────── */
 .rpm-save-bar {
-  position: sticky;
+  position: fixed;
   bottom: 0;
-  left: 0;
+  left: 140px;
   right: 0;
-  margin: 0 -24px -24px;
-  background: #1e293b;
-  border-top: 1px solid #334155;
+  margin: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 16px rgba(11, 58, 91, 0.08);
   padding: 14px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 50;
-  border-radius: 0 0 14px 14px;
+  z-index: 1000;
+  border-radius: 0;
   gap: 12px;
+}
+
+.rpm-save-bar-text {
+  color: #64748b !important;
+}
+
+.rpm-save-bar-text strong {
+  color: #0b3a5b !important;
 }
 
 .rpm-save-bar-text {
@@ -690,4 +700,35 @@ body[data-theme="dark"] .rpm-skeleton-row {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ── Dark Theme — Save Bar ───────────────────────────────────── */
+body.dark-theme .rpm-save-bar,
+body.dark-theme.admin-user .rpm-save-bar,
+body[data-theme="dark"] .rpm-save-bar,
+body.admin-user[data-theme="dark"] .rpm-save-bar {
+  background: #0f172a !important;
+  border-top: 1px solid #1e3a5f !important;
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-theme .rpm-save-bar-text,
+body.dark-theme.admin-user .rpm-save-bar-text,
+body[data-theme="dark"] .rpm-save-bar-text,
+body.admin-user[data-theme="dark"] .rpm-save-bar-text {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .rpm-save-bar-text .anticon,
+body.dark-theme.admin-user .rpm-save-bar-text .anticon,
+body[data-theme="dark"] .rpm-save-bar-text .anticon,
+body.admin-user[data-theme="dark"] .rpm-save-bar-text .anticon {
+  color: #f59e0b !important;
+}
+
+body.dark-theme .rpm-save-bar-text strong,
+body.dark-theme.admin-user .rpm-save-bar-text strong,
+body[data-theme="dark"] .rpm-save-bar-text strong,
+body.admin-user[data-theme="dark"] .rpm-save-bar-text strong {
+  color: #7dd3fc !important;
 }

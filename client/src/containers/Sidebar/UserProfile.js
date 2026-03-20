@@ -78,6 +78,7 @@ function UserProfile() {
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const avatarSrc = authUser?.emp_img
     ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
@@ -501,30 +502,27 @@ function UserProfile() {
     <ul className="gx-user-popover">
       {authUser?._id && (
         <>
-          {getRoles(["Client"]) && <li onClick={showModal}>Change Password</li>}
+          {getRoles(["Client"]) && (
+            <li onClick={() => { setUserMenuOpen(false); showModal(); }}>Change Password</li>
+          )}
           {!getRoles(["Client"]) && (
             <>
-            <li
-              onClick={() => {
-                setIsProfileModalOpen(true);
-              }}
-            >
-              Profile
-            </li>
-            <li
-              onClick={() => {
-                setSettingModal(true);
-                emailPreference();
-              }}
-            >
-              General Settings
-            </li>
+              <li onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
+                Profile
+              </li>
+              <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); emailPreference(); }}>
+                General Settings
+              </li>
             </>
           )}
-
-          {getRoles(["Admin"]) && <li onClick={ () => history.push(`/${companySlug}/admin/company-management`)}>Company Management</li>}
-
-          <li onClick={() => dispatch(userSignOut())}>Logout</li>
+          {getRoles(["Admin"]) && (
+            <li onClick={() => setUserMenuOpen(false)}>
+              <Link to={`/${companySlug}/admin/company-management`} style={{ color: "inherit" }}>
+                Company Management
+              </Link>
+            </li>
+          )}
+          <li onClick={() => { setUserMenuOpen(false); dispatch(userSignOut()); }}>Logout</li>
         </>
       )}
     </ul>
@@ -1057,6 +1055,8 @@ function UserProfile() {
               placement="bottomRight"
               content={userMenuOptions}
               trigger="click"
+              open={userMenuOpen}
+              onOpenChange={setUserMenuOpen}
               className="user-profile"
             >
               <div className="user-pill">

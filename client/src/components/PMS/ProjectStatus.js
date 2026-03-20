@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
-  Card,
   Form,
   message,
   Table,
@@ -16,17 +15,34 @@ import {
   SaveTwoTone,
   CloseCircleTwoTone,
   PlusOutlined,
+  NodeIndexOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
 import { AiOutlineDelete } from "react-icons/ai";
-import { useDispatch } from "react-redux";
-import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import "./settings.css";
 
+const SKELETON_ROWS = 6;
+
+function SkeletonTable({ cols = 2 }) {
+  return (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        {Array.from({ length: cols }).map((_, i) => (
+          <div key={i} className="ps-shimmer" style={{ width: i === 0 ? "55%" : "20%", height: 12 }} />
+        ))}
+      </div>
+      {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: `${45 + Math.random() * 30}%` }} />
+          <div className="ps-shimmer" style={{ width: "15%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ProjectStatus() {
-  
   const [addProjectStatus] = Form.useForm();
-  const dispatch = useDispatch();
   const searchRef = useRef();
   const Search = Input.Search;
 
@@ -34,17 +50,14 @@ function ProjectStatus() {
   const [projectstatus, setProjectStatus] = useState("");
   const [projectList, setProjectList] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [editid, setEditid] = useState();
   const [flag, setFlag] = useState(false);
   const [edtitext, setEdittext] = useState({});
 
   const handlechange = e => {
-    const status = e.target.value;
-    setEdittext({ ...edtitext, status: status });
+    setEdittext({ ...edtitext, status: e.target.value });
   };
 
   const onSearch = value => {
@@ -58,7 +71,7 @@ function ProjectStatus() {
 
   const getListProjectStatus = async () => {
     try {
-      dispatch(showAuthLoader());
+      setIsLoading(true);
       const reqBody = {
         pageNo: pagination.current,
         limit: pagination.pageSize,
@@ -66,9 +79,7 @@ function ProjectStatus() {
         sortBy: "desc",
         isDropdown: false,
       };
-      if (searchText && searchText !== "") {
-        reqBody.search = searchText;
-      }
+      if (searchText) reqBody.search = searchText;
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -76,32 +87,27 @@ function ProjectStatus() {
         body: reqBody,
       });
 
-      dispatch(hideAuthLoader());
       if (response?.data?.data?.length > 0) {
-        setPagination({
-          ...pagination,
-          total: response.data.metadata.total,
-        });
+        setPagination({ ...pagination, total: response.data.metadata.total });
         setProjectList(response.data.data);
         setIsModalOpen(false);
       } else {
         setProjectList([]);
-        setPagination(prevPagination => ({ ...prevPagination, total: 0 }));
+        setPagination(p => ({ ...p, total: 0 }));
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOk = async () => {
     try {
-      const reqBody = {
-        title: projectstatus.trim(),
-      };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addProjectStatus,
-        body: reqBody,
+        body: { title: projectstatus.trim() },
       });
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
@@ -118,21 +124,14 @@ function ProjectStatus() {
 
   const handleEdit = async val => {
     try {
-      const name = edtitext?.status.trim();
-
-      const reqBody = {
-        title: name,
-      };
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: Service.editProjectStatus + "/" + val,
-        body: reqBody,
+        body: { title: edtitext?.status?.trim() },
       });
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        setProjectStatus(response.data.data.project_type);
         getListProjectStatus();
-        setIsModalOpen(false);
         setEdittext({});
       } else {
         setEdittext({});
@@ -149,19 +148,12 @@ function ProjectStatus() {
         methodName: Service.deleteMethod,
         api_url: Service.deleteProjectStatus + "/" + val,
       });
-      if (response?.data && response?.data?.data && response?.data?.status) {
+      if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        const isLastItemOnPage =
-          projectList.length === 1 && pagination.current > 1;
-
-        if (isLastItemOnPage) {
-          setPagination(prevPagination => ({
-            ...prevPagination,
-            current: prevPagination.current - 1,
-          }));
+        if (projectList.length === 1 && pagination.current > 1) {
+          setPagination(p => ({ ...p, current: p.current - 1 }));
         }
         getListProjectStatus();
-        setIsModalOpen(false);
       } else {
         message.error(response.data.message);
       }
@@ -175,32 +167,15 @@ function ProjectStatus() {
     setIsModalOpen(false);
   };
 
-  const getFooterDetails = () => {
-    return (
-      <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
-      </label>
-    );
-  };
-
-  const handleTableChange = page => {
-    setPagination({ ...pagination, ...page });
-  };
-
   const columns = [
     {
       title: "Status",
       dataIndex: "title",
       key: "title",
-      width: 700,
       render: (text, record) => {
         const position = record?.title.trim();
-        return record?._id == editid ? (
-          <span
-            onChange={value => {
-              handlechange(value);
-            }}
-          >
+        return record?._id === editid ? (
+          <span onChange={handlechange}>
             <Input defaultValue={position} />
           </span>
         ) : (
@@ -211,53 +186,26 @@ function ProjectStatus() {
     {
       title: "Actions",
       dataIndex: "action",
-      width: 200,
+      width: 120,
       render: (text, record) => (
-        <div
-          style={{
-            display: "flex",
-            flexwrap: "wrap",
-          }}
-        >
-          {flag == true && editid == record?._id ? (
+        <div style={{ display: "flex", gap: 4 }}>
+          {flag && editid === record?._id ? (
             <>
-              <Button type="link edit">
-                <SaveTwoTone
-                  style={{ fontSize: "18px" }}
-                  onClick={() => {
-                    handleEdit(record?._id);
-                    setFlag(false);
-                    setEditid("");
-                  }}
-                />
+              <Button type="link" style={{ padding: 4 }}>
+                <SaveTwoTone style={{ fontSize: 18 }} onClick={() => { handleEdit(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button
-                type="link delete"
-                title="View"
-                onClick={() => setEditid("")}
-              >
-                <CloseCircleTwoTone style={{ fontSize: "18px" }} />
+              <Button type="link" style={{ padding: 4 }} onClick={() => setEditid("")}>
+                <CloseCircleTwoTone style={{ fontSize: 18 }} />
               </Button>
             </>
           ) : (
             <>
-              <Button disabled={record.isDefault} type="link edit">
-                <EditOutlined
-                  style={{ color: "green", fontSize: "18px" }}
-                  onClick={() => {
-                    setEditid(record?._id);
-                    setFlag(true);
-                  }}
-                />
+              <Button disabled={record.isDefault} type="link" style={{ padding: 4 }}>
+                <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
-              <Popconfirm
-                title="Do you really want to delete this Status?"
-                okText="Yes"
-                cancelText="No"
-                onConfirm={() => handleDeleteProjectTech(record?._id)}
-              >
-                <Button disabled={record.isDefault} type="link delete">
-                  <AiOutlineDelete style={{ color: "red", fontSize: "18px" }} />
+              <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
+                <Button disabled={record.isDefault} type="link" style={{ padding: 4 }}>
+                  <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
                 </Button>
               </Popconfirm>
             </>
@@ -267,109 +215,74 @@ function ProjectStatus() {
     },
   ];
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
   return (
-    <>
-      <Card className="employee-card">
-        <div className="project-status-container">
-        
-            <div className="heading-wrapper">
-              <h2>Project Status</h2>
-              <Button
-                type="primary"
-                className="addleave-btn"
-                onClick={showModal}
-                size="default"
-                icon={<PlusOutlined/>}
-              >
-                Add
-              </Button>
-            </div>
-            <div className="global-search">
-              <Search
-                ref={searchRef}
-                placeholder="Search..."
-                onSearch={onSearch}
-                style={{ width: 200 }}
-              />
-            </div>
-        
-          <Modal
-      open={isModalOpen}
-      onCancel={handleCancel}
-      title="Add Project Status"
-      className="project-add-wrapper edit-details-task-model"
-      width={600}
-      footer={[
-        <Button
-          key="cancel"
-          onClick={handleCancel}
-          size="large"
-          className="square-outline-btn ant-delete"
-        >
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          size="large"
-          className="square-primary-btn"
-          onClick={() => addProjectStatus.submit()}
-        >
-          Save
-        </Button>,
-      ]}
-    >
-      <div className="overview-modal-wrapper task-overview-modal-wrapper">
-        <Form
-          form={addProjectStatus}
-          layout="vertical"
-          onFinish={handleOk}
-        >
-          <Row gutter={[0, 0]}>
-            <Col xs={24} sm={24} md={24} lg={24}>
-              <Form.Item
-                name="title"
-                label="Project Status"
-                rules={[
-                  {
-                    required: true,
-                    whitespace: true,
-                    message: "Please enter a valid title",
-                  },
-                ]}
-              >
-                <Input
-                  autoComplete="off"
-                  onChange={(e) => setProjectStatus(e.target.value)}
-                  size="large"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
-    </Modal>
+    <div className="ps-page">
+      <div className="ps-card">
+        {/* Header */}
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><NodeIndexOutlined /></span>
+            Project Status
+          </h2>
+          <div className="ps-header-right">
+            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+              Add Status
+            </Button>
+          </div>
+        </div>
 
-          <div className="block-table-content">
+        {/* Search */}
+        <div className="ps-search">
+          <Search
+            ref={searchRef}
+            placeholder="Search status..."
+            onSearch={onSearch}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
+            style={{ width: 260 }}
+          />
+        </div>
+
+        {/* Table / Skeleton */}
+        {isLoading ? (
+          <SkeletonTable cols={2} />
+        ) : (
+          <div className="ps-table-wrap">
             <Table
               columns={columns}
               dataSource={projectList}
-              footer={getFooterDetails}
-              pagination={{
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                ...pagination,
-              }}
-              onChange={handleTableChange}
+              rowKey="_id"
+              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              onChange={page => setPagination({ ...pagination, ...page })}
             />
           </div>
-        </div>
-      </Card>
-    </>
+        )}
+      </div>
+
+      {/* Modal */}
+      <Modal
+        open={isModalOpen}
+        onCancel={handleCancel}
+        title={<><NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Project Status</>}
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
+          <Button key="submit" className="ps-modal-save" onClick={() => addProjectStatus.submit()}>Save</Button>,
+        ]}
+      >
+        <Form form={addProjectStatus} layout="vertical" onFinish={handleOk}>
+          <Form.Item
+            name="title"
+            label="Status Name"
+            rules={[{ required: true, whitespace: true, message: "Please enter a valid status" }]}
+          >
+            <Input autoComplete="off" onChange={e => setProjectStatus(e.target.value)} size="large" placeholder="e.g. In Progress" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 }
 

@@ -29,6 +29,16 @@ const PermissionModuleController = () => {
   /* ref for original snapshot (used by discard) */
   const originalRef = useRef([]);
 
+  /* ref always holds LATEST localPermissions — updated synchronously
+     inside every write so savePermissions never reads stale data */
+  const localPermissionsRef = useRef([]);
+
+  /* helper: write to both state AND ref atomically */
+  const setPermissions = useCallback((next) => {
+    localPermissionsRef.current = next;
+    setLocalPermissions(next);
+  }, []);
+
   /* ── 1. fetch all roles ─────────────────────────────────────── */
   const getRoledetails = useCallback(async () => {
     try {
@@ -69,9 +79,10 @@ const PermissionModuleController = () => {
         api_url:    `${Service.getPermissionByRole}/${roleId}`,
       });
       const data = response?.data?.data || [];
+      const mapped = data.map((p) => ({ ...p }));
       setPermissionListData(data);
-      setLocalPermissions(data.map((p) => ({ ...p })));
-      originalRef.current = data.map((p) => ({ ...p }));
+      originalRef.current = mapped;
+      setPermissions(mapped);          // updates ref + state together
     } catch (error) {
       message.error("Failed to load permissions");
     } finally {
@@ -105,30 +116,33 @@ const PermissionModuleController = () => {
 
   /* ── 4. local toggle (no API call, just track changes) ─────── */
   const onPermissionChange = useCallback((checked, permId, permName) => {
-    setLocalPermissions((prev) => {
-      let next;
-      if (permId) {
-        /* existing permission — update by _id */
-        next = prev.map((p) =>
-          p._id === permId ? { ...p, isAccess: checked } : p
-        );
-      } else {
-        /* permission not yet in local list — add a virtual entry by name */
-        const exists = prev.some((p) => p.name === permName);
-        next = exists
-          ? prev.map((p) => p.name === permName ? { ...p, isAccess: checked } : p)
-          : [...prev, { name: permName, isAccess: checked, _id: null }];
-      }
-      const dirty = next.some((p) => {
-        const orig = originalRef.current.find((o) =>
-          p._id ? o._id === p._id : o.name === p.name
-        );
-        return orig ? orig.isAccess !== p.isAccess : p.isAccess;
-      });
-      setIsDirty(dirty);
-      return next;
+    /* read from ref — always the latest value, no stale closure risk */
+    const prev = localPermissionsRef.current;
+    let next;
+
+    if (permId) {
+      /* existing resource — update by _id */
+      next = prev.map((p) =>
+        p._id === permId ? { ...p, isAccess: checked } : p
+      );
+    } else {
+      /* resource without DB record — virtual entry tracked by name */
+      const exists = prev.some((p) => p.name === permName);
+      next = exists
+        ? prev.map((p) => p.name === permName ? { ...p, isAccess: checked } : p)
+        : [...prev, { name: permName, isAccess: checked, _id: null }];
+    }
+
+    const dirty = next.some((p) => {
+      const orig = originalRef.current.find((o) =>
+        p._id ? o._id === p._id : o.name === p.name
+      );
+      return orig ? orig.isAccess !== p.isAccess : p.isAccess;
     });
-  }, []);
+
+    setPermissions(next);    // updates ref + state atomically
+    setIsDirty(dirty);
+  }, [setPermissions]);
 
   /* ── 5. save all pending changes ───────────────────────────── */
   const savePermissions = useCallback(async () => {
@@ -136,9 +150,12 @@ const PermissionModuleController = () => {
     setSaving(true);
     try {
       dispatch(showAuthLoader());
+      /* read from ref — guaranteed to be latest regardless of render cycle */
+      const latest = localPermissionsRef.current;
       const reqBody = {
-        resource_ids: localPermissions.filter((p) => p.isAccess && p._id).map((p) => p._id),
-        pms_role_id:  selectedRoleId,
+        resource_ids:     latest.filter((p) => p.isAccess && p._id).map((p) => p._id),
+        permission_names: latest.filter((p) => p.isAccess && !p._id).map((p) => p.name),
+        pms_role_id:      selectedRoleId,
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -159,13 +176,13 @@ const PermissionModuleController = () => {
     } finally {
       setSaving(false);
     }
-  }, [selectedRoleId, localPermissions, dispatch]);
+  }, [selectedRoleId, dispatch]);
 
   /* ── 6. discard local changes ───────────────────────────────── */
   const discardChanges = useCallback(() => {
-    setLocalPermissions(originalRef.current.map((p) => ({ ...p })));
+    setPermissions(originalRef.current.map((p) => ({ ...p })));
     setIsDirty(false);
-  }, []);
+  }, [setPermissions]);
 
   /* ── 7. create a new role ───────────────────────────────────── */
   const createRole = useCallback(

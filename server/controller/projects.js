@@ -448,6 +448,8 @@ exports.getProjects = async (req, res) => {
                   { pms_clients: loginUserId }
                 ]
               }
+            : value?.filterBy === "created"
+            ? { createdBy: loginUserId }
             : { manager: loginUserId })
         };
       } else if (!isAdminUser) {
@@ -498,16 +500,15 @@ exports.getProjects = async (req, res) => {
     // Or filter..
     let orFilter = [
       value?.filterBy !== "all"
-        ? value?.filterBy == "assigned"
+        ? value?.filterBy === "assigned"
           ? {
-              // "assignees._id": new mongoose.Types.ObjectId(req.user._id)
               $or: [
                 { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
-                {
-                  "pms_clients._id": new mongoose.Types.ObjectId(req.user._id)
-                }
+                { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) }
               ]
             }
+          : value?.filterBy === "created"
+          ? { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) }
           : { "manager._id": new mongoose.Types.ObjectId(req.user._id) }
         : !(await checkUserIsAdmin(req?.user?._id))
         ? {

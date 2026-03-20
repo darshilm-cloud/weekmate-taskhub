@@ -1417,6 +1417,8 @@ const AssignProject = () => {
                   setActiveTab(tab.key);
                   setSelectedWorkspaceProjectId(null);
                   setPagination((p) => ({ ...p, current: 1 }));
+                  setColumnDetails([]);
+                  setIsloadingProject(true);
                 }}
               >
                 <span className="ap-tab-icon">{tab.icon}</span>

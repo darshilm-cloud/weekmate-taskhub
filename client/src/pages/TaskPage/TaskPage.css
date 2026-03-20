@@ -83,7 +83,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  background: var(--app-primary);
+  background: #0b3a5b;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -95,7 +95,7 @@
 }
 
 .task-btn-add:hover {
-  background: var(--app-primary-hover);
+  background: #0e4a73;
 }
 
 .task-btn-ghost {
@@ -517,7 +517,7 @@
 }
 
 .calendar-mode button { padding: 4px 12px; font-size: 13px; }
-.calendar-mode button.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+.calendar-mode button.active { background: #0b3a5b; color: #fff; border-color: #0b3a5b; }
 
 .calendar-grid {
   border: 1px solid #f0f0f0;
@@ -829,8 +829,8 @@ body[data-theme="dark"] .calendar-title {
 
 body.dark-theme .calendar-mode button.active,
 body[data-theme="dark"] .calendar-mode button.active {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #0b3a5b;
+  border-color: #0b3a5b;
 }
 
 body.dark-theme .calendar-grid,
