@@ -864,14 +864,19 @@ function ReportResults({ reportKey, rows, summary }) {
 
 function UserReportResults({ rows, filters }) {
   const [viewMode, setViewMode] = useState("chart");
-  const [selectedMember, setSelectedMember] = useState(() => rows[0]?.key || null);
+  const [selectedMember, setSelectedMember] = useState(() =>
+    filters?.userId && filters.userId !== "all" ? filters.userId : null
+  );
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const firstMeaningfulRow =
-      rows.find((row) => row.total > 0) || rows[0] || null;
-    setSelectedMember(firstMeaningfulRow?.key || null);
-  }, [rows]);
+    if (filters?.userId && filters.userId !== "all") {
+      setSelectedMember(filters.userId);
+    } else {
+      setSelectedMember(null);
+    }
+  }, [filters?.userId]);
+
 
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -881,17 +886,20 @@ function UserReportResults({ rows, filters }) {
     return rows.filter((row) => String(row.user || "").toLowerCase().includes(query));
   }, [rows, search]);
 
-  const selectedRow =
-    filteredMembers.find((row) => row.key === selectedMember) ||
-    filteredMembers[0] ||
-    rows.find((row) => row.key === selectedMember) ||
-    rows[0] ||
-    null;
+  const selectedRow = selectedMember
+    ? (filteredMembers.find((row) => row.key === selectedMember) ||
+       rows.find((row) => row.key === selectedMember) ||
+       null)
+    : null;
 
   const chartRows = useMemo(() => {
     const source = filteredMembers.length > 0 ? filteredMembers : rows;
+    if (selectedMember) {
+      const match = source.find((r) => r.key === selectedMember);
+      if (match) return [match];
+    }
     return source.slice(0, 10);
-  }, [filteredMembers, rows]);
+  }, [filteredMembers, rows, selectedMember]);
 
   const chartSeries = useMemo(
     () => [
@@ -999,7 +1007,15 @@ function UserReportResults({ rows, filters }) {
         { label: "Completed", value: selectedRow.completed || 0 },
         { label: "Incomplete", value: selectedRow.incomplete || 0 },
       ]
-    : [];
+    : [
+        { label: "Total Members", value: rows.length },
+        { label: "Total Tasks", value: rows.reduce((s, r) => s + (r.total || 0), 0) },
+        { label: "Pending Tasks", value: rows.reduce((s, r) => s + (r.pending || 0), 0) },
+        { label: "Due Today", value: rows.reduce((s, r) => s + (r.dueToday || 0), 0) },
+        { label: "Past Due Tasks", value: rows.reduce((s, r) => s + (r.overdue || 0), 0) },
+        { label: "Completed", value: rows.reduce((s, r) => s + (r.completed || 0), 0) },
+        { label: "Incomplete", value: rows.reduce((s, r) => s + (r.incomplete || 0), 0) },
+      ];
 
   return (
     <div className="user-report-layout">
@@ -1118,7 +1134,17 @@ function UserReportResults({ rows, filters }) {
         </div>
 
         <div className="user-report-member-tabs">
-          {filteredMembers.slice(0, 11).map((row) => (
+          {/* All button */}
+          <button
+            type="button"
+            className={`user-report-member-tab ${!selectedMember ? "active" : ""}`}
+            onClick={() => setSelectedMember(null)}
+          >
+            <span className="user-report-member-tab-name">All</span>
+            <span className="user-report-member-tab-count">{rows.length}</span>
+          </button>
+
+          {filteredMembers.filter((r) => (r.total || 0) > 0).slice(0, 10).map((row) => (
             <button
               key={row.key}
               type="button"
@@ -1129,10 +1155,11 @@ function UserReportResults({ rows, filters }) {
               <span className="user-report-member-tab-count">{row.total || 0}</span>
             </button>
           ))}
-          {filteredMembers.length > 11 && (
+
+          {filteredMembers.filter((r) => (r.total || 0) > 0).length > 10 && (
             <Dropdown
               menu={{
-                items: filteredMembers.slice(11).map((m) => ({
+                items: filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).map((m) => ({
                   key: m.key,
                   label: (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "150px" }}>
@@ -1150,11 +1177,11 @@ function UserReportResults({ rows, filters }) {
               <button
                 type="button"
                 className={`user-report-member-tab more-tab ${
-                  filteredMembers.slice(11).some((m) => m.key === selectedMember) ? "active" : ""
+                  filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).some((m) => m.key === selectedMember) ? "active" : ""
                 }`}
               >
                 <span className="user-report-member-tab-name">
-                  {filteredMembers.slice(11).some((m) => m.key === selectedMember)
+                  {filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).some((m) => m.key === selectedMember)
                     ? filteredMembers.find((m) => m.key === selectedMember)?.user
                     : "More"}
                 </span>
@@ -1164,20 +1191,14 @@ function UserReportResults({ rows, filters }) {
           )}
         </div>
 
-        {selectedRow ? (
-          <div className="user-report-member-grid">
-            {memberTableRows.map((item) => (
-              <div key={item.label} className="user-report-member-stat">
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="reports-empty-inline">
-            <Empty description="No member selected" />
-          </div>
-        )}
+        <div className="user-report-member-grid">
+          {memberTableRows.map((item) => (
+            <div key={item.label} className="user-report-member-stat">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

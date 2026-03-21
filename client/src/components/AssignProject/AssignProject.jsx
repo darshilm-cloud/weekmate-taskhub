@@ -128,7 +128,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 
   /* Navigate to project detail */
   const handleCardClick = () => {
-    history.push(`/${companySlug}/project/app/${record._id}?tab=${record?.defaultTab?.name}`);
+    history.push(`/${companySlug}/project/app/${record._id}?tab=Tasks`);
   };
 
   /* Circle click → confirm close project */
@@ -544,11 +544,15 @@ const AssignProject = () => {
         return;
       }
       const cached = projectCache[Key];
-      if (cached) {
+      if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
         setIsloadingProject(false);
         return; // skip API call — data already cached
+      }
+      if (cached && cached.projects.length === 0) {
+        setColumnDetails([]);
+        setPagination((prev) => ({ ...prev, total: 0 }));
       }
       setIsloadingProject(columnDetails.length === 0);
 
@@ -1118,7 +1122,7 @@ const AssignProject = () => {
           (match, group1) => match.charAt(0) + group1.toUpperCase()
         );
         return (
-          <Link to={`/${companySlug}/project/app/${record._id}?tab=${record?.defaultTab?.name}`}>
+          <Link to={`/${companySlug}/project/app/${record._id}?tab=Tasks`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>

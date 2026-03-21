@@ -914,3 +914,12 @@ body[data-theme="dark"] .task-calendar-view .calendar-day-cell:hover {
     display: none;
   }
 }
+
+/* ── Gantt tab wrapper ─────────────────────────────── */
+.task-gantt-wrapper {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+  background: var(--app-surface);
+}
+

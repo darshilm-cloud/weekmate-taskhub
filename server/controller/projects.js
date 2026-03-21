@@ -318,8 +318,17 @@ exports.getProjects = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
+    /*
+     * Recommended indexes (run once in MongoDB shell / migration):
+     *   db.projects.createIndex({ companyId: 1, isDeleted: 1 })
+     *   db.projects.createIndex({ companyId: 1, isDeleted: 1, project_status: 1 })
+     *   db.projects.createIndex({ companyId: 1, isDeleted: 1, manager: 1 })
+     *   db.projects.createIndex({ companyId: 1, isDeleted: 1, assignees: 1 })
+     *   db.projecttasks.createIndex({ project_id: 1, isDeleted: 1 })
+     *   db.projecttaskhourlogs.createIndex({ project_id: 1, isDeleted: 1 })
+     */
     const validationSchema = Joi.object({
-      limit: Joi.number().integer().min(0).default(10),
+      limit: Joi.number().integer().min(0).default(25),
       pageNo: Joi.number().integer().min(1).default(1),
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("_id"), //
@@ -351,12 +360,10 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    const cacheTtlSeconds = 15;
+    const cacheTtlSeconds = 60;
+    // Cache all standard listing requests (single-doc and search bypassed intentionally)
     const cacheKey =
-      value?.includeMetrics === false &&
-      !value?._id &&
-      !value?.isSearch &&
-      !value?.countOnly
+      !value?._id && !value?.isSearch && !value?.countOnly
         ? `projects:get:${generateCacheKey({
             companyId: String(decodedCompanyId || ""),
             userId: String(decodedUserId || ""),
@@ -494,180 +501,96 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    // Manage projects default tabs .. . .
-    await manageAllProjectTabSetting(req.user);
+    // Fire tab-setting sync in background — its result is not needed for the query.
+    // Running it concurrently with checkUserIsAdmin via Promise.all caused DB contention
+    // that made checkUserIsAdmin return undefined, incorrectly applying the user filter
+    // even for admin users and returning fewer projects than expected.
+    manageAllProjectTabSetting(req.user).catch(() => {});
+    const isAdmin = await checkUserIsAdmin(req?.user?._id);
 
-    // Or filter..
-    let orFilter = [
-      value?.filterBy !== "all"
-        ? value?.filterBy === "assigned"
-          ? {
-              $or: [
-                { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
-                { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) }
-              ]
-            }
-          : value?.filterBy === "created"
-          ? { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) }
-          : { "manager._id": new mongoose.Types.ObjectId(req.user._id) }
-        : !(await checkUserIsAdmin(req?.user?._id))
-        ? {
-            $or: [
-              { "assignees._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "pms_clients._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "manager._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "createdBy._id": new mongoose.Types.ObjectId(req.user._id) },
-              { "acc_manager._id": new mongoose.Types.ObjectId(req.user._id) }
-            ]
-          }
-        : {}
-    ];
+    // ── Build filters ────────────────────────────────────────────────────────
+    // All filter conditions reference raw document fields (ObjectIds) so they
+    // can be evaluated in a single $match BEFORE any $lookup stages.
+    // This dramatically reduces the number of documents that flow through joins.
+    const userId = new mongoose.Types.ObjectId(req.user._id);
 
-    let matchQuery = {
-      isDeleted: false, // value?.isArchived,
+    const rawOrFilter = value?.filterBy !== "all"
+      ? value?.filterBy === "assigned"
+        ? { $or: [{ assignees: userId }, { pms_clients: userId }] }
+        : value?.filterBy === "created"
+        ? { createdBy: userId }
+        : { manager: userId }
+      : !isAdmin
+      ? {
+          $or: [
+            { assignees:   userId },
+            { pms_clients: userId },
+            { manager:     userId },
+            { createdBy:   userId },
+            { acc_manager: userId }
+          ]
+        }
+      : null;
+
+    // Pre-lookup match — only raw document fields, maximises early elimination
+    const preMatch = {
+      isDeleted: false,
       companyId: newObjectId(decodedCompanyId),
-      // For details
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value?.color ? { color: value.color } : {}),
+      ...("isBillable" in value ? { isBillable: value.isBillable } : {}),
+      // Formerly "technology._id" / "project_type._id" etc — now raw ObjectId fields
+      ...(value?.technology?.length > 0
+        ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(value?.category?.length > 0
+        ? { project_type: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(value?.project_type?.length > 0
+        ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(value?.manager_id?.length > 0
+        ? { manager: { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(value?.acc_manager_id?.length > 0
+        ? { acc_manager: { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(value?.assignee_id?.length > 0
+        ? { assignees: { $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+        : {}),
+      ...(rawOrFilter ? { $and: [rawOrFilter] } : {})
+    };
+
+    // Post project_status lookup match — title comparison requires the join
+    const postStatusMatch = {
       ...(value?._id
-        ? { _id: new mongoose.Types.ObjectId(value?._id) }
-        : // For active and archive
-        value?.isArchived
-        ? {
-            "project_status.title": {
-              // $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
-              $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
-            }
-          }
-        : {
-            "project_status.title": {
-              $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
-              // $ne: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
-            }
-          }),
-      // filters..
-      ...(value?.color ? { color: value?.color } : {}),
+        ? {}
+        : value?.isArchived
+        ? { "project_status.title": { $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }
+        : { "project_status.title": { $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }),
       ...(value?.project_status?.length > 0
         ? {
             "project_status._id": {
-              $in: value.project_status.map(
-                (s) => new mongoose.Types.ObjectId(s)
-              )
+              $in: value.project_status.map((s) => new mongoose.Types.ObjectId(s))
             }
           }
-        : {}),
-
-      ...(value?.category?.length > 0
-        ? {
-            "project_type._id": {
-              $in: value.category.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {}),
-
-      ...(value?.technology?.length > 0
-        ? {
-            "technology._id": {
-              $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {}),
-
-      ...(value?.project_type?.length > 0
-        ? {
-            "project_type._id": {
-              $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {}),
-
-      ...(value?.manager_id?.length > 0
-        ? {
-            "manager._id": {
-              $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {}),
-      ...(value?.acc_manager_id?.length > 0
-        ? {
-            "acc_manager._id": {
-              $in: value.acc_manager_id.map(
-                (s) => new mongoose.Types.ObjectId(s)
-              )
-            }
-          }
-        : {}),
-      ...(value?.assignee_id?.length > 0
-        ? {
-            "assignees._id": {
-              $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {}),
-
-      ...("isBillable" in value && { isBillable: value?.isBillable })
+        : {})
     };
 
-    if (value?.search) {
-      orFilter = [
-        ...orFilter,
-        searchDataArr(
+    // Search evaluated last — may reference manager.full_name (post-join field)
+    const searchMatch = value?.search
+      ? searchDataArr(
           ["title", ...(!value.isSearch ? ["manager.full_name"] : [])],
-          value?.search
+          value.search
         )
-      ];
-    }
-    matchQuery = {
-      ...matchQuery,
-      $and: orFilter
-    };
+      : null;
 
+    // ── Pipeline — only 2 lookups remain ──────────────────────────────────────
+    // Removed: projecttechs, projecttypes, acc_manager employees,
+    //          getCreatedUpdatedDeletedByQuery, assignees employees,
+    //          getClientQuery, projectworkflows, getProjectDefaultSettingQuery
     const mainQuery = [
-      {
-        $match: { isDeleted: false } // value?.isArchived,
-      },
-      {
-        $lookup: {
-          from: "projecttechs",
-          let: { technology: "$technology" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "technology"
-        }
-      },
-      {
-        $lookup: {
-          from: "projecttypes",
-          let: { project_type: "$project_type" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_type"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project_type"
-        }
-      },
-      {
-        $unwind: {
-          path: "$project_type",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $match: preMatch },
       {
         $lookup: {
           from: "projectstatuses",
@@ -682,17 +605,14 @@ exports.getProjects = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { _id: 1, title: 1 } }
           ],
           as: "project_status"
         }
       },
-      {
-        $unwind: {
-          path: "$project_status",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $unwind: { path: "$project_status", preserveNullAndEmptyArrays: true } },
+      { $match: postStatusMatch },
       {
         $lookup: {
           from: "employees",
@@ -709,167 +629,26 @@ exports.getProjects = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { _id: 1, full_name: 1 } }
           ],
           as: "manager"
         }
       },
+      { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+      ...(searchMatch ? [{ $match: searchMatch }] : []),
       {
-        $unwind: {
-          path: "$manager",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$acc_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "acc_manager"
-        }
-      },
-      {
-        $unwind: {
-          path: "$acc_manager",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      ...(await getCreatedUpdatedDeletedByQuery()),
-
-      {
-        $lookup: {
-          from: "employees",
-          let: { assignees: "$assignees" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$assignees"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "assignees"
-        }
-      },
-      ...(await getClientQuery()),
-      {
-        $lookup: {
-          from: "projectworkflows",
-          let: { workFlow: "$workFlow" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$workFlow"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "workFlow"
-        }
-      },
-      {
-        $unwind: {
-          path: "$workFlow",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      ...(await getProjectDefaultSettingQuery()),
-      { $match: matchQuery },
-      {
+        // Strict projection — only fields needed by the project card UI.
+        // estimatedHours is included only as input for projectHoursExceeded
+        // calculation in JS; it is stripped from the final API response.
         $project: {
           _id: 1,
           title: 1,
-          color: 1,
-          projectId: 1,
-          isBillable: 1,
-          isStarred: 1,
           end_date: 1,
-          start_date: 1,
-          descriptions: 1,
-          estimatedHours: 1,
-          recurringType: 1,
-          technology: 1,
-          //  {
-          //   _id: 1,
-          //   project_tech: 1,
-          // },
-          project_type: {
-            _id: 1,
-            project_type: 1
-          },
-          project_status: {
-            _id: 1,
-            title: 1
-          },
-          manager: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1
-          },
-          acc_manager: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1
-          },
-          createdBy: {
-            _id: 1,
-            full_name: 1,
-            emp_img: 1,
-            client_img: 1
-          },
-          assignees: {
-            $map: {
-              input: {
-                $cond: {
-                  if: {
-                    $and: [
-                      { $isArray: "$assignees" },
-                      { $ne: ["$assignees", []] }
-                    ]
-                  },
-                  then: "$assignees",
-                  else: []
-                }
-              },
-              as: "assigneeId",
-              in: {
-                _id: "$$assigneeId._id",
-                name: "$$assigneeId.full_name",
-                emp_img: "$$assigneeId.emp_img"
-              }
-            }
-          },
-          ...(await getClientQuery(true)),
-          workFlow: {
-            _id: 1,
-            project_workflow: 1
-          },
           updatedAt: 1,
-          createdAt: 1,
-          ...(await getProjectDefaultSettingQuery("_id", true))
+          estimatedHours: 1,
+          project_status: { _id: 1, title: 1 },
+          manager: { _id: 1, full_name: 1 }
         }
       }
     ];
@@ -916,10 +695,16 @@ exports.getProjects = async (req, res) => {
     });
 
     if (value?.includeMetrics === false) {
+      // Strip the internal estimatedHours field — not part of the card contract
+      const stripInternal = (p) => {
+        const { estimatedHours: _eh, ...rest } = p;
+        return rest;
+      };
+      const slimData = Array.isArray(data) ? data.map(stripInternal) : data;
       if (cacheKey) {
         storeCache(
           cacheKey,
-          value?._id ? data[0] : data,
+          value?._id ? slimData[0] : slimData,
           !value?._id && metaData,
           cacheTtlSeconds
         );
@@ -928,53 +713,73 @@ exports.getProjects = async (req, res) => {
         res,
         statusCode.SUCCESS,
         messages.LISTING,
-        value?._id ? data[0] : data,
+        value?._id ? slimData[0] : slimData,
         !value?._id && metaData
       );
     }
 
-    const updatedData = await Promise.all(
-      data.map(async (project) => {
-        const projectId = project._id;
+    // Bulk-fetch tasks and logged hours for all projects in two queries
+    // instead of 2N sequential queries (N+1 problem).
+    const allProjectIds = data.map((p) => p._id);
+    const [allTasks, allLoggedHours] = await Promise.all([
+      ProjectTasks.find({ project_id: { $in: allProjectIds } })
+        .populate("task_status", "title")
+        .lean(),
+      LoggedHours.find({ project_id: { $in: allProjectIds }, isDeleted: false })
+        .select("project_id logged_hours logged_minutes")
+        .lean(),
+    ]);
 
-        const allTasks = await ProjectTasks.find({ project_id: projectId })
-          .populate("task_status", "title")
-          .lean();
+    // Group by project_id for O(1) lookup
+    const tasksByProject = {};
+    for (const task of allTasks) {
+      const key = task.project_id?.toString();
+      if (!tasksByProject[key]) tasksByProject[key] = [];
+      tasksByProject[key].push(task);
+    }
+    const minutesByProject = {};
+    for (const entry of allLoggedHours) {
+      const key = entry.project_id?.toString();
+      const mins =
+        parseInt(entry.logged_hours || "0", 10) * 60 +
+        parseInt(entry.logged_minutes || "0", 10);
+      minutesByProject[key] = (minutesByProject[key] || 0) + mins;
+    }
 
-        const doneTasks = allTasks.filter((task) => task.task_status?.title === "Done");
-
-        const completionPercentage = allTasks.length > 0
-          ? Math.round((doneTasks.length / allTasks.length) * 100)
+    const updatedData = data.map((project) => {
+      const key = project._id?.toString();
+      const tasks = tasksByProject[key] || [];
+      const doneTasks = tasks.filter((t) => t.task_status?.title === "Done");
+      const completionPercentage =
+        tasks.length > 0
+          ? Math.round((doneTasks.length / tasks.length) * 100)
           : 0;
+      const finalHours = (minutesByProject[key] || 0) / 60;
+      // estimatedHours is from the $project stage (internal only — not exposed)
+      const estimated = parseFloat(project.estimatedHours || "0");
+      // Explicit pick — no spread, no accidental field leakage
+      return {
+        _id:                  project._id,
+        title:                project.title,
+        end_date:             project.end_date,
+        updatedAt:            project.updatedAt,
+        project_status:       project.project_status,
+        manager:              project.manager,
+        totalTasks:           tasks.length,
+        doneTasks:            doneTasks.length,
+        completionPercentage,
+        projectHoursExceeded: finalHours > estimated,
+      };
+    });
 
-        const loggedHoursData = await LoggedHours.find({
-          project_id: projectId,
-          isDeleted: false
-        }).select("logged_hours logged_minutes").lean();
-
-        const totalMinutes = loggedHoursData.reduce((acc, entry) => {
-          const hours = parseInt(entry.logged_hours || "0", 10);
-          const minutes = parseInt(entry.logged_minutes || "0", 10);
-          return acc + (hours * 60) + minutes;
-        }, 0);
-
-        const finalHours = totalMinutes / 60;
-        const estimated = parseFloat(project.estimatedHours || "0");
-        const projectHoursExceeded = finalHours > estimated;
-
-        return {
-          ...(typeof project.toObject === "function" ? project.toObject() : project),
-          totalTasks: allTasks.length,
-          doneTasks: doneTasks.length,
-          completionPercentage,
-          projectHoursExceeded
-        };
-      })
-    );
-    
-    // console.log("🚀 ~ Final updatedData:", updatedData);
-    
-    // cacheStore(cacheKey, value._id ? data[0] : data, !value._id && metaData);
+    if (cacheKey) {
+      storeCache(
+        cacheKey,
+        value?._id ? updatedData[0] : updatedData,
+        !value?._id && metaData,
+        cacheTtlSeconds
+      );
+    }
 
     return successResponse(
       res,

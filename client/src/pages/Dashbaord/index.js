@@ -496,7 +496,7 @@ const Dashboard = () => {
       }
     }
     try {
-      let reqBody = { pageNo: 1, limit: 4 }; // only need 4 for Recent Projects
+      let reqBody = { pageNo: 1, limit: 50 }; // fetch enough to sort by recently added
       if (category?.length > 0) reqBody = { ...reqBody, category };
       if (projStatus?.length > 0) reqBody = { ...reqBody, project_status: projStatus };
       const response = await Service.makeAPICall({
@@ -1273,7 +1273,10 @@ const Dashboard = () => {
           </div>
           {myProj.length > 0 ? (
             <div className="db-project-cards-row">
-              {myProj.slice(0, 4).map((proj) => {
+              {[...myProj]
+                .sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0))
+                .slice(0, 7)
+                .map((proj) => {
                 const daysLeft = proj.end_date
                   ? Math.ceil((new Date(proj.end_date) - new Date()) / 86400000)
                   : null;

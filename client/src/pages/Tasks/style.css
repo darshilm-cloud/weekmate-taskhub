@@ -2203,23 +2203,26 @@ body.admin-user[data-theme="dark"] .task-wrapper .wm-task-box {
 body.dark-theme .task-wrapper .drag_column h4,
 body[data-theme="dark"] .task-wrapper .drag_column h4,
 body.admin-user[data-theme="dark"] .task-wrapper .drag_column h4 {
-    background-color: transparent !important;
+    background-color: rgba(255,255,255,0.06) !important;
     color: var(--wm-task-text) !important;
-    border-bottom: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+body.dark-theme .task-wrapper .drag_column h4 .wm-col-title,
+body[data-theme="dark"] .task-wrapper .drag_column h4 .wm-col-title {
+    color: var(--wm-task-text) !important;
 }
 
 /* Dark theme: kanban column outer container */
 body.dark-theme .task-wrapper .order.small-box,
 body[data-theme="dark"] .task-wrapper .order.small-box,
 body.admin-user[data-theme="dark"] .task-wrapper .order.small-box {
-    background-color: transparent !important;
-    border-radius: 0 !important;
-    overflow: visible;
+    background-color: rgba(255,255,255,0.04) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
     border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: none !important;
-    box-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
 }
 
 /* Dark theme: column body wrappers transparent */
@@ -2246,27 +2249,27 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
 /* ── Board scroll area ── */
 .task-wrapper .profilerightbar .project-task-section {
     display: flex;
-    gap: 14px;
+    gap: 16px;
     padding: 6px 2px 16px;
     align-items: flex-start;
 }
 
 /* ── Column outer shell ── */
 .task-wrapper .order.small-box {
-    min-width: 260px;
-    max-width: 260px;
-    flex: 0 0 260px;
-    border-radius: 0 !important;
-    overflow: visible;
-    border: none !important;
+    min-width: 285px;
+    max-width: 285px;
+    flex: 0 0 285px;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
     border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
-    box-shadow: none !important;
-    background: transparent !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
+    background: #f4f6f9 !important;
 }
 
 /* ── Column header ── */
 .task-wrapper .drag_column h4 {
-    padding: 10px 4px 10px !important;
+    padding: 13px 14px 12px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     letter-spacing: 0 !important;
@@ -2274,27 +2277,35 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    border-radius: 0 !important;
+    border-radius: 9px 9px 0 0 !important;
     border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.07) !important;
     margin-bottom: 0 !important;
-    background: transparent !important;
+    background: #ffffff !important;
 }
 
 .task-wrapper .drag_column h4 .wm-col-title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
+    color: #1e293b;
 }
 
-/* Column count — inline text matching title color */
-.task-wrapper .drag_column h4 .wm-col-count-inline {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    opacity: 0.85;
+/* Column count badge — solid pill */
+.task-wrapper .drag_column h4 .wm-col-badge {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 2px 9px !important;
+    border-radius: 20px !important;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
+    min-width: 24px;
+    text-align: center;
 }
 
 /* ── Column body (drag area) ── */
 .task-wrapper .drag_row {
-    padding: 6px 0 4px !important;
+    padding: 6px 10px 10px !important;
     min-height: 80px;
     border: none !important;
     border-radius: 0 !important;
@@ -2316,16 +2327,16 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     padding: 0 !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border: 1px solid var(--wm-task-border) !important;
-    border-left: 1px solid var(--wm-task-border) !important;
+    border-left: 3px solid var(--wm-col-border-color, #94a3b8) !important;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
 }
 
 .task-wrapper .wm-task-card:hover,
 .task-wrapper .project-task-list .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.13) !important;
 }
 
 /* ── Task box inner ── */
@@ -2364,7 +2375,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     font-size: 13px;
     font-weight: 600;
     line-height: 1.45;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     color: var(--wm-task-text);
     word-break: break-word;
 }
@@ -2385,6 +2396,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     margin-bottom: 10px;
     display: flex;
     align-items: center;
+    gap: 3px;
 }
 
 /* Footer row */
@@ -2404,9 +2416,22 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 65%;
+    max-width: 62%;
 }
 
+/* Progress badge */
+.task-wrapper .wm-card-progress-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+}
+
+/* Legacy meta (fallback) */
 .task-wrapper .wm-card-meta {
     color: var(--wm-task-muted);
     font-size: 11px;
@@ -2562,24 +2587,31 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head.u
     color: #b91c1c !important;
 }
 
-/* column drag row (kanban body bg) — open/transparent like image 2 */
+/* column header — white background with bottom separator */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 {
-    background: transparent !important;
-    border-bottom: none !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e8edf2 !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .order.small-box {
-    background: transparent !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: none !important;
+    background: #f4f6f9 !important;
+    border: 1px solid #e2e8f0 !important;
     border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
-    box-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_row {
-    background: transparent !important;
+    background: #f4f6f9 !important;
     border-color: transparent !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e8edf2 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 .wm-col-title {
+    color: #1e293b !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column,
@@ -2591,8 +2623,9 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .small-box {
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-card {
     background: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07) !important;
     border: 1px solid #e5e7eb !important;
+    border-left: 3px solid var(--wm-col-border-color, #94a3b8) !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-box h3,
@@ -2618,8 +2651,18 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-card-meta {
     color: #6b7280;
 }
 
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-card-progress-badge {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-card-footer {
     border-top-color: #f0f0f0;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column,
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_row {
+    background: transparent !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .design-graph {
@@ -2646,8 +2689,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .add-project-wrappe
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-box,
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-box,
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .wm-task-card {
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-box {
     background: #ffffff !important;
     border-color: #e5e7eb !important;
 }

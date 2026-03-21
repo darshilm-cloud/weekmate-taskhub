@@ -964,7 +964,15 @@ const TaskList = ({
                   <h4>
                     <span className="wm-col-title" style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}>
                       {boardData?.workflowStatus?.title}
-                      <span className="wm-col-count-inline"> ({boardData.tasks.length})</span>
+                    </span>
+                    <span
+                      className="wm-col-badge"
+                      style={{
+                        background: boardData?.workflowStatus?.color || "#3b82f6",
+                        color: "#ffffff",
+                      }}
+                    >
+                      {boardData.tasks.length}
                     </span>
                   </h4>
 
@@ -1078,7 +1086,7 @@ const TaskList = ({
                                         ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
                                         : "Unassigned"}
                                     </span>
-                                    <span className="wm-card-meta">
+                                    <span className="wm-card-progress-badge">
                                       {task.task_progress || "0"}%
                                     </span>
                                   </div>

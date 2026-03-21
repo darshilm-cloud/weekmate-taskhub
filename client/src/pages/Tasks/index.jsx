@@ -58,6 +58,7 @@ import getCookie from "../../hooks/getCookie";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
 import TaskList from "./TasksKanbanBoard";
 import TasksTableView from "./TasksTableView/TasksTableView";
+import TasksGanttView from "./TasksGanttView";
 import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
@@ -1584,12 +1585,18 @@ const TasksPMS = ({ flag }) => {
   const csvRef = document.getElementById("test-table-xls-button");
 
   const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={() => handleChangeTableView("table")}>
+    <Menu selectedKeys={[selectedView]}>
+      <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
+        <i className="fa-solid fa-list" style={{ marginRight: 8 }} />
         Table View
       </Menu.Item>
-      <Menu.Item key="2" onClick={() => handleChangeTableView("board")}>
+      <Menu.Item key="board" onClick={() => handleChangeTableView("board")}>
+        <i className="fa-solid fa-table-columns" style={{ marginRight: 8 }} />
         Board View
+      </Menu.Item>
+      <Menu.Item key="gantt" onClick={() => handleChangeTableView("gantt")}>
+        <i className="fa-solid fa-bars-progress" style={{ marginRight: 8 }} />
+        Gantt View
       </Menu.Item>
     </Menu>
   );
@@ -2039,7 +2046,7 @@ const TasksPMS = ({ flag }) => {
                 <p>No task found</p>
               </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : tableTrue === false ? (
+            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
@@ -2055,6 +2062,11 @@ const TasksPMS = ({ flag }) => {
                 projectDetails={projectDetails}
                 isEditTaskSave={isEditTaskSave}
                 setEditTaskSave={setEditTaskSave}
+              />
+            ) : selectedView === "gantt" ? (
+              <TasksGanttView
+                tasks={filteredBoardTasks}
+                onTaskClick={(task) => showEditTaskModal(task)}
               />
             ) : (
               <TasksTableView
