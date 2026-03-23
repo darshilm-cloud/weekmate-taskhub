@@ -194,7 +194,7 @@ const Dashboard = () => {
     return () => document.removeEventListener("mousedown", handleCalendarOutsideClick);
   }, [isCalendarPickerOpen]);
 
-  // Memoized chart data — only recalculate when myTask or chartView changes
+  // Memoized chart data — recalculate when myTask, chartView, or calendarValue changes
   const { labels, completedCounts, incompleteCounts } = useMemo(() => {
     const periods = chartView === "monthly" ? 6 : 7;
     const _labels = [];
@@ -202,8 +202,8 @@ const Dashboard = () => {
     const _incompleteCounts = [];
     for (let i = periods - 1; i >= 0; i--) {
       if (chartView === "monthly") {
-        const m = dayjs().subtract(i, "month");
-        _labels.push(m.format("MMM"));
+        const m = calendarValue.subtract(i, "month");
+        _labels.push(m.format("MMM YYYY"));
         const tasksInPeriod = myTask.filter((t) => {
           const d = t.createdAt || t.due_date;
           return d && dayjs(d).format("YYYY-MM") === m.format("YYYY-MM");
@@ -215,8 +215,8 @@ const Dashboard = () => {
           tasksInPeriod.filter((t) => !["done", "closed"].includes(t.status?.toLowerCase())).length
         );
       } else {
-        const d = dayjs().subtract(i, "day");
-        _labels.push(d.format("ddd"));
+        const d = calendarValue.subtract(i, "day");
+        _labels.push(d.format("ddd DD"));
         const tasksOnDay = myTask.filter(
           (t) =>
             (t.createdAt || t.due_date) &&
@@ -231,7 +231,7 @@ const Dashboard = () => {
       }
     }
     return { labels: _labels, completedCounts: _completedCounts, incompleteCounts: _incompleteCounts };
-  }, [myTask, chartView]);
+  }, [myTask, chartView, calendarValue]);
 
   const isDarkTheme = useMemo(() => {
     if (typeof document === "undefined") return false;
@@ -968,7 +968,7 @@ const Dashboard = () => {
           {/* Statistics Chart */}
           <div className="dashboard-section-card">
             <div className="stats-header-row">
-              <h3>Statistics</h3>
+              <h3>Project Statistics</h3>
               <div className="stats-controls">
                 <button
                   className={`stats-toggle-btn${chartView === "monthly" ? " active" : ""}`}

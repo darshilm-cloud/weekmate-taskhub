@@ -336,8 +336,6 @@ const TasksPMS = ({ flag }) => {
   };
   const getProjectByID = async () => {
     try {
-      setIsLoadingTasksPage(true);
-      dispatch(showAuthLoader());
       const reqBody = {
         _id: projectId,
       };
@@ -354,16 +352,12 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         setProjectDetails(response.data.data);
         setStagesId(response.data.data?.workFlow?._id);
-        dispatch(hideAuthLoader());
-        setIsLoadingTasksPage(false);
       } else {
         message.error(response?.data?.message);
-        dispatch(hideAuthLoader());
-        setIsLoadingTasksPage(false);
       }
     } catch (error) {
       console.log(error);
-      dispatch(hideAuthLoader());
+    } finally {
       setIsLoadingTasksPage(false);
     }
   };
@@ -694,7 +688,11 @@ const TasksPMS = ({ flag }) => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        const enrichedData = await Promise.all(
+        // Show tasks immediately — no waiting for hasDraft
+        setBoardTasks(response.data.data);
+        setIsTasksLoading(false);
+        // Update hasDraft in background after UI is unblocked
+        Promise.all(
           response.data.data.map(async (column) => ({
             ...column,
             tasks: await Promise.all(
@@ -704,14 +702,15 @@ const TasksPMS = ({ flag }) => {
               }))
             ),
           }))
-        );
-        setBoardTasks(enrichedData);
+        ).then((enrichedData) => {
+          setBoardTasks(enrichedData);
+        });
       } else {
         message.error(response.data.message);
+        setIsTasksLoading(false);
       }
     } catch (error) {
       console.log(error);
-    } finally {
       setIsTasksLoading(false);
     }
   };
@@ -751,7 +750,6 @@ const TasksPMS = ({ flag }) => {
   const getProjectMianTask = async (taskID, selectionFalse) => {
     try {
       setIsTasksLoading(true);
-      dispatch(showAuthLoader());
       const reqBody = {
         search: searchText,
         sort: sortColumn,
@@ -770,7 +768,6 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.getProjectMianTask,
         body: reqBody,
       });
-      dispatch(hideAuthLoader());
       if (response?.data?.data?.length > 0) {
         if (filterData?.isActive == true) {
           setPagination((prevPagination) => ({
@@ -1550,9 +1547,13 @@ const TasksPMS = ({ flag }) => {
   };
 
   useEffect(() => {
-    dispatch(getLables());
-    dispatch(getEmployeeList());
     dispatch(moveWorkFlowTaskHandler([]));
+    // Defer labels & employees — only needed when Add Task modal opens
+    const t = setTimeout(() => {
+      dispatch(getLables());
+      dispatch(getEmployeeList());
+    }, 600);
+    return () => clearTimeout(t);
   }, []);
 
   useEffectAfterMount(() => {
@@ -1581,9 +1582,13 @@ const TasksPMS = ({ flag }) => {
       boardTasksInitiatedRef.current = true;
       getBoardTasks(listID);
     }
-    dispatch(getFolderList(projectId));
-    dispatch(getClientList(projectId));
-    dispatch(getSubscribersList(projectId));
+    // Defer non-critical calls — only needed when modals open
+    const deferTimer = setTimeout(() => {
+      dispatch(getFolderList(projectId));
+      dispatch(getClientList(projectId));
+      dispatch(getSubscribersList(projectId));
+    }, 800);
+    return () => clearTimeout(deferTimer);
   }, [projectId]);
 
   useEffectAfterMount(() => {

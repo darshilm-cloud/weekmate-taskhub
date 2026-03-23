@@ -3665,3 +3665,160 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     border-color: rgba(248, 113, 113, 0.24);
     color: #fca5a5;
 }
+
+/* ══════════════════════════════════════════════
+   ADD TASK MODAL (project tasks tab) — Dark Theme
+   ══════════════════════════════════════════════ */
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-content,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-content {
+    background: #0d1b2e !important;
+    border: 1px solid rgba(74, 104, 150, 0.2);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-header,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-header {
+    background: #071624 !important;
+    border-bottom-color: rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-title,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-title {
+    color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-close,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-close {
+    color: #64829e !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-body,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-body {
+    background: #0d1b2e !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-footer,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-modal-footer {
+    background: #071624 !important;
+    border-top-color: rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .overview-modal-wrapper,
+body.dark-theme .add-task-modal.edit-details-task-model .task-overview-modal-wrapper,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .overview-modal-wrapper,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .task-overview-modal-wrapper {
+    background: #0d1b2e !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-form-item-label > label,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-form-item-label > label {
+    color: #64829e !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-input,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-input-affix-wrapper,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-input-number,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-select-selector,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker,
+body.dark-theme .add-task-modal.edit-details-task-model textarea,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input-affix-wrapper,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input-number,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-selector,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model textarea {
+    background: #0c1e33 !important;
+    border-color: #1e3a58 !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-input::placeholder,
+body.dark-theme .add-task-modal.edit-details-task-model textarea::placeholder,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-select-selection-placeholder,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input > input::placeholder,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input::placeholder,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model textarea::placeholder,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-selection-placeholder,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input > input::placeholder {
+    color: #3f5a74 !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input > input,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-select-selection-item,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-select-arrow,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-suffix,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-separator,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input > input,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-selection-item,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-arrow,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-suffix,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-separator {
+    color: #64829e !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ant-input-number-input,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input-number-input {
+    background: transparent !important;
+    color: #dce7fb !important;
+}
+
+/* CKEditor dark */
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-toolbar,
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-editor__main > .ck-editor__editable,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-toolbar,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-editor__main > .ck-editor__editable {
+    background: #0c1e33 !important;
+    border-color: #1e3a58 !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-toolbar__items .ck-button,
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-dropdown__button,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-toolbar__items .ck-button,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-dropdown__button {
+    color: #64829e !important;
+    background: transparent !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-button:hover,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-toolbar .ck-button:hover {
+    background: rgba(94, 179, 240, 0.1) !important;
+    color: #dce7fb !important;
+}
+
+/* Attach files button */
+body.dark-theme .add-task-modal.edit-details-task-model .fileAttachment_container,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .fileAttachment_container {
+    background: #0c1e33 !important;
+    border-color: #1e3a58 !important;
+    color: #64829e !important;
+}
+
+/* Cancel / Save footer buttons */
+body.dark-theme .add-task-modal.edit-details-task-model .square-outline-btn,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-outline-btn {
+    background: transparent !important;
+    border-color: #1e3a58 !important;
+    color: #64829e !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .square-outline-btn:hover,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-outline-btn:hover {
+    border-color: #5eb3f0 !important;
+    color: #5eb3f0 !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .square-primary-btn,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-btn {
+    background: #0b3a5b !important;
+    border-color: #0b3a5b !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .add-task-modal.edit-details-task-model .square-primary-btn:hover,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-btn:hover {
+    background: #082f4a !important;
+    border-color: #082f4a !important;
+}
