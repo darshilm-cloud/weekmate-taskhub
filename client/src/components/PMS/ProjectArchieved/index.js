@@ -211,8 +211,11 @@ function ProjectArchieved() {
     getStatus();
     getProjectassignees();
     getManager();
-    getProjectListing();
   }, []);
+
+  useEffect(() => {
+    getProjectListing();
+  }, [searchText, pagination.current, pagination.pageSize, sortOption]);
 
   const getTechnologyList = async () => {
     try {

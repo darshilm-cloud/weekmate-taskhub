@@ -701,6 +701,32 @@ export const TrashSkeleton = () => (
 );
 
 /* ──────────────────────────────────────────────
+   TRASH TABLE SKELETON  (tab-switch loading — keeps header/tabs visible)
+────────────────────────────────────────────── */
+export const TrashTableSkeleton = () => (
+  <div style={{ padding: "4px 0" }}>
+    {/* checkbox + column headers row */}
+    <div style={{ display: "grid", gridTemplateColumns: "32px 2fr 1.5fr 1.2fr 1fr", gap: 16, padding: "10px 16px", borderBottom: "1px solid var(--sk-border, rgba(100,116,139,0.18))" }}>
+      <Sk w={16} h={16} r={3} />
+      {["70%", "60%", "55%", "50%"].map((w, i) => <Sk key={i} w={w} h={12} />)}
+    </div>
+    {/* data rows */}
+    {Array.from({ length: 7 }, (_, r) => (
+      <div key={r} style={{ display: "grid", gridTemplateColumns: "32px 2fr 1.5fr 1.2fr 1fr", gap: 16, padding: "14px 16px", borderBottom: "1px solid var(--sk-border, rgba(100,116,139,0.12))" }}>
+        <Sk w={16} h={16} r={3} />
+        <Sk w={`${55 + (r % 3) * 15}%`} h={13} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Sk w={28} h={28} r="50%" />
+          <Sk w="55%" h={12} />
+        </div>
+        <Sk w="65%" h={12} />
+        <Sk w="60%" h={12} />
+      </div>
+    ))}
+  </div>
+);
+
+/* ──────────────────────────────────────────────
    USERS PAGE SKELETON  (EmployeeMasterList)
    Layout: left sidebar (employee list) + right main (stat cards + charts)
 ────────────────────────────────────────────── */

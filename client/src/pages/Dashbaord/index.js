@@ -1474,7 +1474,12 @@ const Dashboard = () => {
                   style={{ cursor: "pointer" }}
                   onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
                 >
-                  <span className="db-note-pin">📌</span>
+                  <span className="db-note-pin">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399"/>
+                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </span>
                   <div className="db-note-body">
                     <p className="db-note-title">{note.title || "Untitled Note"}</p>
                     <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>

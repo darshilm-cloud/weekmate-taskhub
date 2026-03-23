@@ -564,11 +564,24 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   color: #fff;
 }
 
+body.dark-theme .stats-toggle-btn,
+body[data-theme="dark"] .stats-toggle-btn {
+  background: #1e293b;
+  border-color: #2d3f55;
+  color: #94a3b8;
+}
+
+body.dark-theme .stats-toggle-btn:hover,
+body[data-theme="dark"] .stats-toggle-btn:hover {
+  background: #243447;
+  color: #e2e8f0;
+}
+
 body.dark-theme .stats-toggle-btn.active,
 body[data-theme="dark"] .stats-toggle-btn.active,
 body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
-  background: #19202c;
-  border-color: #19202c;
+  background: #0b3a5b;
+  border-color: #0b3a5b;
   color: #fff;
 }
 

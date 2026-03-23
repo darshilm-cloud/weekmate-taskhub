@@ -9,7 +9,7 @@
     flex: 0 0 260px !important;
     border-radius: 12px !important;
     overflow: hidden;
-    border: none !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
     border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06) !important;
     background: #ffffff !important;
@@ -198,8 +198,8 @@
 body.dark-theme .bugs-task-wrapper .order.small-box,
 body[data-theme="dark"] .bugs-task-wrapper .order.small-box {
     background: #1c2938 !important;
-    border: none !important;
-    border-top-color: var(--wm-col-border-color, #38bdf8) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    border-top: 4px solid var(--wm-col-border-color, #38bdf8) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 

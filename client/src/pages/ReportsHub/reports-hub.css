@@ -138,15 +138,16 @@
 }
 
 .reports-filter-bar {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) 112px;
+  display: flex;
   gap: 14px;
   padding: 8px 0 10px;
+  align-items: center;
 }
 
 .reports-filter-control.ant-select,
 .reports-filter-control.ant-picker {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 46px;
   border-radius: 12px;
   background: #fff;
@@ -770,7 +771,6 @@
 
 @media (max-width: 1280px) {
   .reports-hub-grid,
-  .reports-filter-bar,
   .project-report-stats,
   .daily-report-expanded-grid,
   .user-report-member-grid,
@@ -779,7 +779,12 @@
   }
 
   .reports-filter-bar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-wrap: wrap;
+  }
+
+  .reports-filter-bar .reports-filter-control.ant-select,
+  .reports-filter-bar .reports-filter-control.ant-picker {
+    flex: 1 1 calc(50% - 7px);
   }
 
   .reports-search-button {
@@ -1382,7 +1387,13 @@ body[data-theme="dark"] .user-report-member-search .ant-input::placeholder {
   }
 
   .reports-filter-bar {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .reports-filter-bar .reports-filter-control.ant-select,
+  .reports-filter-bar .reports-filter-control.ant-picker {
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .project-report-search,

@@ -56,3 +56,71 @@
     white-space: normal;
     max-width: 100%;
 }
+
+/* ── Active tab dark theme fix ── */
+body.dark-theme .main-trash-wrapper ul.tab_menu li.active-tab,
+body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li.active-tab {
+    background: rgba(24, 124, 183, 0.15) !important;
+    color: #60a5fa !important;
+    border-color: #60a5fa !important;
+}
+
+body.dark-theme .main-trash-wrapper ul.tab_menu li,
+body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li {
+    color: #94a3b8;
+}
+
+body.dark-theme .main-trash-wrapper ul.tab_menu li:hover,
+body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li:hover {
+    color: #cbd5e1;
+}
+
+/* ── Action buttons (restore/delete) dark theme fix ── */
+body.dark-theme .main-trash-wrapper .action-buttons,
+body[data-theme="dark"] .main-trash-wrapper .action-buttons {
+    border-color: #334155 !important;
+}
+
+body.dark-theme .main-trash-wrapper .action-buttons button,
+body[data-theme="dark"] .main-trash-wrapper .action-buttons button {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .main-trash-wrapper .action-buttons button:not([disabled]):hover,
+body[data-theme="dark"] .main-trash-wrapper .action-buttons button:not([disabled]):hover {
+    color: #60a5fa !important;
+}
+
+/* ── Dark theme fixes ── */
+body.dark-theme .main-trash-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr > td {
+    color: #cbd5e1;
+}
+
+body.dark-theme .main-trash-wrapper .ant-table-tbody > tr > td a,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr > td a {
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .main-trash-wrapper .ant-table-tbody > tr > td a:hover,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr > td a:hover {
+    color: #93c5fd !important;
+}
+
+body.dark-theme .main-trash-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-thead > tr > th {
+    color: #64748b;
+    background: #0f172a !important;
+}
+
+body.dark-theme .main-trash-wrapper .ant-table,
+body.dark-theme .main-trash-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"] .main-trash-wrapper .ant-table,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr > td {
+    background: #1e293b;
+}
+
+body.dark-theme .main-trash-wrapper .ant-table-tbody > tr:hover > td,
+body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr:hover > td {
+    background: #263548 !important;
+}

@@ -211,6 +211,7 @@ const SettingsModule = () => {
                       value={smtpHost}
                       onChange={(e) => setSmtpHost(e.target.value)}
                       prefix={<GlobalOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
+                      styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
                     />
                   </div>
                 </Col>
@@ -222,6 +223,7 @@ const SettingsModule = () => {
                       value={smtpPort}
                       onChange={(e) => setSmtpPort(e.target.value)}
                       prefix={<LockOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
+                      styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
                     />
                   </div>
                 </Col>
@@ -246,6 +248,7 @@ const SettingsModule = () => {
                       value={fromName}
                       onChange={(e) => setFromName(e.target.value)}
                       prefix={<UserOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
+                      styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
                     />
                   </div>
                 </Col>
@@ -257,6 +260,7 @@ const SettingsModule = () => {
                       value={smtpEmail}
                       onChange={(e) => setSmtpEmail(e.target.value)}
                       prefix={<MailOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
+                      styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
                     />
                   </div>
                 </Col>
@@ -269,6 +273,7 @@ const SettingsModule = () => {
                       onChange={(e) => setAppPassword(e.target.value)}
                       prefix={<LockOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
                       iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                      styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
                     />
                   </div>
                 </Col>

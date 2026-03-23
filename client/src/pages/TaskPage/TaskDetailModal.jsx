@@ -47,6 +47,7 @@ function getAssigneeName(a) {
 }
 
 const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) => {
+  const isDark = document.body.classList.contains("dark-theme") || document.body.getAttribute("data-theme") === "dark";
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("comments");
@@ -358,7 +359,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
           <div className="task-no-comments">No comments</div>
         )}
       </div>
-      <div className="task-detail-add-comment">
+      <div className="task-detail-add-comment" style={isDark ? { background: 'rgba(10,18,32,0.98)', backgroundColor: 'rgba(10,18,32,0.98)', borderColor: 'rgba(51,65,85,0.6)' } : {}}>
         <div className="task-detail-composer-title">Add to the conversation</div>
         <TextArea
           rows={4}
@@ -366,9 +367,11 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           disabled={!taskId}
+          style={isDark ? { background: 'rgba(7,17,31,0.9)', backgroundColor: 'rgba(7,17,31,0.9)', borderColor: 'rgba(51,65,85,0.8)', color: '#e2e8f0' } : {}}
+          styles={{ textarea: isDark ? { background: 'rgba(7,17,31,0.9)', backgroundColor: 'rgba(7,17,31,0.9)', color: '#e2e8f0' } : {} }}
         />
-        <div className="task-detail-composer-actions">
-          <span className="task-detail-composer-hint">
+        <div className="task-detail-composer-actions" style={isDark ? { background: 'transparent' } : {}}>
+          <span className="task-detail-composer-hint" style={isDark ? { color: '#64748b' } : {}}>
             Comments stay attached to this task for the team.
           </span>
           <Button

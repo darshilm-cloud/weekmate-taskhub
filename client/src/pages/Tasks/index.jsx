@@ -123,6 +123,7 @@ const TasksPMS = ({ flag }) => {
   const [stagesId, setStagesId] = useState("");
   const [html, setHtml] = useState([]);
   const importRef = useRef(null);
+  const boardTasksInitiatedRef = useRef(false);
 
   //Filter Subscribers & Clients for List Notification:
   const [filteredSubscriber, setFilteredSubscribers] = useState([]);
@@ -682,6 +683,7 @@ const TasksPMS = ({ flag }) => {
 
   const getBoardTasks = async (main_task_id) => {
     try {
+      setIsTasksLoading(true);
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
@@ -704,12 +706,13 @@ const TasksPMS = ({ flag }) => {
           }))
         );
         setBoardTasks(enrichedData);
-        getProjectByID()
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsTasksLoading(false);
     }
   };
 
@@ -1562,13 +1565,22 @@ const TasksPMS = ({ flag }) => {
       let data = projectMianTask.filter((ele) => listID == ele?._id);
       setSelectedTask(data[0]);
       getListWorkflowStatus();
-      getBoardTasks(listID);
+      if (boardTasksInitiatedRef.current) {
+        boardTasksInitiatedRef.current = false;
+      } else {
+        getBoardTasks(listID);
+      }
     }
   }, [listID, projectMianTask]);
 
   useEffect(() => {
+    boardTasksInitiatedRef.current = false;
     getProjectByID();
     getProjectMianTask();
+    if (listID) {
+      boardTasksInitiatedRef.current = true;
+      getBoardTasks(listID);
+    }
     dispatch(getFolderList(projectId));
     dispatch(getClientList(projectId));
     dispatch(getSubscribersList(projectId));

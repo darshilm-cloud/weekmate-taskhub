@@ -6,10 +6,12 @@ import { removeTitle } from "../../util/nameFilter";
 
 const MyAvatar = ({ userName, src, key, alt, isThumbnail = true }) => {
   const [isLoading, setIsLoading] = useState(true); // Assume initial loading state
-  let avtar_resolution =
-    isThumbnail == true
-      ? `${Service.HRMS_Base_URL}/uploads/thumbnail_emp_images/${src}`
-      : `${Service.HRMS_Base_URL}/uploads/emp_images/${src}`;
+  const localBase = process.env.REACT_APP_API_URL || Service.Server_Base_URL || "";
+  let avtar_resolution = src
+    ? src.startsWith("http")
+      ? src
+      : `${localBase}/public/${src}`
+    : "";
 
   useEffect(() => {
     let image;

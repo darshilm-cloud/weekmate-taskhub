@@ -228,6 +228,22 @@
 
 .ps-skeleton-row:last-child { border-bottom: none; }
 
+.ps-skeleton-header-row {
+  background: #f8fafb;
+  border-bottom: 1px solid #edf0f4;
+}
+
+body.dark-theme .ps-skeleton-header-row,
+body[data-theme="dark"] .ps-skeleton-header-row {
+  background: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+body.dark-theme .ps-skeleton-row,
+body[data-theme="dark"] .ps-skeleton-row {
+  border-bottom-color: #1e293b;
+}
+
 .ps-shimmer {
   border-radius: 6px;
   background: linear-gradient(90deg, #edf0f4 25%, #f5f7fa 50%, #edf0f4 75%);
@@ -427,6 +443,16 @@ body[data-theme="dark"] .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr 
   color: #cbd5e1;
   border-bottom-color: rgba(71, 85, 105, 0.15) !important;
   background: #1e293b;
+}
+
+body.dark-theme .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr > td a,
+body[data-theme="dark"] .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr > td a {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr > td a:hover,
+body[data-theme="dark"] .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr > td a:hover {
+  color: #93c5fd !important;
 }
 
 body.dark-theme .ps-table-wrap .ant-table-wrapper .ant-table-tbody > tr:hover > td,

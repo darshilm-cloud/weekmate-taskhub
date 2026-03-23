@@ -155,15 +155,19 @@
         
         &:hover, &:focus, &.ant-input-affix-wrapper-focused {
           border-color: #0b3a5b !important;
+          background: var(--app-surface-2) !important;
           box-shadow: none;
         }
 
         .ant-input {
-          background: transparent;
+          background: transparent !important;
+          background-color: transparent !important;
           color: var(--app-text);
           height: 100%;
           border: none;
-          &:focus {
+          &:focus, &:hover {
+            background: transparent !important;
+            background-color: transparent !important;
             box-shadow: none;
           }
         }
@@ -177,6 +181,14 @@
         padding-left: 12px;
         padding-right: 12px;
 
+        &.ant-input-affix-wrapper-focused,
+        &:focus-within {
+          background: var(--app-surface-2) !important;
+          background-color: var(--app-surface-2) !important;
+          border-color: #0b3a5b !important;
+          box-shadow: none !important;
+        }
+
         .ant-input-prefix {
           margin-right: 8px;
           display: flex;
@@ -186,7 +198,7 @@
           margin-left: 8px;
           display: flex;
           align-items: center;
-          
+
           .anticon {
             color: var(--app-text-subtle);
             cursor: pointer;
@@ -196,14 +208,24 @@
           }
         }
 
-        .ant-input {
+        .ant-input,
+        .ant-input:focus,
+        .ant-input:hover {
           background: transparent !important;
+          background-color: transparent !important;
           box-shadow: none !important;
         }
       }
 
       .ant-select {
         color: var(--app-text);
+
+        &:hover .ant-select-selector,
+        &.ant-select-focused .ant-select-selector {
+          background: var(--app-surface-2) !important;
+          border-color: #0b3a5b !important;
+          box-shadow: none !important;
+        }
       }
 
       .ant-select-arrow,
@@ -428,5 +450,33 @@ body[data-theme="dark"] .settings-overview {
       border-color: var(--app-border);
       color: var(--app-text);
     }
+  }
+}
+
+/* Force dark background on all SMTP form inputs — overrides Ant Design focus reset */
+.settings-overview .manual-config-section {
+  .ant-input-affix-wrapper,
+  .ant-input-affix-wrapper:hover,
+  .ant-input-affix-wrapper:focus,
+  .ant-input-affix-wrapper-focused,
+  .ant-input-affix-wrapper:focus-within {
+    background: var(--app-surface-2) !important;
+    background-color: var(--app-surface-2) !important;
+  }
+
+  .ant-input-affix-wrapper .ant-input,
+  .ant-input-affix-wrapper .ant-input:hover,
+  .ant-input-affix-wrapper .ant-input:focus,
+  .ant-input-affix-wrapper-focused .ant-input {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .ant-input,
+  .ant-input:hover,
+  .ant-input:focus {
+    background: var(--app-surface-2) !important;
+    background-color: var(--app-surface-2) !important;
   }
 }

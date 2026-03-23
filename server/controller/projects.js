@@ -644,11 +644,13 @@ exports.getProjects = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
+          start_date: 1,
           end_date: 1,
           updatedAt: 1,
           estimatedHours: 1,
           project_status: { _id: 1, title: 1 },
-          manager: { _id: 1, full_name: 1 }
+          manager: { _id: 1, full_name: 1, emp_img: 1 },
+          assignees: 1
         }
       }
     ];
@@ -761,10 +763,12 @@ exports.getProjects = async (req, res) => {
       return {
         _id:                  project._id,
         title:                project.title,
+        start_date:           project.start_date,
         end_date:             project.end_date,
         updatedAt:            project.updatedAt,
         project_status:       project.project_status,
         manager:              project.manager,
+        assignees:            project.assignees,
         totalTasks:           tasks.length,
         doneTasks:            doneTasks.length,
         completionPercentage,

@@ -314,12 +314,25 @@
   padding-top: 6px;
 }
 
-.task-detail-primary-btn,
-.task-detail-comment-submit {
+.task-detail-primary-btn {
   height: 44px;
   border-radius: 14px;
   padding: 0 20px;
   font-weight: 700;
+  border: none !important;
+  background: linear-gradient(135deg, #0f67d8 0%, #38bdf8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 16px 34px rgba(14, 116, 214, 0.26);
+}
+
+.task-detail-comment-submit {
+  height: 52px;
+  border-radius: 16px;
+  padding: 0 32px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: visible;
   border: none !important;
   background: linear-gradient(135deg, #0f67d8 0%, #38bdf8 100%) !important;
   color: #ffffff !important;
@@ -540,6 +553,7 @@
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 14px 32px rgba(59, 130, 246, 0.08);
+  overflow: visible;
 }
 
 .task-detail-composer-title {
@@ -742,15 +756,67 @@ body[data-theme="dark"] .task-no-comments,
 body.dark-theme .task-detail-history .history-data-wrapper,
 body[data-theme="dark"] .task-detail-history .history-data-wrapper,
 body.dark-theme .task-detail-comment-item .fileAttachment_Box,
-body[data-theme="dark"] .task-detail-comment-item .fileAttachment_Box,
+body[data-theme="dark"] .task-detail-comment-item .fileAttachment_Box {
+  background: rgba(15, 23, 42, 0.72) !important;
+}
+
 body.dark-theme .task-detail-add-comment .ant-input,
-body[data-theme="dark"] .task-detail-add-comment .ant-input {
-  background: rgba(15, 23, 42, 0.72);
+body[data-theme="dark"] .task-detail-add-comment .ant-input,
+body.dark-theme .task-detail-add-comment .ant-input:hover,
+body[data-theme="dark"] .task-detail-add-comment .ant-input:hover,
+body.dark-theme .task-detail-add-comment .ant-input:focus,
+body[data-theme="dark"] .task-detail-add-comment .ant-input:focus {
+  background: rgba(7, 17, 31, 0.9) !important;
+  background-color: rgba(7, 17, 31, 0.9) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .task-detail-add-comment,
+body[data-theme="dark"] .task-detail-add-comment {
+  background: rgba(12, 23, 40, 0.95) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+}
+
+body.dark-theme .task-detail-composer-title,
+body[data-theme="dark"] .task-detail-composer-title {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .task-no-comments,
+body[data-theme="dark"] .task-no-comments {
+  background: rgba(7, 17, 31, 0.7) !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+  color: #475569 !important;
 }
 
 body.dark-theme .task-detail-modal-right,
 body[data-theme="dark"] .task-detail-modal-right {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-content-holder,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-content-holder {
+  background: transparent !important;
+}
+
+body.dark-theme .task-detail-tab-content,
+body[data-theme="dark"] .task-detail-tab-content {
+  background: transparent !important;
+}
+
+body.dark-theme .task-detail-add-comment,
+body[data-theme="dark"] .task-detail-add-comment {
+  background: rgba(10, 18, 32, 0.98) !important;
+  background-color: rgba(10, 18, 32, 0.98) !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .task-detail-composer-actions,
+body[data-theme="dark"] .task-detail-composer-actions {
+  background: transparent !important;
 }
 
 body.dark-theme .task-detail-title,
@@ -798,8 +864,83 @@ body[data-theme="dark"] .task-detail-secondary-btn {
 
 body.dark-theme .task-detail-tabs .ant-tabs-tab-active .task-detail-tab-label,
 body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab-active .task-detail-tab-label {
-  color: #7dd3fc;
-  border-color: rgba(14, 165, 233, 0.42);
+  color: #7dd3fc !important;
+  border-color: rgba(14, 165, 233, 0.42) !important;
+  background: rgba(14, 165, 233, 0.08) !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-nav,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-nav {
+  background: transparent !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-tab,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab {
+  background: transparent !important;
+}
+
+body.dark-theme .task-detail-tabs,
+body[data-theme="dark"] .task-detail-tabs {
+  background: transparent !important;
+}
+
+/* Metric cards (Due date / Assignees / Assets) */
+body.dark-theme .task-detail-metric-card,
+body[data-theme="dark"] .task-detail-metric-card {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+}
+
+/* Task ID pill */
+body.dark-theme .task-detail-task-id,
+body[data-theme="dark"] .task-detail-task-id {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+  color: #94a3b8 !important;
+}
+
+/* Icon buttons (top-right actions) */
+body.dark-theme .task-detail-icon-btn,
+body[data-theme="dark"] .task-detail-icon-btn {
+  background: rgba(15, 23, 42, 0.82) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+  color: #94a3b8 !important;
+}
+
+body.dark-theme .task-detail-icon-btn:hover,
+body[data-theme="dark"] .task-detail-icon-btn:hover {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #e2e8f0 !important;
+}
+
+/* Tab labels (Comments / Files / Activity) */
+body.dark-theme .task-detail-tab-label,
+body[data-theme="dark"] .task-detail-tab-label {
+  background: rgba(12, 20, 35, 0.9) !important;
+  background-color: rgba(12, 20, 35, 0.9) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+/* Sidebar kicker text */
+body.dark-theme .task-detail-sidebar-kicker,
+body[data-theme="dark"] .task-detail-sidebar-kicker {
+  color: #475569 !important;
+}
+
+/* Tab hint text */
+body.dark-theme .task-detail-tab-hint,
+body[data-theme="dark"] .task-detail-tab-hint {
+  color: #475569 !important;
+}
+
+/* Comment badge */
+body.dark-theme .comment-badge,
+body[data-theme="dark"] .comment-badge {
+  background: rgba(14, 165, 233, 0.2) !important;
+  color: #7dd3fc !important;
 }
 
 @media (max-width: 1100px) {

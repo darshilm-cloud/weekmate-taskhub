@@ -435,7 +435,7 @@ function ProjectLabels() {
 
   const SkeletonTable = () => (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+      <div className="ps-skeleton-row ps-skeleton-header-row">
         <div className="ps-shimmer" style={{ width: "8%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "40%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />

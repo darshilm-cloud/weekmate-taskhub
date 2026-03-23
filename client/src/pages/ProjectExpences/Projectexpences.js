@@ -667,7 +667,7 @@ const Projectexpences = () => {
             type="donut"
             series={donutSeries}
             options={donutOptions}
-            height={180}
+            height={260}
           />
           <div className="pe-legend">
             <div className="pe-legend-row">

@@ -162,6 +162,7 @@
   grid-template-columns: 1fr 1fr 320px;
   gap: 16px;
   margin-bottom: 24px;
+  align-items: stretch;
 }
 
 .pe-chart-card {
@@ -170,7 +171,15 @@
   border-radius: 14px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
+
+.pe-charts-grid .pe-chart-card:nth-child(3) {
+  justify-content: center;
+}
+
 
 .pe-chart-header {
   display: flex;

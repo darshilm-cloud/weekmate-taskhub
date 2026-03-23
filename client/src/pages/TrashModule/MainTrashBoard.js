@@ -14,7 +14,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import NotesController from "./NotesController/NotesController";
-import { TrashSkeleton } from "../../components/common/SkeletonLoader";
+import { TrashSkeleton, TrashTableSkeleton } from "../../components/common/SkeletonLoader";
 import "./trashstyle.css";
 
 const MainTrashBoard = () => {
@@ -39,6 +39,7 @@ const MainTrashBoard = () => {
   const { tab, taskID, listID } = queryString.parse(location.search);
   const [selectedTab, setSelectedTab] = useState(tab || "Project");
   const [pageLoading, setPageLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const history = useHistory();
   useEffect(() => {
     const handleResize = () => {
@@ -170,7 +171,12 @@ const MainTrashBoard = () => {
   // updateTable is stable for our use; avoid exhaustive deps churn
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    updateTable().finally(() => setPageLoading(false));
+    setTableLoading(true);
+    setTableData([]);
+    updateTable().finally(() => {
+      setPageLoading(false);
+      setTableLoading(false);
+    });
   }, [selectedTab]);
 
   const Payload = () => {
@@ -359,21 +365,25 @@ const MainTrashBoard = () => {
 
 
           <div className="table-content">
-            <Table
-              rowSelection={ rowSelection }
-              scroll={ {
-                x: "100%",
-              } }
-              columns={ columns }
-              dataSource={ tableData }
-              pagination={ {
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                showTotal: showTotal,
-                ...pagination,
-              } }
-              rowKey="_id"
-            />
+            { tableLoading ? (
+              <TrashTableSkeleton />
+            ) : (
+              <Table
+                rowSelection={ rowSelection }
+                scroll={ {
+                  x: "100%",
+                } }
+                columns={ columns }
+                dataSource={ tableData }
+                pagination={ {
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "30"],
+                  showTotal: showTotal,
+                  ...pagination,
+                } }
+                rowKey="_id"
+              />
+            ) }
           </div>
         </Card>
       </div>

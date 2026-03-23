@@ -19,7 +19,7 @@ const SKELETON_ROWS = 6;
 function SkeletonTable() {
   return (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+      <div className="ps-skeleton-row ps-skeleton-header-row">
         <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
       </div>
       {Array.from({ length: SKELETON_ROWS }).map((_, i) => (

@@ -325,7 +325,7 @@ export default function NotesPage() {
               <div style={{ marginTop: 10 }}>
                 <Skeleton active paragraph={{ rows: 2, width: ["90%", "70%"] }} title={false} />
               </div>
-              <div className="note-card-footer" style={{ borderTop: "1px solid #e2e8f0", marginTop: 8 }}>
+              <div className="note-card-footer" style={{ marginTop: 8 }}>
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
