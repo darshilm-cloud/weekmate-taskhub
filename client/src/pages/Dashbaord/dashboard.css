@@ -654,6 +654,19 @@ tbody.showfilter {
   overflow: hidden !important;
 }
 
+.stats-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  padding-bottom: 8px;
+}
+
+body.dark-theme .stats-header-row,
+body[data-theme="dark"] .stats-header-row {
+  background: var(--card-bg, #1e293b);
+}
+
 .stats-chart-wrap {
   position: relative;
 }
