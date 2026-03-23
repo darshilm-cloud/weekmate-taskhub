@@ -657,7 +657,7 @@ const AssignProject = () => {
           setPagination((prev) => ({ ...prev, current: prev.current - 1 }));
         }
         if (!isLastItemOnPage) {
-          getProjectListing();
+          getProjectListing(currentSkipFilters, currentFilters, true);
         }
       } else {
         message.error(response.data.message);

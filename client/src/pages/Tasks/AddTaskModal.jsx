@@ -660,6 +660,7 @@ export default function AddTaskModal({
       >
         <div className="add-task-modal-v2-inner">
           <div className="add-task-modal-header">
+            <span className="add-task-modal-header-title">Create New Task</span>
             <button type="button" className="add-task-modal-close-btn" onClick={onCancel} aria-label="Close">
               <CloseOutlined />
             </button>
