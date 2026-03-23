@@ -1,21 +1,21 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
-  Card,
   Form,
   message,
   Table,
   Input,
   Modal,
   Popconfirm,
-  Spin,
   Row,
   Col
 } from "antd";
 import {
   EditOutlined,
   SaveTwoTone,
-  CloseCircleTwoTone
+  CloseCircleTwoTone,
+  PlusOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import { useDispatch } from "react-redux";
@@ -433,111 +433,107 @@ function ProjectLabels() {
     fetchLabels();
   }, [fetchLabels]);
 
-  return (
-    <Card className="employee-card">
-      <div className="project-labels-container">
-        <div className="heading-wrapper">
-          <h2>Project Labels</h2>
-          <Button className="addleave-btn" onClick={ showModal } type="primary">
-            + Add
-          </Button>
-        </div>
-
-        <div className="global-search">
-          <Search
-            placeholder="Search..."
-            onSearch={ onSearch }
-            style={ { width: 200 } }
-            allowClear
-          />
-        </div>
-
-        <Modal
-          open={ isModalOpen }
-          onCancel={ handleModalClose }
-          title="Add Task Labels"
-          className="project-add-wrapper edit-details-task-model"
-          width={ 600 }
-          footer={ [
-            <Button
-              key="cancel"
-              onClick={ handleModalClose }
-              size="large"
-              className="square-outline-btn ant-delete"
-            >
-              Cancel
-            </Button>,
-            <Button
-              key="submit"
-              type="primary"
-              size="large"
-              className="square-primary-btn"
-              onClick={ () => form.submit() }
-            >
-              Save
-            </Button>,
-          ] }
-        >
-          <div className="overview-modal-wrapper task-overview-modal-wrapper">
-            <Form
-              form={ form }
-              layout="vertical"
-              onFinish={ handleAddLabel }
-            >
-              <Row gutter={ [0, 0] }>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <Form.Item
-                    label="Color"
-                    rules={ [{ required: true, message: "Please select a color" }] }
-                  >
-                    <Input
-                      type="color"
-                      value={ selectedColor }
-                      onChange={ (e) => setSelectedColor(e.target.value) }
-                      style={ { width: 100, height: 40 } }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <Form.Item
-                    name="title"
-                    label="Task Label"
-                    rules={ [
-                      { required: true, message: "Please enter a task label" },
-                      { whitespace: true, message: "Task label cannot be empty" },
-                    ] }
-                  >
-                    <Input
-                      autoComplete="off"
-                      placeholder="Enter label name"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Form>
-          </div>
-        </Modal>
-        <div className="block-table-content">
-          <Table
-            columns={ columns }
-            dataSource={ projectlabelListing }
-            rowKey="_id"
-            pagination={ {
-              showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
-              showTotal: (total) => `Total ${total} records`,
-              ...pagination,
-            } }
-            onChange={ handleTableChange }
-            loading={ {
-              spinning: isTableLoading,
-              indicator: <Spin size="large" />
-            } }
-          />
-        </div>
+  const SkeletonTable = () => (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row ps-skeleton-header-row">
+        <div className="ps-shimmer" style={{ width: "8%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "40%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
       </div>
-    </Card>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: 32, height: 18, borderRadius: 4 }} />
+          <div className="ps-shimmer" style={{ width: `${30 + Math.random() * 30}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="ps-page">
+      <div className="ps-card">
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><TagsOutlined /></span>
+            Project Labels
+          </h2>
+          <div className="ps-header-right">
+            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={showModal}>
+              Add Label
+            </Button>
+          </div>
+        </div>
+
+        <div className="ps-search">
+          <Search
+            placeholder="Search labels..."
+            onSearch={onSearch}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
+            style={{ width: 260 }}
+          />
+        </div>
+
+        {isTableLoading ? (
+          <SkeletonTable />
+        ) : (
+          <div className="ps-table-wrap">
+            <Table
+              columns={columns}
+              dataSource={projectlabelListing}
+              rowKey="_id"
+              pagination={{
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "30"],
+                showTotal: (total) => `Total ${total} records`,
+                ...pagination,
+              }}
+              onChange={handleTableChange}
+            />
+          </div>
+        )}
+      </div>
+
+      <Modal
+        open={isModalOpen}
+        onCancel={handleModalClose}
+        title={<><TagsOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Task Label</>}
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
+          <Button key="submit" className="ps-modal-save" onClick={() => form.submit()}>Save</Button>,
+        ]}
+      >
+        <Form form={form} layout="vertical" onFinish={handleAddLabel}>
+          <Row gutter={[16, 0]}>
+            <Col xs={6}>
+              <Form.Item label="Color">
+                <Input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  style={{ width: "100%", height: 40, padding: 2, borderRadius: 8 }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={18}>
+              <Form.Item
+                name="title"
+                label="Label Name"
+                rules={[
+                  { required: true, message: "Please enter a label name" },
+                  { whitespace: true, message: "Label name cannot be empty" },
+                ]}
+              >
+                <Input autoComplete="off" placeholder="e.g. Bug, Feature, Urgent" size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+    </div>
   );
 }
 

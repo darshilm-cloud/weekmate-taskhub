@@ -4,6 +4,8 @@ const {
   successResponse,
   catchBlockErrorResponse
 } = require("../helpers/response");
+const { getCache, storeCache } = require("../middleware/cacheStore");
+const { generateCacheKey } = require("../middleware/CryptoKey");
 const mongoose = require("mongoose");
 const WorkflowStatusModel = mongoose.model("workflowstatus");
 const ProjectMainTasks = mongoose.model("projectmaintasks");
@@ -186,6 +188,15 @@ exports.getProjectsMainTask = async (req, res) => {
       sort: value.sort,
       sortBy: value.sortBy
     });
+
+    const cacheTtlSeconds = 30;
+    const mainTaskCacheKey = !value._id && !value.search
+      ? `maintasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, pageNo: value.pageNo, limit: value.limit })}`
+      : null;
+    if (mainTaskCacheKey) {
+      const cached = getCache(mainTaskCacheKey);
+      if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data, cached.metadata);
+    }
 
     const [isClient, isAdmin, isManager, isAccManager] =
       await Promise.all([
@@ -665,13 +676,12 @@ exports.getProjectsMainTask = async (req, res) => {
       currentPage: pagination.page
     };
 
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      value._id ? data[0] : data,
-      !value._id && metaData
-    );
+    const responseData = value._id ? data[0] : data;
+    const responseMeta = !value._id && metaData;
+    if (mainTaskCacheKey) {
+      storeCache(mainTaskCacheKey, responseData, responseMeta, cacheTtlSeconds);
+    }
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, responseData, responseMeta);
   } catch (error) {
     console.log("🚀 ~ exports.getProjectsMainTask= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
@@ -1112,6 +1122,16 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const boardCacheTtlSeconds = 20;
+    const hasFilters = value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length;
+    const boardCacheKey = !hasFilters
+      ? `boardtasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, main_task_id: value.main_task_id })}`
+      : null;
+    if (boardCacheKey) {
+      const cached = getCache(boardCacheKey);
+      if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data);
     }
 
     const [isClient, isAdmin, isManager, isAccManager] =
@@ -1572,6 +1592,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       }
     ];
     const data = await ProjectMainTasks.aggregate(mainQuery);
+    if (boardCacheKey) {
+      storeCache(boardCacheKey, data, null, boardCacheTtlSeconds);
+    }
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);

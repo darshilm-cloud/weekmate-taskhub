@@ -142,6 +142,7 @@ exports.getProjects = async (req, res) => {
       page: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
       search: Joi.string().optional().allow(''),
+      includeClosed: Joi.boolean().truthy("true").falsy("false").optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.query);
@@ -153,7 +154,7 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    const { page, limit, search } = value;
+    const { page, limit, search, includeClosed } = value;
 
     // Convert page and limit to integers with default values
     const pageNum = page && page > 0 ? parseInt(page, 10) : null;
@@ -195,7 +196,9 @@ exports.getProjects = async (req, res) => {
       },
       {
         $match: {
-          "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+          ...(!includeClosed && {
+            "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+          }),
           ...searchMatch // Add search conditions after lookup
         }
       },
@@ -1998,4 +2001,3 @@ exports.getAccMgrs = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
-

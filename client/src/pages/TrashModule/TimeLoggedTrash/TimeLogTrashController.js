@@ -83,12 +83,15 @@ const TimeLogTrashController = () => {
       key: "Deleted by",
       render: (text, record) => {
         return (
-          <MyAvatar
-            userName={record?.deletedBy?.full_name || "-"}
-            src={record?.deletedBy?.emp_img}
-            key={record.deletedBy?._id}
-            alt={record?.deletedBy?.full_name}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MyAvatar
+              userName={record?.deletedBy?.full_name || "-"}
+              src={record?.deletedBy?.emp_img}
+              key={record.deletedBy?._id}
+              alt={record?.deletedBy?.full_name}
+            />
+            <span style={{ color: "inherit" }}>{record?.deletedBy?.full_name || "-"}</span>
+          </div>
         );
       },
     },

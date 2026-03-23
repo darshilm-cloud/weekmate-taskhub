@@ -1,43 +1,76 @@
-import React, { useCallback, useState } from "react";
-import { Modal, Form, Input } from "antd";
+import React, { useEffect, useMemo, useState } from "react";
+import { Modal, Form, Input, Spin } from "antd";
 import {
   ClockCircleOutlined,
   FolderOutlined,
   SearchOutlined,
   ProjectOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import { debounce } from "lodash";
 import "./ProjectListModal.css";
 
 const ProjectListModal = ({
-  projectDetails,
+  projectList,
   recentList,
+  isProjectListLoading,
+  isRecentListLoading,
   isModalOpen,
   handleCancel,
   addVisitedData,
+  removeVisitedData,
   setIsModalOpen,
   form,
-  getProjectListing,
 }) => {
   const companySlug  = localStorage.getItem("companyDomain");
   const [isSearching, setIsSearching] = useState(true);
-
-  const onSearch = useCallback(
-    debounce((value) => {
-      getProjectListing(value);
-    }, 500),
-    [getProjectListing]
-  );
+  const [searchValue, setSearchValue] = useState("");
 
   const handleInputChange = (e) => {
     const { value } = e.target;
+    setSearchValue(value);
     setIsSearching(value.trim() === "");
-    onSearch(value);
   };
 
   const formattedTitle = (title) =>
     title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase());
+
+  const filteredProjects = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return projectList || [];
+    }
+
+    return (projectList || []).filter((item) =>
+      `${item?.title || ""}`.toLowerCase().includes(normalizedSearch)
+    );
+  }, [projectList, searchValue]);
+
+  const sortedRecentList = useMemo(() => {
+    const getVisitedTimestamp = (item) => {
+      const rawValue =
+        item?.visitedAt ||
+        item?.lastVisitedAt ||
+        item?.updatedAt ||
+        item?.createdAt ||
+        item?.visit_date;
+
+      const timestamp = rawValue ? new Date(rawValue).getTime() : 0;
+      return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    return [...(recentList || [])].sort(
+      (a, b) => getVisitedTimestamp(b) - getVisitedTimestamp(a)
+    );
+  }, [recentList]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      setIsSearching(true);
+      setSearchValue("");
+      form.resetFields();
+    }
+  }, [form, isModalOpen]);
 
   return (
     <Modal
@@ -68,20 +101,25 @@ const ProjectListModal = ({
       <div className="plm-body">
 
         {/* Recents */}
-        {recentList?.length > 0 && isSearching && (
+        {sortedRecentList?.length > 0 && isSearching && (
           <div className="plm-section">
             <div className="plm-section-header">
               <ClockCircleOutlined className="plm-section-icon" />
               <span>Recents</span>
-              <span className="plm-count">{recentList.length}</span>
+              <span className="plm-count">{sortedRecentList.length}</span>
             </div>
             <div className="plm-list">
-              {recentList.map((item) => (
+              {sortedRecentList.map((item) => (
                 <Link
-                  key={item.project_id}
+                  key={item._id || item.project_id}
                   to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
                   className="plm-item"
-                  onClick={() => { setIsModalOpen(false); form.resetFields(); }}
+                  onClick={() => {
+                    addVisitedData(item.project_id);
+                    setIsSearching(true);
+                    setIsModalOpen(false);
+                    form.resetFields();
+                  }}
                 >
                   <span className="plm-item-icon">
                     <ClockCircleOutlined />
@@ -89,8 +127,32 @@ const ProjectListModal = ({
                   <span className="plm-item-title">
                     {formattedTitle(item?.project?.title)}
                   </span>
+                  <button
+                    type="button"
+                    className="plm-item-remove"
+                    aria-label={`Remove ${item?.project?.title || "project"} from recents`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeVisitedData(item._id);
+                    }}
+                  >
+                    <CloseOutlined />
+                  </button>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {isSearching && isRecentListLoading && sortedRecentList?.length === 0 && (
+          <div className="plm-section">
+            <div className="plm-section-header">
+              <ClockCircleOutlined className="plm-section-icon" />
+              <span>Recents</span>
+            </div>
+            <div className="plm-empty">
+              <Spin size="small" />
             </div>
           </div>
         )}
@@ -100,14 +162,14 @@ const ProjectListModal = ({
           <div className="plm-section-header">
             <FolderOutlined className="plm-section-icon" />
             <span>Projects</span>
-            {projectDetails?.length > 0 && (
-              <span className="plm-count">{projectDetails.length}</span>
+            {filteredProjects?.length > 0 && (
+              <span className="plm-count">{filteredProjects.length}</span>
             )}
           </div>
 
-          {projectDetails?.length > 0 ? (
+          {filteredProjects?.length > 0 ? (
             <div className="plm-list">
-              {projectDetails.map((item) => (
+              {filteredProjects.map((item) => (
                 <Link
                   key={item._id}
                   to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
@@ -127,6 +189,11 @@ const ProjectListModal = ({
                   </span>
                 </Link>
               ))}
+            </div>
+          ) : isProjectListLoading ? (
+            <div className="plm-empty">
+              <Spin />
+              <p>Loading projects...</p>
             </div>
           ) : (
             <div className="plm-empty">

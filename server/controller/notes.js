@@ -341,6 +341,7 @@ exports.getNotes = async (req, res) => {
           title: 1,
           notesInfo: 1,
           color: 1,
+          isBookmark: 1,
           createdAt: 1,
           createdBy: 1,
           subscribers: "$subscriberDetails",

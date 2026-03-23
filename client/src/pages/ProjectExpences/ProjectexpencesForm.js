@@ -23,6 +23,8 @@ import { useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { sideBarContentId2 } from "../../constants";
+import { useSocketAction } from "../../hooks/useSocketAction";
+import { socketEvents } from "../../settings/socketEventName";
 import "../Complaints/ComplaintDetails.css";
 
 /* ── constants ─────────────────────────────────────────────── */
@@ -46,6 +48,7 @@ const ProjectExpensesForm = () => {
   const [form]        = Form.useForm();
   const dispatch      = useDispatch();
   const history       = useHistory();
+  const { emitEvent } = useSocketAction();
   const { review_id } = useParams();
 
   const [state, setState] = useState({
@@ -217,6 +220,10 @@ const ProjectExpensesForm = () => {
           });
           if (response?.data?.data) {
             message.success(response.data.message);
+            await emitEvent(socketEvents.PROJECT_EXPENSE_UPDATED, {
+              type: "update",
+              id: state.reviewId,
+            });
             history.push(`/${companySlug}/projectexpense`);
           } else {
             message.error(response.data.message);
@@ -241,6 +248,10 @@ const ProjectExpensesForm = () => {
           });
           if (response?.data?.statusCode === 201) {
             message.success(response.data.message);
+            await emitEvent(socketEvents.PROJECT_EXPENSE_UPDATED, {
+              type: "add",
+              id: response.data.data._id,
+            });
             history.push(`/${companySlug}/projectexpense`);
           } else {
             message.error(response.data.message);

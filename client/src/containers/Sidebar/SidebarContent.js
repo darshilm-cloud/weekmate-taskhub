@@ -1,35 +1,27 @@
 import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
-import { Form, Menu, Layout, Avatar, Dropdown } from "antd";
+import { Menu, Layout, Avatar, Dropdown } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
-import { useDispatch, useSelector } from "react-redux";
 import {
-  SearchOutlined,
   DashboardOutlined,
   SettingOutlined,
   HistoryOutlined,
   StarOutlined,
   ExclamationCircleOutlined,
   BarChartOutlined,
-  MenuOutlined,
   DownOutlined,
   CheckOutlined,
   FolderOutlined,
   FileTextOutlined,
   TeamOutlined,
-  BellOutlined,
   ReadOutlined,
   MessageOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
-import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
-import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
-import Service from "../../service";
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
-import ProjectListModal from "../../components/Modal/ProjectListModal";
 import WeekmateLogo from "../../assets/images/WEEKMATE_LOGO.png";
-import { generateCacheKey } from "../../util/generateCacheKey";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
 
@@ -40,101 +32,10 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const userData = JSON.parse(localStorage.getItem("user_data"));
 
-  const dispatch = useDispatch();
   const history = useHistory();
   const location = useLocation();
-  const { navCollapsed } = useSelector(({ common }) => common);
-
   const [selectedKeys, setSelectedKeys] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [projectDetails, setProjectDetails] = useState([]);
-  const [recentList, setRecentList] = useState([]);
-  const [form] = Form.useForm();
-
-  
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
-  // open modal and calling getlisting api
-  const showModal = async () => {
-    setIsModalOpen(true);
-    getProjectListing();
-    getVisitedData();
-  };
-
-  const getProjectListing = async (searchText) => {
-    try {
-      dispatch(showAuthLoader());
-      const normalizedSearch = (searchText || "").trim();
-      const defaultPayload = {
-        pageNo: 1,
-        limit: 100,
-        search: normalizedSearch,
-        sortBy: "desc",
-        filterBy: "all",
-        isSearch: normalizedSearch.length > 0,
-      };
-      const reqBody = {
-        ...defaultPayload,
-      };
-      if (normalizedSearch) {
-        reqBody.search = normalizedSearch;
-      }
-      let Key = generateCacheKey("project", reqBody);
-
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getProjectdetails,
-        body: reqBody,
-        options: {
-          cachekey: Key,
-        },
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setProjectDetails(response?.data?.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const addVisitedData = async (projectId) => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.addrecentVisited,
-        body: {
-          project_id: projectId,
-        },
-      });
-      if (response?.data && response?.data?.statusCode == 200) {
-        dispatch(hideAuthLoader());
-      }
-    } catch (error) {
-      console.log("add project error");
-    }
-  };
-
-  const getVisitedData = async () => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getrecentVisited,
-      });
-      if (response?.data && response?.data?.statusCode == 200) {
-        dispatch(hideAuthLoader());
-        setRecentList(response?.data?.data);
-      }
-    } catch (error) {
-      console.log("get project error");
-    }
-  };
+  const [openKeys, setOpenKeys] = useState([]);
 
   const handleMenuClick = useCallback(
     (key, path) => {
@@ -153,8 +54,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/discussion")) return "Discussion";
     if (path.includes("/project-users")) return "Users";
     if (path.includes("/permission-access")) return "Permission";
-    if (path.includes("/project-runnig-reports")) return "Analytics-Projects-running";
-    if (path.includes("/timesheet-reports")) return "Analytics-Timesheet";
+    if (path.includes("/reports")) return "Reports";
+    if (path.includes("/project-runnig-reports")) return "Project Running";
+    if (path.includes("/timesheet-reports")) return "Timesheet";
     if (path.includes("/billable-hours")) return "Hours";
     if (path.includes("/positive-review")) return "FeedBack-Positive Reviews";
     if (path.includes("/complaints")) return "FeedBack-Complaints";
@@ -164,36 +66,101 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     return "Dashboard";
   }, [location.pathname]);
 
+  const getDefaultOpenKeys = useCallback(() => {
+    const path = location.pathname;
+    return [];
+  }, [location.pathname]);
+
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
     setSelectedKeys([newSelectedKey]);
-  }, [location.pathname]);
+    setOpenKeys(getDefaultOpenKeys());
+  }, [location.pathname, getDefaultOpenKeys, getDefaultSelectedKey]);
+
+  const handleOpenChange = useCallback((keys) => {
+    const latestKey = keys.includes("Analytics") ? ["Analytics"] : [];
+    setOpenKeys(latestKey);
+  }, []);
+
+  const handleMenuMouseLeave = useCallback(() => {
+    setOpenKeys([]);
+  }, []);
 
   const menuItemsRaw = useMemo(
     () => [
-      {
-        key: "Search Project",
-        icon: <SearchOutlined />,
-        label: "Search",
-        onClick: () => showModal(),
-      },
+      // 1. Dashboard
       !getRoles(["Client"]) && {
         key: "Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
-      {
-        key: "Tasks",
-        icon: <CheckOutlined style={{ marginRight: 4 }} />,
-        label: "Tasks",
-        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks`),
-      },
+      // 2. Projects
       {
         key: "Projects",
         icon: <FolderOutlined />,
         label: "Projects",
         onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
+      },
+      // 3. Users
+      getRoles(["Admin"]) && {
+        key: "Users",
+        icon: <TeamOutlined />,
+        label: "Users",
+        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
+      },
+      // 4. Permissions
+      getRoles(["Admin"]) && {
+        key: "Permission",
+        icon: <i className="fi fi-rr-lock"></i>,
+        label: "Permissions",
+        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
+      },
+      // 5. Analytics
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "Analytics",
+        icon: <LineChartOutlined />,
+        label: "Analytics",
+        children: [
+          {
+            key: "Project Running",
+            label: "Project Running",
+            onClick: () => handleMenuClick("Project Running", `/${companySlug}/project-runnig-reports`),
+          },
+          {
+            key: "Timesheet",
+            label: "Timesheet",
+            onClick: () => handleMenuClick("Timesheet", `/${companySlug}/timesheet-reports`),
+          },
+        ],
+      },
+      // 6. Feedback - Positive Reviews
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Positive Reviews",
+        icon: <StarOutlined />,
+        label: "Positive Reviews",
+        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
+      },
+      // 7. Feedback - Complaints
+      getRoles(["Admin", "PC", "TL", "AM"]) && {
+        key: "FeedBack-Complaints",
+        icon: <ExclamationCircleOutlined />,
+        label: "Complaints",
+        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
+      },
+      // 8. Project Expense
+      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
+        key: "Projectexpences",
+        icon: <FileTextOutlined />,
+        label: "Project Expense",
+        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
+      },
+      // --- rest remaining ---
+      {
+        key: "Tasks",
+        icon: <CheckOutlined style={{ marginRight: 4 }} />,
+        label: "Tasks",
+        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
       },
       {
         key: "Notes",
@@ -207,47 +174,11 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Discussion",
         onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`),
       },
-      getRoles(["Admin"]) && {
-        key: "Users",
-        icon: <TeamOutlined />,
-        label: "Users",
-        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
-      },
-      getRoles(["Admin"]) && {
-        key: "Permission",
-        icon: <i className="fi fi-rr-lock"></i>,
-        label: "Permissions",
-        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
-      },
       (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
-        key: "Analytics-Projects-running",
+        key: "Reports",
         icon: <BarChartOutlined />,
-        label: "Projects Running",
-        onClick: () => handleMenuClick("Analytics-Projects-running", `/${companySlug}/project-runnig-reports`),
-      },
-      (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
-        key: "Analytics-Timesheet",
-        icon: <HistoryOutlined />,
-        label: "Timesheet",
-        onClick: () => handleMenuClick("Analytics-Timesheet", `/${companySlug}/timesheet-reports`),
-      },
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Positive Reviews",
-        icon: <StarOutlined />,
-        label: "Positive Reviews",
-        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
-      },
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Complaints",
-        icon: <ExclamationCircleOutlined />,
-        label: "Complaints",
-        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
-      },
-      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
-        key: "Projectexpences",
-        icon: <FileTextOutlined />,
-        label: "Project Expense",
-        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
+        label: "Reports",
+        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`),
       },
       getRoles(["Admin"]) && {
         key: "Admin_Settings",
@@ -277,12 +208,15 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     () => (
       <Menu
         theme="light"
-        mode="inline"
+        mode="vertical"
         selectedKeys={selectedKeys}
+        openKeys={openKeys}
+        onOpenChange={handleOpenChange}
+        triggerSubMenuAction="hover"
         items={item}
       />
     ),
-    [selectedKeys, item]
+    [handleOpenChange, item, openKeys, selectedKeys]
   );
 
   const userInitials = useMemo(() => {
@@ -342,7 +276,10 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           </Dropdown>
         </div>
 
-        <CustomScrollbars className="gx-layout-sider-scrollbar weekmate-sidebar-scroll">
+        <CustomScrollbars
+          className="gx-layout-sider-scrollbar weekmate-sidebar-scroll"
+          onMouseLeave={handleMenuMouseLeave}
+        >
           <Sider collapsible={false} collapsed={false} className="Sidebar">
             {menuComponent}
           </Sider>
@@ -354,17 +291,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             <span className="weekmate-whats-new-badge">1</span>
           </div> */}
         </CustomScrollbars>
-
-        <ProjectListModal
-          projectDetails={projectDetails}
-          recentList={recentList}
-          isModalOpen={isModalOpen}
-          handleCancel={handleCancel}
-          addVisitedData={addVisitedData}
-          setIsModalOpen={setIsModalOpen}
-          form={form}
-          getProjectListing={getProjectListing}
-        />
       </div>
     </>
   );

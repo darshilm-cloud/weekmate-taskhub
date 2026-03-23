@@ -42,6 +42,8 @@ import "./ProjectExpense.css";
 import { sideBarContentId2 } from "../../constants";
 import ProjectExpenseFilterComponent from "./ProjectExpenseFilterComponent";
 import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
+import { useSocketAction } from "../../hooks/useSocketAction";
+import { socketEvents } from "../../settings/socketEventName";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -89,6 +91,7 @@ const StatCard = ({ icon, label, value, sub, color }) => (
 const Projectexpences = () => {
   const dispatch      = useDispatch();
   const companySlug   = localStorage.getItem("companyDomain");
+  const { emitEvent, listenEvent } = useSocketAction();
 
   /* ── filter state (wired to existing FilterComponent) ── */
   const [selectedProject, setSelectedProject]     = useState([]);
@@ -205,6 +208,18 @@ const Projectexpences = () => {
   useEffect(() => {
     fetchTableData();
   }, [fetchTableData]);
+
+  /* ─────────────────────────────────────────────────────────────
+     REAL-TIME LISTENERS
+  ───────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    const cleanup = listenEvent(socketEvents.PROJECT_EXPENSE_UPDATED, (data) => {
+      console.log("Real-time expense update received:", data);
+      fetchAllForAnalytics();
+      fetchTableData();
+    });
+    return cleanup;
+  }, [listenEvent, fetchAllForAnalytics, fetchTableData]);
 
   /* ─────────────────────────────────────────────────────────────
      ANALYTICS — computed from allExpenses
@@ -350,6 +365,10 @@ const Projectexpences = () => {
       if (response?.data?.data) {
         fetchTableData();
         fetchAllForAnalytics();
+        await emitEvent(socketEvents.PROJECT_EXPENSE_UPDATED, {
+          type: "delete",
+          id: deleteId,
+        });
         message.success(response.data.message);
       }
     } catch (err) {
@@ -648,7 +667,7 @@ const Projectexpences = () => {
             type="donut"
             series={donutSeries}
             options={donutOptions}
-            height={180}
+            height={260}
           />
           <div className="pe-legend">
             <div className="pe-legend-row">

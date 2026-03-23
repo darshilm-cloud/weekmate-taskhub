@@ -28,9 +28,10 @@ body.admin-user[data-theme="light"] .sk-block {
 
 /* ── Dark theme tokens ── */
 body[data-theme="dark"] .sk-block,
-body.admin-user[data-theme="dark"] .sk-block {
-  --sk-base:      #1c2a3e;
-  --sk-highlight: #243450;
+body.admin-user[data-theme="dark"] .sk-block,
+body.dark-theme .sk-block {
+  --sk-base:      #263548;
+  --sk-highlight: #334a63;
   background-image: linear-gradient(
     90deg,
     var(--sk-base) 25%,

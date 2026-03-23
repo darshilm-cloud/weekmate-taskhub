@@ -61,6 +61,9 @@ const {
   addFileUploadSubscriberEvent,
   editFileUploadSubscriberEvent,
 } = require("./eventHandler/fileUpload");
+const {
+  projectExpenseUpdatedEvent,
+} = require("./eventHandler/projectExpense");
 
 const app = express();
 const server = http.createServer(app);
@@ -153,6 +156,9 @@ io.on(socketEvents.CONNECTION, async (socket) => {
   // Files events...
   await addFileUploadSubscriberEvent(socket, io);
   await editFileUploadSubscriberEvent(socket, io);
+
+  // Project Expense events...
+  await projectExpenseUpdatedEvent(socket, io);
 
   socket.on(socketEvents.DISCONNECT, () => {
     removeBySocketId(socket.id);

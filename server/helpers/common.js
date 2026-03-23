@@ -614,9 +614,9 @@ class CommonHelpers {
           $addFields: {
             [fieldName]: {
               $cond: {
-                if: { $eq: [refModel, "employees"] },
-                then: { $arrayElemAt: [`$${empVar}`, 0] },
-                else: { $arrayElemAt: [`$${clientVar}`, 0] }
+                if: { $eq: [refModel, "pmsclients"] },
+                then: { $arrayElemAt: [`$${clientVar}`, 0] },
+                else: { $arrayElemAt: [`$${empVar}`, 0] }
               }
             }
           }

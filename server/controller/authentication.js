@@ -570,6 +570,7 @@ exports.checkUserIsAdmin = async (userId) => {
     return isAdmin;
   } catch (error) {
     console.log("🚀 ~ exports.checkUserIsAdmin= ~ error:", error);
+    return false;
   }
 };
 

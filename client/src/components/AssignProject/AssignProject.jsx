@@ -90,12 +90,24 @@ const STATUS_MAP = {
 const getStatusStyle = (title = "") =>
   STATUS_MAP[title.toLowerCase()] || { bg: "#F3F4F6", color: "#374151", dot: "#9CA3AF" };
 
+const getCompletionPercent = (record, stats) => {
+  const directPct = record?.completionPercentage;
+  if (typeof directPct === "number" && Number.isFinite(directPct)) {
+    return Math.min(Math.max(Math.round(directPct), 0), 100);
+  }
+
+  const totalTasks = Number(stats?.totalTasks || 0);
+  const closedTasks = Number(stats?.closed || 0);
+  if (totalTasks <= 0) return 0;
+  return Math.min(Math.max(Math.round((closedTasks / totalTasks) * 100), 0), 100);
+};
+
 /* ─── Project Card ────────────────────────────────────────── */
 const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onCloseProject }) => {
   const history = useHistory();
   const statusTitle = record?.project_status?.title || "Active";
   const sc = getStatusStyle(statusTitle);
-  const pct = record?.completionPercentage || 0;
+  const pct = getCompletionPercent(record, stats);
 
   const formattedTitle = record?.title?.replace(
     /(?:^|\s)([a-z])/g,
@@ -116,7 +128,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 
   /* Navigate to project detail */
   const handleCardClick = () => {
-    history.push(`/${companySlug}/project/app/${record._id}?tab=${record?.defaultTab?.name}`);
+    history.push(`/${companySlug}/project/app/${record._id}?tab=Tasks`);
   };
 
   /* Circle click → confirm close project */
@@ -265,6 +277,11 @@ const TAB_FILTER_MAP = {
 };
 
 const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
+// Avoid blocking the UI thread with huge sessionStorage JSON.parse/stringify.
+// `View All` can cache very large payloads; we cap cache usage to keep initial paint fast.
+const PROJECT_CACHE_MAX_CHARS = 250_000;
+const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
+const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
 
 const GridSkeletonCard = ({ index }) => (
   <div className="ap-skeleton-card" key={`project-skeleton-${index}`}>
@@ -295,6 +312,7 @@ const AssignProject = () => {
   const location = useLocation();
   const searchRef = useRef();
   const sessionCacheKey = `assign-project-cache-${companySlug || "default"}`;
+  const searchModalCacheKey = "sidebar_project_list_search_modal_v2";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
@@ -316,6 +334,10 @@ const AssignProject = () => {
     try {
       const raw = sessionStorage.getItem(sessionCacheKey);
       if (!raw) return {};
+      if (raw.length > PROJECT_CACHE_MAX_CHARS) {
+        sessionStorage.removeItem(sessionCacheKey);
+        return {};
+      }
       const parsed = JSON.parse(raw);
       const cachedAt = parsed?.cachedAt || 0;
       if (!parsed?.data || Date.now() - cachedAt > PROJECT_CACHE_TTL_MS) {
@@ -342,19 +364,38 @@ const AssignProject = () => {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [addTaskForm] = Form.useForm();
   const latestRequestIdRef = useRef(0);
+  const inflightProjectsReqRef = useRef({ key: null, pending: false });
   const prefetchTimeoutRef = useRef(null);
   const idleFetchRef = useRef(null);
+  const cacheWriteTimerRef = useRef(null);
   const ENABLE_TAB_PREFETCH = false;
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(
-        sessionCacheKey,
-        JSON.stringify({ cachedAt: Date.now(), data: projectCache })
-      );
-    } catch (error) {
-      // Ignore storage failures and continue with in-memory cache.
-    }
+    if (cacheWriteTimerRef.current) clearTimeout(cacheWriteTimerRef.current);
+    cacheWriteTimerRef.current = setTimeout(() => {
+      const write = () => {
+        try {
+          const payload = JSON.stringify({ cachedAt: Date.now(), data: projectCache });
+          if (payload.length > PROJECT_CACHE_MAX_CHARS) {
+            sessionStorage.removeItem(sessionCacheKey);
+            return;
+          }
+          sessionStorage.setItem(sessionCacheKey, payload);
+        } catch (error) {
+          // Ignore storage failures and continue with in-memory cache.
+        }
+      };
+
+      if (typeof window !== "undefined" && window.requestIdleCallback) {
+        window.requestIdleCallback(write, { timeout: 1500 });
+      } else {
+        setTimeout(write, 0);
+      }
+    }, PROJECT_CACHE_WRITE_DEBOUNCE_MS);
+
+    return () => {
+      if (cacheWriteTimerRef.current) clearTimeout(cacheWriteTimerRef.current);
+    };
   }, [projectCache, sessionCacheKey]);
 
   useEffect(() => {
@@ -414,6 +455,7 @@ const AssignProject = () => {
       reqBody.project_type = filterStats.project_type;
     if (!shouldSkip("skipAssignees") && filterStats?.assignees?.length > 0)
       reqBody.assignee_id = filterStats.assignees;
+    reqBody.includeMetrics = false;
     if (searchText?.trim()) {
       reqBody.search = searchText;
       setSearchEnabled(true);
@@ -427,6 +469,7 @@ const AssignProject = () => {
       otherTabs.map(async (tabKey) => {
         const filterBy = TAB_FILTER_MAP[tabKey] || "all";
         const reqBody = buildReqBody(filterBy, skipFilters, filterStats);
+        if (reqBody.limit > PROJECT_CACHE_MAX_PAGE_SIZE) return;
         const Key = generateCacheKey("project", reqBody);
         if (projectCache[Key]) return;
         try {
@@ -458,7 +501,7 @@ const AssignProject = () => {
 
     const results = {};
     const queue = [...idsToFetch];
-    const limit = 4;
+    const limit = 2;
 
     const fetchOne = async (projectId) => {
       try {
@@ -491,19 +534,29 @@ const AssignProject = () => {
 
   const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
     const requestId = ++latestRequestIdRef.current;
+    let requestKey = null;
     try {
       const reqBody = buildReqBody(TAB_FILTER_MAP[activeTab] || "all", skipFilters, filterStats);
 
       const Key = generateCacheKey("project", reqBody);
+      requestKey = Key;
+      if (inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === Key) {
+        return;
+      }
       const cached = projectCache[Key];
-      if (cached) {
+      if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
         setIsloadingProject(false);
         return; // skip API call — data already cached
       }
+      if (cached && cached.projects.length === 0) {
+        setColumnDetails([]);
+        setPagination((prev) => ({ ...prev, total: 0 }));
+      }
       setIsloadingProject(columnDetails.length === 0);
 
+      inflightProjectsReqRef.current = { key: Key, pending: true };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
@@ -518,14 +571,16 @@ const AssignProject = () => {
         setColumnDetails(projects);
         setPagination((prev) => ({ ...prev, total: response.data.metadata.total }));
         setIsloadingProject(false);
-        setProjectCache((prev) => ({
-          ...prev,
-          [Key]: {
-            projects,
-            total: response.data.metadata.total,
-            taskStats: prev[Key]?.taskStats || {},
-          },
-        }));
+        if (reqBody.limit <= PROJECT_CACHE_MAX_PAGE_SIZE) {
+          setProjectCache((prev) => ({
+            ...prev,
+            [Key]: {
+              projects,
+              total: response.data.metadata.total,
+              taskStats: prev[Key]?.taskStats || {},
+            },
+          }));
+        }
       } else {
         setColumnDetails([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
@@ -551,6 +606,9 @@ const AssignProject = () => {
     } catch (error) {
       console.error(error);
     } finally {
+      if (requestKey && inflightProjectsReqRef.current.key === requestKey) {
+        inflightProjectsReqRef.current = { key: requestKey, pending: false };
+      }
       if (requestId === latestRequestIdRef.current) {
         setIsloadingProject(false);
       }
@@ -585,11 +643,21 @@ const AssignProject = () => {
       });
       if (response.data?.data && response?.data?.status) {
         message.success(response.data.message);
+        invalidateProjectCaches();
+        sessionStorage.removeItem("dashboard_project_total_count_v1");
+        sessionStorage.removeItem("dashboard_project_list_v1");
+        window.dispatchEvent(new CustomEvent("weekmate:projects-changed", {
+          detail: { action: "delete", projectId: id },
+        }));
+        setColumnDetails((prev) => prev.filter((project) => project._id !== id));
+        setProjectCache({});
         const isLastItemOnPage = columnDetails.length === 1 && pagination.current > 1;
         if (isLastItemOnPage) {
           setPagination((prev) => ({ ...prev, current: prev.current - 1 }));
         }
-        getProjectListing();
+        if (!isLastItemOnPage) {
+          getProjectListing();
+        }
       } else {
         message.error(response.data.message);
       }
@@ -621,6 +689,16 @@ const AssignProject = () => {
     setCurrentSkipFilters(skipFilters);
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
+
+  const invalidateProjectCaches = useCallback(() => {
+    setProjectCache({});
+    try {
+      sessionStorage.removeItem(sessionCacheKey);
+      sessionStorage.removeItem(searchModalCacheKey);
+    } catch (error) {
+      // Ignore storage failures and continue with in-memory reset.
+    }
+  }, [sessionCacheKey]);
 
   const showModal = (project = null) => {
     setSelectedProject(project);
@@ -769,16 +847,16 @@ const AssignProject = () => {
     if (isGrid && (gridIds.length || remainingIds.length)) {
       if (typeof window !== "undefined" && window.requestIdleCallback) {
         idleFetchRef.current = window.requestIdleCallback(() => {
-          if (gridIds.length) fetchTaskStatsForIds(gridIds);
+          if (gridIds.length) fetchTaskStatsForIds(gridIds.slice(0, 3));
           if (remainingIds.length) {
-            setTimeout(() => fetchTaskStatsForIds(remainingIds), 300);
+            setTimeout(() => fetchTaskStatsForIds([...gridIds.slice(3), ...remainingIds]), 600);
           }
         }, { timeout: 2000 });
       } else {
         idleFetchRef.current = setTimeout(() => {
-          if (gridIds.length) fetchTaskStatsForIds(gridIds);
+          if (gridIds.length) fetchTaskStatsForIds(gridIds.slice(0, 3));
           if (remainingIds.length) {
-            setTimeout(() => fetchTaskStatsForIds(remainingIds), 300);
+            setTimeout(() => fetchTaskStatsForIds([...gridIds.slice(3), ...remainingIds]), 600);
           }
         }, 900);
       }
@@ -967,23 +1045,13 @@ const AssignProject = () => {
     selectedWorkspaceProject?.manager?.full_name ||
     (selectedWorkspaceProject?.assignees?.[0]?.name ?? "Team");
 
-  const completionPctRaw = selectedWorkspaceProject?.completionPercentage;
-  const completionPct =
-    typeof completionPctRaw === "number" && Number.isFinite(completionPctRaw)
-      ? Math.min(Math.max(Math.round(completionPctRaw), 0), 100)
-      : null;
+  const completionPct = getCompletionPercent(selectedWorkspaceProject, selectedWorkspaceStats);
 
-  const closedPct = completionPct !== null
+  const closedPct = totalChartCount === 0
     ? completionPct
-    : totalChartCount === 0
-      ? 0
-      : Math.round((closedCount / totalChartCount) * 100);
+    : Math.round((closedCount / totalChartCount) * 100);
 
-  const incompletePct = completionPct !== null
-    ? Math.max(0, 100 - closedPct)
-    : totalChartCount === 0
-      ? 0
-      : Math.round((pendingCount / totalChartCount) * 100);
+  const incompletePct = Math.max(0, 100 - closedPct);
 
   const userAnalysisOptions = {
     chart: { type: "bar", stacked: true, toolbar: { show: false } },
@@ -1054,7 +1122,7 @@ const AssignProject = () => {
           (match, group1) => match.charAt(0) + group1.toUpperCase()
         );
         return (
-          <Link to={`/${companySlug}/project/app/${record._id}?tab=${record?.defaultTab?.name}`}>
+          <Link to={`/${companySlug}/project/app/${record._id}?tab=Tasks`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>
@@ -1353,6 +1421,8 @@ const AssignProject = () => {
                   setActiveTab(tab.key);
                   setSelectedWorkspaceProjectId(null);
                   setPagination((p) => ({ ...p, current: 1 }));
+                  setColumnDetails([]);
+                  setIsloadingProject(true);
                 }}
               >
                 <span className="ap-tab-icon">{tab.icon}</span>
@@ -1637,7 +1707,7 @@ const AssignProject = () => {
                           <div><span>Upcoming</span><strong>{selectedWorkspaceStats?.upComing ?? 0}</strong></div>
                         </div>
                         <div className="ap-browser-donut-wrap">
-                          <DonutChart percentage={selectedWorkspaceProject?.completionPercentage || 0} size={92} />
+                          <DonutChart percentage={completionPct} size={92} />
                         </div>
                       </div>
                     </div>
@@ -1855,7 +1925,10 @@ const AssignProject = () => {
           selectedProject={selectedProject}
           handleCancel={handleCancel}
           setIsModalOpen={setIsModalOpen}
-          triggerRefreshList={() => getProjectListing()}
+          triggerRefreshList={() => {
+            invalidateProjectCaches();
+            getProjectListing();
+          }}
         />
       )}
 

@@ -9,6 +9,7 @@ import {
   DownOutlined,
   FlagOutlined,
   MessageOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -17,6 +18,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { getRoles } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
+import TasksGanttView from "../Tasks/TasksGanttView";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import "./TaskPage.css";
 
@@ -129,7 +131,7 @@ const TaskPage = () => {
 
   const filterState = getFilterStateFromSearch(location.search, isAdmin);
 
-  const [view, setView] = useState("calendar"); // list | kanban | calendar
+  const [view, setView] = useState("list"); // list | kanban | calendar | gantt
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -291,6 +293,14 @@ const TaskPage = () => {
     return Object.values(byStatus).sort((a, b) => a.title.localeCompare(b.title));
   }, [sortedTasks]);
 
+  // Convert kanbanColumns → format expected by TasksGanttView
+  const ganttBoards = useMemo(() =>
+    kanbanColumns.map((col) => ({
+      workflowStatus: { _id: col.id, title: col.title, color: col.color },
+      tasks: col.tasks,
+    })),
+  [kanbanColumns]);
+
   const calendarTasksByDate = useMemo(() => {
     const map = {};
     sortedTasks.forEach((t) => {
@@ -394,6 +404,12 @@ const TaskPage = () => {
           >
             <CalendarOutlined className="task-tab-icon" /> Calendar
           </button>
+          <button
+            className={`task-tab ${view === "gantt" ? "active" : ""}`}
+            onClick={() => setView("gantt")}
+          >
+            <BarChartOutlined className="task-tab-icon" /> Gantt
+          </button>
         </div>
         <div className="task-page-tabs-right">
           <Select
@@ -479,7 +495,7 @@ const TaskPage = () => {
             </div>
           ))}
         </div>
-      ) : (
+      ) : view === "calendar" ? (
         <div className="task-calendar-view">
           <div className="calendar-toolbar">
             <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
@@ -496,7 +512,14 @@ const TaskPage = () => {
           </div>
           <CalendarGrid mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} onOpenTask={handleOpenTask} />
         </div>
-      )}
+      ) : view === "gantt" ? (
+        <div className="task-gantt-wrapper">
+          <TasksGanttView
+            tasks={ganttBoards}
+            onTaskClick={handleOpenTask}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };

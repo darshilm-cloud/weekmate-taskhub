@@ -113,6 +113,7 @@ const TaskList = ({
     isLoggedHoursMoreThanEstimated,
     textAreaValue,
     subscribersList,
+    assigneeOptions,
     taggedUserList,
     activeClass,
     activeClass1,
@@ -229,6 +230,7 @@ const TaskList = ({
     setPopulatedFiles,
     deleteTime,
     setTextAreaValue,
+    updateviewTask,
   } = TaskKanbanController({
     tasks,
     showModalTaskModal,
@@ -960,13 +962,14 @@ const TaskList = ({
               <div className="container project-task-list">
                 <div className="drag_column">
                   <h4>
-                    <span className="wm-col-title" style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}>{boardData?.workflowStatus?.title}</span>
+                    <span className="wm-col-title" style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}>
+                      {boardData?.workflowStatus?.title}
+                    </span>
                     <span
-                      className="wm-col-count"
+                      className="wm-col-badge"
                       style={{
-                        background: `${boardData?.workflowStatus?.color || "#3b82f6"}22`,
-                        color: boardData?.workflowStatus?.color || "#3b82f6",
-                        border: `1px solid ${boardData?.workflowStatus?.color || "#3b82f6"}55`,
+                        background: boardData?.workflowStatus?.color || "#3b82f6",
+                        color: "#ffffff",
                       }}
                     >
                       {boardData.tasks.length}
@@ -1064,29 +1067,27 @@ const TaskList = ({
                                   )}
 
                                   {/* Due date */}
-                                  {task.due_date && (
-                                    <div
-                                      className="wm-card-due"
-                                      style={{ color: moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
-                                    >
-                                      <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
-                                      {moment(task.due_date).format("MMM D, YYYY")}
-                                    </div>
-                                  )}
+                                  <div
+                                    className="wm-card-due"
+                                    style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                  >
+                                    {task.due_date ? (
+                                      <>
+                                        <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                        {moment(task.due_date).format("MMM D, YYYY")}
+                                      </>
+                                    ) : "—"}
+                                  </div>
 
-                                  {/* Footer: assignees + comments */}
+                                  {/* Footer: assignees + progress */}
                                   <div className="wm-card-footer">
                                     <span className="wm-card-assignees">
                                       {task.assignees?.length > 0
                                         ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
                                         : "Unassigned"}
                                     </span>
-                                    <span className="wm-card-meta">
-                                      <i className="fa-regular fa-comment" style={{ marginRight: 3 }}></i>
-                                      {task.comments || 0}
-                                      {(taskDrafts[task._id] || task.hasDraft) && (
-                                        <span className="draft-indicator" style={{ color: "#ff4d4f", marginLeft: 4 }}>Draft</span>
-                                      )}
+                                    <span className="wm-card-progress-badge">
+                                      {task.task_progress || "0"}%
                                     </span>
                                   </div>
                                 </div>
@@ -1476,7 +1477,7 @@ const TaskList = ({
         className="task-detail-popup"
         open={modalIsOpen && taggedUserList.length > 0}
         destroyOnClose
-        width={1000}
+        width={1120}
         footer={null}
         onCancel={() => {
           dispatch(setData({ stateName: "taggedUserList", data: [] }));
@@ -2083,7 +2084,7 @@ const TaskList = ({
                                   )
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                               bordered={false}
                             />
@@ -2553,6 +2554,25 @@ const TaskList = ({
                     })}
                   </ul>
                 </div>
+              </div>
+
+              <div className="task-popup-actions">
+                <Button
+                  className="square-primary-btn task-popup-save-btn"
+                  onClick={() => updateviewTask(viewTask)}
+                  disabled={!taskId}
+                >
+                  Save
+                </Button>
+                <Button
+                  className="square-outline-btn task-popup-close-btn"
+                  onClick={() => {
+                    handleCancel();
+                    setSelectedTaskId(null);
+                  }}
+                >
+                  Close
+                </Button>
               </div>
             </div>
           </div>

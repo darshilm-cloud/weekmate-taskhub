@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Input, Avatar, Tooltip, Select } from "antd";
+import { Input, Avatar, Tooltip, Select, Pagination } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -77,6 +77,9 @@ const EmployeeMasterList = () => {
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [sidebarSearch, setSidebarSearch] = useState("");
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
+  const [employeeListPage, setEmployeeListPage] = useState(1);
+  const [clientListPage, setClientListPage] = useState(1);
+  const sidebarPageSize = 12;
 
   /* ── employee favorites ── */
   const [favorites, setFavorites] = useState(() => {
@@ -191,6 +194,15 @@ const EmployeeMasterList = () => {
 
   const favoriteUsers = filteredUsers.filter((u) =>  favorites.includes(u._id));
   const regularUsers  = filteredUsers.filter((u) => !favorites.includes(u._id));
+  const paginatedRegularUsers = regularUsers.slice(
+    (employeeListPage - 1) * sidebarPageSize,
+    employeeListPage * sidebarPageSize
+  );
+
+  const paginatedClients = filteredClients.slice(
+    (clientListPage - 1) * sidebarPageSize,
+    clientListPage * sidebarPageSize
+  );
 
   const filteredAnalytics = (() => {
     const roleBreakdown = {};
@@ -219,6 +231,29 @@ const EmployeeMasterList = () => {
     }
   }, [filteredUsers, selectedUserId]);
 
+  useEffect(() => {
+    if (sidebarMode === "employees") setEmployeeListPage(1);
+    else setClientListPage(1);
+  }, [sidebarMode]);
+
+  useEffect(() => {
+    if (sidebarMode === "employees") setEmployeeListPage(1);
+  }, [sidebarMode, sidebarSearch, employeeStatusFilter]);
+
+  useEffect(() => {
+    if (sidebarMode === "clients") setClientListPage(1);
+  }, [sidebarMode, sidebarSearch]);
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(regularUsers.length / sidebarPageSize));
+    if (employeeListPage > maxPage) setEmployeeListPage(maxPage);
+  }, [employeeListPage, regularUsers.length]);
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(filteredClients.length / sidebarPageSize));
+    if (clientListPage > maxPage) setClientListPage(maxPage);
+  }, [clientListPage, filteredClients.length]);
+
   /* ── selected objects ──────────────────────────────────────────── */
   const selectedUser   = selectedUserId   ? sidebarUsers.find((u) => u._id === selectedUserId)   : null;
   const selectedClient = selectedClientId ? sidebarClients.find((c) => c._id === selectedClientId) : null;
@@ -235,7 +270,11 @@ const EmployeeMasterList = () => {
   const roleLabels  = Object.keys(analytics.roleBreakdown);
   const roleSeries  = Object.values(analytics.roleBreakdown);
   const donutOptions = {
-    chart: { type: "donut", fontFamily: "inherit" },
+    chart: {
+      type: "donut",
+      fontFamily: "inherit",
+      animations: { enabled: false },
+    },
     labels: roleLabels.length ? roleLabels : ["No Data"],
     colors: ["#2563eb", "#7c3aed", "#16a34a", "#f59e0b", "#dc2626", "#0891b2"],
     legend: { position: "bottom", fontSize: "12px" },
@@ -412,18 +451,31 @@ const EmployeeMasterList = () => {
                   {favoriteUsers.length > 0 && (
                     <div className="sidebar-section-label">All Members</div>
                   )}
-                  {regularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                  {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
                 </>
               )}
 
               {!sidebarLoading && filteredUsers.length === 0 && (
                 <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                  No employees found
-                </div>
-              )}
-            </>
-          ) : (
-            <>
+	                  No employees found
+	                </div>
+	              )}
+
+                {regularUsers.length > sidebarPageSize && (
+                  <div className="sidebar-pagination">
+                    <Pagination
+                      size="small"
+                      current={employeeListPage}
+                      pageSize={sidebarPageSize}
+                      total={regularUsers.length}
+                      showLessItems
+                      onChange={(page) => setEmployeeListPage(page)}
+                    />
+                  </div>
+                )}
+	            </>
+	          ) : (
+	            <>
               {/* All Clients */}
               <div
                 className={`sidebar-all-users-btn ${!selectedClientId ? "active" : ""}`}
@@ -433,18 +485,31 @@ const EmployeeMasterList = () => {
                 <span className="sidebar-all-users-label">All Clients</span>
               </div>
 
-              {filteredClients.map((c) => (
-                <SidebarClientItem key={c._id} client={c} />
-              ))}
+	              {paginatedClients.map((c) => (
+	                <SidebarClientItem key={c._id} client={c} />
+	              ))}
 
               {!clientsLoading && filteredClients.length === 0 && (
                 <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                  No clients found
-                </div>
-              )}
-            </>
-          )}
-        </div>
+	                  No clients found
+	                </div>
+	              )}
+
+                {filteredClients.length > sidebarPageSize && (
+                  <div className="sidebar-pagination">
+                    <Pagination
+                      size="small"
+                      current={clientListPage}
+                      pageSize={sidebarPageSize}
+                      total={filteredClients.length}
+                      showLessItems
+                      onChange={(page) => setClientListPage(page)}
+                    />
+                  </div>
+                )}
+	            </>
+	          )}
+	        </div>
       </aside>
 
       {/* ══════════ RIGHT DASHBOARD ══════════ */}

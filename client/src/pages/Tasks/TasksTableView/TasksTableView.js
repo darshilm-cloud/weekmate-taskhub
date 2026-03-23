@@ -189,6 +189,8 @@ const TasksTableView = ({
     handleCancelManagePeople,
     setDetailsClientSubs,
     deleteTime,
+    viewTask,
+    updateviewTask,
   } = TaskKanbanController({
     tasks,
     showModalTaskModal,
@@ -236,64 +238,68 @@ const TasksTableView = ({
     <>
       <div className="tasks-table-view-wrapper">
         <div className="block-table-content new-block-table">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th className="data-table-fix-width">Start Date</th>
-                <th className="data-table-fix-width">Due Date</th>
-                <th className="data-table-fix-width">Stage</th>
-                <th className="data-table-fix-width">Assignees</th>
-                <th className="data-table-fix-width">Labels</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks?.map((boardData, index) => (
-                <React.Fragment key={`${boardData._id}_${index}`}>
-                  <tr
-                    className={`order small-box ${
-                      dragged ? "dragged-over" : ""
-                    }`}
-                    onDragLeave={(e) => onDragLeave(e)}
-                    onDragEnter={(e) => onDragEnter(e)}
-                    onDragEnd={(e) => onDragEnd(e)}
-                    onDragOver={(e) => onDragOver(e)}
-                    onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
+          <div className="ttv-card-layout">
+            {tasks?.map((boardData, index) => (
+              <div
+                key={`${boardData._id}_${index}`}
+                className={`ttv-status-group ${dragged ? "dragged-over" : ""}`}
+                style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6" }}
+                onDragLeave={(e) => onDragLeave(e)}
+                onDragEnter={(e) => onDragEnter(e)}
+                onDragEnd={(e) => onDragEnd(e)}
+                onDragOver={(e) => onDragOver(e)}
+                onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
+              >
+                {/* Status group header */}
+                <div
+                  className="ttv-status-header"
+                  onClick={() => toggleCollapse(boardData.workflowStatus._id)}
+                >
+                  <span
+                    className="wm-col-title"
+                    style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}
                   >
-                    <td
-                      colSpan="8"
-                      className="project-title"
-                      onClick={() =>
-                        toggleCollapse(boardData.workflowStatus._id)
-                      }
-                    >
-                      <h3>
-                        {collapsedRows[boardData.workflowStatus._id] ? (
-                          <DownCircleOutlined />
-                        ) : (
-                          <UpCircleOutlined />
-                        )}
-                        {boardData?.workflowStatus?.title}
-                        <span>{"    (" + boardData?.total_task + ")"}</span>
-                      </h3>
-                    </td>
-                  </tr>
+                    {boardData?.workflowStatus?.title}
+                  </span>
+                  <span
+                    className="wm-col-count"
+                    style={{
+                      background: `${boardData?.workflowStatus?.color || "#3b82f6"}22`,
+                      color: boardData?.workflowStatus?.color || "#3b82f6",
+                      border: `1px solid ${boardData?.workflowStatus?.color || "#3b82f6"}55`,
+                    }}
+                  >
+                    {boardData?.total_task}
+                  </span>
+                  {collapsedRows[boardData.workflowStatus._id] ? (
+                    <DownCircleOutlined />
+                  ) : (
+                    <UpCircleOutlined />
+                  )}
+                </div>
 
-                  {!collapsedRows[boardData.workflowStatus._id] &&
-                  boardData?.total_task > 0
-                    ? boardData?.tasks?.map((item, cardIndex) => {
-                        const isLastTask =
-                          cardIndex ===
-                          boardData.tasks.slice(0, sliceState).length - 1;
-                        return (
-                          <tr
-                            className={`card ${dragged ? "dragged" : ""}`}
-                            key={item?._id}
-                            id={item?._id}
-                            draggable
-                            onDragStart={(e) => onDragStart(e, item)}
-                            onDragEnd={(e) => onDragEnd(e)}
-                            ref={isLastTask ? lastTaskElementRef : null}
+                {/* Task cards */}
+                {!collapsedRows[boardData.workflowStatus._id] && boardData?.total_task > 0 ? (
+                  <div className="ttv-cards-list">
+                    {boardData?.tasks?.map((item, cardIndex) => {
+                      const isDoneColumn = boardData.workflowStatus?.title === "Done";
+                      const isLastTask = cardIndex === boardData.tasks.slice(0, sliceState).length - 1;
+                      return (
+                        <div
+                          className={`wm-task-card ${dragged ? "dragged" : ""}${isDoneColumn ? " wm-task-card-done" : ""}`}
+                          key={item?._id}
+                          id={item?._id}
+                          draggable
+                          onDragStart={(e) => onDragStart(e, item)}
+                          onDragEnd={(e) => onDragEnd(e)}
+                          ref={isLastTask ? lastTaskElementRef : null}
+                          onDragLeave={(e) => onDragLeave(e)}
+                          onDragEnter={(e) => onDragEnter(e)}
+                          onDragOver={(e) => onDragOver(e)}
+                          onDrop={(e) => onDrop(e, boardData.workflowStatus._id)}
+                        >
+                          <div
+                            className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               getTaskByIdDetails(item._id);
@@ -301,100 +307,72 @@ const TasksTableView = ({
                               setTempBoard(boardData);
                               setSelectedTaskId(item._id);
                             }}
-                            onDragLeave={(e) => onDragLeave(e)}
-                            onDragEnter={(e) => onDragEnter(e)}
-                            onDragOver={(e) => onDragOver(e)}
-                            onDrop={(e) =>
-                              onDrop(e, boardData.workflowStatus._id)
-                            }
                           >
-                            <td>
-                              <span className="bug-title"> {item?.title} </span>
-                              <Tooltip title="Comments" placement="left">
-                                <span className="table-task-comments-count">
-                                  {item?.comments}
-                                </span>
-                              </Tooltip>
-                            </td>
-                            <td>
-                              {item?.start_date
-                                ? moment(item.start_date).format("MMM D, YYYY")
-                                : "-"}
-                            </td>
-                            <td>
-                              {item?.due_date
-                                ? <span style={{ color: moment(item.due_date).isBefore(moment(), "day") ? "#ef4444" : "inherit" }}>
-                                    {moment(item.due_date).format("MMM D, YYYY")}
-                                  </span>
-                                : "-"}
-                            </td>
-                            <td>
-                              <span
-                                className={`tt-stage-pill tt-stage-pill--${normalizeStageTitle(boardData?.workflowStatus?.title)}`}
-                                style={{
-                                  "--tt-stage-color": boardData?.workflowStatus?.color || "#94a3b8",
-                                  "--tt-stage-bg": withAlpha(boardData?.workflowStatus?.color, 0.12),
-                                  "--tt-stage-border": withAlpha(boardData?.workflowStatus?.color, 0.28),
-                                  "--tt-stage-dark-bg": withAlpha(boardData?.workflowStatus?.color, 0.18, "rgba(15, 23, 42, 0.88)"),
-                                  "--tt-stage-dark-border": withAlpha(boardData?.workflowStatus?.color, 0.52),
-                                }}
-                              >
-                                {boardData?.workflowStatus?.title}
-                              </span>
-                            </td>
-
-                            <td>
-                              <MyAvatarGroup
-                                record={item.assignees.map((ele) => {
-                                  let obj = {
-                                    ...ele,
-                                    name: ele?.full_name,
-                                  };
-                                  return obj;
-                                })}
-                                size={"small"}
-                                customStyle={{ height: "20px", width: "20px" }}
-                              />
-                            </td>
-                            <td>
-                              {" "}
-                              {item?.task_labels.map((t) => {
-                                return (
+                            {/* Labels */}
+                            {item.task_labels?.length > 0 && (
+                              <div className="wm-card-labels">
+                                {item.task_labels.map((lbl) => (
                                   <span
-                                    className="highlabel"
-                                    style={{
-                                      "--tt-label-color": t.color || "#94a3b8",
-                                      "--tt-label-bg": withAlpha(t.color, 0.14),
-                                      "--tt-label-border": withAlpha(t.color, 0.3),
-                                      "--tt-label-dark-bg": withAlpha(t.color, 0.18, "rgba(15, 23, 42, 0.88)"),
-                                      "--tt-label-dark-border": withAlpha(t.color, 0.5),
-                                      color: textColorPicker(t.color) === "#000000" ? "#0f172a" : "#ffffff",
-                                    }}
+                                    key={lbl._id}
+                                    className="wm-card-label"
+                                    style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
                                   >
-                                    {t.title}
+                                    {lbl.title}
                                   </span>
-                                );
-                              })}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    : !collapsedRows[boardData.workflowStatus._id] && (
-                        <tr>
-                          <td colSpan={6} style={{ textAlign: "center" }}>
-                            No data Found
-                          </td>
-                        </tr>
-                      )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Title */}
+                            <div className="wm-card-title" style={{ textDecoration: isDoneColumn ? "line-through" : "none" }}>
+                              {item.title}
+                            </div>
+
+                            {/* List name */}
+                            {selectedTask?.title && (
+                              <div className="wm-card-list">{selectedTask.title}</div>
+                            )}
+
+                            {/* Due date */}
+                            <div
+                              className="wm-card-due"
+                              style={{ color: item.due_date && moment(item.due_date).isBefore(moment(), "day") ? "#f87171" : undefined }}
+                            >
+                              {item.due_date ? (
+                                <>
+                                  <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                  {moment(item.due_date).format("MMM D, YYYY")}
+                                </>
+                              ) : "—"}
+                            </div>
+
+                            {/* Footer: assignees + progress */}
+                            <div className="wm-card-footer">
+                              <span className="wm-card-assignees">
+                                {item.assignees?.length > 0
+                                  ? item.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
+                                  : "Unassigned"}
+                              </span>
+                              <span className="wm-card-meta">
+                                {item.task_progress || "0"}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : !collapsedRows[boardData.workflowStatus._id] && (
+                  <div className="ttv-no-data">No data Found</div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
         <Modal
           className="task-detail-popup"
           open={modalIsOpen}
-          width={1000}
+          width={1120}
           footer={null}
           onCancel={() => {
             handleCancel();
@@ -913,6 +891,25 @@ const TasksTableView = ({
                       })}
                     </ul>
                   </div>
+                </div>
+
+                <div className="task-popup-actions">
+                  <Button
+                    className="square-primary-btn task-popup-save-btn"
+                    onClick={() => updateviewTask(viewTask)}
+                    disabled={!taskId}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    className="square-outline-btn task-popup-close-btn"
+                    onClick={() => {
+                      handleCancel();
+                      setSelectedTaskId(null);
+                    }}
+                  >
+                    Close
+                  </Button>
                 </div>
               </div>
             </div>

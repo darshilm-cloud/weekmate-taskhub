@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Button,
   Menu,
@@ -58,6 +58,7 @@ import getCookie from "../../hooks/getCookie";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
 import TaskList from "./TasksKanbanBoard";
 import TasksTableView from "./TasksTableView/TasksTableView";
+import TasksGanttView from "./TasksGanttView";
 import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
@@ -73,8 +74,8 @@ const TasksPMS = ({ flag }) => {
   let { taskID, listID } = queryString.parse(location.search);
   const { emitEvent } = useSocketAction();
 
-  const [selectedView, setSelectedView] = useState("board");
-  const [tableTrue, setTableTrue] = useState(false);
+  const [selectedView, setSelectedView] = useState("table");
+  const [tableTrue, setTableTrue] = useState(true);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
 
 
@@ -122,6 +123,7 @@ const TasksPMS = ({ flag }) => {
   const [stagesId, setStagesId] = useState("");
   const [html, setHtml] = useState([]);
   const importRef = useRef(null);
+  const boardTasksInitiatedRef = useRef(false);
 
   //Filter Subscribers & Clients for List Notification:
   const [filteredSubscriber, setFilteredSubscribers] = useState([]);
@@ -162,7 +164,12 @@ const TasksPMS = ({ flag }) => {
       const parsedView = JSON.parse(savedView);
       setSelectedView(parsedView);
       setTableTrue(parsedView === "table");
+      return;
     }
+
+    setSelectedView("table");
+    setTableTrue(true);
+    setCookie("view_tasks", JSON.stringify("table"), { expires: 365 });
   }, []);
 
   const handleSearch = (searchValue) => {
@@ -231,7 +238,7 @@ const TasksPMS = ({ flag }) => {
 
   const handleSelectedItemsChange = (selectedItemIds) => {
     setSelectedItems(
-      subscribersList.filter((item) => selectedItemIds.includes(item._id))
+      assigneeOptions.filter((item) => selectedItemIds.includes(item._id))
     );
     setSearchKeyword("");
   };
@@ -285,8 +292,25 @@ const TasksPMS = ({ flag }) => {
     projectLabels,
     projectWorkflowStage,
     subscribersList,
+    employeeList,
     clientsList,
   } = useSelector((state) => state.apiData);
+
+  const assigneeOptions = useMemo(() => {
+    const mergedUsers = [...(subscribersList || []), ...(employeeList || [])];
+    const uniqueUsers = new Map();
+
+    mergedUsers.forEach((user) => {
+      if (!user?._id) return;
+
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [employeeList, subscribersList]);
 
   const { task_ids } = useSelector(({ common }) => common);
 
@@ -659,6 +683,7 @@ const TasksPMS = ({ flag }) => {
 
   const getBoardTasks = async (main_task_id) => {
     try {
+      setIsTasksLoading(true);
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
@@ -681,12 +706,13 @@ const TasksPMS = ({ flag }) => {
           }))
         );
         setBoardTasks(enrichedData);
-        getProjectByID()
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsTasksLoading(false);
     }
   };
 
@@ -1241,35 +1267,39 @@ const TasksPMS = ({ flag }) => {
   const showEditTaskModal = (data, workflowID) => {
     setIsEditTaskModalOpen(true);
     setShowSelectClient(true);
-    setEditTaskData({ id: data._id, workflow_id: workflowID });
+    setEditTaskData({ id: data?._id, workflow_id: workflowID });
     setPopulatedFiles(data?.attachments || []);
-    seteditModalDescription(data.descriptions);
+    seteditModalDescription(data?.descriptions);
     editform.setFieldsValue({
-      title: data.title,
-      descriptions: removeHTMLTags(data.descriptions ? data.descriptions : ""),
-      labels: data.taskLabels.map((item) => item.title),
+      title: data?.title,
+      descriptions: removeHTMLTags(data?.descriptions ? data.descriptions : ""),
+      labels: (data?.taskLabels || []).map((item) => item?.title).filter(Boolean),
     });
 
     setAddInputTaskData({
-      start_date: data.start_date,
-      end_date: data.due_date,
-      labels: data.taskLabels.map((item) => item._id).join(","),
-      assignees: data.assignees?.map((value) => value._id),
+      start_date: data?.start_date,
+      end_date: data?.due_date,
+      labels: (data?.taskLabels || []).map((item) => item?._id).filter(Boolean).join(","),
+      assignees: (data?.assignees || []).map((value) => value?._id).filter(Boolean),
       clients: addInputTaskData?.clients
         ? addInputTaskData?.clients.map((val) => val?._id)
-        : data.pms_clients?.map((value) => value._id),
+        : (data?.pms_clients || []).map((value) => value?._id).filter(Boolean),
         recurringType: data?.recurringType || null,
     });
-    setSelectedItems(data.assignees);
-    setSelectedClients(data.pms_clients);
-    setNewFilteredAssignees(data.assignees?.map((value) => value._id));
-    setNewFilteredClients(data.pms_clients?.map((value) => value._id));
+    setSelectedItems(data?.assignees || []);
+    setSelectedClients(data?.pms_clients || []);
+    setNewFilteredAssignees(
+      (data?.assignees || []).map((value) => value?._id).filter(Boolean)
+    );
+    setNewFilteredClients(
+      (data?.pms_clients || []).map((value) => value?._id).filter(Boolean)
+    );
 
-    setEstHrs(data.estimated_hours);
-    setEstMins(data.estimated_minutes);
-    setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
+    setEstHrs(data?.estimated_hours);
+    setEstMins(data?.estimated_minutes);
+    setEstTime(`${data?.estimated_hours || "00"}:${data?.estimated_minutes || "00"}`);
     setIsAlterEstimatedTime(false);
-    if (data.assignees.length > 0) {
+    if ((data?.assignees || []).length > 0) {
       setShowSelectTask(true);
     } else {
       setShowSelectTask(false);
@@ -1521,6 +1551,7 @@ const TasksPMS = ({ flag }) => {
 
   useEffect(() => {
     dispatch(getLables());
+    dispatch(getEmployeeList());
     dispatch(moveWorkFlowTaskHandler([]));
   }, []);
 
@@ -1534,13 +1565,22 @@ const TasksPMS = ({ flag }) => {
       let data = projectMianTask.filter((ele) => listID == ele?._id);
       setSelectedTask(data[0]);
       getListWorkflowStatus();
-      getBoardTasks(listID);
+      if (boardTasksInitiatedRef.current) {
+        boardTasksInitiatedRef.current = false;
+      } else {
+        getBoardTasks(listID);
+      }
     }
   }, [listID, projectMianTask]);
 
   useEffect(() => {
+    boardTasksInitiatedRef.current = false;
     getProjectByID();
     getProjectMianTask();
+    if (listID) {
+      boardTasksInitiatedRef.current = true;
+      getBoardTasks(listID);
+    }
     dispatch(getFolderList(projectId));
     dispatch(getClientList(projectId));
     dispatch(getSubscribersList(projectId));
@@ -1557,12 +1597,18 @@ const TasksPMS = ({ flag }) => {
   const csvRef = document.getElementById("test-table-xls-button");
 
   const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={() => handleChangeTableView("table")}>
+    <Menu selectedKeys={[selectedView]}>
+      <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
+        <i className="fa-solid fa-list" style={{ marginRight: 8 }} />
         Table View
       </Menu.Item>
-      <Menu.Item key="2" onClick={() => handleChangeTableView("board")}>
+      <Menu.Item key="board" onClick={() => handleChangeTableView("board")}>
+        <i className="fa-solid fa-table-columns" style={{ marginRight: 8 }} />
         Board View
+      </Menu.Item>
+      <Menu.Item key="gantt" onClick={() => handleChangeTableView("gantt")}>
+        <i className="fa-solid fa-bars-progress" style={{ marginRight: 8 }} />
+        Gantt View
       </Menu.Item>
     </Menu>
   );
@@ -2012,7 +2058,7 @@ const TasksPMS = ({ flag }) => {
                 <p>No task found</p>
               </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : tableTrue === false ? (
+            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
@@ -2028,6 +2074,11 @@ const TasksPMS = ({ flag }) => {
                 projectDetails={projectDetails}
                 isEditTaskSave={isEditTaskSave}
                 setEditTaskSave={setEditTaskSave}
+              />
+            ) : selectedView === "gantt" ? (
+              <TasksGanttView
+                tasks={filteredBoardTasks}
+                onTaskClick={(task) => showEditTaskModal(task)}
               />
             ) : (
               <TasksTableView
@@ -2494,7 +2545,7 @@ const TasksPMS = ({ flag }) => {
                                   ? selectedItems.map((item) => item?._id)
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                             />
                           </div>
@@ -2925,7 +2976,7 @@ const TasksPMS = ({ flag }) => {
                                   ? selectedItems.map((item) => item?._id)
                                   : []
                               }
-                              listData={subscribersList}
+                              listData={assigneeOptions}
                               search={searchKeyword}
                             />
                           </div>

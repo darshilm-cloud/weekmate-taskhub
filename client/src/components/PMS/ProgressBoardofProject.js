@@ -131,9 +131,9 @@ function ProgressBoardofProject() {
             disabled={record?.isEnable === false}
             onChange={(checked) =>
               handleTabChange(
-                record._id,
+                record?._id,
                 projectId,
-                record.isEnable,
+                record?.isEnable,
                 checked?.target?.checked
               )
             }
@@ -343,17 +343,25 @@ function ProgressBoardofProject() {
         dispatch(getSubscribersList(projectId));
 
         let assignee = new Set(
-          initialDetails?.assignees.map((item) => item._id)
+          (initialDetails?.assignees || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newAssignees = values.assignees.filter((id) => !assignee.has(id));
+        let newAssignees = (values.assignees || []).filter(
+          (id) => !assignee.has(id)
+        );
 
         let client = new Set(
-          initialDetails?.pms_clients.map((item) => item._id)
+          (initialDetails?.pms_clients || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newClients = values.clients.filter((id) => !client.has(id));
+        let newClients = (values.clients || []).filter(
+          (id) => !client.has(id)
+        );
         let newManagerId;
 
-        if (initialDetails.manager._id !== values.manager) {
+        if (initialDetails?.manager?._id !== values.manager) {
           newManagerId = values.manager;
         }
 

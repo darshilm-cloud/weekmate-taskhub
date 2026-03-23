@@ -13,9 +13,10 @@
 
   .notidication-modal ul li {
     border-left: 2px solid #197FBB;
-    padding-left: 5px;
+    padding: 10px 12px 10px 10px;
     margin-bottom: 10px;
-    background: #eeeeee52;
+    background: #f8fafc;
+    border-radius: 12px;
   }
 
   .notidication-modal .filter-notification-checkbox ul li {
@@ -64,6 +65,10 @@
     width: 425px;
   }
 
+  .notidication-modal ul li:last-child {
+    margin-bottom: 0;
+  }
+
   .notidication-modal button:nth-child(1) {
     border: none;
     background: transparent;
@@ -110,6 +115,104 @@
   .notidication-modal {
     max-width: 425px;
     padding: 0 10px;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-popover-inner,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-popover-inner {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45) !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-popover-inner-content,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-popover-inner-content {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-popover-arrow-content,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-popover-arrow-content {
+    background: #1e293b !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notifiction-pop,
+  body[data-theme="dark"] .weekmate-notification-popover .notifiction-pop {
+    background: transparent !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-tabs-nav,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-tabs-nav {
+    margin-bottom: 0 !important;
+    padding: 0 16px !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-tabs-tab,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-tabs-tab {
+    background: transparent !important;
+    color: #94a3b8 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .ant-tabs-tab.ant-tabs-tab-active,
+  body.dark-theme .weekmate-notification-popover .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-tabs-tab.ant-tabs-tab-active,
+  body[data-theme="dark"] .weekmate-notification-popover .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal {
+    padding: 12px 16px 16px !important;
+    color: #e2e8f0 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal ul li,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal ul li {
+    background: transparent !important;
+    border-left-color: #38bdf8 !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 0 !important;
+    padding: 12px 0 12px 10px !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal .filter-notification-checkbox ul li,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal .filter-notification-checkbox ul li {
+    border: 1px solid #334155 !important;
+    border-left: 1px solid #334155 !important;
+    border-bottom: 1px solid #334155 !important;
+    border-radius: 999px !important;
+    padding: 8px 16px !important;
+    background: #0f172a !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal .filter-notification-checkbox ul li.active,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal .filter-notification-checkbox ul li.active {
+    background: #0b5cab !important;
+    border-color: #0b5cab !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notification-content-wrapper h3,
+  body.dark-theme .weekmate-notification-popover .notidication-modal p,
+  body[data-theme="dark"] .weekmate-notification-popover .notification-content-wrapper h3,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal p {
+    color: #e2e8f0 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal .notification-time,
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal .notification-time {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal button:nth-child(1),
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal button:nth-child(1) {
+    color: #38bdf8 !important;
+  }
+
+  body.dark-theme .weekmate-notification-popover .notidication-modal button:nth-child(2),
+  body[data-theme="dark"] .weekmate-notification-popover .notidication-modal button:nth-child(2) {
+    color: #f87171 !important;
   }
 
   .bell-icon .count {
@@ -163,9 +266,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.16);
     color: #ffffff;
     font-size: 15px;
+    flex-shrink: 0;
   }
 
   .user-pill-name {

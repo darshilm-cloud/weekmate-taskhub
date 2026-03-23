@@ -144,14 +144,77 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 999px;
   flex-shrink: 0;
-  opacity: 0.6;
-  transition: opacity 0.15s;
+  opacity: 0.45;
+  color: #64748b;
+  transition: opacity 0.15s, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  position: relative;
 }
 
-.note-card-pin-btn:hover { opacity: 1; }
+.note-card-pin-btn:hover {
+  opacity: 0.9;
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+}
+
+.note-card-pin-btn.active {
+  opacity: 1;
+  color: #0b3a5b;
+  background: rgba(11, 58, 91, 0.1);
+}
+
+.note-card-pin-btn .anticon {
+  transform: rotate(-12deg);
+}
+
+.note-card-pin-btn.active .anticon {
+  color: #0b3a5b !important;
+  transform: rotate(-8deg);
+}
+
+.note-card-pin-cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+  transform: translate(-50%, -50%) rotate(-42deg);
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+body.dark-theme .note-card-pin-btn,
+body[data-theme="dark"] .note-card-pin-btn {
+  color: #94a3b8;
+}
+
+body.dark-theme .note-card-pin-btn:hover,
+body[data-theme="dark"] .note-card-pin-btn:hover {
+  background: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+
+body.dark-theme .note-card-pin-btn.active,
+body[data-theme="dark"] .note-card-pin-btn.active {
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+
+body.dark-theme .note-card-pin-btn.active .anticon,
+body[data-theme="dark"] .note-card-pin-btn.active .anticon {
+  color: #bfdbfe !important;
+}
 
 .note-card-content {
   flex: 1;
@@ -207,6 +270,29 @@ body.dark-theme .note-card-skeleton,
 body[data-theme="dark"] .note-card-skeleton {
   background: #1e293b !important;
   border-color: #334155;
+}
+
+body.dark-theme .note-card-skeleton .ant-skeleton-element .ant-skeleton-input,
+body.dark-theme .note-card-skeleton .ant-skeleton-element .ant-skeleton-button,
+body.dark-theme .note-card-skeleton .ant-skeleton .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.dark-theme .note-card-skeleton .ant-skeleton .ant-skeleton-content .ant-skeleton-title,
+body[data-theme="dark"] .note-card-skeleton .ant-skeleton-element .ant-skeleton-input,
+body[data-theme="dark"] .note-card-skeleton .ant-skeleton-element .ant-skeleton-button,
+body[data-theme="dark"] .note-card-skeleton .ant-skeleton .ant-skeleton-content .ant-skeleton-paragraph > li,
+body[data-theme="dark"] .note-card-skeleton .ant-skeleton .ant-skeleton-content .ant-skeleton-title {
+  background: linear-gradient(90deg, #263548 25%, #334a63 50%, #263548 75%) !important;
+  background-size: 400% 100% !important;
+  animation: note-sk-shimmer 1.5s ease-in-out infinite !important;
+}
+
+@keyframes note-sk-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+body.dark-theme .note-card-footer,
+body[data-theme="dark"] .note-card-footer {
+  border-top-color: #334155 !important;
 }
 
 /* ── Color Picker ─── */

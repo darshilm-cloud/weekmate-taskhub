@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import ReactDOM from "react-dom";
 import { Switch, Tooltip } from "antd";
 import {
   BugOutlined,
@@ -429,13 +430,13 @@ const PermissionModule = () => {
             </div>
           )}
 
-          {/* ── Sticky Save Bar (shown when dirty) ── */}
-          {isDirty && (
+          {/* ── Sticky Save Bar — rendered via portal to bypass parent overflow/transform ── */}
+          {isDirty && ReactDOM.createPortal(
             <div className="rpm-save-bar">
               <div className="rpm-save-bar-text">
                 <WarningOutlined />
                 You have unsaved permission changes for{" "}
-                <strong style={{ color: "#e2e8f0" }}>
+                <strong>
                   {selectedRole?.role_name}
                 </strong>
               </div>
@@ -455,7 +456,8 @@ const PermissionModule = () => {
                   {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </section>
       </div>

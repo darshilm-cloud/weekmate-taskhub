@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input, Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover } from "antd";
 import {
   PlusOutlined,
@@ -248,6 +248,29 @@ export default function NotesPage() {
     } catch (e) { message.error("Delete failed"); }
   };
 
+  const handleBookmarkToggle = async (noteId, isBookmark) => {
+    try {
+      const nextBookmarkState = !isBookmark;
+      await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.notesBookmark}/${noteId}`,
+        body: { isBookmark: nextBookmarkState },
+      });
+      setNotes((prev) =>
+        prev.map((note) =>
+          note._id === noteId ? { ...note, isBookmark: nextBookmarkState } : note
+        )
+      );
+      window.dispatchEvent(
+        new CustomEvent("weekmate:notes-bookmark-updated", {
+          detail: { noteId, isBookmark: nextBookmarkState },
+        })
+      );
+    } catch (e) {
+      message.error("Pin update failed");
+    }
+  };
+
   const filteredNotes = notes.filter((note) => {
     const isCreator = note.createdBy === currentUserId || note.createdBy?._id === currentUserId || note.createdBy?.toString() === currentUserId;
     if (activeTab === "created") return isCreator;
@@ -302,7 +325,7 @@ export default function NotesPage() {
               <div style={{ marginTop: 10 }}>
                 <Skeleton active paragraph={{ rows: 2, width: ["90%", "70%"] }} title={false} />
               </div>
-              <div className="note-card-footer" style={{ borderTop: "1px solid #e2e8f0", marginTop: 8 }}>
+              <div className="note-card-footer" style={{ marginTop: 8 }}>
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
                 <Skeleton.Button active size="small" style={{ width: 24, borderRadius: 6 }} />
@@ -340,8 +363,14 @@ export default function NotesPage() {
                 <div key={note._id} className="note-card" style={{ background: bgColor }}>
                   <div className="note-card-header">
                     <span className="note-card-title">{note.title}</span>
-                    <button className="note-card-pin-btn">
-                      <PushpinOutlined style={{ color: "#64748b", fontSize: 14 }} />
+                    <button
+                      className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
+                      onClick={() => handleBookmarkToggle(note._id, note.isBookmark)}
+                      type="button"
+                      aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
+                    >
+                      <PushpinOutlined style={{ fontSize: 14 }} />
+                      {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
                     </button>
                   </div>
                   <div className="note-card-content">
