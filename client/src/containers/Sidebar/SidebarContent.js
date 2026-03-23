@@ -4,8 +4,6 @@ import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
 import {
   DashboardOutlined,
-  SettingOutlined,
-  HistoryOutlined,
   StarOutlined,
   ExclamationCircleOutlined,
   BarChartOutlined,
@@ -109,13 +107,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Users",
         onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
       },
-      // 4. Permissions
-      getRoles(["Admin"]) && {
-        key: "Permission",
-        icon: <i className="fi fi-rr-lock"></i>,
-        label: "Permissions",
-        onClick: () => handleMenuClick("Permission", `/${companySlug}/permission-access`),
-      },
       // 5. Analytics
       getRoles(["Admin", "PC", "TL", "AM"]) && {
         key: "Analytics",
@@ -179,18 +170,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <BarChartOutlined />,
         label: "Reports",
         onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`),
-      },
-      getRoles(["Admin"]) && {
-        key: "Admin_Settings",
-        icon: <SettingOutlined />,
-        label: "Settings",
-        onClick: () => handleMenuClick("Admin_Settings", `/${companySlug}/admin/settings`),
-      },
-      getRoles(["Admin"]) && {
-        key: "activity_logs",
-        icon: <HistoryOutlined />,
-        label: "Activity Logs",
-        onClick: () => handleMenuClick("activity_logs", `/${companySlug}/admin/activity-logs`),
       },
       getRoles(["Admin"]) && {
         key: "mira_ai",

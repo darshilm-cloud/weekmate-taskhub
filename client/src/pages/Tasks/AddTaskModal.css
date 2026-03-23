@@ -326,12 +326,29 @@
 
 .add-task-right-input .input-send {
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  font-size: 18px !important;
+  box-shadow: 0 4px 12px rgba(11, 58, 91, 0.35);
+  transition: all 0.2s ease;
+}
+
+.add-task-right-input .input-send:hover {
+  background-color: #ffffff !important;
+  border-color: #0b3a5b !important;
+  color: #0b3a5b !important;
+  box-shadow: 0 6px 16px rgba(11, 58, 91, 0.45);
+  transform: scale(1.08);
+}
+
+.add-task-right-input .input-send:hover .anticon {
+  color: #0b3a5b !important;
 }
 
 .add-task-modal-footer {
@@ -360,11 +377,16 @@
   min-width: 90px;
   background: #0b3a5b !important;
   border-color: #0b3a5b !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(11, 58, 91, 0.35);
+  transition: all 0.2s ease;
 }
 
 .add-task-btn-submit:hover {
-  background: #0d4a73 !important;
-  border-color: #0d4a73 !important;
+  background: #082f4a !important;
+  border-color: #082f4a !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(11, 58, 91, 0.45);
 }
 
 body.dark-theme .add-task-modal-v2 .ant-modal-content,
