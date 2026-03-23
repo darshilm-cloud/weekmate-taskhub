@@ -11,6 +11,7 @@ import {
   ClusterOutlined,
   DeleteOutlined,
   InboxOutlined,
+  HistoryOutlined,
   LockOutlined,
   NodeIndexOutlined,
   TagsOutlined,
@@ -38,6 +39,7 @@ function Topbar() {
         { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
         { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
         { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
+        { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
       ],
     },
     {

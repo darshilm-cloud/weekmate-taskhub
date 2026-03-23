@@ -638,6 +638,43 @@ exports.getProjects = async (req, res) => {
       { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
       ...(searchMatch ? [{ $match: searchMatch }] : []),
       {
+        $lookup: {
+          from: "employees",
+          let: { assignees: "$assignees" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$assignees"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                emp_img: 1,
+                name: {
+                  $ifNull: [
+                    "$full_name",
+                    { $trim: { input: { $concat: [
+                      { $ifNull: ["$first_name", ""] },
+                      " ",
+                      { $ifNull: ["$last_name", ""] }
+                    ]}}}
+                  ]
+                }
+              }
+            }
+          ],
+          as: "assignees"
+        }
+      },
+      {
         // Strict projection — only fields needed by the project card UI.
         // estimatedHours is included only as input for projectHoursExceeded
         // calculation in JS; it is stripped from the final API response.
@@ -650,7 +687,7 @@ exports.getProjects = async (req, res) => {
           estimatedHours: 1,
           project_status: { _id: 1, title: 1 },
           manager: { _id: 1, full_name: 1, emp_img: 1 },
-          assignees: 1
+          assignees: { _id: 1, name: 1, emp_img: 1 }
         }
       }
     ];
@@ -1315,33 +1352,27 @@ exports.getProjectDetailsForMail = async (
               },
               as: "assigneeId",
               in: {
-                // _id: "$$assigneeId._id",
-                // name: "$$assigneeId.full_name",
-                // email: "$$assigneeId.email",
-                // emp_img: "$$assigneeId.emp_img",
-                $cond: {
-                  if: {
-                    ...(newAddedAssignees.length > 0
-                      ? {
-                          $in: [
-                            "$$assigneeId._id",
-                            newAddedAssignees.map(
-                              (n) => new mongoose.Types.ObjectId(n)
-                            )
+                _id: "$$assigneeId._id",
+                name: {
+                  $ifNull: [
+                    "$$assigneeId.full_name",
+                    {
+                      $trim: {
+                        input: {
+                          $concat: [
+                            { $ifNull: ["$$assigneeId.first_name", ""] },
+                            " ",
+                            { $ifNull: ["$$assigneeId.last_name", ""] }
                           ]
                         }
-                      : {})
-                  },
-                  then: {
-                    _id: "$$assigneeId._id",
-                    name: "$$assigneeId.full_name",
-                    first_name: "$$assigneeId.first_name",
-                    last_name: "$$assigneeId.last_name",
-                    email: "$$assigneeId.email",
-                    emp_img: "$$assigneeId.emp_img"
-                  },
-                  else: null // Or any other value you prefer for non-matching IDs
-                }
+                      }
+                    }
+                  ]
+                },
+                first_name: "$$assigneeId.first_name",
+                last_name: "$$assigneeId.last_name",
+                email: "$$assigneeId.email",
+                emp_img: "$$assigneeId.emp_img"
               }
             }
           },
@@ -2165,7 +2196,22 @@ exports.getProjectOverviewData = async (req, res) => {
               as: "assigneeId",
               in: {
                 _id: "$$assigneeId._id",
-                name: "$$assigneeId.full_name",
+                name: {
+                  $ifNull: [
+                    "$$assigneeId.full_name",
+                    {
+                      $trim: {
+                        input: {
+                          $concat: [
+                            { $ifNull: ["$$assigneeId.first_name", ""] },
+                            " ",
+                            { $ifNull: ["$$assigneeId.last_name", ""] }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
                 emp_img: "$$assigneeId.emp_img"
               }
             }

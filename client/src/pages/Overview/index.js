@@ -331,12 +331,12 @@ const Overview = () => {
                 <div className="member-card" key={member._id}>
                   <MyAvatar
                     src={member.emp_img || member.client_img}
-                    alt={member.name || member.full_name}
-                    userName={member.name || member.full_name}
+                    alt={member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim()}
+                    userName={member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim()}
                   />
                   <div className="member-details">
                     <span className="member-name">
-                      {removeTitle(member.name || member.full_name)}
+                      {removeTitle(member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim())}
                     </span>
                     <span className="member-role-badge">{memberTab}</span>
                   </div>

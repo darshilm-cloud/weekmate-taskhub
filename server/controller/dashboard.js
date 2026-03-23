@@ -433,7 +433,7 @@ exports.getMyTasks = async (req, res) => {
         : {}),
       ...(value.start_date == "" && value.end_date !== ""
         ? {
-          due_date: { $lte: moment(value.end_date).startOf("day").toDate() },
+          due_date: { $lte: moment(value.end_date).endOf("day").toDate() },
         }
         : {}),
 
@@ -441,7 +441,7 @@ exports.getMyTasks = async (req, res) => {
         ? {
           due_date: {
             $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $lte: moment(value.end_date).endOf("day").toDate(),
           },
         }
         : {}),
@@ -695,13 +695,13 @@ exports.getTaskList = async (req, res) => {
         ? { due_date: { $gte: moment(value.start_date).startOf("day").toDate() } }
         : {}),
       ...(value.start_date === "" && value.end_date !== ""
-        ? { due_date: { $lte: moment(value.end_date).startOf("day").toDate() } }
+        ? { due_date: { $lte: moment(value.end_date).endOf("day").toDate() } }
         : {}),
       ...(value.start_date !== "" && value.end_date !== ""
         ? {
             due_date: {
               $gte: moment(value.start_date).startOf("day").toDate(),
-              $lte: moment(value.end_date).startOf("day").toDate(),
+              $lte: moment(value.end_date).endOf("day").toDate(),
             },
           }
         : {}),

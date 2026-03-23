@@ -898,6 +898,27 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   flex: 1;
 }
 
+.dashboard-calendar .db-cal-picker-native-select {
+  flex: 1;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+  transition: border-color 0.15s ease;
+}
+
+.dashboard-calendar .db-cal-picker-native-select:focus,
+.dashboard-calendar .db-cal-picker-native-select:hover {
+  border-color: #007AC1;
+}
+
 .dashboard-calendar .db-cal-nav {
   display: flex;
   align-items: center;
@@ -1727,6 +1748,20 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-picker-panel {
   border-color: #334155;
   background: #0f172a;
   box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
+}
+
+body.dark-theme .dashboard-calendar .db-cal-picker-native-select,
+body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark-theme .dashboard-calendar .db-cal-picker-native-select:focus,
+body.dark-theme .dashboard-calendar .db-cal-picker-native-select:hover,
+body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select:focus,
+body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select:hover {
+  border-color: #38bdf8;
 }
 
 body.dark-theme .db-act-email,

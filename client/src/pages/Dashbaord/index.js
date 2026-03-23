@@ -1037,24 +1037,28 @@ const Dashboard = () => {
                     <span className="db-cal-title-caret">{isCalendarPickerOpen ? "˄" : "˅"}</span>
                   </button>
 
-                  {isCalendarPickerOpen ? (
+                  {isCalendarPickerOpen && (
                     <div className="db-cal-picker-panel">
-                      <Select
+                      <select
+                        className="db-cal-picker-native-select"
                         value={calendarValue.month()}
-                        onChange={updateCalendarMonth}
-                        options={calendarMonths}
-                        className="db-cal-picker-select"
-                        popupMatchSelectWidth={false}
-                      />
-                      <Select
+                        onChange={(e) => updateCalendarMonth(Number(e.target.value))}
+                      >
+                        {calendarMonths.map((m) => (
+                          <option key={m.value} value={m.value}>{m.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="db-cal-picker-native-select"
                         value={calendarValue.year()}
-                        onChange={updateCalendarYear}
-                        options={calendarYearOptions.map((year) => ({ label: String(year), value: year }))}
-                        className="db-cal-picker-select"
-                        popupMatchSelectWidth={false}
-                      />
+                        onChange={(e) => updateCalendarYear(Number(e.target.value))}
+                      >
+                        {calendarYearOptions.map((year) => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
                     </div>
-                  ) : null}
+                  )}
                 </div>
                 <div className="db-cal-nav">
                   <button

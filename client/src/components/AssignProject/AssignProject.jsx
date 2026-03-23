@@ -327,6 +327,7 @@ const AssignProject = () => {
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [activeTab, setActiveTab] = useState("created_by_me");
+  const [memberBrowserTab, setMemberBrowserTab] = useState("Staff member");
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
@@ -532,7 +533,7 @@ const AssignProject = () => {
     }
   }, [taskStats]);
 
-  const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+  const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters, forceRefresh = false) => {
     const requestId = ++latestRequestIdRef.current;
     let requestKey = null;
     try {
@@ -540,10 +541,10 @@ const AssignProject = () => {
 
       const Key = generateCacheKey("project", reqBody);
       requestKey = Key;
-      if (inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === Key) {
+      if (!forceRefresh && inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === Key) {
         return;
       }
-      const cached = projectCache[Key];
+      const cached = !forceRefresh ? projectCache[Key] : null;
       if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
@@ -656,7 +657,7 @@ const AssignProject = () => {
           setPagination((prev) => ({ ...prev, current: prev.current - 1 }));
         }
         if (!isLastItemOnPage) {
-          getProjectListing();
+          getProjectListing(currentSkipFilters, currentFilters, true);
         }
       } else {
         message.error(response.data.message);
@@ -1557,7 +1558,7 @@ const AssignProject = () => {
                       key={project._id}
                       type="button"
                       className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
-                      onClick={() => setSelectedWorkspaceProjectId(project._id)}
+                      onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
                     >
                       <span className="ap-browser-project-name">
                         {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
@@ -1715,24 +1716,35 @@ const AssignProject = () => {
                     <div className="ap-browser-card">
                       <div className="ap-browser-card-title">Project Members ({(selectedWorkspaceProject?.assignees?.length || 0) + (selectedWorkspaceProject?.manager ? 1 : 0) + (selectedWorkspaceProject?.pms_clients?.length || 0)})</div>
                       <div className="ap-browser-member-tabs">
-                        <span className="active">Staff member ({selectedWorkspaceProject?.assignees?.length || 0})</span>
-                        <span>Project Manager ({selectedWorkspaceProject?.manager ? 1 : 0})</span>
-                        <span>Co-member (0)</span>
-                        <span>Client ({selectedWorkspaceProject?.pms_clients?.length || 0})</span>
+                        {[
+                          { key: "Staff member", count: selectedWorkspaceProject?.assignees?.length || 0 },
+                          { key: "Project Manager", count: selectedWorkspaceProject?.manager ? 1 : 0 },
+                          { key: "Co-member", count: 0 },
+                          { key: "Client", count: selectedWorkspaceProject?.pms_clients?.length || 0 },
+                        ].map((tab) => (
+                          <span
+                            key={tab.key}
+                            className={memberBrowserTab === tab.key ? "active" : ""}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setMemberBrowserTab(tab.key)}
+                          >
+                            {tab.key} ({tab.count})
+                          </span>
+                        ))}
                       </div>
                       <div className="ap-browser-member-grid">
-                        {selectedWorkspaceProject?.assignees?.map((member) => (
+                        {memberBrowserTab === "Staff member" && selectedWorkspaceProject?.assignees?.map((member) => (
                           <div key={member?._id || member?.name} className="ap-browser-member-card">
                             <MyAvatar
                               src={member?.emp_img}
-                              alt={member?.name}
-                              userName={member?.name}
+                              alt={member?.name || member?.full_name}
+                              userName={member?.name || member?.full_name}
                             />
-                            <div className="ap-browser-member-name">{member?.name}</div>
+                            <div className="ap-browser-member-name">{member?.name || member?.full_name}</div>
                             <div className="ap-browser-member-role">Staff Member</div>
                           </div>
                         ))}
-                        {selectedWorkspaceProject?.manager && (
+                        {memberBrowserTab === "Project Manager" && selectedWorkspaceProject?.manager && (
                           <div className="ap-browser-member-card">
                             <MyAvatar
                               src={selectedWorkspaceProject.manager?.emp_img}
@@ -1743,7 +1755,7 @@ const AssignProject = () => {
                             <div className="ap-browser-member-role">Project Manager</div>
                           </div>
                         )}
-                        {selectedWorkspaceProject?.pms_clients?.map((client) => (
+                        {memberBrowserTab === "Client" && selectedWorkspaceProject?.pms_clients?.map((client) => (
                           <div key={client?._id || client?.full_name} className="ap-browser-member-card">
                             <MyAvatar
                               src={client?.emp_img}
@@ -1754,6 +1766,9 @@ const AssignProject = () => {
                             <div className="ap-browser-member-role">Client</div>
                           </div>
                         ))}
+                        {memberBrowserTab === "Co-member" && (
+                          <div style={{ color: "#94a3b8", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
+                        )}
                       </div>
                     </div>
 
@@ -1927,7 +1942,7 @@ const AssignProject = () => {
           setIsModalOpen={setIsModalOpen}
           triggerRefreshList={() => {
             invalidateProjectCaches();
-            getProjectListing();
+            getProjectListing(currentSkipFilters, currentFilters, true);
           }}
         />
       )}

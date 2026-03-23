@@ -51,14 +51,14 @@
 }
 
 .cmp-btn.primary {
-  background: var(--app-primary);
-  border-color: var(--app-primary);
+  background: #0b3a5b;
+  border-color: #0b3a5b;
   color: #ffffff;
 }
 
 .cmp-btn.primary:hover {
-  background: var(--app-primary-hover);
-  border-color: var(--app-primary-hover);
+  background: #082f4a;
+  border-color: #082f4a;
   color: #ffffff;
 }
 
