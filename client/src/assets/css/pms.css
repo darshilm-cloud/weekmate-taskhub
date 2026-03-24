@@ -3407,7 +3407,8 @@ span.anticon.anticon-down svg {
     padding-right: 9px;
 }
 
-.task-detail-inner.comments .comment-wrapper p {
+.task-detail-inner.comments .comment-wrapper p,
+.task-detail-inner.comments .comment-wrapper .comment-content p {
     font-size: 12px;
     padding-bottom: 3px;
     font-weight: 500;
@@ -3415,6 +3416,24 @@ span.anticon.anticon-down svg {
     word-break: break-word;
     word-wrap: break-word;
     white-space: normal;
+}
+
+.task-detail-inner.comments .comment-wrapper .comment-content {
+    font-size: 12px;
+    font-weight: 500;
+    word-break: break-word;
+    word-wrap: break-word;
+}
+
+.task-detail-inner.comments .comment-wrapper .comment-content > p {
+    margin: 0;
+    padding-bottom: 2px;
+    line-height: 1.5;
+}
+
+.task-detail-inner.comments .comment-wrapper .comment-content > p:empty,
+.task-detail-inner.comments .comment-wrapper .comment-content > p:last-child {
+    padding-bottom: 0;
 }
 
 .task-detail-inner.comments .comment-textarea {

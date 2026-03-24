@@ -93,6 +93,34 @@
     padding: 10px;
 }
 
+/* Add Comment button — sidebar color */
+.add-comment-btn.ant-btn-primary {
+    background: #0b3a5b !important;
+    background-image: none !important;
+    border-color: #0b3a5b !important;
+    color: #fff !important;
+    border-radius: 7px !important;
+    font-weight: 600 !important;
+    height: 34px !important;
+    padding: 0 16px !important;
+    box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
+    transition: all 0.2s;
+}
+
+.add-comment-btn.ant-btn-primary:hover:not(:disabled) {
+    background: #082f4a !important;
+    border-color: #082f4a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(11, 58, 91, 0.35) !important;
+}
+
+.add-comment-btn.ant-btn-primary:disabled {
+    background: #e2e8f0 !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+}
+
 .overview-modal-wrapper .fileAttachment_Box {
     height: 80px;
     width: 100px;
@@ -231,17 +259,17 @@ body[data-theme="dark"] .task-model .comment-textarea .ant-btn:hover {
 
 body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-primary,
 body[data-theme="dark"] .task-model .comment-textarea .ant-btn.ant-btn-primary {
-    background: #0f6cbd !important;
-    background-color: #0f6cbd !important;
+    background: #0b3a5b !important;
+    background-color: #0b3a5b !important;
     color: #ffffff !important;
-    border-color: #0f6cbd !important;
+    border-color: #0b3a5b !important;
 }
 
 body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-primary:hover,
 body[data-theme="dark"] .task-model .comment-textarea .ant-btn.ant-btn-primary:hover {
-    background: #1785db !important;
-    background-color: #1785db !important;
-    border-color: #1785db !important;
+    background: #082f4a !important;
+    background-color: #082f4a !important;
+    border-color: #082f4a !important;
 }
 
 body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-background-ghost,

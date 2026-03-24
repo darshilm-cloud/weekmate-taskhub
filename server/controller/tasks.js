@@ -2944,6 +2944,7 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
           createdBy: 1,
           reporter: "$reporter.full_name",
           assignees: {
+            _id: 1,
             full_name: 1,
             first_name: 1,
             last_name: 1,

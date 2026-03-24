@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Form, Input, Spin } from "antd";
 import {
   ClockCircleOutlined,
@@ -7,7 +7,7 @@ import {
   ProjectOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import "./ProjectListModal.css";
 
 const ProjectListModal = ({
@@ -25,6 +25,9 @@ const ProjectListModal = ({
   const companySlug  = localStorage.getItem("companyDomain");
   const [isSearching, setIsSearching] = useState(true);
   const [searchValue, setSearchValue] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const history = useHistory();
+  const itemRefs = useRef([]);
 
   const handleInputChange = (e) => {
     const { value } = e.target;
@@ -40,7 +43,6 @@ const ProjectListModal = ({
     if (!normalizedSearch) {
       return projectList || [];
     }
-
     return (projectList || []).filter((item) =>
       `${item?.title || ""}`.toLowerCase().includes(normalizedSearch)
     );
@@ -54,23 +56,90 @@ const ProjectListModal = ({
         item?.updatedAt ||
         item?.createdAt ||
         item?.visit_date;
-
       const timestamp = rawValue ? new Date(rawValue).getTime() : 0;
       return Number.isNaN(timestamp) ? 0 : timestamp;
     };
-
     return [...(recentList || [])].sort(
       (a, b) => getVisitedTimestamp(b) - getVisitedTimestamp(a)
     );
   }, [recentList]);
 
+  // Flat list of all navigable items in render order
+  const allItems = useMemo(() => {
+    const items = [];
+    if (isSearching) {
+      sortedRecentList.forEach((item) => {
+        items.push({
+          type: "recent",
+          id: item._id || item.project_id,
+          path: `/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`,
+          projectId: item.project_id,
+        });
+      });
+    }
+    filteredProjects.forEach((item) => {
+      items.push({
+        type: "project",
+        id: item._id,
+        path: `/${companySlug}/project/app/${item._id}?tab=Tasks`,
+        projectId: item._id,
+      });
+    });
+    return items;
+  }, [isSearching, sortedRecentList, filteredProjects, companySlug]);
+
+  // Reset highlight when results change
+  useEffect(() => {
+    setSelectedIndex(-1);
+    itemRefs.current = [];
+  }, [allItems]);
+
+  // Reset modal state on open
   useEffect(() => {
     if (isModalOpen) {
       setIsSearching(true);
       setSearchValue("");
+      setSelectedIndex(-1);
       form.resetFields();
     }
   }, [form, isModalOpen]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && itemRefs.current[selectedIndex]) {
+      itemRefs.current[selectedIndex].scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedIndex]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(prev + 1, allItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < allItems.length) {
+        const item = allItems[selectedIndex];
+        addVisitedData(item.projectId);
+        setIsSearching(true);
+        setIsModalOpen(false);
+        form.resetFields();
+        history.push(item.path);
+      }
+    }
+  };
+
+  const openItem = (projectId) => {
+    addVisitedData(projectId);
+    setIsSearching(true);
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  // Index offset for projects section
+  const projectOffset = isSearching ? sortedRecentList.length : 0;
 
   return (
     <Modal
@@ -88,6 +157,7 @@ const ProjectListModal = ({
           <Input
             prefix={<SearchOutlined className="plm-search-icon" />}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder="Search projects…"
             variant="borderless"
             className="plm-search-input"
@@ -109,17 +179,13 @@ const ProjectListModal = ({
               <span className="plm-count">{sortedRecentList.length}</span>
             </div>
             <div className="plm-list">
-              {sortedRecentList.map((item) => (
+              {sortedRecentList.map((item, idx) => (
                 <Link
                   key={item._id || item.project_id}
                   to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
-                  className="plm-item"
-                  onClick={() => {
-                    addVisitedData(item.project_id);
-                    setIsSearching(true);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                  }}
+                  className={`plm-item${idx === selectedIndex ? " plm-item-active" : ""}`}
+                  ref={(el) => { itemRefs.current[idx] = el; }}
+                  onClick={() => openItem(item.project_id)}
                 >
                   <span className="plm-item-icon">
                     <ClockCircleOutlined />
@@ -169,26 +235,25 @@ const ProjectListModal = ({
 
           {filteredProjects?.length > 0 ? (
             <div className="plm-list">
-              {filteredProjects.map((item) => (
-                <Link
-                  key={item._id}
-                  to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
-                  className="plm-item"
-                  onClick={() => {
-                    setIsSearching(true);
-                    addVisitedData(item._id);
-                    setIsModalOpen(false);
-                    form.resetFields();
-                  }}
-                >
-                  <span className="plm-item-icon">
-                    <ProjectOutlined />
-                  </span>
-                  <span className="plm-item-title">
-                    {formattedTitle(item?.title)}
-                  </span>
-                </Link>
-              ))}
+              {filteredProjects.map((item, idx) => {
+                const globalIdx = projectOffset + idx;
+                return (
+                  <Link
+                    key={item._id}
+                    to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
+                    className={`plm-item${globalIdx === selectedIndex ? " plm-item-active" : ""}`}
+                    ref={(el) => { itemRefs.current[globalIdx] = el; }}
+                    onClick={() => openItem(item._id)}
+                  >
+                    <span className="plm-item-icon">
+                      <ProjectOutlined />
+                    </span>
+                    <span className="plm-item-title">
+                      {formattedTitle(item?.title)}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           ) : isProjectListLoading ? (
             <div className="plm-empty">
