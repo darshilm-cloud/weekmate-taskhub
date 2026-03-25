@@ -22,6 +22,8 @@ import {
   PlayCircleOutlined,
   PauseCircleOutlined,
   ClockCircleOutlined,
+  CommentOutlined,
+  HistoryOutlined,
 } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import {
@@ -40,9 +42,12 @@ import {
   Popconfirm,
   Checkbox,
   message,
+  Image,
 } from "antd";
 import dayjs from "dayjs";
 import "../style.css";
+import "../../TaskPage/TaskDetailModal.css";
+import TaskDetailModal from "../../TaskPage/TaskDetailModal";
 import moment from "moment";
 import AddComment from "../../../ReuseComponent/AddComment/AddComment";
 import { fileImageSelect } from "../../../util/FIleSelection";
@@ -104,6 +109,7 @@ const TaskList = ({
     handleCancel,
     taskDetails,
     viewTask,
+    setViewTask,
     handleTaskDelete,
     estError,
     visible,
@@ -111,25 +117,10 @@ const TaskList = ({
     popOverTimeLogged,
     openPopOver,
     isLoggedHoursMoreThanEstimated,
-    textAreaValue,
     subscribersList,
     assigneeOptions,
     taggedUserList,
-    activeClass,
-    activeClass1,
-    activeTab,
-    comments,
     setOpenCommentModle,
-    handleEditComment,
-    deleteComment,
-    handleDropdownClick,
-    addComments,
-    isTextAreaFocused,
-    setIsTextAreaFocused,
-    taskHistory,
-    handleToggle,
-    storeIndex,
-    showTaskHistory,
     isModalOpenTaskModal,
     handleCancelTaskModal,
     addform,
@@ -139,13 +130,6 @@ const TaskList = ({
     handleTaskInput,
     handleViewTask,
     handleEstTimeInput,
-    openCommentModel,
-    handleCancelCommentModel,
-    formComment,
-    handleComments,
-    commentVal,
-    setCommentVal,
-    handleSelect,
     fileAttachment,
     removeAttachmentFile,
     attachmentfileRef,
@@ -164,10 +148,18 @@ const TaskList = ({
     taskId,
     projectId,
     setIssuetitle,
+    issuetitle,
+    newBugData,
+    setNewBugData,
     setIssuetitleflag,
     issuetitleflag,
     handleissuedata,
+    addissue,
     issuedata,
+    deleteBug,
+    editBug,
+    updateBugWorkflow,
+    bugWorkflowStatuses,
     estHrsError,
     estMinsError,
     estHrs,
@@ -267,6 +259,19 @@ const TaskList = ({
     currentTaskId: null,
     isTimeExceeded: false
   });
+
+  const [editingBugId, setEditingBugId] = useState(null);
+  const [editingBugTitle, setEditingBugTitle] = useState("");
+  const [editingBugCode, setEditingBugCode] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Reset edit mode when drawer opens for a new task
+  useEffect(() => {
+    if (modalIsOpen) {
+      setIsEditMode(false);
+      setEditingBugId(null);
+    }
+  }, [modalIsOpen, taskDetails?._id]);
 
   // Use a more optimized global state that doesn't cause re-renders
   const globalTimerRef = useRef({
@@ -949,7 +954,7 @@ const TaskList = ({
       <div className="container project-task-section">
         {tasks.map((boardData, index) => (
           <div
-            key={`${boardData._id}_${index}`}
+            key={`${boardData?._id}_${index}`}
             className={`order small-box ${dragged ? "dragged-over" : ""}`}
             style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6" }}
             onDragLeave={(e) => onDragLeave(e)}
@@ -1035,10 +1040,10 @@ const TaskList = ({
                                   className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    getTaskByIdDetails(task._id);
-                                    getComment(task._id);
+                                    getTaskByIdDetails(task?._id);
+                                    getComment(task?._id);
                                     setTempBoard(boardData);
-                                    setSelectedTaskId(task._id);
+                                    setSelectedTaskId(task?._id);
                                   }}
                                 >
                                   {/* Task labels */}
@@ -1118,12 +1123,10 @@ const TaskList = ({
                                               <Menu.Item
                                                 disabled
                                                 onClick={() => {
-                                                  getTaskByIdDetails(task._id, {
-                                                    editFlag: true,
-                                                    boardID:
-                                                      boardData?.workflowStatus
-                                                        ._id,
-                                                  });
+                                                  getTaskByIdDetails(task?._id);
+                                                  getComment(task?._id);
+                                                  setTempBoard(boardData);
+                                                  setSelectedTaskId(task?._id);
                                                 }}
                                               >
                                                 <EditOutlined
@@ -1135,12 +1138,10 @@ const TaskList = ({
                                           ) : (
                                             <Menu.Item
                                               onClick={() => {
-                                                getTaskByIdDetails(task._id, {
-                                                  editFlag: true,
-                                                  boardID:
-                                                    boardData?.workflowStatus
-                                                      ._id,
-                                                });
+                                                getTaskByIdDetails(task?._id);
+                                                getComment(task?._id);
+                                                setTempBoard(boardData);
+                                                setSelectedTaskId(task?._id);
                                               }}
                                             >
                                               <EditOutlined
@@ -1155,7 +1156,7 @@ const TaskList = ({
                                           <Popconfirm
                                             title="Are you sure you want to delete this task?"
                                             onConfirm={() => {
-                                              handleDelete(task._id);
+                                              handleDelete(task?._id);
                                             }}
                                             okText="Yes"
                                             cancelText="No"
@@ -1193,7 +1194,7 @@ const TaskList = ({
                                                 isCopyComments: true,
                                               });
                                               getTaskByIdDetails(
-                                                task._id,
+                                                task?._id,
                                                 "",
                                                 true
                                               );
@@ -1206,7 +1207,7 @@ const TaskList = ({
 
                                         <Menu.Item
                                           onClick={() =>
-                                            handleCopyTaskLink(task._id)
+                                            handleCopyTaskLink(task?._id)
                                           }
                                         >
                                           <LinkOutlined />
@@ -1217,17 +1218,17 @@ const TaskList = ({
                                         ) && (
                                             <Menu.Item
                                               onClick={() => {
-                                                setTaskId(task._id);
+                                                setTaskId(task?._id);
                                                 setManagePeople(true);
 
                                                 managePeopleForm.setFieldsValue({
                                                   assignees:
                                                     detailClientSubs?.assignees?.map(
-                                                      (item) => item._id
+                                                      (item) => item?._id
                                                     ),
                                                   clients:
                                                     detailClientSubs?.pms_clients?.map(
-                                                      (item) => item._id
+                                                      (item) => item?._id
                                                     ),
                                                 });
                                               }}
@@ -1252,17 +1253,17 @@ const TaskList = ({
                                         onClick={() => {
                                           getDetailsClientSubs(
                                             projectId,
-                                            task._id,
+                                            task?._id,
                                             true
                                           );
                                           managePeopleForm.setFieldsValue({
                                             assignees:
                                               detailClientSubs?.assignees?.map(
-                                                (item) => item._id
+                                                (item) => item?._id
                                               ),
                                             clients:
                                               detailClientSubs?.pms_clients?.map(
-                                                (item) => item._id
+                                                (item) => item?._id
                                               ),
                                           });
                                         }}
@@ -1473,17 +1474,15 @@ const TaskList = ({
         </div>
       </Modal>
 
-      <Modal
-        className="task-detail-popup"
-        open={modalIsOpen && taggedUserList.length > 0}
-        destroyOnClose
-        width={1120}
-        footer={null}
-        onCancel={() => {
+      <TaskDetailModal
+        open={modalIsOpen}
+        onClose={() => {
           dispatch(setData({ stateName: "taggedUserList", data: [] }));
           handleCancel();
           setSelectedTaskId(null);
           setOpenCommentModle(false);
+          setIsEditMode(false);
+          setEditingBugId(null);
           setIsEditable({
             title: false,
             proj_description: false,
@@ -1494,1585 +1493,26 @@ const TaskList = ({
             estimated_time: false,
           });
         }}
-        zIndex={1000}
-      >
-        <div className="task-detail-panel task-model">
-          <div className="left-task-detail-panel">
-            <div className="head-toolbar">
-              <div className="status-button">
-                <Popover
-                  trigger="click"
-                  placement="bottomLeft"
-                  visible={isPopoverVisible}
-                  onVisibleChange={setIsPopoverVisible}
-                  content={
-                    <div className="assignees-popover stages-task-popover">
-                      <ul
-                        className="workflow-stages-task-main-wrapper"
-                        style={{ paddingLeft: "0px !important" }}
-                      >
-                        {projectWorkflowStage.map((item) => (
-                          <div
-                            className="workflow-stages-task"
-                            key={item._id}
-                            style={{
-                              display: "flex",
-                              cursor: "pointer",
-                              justifyContent: "space-between",
-                              gap: "20px !important",
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "5px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: "10px",
-                                  height: "10px",
-                                  backgroundColor: `${item.color}`,
-                                  borderRadius: "50%",
-                                }}
-                              ></div>
-                              <div
-                                onClick={() => {
-                                  handleTaskStatusClick(item._id, taskId);
-                                  handleTaskStatusClickFor(item._id, taskId);
-                                }}
-                              >
-                                {item.title}
-                              </div>
-                            </span>
-                            {selectedTaskStatusTitle === item.title && (
-                              <span style={{ float: "right" }}>
-                                <i class="fi fi-br-check"></i>
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </ul>
-                    </div>
-                  }
-                >
-                  <Button className="done-btn">
-                    <i
-                      className="fi fi-ss-check-circle"
-                      style={{ color: taskDetails?.task_status?.color }}
-                    ></i>
-                    {selectedTaskStatusTitle || taskDetails?.task_status?.title}
-                  </Button>
-                </Popover>
-
-                <span>{taskDetails?.taskId}</span>
-              </div>
-              <div className="task-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ flex: 1 }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {/* Only show timer for In Progress tasks */}
-                  {isDisabledTrackManually && (
-                    isTaskInProgress(taskDetails)
-                    && (
-                      <Popover
-
-                        content={
-                          <div style={{ minWidth: '280px', padding: '8px' }}>
-                            {/* Header Section */}
-                            <div style={{
-                              textAlign: 'center',
-                              paddingBottom: '16px',
-                              borderBottom: '1px solid #f0f0f0',
-                              marginBottom: '16px'
-                            }}>
-                              <div style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#262626',
-                                marginBottom: '8px'
-                              }}>
-                                Time Tracker
-                              </div>
-                              <div style={{
-                                fontSize: '32px',
-                                fontWeight: 'bold',
-                                color: (() => {
-                                  const displayInfo = getTimerDisplayInfo();
-                                  if (displayInfo.isActive) return '#52c41a';
-                                  return '#1890ff';
-                                })(),
-                                fontFamily: 'monospace',
-                                letterSpacing: '1px'
-                              }}>
-                                {getTimerDisplayInfo().timeString}
-                              </div>
-                            </div>
-
-
-
-                            {/* Action Buttons */}
-                            <div style={{
-                              display: 'flex',
-                              gap: '8px',
-                              justifyContent: 'center',
-                              marginBottom: '12px'
-                            }}>
-                              {(() => {
-                                const displayInfo = getTimerDisplayInfo();
-
-                                if (displayInfo.canStart) {
-                                  return (
-                                    <Button
-                                      type="primary"
-                                      icon={<PlayCircleOutlined />}
-                                      onClick={() => startTimer(taskDetails?._id)}
-                                      style={{
-                                        borderRadius: '6px',
-                                        fontWeight: '500'
-                                      }}
-                                    >
-                                      Start Timer
-                                    </Button>
-                                  );
-                                }
-
-                                if (displayInfo.canStop) {
-                                  return (
-                                    <Button
-                                      danger
-                                      icon={<PauseCircleOutlined />}
-                                      onClick={() => stopTimer(taskDetails?._id)}
-                                      style={{
-                                        borderRadius: '6px',
-                                        fontWeight: '500'
-                                      }}
-                                    >
-                                      Stop Timer
-                                    </Button>
-                                  );
-                                }
-
-                                return null;
-                              })()}
-                            </div>
-
-                            {/* Warning Messages */}
-                            {globalTimerRef.current.activeTaskId &&
-                              globalTimerRef.current.activeTaskId !== taskDetails?._id &&
-                              shouldShowTimer(taskDetails) && (
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: '#fa8c16',
-                                  padding: '8px 12px',
-                                  backgroundColor: '#fffbe6',
-                                  borderRadius: '4px',
-                                  border: '1px solid #ffe58f',
-                                  textAlign: 'center'
-                                }}>
-                                  Another timer is running and will be stopped
-                                </div>
-                              )}
-                          </div>
-                        }
-                        title={null}
-                        trigger="click"
-                        visible={timerState.isPopoverVisible}
-                        onVisibleChange={(visible) => setTimerState(prev => ({ ...prev, isPopoverVisible: visible }))}
-                        placement="bottomRight"
-                      >
-                        <Button
-                          style={{
-                            marginRight: '10px',
-                            border: (() => {
-                              const displayInfo = getTimerDisplayInfo();
-                              // if (displayInfo.isExceeded) return '2px solid #ff4d4f';
-                              if (displayInfo.isActive) return '2px solid #52c41a';
-                              // if (displayInfo.isNearLimit) return '2px solid #fa8c16';
-                              return '1px solid #d9d9d9';
-                            })(),
-                            backgroundColor: (() => {
-                              const displayInfo = getTimerDisplayInfo();
-                              // if (displayInfo.isExceeded) return '#fff2f0';
-                              if (displayInfo.isActive) return '#f6ffed';
-                              // if (displayInfo.isNearLimit) return '#fffbe6';
-                              return 'white';
-                            })()
-                          }}
-                        >
-                          <ClockCircleOutlined
-                            style={{
-                              color: (() => {
-                                const displayInfo = getTimerDisplayInfo();
-                                // if (displayInfo.isExceeded) return '#ff4d4f';
-                                if (displayInfo.isActive) return '#52c41a';
-                                // if (displayInfo.isNearLimit) return '#fa8c16';
-                                return '#1890ff';
-                              })(),
-                              fontSize: '16px'
-                            }}
-                          />
-                          {/* {(() => {
-                        const displayInfo = getTimerDisplayInfo();
-                        return displayInfo.isActive && displayInfo.timeString !== '00:00:00';
-                      })() && ( */}
-                          <span style={{
-                            marginLeft: '5px',
-                            fontSize: '12px',
-                            color: (() => {
-                              const displayInfo = getTimerDisplayInfo();
-                              // if (displayInfo.isExceeded) return '#ff4d4f';
-                              // if (displayInfo.isNearLimit) return '#fa8c16';
-                              return 'inherit';
-                            })()
-                          }}>
-                            {(() => getTimerDisplayInfo().timeString)()}
-                          </span>
-                          {/* )} */}
-                        </Button>
-                      </Popover>
-                    )
-                  )}
-
-                  <div className="task-editbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    {hasPermission(["task_edit"]) &&
-                      ((projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
-                        <Tooltip title="Project hours exceeded" placement="top">
-                          <EditOutlined
-                            style={{ color: "gray", cursor: "not-allowed" }}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                          />
-                        </Tooltip>
-                      ) : (
-                        <EditOutlined
-                          style={{ color: "green" }}
-                          onClick={() => {
-                            getTaskByIdDetails(taskDetails?._id, {
-                              editFlag: true,
-                              boardID: tempBoard?.workflowStatus._id,
-                            });
-                          }}
-                        />
-                      ))}
-
-                    {hasPermission(["task_delete"]) && (
-                      <Popconfirm
-                        title="Do you want to delete?"
-                        onConfirm={() => handleTaskDelete(taskDetails._id)}
-                        okText="Yes"
-                        cancelText="No"
-                        placement="bottom"
-                      >
-                        <Button danger>
-                          <i className="fi fi-rs-trash"></i>
-                          {/* Delete */}
-                        </Button>
-                      </Popconfirm>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="task-inner-card">
-              <div className="bredcamp-panel">
-                <ul>
-                  <li>
-                    <p>
-                      {taskDetails?.project?.color && (
-                        <div
-                          className="color-div"
-                          style={{ background: taskDetails?.project?.color }}
-                        ></div>
-                      )}
-                      {taskDetails?.project?.title}
-                    </p>
-                  </li>
-                  <li>
-                    <i className="fi fi-rr-angle-small-right"></i>
-                  </li>
-
-                  <li>
-                    <span>{taskDetails?.mainTask?.title}</span>
-                  </li>
-                </ul>
-              </div>
-              {hasPermission(["task_edit"]) && isEditable.title ? (
-                <Tooltip title="Enter the title and hit enter key">
-                  <Input
-                    placeholder="Title"
-                    defaultValue={viewTask?.title}
-                    onPressEnter={(e) => {
-                      const value = e.target.value;
-                      handleViewTask("title", value);
-                    }}
-                  />
-                </Tooltip>
-              ) : (
-                <h3
-                  onClick={() => {
-                    handleFieldClick("title");
-                  }}
-                >
-                  {taskDetails?.title}
-                </h3>
-              )}
-              {hasPermission(["task_edit"]) && isEditable.proj_description ? (
-                <div>
-                  <CKEditor
-                    editor={Custombuild}
-                    data={editViewModalDescription || viewTask?.descriptions}
-                    onReady={(editor) => {
-                      setEditorInstance(editor);
-                    }}
-                    config={{
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
-                        ],
-                      },
-                      print: {
-                        // Implement print functionality here
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    }}
-                  />
-                  <div className="modal-footer-flex">
-                    <div className="flex-btn">
-                      <Button
-                        htmlType="submit"
-                        type="primary"
-                        className="square-primary-btn"
-                        onClick={() => {
-                          if (editorInstance) {
-                            const data = editorInstance.getData();
-                            handleViewTask("descriptions", data);
-                          }
-                          setIsEditable((prevState) => ({
-                            ...prevState,
-                            proj_description: false,
-                          }));
-                        }}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        className="square-outline-btn ant-delete"
-                        onClick={() =>
-                          setIsEditable((prevState) => ({
-                            ...prevState,
-                            proj_description: false,
-                          }))
-                        }
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="item-inner"
-                  onClick={() => {
-                    handleFieldClick("proj_description");
-                  }}
-                >
-                  <p
-                    dangerouslySetInnerHTML={{
-                      __html: taskDetails?.descriptions,
-                    }}
-                  ></p>
-                </div>
-              )}
-
-              <Form form={viewEdit} onFinish={handleViewEdit}>
-                <Form.Item>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            {hasPermission(["task_edit"]) &&
-                              isEditable.start_date ? (
-                              <DatePicker
-                                value={
-                                  viewTask?.start_date &&
-                                  dayjs(viewTask?.start_date, "YYYY-MM-DD")
-                                }
-                                placeholder="Start Date"
-                                onChange={(date, dateString) =>
-                                  handleViewTask("start_date", dateString)
-                                }
-                                allowClear={false}
-                              />
-                            ) : (
-                              <div>
-                                <DatePicker
-                                  open={false}
-                                  inputReadOnly
-                                  placeholder="Start Date"
-                                  value={
-                                    taskDetails?.start_date &&
-                                    dayjs(taskDetails?.start_date, "YYYY-MM-DD")
-                                  }
-                                  allowClear={false}
-                                  onChange={onChange}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            {hasPermission(["task_edit"]) &&
-                              isEditable.end_date ? (
-                              <DatePicker
-                                value={
-                                  viewTask?.due_date &&
-                                  dayjs(viewTask?.due_date, "YYYY-MM-DD")
-                                }
-                                placeholder="End Date"
-                                onChange={(date, dateString) =>
-                                  handleViewTask("due_date", dateString)
-                                }
-                                disabledDate={(current) =>
-                                  current &&
-                                  current <
-                                  dayjs(viewTask?.start_date, "YYYY-MM-DD")
-                                }
-                                allowClear={false}
-                              />
-                            ) : (
-                              <div>
-                                <DatePicker
-                                  open={false}
-                                  inputReadOnly
-                                  placeholder="End Date"
-                                  value={
-                                    taskDetails?.due_date &&
-                                    dayjs(taskDetails?.due_date, "YYYY-MM-DD")
-                                  }
-                                  allowClear={false}
-                                  onChange={onChange}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          {hasPermission(["task_edit"]) &&
-                            isEditable.taskLabels ? (
-                            <Select
-                              value={viewTask?.taskLabels[0]?.title}
-                              placeholder="Select labels"
-                              onChange={handleSelectedLabelsChange}
-                              bordered={false}
-                            >
-                              {projectLabels.map((item) => (
-                                <Option
-                                  key={item?._id}
-                                  value={item?._id}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {item.title}
-                                </Option>
-                              ))}
-                            </Select>
-                          ) : (
-                            <div onClick={() => handleFieldClick("taskLabels")}>
-                              {taskDetails?.taskLabels?.length > 0 ? (
-                                taskDetails.taskLabels.map((label) => (
-                                  <div key={label._id}>
-                                    {label.title.charAt(0).toUpperCase() +
-                                      label.title.slice(1)}
-                                  </div>
-                                ))
-                              ) : (
-                                <div>Select</div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">Assignees</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          {hasPermission(["task_edit"]) &&
-                            isEditable.assignees ? (
-                            <MultiSelect
-                              onSearch={handleSearch}
-                              onChange={handleSelectedItemsChange}
-                              values={
-                                viewTask
-                                  ? viewTask?.assignees?.map(
-                                    (item) => item?._id
-                                  )
-                                  : []
-                              }
-                              listData={assigneeOptions}
-                              search={searchKeyword}
-                              bordered={false}
-                            />
-                          ) : (
-                            <div onClick={() => handleFieldClick("assignees")}>
-                              {taskDetails?.assignees?.length > 0 ? (
-                                <Avatar.Group
-                                  maxCount={2}
-                                  maxPopoverTrigger="click"
-                                  size="default"
-                                  maxStyle={{
-                                    color: "#f56a00",
-                                    backgroundColor: "#fde3cf",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {taskDetails.assignees.map((data) => (
-                                    <Tooltip
-                                      title={removeTitle(data.name)}
-                                      key={data._id}
-                                    >
-                                      <MyAvatar
-                                        userName={data.name}
-                                        alt={data.name}
-                                        src={data?.emp_img}
-                                        key={data._id}
-                                      />
-                                    </Tooltip>
-                                  ))}
-                                </Avatar.Group>
-                              ) : (
-                                <div>Select</div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              {!getRoles(["Client"]) && (
-                                <span style={{ color: "red" }}>*</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            {hasPermission(["task_edit"]) &&
-                              isEditable.estimated_time ? (
-                              <div className="estimated_time_input_container">
-                                <div className="hours_min_container">
-                                  <Tooltip title="Add hours and press enter key">
-                                    <Input
-                                      min={0}
-                                      defaultValue={viewTask.estimated_hours}
-                                      type="number"
-                                      onPressEnter={(e) => {
-                                        const value = e.target.value;
-                                        handleEstTimeViewInput(
-                                          "est_hrs",
-                                          value
-                                        );
-                                      }}
-                                      className={`hours_input ${estHrsError && "error-border"
-                                        }`}
-                                      placeholder="Hours"
-                                    />
-                                  </Tooltip>
-                                  <div style={{ color: "red" }}>
-                                    {estHrsError}
-                                  </div>
-                                </div>
-                                <div className="hours_min_container">
-                                  <Tooltip title="Add mins and press enter key">
-                                    <Input
-                                      min={0}
-                                      max={59}
-                                      type="number"
-                                      defaultValue={viewTask.estimated_minutes}
-                                      className={`hours_input ${estMinsError && "error-border"
-                                        }`}
-                                      placeholder="Minutes"
-                                      onPressEnter={(e) => {
-                                        const value = e.target.value;
-                                        handleEstTimeViewInput(
-                                          "est_mins",
-                                          value
-                                        );
-                                      }}
-                                    />
-                                  </Tooltip>
-                                  <div style={{ color: "red" }}>
-                                    {estMinsError}
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                <div style={{ cursor: "pointer" }}>
-                                  <Popover
-                                    trigger="hover"
-                                    visible={visible}
-                                    arrow={false}
-                                    placement="bottom"
-                                    style={{ margin: "0" }}
-                                    content={
-                                      <>
-                                        <div
-                                          onClick={
-                                            isDisabledTrackManually ? undefined : popOver
-                                          }
-                                          style={{
-                                            cursor: isDisabledTrackManually
-                                              ? "not-allowed"
-                                              : "pointer",
-                                            opacity: isDisabledTrackManually ? 0.5 : 1,
-                                            pointerEvents: isDisabledTrackManually
-                                              ? "none"
-                                              : "auto",
-                                          }}
-                                        >
-                                          <p >
-                                            <EditOutlined
-                                              style={{
-                                                marginRight: "20px",
-                                                marginBottom: "10px",
-                                                color: isDisabledTrackManually
-                                                  ? "gray"
-                                                  : "green",
-                                              }}
-
-                                            />
-                                            Track Manually
-                                          </p>
-                                        </div>
-                                        {hasPermission(["view_timesheet"]) && (
-                                          <div
-                                            onClick={() => {
-                                              popOverTimeLogged();
-                                              getTimeLogged(taskId);
-                                              setExpandedRowKey(null);
-                                              setIsEditable((prevState) => ({
-                                                ...prevState,
-                                                estimated_time: false,
-                                              }));
-                                            }}
-                                            style={{ cursor: "pointer" }}
-                                          >
-                                            <p>
-                                              {" "}
-                                              <FieldTimeOutlined
-                                                style={{ marginRight: "20px" }}
-                                              />{" "}
-                                              Logged Time Detail
-                                            </p>
-                                          </div>
-                                        )}
-                                      </>
-                                    }
-                                    className="flex-table"
-                                    onVisibleChange={openPopOver}
-                                  >
-                                    {isLoggedHoursMoreThanEstimated(
-                                      taskDetails.time,
-                                      `${taskDetails?.estimated_hours}:${taskDetails?.estimated_minutes}`
-                                    ) && (
-                                        <i
-                                          style={{ color: "red" }}
-                                          className="fi fi-ss-triangle-warning"
-                                        ></i>
-                                      )}
-                                    <p className="logged-time">
-                                      <span>Logged Time : </span>
-                                      {taskDetails?.time} /{" "}
-                                      <span>Estimated time : </span>
-                                      <span
-                                        onClick={() =>
-                                          handleFieldClick("estimated_time")
-                                        }
-                                      >
-                                        {`${taskDetails?.estimated_hours}:${taskDetails?.estimated_minutes}`}
-                                      </span>
-                                    </p>
-                                  </Popover>
-                                  {estError && (
-                                    <div className="error-message">
-                                      Logged hours cannot be greater than
-                                      estimated hours.
-                                    </div>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Form.Item>
-              </Form>
-
-              <div className="file-upload">
-                <h5>Attached Files</h5>
-              </div>
-              <div className="fileAttachment_container">
-                {(() => {
-                  const attachments = [
-                    ...(fileViewAttachment || []),
-                    ...(populatedViewFiles || []),
-                  ];
-                  return attachments.map((file, index) => {
-                    const fileName = file?.name || file?.file_name || "";
-                    const fileType = file?.file_type || file?.type || "";
-                    const rawPath = file?.path || file?.file_path || "";
-                    const href = rawPath
-                      ? `${process.env.REACT_APP_API_URL}/public/${rawPath}`
-                      : undefined;
-                    return (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentViewFile(index, file)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                          {href ? (
-                            <a
-                              className="fileNameTxtellipsis"
-                              href={href}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                          {fileName && fileName.length > 15
-                            ? `${fileName.slice(0, 15)}.....${fileType}`
-                            : `${fileName}${fileType}`}
-                            </a>
-                          ) : (
-                            <span className="fileNameTxtellipsis">
-                              {fileName && fileName.length > 15
-                                ? `${fileName.slice(0, 15)}.....${fileType}`
-                                : `${fileName}${fileType}`}
-                            </span>
-                          )}
-                      </div>
-                    </Badge>
-                    );
-                  });
-                })()}
-              </div>
-              {populatedViewFiles?.length > 0 && (
-                <div className="folder-comment">
-                  <Form.Item
-                    label="Folder"
-                    initialValue={
-                      foldersList.length > 0 ? foldersList[0]?._id : undefined
-                    }
-                    name="folder"
-                    rules={[
-                      {
-                        required: true,
-                      },
-                    ]}
-                  >
-                    <Select placeholder="Please Select Folder" showSearch>
-                      {foldersList.map((data) => (
-                        <Option
-                          key={data?._id}
-                          value={data?._id}
-                          style={{ textTransform: "capitalize" }}
-                        >
-                          {data.name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </div>
-              )}
-
-              <Tooltip placement="top" title="Attached file">
-                <Button
-                  className="link-btn"
-                  onClick={() => attachmentViewfileRef.current.click()}
-                >
-                  <i className="fi fi-ss-link"></i> Attach files
-                </Button>
-              </Tooltip>
-              <input
-                multiple
-                type="file"
-                accept="*"
-                onChange={onFileViewChange}
-                hidden
-                ref={attachmentViewfileRef}
-              />
-
-              <div className="attachment-comment">
-                <div
-                  className="table-schedule-wrapper"
-                  style={{ background: "white" }}
-                >
-                  <h5>Bugs</h5>
-                  <ul>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">Id</div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">Name</div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">Status</div>
-                      </div>
-                      <div className="table-right">
-                        <div className="bug-iconwrapper">
-                          <i class="fi fi-rr-briefcase"></i>
-                          <div className="flex-table">Reporter</div>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="bug-iconwrapper">
-                          <i class="fi fi-tr-boss"></i>
-                          <div className="flex-table">Assignee</div>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="bug-iconwrapper">
-                          <i class="fi fi-rr-calendar"></i>
-                          <div className="flex-table"> Due Date</div>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="bug-iconwrapper">
-                          <i class="fi fi-rr-calendar"></i>
-                          <div className="flex-table"> Created At</div>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                      <div className="table-left">
-                        {hasPermission(["bug_add"]) && issuetitleflag ? (
-                          <Input
-                            name="issue"
-                            placeholder="Enter bug title"
-                            onChange={(e) => {
-                              setIssuetitle(e.target.value);
-                            }}
-                            onPressEnter={(e) => handleissuedata(e)}
-                          />
-                        ) : (
-                          <div
-                            className="flex-table"
-                            onClick={() => setIssuetitleflag(true)}
-                          >
-                            <span className="add-bug">
-                              Add Bug and hit enter key
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                    </li>
-                    {issuedata?.map((value) => {
-                      return (
-                        <li>
-                          <div className="table-left">
-                            <div className="flex-table">{value?.bugId}</div>
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              <Link
-                                to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
-                              >
-                                {value?.title}
-                              </Link>
-                            </div>
-                          </div>
-                          <div className="table-left">
-                            <div
-                              className="flex-table"
-                              style={{ color: "orange" }}
-                            >
-                              {value?.bug_status}
-                            </div>
-                          </div>
-
-                          <div className="table-left">
-                            <Tooltip
-                              title={removeTitle(value?.reporter)}
-                              key={value?.reporter}
-                            >
-                              <MyAvatar
-                                userName={value?.reporter}
-                                alt={value?.reporter}
-                                key={value?.reporter}
-                              />
-                            </Tooltip>
-                          </div>
-                          <div className="table-left">
-                            {value?.assignees?.length > 0 ? (
-                              <Avatar.Group
-                                maxCount={2}
-                                maxPopoverTrigger="click"
-                                size="default"
-                                maxStyle={{
-                                  color: "#f56a00",
-                                  backgroundColor: "#fde3cf",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                {value?.assignees &&
-                                  value?.assignees?.map((data) => (
-                                    <Tooltip
-                                      title={removeTitle(data.full_name)}
-                                      key={data.full_name}
-                                    >
-                                      <MyAvatar
-                                        userName={data.full_name}
-                                        alt={data.full_name}
-                                        src={data.emp_img}
-                                        key={data.full_name}
-                                      />
-                                    </Tooltip>
-                                  ))}
-                              </Avatar.Group>
-                            ) : (
-                              "-"
-                            )}
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              {moment(value?.due_date).format("DD-MMM-YYYY") ==
-                                "Invalid date"
-                                ? "-"
-                                : moment(value?.due_date).format("DD-MMM-YYYY")}
-                            </div>
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              {moment(value?.createdAt).format("DD-MMM-YYYY")}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="task-popup-actions">
-                <Button
-                  className="square-primary-btn task-popup-save-btn"
-                  onClick={() => updateviewTask(viewTask)}
-                  disabled={!taskId}
-                >
-                  Save
-                </Button>
-                <Button
-                  className="square-outline-btn task-popup-close-btn"
-                  onClick={() => {
-                    handleCancel();
-                    setSelectedTaskId(null);
-                  }}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="right-task-detail-panel">
-            <div className="right-toolbar">
-              <div className="right-toolbar-tab">
-                <label
-                  onClick={() => {
-                    handleTabChange("comments");
-                    getComment(taskDetails?._id);
-                  }}
-                  style={{ cursor: "pointer" }}
-                  className={`${activeClass()}`}
-                >
-                  Comments
-                  <span className="comment-badge">{comments.length || 0}</span>
-                </label>
-
-                <label
-                  onClick={() => {
-                    handleTabChange("task");
-                    getTaskhistory();
-                  }}
-                  style={{ cursor: "pointer" }}
-                  className={`${activeClass1()}`}
-                >
-                  Task History
-                </label>
-              </div>
-            </div>
-
-            <div
-              className={` task-history-inner  task-detail-inner ${activeTab?.toLowerCase()}`}
-            >
-              {activeTab === "comments" ? (
-                <>
-                  <div className="comment-list-wrapper" ref={commentListRef}>
-                    {comments && comments.length > 0 ? (
-                      comments?.map((item, index) => {
-                        return (
-                          <div className="main-comment-wrapper" key={index}>
-                            <div className="main-avatar-wrapper">
-                              <MyAvatar
-                                src={item.profile_pic}
-                                userName={item.sender}
-                                alt={item.sender}
-                                key={item.sender}
-                              />
-                              <div className="comment-sender-name">
-                                <h1
-                                  style={{
-                                    color: userColors[item.sender] || "#000",
-                                  }}
-                                >
-                                  {removeTitle(item.sender)}
-                                </h1>
-                                <h4>
-                                  {calculateTimeDifference(item.createdAt)} (
-                                  {moment(item?.createdAt).format("DD-MM-YYYY")}
-                                  )
-                                </h4>
-                              </div>
-
-                              {isCreatedBy(item?.sender_id) && (
-                                <div className="edit-bar">
-                                  <Dropdown
-                                    trigger={["click"]}
-                                    overlay={
-                                      <Menu>
-                                        <Menu.Item
-                                          key="1"
-                                          onClick={() => {
-                                            setOpenCommentModle(true);
-                                            handleEditComment(item._id);
-                                          }}
-                                        >
-                                          <EditOutlined
-                                            style={{ color: "green" }}
-                                          />
-                                          Edit
-                                        </Menu.Item>
-                                        <Menu.Item
-                                          key="2"
-                                          onClick={() => {
-                                            deleteComment(item._id);
-                                          }}
-                                          className="ant-delete"
-                                        >
-                                          <DeleteOutlined
-                                            style={{ color: "red" }}
-                                          />
-                                          Delete
-                                        </Menu.Item>
-                                      </Menu>
-                                    }
-                                    onClick={handleDropdownClick}
-                                  >
-                                    <MoreOutlined
-                                      style={{ cursor: "pointer" }}
-                                    />
-                                  </Dropdown>
-                                </div>
-                              )}
-                            </div>
-                            <div className="comment-wrapper">
-                              <p key={index}>
-                                <span
-                                  dangerouslySetInnerHTML={{
-                                    __html: item?.comment,
-                                  }}
-                                ></span>
-                              </p>
-                              <div className="task-all-file-wrapper">
-                                {item?.attachments.map((file, index) => (
-                                  <Badge key={index}>
-                                    <div className="fileAttachment_Box">
-                                      <div className="fileAttachment_box-img">
-                                        {fileImageSelect(file?.file_type)}
-                                      </div>
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          marginBottom: "10px",
-                                          width: "100%",
-                                          justifyContent: "space-between",
-                                          alignItems: "center",
-                                        }}
-                                      >
-                                        <p
-                                          style={{
-                                            margin: "0px 10px",
-                                            flex: 1,
-                                          }}
-                                          className="fileNameTxtellipsis"
-                                        >
-                                          <a
-                                            className="fileNameTxtellipsis"
-                                            href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                                            rel="noopener noreferrer"
-                                            target="_blank"
-                                          >
-                                            {file.name.length > 15
-                                              ? `${file.name.slice(
-                                                0,
-                                                15
-                                              )}.....${file.file_type}`
-                                              : file.name + file.file_type}
-                                          </a>
-                                        </p>
-                                        <Button
-                                          type="text"
-                                          size="small"
-                                          icon={<DownloadOutlined />}
-                                          onClick={() =>
-                                            handleDownloadFile(file)
-                                          }
-                                          style={{
-                                            minWidth: "auto",
-                                            padding: "4px 8px",
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="task-no-comments">No comments</div>
-                    )}
-                  </div>
-
-                  <AddComment
-                    editFlagObj={{
-                      flag: openCommentModel,
-                      setFn: setOpenCommentModle,
-                      submitFn: handleComments,
-                    }}
-                    populatedFiles={populatedFiles}
-                    setPopulatedFiles={setPopulatedFiles}
-                    deleteFileData={deleteFileData}
-                    setDeleteFileData={setDeleteFileData}
-                    addComment={addComments} // Function to handle adding comments
-                    id={taskDetails?._id} // Task ID
-                    setTextAreaValue={setTextAreaValue} // Function to set text area value
-                    isTextAreaFocused={isTextAreaFocused} // Boolean for text area focus state
-                    setIsTextAreaFocused={setIsTextAreaFocused} // Function to set focus state
-                    textAreaValue={textAreaValue}
-                    userList={taggedUserList}
-                    getBoardTasks={getBoardTasks}
-                    mainTaskId={taskDetails?.mainTask?._id}
-                    onDraftChange={handleDraftChange}
-                    updateTaskDraftStatus={updateTaskDraftStatus}
-                  />
-                </>
-              ) : activeTab === "issue" ? (
-                <div
-                  className="tab-schedule-wrapper"
-                  style={{ background: "white" }}
-                >
-                  <ul>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">Id</div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">Name</div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">Status</div>
-                      </div>
-                      <div className="table-right">
-                        <i class="fi fi-rr-briefcase"></i>
-                        <div className="flex-table">Reporter</div>
-                      </div>
-                      <div className="table-right">
-                        <i class="fi fi-tr-boss"></i>
-                        <div className="flex-table">Assignee</div>
-                      </div>
-                      <div className="table-right">
-                        <i class="fi fi-rr-calendar"></i>
-                        <div className="flex-table"> Due Date</div>
-                      </div>
-                      <div className="table-right">
-                        <i class="fi fi-rr-calendar"></i>
-                        <div className="flex-table"> Created At</div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                      <div className="table-left">
-                        {issuetitleflag ? (
-                          <Input
-                            name="issue"
-                            placeholder="Enter bug title"
-                            onChange={(e) => {
-                              setIssuetitle(e.target.value);
-                            }}
-                            onPressEnter={(e) => handleissuedata(e)}
-                          />
-                        ) : (
-                          <div
-                            className="flex-table"
-                            onClick={() => setIssuetitleflag(true)}
-                          >
-                            Add Bug and hit enter key
-                          </div>
-                        )}
-                      </div>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>{" "}
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                      <div className="table-left">
-                        <div className="flex-table"></div>
-                      </div>
-                    </li>
-                    {issuedata?.map((value) => {
-                      return (
-                        <li>
-                          <div className="table-left">
-                            <div className="flex-table">{value?.bugId}</div>
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              <Link
-                                to={`/${companySlug}/project/app/${projectId}?tab=Bugs&bugID=${value?._id}`}
-                              >
-                                {value?.title}
-                              </Link>
-                            </div>
-                          </div>
-                          <div className="table-left">
-                            <div
-                              className="flex-table"
-                              style={{ color: "orange" }}
-                            >
-                              {value?.bug_status}
-                            </div>
-                          </div>
-
-                          <div className="table-left">
-                            <Tooltip
-                              title={removeTitle(value?.reporter)}
-                              key={value?.reporter}
-                            >
-                              <MyAvatar
-                                userName={value?.reporter}
-                                alt={value?.reporter}
-                                key={value?.reporter}
-                              />
-                            </Tooltip>
-                          </div>
-                          <div className="table-left">
-                            {value?.assignees.length > 0 ? (
-                              <Avatar.Group
-                                maxCount={2}
-                                maxPopoverTrigger="click"
-                                size="default"
-                                maxStyle={{
-                                  color: "#f56a00",
-                                  backgroundColor: "#fde3cf",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                {value?.assignees &&
-                                  value?.assignees?.map((data) => (
-                                    <Tooltip
-                                      title={removeTitle(data.full_name)}
-                                      key={data.full_name}
-                                    >
-                                      <MyAvatar
-                                        key={data.full_name}
-                                        userName={data.full_name}
-                                        alt={data.full_name}
-                                        src={data.emp_img}
-                                      />
-                                    </Tooltip>
-                                  ))}
-                              </Avatar.Group>
-                            ) : (
-                              "-"
-                            )}
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              {moment(value?.due_date).format("DD-MMM-YYYY") ==
-                                "Invalid date"
-                                ? "-"
-                                : moment(value?.due_date).format("DD-MMM-YYYY")}
-                            </div>
-                          </div>
-                          <div className="table-left">
-                            <div className="flex-table">
-                              {moment(value?.createdAt).format("DD-MMM-YYYY")}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ) : (
-                <div className="task-history">
-                  {taskHistory.map((item, index) => {
-                    let updateKey = item?.updated_key
-                      .replace("_", " ")
-                      .includes("assignee")
-                      ? "Assigned people"
-                      : item?.updated_key.replace("_", " ");
-
-                    return (
-                      <div className="task-history-wrapper" key={item._id}>
-                        {item.updated_key === "createdAt" ? (
-                          <div className="task-history-img">
-                            <MyAvatar
-                              key={item._id}
-                              userName={item.createdBy?.full_name}
-                              alt={item.createdBy?.full_name}
-                              src={item.createdBy?.emp_img}
-                            />
-                            <span className="history-details">
-                              <strong>
-                                {removeTitle(item.createdBy.full_name)}
-                              </strong>{" "}
-                              added the task &nbsp;
-                              <span className="hitory-time">
-                                {calculateTimeDifference(item?.createdAt)} (
-                                {moment(item?.createdAt).format("DD-MM-YYYY")})
-                              </span>
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="task-history-img">
-                            <MyAvatar
-                              key={item._id}
-                              userName={item.updatedBy?.full_name}
-                              alt={item.updatedBy?.full_name}
-                              src={item.updatedBy?.emp_img}
-                            />
-
-                            <span className="history-details">
-                              {item.updatedBy.full_name} updated the task &nbsp;
-                              <span className="hitory-time">
-                                {calculateTimeDifference(item?.updatedAt)}
-                              </span>
-                            </span>
-                            <div
-                              className="history-icon"
-                              onClick={() => handleToggle(item, index)}
-                              style={{ cursor: "pointer" }}
-                            >
-                              {storeIndex === item._id && showTaskHistory ? (
-                                <DownOutlined />
-                              ) : (
-                                <RightOutlined />
-                              )}
-                            </div>
-                            {storeIndex === item._id && (
-                              <div
-                                className="history-data-wrapper"
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                <div className="history-prev">
-                                  <h2>Previous:</h2>
-                                </div>
-                                <div className="history-data">
-                                  {/* <h5>
-                                    {item.pervious_value
-                                      ? item?.updated_key === "start_date" ||
-                                        item?.updated_key === "due_date"
-                                        ? item?.pervious_value
-                                          ? updateKey +
-                                          " : " +
-                                          moment(item.pervious_value).format(
-                                            "DD MMM, YY"
-                                          )
-                                          : updateKey + " : " + "-"
-                                        : updateKey +
-                                        " : " +
-                                        item.pervious_value
-                                      : updateKey + " : " + "-"}
-                                  </h5> */}
-                                  <h5>
-                                    {item.pervious_value ? (
-                                      item?.updated_key === "start_date" ||
-                                        item?.updated_key === "due_date" ? (
-                                        item?.pervious_value ? (
-                                          <span>
-                                            {updateKey + " : "}
-                                            {moment(item.pervious_value).format("DD MMM, YY")}
-                                          </span>
-                                        ) : (
-                                          updateKey + " : " + "-"
-                                        )
-                                      ) : (
-                                        <span>
-                                          {updateKey + " : "}
-                                          <span dangerouslySetInnerHTML={{ __html: item.pervious_value }} />
-                                        </span>
-                                      )
-                                    ) : (
-                                      updateKey + " : " + "-"
-                                    )}
-                                  </h5>
-                                </div>
-                                <div className="history-prev">
-                                  <h2>New:</h2>
-                                </div>
-                                <div className="history-data">
-                                  <h5>
-                                    {item.new_value ? (
-                                      item?.updated_key === "start_date" ||
-                                        item?.updated_key === "due_date" ? (
-                                        item?.new_value ? (
-                                          <span>
-                                            {updateKey + " : "}
-                                            {moment(item.new_value).format("DD MMM, YY")}
-                                          </span>
-                                        ) : (
-                                          updateKey + " : " + "-"
-                                        )
-                                      ) : (
-                                        <span>
-                                          {updateKey + " : "}
-                                          <span dangerouslySetInnerHTML={{ __html: item.new_value }} />
-                                        </span>
-                                      )
-                                    ) : (
-                                      updateKey + " : " + "-"
-                                    )}
-                                  </h5>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </Modal>
+        task={taskDetails}
+        companySlug={companySlug}
+        onOpenInProject={(url) => {
+          window.location.href = url;
+        }}
+        // Bug tracking props
+        bugs={issuedata}
+        bugStatuses={bugWorkflowStatuses}
+        onBugAdd={addissue}
+        onBugDelete={deleteBug}
+        onBugEdit={editBug}
+        onBugStatusUpdate={updateBugWorkflow}
+        issueTitle={issuetitle}
+        onIssueTitleChange={setIssuetitle}
+        newBugData={newBugData}
+        onNewBugDataChange={setNewBugData}
+        onIssueDataKeypress={handleissuedata}
+        // Edit mode prop
+        onUpdateTask={updateviewTask}
+      />
 
       <AddTimeModal
         openModal={isModalOpenTaskModal}

@@ -31,7 +31,7 @@
 .task-page-detail-modal .ant-modal-body {
   padding: 0;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* ── Loading ──────────────────────────────────── */
@@ -268,7 +268,9 @@
 .task-detail-section-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: auto;
   gap: 14px;
+  align-items: start;
 }
 
 .task-detail-section-count {
@@ -678,8 +680,27 @@
 
 /* ── History ─────────────────────────────────── */
 .task-detail-history {
-  gap: 10px;
+  gap: 12px;
   overflow-y: auto;
+  max-height: 540px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.task-detail-history::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-detail-history::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.task-detail-history::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .task-detail-history .task-history-wrapper {
@@ -940,8 +961,14 @@ body[data-theme="dark"] .task-detail-history .history-icon {
   color: #5eb3f0;
 }
 
-body.dark-theme .task-detail-history .history-data-wrapper,
-body[data-theme="dark"] .task-detail-history .history-data-wrapper {
+body.dark-theme .task-detail-history,
+body[data-theme="dark"] .task-detail-history {
+  background: #0a1627;
+  border-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .task-detail-history .history-details,
+body[data-theme="dark"] .task-detail-history .history-details {
   background: #0a1627;
 }
 
@@ -1016,4 +1043,300 @@ body[data-theme="dark"] .task-detail-section-count {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
+}
+
+/* ══════════════════════════════════════════════
+   EDIT MODE STYLES
+   ══════════════════════════════════════════════ */
+
+.task-detail-icon-btn-active {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  color: #10b981 !important;
+}
+
+.task-detail-icon-btn-active:hover {
+  background: rgba(16, 185, 129, 0.35) !important;
+  border-color: rgba(16, 185, 129, 0.7) !important;
+}
+
+.task-detail-edit-title-input {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  padding: 8px 14px !important;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.task-detail-edit-title-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.task-detail-edit-title-input:focus,
+.task-detail-edit-title-input:hover {
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
+}
+
+.task-detail-edit-datepicker {
+  border-radius: 6px !important;
+  min-width: 140px;
+  width: 100% !important;
+}
+
+/* Multi-select dropdowns for Assignees and Labels */
+.task-detail-section-grid .task-detail-value .ant-select {
+  width: 100% !important;
+  display: block !important;
+}
+
+.task-detail-section-grid .task-detail-value .ant-select-selector {
+  border-radius: 6px !important;
+  min-height: 32px !important;
+  height: auto !important;
+  flex-wrap: wrap !important;
+  padding: 2px 4px !important;
+}
+
+.task-detail-section-grid .task-detail-value .ant-select-selection-overflow {
+  flex-wrap: wrap !important;
+  gap: 2px;
+}
+
+.task-detail-section-grid .task-detail-value .ant-select-selection-item {
+  border-radius: 4px !important;
+  font-size: 11px;
+  max-width: 100% !important;
+  height: 22px !important;
+  line-height: 20px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-detail-edit-description-wrapper {
+  padding: 16px 20px 20px;
+  background: #f8fafc;
+}
+
+.task-detail-edit-description {
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+}
+
+/* ══════════════════════════════════════════════
+   BUGS SECTION
+   ══════════════════════════════════════════════ */
+
+.task-detail-bugs-section {
+  overflow: visible;
+}
+
+.task-detail-bug-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  transition: border-color 0.2s;
+}
+
+.task-detail-bug-input-wrapper:focus-within {
+  border-color: #0b3a5b;
+  background: #ffffff;
+}
+
+.task-detail-bug-input-plus {
+  color: #94a3b8;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.task-detail-bug-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.task-detail-bug-input::placeholder {
+  color: #94a3b8;
+}
+
+.task-detail-bug-table-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+}
+
+.task-detail-bug-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.task-detail-bug-table thead {
+  background: #f1f5f9;
+}
+
+.task-detail-bug-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  border-bottom: 1px solid #e8edf3;
+  white-space: nowrap;
+}
+
+.task-detail-bug-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.task-detail-bug-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.task-detail-bug-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.bug-id-cell {
+  width: 70px;
+}
+
+.bug-title-cell {
+  min-width: 120px;
+}
+
+.bug-status-cell {
+  width: 140px;
+}
+
+.bug-reporter-cell {
+  width: 120px;
+}
+
+.bug-assignees-cell {
+  width: 160px;
+}
+
+.bug-assignees-cell .ant-select {
+  width: 100% !important;
+  display: block !important;
+}
+
+.bug-assignees-cell .ant-select-selector {
+  border-radius: 6px !important;
+  min-height: 32px !important;
+  height: auto !important;
+  flex-wrap: wrap !important;
+  padding: 2px 4px !important;
+}
+
+.bug-assignees-cell .ant-select-selection-overflow {
+  flex-wrap: wrap !important;
+  gap: 2px;
+}
+
+.bug-assignees-cell .ant-select-selection-item {
+  border-radius: 4px !important;
+  font-size: 11px;
+  max-width: 100% !important;
+  height: 22px !important;
+  line-height: 20px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bug-actions-cell {
+  width: 80px;
+  text-align: center !important;
+}
+
+.bug-assignee-avatars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Bugs Dark Theme ──────────────────────────── */
+body.dark-theme .task-detail-bug-input-wrapper,
+body[data-theme="dark"] .task-detail-bug-input-wrapper {
+  background: #0a1627;
+  border-color: rgba(74, 104, 150, 0.3);
+}
+
+body.dark-theme .task-detail-bug-input-wrapper:focus-within,
+body[data-theme="dark"] .task-detail-bug-input-wrapper:focus-within {
+  border-color: #5eb3f0;
+}
+
+body.dark-theme .task-detail-bug-input,
+body[data-theme="dark"] .task-detail-bug-input {
+  color: #dce7fb;
+}
+
+body.dark-theme .task-detail-bug-table-wrapper,
+body[data-theme="dark"] .task-detail-bug-table-wrapper {
+  border-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .task-detail-bug-table thead,
+body[data-theme="dark"] .task-detail-bug-table thead {
+  background: #0c1e33;
+}
+
+body.dark-theme .task-detail-bug-table th,
+body[data-theme="dark"] .task-detail-bug-table th {
+  color: #64829e;
+  border-bottom-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .task-detail-bug-table td,
+body[data-theme="dark"] .task-detail-bug-table td {
+  color: #dce7fb;
+  border-bottom-color: rgba(74, 104, 150, 0.1);
+}
+
+body.dark-theme .task-detail-bug-table tbody tr:hover,
+body[data-theme="dark"] .task-detail-bug-table tbody tr:hover {
+  background: rgba(94, 179, 240, 0.05);
+}
+
+/* ── Edit Mode Dark Theme ─────────────────────── */
+body.dark-theme .task-detail-edit-title-input,
+body[data-theme="dark"] .task-detail-edit-title-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+body.dark-theme .task-detail-edit-description-wrapper,
+body[data-theme="dark"] .task-detail-edit-description-wrapper {
+  background: #0a1627;
+}
+
+body.dark-theme .task-detail-edit-description,
+body[data-theme="dark"] .task-detail-edit-description {
+  background: #0c1e33 !important;
+  border-color: rgba(74, 104, 150, 0.3) !important;
+  color: #dce7fb !important;
 }

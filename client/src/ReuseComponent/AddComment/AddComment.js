@@ -82,12 +82,17 @@ function AddComment({
 
     let taggedUserIds = extractMentions(setTextAreaValue ? textAreaValue : OwnTextAreaValue);
     setTaggedUser(taggedUserIds);
-    const uploadedFiles1 = await uploadFiles(fileAttachment, "comment");
+    // Only call upload API if there are actual files to upload
+    const uploadedFiles1 = fileAttachment.length > 0
+      ? await uploadFiles(fileAttachment, "comment")
+      : [];
+    const defaultFolderId = foldersList?.[0]?._id ?? null;
+    const resolvedFolderId = folderId || defaultFolderId;
     editFlagObj?.flag
       ? editFlagObj?.submitFn(
           {
             taggedUserIds,
-            folder: folderId || foldersList[0]._id,
+            folder: resolvedFolderId,
             uploadedFiles1,
           },
           true,
@@ -96,9 +101,9 @@ function AddComment({
       : addComment(
           id,
           taggedUserIds,
-          folderId || foldersList[0]._id, // Use the first folder ID as default if folderId is falsy
+          resolvedFolderId,
           uploadedFiles1,
-         setTextAreaValue ? textAreaValue : OwnTextAreaValue
+          setTextAreaValue ? textAreaValue : OwnTextAreaValue
         );
 
         await cacheData(`comment_${id}`, "");
@@ -115,12 +120,10 @@ function AddComment({
     setIsTextAreaFocused(false);
     setFolderId(null);
     setfileAttachment([]);
-    if (otherProps.getBoardTasks) {
-      otherProps.getBoardTasks(otherProps.mainTaskId);
-      otherProps.getBoardTasks(projectId);
-    }
+    // NOTE: getBoardTasks intentionally NOT called here — adding a comment
+    // does not require re-fetching the full board (was causing full page reload)
     if (otherProps.onDraftChange) {
-    otherProps.onDraftChange(id, false);
+      otherProps.onDraftChange(id, false);
     }
     // }
   };
@@ -309,12 +312,13 @@ function AddComment({
         <div className="main-wrapper-btn">
           <Button
             type="primary"
+            className="add-comment-btn"
             disabled={
               (setTextAreaValue ? textAreaValue.trim() : OwnTextAreaValue.trim() )|| fileAttachment.length > 0 ? false : true
             }
             onClick={handleAddComment}
           >
-            {editFlagObj?.flag ? "Update" : "Add"}
+            {editFlagObj?.flag ? "Update Comment" : "Add Comment"}
           </Button>
 
           {editFlagObj?.flag && (

@@ -1653,7 +1653,7 @@ exports.updateProjectsTaskProps = async (req, res) => {
       title: Joi.string().optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
-      task_labels: Joi.string().optional().allow(""),
+      task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
       start_date: Joi.date().optional().allow(null),
       due_date: Joi.date().optional().allow(null),
       assignees: Joi.array().optional(),
@@ -1683,8 +1683,13 @@ exports.updateProjectsTaskProps = async (req, res) => {
     // } else {
     // data type of task_labels changed array to string .. need to manage here cause of this use in other module
     let task_labels = [];
-    if (value?.task_labels && value?.task_labels != "")
-      task_labels = [value.task_labels];
+    if (value?.task_labels && value?.task_labels != "") {
+      if (Array.isArray(value.task_labels)) {
+        task_labels = value.task_labels;
+      } else {
+        task_labels = [value.task_labels];
+      }
+    }
 
     value.task_labels = task_labels;
 
@@ -2001,7 +2006,7 @@ exports.updateProjectsTaskProps = async (req, res) => {
       res,
       statusCode.SUCCESS,
       messages.TASK_UPDATED,
-      data
+      newDataPopulated
     );
     // }
   } catch (error) {
@@ -2944,6 +2949,7 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
           createdBy: 1,
           reporter: "$reporter.full_name",
           assignees: {
+            _id: 1,
             full_name: 1,
             first_name: 1,
             last_name: 1,

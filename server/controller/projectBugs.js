@@ -132,6 +132,7 @@ exports.addProjectsBugs = async (req, res) => {
 
     const validationSchema = Joi.object({
       title: Joi.string().required(),
+      bugId: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       task_id: Joi.string().optional().default(null),
       sub_task_id: Joi.string().optional().default(null),
@@ -148,7 +149,9 @@ exports.addProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional().default(false)
+      isRepeated: Joi.boolean().optional().default(false),
+      createdBy: Joi.string().optional().allow(null, ""),
+      createdAt: Joi.date().optional().allow(null)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -185,7 +188,7 @@ exports.addProjectsBugs = async (req, res) => {
       value.bug_labels = bug_labels;
       let data = new ProjectBugs({
         title: value.title,
-        bugId: generateRandomId(),
+        bugId: value.bugId || generateRandomId(),
         project_id: value.project_id,
         task_id: value.task_id || null,
         sub_task_id: value.sub_task_id || null,
@@ -212,7 +215,8 @@ exports.addProjectsBugs = async (req, res) => {
           ]
         }),
 
-        createdBy: req.user._id,
+        createdBy: value.createdBy || req.user._id,
+        ...(value.createdAt ? { createdAt: value.createdAt } : {}),
         updatedBy: req.user._id,
         ...(await getRefModelFromLoginUser(req?.user))
       });
@@ -816,6 +820,7 @@ exports.updateProjectsBugs = async (req, res) => {
     const validationSchema = Joi.object({
       updated_key: Joi.array().min(1).required(),
       title: Joi.string().required(),
+      bugId: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       task_id: Joi.string().optional().default(null),
       sub_task_id: Joi.string().optional().default(null),
@@ -832,7 +837,9 @@ exports.updateProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional()
+      isRepeated: Joi.boolean().optional(),
+      createdBy: Joi.string().optional().allow(null, ""),
+      createdAt: Joi.date().optional().allow(null)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1388,6 +1395,40 @@ exports.projectBugsDetailedData = async (req, res) => {
             {
               $lookup: {
                 from: "employees",
+                let: { reporterId: "$createdBy" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$_id", "$$reporterId"] },
+                          { $eq: ["$isDeleted", false] },
+                          { $eq: ["$isSoftDeleted", false] },
+                          { $eq: ["$isActivate", true] }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    $project: {
+                      _id: 1,
+                      full_name: 1,
+                      emp_img: 1
+                    }
+                  }
+                ],
+                as: "createdBy"
+              }
+            },
+            {
+              $unwind: {
+                path: "$createdBy",
+                preserveNullAndEmptyArrays: true
+              }
+            },
+            {
+              $lookup: {
+                from: "employees",
                 let: { assigneeIds: "$assignees" },
                 pipeline: [
                   {
@@ -1642,6 +1683,21 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
         const element = reqBody?.updated_key[i];
 
         switch (element) {
+          case "bugId":
+            if (typeof reqBody?.bugId !== "undefined") {
+              updateObj.bugId = reqBody?.bugId;
+              if (perviousData?.bugId !== reqBody?.bugId) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.bugId,
+                  new_value: reqBody?.bugId
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+            break;
+
           case "title":
             if (reqBody?.title) {
               updateObj.title = reqBody?.title;
@@ -1786,7 +1842,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
               updateObj.assignees = reqBody?.assignees;
 
               let changedArr = getArrayChanges(
-                perviousData?.assignees.map((a) => a.toString()),
+                (perviousData?.assignees || []).map((a) => a.toString()),
                 reqBody?.assignees
               );
 
@@ -1850,12 +1906,56 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
 
             break;
 
+          case "createdBy":
+            if (typeof reqBody?.createdBy !== "undefined" && reqBody?.createdBy) {
+              updateObj.createdBy = reqBody?.createdBy;
+
+              if ((perviousData?.createdBy?.toString?.() || perviousData?.createdBy?.toString()) !== reqBody?.createdBy) {
+                const previousReporter = perviousData?.createdBy
+                  ? await Employees.findById(perviousData.createdBy).select("full_name")
+                  : null;
+                const newReporter = await Employees.findById(reqBody.createdBy).select("full_name");
+
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: previousReporter?.full_name || "",
+                  new_value: newReporter?.full_name || ""
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+
+            break;
+
+          case "createdAt":
+            if (typeof reqBody?.createdAt !== "undefined" && reqBody?.createdAt) {
+              updateObj.createdAt = reqBody?.createdAt;
+
+              if (
+                !moment(perviousData?.createdAt).isSame(
+                  moment(reqBody?.createdAt),
+                  "day"
+                )
+              ) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.createdAt,
+                  new_value: reqBody?.createdAt
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+
+            break;
+
           case "pms_clients":
             if (reqBody?.pms_clients) {
               updateObj.pms_clients = reqBody?.pms_clients;
 
               let changedArr = getArrayChanges(
-                perviousData?.pms_clients.map((a) => a.toString()),
+                (perviousData?.pms_clients || []).map((a) => a.toString()),
                 reqBody?.pms_clients
               );
 

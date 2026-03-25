@@ -95,7 +95,7 @@ const TaskKanbanController = ({
   const [addInputTaskData, setAddInputTaskData] = useState({});
   const [visible, setVisible] = useState(false);
   const [taskdropdown, setTaskdropdown] = useState([]);
-  const [taskId, setTaskId] = useState({});
+  const [taskId, setTaskId] = useState(null);
   const [taskHistory, setTaskHistory] = useState([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [estError, setEstError] = useState(false);
@@ -122,24 +122,18 @@ const TaskKanbanController = ({
   });
   const [columnDetails, setColumnDetails] = useState([]);
   const [initialDetails, setInitialDetails] = useState([]);
-  const [issuedata, setIssuedata] = useState([
-    {
-      id: "SWD-I11",
-      issuetitle: "Test",
-      projectname: "sample website",
-      reporter: "Chirag Rawal",
-      createddate: "03-13-2024 04:30:00",
-    },
-    {
-      id: "SWD-I12",
-      issuetitle: "test2",
-      projectname: "sample website kkkk",
-      reporter: "kartik trivedi",
-      createddate: "03-13-2024 04:30:00",
-    },
-  ]);
+  const [issuedata, setIssuedata] = useState([]);
+  const [bugWorkflowStatuses, setBugWorkflowStatuses] = useState([]);
   const [issuetitleflag, setIssuetitleflag] = useState(false);
   const [issuetitle, setIssuetitle] = useState("");
+  const [newBugData, setNewBugData] = useState({
+    bugId: "",
+    bug_status: undefined,
+    createdBy: undefined,
+    createdAt: null,
+    assignees: [],
+    due_date: null,
+  });
   const [copyFormData, setCopyFormData] = useState({
     title: "",
     project_id: "",
@@ -311,14 +305,16 @@ useEffect(() => {
     if (stagesId) {
       dispatch(getSpecificProjectWorkflowStage(stagesId));
     }
-    getMainTask();
+    getBugWorkflowStatuses();
   }, [projectId]);
 
   useEffect(() => {
-    if (taskID) {
-      dispatch(getTaggedUserList(false, taskID, false, false));
+    if (selectedTaskId) {
+      setTaskId(selectedTaskId);
+      dispatch(getTaggedUserList(false, selectedTaskId, false, false));
+      getIssuedata(selectedTaskId);
     }
-  }, [taskID]);
+  }, [selectedTaskId]);
 
   const handleCancelManagePeople = () => {
     setManagePeople(false);
@@ -338,8 +334,7 @@ useEffect(() => {
     updateviewTask({ ...viewTask, [name]: value });
   };
 
-  const updateviewTask = async (_viewTask = viewTask, uploadedFiles) => {
-    dispatch(showAuthLoader());
+  const updateviewTask = async (_viewTask = viewTask, uploadedFiles, showSuccess = false) => {
     try {
       let reqBody = {
         updated_key: [
@@ -354,14 +349,14 @@ useEffect(() => {
           "attachments",
         ],
         project_id: projectId,
-        main_task_id: taskId,
+        main_task_id: _viewTask?.mainTask?._id || _viewTask?._id || taskId,
         title: _viewTask.title,
         descriptions: _viewTask.descriptions,
-        task_labels: _viewTask?.taskLabels[0]?._id
-          ? _viewTask?.taskLabels[0]?._id
-          : "",
+        task_labels: (_viewTask?.taskLabels || _viewTask?.task_labels || [])
+          .map((item) => (typeof item === 'string' ? item : item?._id))
+          .filter(Boolean),
         assignees: (_viewTask?.assignees || [])
-          .map((item) => item?._id)
+          .map((item) => (typeof item === 'string' ? item : item?._id))
           .filter(Boolean),
         estimated_hours:
           _viewTask.estimated_hours && _viewTask.estimated_hours != ""
@@ -415,6 +410,7 @@ useEffect(() => {
         setViewTask(updatedTask);
         setSelectedTaskStatusTitle(updatedTask.task_status?.title);
         updateBoardTaskLocally?.(updatedTask);
+        if (showSuccess) message.success("Task saved successfully!");
         setIsEditable({
           title: false,
           proj_description: false,
@@ -427,9 +423,7 @@ useEffect(() => {
       } else {
         message.error(response.data.message);
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -458,10 +452,10 @@ useEffect(() => {
   };
 
   const getIssuedata = async (taskid) => {
-    if (taskId) {
+    if (taskid && typeof taskid === "string") {
       try {
         const reqBody = {
-          project_id: selectedTask.project._id,
+          project_id: projectId,
           task_id: taskid,
         };
         const response = await Service.makeAPICall({
@@ -484,13 +478,93 @@ useEffect(() => {
     }
   };
 
+  const deleteBug = async (bugId) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteBugs}/${bugId}`,
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const editBug = async (bugId, title, additionalFields = {}) => {
+    try {
+      const updatedKeys = ["title", ...Object.keys(additionalFields)];
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.editBugTask}/${bugId}`,
+        body: {
+          updated_key: updatedKeys,
+          title,
+          project_id: selectedTask?.project?._id,
+          ...additionalFields,
+        },
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateBugWorkflow = async (bugId, statusId) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateWorkflowOfBugs}/${bugId}`,
+        body: { bug_status: statusId },
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getBugWorkflowStatuses = async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getBugWorkFlowStatus,
+      });
+      if (response?.data?.status) {
+        setBugWorkflowStatuses(response.data.data || []);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const addissue = async () => {
+    if (!issuetitle?.trim()) {
+      return false;
+    }
+
     dispatch(showAuthLoader());
     try {
       let reqBody = {
-        project_id: selectedTask.project._id,
-        title: issuetitle,
+        project_id: selectedTask?.project?._id || projectId,
+        title: issuetitle.trim(),
         task_id: taskId,
+        bugId: newBugData.bugId || undefined,
+        createdBy: newBugData.createdBy || undefined,
+        createdAt: newBugData.createdAt || undefined,
+        assignees: newBugData.assignees || [],
+        due_date: newBugData.due_date || null,
+        ...(newBugData.bug_status ? { bug_status: newBugData.bug_status } : {}),
       };
 
       const response = await Service.makeAPICall({
@@ -502,13 +576,25 @@ useEffect(() => {
         getIssuedata(taskId);
         setIssuetitle("");
         setIssuetitleflag(false);
+        setNewBugData({
+          bugId: "",
+          bug_status: undefined,
+          createdBy: undefined,
+          createdAt: null,
+          assignees: [],
+          due_date: null,
+        });
+        dispatch(hideAuthLoader());
+        return true;
       } else {
         message.error(response.data.message);
+        dispatch(hideAuthLoader());
+        return false;
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
       dispatch(hideAuthLoader());
       console.log(error);
+      return false;
     }
   };
 
@@ -668,10 +754,6 @@ useEffect(() => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        if (editType?.editFlag) {
-          return showEditTaskModal(response?.data?.data, editType.boardID);
-        }
-
         setTaskDetails(response.data.data);
         setFileViewAttachment(response.data.data.attachments);
         setViewTask(response.data.data);
@@ -744,6 +826,15 @@ useEffect(() => {
     }
     setModalIsOpen(false);
     setIssuetitleflag(false);
+    setIssuetitle("");
+    setNewBugData({
+      bugId: "",
+      bug_status: undefined,
+      createdBy: undefined,
+      createdAt: null,
+      assignees: [],
+      due_date: null,
+    });
     handleTabChange("comments");
     setShowTaskHistory(false);
     setTextAreaValue("");
@@ -1436,7 +1527,11 @@ useEffect(() => {
   };
 
   const handleViewEdit = (values) => {
-    console.log(values, "viewEditvalues");
+    if (!values?._id) return;
+    setModalIsOpen(true);
+    setViewTask(values);
+    setTaskId(values._id);
+    getIssuedata(values._id);
   };
 
   const commentListRef = useRef(null);
@@ -1522,11 +1617,18 @@ useEffect(() => {
     tempBoard,
     setIssuetitle,
     issuetitle,
+    newBugData,
+    setNewBugData,
     issuedata,
     setIssuedata,
     setIssuetitleflag,
     issuetitleflag,
     handleissuedata,
+    addissue,
+    deleteBug,
+    editBug,
+    updateBugWorkflow,
+    bugWorkflowStatuses,
     removeHTMLTags,
     projectWorkflowStage,
     isPopoverVisible,
@@ -1590,6 +1692,7 @@ useEffect(() => {
     viewEdit,
     handleViewEdit,
     viewTask,
+    setViewTask,
     handleViewTask,
     updateviewTask,
     handleFieldClick,
