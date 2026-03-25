@@ -729,6 +729,8 @@ const TaskDetailModal = ({
                         }}
                         style={{ width: 120 }}
                         dropdownMatchSelectWidth={false}
+                        showSearch
+                        optionFilterProp="children"
                       >
                         {bugStatuses.map((s) => (
                           <Select.Option key={s._id} value={s._id}>
@@ -755,6 +757,8 @@ const TaskDetailModal = ({
                             value: emp._id,
                             label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
                           }))}
+                          showSearch
+                          optionFilterProp="label"
                           allowClear
                           placeholder="Select reporter"
                         />
@@ -778,6 +782,8 @@ const TaskDetailModal = ({
                             value: emp._id,
                             label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
                           }))}
+                          showSearch
+                          optionFilterProp="label"
                           allowClear
                           placeholder="Select assignees"
                         />
@@ -825,7 +831,7 @@ const TaskDetailModal = ({
       open={open}
       onCancel={onClose}
       footer={null}
-      width={1180}
+      width={1100}
       closeIcon={<CloseOutlined />}
       destroyOnClose
     >
@@ -834,19 +840,7 @@ const TaskDetailModal = ({
           <div className="task-detail-hero">
             <div className="task-detail-topbar">
               <div className="task-detail-topbar-left">
-                <span
-                  className="task-detail-status-pill"
-                  style={{
-                    borderColor: `${taskStatusColor}22`,
-                    color: taskStatusColor,
-                    background: `${taskStatusColor}12`,
-                  }}
-                >
-                  {taskStatusTitle}
-                </span>
-                {displayTask?._id && (
-                  <span className="task-detail-task-id">TASK-{String(displayTask._id).slice(-6)}</span>
-                )}
+                <div className="task-detail-status-text">{taskStatusTitle}</div>
               </div>
 
               <div className="task-detail-topbar-actions">
@@ -868,12 +862,7 @@ const TaskDetailModal = ({
                   onClick={() => setActiveTab("activity")}
                   icon={<HistoryOutlined />}
                 />
-                <Button
-                  className="task-detail-icon-btn"
-                  type="text"
-                  onClick={handleOpenInProject}
-                  icon={<LinkOutlined />}
-                />
+
                 {/* Edit icon button */}
                 <Button
                   className={`task-detail-icon-btn ${isEditing ? 'task-detail-icon-btn-active' : ''}`}
@@ -884,6 +873,18 @@ const TaskDetailModal = ({
                 />
               </div>
             </div>
+
+            {/* Title: editable or static */}
+            {isEditing ? (
+              <Input
+                className="task-detail-edit-title-input"
+                value={editData.title}
+                onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))}
+                placeholder="Task title"
+              />
+            ) : (
+              <h2 className="task-detail-title">{displayTask?.title || "—"}</h2>
+            )}
 
             <div className="task-detail-breadcrumb">
               <div className="task-detail-breadcrumb-trail">
@@ -902,18 +903,6 @@ const TaskDetailModal = ({
                 )}
               </div>
             </div>
-
-            {/* Title: editable or static */}
-            {isEditing ? (
-              <Input
-                className="task-detail-edit-title-input"
-                value={editData.title}
-                onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))}
-                placeholder="Task title"
-              />
-            ) : (
-              <h2 className="task-detail-title">{displayTask?.title || "—"}</h2>
-            )}
 
             <div className="task-detail-meta">
               <div className="task-detail-metric-card">
@@ -998,6 +987,7 @@ const TaskDetailModal = ({
                       placeholder="Select assignees"
                       value={editData.assignees || []}
                       onChange={(val) => setEditData((p) => ({ ...p, assignees: val }))}
+                      showSearch
                       optionFilterProp="label"
                       options={assigneeOptions.map((emp) => ({
                         value: emp._id,
@@ -1041,6 +1031,7 @@ const TaskDetailModal = ({
                       placeholder="Select labels"
                       value={editData.taskLabels || []}
                       onChange={(val) => setEditData((p) => ({ ...p, taskLabels: val }))}
+                      showSearch
                       optionFilterProp="label"
                       options={labelOptions.map((lbl) => ({
                         value: lbl._id,
@@ -1179,18 +1170,22 @@ const TaskDetailModal = ({
                         {details.attachments.map((att, i) => (
                           <li key={i}>
                             <a
+                              className="task-detail-attachment-link"
                               href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               {att?.name || "File"}
                             </a>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<DownloadOutlined />}
-                              onClick={() => handleDownloadFile(att)}
-                            />
+                            <div className="task-detail-attachment-actions">
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<DownloadOutlined />}
+                                onClick={() => handleDownloadFile(att)}
+                                title="Download"
+                              />
+                            </div>
                           </li>
                         ))}
                       </ul>

@@ -1,6 +1,7 @@
 /* eslint-disable no-useless-concat */
 import BugsKanbanController from "../BugsKanbanBoard/BugsKanbanController";
 import React, { useState } from "react";
+import BugDetailModal from "../BugDetailModal";
 import moment from "moment";
 import {
   DownOutlined,
@@ -128,6 +129,26 @@ const BugsTable = ({
     handleChangedescription,
     editorData,
     handlePaste,
+    // Add missing handlers for inline editing
+    isEditable,
+    setIsEditable,
+    viewBug,
+    handleViewBug,
+    handleFieldClick,
+    handleEstTimeViewInput,
+    subscribersList,
+    employeeList,
+    projectLabels,
+    handleSearch,
+    handleSelectedItemsChange,
+    handleSelectedLabelsChange,
+    searchKeyword,
+    fileViewAttachment,
+    populatedViewFiles,
+    removeAttachmentViewFile,
+    onFileViewChange,
+    attachmentViewfileRef,
+    updateviewBug,
   } = BugsKanbanController({
     tasks,
     showModalTaskModal,
@@ -136,6 +157,7 @@ const BugsTable = ({
     boardTasksBugs,
     selectedTask,
     deleteTasks,
+    projectId,
   });
 
   const [collapsedRows, setCollapsedRows] = useState({});
@@ -221,7 +243,7 @@ const BugsTable = ({
                               {bug?.comments}
                             </span>
                             </Tooltip>
-                           
+                            
                           </td>
                           <td>
                             {bug.start_date
@@ -281,642 +303,67 @@ const BugsTable = ({
             </tbody>
           </table>
         </div>
-        <Modal
-          className="task-detail-popup"
+
+        <BugDetailModal
           open={modalIsOpen}
-          width={1000}
-          footer={null}
           onCancel={() => {
             handleCancel();
             setSelectedBugId(null);
           }}
-        >
-          <div className="task-detail-panel bug-task-panel">
-            <div className="left-task-detail-panel">
-              <div className="head-toolbar">
-                <div className="status-button">
-                  <Popover
-                    trigger="click"
-                    placement="bottomLeft"
-                    visible={isPopoverVisible}
-                    onVisibleChange={setIsPopoverVisible}
-                    content={
-                      <div className="assignees-popover stages-bug-popover">
-                        <ul style={{ paddingLeft: "0px" }}>
-                          {bugWorkFlowStatusList.map((item, index) => (
-                            <div
-                              key={item._id}
-                              style={{
-                                display: "flex",
-                                cursor: "pointer",
-                                justifyContent: "space-between",
-                                gap: "20px ",
-                                paddingBottom: "9px",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "5px",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    width: "10px",
-                                    height: "10px",
-                                    backgroundColor: `${config.COLORS[index]}`,
-                                    borderRadius: "50%",
-                                  }}
-                                ></div>
-                                <div
-                                  onClick={() =>
-                                    handleBugStatusClick(item._id, bugId)
-                                  }
-                                >
-                                  {item.title}
-                                </div>
-                              </span>
-                              {selectedBugStatusTitle === item.title && (
-                                <span style={{ float: "right" }}>
-                                  <i class="fi fi-br-check"></i>
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </ul>
-                      </div>
-                    }
-                  >
-                    <Button className="done-btn">
-                      <i
-                        className="fi fi-ss-check-circle"
-                        style={{ color: selectedBugStatusColor }}
-                      ></i>
-                      {selectedBugStatusTitle || taskDetails?.bug_status?.title}
-                    </Button>
-                  </Popover>
-
-                  <span>{taskDetails?.bugId}</span>
-                </div>
-                <div className="bug-editbtn">
-                  {hasPermission(["bug_edit"]) && (
-                    <EditOutlined
-                      style={{ color: "green" }}
-                      onClick={() => {
-                        getTaskByIdDetails(taskDetails?._id, {
-                          editFlag: true,
-                          boardID: tempBoard?._id,
-                        });
-                      }}
-                    />
-                  )}
-                  {hasPermission(["bug_delete"]) && (
-                    <Popconfirm
-                      title="Do you want to delete?"
-                      onConfirm={() => handleTaskDelete(taskDetails._id)}
-                      okText="Yes"
-                      cancelText="No"
-                      placement="bottom"
-                    >
-                      <Button danger>
-                        <i className="fi fi-rs-trash"></i>
-                      </Button>
-                    </Popconfirm>
-                  )}
-                </div>
-              </div>
-              <div className="task-inner-card">
-                <div className="bredcamp-panel">
-                  <ul>
-                    <li>
-                      <p>{taskDetails?.project?.title}</p>
-                    </li>
-                    <li>
-                      <i className="fi fi-rr-angle-small-right"></i>
-                      <span className="pop-bug-title">
-                        {taskDetails?.task?.title}
-                      </span>
-                    </li>
-                    <li>
-                      <span>{taskDetails?.mainTask?.title}</span>
-                    </li>
-                  </ul>
-                </div>
-                <h3>{taskDetails?.title}</h3>
-                <div className="item-inner">
-                  <p
-                    dangerouslySetInnerHTML={{
-                      __html: taskDetails?.descriptions,
-                    }}
-                  ></p>
-                </div>
-
-                <div className="table-schedule-wrapper">
-                  <ul>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-calendar-day"></i>
-                          <DatePicker
-                            open={false}
-                            inputReadOnly
-                            allowClear={false}
-                            placeholder="Start"
-                            value={
-                              taskDetails?.start_date &&
-                              dayjs(taskDetails?.start_date, "YYYY-MM-DD")
-                            }
-                            onChange={onChange}
-                          />
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-calendar-day"></i>
-                          <DatePicker
-                            open={false}
-                            allowClear={false}
-                            inputReadOnly
-                            placeholder="Due"
-                            value={
-                              taskDetails?.due_date &&
-                              dayjs(taskDetails?.due_date, "YYYY-MM-DD")
-                            }
-                            onChange={onChange}
-                          />
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rs-tags"></i>
-                          <span className="schedule-label">Labels</span>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          {taskDetails?.bug_labels?.map((val, index) => (
-                            <div key={index}>
-                              {val.title.charAt(0).toUpperCase() +
-                                val.title.slice(1)}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-users"></i>
-                          <span className="schedule-label">Assignees</span>
-                        </div>
-                      </div>
-                      <div className="table-right">
-                        <div className="flex-table">
-                          <Avatar.Group
-                            maxCount={2}
-                            maxPopoverTrigger="click"
-                            size="default"
-                            maxStyle={{
-                              color: "#f56a00",
-                              backgroundColor: "#fde3cf",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {taskDetails?.assignees &&
-                              taskDetails?.assignees?.map((data) => (
-                                <Tooltip
-                                  title={removeTitle(data.name)}
-                                  key={data._id}
-                                >
-                                  <MyAvatar
-                                    userName={data.name}
-                                    key={data._id}
-                                    alt={data.name}
-                                    src={data.emp_img}
-                                  />
-                                </Tooltip>
-                              ))}
-                          </Avatar.Group>
-                        </div>
-                      </div>
-                    </li>
-                    <li>
-                      <div className="table-left">
-                        <div className="flex-table">
-                          <i className="fi fi-rr-clock"></i>
-                          <span className="schedule-label">Estimated Time</span>
-                        </div>
-                      </div>
-                      <div
-                        className="table-right"
-                        style={{ cursor: "pointer" }}
-                      >
-                        <Popover
-                          visible={visible}
-                          arrow={false}
-                          placement="bottom"
-                          style={{ margin: "0" }}
-                          content={
-                            <div
-                              onClick={popOver}
-                              style={{ cursor: "pointer" }}
-                            >
-                              <p>
-                                {" "}
-                                <EditOutlined
-                                  style={{
-                                    marginRight: "20px",
-                                    color: "green",
-                                  }}
-                                />{" "}
-                                Track Manually
-                              </p>
-                            </div>
-                          }
-                          trigger="click"
-                          className="flex-table"
-                          onVisibleChange={openPopOver}
-                        >
-                          {isLoggedHoursMoreThanEstimated(
-                            taskDetails.time,
-                            `${taskDetails?.estimated_hours}:${taskDetails?.estimated_minutes}`
-                          ) && (
-                            <i
-                              style={{ color: "red" }}
-                              className="fi fi-ss-triangle-warning"
-                            ></i>
-                          )}
-                          <p className="logged-time">
-                            <span>Logged Time : </span>
-                            {taskDetails?.time}/ <span>Estimated time : </span>
-                            {`${taskDetails?.estimated_hours}:${taskDetails?.estimated_minutes}`}
-                          </p>
-                        </Popover>
-                        {estError && (
-                          <div className="error-message">
-                            Logged hours cannot be greater than estimated hours.
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-                <div style={{ textAlign: "end" }}>
-                  <Checkbox checked={taskDetails?.isRepeated}>
-                    <span style={{ fontWeight: "bold" }}>Repeated Bug</span>
-                  </Checkbox>
-                </div>
-                <div className="file-upload">
-                  <h5>Attach Files</h5>
-                  <div className="fileAttachment_container">
-                    {taskDetails?.attachments &&
-                    taskDetails?.attachments.length > 0 ? (
-                      taskDetails?.attachments?.map((val, index) => (
-                        <div key={index} className="fileAttachment_viewBox">
-                          {fileImageSelect(val?.file_type, "35px")}
-                          <a
-                            href={`${process.env.REACT_APP_API_URL}/public/${val?.path}`}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            {val?.name.length > 15
-                              ? `${val?.name.slice(0, 15)}.....${
-                                  val?.file_type
-                                }`
-                              : val?.name + val?.file_type}
-                          </a>
-                          <br />
-                        </div>
-                      ))
-                    ) : (
-                      <div>No Attached Files</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="right-task-detail-panel right-bug-panel">
-              <div className="right-toolbar">
-                <div className="right-toolbar-tab">
-                  <label
-                    onClick={() => {
-                      handleTabChange("comments");
-                      getComment(taskDetails?._id);
-                    }}
-                    style={{ cursor: "pointer" }}
-                    className={`${activeClass()}`}
-                  >
-                    Comments
-                    <span className="comment-badge">
-                      {comments.length || 0}
-                    </span>
-                  </label>
-                  <label
-                    onClick={() => {
-                      handleTabChange("task");
-                      getBughistory(taskDetails?._id);
-                    }}
-                    style={{ cursor: "pointer" }}
-                    className={`${activeClass1()}`}
-                  >
-                    Bug History
-                  </label>
-                </div>
-              </div>
-
-              <div
-                className={` task-history-inner  task-detail-inner ${activeTab?.toLowerCase()}`}
-              >
-                {activeTab === "comments" ? (
-                  <>
-                    <div className="comment-list-wrapper" ref={commentListRef}>
-                      {comments && comments.length > 0 ? (
-                        comments?.map((item, index) => {
-                          const commentValue = item.comment;
-
-                          return (
-                            <div className="main-comment-wrapper" key={index}>
-                              <div className="main-avatar-wrapper">
-                                <MyAvatar
-                                  userName={item.sender}
-                                  src={item.profile_pic}
-                                  alt={item.sender}
-                                />
-                                <div className="comment-sender-name">
-                                  <h1
-                                    style={{
-                                      color:
-                                        useUserColors[item.sender] || "#000",
-                                    }}
-                                  >
-                                    {removeTitle(item.sender)}
-                                  </h1>
-                                  <h4>
-                                    {calculateTimeDifference(item.createdAt)}
-                                  </h4>
-                                </div>
-
-                                {isCreatedBy(item?.sender_id) && (
-                                  <div className="edit-bar">
-                                    <Dropdown
-                                      trigger={["click"]}
-                                      overlay={
-                                        <Menu>
-                                          <Menu.Item
-                                            key="1"
-                                            onClick={() => {
-                                              setOpenCommentModle(true);
-                                              handleEditComment(item._id);
-                                            }}
-                                          >
-                                            <EditOutlined
-                                              style={{ color: "green" }}
-                                            />
-                                            Edit
-                                          </Menu.Item>
-                                          <Menu.Item
-                                            key="2"
-                                            onClick={() => {
-                                              deleteComment(item._id);
-                                            }}
-                                            className="ant-delete"
-                                          >
-                                            <DeleteOutlined
-                                              style={{ color: "red" }}
-                                            />
-                                            Delete
-                                          </Menu.Item>
-                                        </Menu>
-                                      }
-                                      onClick={handleDropdownClick}
-                                    >
-                                      <MoreOutlined
-                                        style={{ cursor: "pointer" }}
-                                      />
-                                    </Dropdown>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="comment-wrapper">
-                                <p key={index}>
-                                  {commentValue
-                                    .split(/(\S+)/g)
-                                    .map((part, partIndex) => {
-                                      if (part.startsWith("@")) {
-                                        return (
-                                          <span
-                                            key={partIndex}
-                                            className="mention-user-comment"
-                                          >
-                                            {part.replace("@", "")}
-                                          </span>
-                                        );
-                                      } else {
-                                        return (
-                                          <span
-                                            dangerouslySetInnerHTML={{
-                                              __html: part.replace(
-                                                /\n/g,
-                                                "<br>"
-                                              ),
-                                            }}
-                                            key={partIndex}
-                                          ></span>
-                                        );
-                                      }
-                                    })}
-                                </p>
-
-                                <div className="bug-all-file-wrapper">
-                                  {item?.attachments.map((file, index) => (
-                                    <Badge key={index}>
-                                      <div className="fileAttachment_Box">
-                                        <div className="fileAttachment_box-img">
-                                          {fileImageSelect(file?.file_type)}
-                                        </div>
-                                        <div
-                                          style={{
-                                            display: "flex",
-                                            marginBottom: "10px",
-                                            width: "100%",
-                                            justifyContent: "space-between",
-                                          }}
-                                        >
-                                          <p
-                                            style={{ margin: "0px 15px" }}
-                                            className="fileNameTxtellipsis"
-                                          >
-                                            <a
-                                              className="fileNameTxtellipsis"
-                                              href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                                              rel="noopener noreferrer"
-                                              target="_blank"
-                                            >
-                                              {file.name.length > 15
-                                                ? `${file.name.slice(
-                                                    0,
-                                                    15
-                                                  )}.....${
-                                                    file.file_type || file.type
-                                                  }`
-                                                : file.name + file.file_type ||
-                                                  file.type}
-                                            </a>
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="bug-no-comments">No Comments</div>
-                      )}
-                    </div>
-
-                    <AddComment
-                      addComment={addComments} // Function to handle adding comments
-                      id={taskDetails?._id} // Task ID
-                      setTextAreaValue={setTextAreaValue} // Function to set text area value
-                      isTextAreaFocused={isTextAreaFocused} // Boolean for text area focus state
-                      setIsTextAreaFocused={setIsTextAreaFocused} // Function to set focus state
-                      textAreaValue={textAreaValue}
-                      userList={taggedUserList}
-                      getBoardTasks={getBoardTasks}
-                      projectId={projectId}
-                    />
-                  </>
-                ) : (
-                  <div className="task-history">
-                    {taskHistory.map((item, index) => {
-                      let updateKey = item?.updated_key
-                        .replace("_", " ")
-                        .includes("assignee")
-                        ? "Assigned people"
-                        : item?.updated_key.replace("_", " ");
-
-                      return (
-                        <div className="task-history-wrapper" key={item._id}>
-                          {item.updated_key === "createdAt" ? (
-                            <div className="task-history-img">
-                              <MyAvatar
-                                userName={item.createdBy?.full_name}
-                                src={item.createdBy?.emp_img}
-                                alt={item.createdBy?.full_name}
-                                key={item._id}
-                              />
-                              <span className="history-details">
-                                {removeTitle(item.createdBy.full_name)} added
-                                the bug &nbsp;
-                                <span className="hitory-time">
-                                  {calculateTimeDifference(item?.createdAt)}
-                                </span>
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="task-history-img">
-                              <MyAvatar
-                                userName={item.updatedBy?.full_name}
-                                alt={item.updatedBy?.full_name}
-                                key={item._id}
-                                src={item.updatedBy?.emp_img}
-                              />
-                              <span className="history-details">
-                                {removeTitle(item.updatedBy.full_name)} updated
-                                the bug &nbsp;
-                                <span className="hitory-time">
-                                  {calculateTimeDifference(item?.updatedAt)}
-                                </span>
-                              </span>
-                              <div
-                                className="history-icon"
-                                onClick={() => handleToggle(item, index)}
-                                style={{ cursor: "pointer" }}
-                              >
-                                {storeIndex === item._id && showTaskHistory ? (
-                                  <DownOutlined />
-                                ) : (
-                                  <RightOutlined />
-                                )}
-                              </div>
-                              {storeIndex === item._id && (
-                                <div
-                                  className="history-data-wrapper"
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  <div className="history-prev">
-                                    <h2>Previous:</h2>
-                                  </div>
-                                  <div className="history-data">
-                                    <h5>
-                                       {item.pervious_value ? (
-                                                                            item?.updated_key === "start_date" ||
-                                                                              item?.updated_key === "due_date" ? (
-                                                                              item?.pervious_value ? (
-                                                                                <span>
-                                                                                  {updateKey + " : "}
-                                                                                  {moment(item.pervious_value).format("DD MMM, YY")}
-                                                                                </span>
-                                                                              ) : (
-                                                                                updateKey + " : " + "-"
-                                                                              )
-                                                                            ) : (
-                                                                              <span>
-                                                                                {updateKey + " : "}
-                                                                                <span dangerouslySetInnerHTML={{ __html: item.pervious_value }} />
-                                                                              </span>
-                                                                            )
-                                                                          ) : (
-                                                                            updateKey + " : " + "-"
-                                                                          )}
-                                    </h5>
-                                  </div>
-                                  <div className="history-prev">
-                                    <h2>New:</h2>
-                                  </div>
-                                  <div className="history-data">
-                                    <h5>
-                                     {item.new_value ? (
-                                                                           item?.updated_key === "start_date" ||
-                                                                             item?.updated_key === "due_date" ? (
-                                                                             item?.new_value ? (
-                                                                               <span>
-                                                                                 {updateKey + " : "}
-                                                                                 {moment(item.new_value).format("DD MMM, YY")}
-                                                                               </span>
-                                                                             ) : (
-                                                                               updateKey + " : " + "-"
-                                                                             )
-                                                                           ) : (
-                                                                             <span>
-                                                                               {updateKey + " : "}
-                                                                               <span dangerouslySetInnerHTML={{ __html: item.new_value }} />
-                                                                             </span>
-                                                                           )
-                                                                         ) : (
-                                                                           updateKey + " : " + "-"
-                                                                         )}
-                                    </h5>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Modal>
+          taskDetails={taskDetails}
+          comments={comments}
+          taskHistory={taskHistory}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          getComment={getComment}
+          getBughistory={getBughistory}
+          handleBugStatusClick={handleBugStatusClick}
+          bugWorkFlowStatusList={bugWorkFlowStatusList}
+          isPopoverVisible={isPopoverVisible}
+          setIsPopoverVisible={setIsPopoverVisible}
+          selectedBugStatusTitle={selectedBugStatusTitle}
+          selectedBugStatusColor={selectedBugStatusColor}
+          handleTaskDelete={handleTaskDelete}
+          hasPermission={hasPermission}
+          isEditable={isEditable}
+          setIsEditable={setIsEditable}
+          viewBug={viewBug}
+          handleViewBug={handleViewBug}
+          handleFieldClick={handleFieldClick}
+          handleEstTimeViewInput={handleEstTimeViewInput}
+          estHrsError={estHrsError}
+          estMinsError={estMinsError}
+          subscribersList={subscribersList}
+          employeeList={employeeList}
+          projectLabels={projectLabels}
+          handleSearch={handleSearch}
+          handleSelectedItemsChange={handleSelectedItemsChange}
+          handleSelectedLabelsChange={handleSelectedLabelsChange}
+          searchKeyword={searchKeyword}
+          isLoggedHoursMoreThanEstimated={isLoggedHoursMoreThanEstimated}
+          visible={visible}
+          popOver={popOver}
+          openPopOver={openPopOver}
+          estError={estError}
+          fileViewAttachment={fileViewAttachment}
+          populatedViewFiles={populatedViewFiles}
+          removeAttachmentViewFile={removeAttachmentViewFile}
+          onFileViewChange={onFileViewChange}
+          attachmentViewfileRef={attachmentViewfileRef}
+          projectId={projectId}
+          getBoardTasks={getBoardTasks}
+          addComments={addComments}
+          setTextAreaValue={setTextAreaValue}
+          isTextAreaFocused={isTextAreaFocused}
+          setIsTextAreaFocused={setIsTextAreaFocused}
+          textAreaValue={textAreaValue}
+          taggedUserList={taggedUserList}
+          handleTaskOps={handleTaskOps}
+          addform={addform}
+          formComment={formComment}
+          bugId={bugId}
+          updateviewBug={updateviewBug}
+        />
 
         <AddTimeModal
           openModal={isModalOpenTaskModal}
