@@ -1395,6 +1395,40 @@ exports.projectBugsDetailedData = async (req, res) => {
             {
               $lookup: {
                 from: "employees",
+                let: { reporterId: "$createdBy" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$_id", "$$reporterId"] },
+                          { $eq: ["$isDeleted", false] },
+                          { $eq: ["$isSoftDeleted", false] },
+                          { $eq: ["$isActivate", true] }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    $project: {
+                      _id: 1,
+                      full_name: 1,
+                      emp_img: 1
+                    }
+                  }
+                ],
+                as: "createdBy"
+              }
+            },
+            {
+              $unwind: {
+                path: "$createdBy",
+                preserveNullAndEmptyArrays: true
+              }
+            },
+            {
+              $lookup: {
+                from: "employees",
                 let: { assigneeIds: "$assignees" },
                 pipeline: [
                   {
@@ -1808,7 +1842,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
               updateObj.assignees = reqBody?.assignees;
 
               let changedArr = getArrayChanges(
-                perviousData?.assignees.map((a) => a.toString()),
+                (perviousData?.assignees || []).map((a) => a.toString()),
                 reqBody?.assignees
               );
 
@@ -1921,7 +1955,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
               updateObj.pms_clients = reqBody?.pms_clients;
 
               let changedArr = getArrayChanges(
-                perviousData?.pms_clients.map((a) => a.toString()),
+                (perviousData?.pms_clients || []).map((a) => a.toString()),
                 reqBody?.pms_clients
               );
 

@@ -10,6 +10,9 @@ import {
   Badge,
   Dropdown,
   Menu,
+  DatePicker,
+  Select,
+  Upload,
 } from "antd";
 import {
   CloseOutlined,
@@ -21,6 +24,10 @@ import {
   MoreOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
+  CheckOutlined,
+  SaveOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import moment from "moment";
@@ -46,7 +53,27 @@ function getAssigneeName(a) {
   return "";
 }
 
-const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) => {
+const TaskDetailModal = ({
+  open,
+  onClose,
+  task,
+  companySlug,
+  onOpenInProject,
+  // Edit mode props
+  onUpdateTask,
+  // Bug tracking props
+  bugs = [],
+  bugStatuses = [],
+  onBugAdd,
+  onBugDelete,
+  onBugEdit,
+  onBugStatusUpdate,
+  issueTitle,
+  onIssueTitleChange,
+  newBugData,
+  onNewBugDataChange,
+  onIssueDataKeypress,
+}) => {
   const isDark = document.body.classList.contains("dark-theme") || document.body.getAttribute("data-theme") === "dark";
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -58,6 +85,16 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [expandHistoryId, setExpandHistoryId] = useState(null);
+
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [fileList, setFileList] = useState([]);
+
+  // Options for assignees and labels dropdowns
+  const [assigneeOptions, setAssigneeOptions] = useState([]);
+  const [labelOptions, setLabelOptions] = useState([]);
 
   const fetchTaskDetails = useCallback(async () => {
     if (!task?.project?._id || !task?.mainTask?._id || !task?._id) return;
@@ -214,9 +251,31 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
     }
   }, []);
 
+  // Fetch assignees and labels options for dropdowns
+  const fetchDropdownOptions = useCallback(async () => {
+    try {
+      const [empRes, labelRes] = await Promise.all([
+        Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: Service.getEmployees,
+        }),
+        Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectLables,
+          body: { isDropdown: true },
+        }),
+      ]);
+      if (empRes?.data?.data) setAssigneeOptions(empRes.data.data);
+      if (labelRes?.data?.data) setLabelOptions(labelRes.data.data);
+    } catch (e) {
+      // silently fail — dropdowns will just be empty
+    }
+  }, []);
+
   useEffect(() => {
     if (open && task) {
       fetchTaskDetails();
+      fetchDropdownOptions();
     } else if (!open) {
       setDetails(null);
       setComments([]);
@@ -224,8 +283,11 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       setActiveTab("comments");
       setCommentText("");
       setExpandHistoryId(null);
+      setIsEditing(false);
+      setEditData({});
     }
-  }, [open, task, fetchTaskDetails]);
+  }, [open, task, fetchTaskDetails, fetchDropdownOptions]);
+
 
   useEffect(() => {
     const taskId = details?._id || task?._id;
@@ -240,6 +302,109 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       getTaskhistory(taskId);
     }
   }, [open, activeTab, details?._id, task?._id, getTaskhistory]);
+
+  // Initialize edit data when entering edit mode
+  const handleEditClick = () => {
+    const src = details || task;
+    const assigneeIds = (src?.assignees || []).map((a) =>
+      typeof a === "object" ? a._id : a
+    ).filter(Boolean);
+    const labelIds = (details?.taskLabels || []).map((l) =>
+      typeof l === "object" ? l._id : l
+    ).filter(Boolean);
+
+    setEditData({
+      title: src?.title || "",
+      descriptions: src?.descriptions || "",
+      due_date: src?.due_date || null,
+      start_date: src?.start_date || null,
+      assignees: assigneeIds,
+      taskLabels: labelIds,
+      bugs: bugs || [],
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditData({});
+    setFileList([]);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!onUpdateTask) {
+      message.warning("Save not available in this view");
+      setIsEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      let uploadedFiles = undefined;
+      if (fileList.length > 0) {
+        const filesToUpload = fileList.map(f => f.originFileObj).filter(Boolean);
+        if (filesToUpload.length > 0) {
+          uploadedFiles = await uploadFiles(filesToUpload, "task");
+        }
+      }
+
+      const updatedTask = {
+        ...(details || task),
+        title: editData.title,
+        descriptions: editData.descriptions,
+        due_date: editData.due_date,
+        start_date: editData.start_date,
+        // Keep assignees as IDs array for the API
+        assignees: editData.assignees || [],
+        // Keep labels as IDs array for the API
+        taskLabels: editData.taskLabels || [],
+        labels: editData.taskLabels || [],
+      };
+      await onUpdateTask(updatedTask, uploadedFiles, true);
+
+      // Save bug edits if there are any changes
+      if (editData.bugs && onBugEdit) {
+        for (const bug of editData.bugs) {
+          const originalBug = bugs.find((b) => b._id === bug._id);
+          // Check if anything actually changed
+          const reporterId = typeof bug.createdBy === "object" ? bug.createdBy?._id : bug.createdBy || (typeof bug.reporter === "object" ? bug.reporter?._id : null);
+          const originalReporterId = typeof originalBug?.createdBy === "object" ? originalBug?.createdBy?._id : originalBug?.createdBy || (typeof originalBug?.reporter === "object" ? originalBug?.reporter?._id : null);
+          const assigneesChanged = JSON.stringify(bug.assignees) !== JSON.stringify((originalBug?.assignees || []).map(a => typeof a === "object" ? a._id : a));
+          
+          let bugStatusId = typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status;
+          if (typeof bugStatusId === "string" && !bugStatuses.some(s => s._id === bugStatusId)) {
+            // Reverse lookup ID if it's the title string
+            const matchedStatus = bugStatuses.find(s => s.title === bugStatusId);
+            if (matchedStatus) bugStatusId = matchedStatus._id;
+          }
+          
+          let originalBugStatusId = typeof originalBug?.bug_status === "object" ? originalBug?.bug_status?._id : originalBug?.bug_status;
+          if (typeof originalBugStatusId === "string" && !bugStatuses.some(s => s._id === originalBugStatusId)) {
+            const matchedOriginalStatus = bugStatuses.find(s => s.title === originalBugStatusId);
+            if (matchedOriginalStatus) originalBugStatusId = matchedOriginalStatus._id;
+          }
+
+          const statusChanged = bugStatusId && originalBugStatusId && (bugStatusId !== originalBugStatusId);
+
+          if (bug.title !== originalBug?.title || reporterId !== originalReporterId || assigneesChanged || statusChanged) {
+             await onBugEdit(bug._id, bug.title, {
+                createdBy: reporterId || originalReporterId,
+                assignees: bug.assignees,
+                bug_status: bugStatusId,
+             });
+          }
+        }
+      }
+
+      setIsEditing(false);
+      setFileList([]);
+      message.success("Task updated successfully");
+      fetchTaskDetails();
+    } catch (e) {
+      message.error("Failed to update task");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAddComment = async () => {
     const taskId = details?._id || task?._id;
@@ -272,7 +437,9 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
       ? displayTask.assignees.map((a) => getAssigneeName(a)).filter(Boolean)
       : []
     : [];
-  const labelNames = details?.taskLabels?.length > 0 ? details.taskLabels.map((l) => l.title) : [];
+  const labelNames = (details?.taskLabels || details?.task_labels || [])
+    .map(l => typeof l === 'object' ? l.title : null)
+    .filter(Boolean);
   const attachmentCount = details?.attachments?.length || 0;
   const descriptionHtml = displayTask?.descriptions || "<p>No detailed description has been added yet.</p>";
 
@@ -482,6 +649,176 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
     );
   };
 
+  // ── Bugs Section ──
+  const renderBugsSection = () => (
+    <div className="task-detail-section task-detail-bugs-section">
+      <div className="task-detail-section-head">
+        <div>
+          <div className="task-detail-label">Quality control</div>
+          <div className="task-detail-section-title">Bugs</div>
+        </div>
+        <span className="task-detail-section-count">{bugs?.length || 0}</span>
+      </div>
+
+      {/* Quick add bug input */}
+      {onBugAdd && (
+        <div className="task-detail-bug-input-wrapper">
+          <span className="task-detail-bug-input-plus">+</span>
+          <input
+            className="task-detail-bug-input"
+            type="text"
+            placeholder="Quick add an issue title and press Enter..."
+            value={issueTitle || ""}
+            onChange={(e) => onIssueTitleChange && onIssueTitleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (onIssueDataKeypress) {
+                  onIssueDataKeypress(e);
+                } else if (onBugAdd) {
+                  onBugAdd();
+                }
+              }
+            }}
+          />
+        </div>
+      )}
+
+      {/* Bug table */}
+      {bugs?.length > 0 ? (
+        <div className="task-detail-bug-table-wrapper">
+          <table className="task-detail-bug-table">
+            <thead>
+              <tr>
+                <th className="bug-id-cell">Bug ID</th>
+                <th className="bug-title-cell">Title</th>
+                <th className="bug-status-cell">Status</th>
+                <th className="bug-reporter-cell">Reporter</th>
+                <th className="bug-assignees-cell">Assignees</th>
+                {!isEditing && <th className="bug-actions-cell">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {(isEditing ? editData.bugs || [] : bugs).map((bug, idx) => {
+                return (
+                  <tr key={bug._id || idx}>
+                    <td className="bug-id-cell">{bug.bugId || idx + 1}</td>
+                    <td className="bug-title-cell">
+                      {isEditing ? (
+                        <Input
+                          size="small"
+                          value={bug.title}
+                          onChange={(e) => {
+                            const newBugs = [...(editData.bugs || [])];
+                            newBugs[idx] = { ...bug, title: e.target.value };
+                            setEditData({ ...editData, bugs: newBugs });
+                          }}
+                        />
+                      ) : (
+                        bug.title || "—"
+                      )}
+                    </td>
+                    <td className="bug-status-cell">
+                      {isEditing && bugStatuses?.length > 0 ? (
+                      <Select
+                        size="small"
+                        value={typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status}
+                        onChange={(val) => {
+                          const newBugs = [...(editData.bugs || [])];
+                          newBugs[idx] = { ...bug, bug_status: val };
+                          setEditData({ ...editData, bugs: newBugs });
+                        }}
+                        style={{ width: 120 }}
+                        dropdownMatchSelectWidth={false}
+                      >
+                        {bugStatuses.map((s) => (
+                          <Select.Option key={s._id} value={s._id}>
+                            {s.title}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    ) : (
+                      <span>{typeof bug.bug_status === "string" && !bugStatuses.some(s => s._id === bug.bug_status) ? bug.bug_status : (bugStatuses?.find(s => s._id === (typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status))?.title || bug.bug_status?.title || bug.bug_status_details?.[0]?.title || "—")}</span>
+                    )}
+                    </td>
+                    <td className="bug-reporter-cell">
+                      {isEditing ? (
+                        <Select
+                          size="small"
+                          style={{ width: "100%", minWidth: 100 }}
+                          value={typeof bug.reporter === "object" ? bug.reporter?._id : (bug.createdBy?._id || bug.createdBy)}
+                          onChange={(val) => {
+                            const newBugs = [...(editData.bugs || [])];
+                            newBugs[idx] = { ...bug, createdBy: val };
+                            setEditData({ ...editData, bugs: newBugs });
+                          }}
+                          options={assigneeOptions.map((emp) => ({
+                            value: emp._id,
+                            label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+                          }))}
+                          allowClear
+                          placeholder="Select reporter"
+                        />
+                      ) : (
+                        typeof bug.reporter === "string" ? bug.reporter : (bug.createdBy?.full_name || bug.reporter?.full_name || "—")
+                      )}
+                    </td>
+                    <td className="bug-assignees-cell">
+                      {isEditing ? (
+                        <Select
+                          mode="multiple"
+                          size="small"
+                          style={{ width: "100%", minWidth: 140 }}
+                          value={(bug.assignees || []).map((a) => (typeof a === "object" ? a._id : a))}
+                          onChange={(val) => {
+                            const newBugs = [...(editData.bugs || [])];
+                            newBugs[idx] = { ...bug, assignees: val };
+                            setEditData({ ...editData, bugs: newBugs });
+                          }}
+                          options={assigneeOptions.map((emp) => ({
+                            value: emp._id,
+                            label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+                          }))}
+                          allowClear
+                          placeholder="Select assignees"
+                        />
+                      ) : (
+                        <div className="bug-assignee-avatars">
+                          {bug.assignees?.length > 0 ? bug.assignees.map((a, i) => (
+                            <MyAvatar
+                              key={a?._id || i}
+                              userName={getAssigneeName(a)}
+                              src={a?.emp_img || a?.profile_pic}
+                              size={26}
+                            />
+                          )) : "—"}
+                        </div>
+                      )}
+                    </td>
+                    {!isEditing && (
+                      <td className="bug-actions-cell">
+                        {onBugDelete && (
+                          <Button
+                            type="text"
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => onBugDelete(bug._id)}
+                          />
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="task-detail-empty-state">No issues tracked yet.</div>
+      )}
+    </div>
+  );
+
   return (
     <Modal
       className="task-page-detail-modal"
@@ -537,6 +874,14 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                   onClick={handleOpenInProject}
                   icon={<LinkOutlined />}
                 />
+                {/* Edit icon button */}
+                <Button
+                  className={`task-detail-icon-btn ${isEditing ? 'task-detail-icon-btn-active' : ''}`}
+                  type="text"
+                  onClick={isEditing ? handleCancelEdit : handleEditClick}
+                  icon={isEditing ? <CloseOutlined /> : <EditOutlined />}
+                  title={isEditing ? "Cancel Editing" : "Edit Task"}
+                />
               </div>
             </div>
 
@@ -558,16 +903,39 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
               </div>
             </div>
 
-            <h2 className="task-detail-title">{displayTask?.title || "—"}</h2>
+            {/* Title: editable or static */}
+            {isEditing ? (
+              <Input
+                className="task-detail-edit-title-input"
+                value={editData.title}
+                onChange={(e) => setEditData((p) => ({ ...p, title: e.target.value }))}
+                placeholder="Task title"
+              />
+            ) : (
+              <h2 className="task-detail-title">{displayTask?.title || "—"}</h2>
+            )}
 
             <div className="task-detail-meta">
               <div className="task-detail-metric-card">
                 <span className="task-detail-metric-label">Due date</span>
                 <span className="task-detail-metric-value">
-                  <CalendarOutlined />
-                  {displayTask?.due_date
-                    ? dayjs(displayTask.due_date).format("MMM D, YYYY")
-                    : "Not set"}
+                  {isEditing ? (
+                    <DatePicker
+                      size="small"
+                      className="task-detail-edit-datepicker"
+                      value={editData.due_date ? dayjs(editData.due_date) : null}
+                      onChange={(d) => setEditData((p) => ({ ...p, due_date: d ? d.toISOString() : null }))}
+                      format="MMM D, YYYY"
+                      allowClear
+                    />
+                  ) : (
+                    <>
+                      <CalendarOutlined />
+                      {displayTask?.due_date
+                        ? dayjs(displayTask.due_date).format("MMM D, YYYY")
+                        : "Not set"}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="task-detail-metric-card">
@@ -586,6 +954,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
           </div>
 
           <div className="task-detail-content-grid">
+            {/* Description */}
             <div className="task-detail-section task-detail-section-featured">
               <div className="task-detail-section-head">
                 <div>
@@ -593,12 +962,25 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
                   <div className="task-detail-section-title">Description</div>
                 </div>
               </div>
-              <div
-                className="task-detail-description"
-                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-              />
+              {isEditing ? (
+                <div className="task-detail-edit-description-wrapper">
+                  <TextArea
+                    className="task-detail-edit-description"
+                    rows={5}
+                    value={editData.descriptions}
+                    onChange={(e) => setEditData((p) => ({ ...p, descriptions: e.target.value }))}
+                    placeholder="Enter task description..."
+                  />
+                </div>
+              ) : (
+                <div
+                  className="task-detail-description"
+                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                />
+              )}
             </div>
 
+            {/* Meta grid */}
             <div className="task-detail-section-grid">
               <div className="task-detail-section">
                 <div className="task-detail-label">Project</div>
@@ -607,63 +989,156 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
 
               <div className="task-detail-section">
                 <div className="task-detail-label">Assignee(s)</div>
-                <div className="task-detail-value task-detail-assignees">
-                  {assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"}
+                <div className="task-detail-value">
+                  {isEditing ? (
+                    <Select
+                      mode="multiple"
+                      size="small"
+                      style={{ width: "100%" }}
+                      placeholder="Select assignees"
+                      value={editData.assignees || []}
+                      onChange={(val) => setEditData((p) => ({ ...p, assignees: val }))}
+                      optionFilterProp="label"
+                      options={assigneeOptions.map((emp) => ({
+                        value: emp._id,
+                        label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+                      }))}
+                      allowClear
+                    />
+                  ) : (
+                    assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"
+                  )}
                 </div>
               </div>
 
               <div className="task-detail-section">
                 <div className="task-detail-label">Start date</div>
                 <div className="task-detail-value">
-                  {details?.start_date ? dayjs(details.start_date).format("MMM D, YYYY") : "—"}
+                  {isEditing ? (
+                    <DatePicker
+                      size="small"
+                      className="task-detail-edit-datepicker"
+                      value={editData.start_date ? dayjs(editData.start_date) : null}
+                      onChange={(d) => setEditData((p) => ({ ...p, start_date: d ? d.toISOString() : null }))}
+                      format="MMM D, YYYY"
+                      allowClear
+                      style={{ width: "100%" }}
+                    />
+                  ) : (
+                    displayTask?.start_date ? moment(displayTask.start_date).format("MMM D, YYYY") : "—"
+                  )}
                 </div>
               </div>
 
               <div className="task-detail-section">
                 <div className="task-detail-label">Labels</div>
                 <div className="task-detail-value">
-                  {labelNames.length > 0 ? labelNames.join(", ") : "—"}
+                  {isEditing ? (
+                    <Select
+                      mode="multiple"
+                      size="small"
+                      style={{ width: "100%" }}
+                      placeholder="Select labels"
+                      value={editData.taskLabels || []}
+                      onChange={(val) => setEditData((p) => ({ ...p, taskLabels: val }))}
+                      optionFilterProp="label"
+                      options={labelOptions.map((lbl) => ({
+                        value: lbl._id,
+                        label: lbl.title,
+                      }))}
+                      allowClear
+                    />
+                  ) : (
+                    labelNames.length > 0 ? (
+                      <div className="task-detail-tags">
+                        {labelNames.map((l, i) => (
+                          <span key={i} className="task-detail-tag">{l}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      "—"
+                    )
+                  )}
                 </div>
               </div>
             </div>
 
+            {/* Attachments */}
             <div className="task-detail-section">
               <div className="task-detail-section-head">
                 <div>
                   <div className="task-detail-label">Files</div>
                   <div className="task-detail-section-title">Attachments</div>
                 </div>
-                <span className="task-detail-section-count">{attachmentCount}</span>
+                <span className="task-detail-section-count">{attachmentCount + fileList.length}</span>
               </div>
-              {details?.attachments?.length > 0 ? (
-                <div className="task-detail-attachments">
-                  {details.attachments.map((att, i) => (
-                    <div className="task-detail-attachment-card" key={i}>
-                      <a
-                        href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="task-detail-attachment-link"
-                      >
-                        {att?.name || "File"}
-                      </a>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<DownloadOutlined />}
-                        onClick={() => handleDownloadFile(att)}
-                      />
-                    </div>
-                  ))}
+              
+              {isEditing ? (
+                <div className="task-detail-attachments-edit">
+                  <div className="task-detail-attachments">
+                    {details?.attachments?.map((att, i) => (
+                      <div className="task-detail-attachment-card" key={i}>
+                        <span className="task-detail-attachment-link">{att?.name || "File"}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 16 }}>
+                    <Upload
+                      listType="picture-card"
+                      fileList={fileList}
+                      onChange={({ fileList: fl }) => setFileList(fl)}
+                      beforeUpload={() => false}
+                    >
+                      {fileList.length >= 8 ? null : (
+                        <div>
+                          <PlusOutlined />
+                          <div style={{ marginTop: 8 }}>Upload</div>
+                        </div>
+                      )}
+                    </Upload>
+                  </div>
                 </div>
               ) : (
-                <div className="task-detail-empty-state">No attachments added yet.</div>
+                details?.attachments?.length > 0 ? (
+                  <div className="task-detail-attachments">
+                    {details.attachments.map((att, i) => (
+                      <div className="task-detail-attachment-card" key={i}>
+                        <a
+                          href={`${process.env.REACT_APP_API_URL || ""}/public/${att?.path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="task-detail-attachment-link"
+                        >
+                          {att?.name || "File"}
+                        </a>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          onClick={() => handleDownloadFile(att)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="task-detail-empty-state">No attachments added yet.</div>
+                )
               )}
             </div>
 
+            {/* Bugs Section */}
+            {renderBugsSection()}
+
+            {/* Footer Actions */}
             <div className="task-detail-modal-footer-actions">
-              <Button className="task-detail-primary-btn" type="primary" onClick={handleOpenInProject}>
-                <LinkOutlined /> Open in project
+              <Button
+                className="task-detail-primary-btn"
+                type="primary"
+                onClick={handleSaveEdit}
+                loading={saving}
+                icon={<SaveOutlined />}
+              >
+                Save
               </Button>
               <Button className="task-detail-secondary-btn" onClick={onClose}>Close</Button>
             </div>
@@ -736,7 +1211,7 @@ const TaskDetailModal = ({ open, onClose, task, companySlug, onOpenInProject }) 
               },
             ]}
           />
-          </div>
+        </div>
       </div>
     </Modal>
   );

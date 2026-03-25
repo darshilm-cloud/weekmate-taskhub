@@ -352,7 +352,9 @@ useEffect(() => {
         main_task_id: _viewTask?.mainTask?._id || _viewTask?._id || taskId,
         title: _viewTask.title,
         descriptions: _viewTask.descriptions,
-        task_labels: _viewTask?.taskLabels?.[0]?._id || _viewTask?.task_labels?.[0]?._id || "",
+        task_labels: (_viewTask?.taskLabels || _viewTask?.task_labels || [])
+          .map((item) => (typeof item === 'string' ? item : item?._id))
+          .filter(Boolean),
         assignees: (_viewTask?.assignees || [])
           .map((item) => (typeof item === 'string' ? item : item?._id))
           .filter(Boolean),
