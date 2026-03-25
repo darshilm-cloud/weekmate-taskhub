@@ -64,6 +64,12 @@ const TaskKanbanController = ({
   const [editModalDescription, seteditModalDescription] = useState("");
   const attachmentfileRef = useRef();
   const attachmentViewfileRef = useRef();
+  const pendingDescriptionSaveRef = useRef({
+    timeoutId: null,
+    // Latest viewTask snapshot that includes the user's current description text.
+    latestViewTask: null,
+    lastSentDescription: null,
+  });
 
   const [dragged, setDragged] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState("");
@@ -325,16 +331,62 @@ useEffect(() => {
     setAddInputTaskData({ ...addInputTaskData, [name]: value });
   };
 
+  useEffect(() => {
+    return () => {
+      if (pendingDescriptionSaveRef.current.timeoutId) {
+        clearTimeout(pendingDescriptionSaveRef.current.timeoutId);
+        pendingDescriptionSaveRef.current.timeoutId = null;
+      }
+    };
+  }, []);
+
   const handleViewTask = (name, value) => {
-    setViewTask((prevViewTask) => ({
-      ...prevViewTask,
-      [name]: value,
-    }));
     setSearchKeyword("");
-    updateviewTask({ ...viewTask, [name]: value });
+
+    // Description editor emits changes on every keystroke. Saving immediately causes
+    // frequent re-renders and can feel like "auto fill / auto save" loops.
+    if (name === "descriptions") {
+      setViewTask((prevViewTask) => {
+        const nextViewTask = { ...prevViewTask, [name]: value };
+        pendingDescriptionSaveRef.current.latestViewTask = nextViewTask;
+
+        if (pendingDescriptionSaveRef.current.timeoutId) {
+          clearTimeout(pendingDescriptionSaveRef.current.timeoutId);
+        }
+
+        pendingDescriptionSaveRef.current.timeoutId = setTimeout(() => {
+          pendingDescriptionSaveRef.current.timeoutId = null;
+          const latest = pendingDescriptionSaveRef.current.latestViewTask;
+          if (!latest) return;
+
+          // Skip if nothing actually changed since the last send.
+          if (
+            pendingDescriptionSaveRef.current.lastSentDescription ===
+            latest.descriptions
+          ) {
+            return;
+          }
+          pendingDescriptionSaveRef.current.lastSentDescription = latest.descriptions;
+          updateviewTask(latest);
+        }, 900);
+
+        return nextViewTask;
+      });
+      return;
+    }
+
+    setViewTask((prevViewTask) => {
+      const nextViewTask = { ...prevViewTask, [name]: value };
+      updateviewTask(nextViewTask);
+      return nextViewTask;
+    });
   };
 
-  const updateviewTask = async (_viewTask = viewTask, uploadedFiles, showSuccess = false) => {
+  const updateviewTask = async (
+    _viewTask = viewTask,
+    uploadedFiles,
+    showSuccess = false
+  ) => {
     try {
       let reqBody = {
         updated_key: [
@@ -405,11 +457,21 @@ useEffect(() => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         const updatedTask = response.data.data;
-        setTaskDetails(updatedTask);
-        setFileViewAttachment(updatedTask.attachments || []);
-        setViewTask(updatedTask);
+        const latestLocalDescription =
+          pendingDescriptionSaveRef.current.latestViewTask?.descriptions;
+        const shouldPreserveDescription =
+          typeof latestLocalDescription === "string" &&
+          pendingDescriptionSaveRef.current.timeoutId;
+
+        const nextTask = shouldPreserveDescription
+          ? { ...updatedTask, descriptions: latestLocalDescription }
+          : updatedTask;
+
+        setTaskDetails(nextTask);
+        setFileViewAttachment(nextTask.attachments || []);
+        setViewTask(nextTask);
         setSelectedTaskStatusTitle(updatedTask.task_status?.title);
-        updateBoardTaskLocally?.(updatedTask);
+        updateBoardTaskLocally?.(nextTask);
         if (showSuccess) message.success("Task saved successfully!");
         setIsEditable({
           title: false,

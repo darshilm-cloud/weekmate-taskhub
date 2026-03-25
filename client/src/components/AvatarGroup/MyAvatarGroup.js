@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Tooltip, Avatar, Skeleton } from "antd";
-import UtilFunctions from "../../util/UtilFunctions";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+
+function getInitials(name) {
+  const cleaned = String(name || "").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "?";
+  const parts = cleaned.split(" ").filter(Boolean);
+  const filtered = parts.filter(
+    (part) => !["mr.", "miss.", "mrs.", "ms."].includes(part.toLowerCase())
+  );
+  const useParts = filtered.length ? filtered : parts;
+  return useParts
+    .slice(0, 2)
+    .map((p) => p.charAt(0))
+    .join("")
+    .toUpperCase();
+}
 
 const MyAvatarGroup = ({
   record,
@@ -73,13 +87,12 @@ const MyAvatarGroup = ({
                 src={
                   data?.emp_img
                     ? `${Service.HRMS_Base_URL}/uploads/thumbnail_emp_images/${data?.emp_img}`
-                    : UtilFunctions.generateAvatarFromName(
-                        data.name,
-                        height,
-                        width
-                      )
+                    : undefined
                 }
-              />
+                alt={data?.name}
+              >
+                {getInitials(data?.name)}
+              </Avatar>
             </Tooltip>
           ))}
     </Avatar.Group>

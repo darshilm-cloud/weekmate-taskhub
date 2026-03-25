@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import UtilFunctions from "../../../util/UtilFunctions";
 import moment from "moment";
-import { getSubscribersList, getTaggedUserList } from "../../../appRedux/reducers/ApiData";
+import { getEmployeeList, getSubscribersList, getTaggedUserList } from "../../../appRedux/reducers/ApiData";
 import {
   message,
   Select,
@@ -36,7 +36,7 @@ const BugsKanbanController = ({
   const attachmentViewfileRef = useRef();
   let currDate = moment()
 
-  const { foldersList, subscribersList,taggedUserList,projectLabels } = useSelector(
+  const { foldersList, subscribersList, taggedUserList, projectLabels, employeeList } = useSelector(
     (state) => state.apiData
   );
   const { authUser } = useSelector(({ auth }) => auth);
@@ -94,8 +94,8 @@ const BugsKanbanController = ({
   const [isEditable, setIsEditable] = useState({
     title: false,
     proj_description: false,
-    start_date: true,
-    end_date: true,
+    start_date: false,
+    end_date: false,
     bug_labels: false,
     assignees: false,
     estimated_time: false
@@ -122,6 +122,18 @@ const BugsKanbanController = ({
   };
   
   const handleFieldClick = (fieldName) => {
+    if (fieldName === "all") {
+      setIsEditable({
+        title: true,
+        proj_description: true,
+        start_date: true,
+        end_date: true,
+        bug_labels: true,
+        assignees: true,
+        estimated_time: true
+      });
+      return;
+    }
     setIsEditable((prevIsEditable) => ({
       ...prevIsEditable,
       [fieldName]: true,
@@ -139,7 +151,6 @@ const BugsKanbanController = ({
           ...prevBugDetails,
           estimated_hours: hrs
         }));
-        updateviewBug({ ...viewBug, estimated_hours: hrs });
       }
       if (hrs === 0 && parseInt(viewBug.estimated_minutes) === 0) {
         setEstHrsError("Enter a non-zero value for hours");
@@ -157,7 +168,6 @@ const BugsKanbanController = ({
           ...prevBugDetails,
           estimated_minutes: mins
         }));
-        updateviewBug({ ...viewBug, estimated_minutes: mins });
       }
       if (mins === 0 && parseInt(viewBug.estimated_hours || 0, 10) === 0) {
         setEstMinsError("Enter a non-zero value for minutes");
@@ -171,15 +181,26 @@ const BugsKanbanController = ({
   };
 
   const handleSelectedItemsChange = selectedItemIds => {
-    const updatedAssignees = subscribersList.filter(item =>
-      selectedItemIds.includes(item._id)
-    );
+    const pool = [
+      ...(Array.isArray(subscribersList) ? subscribersList : []),
+      ...(Array.isArray(employeeList) ? employeeList : []),
+      ...(Array.isArray(taggedUserList) ? taggedUserList : []),
+    ].filter(Boolean);
+
+    const byId = new Map();
+    for (const user of pool) {
+      const id = user?._id || user?.id;
+      if (id && !byId.has(id)) byId.set(id, user);
+    }
+
+    const updatedAssignees = selectedItemIds
+      .map((id) => byId.get(id))
+      .filter(Boolean);
     setViewBug(prevBugDetails => ({
       ...prevBugDetails,
       assignees: updatedAssignees
     }));
     setSearchKeyword("");   
-    updateviewBug({ ...viewBug, assignees: updatedAssignees });
   };
 
   const handleSelectedLabelsChange = selectedLabelIds => {
@@ -190,7 +211,6 @@ const BugsKanbanController = ({
       ...prevBugDetails,
       bug_labels: updatedLabels
     }));
-    updateviewBug({ ...viewBug, bug_labels: updatedLabels });
   };
 
   const updateviewBug = async (_viewBug = viewBug, uploadedFiles) => {    
@@ -216,8 +236,12 @@ const BugsKanbanController = ({
         task_id: bugID,
         title: _viewBug?.title,
         descriptions: _viewBug?.descriptions,
-        bug_labels: _viewBug?.bug_labels[0]?._id ? _viewBug?.bug_labels[0]?._id : "",
-        assignees: _viewBug?.assignees.map(item => item._id),
+        bug_labels: Array.isArray(_viewBug?.bug_labels) 
+          ? (_viewBug.bug_labels[0]?._id || _viewBug.bug_labels[0]?.id || _viewBug.bug_labels[0] || "") 
+          : (_viewBug?.bug_labels || ""),
+        assignees: Array.isArray(_viewBug?.assignees) 
+          ? _viewBug.assignees.map(item => item?._id || item?.id || item) 
+          : [],
         estimated_hours: _viewBug?.estimated_hours && _viewBug?.estimated_hours != "" ? _viewBug?.estimated_hours.toString() : "00",
         estimated_minutes: _viewBug.estimated_minutes && _viewBug.estimated_minutes != "" ? _viewBug.estimated_minutes.toString() : "00",
         start_date: _viewBug.start_date
@@ -266,9 +290,9 @@ const BugsKanbanController = ({
         setIsEditable({
           title: false,
           proj_description: false,
-          start_date: true,
-          end_date: true,
-          taskLabels: false,
+          start_date: false,
+          end_date: false,
+          bug_labels: false,
           assignees: false,
           estimated_time: false
         })        
@@ -288,7 +312,6 @@ const BugsKanbanController = ({
       [name]: value
     }));
     setSearchKeyword("");
-    updateviewBug({ ...viewBug, [name]: value });
   }
 
   function removeHTMLTags(inputText) {
@@ -477,6 +500,7 @@ const BugsKanbanController = ({
 
   useEffect(() => {
     getTaskdropdown();
+    dispatch(getEmployeeList());
     dispatch(getSubscribersList(projectId));    
   }, [projectId]);
   
@@ -1020,6 +1044,7 @@ const BugsKanbanController = ({
     setIsTextAreaFocused,
     textAreaValue,
     subscribersList,
+    employeeList,
     taggedUserList,
     taskHistory,
     showTaskHistory,
@@ -1085,6 +1110,7 @@ const BugsKanbanController = ({
     fileViewAttachment,
     onFileViewChange,
     attachmentViewfileRef,
+    updateviewBug,
     setIsEditable,
     setPopulatedFiles,
     deleteFileData,
