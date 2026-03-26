@@ -131,6 +131,36 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
     history.push(`/${companySlug}/project/app/${record._id}?tab=Tasks`);
   };
 
+  const handleStatClick = (e, label) => {
+    e.stopPropagation();
+    const params = new URLSearchParams();
+    params.set("project", record._id);
+
+    const normalized = String(label || "").trim().toLowerCase();
+    if (normalized === "today") {
+      params.set("filter", "due_today");
+      params.set("view", "list");
+      params.set("section", "today");
+    } else if (normalized === "over due" || normalized === "overdue") {
+      params.set("filter", "past_due");
+      params.set("view", "list");
+      params.set("section", "overdue");
+    } else if (normalized === "upcoming") {
+      params.set("filter", "all");
+      params.set("view", "list");
+      params.set("section", "upcoming");
+    } else if (normalized === "closed") {
+      params.set("status", "completed");
+      params.set("view", "kanban");
+      params.set("kanbanStatus", "Closed");
+    } else {
+      params.set("filter", "all");
+      params.set("view", "list");
+    }
+
+    history.push(`/${companySlug}/tasks?${params.toString()}`);
+  };
+
   /* Circle click → confirm close project */
   const handleCircleClick = (e) => {
     e.stopPropagation();
@@ -246,7 +276,18 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
           {/* Stats grid */}
           <div className="ap-stats-grid">
             {taskStats.map((s) => (
-              <div key={s.label} className="ap-stat-item" style={{ borderLeftColor: s.color }}>
+              <div
+                key={s.label}
+                className="ap-stat-item ap-stat-item--clickable"
+                style={{ borderLeftColor: s.color }}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => handleStatClick(e, s.label)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleStatClick(e, s.label);
+                }}
+                title={`View ${s.label} tasks`}
+              >
                 <span className="ap-stat-label" style={{ color: s.color }}>{s.label}</span>
                 <span className="ap-stat-value">{s.value}</span>
               </div>
@@ -282,6 +323,9 @@ const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROJECT_CACHE_MAX_CHARS = 250_000;
 const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
 const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
+const DEFAULT_PAGE_SIZE = 12;
+const VIEW_ALL_PAGE_SIZE = 30;
+const VIEW_ALL_MAX_PAGES = 50;
 
 const GridSkeletonCard = ({ index }) => (
   <div className="ap-skeleton-card" key={`project-skeleton-${index}`}>
@@ -318,7 +362,8 @@ const AssignProject = () => {
   const [modalMode, setModalMode] = useState("add");
   const [selectedProject, setSelectedProject] = useState(null);
   const [isloadingProject, setIsloadingProject] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 12 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [sortOption, setSortOption] = useState("createdAt");
@@ -419,7 +464,7 @@ const AssignProject = () => {
 
   useEffect(() => {
     getProjectListing(currentSkipFilters, currentFilters);
-  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, statusFilter]);
+  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, statusFilter, isViewAllProjects]);
 
   const fetchStatusList = async () => {
     try {
@@ -539,12 +584,30 @@ const AssignProject = () => {
     try {
       const reqBody = buildReqBody(TAB_FILTER_MAP[activeTab] || "all", skipFilters, filterStats);
 
+      // If user selects "Archived" from status filter, fetch archived projects from backend.
+      // Archived projects are stored separately and require `isArchived: true` in request body.
+      const selectedStatusForFetch = statusFilter
+        ? projectStatusList.find((status) => status._id === statusFilter)
+        : null;
+      const selectedStatusTitleForFetch = selectedStatusForFetch?.title?.toLowerCase?.() || "";
+      if (selectedStatusTitleForFetch === "archived") {
+        reqBody.isArchived = true;
+        // Archived listing behaves like global archived page (not per-tab).
+        reqBody.filterBy = "all";
+      }
+
+      if (isViewAllProjects) {
+        reqBody.pageNo = 1;
+        reqBody.limit = VIEW_ALL_PAGE_SIZE;
+      }
+
       const Key = generateCacheKey("project", reqBody);
-      requestKey = Key;
-      if (!forceRefresh && inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === Key) {
+      requestKey = isViewAllProjects ? `viewall:${Key}` : Key;
+      if (!forceRefresh && inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === requestKey) {
         return;
       }
-      const cached = !forceRefresh ? projectCache[Key] : null;
+      const shouldUseCache = !isViewAllProjects && !forceRefresh;
+      const cached = shouldUseCache ? projectCache[Key] : null;
       if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
@@ -557,7 +620,54 @@ const AssignProject = () => {
       }
       setIsloadingProject(columnDetails.length === 0);
 
-      inflightProjectsReqRef.current = { key: Key, pending: true };
+      inflightProjectsReqRef.current = { key: requestKey, pending: true };
+
+      if (isViewAllProjects) {
+        const combined = [];
+        let total = 0;
+        let pageNo = 1;
+        const limit = VIEW_ALL_PAGE_SIZE;
+        const maxPages = VIEW_ALL_MAX_PAGES;
+
+        while (pageNo <= maxPages) {
+          const pageBody = { ...reqBody, pageNo, limit };
+          const response = await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectdetails,
+            body: pageBody,
+          });
+
+          if (requestId !== latestRequestIdRef.current) return;
+
+          const rows = response?.data?.data;
+          const metaTotal = response?.data?.metadata?.total;
+          if (typeof metaTotal === "number") total = metaTotal;
+
+          if (Array.isArray(rows) && rows.length > 0) {
+            combined.push(...rows);
+          } else {
+            break;
+          }
+
+          if (total && combined.length >= total) break;
+          if (rows.length < limit) break;
+          pageNo += 1;
+        }
+
+        if (requestId !== latestRequestIdRef.current) return;
+
+        if (combined.length > 0) {
+          setColumnDetails(combined);
+          setPagination((prev) => ({ ...prev, total: total || combined.length, current: 1 }));
+        } else {
+          setColumnDetails([]);
+          setPagination((prev) => ({ ...prev, total: 0, current: 1 }));
+          setTaskStats({});
+        }
+        setIsloadingProject(false);
+        return;
+      }
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
@@ -763,6 +873,51 @@ const AssignProject = () => {
     }
   };
 
+  const getSidebarProjectMenuItems = (project) => {
+    const items = [
+      {
+        key: "open",
+        label: "Open project",
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation?.();
+          history.push(`/${companySlug}/project/app/${project._id}?tab=Tasks`);
+        },
+      },
+    ];
+
+    if (hasPermission(["project_edit"])) {
+      items.push({
+        key: "edit",
+        label: "Edit",
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation?.();
+          showModal(project);
+        },
+      });
+    }
+
+    if (hasPermission(["project_delete"])) {
+      items.push({
+        key: "delete",
+        label: "Delete",
+        danger: true,
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation?.();
+          Modal.confirm({
+            title: "Delete Project",
+            content: "Are you sure you want to delete this project?",
+            okText: "Yes",
+            cancelText: "No",
+            okButtonProps: { danger: true },
+            onOk: () => deleteProject(project._id),
+          });
+        },
+      });
+    }
+
+    return items;
+  };
+
   const doesProjectMatchDate = (record, dateValue) => {
     if (!dateValue) return true;
     const selectedMoment = moment(dateValue.toDate()).startOf("day");
@@ -809,6 +964,16 @@ const AssignProject = () => {
     const recordStatusId = record?.project_status?._id || record?.project_status;
     const recordStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
     const selectedStatusTitle = selectedStatusMeta?.title?.toLowerCase?.() || "";
+
+    if (selectedStatusTitle === "archived") {
+      const archivedFlag =
+        record?.isArchived ??
+        record?.is_archived ??
+        record?.archived ??
+        record?.isArchive ??
+        null;
+      if (archivedFlag === true || archivedFlag === 1 || archivedFlag === "true") return true;
+    }
 
     return recordStatusId === statusFilter || (!!selectedStatusTitle && recordStatusTitle === selectedStatusTitle);
   });
@@ -1250,7 +1415,11 @@ const AssignProject = () => {
   }
 
   const totalCount =
-    selectedDate || statusFilter ? visibleProjects.length : (pagination.total || columnDetails.length);
+    isViewAllProjects
+      ? visibleProjects.length
+      : selectedDate || statusFilter
+      ? visibleProjects.length
+      : (pagination.total || columnDetails.length);
   const calendarOverlay = (
     <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="ap-date-dropdown-header">
@@ -1435,9 +1604,19 @@ const AssignProject = () => {
             <span className="ap-project-count">All Projects ({totalCount})</span>
             <span
               className="ap-view-all-link"
-              onClick={() => setPagination((p) => ({ ...p, pageSize: p.total || 100, current: 1 }))}
+              onClick={() => {
+                setIsViewAllProjects((prev) => !prev);
+                setSelectedWorkspaceProjectId(null);
+                setColumnDetails([]);
+                setIsloadingProject(true);
+                setPagination((p) => ({
+                  ...p,
+                  current: 1,
+                  pageSize: p.pageSize || DEFAULT_PAGE_SIZE,
+                }));
+              }}
             >
-              View All
+              {isViewAllProjects ? "View Paged" : "View All"}
             </span>
           </div>
         </div>
@@ -1475,7 +1654,7 @@ const AssignProject = () => {
                 ))}
               </div>
             )}
-            {!isloadingProject && visibleProjects.length > 0 && (
+            {!isViewAllProjects && !isloadingProject && visibleProjects.length > 0 && (
               <div className="ap-grid-pagination">
                 <Pagination
                   current={pagination.current}
@@ -1563,7 +1742,20 @@ const AssignProject = () => {
                       <span className="ap-browser-project-name">
                         {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
                       </span>
-                      <MoreOutlined className="ap-browser-project-more" />
+                      <span
+                        className="ap-browser-project-more-btn"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <Dropdown
+                          menu={{ items: getSidebarProjectMenuItems(project) }}
+                          trigger={["click"]}
+                          placement="bottomRight"
+                        >
+                          <MoreOutlined className="ap-browser-project-more" title="More actions" />
+                        </Dropdown>
+                      </span>
                     </button>
                   ))
                 )}

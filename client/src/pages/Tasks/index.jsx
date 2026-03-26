@@ -1305,7 +1305,7 @@ const TasksPMS = ({ flag }) => {
     } else {
       setShowSelectTask(false);
     }
-    if (data.pms_clients.length > 0) {
+    if ((data?.pms_clients || []).length > 0) {
       setShowSelectClient(true);
     } else {
       setShowSelectClient(false);
@@ -1941,24 +1941,22 @@ const TasksPMS = ({ flag }) => {
                   </div>
                   <Popover
                     placement="bottomRight"
-                    content={
-                      <div className="task-elipse-pop">
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Sample CSV:</h6>
-                              <i
-                                onClick={() => exportSampleCSVfile()}
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                className="fi fi-rr-file-download"
-                              ></i>
-                              <input
-                                type="file"
-                                size="small"
+                    overlayClassName="wm-ellipsis-popover"
+	                    content={
+	                      <div className="task-elipse-pop">
+	                        {hasPermission(["task_add"]) && (
+	                          <>
+	                            <div
+	                              className="sample-csv"
+	                              onClick={() => exportSampleCSVfile()}
+	                              role="button"
+	                              tabIndex={0}
+	                            >
+	                              <h6>Sample CSV:</h6>
+	                              <i className="fi fi-rr-file-download"></i>
+	                              <input
+	                                type="file"
+	                                size="small"
                                 onChange={(e) => {
                                   const file = e.target.files[0];
                                   importCsvFile(file);
@@ -1972,39 +1970,33 @@ const TasksPMS = ({ flag }) => {
                           </>
                         )}
 
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Import CSV:</h6>
-                              <i
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => importRef.current.click()}
-                                className="fi fi-rr-file-import"
-                              ></i>
-                            </div>
-                          </>
-                        )}
-                        <div className="sample-csv">
-                          <h6>Export CSV:</h6>
-                          <i
-                            onClick={() => {
-                              exportCsv();
-                              csvRef.click();
-                            }}
-                            style={{
-                              color: "#358CC0",
-                              fontSize: "16px",
-                              cursor: "pointer",
-                            }}
-                            className="fi fi-rr-file-download"
-                          ></i>
-                        </div>
-                      </div>
-                    }
+	                        {hasPermission(["task_add"]) && (
+	                          <>
+	                            <div
+	                              className="sample-csv"
+	                              onClick={() => importRef.current.click()}
+	                              role="button"
+	                              tabIndex={0}
+	                            >
+	                              <h6>Import CSV:</h6>
+	                              <i className="fi fi-rr-file-import"></i>
+	                            </div>
+	                          </>
+	                        )}
+	                        <div
+	                          className="sample-csv"
+	                          onClick={() => {
+	                            exportCsv();
+	                            csvRef.click();
+	                          }}
+	                          role="button"
+	                          tabIndex={0}
+	                        >
+	                          <h6>Export CSV:</h6>
+	                          <i className="fi fi-rr-file-download"></i>
+	                        </div>
+	                      </div>
+	                    }
                     trigger="click"
                   >
                     <div style={{ cursor: "pointer" }}>
@@ -2067,7 +2059,7 @@ const TasksPMS = ({ flag }) => {
                 <p>No task found</p>
               </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : selectedView === "board" ? (
+            {isLoadingTasksPage || isTasksLoading || projectMianTask.length === 0 ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
@@ -2087,7 +2079,7 @@ const TasksPMS = ({ flag }) => {
             ) : selectedView === "gantt" ? (
               <TasksGanttView
                 tasks={filteredBoardTasks}
-                onTaskClick={(task) => showEditTaskModal(task)}
+                onTaskClick={(task) => showEditTaskModal(task, task?._stId || task?.task_status?._id || task?.task_status)}
               />
             ) : (
               <TasksTableView
@@ -2759,26 +2751,106 @@ const TasksPMS = ({ flag }) => {
           setSelectedTaskToView(null);
           handleCancelTaskModal();
         }}
-        task={selectedTaskToView}
+        task={
+          selectedTaskToView
+            ? {
+                ...selectedTaskToView,
+                project:
+                  selectedTaskToView?.project ||
+                  (projectDetails?._id
+                    ? { _id: projectDetails._id, title: projectDetails.title }
+                    : selectedTaskToView?.project),
+                mainTask:
+                  selectedTaskToView?.mainTask ||
+                  (selectedTask?._id
+                    ? { _id: selectedTask._id, title: selectedTask.title }
+                    : selectedTaskToView?.mainTask),
+              }
+            : selectedTaskToView
+        }
         companySlug={companySlug}
         onOpenInProject={(url) => {
           window.location.href = url;
         }}
-        onUpdateTask={async (updatedValues) => {
+        onUpdateTask={async (updatedValues, uploadedFiles) => {
           try {
-            const values = {
-              title: updatedValues.title,
-              folder: foldersList[0]?._id,
+            const selectedTaskId = editTaskData?.id || updatedValues?._id;
+            if (!selectedTaskId) throw new Error("missing_task_id");
+
+            const taskLabels = Array.isArray(updatedValues?.taskLabels) ? updatedValues.taskLabels : [];
+            const assignees = Array.isArray(updatedValues?.assignees) ? updatedValues.assignees : [];
+
+            const existingAttachments = Array.isArray(updatedValues?.attachments) ? updatedValues.attachments : [];
+            const normalizedExisting = existingAttachments
+              .map((a) => ({
+                file_name: a?.file_name || a?.name,
+                file_path: a?.file_path || a?.path,
+                _id: a?._id,
+                file_type: a?.file_type,
+              }))
+              .filter((a) => a.file_name && a.file_path);
+
+            const normalizedUploaded = Array.isArray(uploadedFiles)
+              ? uploadedFiles
+                  .map((a) => ({
+                    file_name: a?.file_name || a?.name,
+                    file_path: a?.file_path || a?.path,
+                    _id: a?._id,
+                    file_type: a?.file_type,
+                  }))
+                  .filter((a) => a.file_name && a.file_path)
+              : [];
+
+            const hasAttachmentsPayload = normalizedExisting.length > 0 || normalizedUploaded.length > 0;
+
+            const updatedKeys = [
+              "title",
+              "descriptions",
+              "task_labels",
+              "start_date",
+              "due_date",
+              "assignees",
+              "estimated_hours",
+              "estimated_minutes",
+              ...(hasAttachmentsPayload ? ["attachments"] : []),
+              ...(editTaskData?.workflow_id ? ["task_status"] : []),
+            ];
+
+            const reqBody = {
+              updated_key: updatedKeys,
+              project_id: projectId,
+              main_task_id: selectedTask?._id,
+              title: (updatedValues?.title || "").trim(),
+              descriptions: updatedValues?.descriptions || "",
+              task_labels: taskLabels.filter(Boolean),
+              assignees: assignees.filter(Boolean),
+              ...(editTaskData?.workflow_id ? { task_status: editTaskData.workflow_id } : {}),
+              estimated_hours: estHrs && estHrs !== "" ? String(estHrs) : "00",
+              estimated_minutes: estMins && estMins !== "" ? String(estMins) : "00",
+              start_date: updatedValues?.start_date || null,
+              due_date: updatedValues?.due_date || null,
+              ...(hasAttachmentsPayload ? { attachments: [...normalizedExisting, ...normalizedUploaded] } : {}),
             };
-            seteditModalDescription(updatedValues.descriptions);
-            setAddInputTaskData({
-              ...addInputTaskData,
-              end_date: updatedValues.due_date
+
+            dispatch(showAuthLoader());
+            const response = await Service.makeAPICall({
+              methodName: Service.putMethod,
+              api_url: `${Service.taskPropUpdation}/${selectedTaskId}`,
+              body: reqBody,
             });
-            await updateTasks(values);
+            dispatch(hideAuthLoader());
+
+            if (response?.data?.status) {
+              message.success(response.data.message || "Task updated");
+              await getBoardTasks(selectedTask?._id);
+            } else {
+              message.error(response?.data?.message || "Failed to update task");
+              return false;
+            }
             return true;
           } catch (e) {
             console.error("Update failed", e);
+            dispatch(hideAuthLoader());
             return false;
           }
         }}

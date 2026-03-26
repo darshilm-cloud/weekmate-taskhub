@@ -62,24 +62,53 @@ function getAssigneesDisplay(assignees) {
 }
 
 /** Parse URL search into filter state so first fetch uses correct params (avoids race with useEffect) */
-function getFilterStateFromSearch(search, isAdmin) {
+function getTaskPageStateFromSearch(search, isAdmin) {
   const params = new URLSearchParams(search || "");
   const filter = params.get("filter");
+  const viewParam = params.get("view");
+  const sectionParam = params.get("section");
+  const kanbanStatusParam = params.get("kanbanStatus");
+  const statusParam = params.get("status");
+  const projectParam = params.get("project") || params.get("projectId") || "";
+
+  const view =
+    viewParam && ["list", "kanban", "calendar", "gantt"].includes(viewParam) ? viewParam : null;
+  const section =
+    sectionParam && ["today", "overdue", "upcoming"].includes(sectionParam) ? sectionParam : null;
+  const kanbanStatus = kanbanStatusParam ? String(kanbanStatusParam).trim() : null;
+
+  const projectIds = projectParam
+    ? String(projectParam)
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean)
+    : [];
+
+  let base = { viewAll: true, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+
   if (filter === "assigned_to_me") {
-    return { viewAll: false, statusFilter: "all", taskStartDate: null, taskEndDate: null };
-  }
-  if (filter === "due_today") {
+    base = { viewAll: false, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+  } else if (filter === "due_today") {
     const today = dayjs().format("YYYY-MM-DD");
-    return { viewAll: isAdmin, statusFilter: "all", taskStartDate: today, taskEndDate: today };
-  }
-  if (filter === "past_due") {
+    base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: today, taskEndDate: today };
+  } else if (filter === "past_due") {
     const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
-    return { viewAll: isAdmin, statusFilter: "incomplete", taskStartDate: null, taskEndDate: yesterday };
+    base = { viewAll: isAdmin, statusFilter: "incomplete", taskStartDate: null, taskEndDate: yesterday };
+  } else if (filter === "all") {
+    base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: null, taskEndDate: null };
   }
-  if (filter === "all") {
-    return { viewAll: isAdmin, statusFilter: "all", taskStartDate: null, taskEndDate: null };
-  }
-  return { viewAll: true, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+
+  const finalStatus =
+    statusParam && ["all", "incomplete", "completed"].includes(statusParam) ? statusParam : base.statusFilter;
+
+  return {
+    ...base,
+    statusFilter: finalStatus,
+    projectIds,
+    view,
+    section,
+    kanbanStatus,
+  };
 }
 
 function getDatePresetFromState(startDate, endDate) {
@@ -129,15 +158,15 @@ const TaskPage = () => {
   const companySlug = localStorage.getItem("companyDomain");
   const isAdmin = getRoles(["Admin"]);
 
-  const filterState = getFilterStateFromSearch(location.search, isAdmin);
+  const filterState = getTaskPageStateFromSearch(location.search, isAdmin);
 
-  const [view, setView] = useState("list"); // list | kanban | calendar | gantt
+  const [view, setView] = useState(filterState.view || "list"); // list | kanban | calendar | gantt
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(filterState.statusFilter);
-  const [projectFilter, setProjectFilter] = useState([]);
+  const [projectFilter, setProjectFilter] = useState(filterState.projectIds || []);
   const [viewAll, setViewAll] = useState(filterState.viewAll);
   const [taskStartDate, setTaskStartDate] = useState(filterState.taskStartDate);
   const [taskEndDate, setTaskEndDate] = useState(filterState.taskEndDate);
@@ -145,6 +174,8 @@ const TaskPage = () => {
   const [datePreset, setDatePreset] = useState(
     getDatePresetFromState(filterState.taskStartDate, filterState.taskEndDate)
   );
+  const [listSection, setListSection] = useState(filterState.section);
+  const [kanbanStatusFilter, setKanbanStatusFilter] = useState(filterState.kanbanStatus);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
@@ -153,12 +184,16 @@ const TaskPage = () => {
 
   // Sync state when URL changes (e.g. user navigates to same page with different filter)
   useEffect(() => {
-    const next = getFilterStateFromSearch(location.search, isAdmin);
+    const next = getTaskPageStateFromSearch(location.search, isAdmin);
     setViewAll(next.viewAll);
     setStatusFilter(next.statusFilter);
     setTaskStartDate(next.taskStartDate);
     setTaskEndDate(next.taskEndDate);
     setDatePreset(getDatePresetFromState(next.taskStartDate, next.taskEndDate));
+    setProjectFilter(next.projectIds || []);
+    setListSection(next.section);
+    setKanbanStatusFilter(next.kanbanStatus);
+    if (next.view) setView(next.view);
   }, [location.search, isAdmin]);
 
 
@@ -290,8 +325,15 @@ const TaskPage = () => {
       }
       byStatus[key].tasks.push(t);
     });
-    return Object.values(byStatus).sort((a, b) => a.title.localeCompare(b.title));
-  }, [sortedTasks]);
+    const all = Object.values(byStatus).sort((a, b) => a.title.localeCompare(b.title));
+    if (!kanbanStatusFilter) return all;
+
+    const needle = String(kanbanStatusFilter).toLowerCase();
+    const filtered = all.filter(
+      (col) => String(col.id).toLowerCase() === needle || String(col.title || "").toLowerCase() === needle
+    );
+    return filtered.length ? filtered : all;
+  }, [sortedTasks, kanbanStatusFilter]);
 
   // Convert kanbanColumns → format expected by TasksGanttView
   const ganttBoards = useMemo(() =>
@@ -471,9 +513,21 @@ const TaskPage = () => {
             <span className="col-assignees">Assignee(s)</span>
             <span className="col-status">Status</span>
           </div>
-          <TaskListSection title="Today" count={todayTasks.length} tasks={todayTasks} onOpenTask={handleOpenTask} />
-          <TaskListSection title="Overdue" count={overdueTasks.length} tasks={overdueTasks} onOpenTask={handleOpenTask} />
-          <TaskListSection title="Upcoming" count={upcomingTasks.length} tasks={upcomingTasks} onOpenTask={handleOpenTask} />
+          {[
+            { key: "today", title: "Today", tasks: todayTasks },
+            { key: "overdue", title: "Overdue", tasks: overdueTasks },
+            { key: "upcoming", title: "Upcoming", tasks: upcomingTasks },
+          ]
+            .filter((s) => (listSection ? s.key === listSection : true))
+            .map((s) => (
+              <TaskListSection
+                key={s.key}
+                title={s.title}
+                count={s.tasks.length}
+                tasks={s.tasks}
+                onOpenTask={handleOpenTask}
+              />
+            ))}
         </div>
       ) : view === "kanban" ? (
         <div className="task-kanban-view">

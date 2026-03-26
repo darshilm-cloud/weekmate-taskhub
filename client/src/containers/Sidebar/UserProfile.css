@@ -383,3 +383,232 @@
     justify-content: space-between;
     padding-top: 10px;
   }
+
+  /* ──────────────────────────────────────────────────────────
+     Settings Modal (v2)
+     ────────────────────────────────────────────────────────── */
+  .setting-main-wrapper.wm-settings-modal .ant-modal-content {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .ant-modal-body {
+    padding: 0;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #eef2f7;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__subtitle {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: #64748b;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__form {
+    padding: 18px 22px 0;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__sectionTitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__left {
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioWrap {
+    margin-bottom: 8px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard {
+    display: flex;
+    gap: 10px;
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard.active {
+    border-color: #93c5fd;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.12);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioTitle {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__radioDesc {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px dashed #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 10px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__right {
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__rightTop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn {
+    padding: 0 6px;
+    height: 28px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__list {
+    margin-top: 2px;
+    padding-right: 6px;
+    overflow: auto;
+    max-height: 420px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__group + .wm-settings__group {
+    margin-top: 14px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__groupTitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: #334155;
+    margin-bottom: 8px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__groupBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    background: #fbfdff;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__row.disabled {
+    opacity: 0.55;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__rowLabel {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__emptyNote {
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px 18px;
+    border-top: 1px solid #eef2f7;
+    background: #ffffff;
+    margin-top: 16px;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__btnCancel {
+    border-radius: 10px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave {
+    border-radius: 10px;
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
+  }
+
+  @media (max-width: 900px) {
+    .setting-main-wrapper.wm-settings-modal .wm-settings__content {
+      grid-template-columns: 1fr;
+    }
+    .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions {
+      margin-left: 0;
+    }
+  }

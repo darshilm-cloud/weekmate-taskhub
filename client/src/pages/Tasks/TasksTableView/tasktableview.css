@@ -1,128 +1,248 @@
-/* ══════════════════════════════════════════════════════════════
-   Tasks Table View — Card Layout (matches Kanban design)
-   ══════════════════════════════════════════════════════════════ */
+/* ============================================================
+   Tasks Table View — Proper Table Layout
+   ============================================================ */
 
-/* ── Wrapper ──────────────────────────────────────────────── */
 .tasks-table-view-wrapper {
-    border-radius: 0 0 8px 8px;
-    padding: 0 15px 15px;
+  border-radius: 0 0 8px 8px;
+  padding: 0 15px 15px;
 }
 
 .tasks-table-view-wrapper .block-table-content.new-block-table {
-    overflow-y: auto;
-    max-height: calc(100vh - 220px);
-    border-radius: 8px;
-    border: none;
-    overflow-x: auto;
-    background: transparent;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  border-radius: 12px;
+  border: 1px solid #eef2f7;
+  overflow-x: auto;
+  background: #fff;
 }
 
-/* ── Card layout container ────────────────────────────────── */
-.ttv-card-layout {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    padding: 8px 4px;
-    overflow-x: auto;
-    align-items: flex-start;
-    min-height: 200px;
+.ttv-table-card {
+  padding: 6px 8px 10px;
 }
 
-/* ── Status group (one column per status) ─────────────────── */
-.ttv-status-group {
-    flex: 0 0 230px;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
+.ttv-table .ant-table {
+  background: transparent;
 }
 
-/* ── Status header ────────────────────────────────────────── */
-.ttv-status-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    cursor: pointer;
-    border-top: 3px solid var(--wm-col-border-color, #3b82f6);
-    margin-bottom: 8px;
+.ttv-table .ant-table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef2f7;
+  background: #fff;
 }
 
-.ttv-status-header .wm-col-title {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+.ttv-table .ant-table-thead > tr > th {
+  background: #fff;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.ttv-status-header .wm-col-count {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 8px;
-    border-radius: 20px;
-    line-height: 1.6;
-    margin-left: 2px;
+.ttv-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
-.ttv-status-header .anticon {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-left: auto;
+.ttv-table .ant-table-thead > tr > th,
+.ttv-table .ant-table-tbody > tr > td {
+  border-right: none !important;
 }
 
-/* ── Cards list ───────────────────────────────────────────── */
-.ttv-cards-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 0 4px 8px;
+.ttv-table .ant-table-tbody > tr:nth-child(even) > td {
+  background: #fbfdff;
 }
 
-/* ── No data ──────────────────────────────────────────────── */
-.ttv-no-data {
-    text-align: center;
-    color: #94a3b8;
-    font-size: 13px;
-    padding: 16px;
-    font-style: italic;
+.ttv-table .ant-table-tbody > tr:hover > td {
+  background: #f8fafc;
 }
 
-/* ── Head box toolbar ─────────────────────────────────────── */
-.head-box-inner .status-content {
-    gap: 10px;
-    background: #fff;
-    padding: 8px;
-    border: 1px solid #d9d9d9;
-    border-radius: 5px;
+.ttv-row {
+  cursor: pointer;
 }
 
-.head-box-inner .status-content span i {
-    color: #545454;
+.ttv-row:focus-within td {
+  background: #f8fafc;
 }
 
-.head-box-inner .status-content span {
-    display: flex;
-    gap: 5px;
-    align-items: center;
+.ttv-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
 }
 
-.head-box-inner .status-content h3 {
-    margin-bottom: 0;
-    font-weight: 500;
+.ttv-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Dark Theme
-   ══════════════════════════════════════════════════════════════ */
+.ttv-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  line-height: 18px;
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+}
+
+.ttv-label-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.ttv-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ttv-muted {
+  color: #94a3b8;
+}
+
+.ttv-list-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.ttv-list-title {
+  color: #334155;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.ttv-due {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+}
+
+.ttv-due.overdue {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.ttv-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+/* Nicer scrollbars inside Ant Table body */
+.ttv-table .ant-table-body {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.65) rgba(226, 232, 240, 0.7);
+}
+
+.ttv-table .ant-table-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ttv-table .ant-table-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.65);
+  border-radius: 999px;
+  border: 3px solid rgba(226, 232, 240, 0.7);
+  background-clip: padding-box;
+}
+
+.ttv-table .ant-table-body::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.7);
+  border-radius: 999px;
+}
+
+.ttv-table .ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.75);
+}
+
+/* Dark theme */
 body.dark-theme .tasks-table-view-wrapper .block-table-content.new-block-table,
 body[data-theme="dark"] .tasks-table-view-wrapper .block-table-content.new-block-table {
-    background: transparent;
+  background: #0b1220;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-body.dark-theme .ttv-status-header,
-body[data-theme="dark"] .ttv-status-header {
-    border-bottom-color: var(--wm-col-border-color, #3b82f6);
+body.dark-theme .ttv-table .ant-table-container,
+body[data-theme="dark"] .ttv-table .ant-table-container {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(11, 18, 32, 0.7);
 }
 
-body.dark-theme .ttv-no-data,
-body[data-theme="dark"] .ttv-no-data {
-    color: #475569;
+body.dark-theme .ttv-table .ant-table-thead > tr > th,
+body[data-theme="dark"] .ttv-table .ant-table-thead > tr > th {
+  background: transparent;
+  color: rgba(148, 163, 184, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+body.dark-theme .ttv-table .ant-table-tbody > tr > td,
+body[data-theme="dark"] .ttv-table .ant-table-tbody > tr > td {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-theme .ttv-table .ant-table-tbody > tr:hover > td,
+body[data-theme="dark"] .ttv-table .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-theme .ttv-table .ant-table-tbody > tr:nth-child(even) > td,
+body[data-theme="dark"] .ttv-table .ant-table-tbody > tr:nth-child(even) > td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+body.dark-theme .ttv-title,
+body[data-theme="dark"] .ttv-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-theme .ttv-list-title,
+body[data-theme="dark"] .ttv-list-title {
+  color: rgba(226, 232, 240, 0.9);
+}
+
+body.dark-theme .ttv-due,
+body[data-theme="dark"] .ttv-due {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+body.dark-theme .ttv-table .ant-table-body,
+body[data-theme="dark"] .ttv-table .ant-table-body {
+  scrollbar-color: rgba(148, 163, 184, 0.5) rgba(15, 23, 42, 0.6);
+}
+
+body.dark-theme .ttv-table .ant-table-body::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .ttv-table .ant-table-body::-webkit-scrollbar-thumb {
+  border-color: rgba(15, 23, 42, 0.6);
+  background: rgba(148, 163, 184, 0.5);
+}
+
+body.dark-theme .ttv-table .ant-table-body::-webkit-scrollbar-track,
+body[data-theme="dark"] .ttv-table .ant-table-body::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
 }

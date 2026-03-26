@@ -742,14 +742,85 @@
     gap: 10px;
     margin-bottom: 10px;
     justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .task-elipse-pop .sample-csv h6 {
-    color: #e2e8f0;
     margin: 0;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     align-self: center;
+    color: #334155;
+}
+
+.task-elipse-pop .sample-csv i,
+.task-elipse-pop .status-content i {
+    color: #2563eb;
+    font-size: 16px;
+}
+
+.task-elipse-pop .sample-csv:hover,
+.task-elipse-pop .status-content:hover {
+    background: #f1f5f9;
+}
+
+/* Bugs popover uses `.status-content` rows inside `.task-elipse-pop` */
+.task-elipse-pop .status-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.task-elipse-pop .status-content h6 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Dark theme: keep popover items readable on dark surfaces */
+body.dark-theme .task-elipse-pop .sample-csv h6,
+body[data-theme="dark"] .task-elipse-pop .sample-csv h6,
+body.dark-theme .task-elipse-pop .status-content h6,
+body[data-theme="dark"] .task-elipse-pop .status-content h6 {
+    color: #e2e8f0;
+}
+
+/* Ellipsis popover (CSV actions) — ensure readable in dark theme.
+   Note: Ant Popover renders in a portal under <body>, so `.wm-force-dark-page`
+   scoped rules don't apply. Use an overlay class for consistent theming. */
+.wm-ellipsis-popover .ant-popover-inner {
+    border-radius: 14px;
+}
+
+.wm-ellipsis-popover .ant-popover-inner-content {
+    padding: 10px 10px 6px;
+}
+
+body.dark-theme .wm-ellipsis-popover .ant-popover-inner,
+body[data-theme="dark"] .wm-ellipsis-popover .ant-popover-inner {
+    background: #0f1722;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-theme .wm-ellipsis-popover .ant-popover-arrow:before,
+body[data-theme="dark"] .wm-ellipsis-popover .ant-popover-arrow:before {
+    background: #0f1722;
+}
+
+body.dark-theme .wm-ellipsis-popover .task-elipse-pop .sample-csv:hover,
+body.dark-theme .wm-ellipsis-popover .task-elipse-pop .status-content:hover,
+body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .sample-csv:hover,
+body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:hover {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .task-logged-details-wrapper .ant-table-body {

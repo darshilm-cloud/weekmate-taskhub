@@ -648,6 +648,24 @@ button.ap-browser-project-item.active:active,
   color: #64748b;
 }
 
+.ap-browser-project-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ap-browser-project-more-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.ap-browser-project-more-btn:active {
+  background: rgba(15, 23, 42, 0.1);
+}
+
 .ap-browser-project-list-skeleton {
   display: flex;
   flex-direction: column;
@@ -1514,6 +1532,22 @@ body[data-theme="dark"] .ap-browser-status-label {
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+.ap-stat-item--clickable {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px 6px 4px 7px;
+  margin-left: -6px;
+}
+
+.ap-stat-item--clickable:hover {
+  background: #f8fafc;
+}
+
+.ap-stat-item--clickable:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
 }
 
 .ap-stat-label {

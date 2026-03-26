@@ -803,12 +803,30 @@ useEffect(() => {
     }
   };
 
-  const getTaskByIdDetails = async (projectId, editType, refresh) => {
+  const getTaskByIdDetails = async (taskId, editType, refresh) => {
     try {
+      const override =
+        editType && typeof editType === "object" ? editType : null;
+      const projectIdForReq =
+        override?.projectId ||
+        selectedTask?.project?._id ||
+        selectedTask?.project_id ||
+        selectedTask?.projectId ||
+        selectedTask?.project?._id;
+      const mainTaskIdForReq =
+        override?.mainTaskId ||
+        selectedTask?._id ||
+        selectedTask?.main_task_id ||
+        selectedTask?.mainTaskId;
+
+      if (!projectIdForReq || !mainTaskIdForReq || !taskId) {
+        message.error("Unable to open task details (missing context).");
+        return;
+      }
       const reqBody = {
-        project_id: selectedTask.project._id,
-        main_task_id: selectedTask._id,
-        _id: projectId,
+        project_id: projectIdForReq,
+        main_task_id: mainTaskIdForReq,
+        _id: taskId,
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
