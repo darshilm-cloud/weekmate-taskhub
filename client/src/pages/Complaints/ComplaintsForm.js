@@ -182,12 +182,15 @@ const ComplaintsForm = () => {
         });
       }
 
-      if (response?.data?.data) {
+      if (response?.data?.status === 1) {
         message.success(response.data.message);
         history.push(`/${companySlug}/complaints`);
+      } else {
+        message.error(response?.data?.message || "Failed to save complaint");
       }
     } catch (error) {
       console.error(error);
+      message.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

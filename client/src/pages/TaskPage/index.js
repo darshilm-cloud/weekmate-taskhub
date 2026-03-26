@@ -651,7 +651,6 @@ function TaskRow({ task, onOpen }) {
 
 function TaskCard({ task, onClick }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
-  const progress = task.task_progress || "0";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
   return (
@@ -669,7 +668,6 @@ function TaskCard({ task, onClick }) {
         <span className="task-card-assignees" title={assigneesLabel}>
           {assigneesLabel}
         </span>
-        <span className="task-card-progress">{progress}%</span>
       </div>
     </div>
   );

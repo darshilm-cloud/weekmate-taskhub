@@ -198,13 +198,6 @@
     flex-shrink: 0;
 }
 
-/* Checkbox in card */
-.bugs-task-wrapper .wm-task-card input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-}
-
 /* ── Dark theme overrides ──────────────────────────────────── */
 body.dark-theme .bugs-task-wrapper .order.small-box,
 body[data-theme="dark"] .bugs-task-wrapper .order.small-box {

@@ -40,7 +40,6 @@ import Service from "../../service";
 import { hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
-import MyAvatarGroup from "../AvatarGroup/MyAvatarGroup";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -1376,11 +1375,21 @@ const AssignProject = () => {
       dataIndex: "assignees",
       key: "assignees",
       width: 120,
-      render: (text, record) => (
-        <div className="avtar-group">
-          <MyAvatarGroup record={record.assignees} maxPopoverTrigger={"click"} />
-        </div>
-      ),
+      render: (text, record) => {
+        const list = Array.isArray(record?.assignees) ? record.assignees : [];
+        const names = list
+          .map((a) => a?.full_name || a?.name || a?.email || "")
+          .map((n) => String(n || "").trim())
+          .filter(Boolean);
+        const shown = names.slice(0, 2).join(", ");
+        const extra = names.length > 2 ? ` +${names.length - 2}` : "";
+        return (
+          <span className="ttv-members-text" title={names.join(", ")}>
+            {shown || "—"}
+            {extra}
+          </span>
+        );
+      },
     },
   ];
 

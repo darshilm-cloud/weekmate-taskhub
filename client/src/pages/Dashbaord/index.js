@@ -1245,7 +1245,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Standalone Add Task section (full-width centered) ─── */}
-      <div className="standalone-add-task">
+      {myTask.length === 0 && assignedToMeTasks.length === 0 && <div className="standalone-add-task">
         <div className="standalone-add-task-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="6" width="18" height="22" rx="3" fill="white" opacity="0.9"/>
@@ -1265,7 +1265,7 @@ const Dashboard = () => {
         >
           Add Task
         </button>
-      </div>
+      </div>}
 
       {/* ── Bottom sections ──────────────────────────────────── */}
       <div className="db-bottom-grid">

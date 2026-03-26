@@ -305,9 +305,10 @@ const BugsPMS = () => {
                     </div>
                   </div>
 
-                </div>
-              </div>
-            </div>
+	                </div>
+	              </div>
+	            </div>
+
             { boardTasksBugs.length === 0 && (
               <div className="error-message">
                 <p>No Data</p>

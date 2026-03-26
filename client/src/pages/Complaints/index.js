@@ -114,7 +114,7 @@ const Complaints = () => {
         api_url:    Service.getComplaintList,
         body: { pageNo: 1, limit: 1000 },
       });
-      if (response?.data?.data) setAllComplaints(response.data.data);
+      if (response?.data?.status === 1) setAllComplaints(response.data.data || []);
     } catch { /* silent */ }
   }, []);
 
@@ -139,13 +139,17 @@ const Complaints = () => {
         body:       reqBody,
       });
       dispatch(hideAuthLoader());
-      if (response?.data?.data) {
-        setComplaintList(response.data.data);
+      if (response?.data?.status === 1) {
+        setComplaintList(response.data.data || []);
         setPagination((p) => ({ ...p, total: response.data.metadata?.total || 0 }));
+      } else {
+        console.error("Complaint list error:", response?.data?.message);
+        message.error(response?.data?.message || "Failed to load complaints");
       }
     } catch (error) {
       dispatch(hideAuthLoader());
       console.error(error);
+      message.error("Failed to load complaints");
     } finally {
       setTableLoading(false);
       setPageLoading(false);
@@ -160,10 +164,12 @@ const Complaints = () => {
         api_url:    Service.deleteComplaint + `/${id}`,
       });
       dispatch(hideAuthLoader());
-      if (response?.data?.data) {
+      if (response?.data?.status === 1) {
         message.success(response.data.message);
         getComplaintList();
         fetchAllForAnalytics();
+      } else {
+        message.error(response?.data?.message || "Failed to delete complaint");
       }
     } catch (error) {
       dispatch(hideAuthLoader());

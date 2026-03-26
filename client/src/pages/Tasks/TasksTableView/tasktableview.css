@@ -113,6 +113,22 @@
   color: #94a3b8;
 }
 
+.ttv-members-text {
+  color: #334155;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 120px;
+}
+
+body.dark-theme .ttv-members-text,
+body[data-theme="dark"] .ttv-members-text {
+  color: rgba(226, 232, 240, 0.9);
+}
+
 .ttv-list-cell {
   display: inline-flex;
   align-items: center;
@@ -245,4 +261,19 @@ body[data-theme="dark"] .ttv-table .ant-table-body::-webkit-scrollbar-thumb {
 body.dark-theme .ttv-table .ant-table-body::-webkit-scrollbar-track,
 body[data-theme="dark"] .ttv-table .ant-table-body::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.6);
+}
+
+/* Members avatars (dark theme) */
+body.dark-theme .ttv-table .ant-avatar,
+body[data-theme="dark"] .ttv-table .ant-avatar {
+  background: rgba(148, 163, 184, 0.18) !important;
+  background-color: rgba(148, 163, 184, 0.18) !important;
+  color: rgba(226, 232, 240, 0.92) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+}
+
+body.dark-theme .ttv-table .ant-avatar-string,
+body[data-theme="dark"] .ttv-table .ant-avatar-string {
+  color: rgba(226, 232, 240, 0.92) !important;
+  -webkit-text-fill-color: rgba(226, 232, 240, 0.92) !important;
 }

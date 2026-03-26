@@ -483,12 +483,17 @@ function UserProfile() {
             ? reqBodyFour
             : reqBody,
       });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
+      dispatch(hideAuthLoader());
+      if (response?.data?.status === 1) {
+        message.success(response?.data?.message || "Settings updated successfully");
         setSettingModal(false);
+      } else {
+        message.error(response?.data?.message || "Failed to update settings");
       }
     } catch (error) {
+      dispatch(hideAuthLoader());
       console.log(error, "error");
+      message.error("Something went wrong. Please try again.");
     }
   };
   const formItemLayout = {
@@ -1062,6 +1067,7 @@ function UserProfile() {
               open={userMenuOpen}
               onOpenChange={setUserMenuOpen}
               className="user-profile"
+              overlayClassName="wm-user-menu-popover"
             >
               <div className="user-pill">
                 {avatarSrc && !avatarLoadFailed ? (

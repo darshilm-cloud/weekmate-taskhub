@@ -577,6 +577,11 @@ body[data-theme="dark"] .disc-tab.active {
   border-bottom-color: #38bdf8;
 }
 
+body.dark-theme .disc-tab:hover:not(.active),
+body[data-theme="dark"] .disc-tab:hover:not(.active) {
+  color: #e2e8f0;
+}
+
 body.dark-theme .disc-search .ant-input-affix-wrapper,
 body.dark-theme .disc-search .ant-input,
 body[data-theme="dark"] .disc-search .ant-input-affix-wrapper,

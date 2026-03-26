@@ -549,7 +549,6 @@ const TasksController = ({ flag }) => {
           "assignees",
           "estimated_hours",
           "estimated_minutes",
-          "task_progress",
           "attachments",
           "task_status",
           "pms_clients",
@@ -564,7 +563,6 @@ const TasksController = ({ flag }) => {
         task_status: editTaskData.workflow_id,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
-        task_progress: "0",
         start_date: addInputTaskData.start_date
           ? addInputTaskData.start_date
           : null,

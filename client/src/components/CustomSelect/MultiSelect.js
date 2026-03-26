@@ -13,6 +13,15 @@ const MultiSelect = ({
   search = "",
   ...otherProps
 }) => {
+  const getDisplayName = (item) =>
+    item?.full_name ||
+    item?.name ||
+    item?.title ||
+    item?.client_name ||
+    item?.company_name ||
+    item?.username ||
+    "";
+
   const wrapperRef = useRef(null);
   const [dynamicMaxTagCount, setDynamicMaxTagCount] = useState(maxTagCount);
 
@@ -20,11 +29,7 @@ const MultiSelect = ({
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
       const calculatedMaxTagCount = Math.floor(rect.width / 50) - 1 || 1;
-      
-      console.log("Select Wrapper Dimensions:");
-      console.log(`Width: ${rect.width}px`);
-      console.log(`Calculated maxTagCount: ${calculatedMaxTagCount}`);
-      
+
       setDynamicMaxTagCount(calculatedMaxTagCount);
     }
   };
@@ -58,10 +63,10 @@ const MultiSelect = ({
     return (
       <>
         <MyAvatar
-          userName={item?.full_name || "-"}
-          src={item?.emp_img}
+          userName={getDisplayName(item) || "-"}
+          src={item?.emp_img || item?.profile_image || item?.avatar || item?.image}
           key={item?._id}
-          alt={item?.full_name}
+          alt={getDisplayName(item)}
         />
         <span
           onClick={onClose}
@@ -82,7 +87,7 @@ const MultiSelect = ({
 
   const filteredOptions = listData
     .filter((ele) =>
-      (ele?.full_name || ele?.name || "")
+      getDisplayName(ele)
         .toLowerCase()
         .includes((search || "").toLowerCase())
     )
@@ -91,12 +96,12 @@ const MultiSelect = ({
       label: (
         <>
           <MyAvatar
-            userName={ele?.full_name || ele?.name || "-"}
-            src={ele?.emp_img}
+            userName={getDisplayName(ele) || "-"}
+            src={ele?.emp_img || ele?.profile_image || ele?.avatar || ele?.image}
             key={ele?._id}
-            alt={ele?.full_name || ele?.name}
+            alt={getDisplayName(ele)}
           />
-          {removeTitle(ele?.full_name || ele?.name || "-")}
+          {removeTitle(getDisplayName(ele) || "-")}
         </>
       ),
     }))

@@ -189,7 +189,6 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
 
               {sec.tasks.map((task, idx) => {
                 const p = pos(task);
-                const pct = parseInt(task.task_progress, 10) || 0;
                 const overdue =
                   task.due_date &&
                   moment(task.due_date).isBefore(moment(), "day") &&
@@ -223,19 +222,13 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
                           overlayClassName="gt-tip"
                           placement="top"
                           title={
-                            <div className="gt-tip-box">
-                              <div className="gt-tip-name">{task.title}</div>
-                              <div className="gt-tip-row"><i className="fa-regular fa-calendar" /> {p.s.format("MMM D")} – {p.e.format("MMM D, YYYY")}</div>
-                              {!!pct && (
-                                <div className="gt-tip-bar-row">
-                                  <span>{pct}% done</span>
-                                  <div className="gt-tip-bar"><div style={{ width: `${pct}%`, background: c }} /></div>
-                                </div>
-                              )}
-                              {overdue && <div className="gt-tip-late">⚠ Overdue</div>}
-                            </div>
-                          }
-                        >
+                              <div className="gt-tip-box">
+                                <div className="gt-tip-name">{task.title}</div>
+                                <div className="gt-tip-row"><i className="fa-regular fa-calendar" /> {p.s.format("MMM D")} – {p.e.format("MMM D, YYYY")}</div>
+                                {overdue && <div className="gt-tip-late">⚠ Overdue</div>}
+                              </div>
+                            }
+                          >
                           <div
                             className={`gt-bar${overdue ? " gt-bar-late" : ""}`}
                             style={{ left: p.left, width: p.width, "--c": c }}
@@ -244,7 +237,6 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
                               onTaskClick?.(task);
                             }}
                           >
-                            {!!pct && <div className="gt-bar-fill" style={{ width: `${pct}%` }} />}
                           </div>
                         </Tooltip>
                       )}

@@ -74,6 +74,9 @@ const PositiveReview = React.lazy(() => import("../pages/PositiveReview"));
 const PositiveReviewForm = React.lazy(() =>
   import("../pages/PositiveReview/PositiveReviewForm.js")
 );
+const ReviewDetailForm = React.lazy(() =>
+  import("../pages/PositiveReview/ReviewDetailsForm.js")
+);
 
 const DashboardModule = React.lazy(() => import("../pages/Dashbaord"));
 const TaskPageModule = React.lazy(() => import("../pages/TaskPage"));
@@ -395,6 +398,16 @@ const index = ({ match, userPermission }) => {
     {
       path: ":companySlug/add/complaintForm-action-details/:id",
       component: ComplaintDetailForm,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/add/reviewForm-action-details/:id",
+      component: ReviewDetailForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.PC,

@@ -224,20 +224,32 @@ export const getTaggedUserList = (topicId,taskId,bugId,noteId,loggedhoursId) => 
 export const getClientList = (projectId = null) => {
   return async (dispatch) => {
     try {
-      // const params = `/${projectId}`
+      const body = {
+        isDropdown: true,
+        ...(projectId ? { project_id: projectId } : {}),
+      };
+
+      // Some environments expose this endpoint as POST; others as GET.
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getclient,
-        body: {
-          isDropdown: true,
-          ...(projectId ? { project_id: projectId } : {}),
-        },
+        body,
       });
-      console.log(response.data, "getclientss");
-      if (response.data && response.data.data) {
-        dispatch(
-          setData({ stateName: "clientsList", data: response.data.data })
-        );
+
+      let data = response?.data?.data;
+      if (!Array.isArray(data) || data.length === 0) {
+        const qs = new URLSearchParams();
+        qs.set("isDropdown", "true");
+        if (projectId) qs.set("project_id", projectId);
+        const fallback = await Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: `${Service.getclient}?${qs.toString()}`,
+        });
+        data = fallback?.data?.data;
+      }
+
+      if (Array.isArray(data)) {
+        dispatch(setData({ stateName: "clientsList", data }));
       }
     } catch (error) {
       console.log(error);

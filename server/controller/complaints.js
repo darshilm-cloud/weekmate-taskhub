@@ -67,7 +67,7 @@ exports.addComplaint = async (req, res) => {
     });
     await data.save();
 
-    let emailDetails = await this.getComplaintDetailsForMail(data._id);
+    let emailDetails = await exports.getComplaintDetailsForMail(data._id);
     await newComplaintMail(emailDetails, decodedCompanyId);
 
     return successResponse(
@@ -224,7 +224,7 @@ exports.getComplaint = async (req, res) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {
@@ -576,7 +576,7 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {

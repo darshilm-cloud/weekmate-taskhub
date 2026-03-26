@@ -43,7 +43,6 @@ export default function DiscussionPage() {
   const [sendingComment, setSendingComment] = useState(false);
   const [folderId, setFolderId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalTopics, setTotalTopics] = useState(0);
   const [topicsError, setTopicsError] = useState("");
   const pageSize = 15;
   const bottomRef = useRef(null);
@@ -55,28 +54,31 @@ export default function DiscussionPage() {
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addType, setAddType] = useState("General"); // General or Member
 
-  const fetchTopics = useCallback(async (searchVal = "", page = 1) => {
-    setLoadingTopics(true);
+  const initialLoadDone = React.useRef(false);
+
+  const fetchTopics = useCallback(async (searchVal = "") => {
+    if (initialLoadDone.current) {
+      // Don't show skeleton on search/filter — only on initial load
+    } else {
+      setLoadingTopics(true);
+    }
     setTopicsError("");
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
         body: {
-          pageNo: page,
-          limit: pageSize,
+          pageNo: 1,
+          limit: 9999,
           sortBy: "desc",
           ...(searchVal ? { search: searchVal } : {}),
         },
       });
       const data = res?.data?.data;
       setTopics(Array.isArray(data) ? data : []);
-      // Backend doesn't return totalCount for this API; keep pagination deterministic.
-      setTotalTopics(Array.isArray(data) ? data.length : 0);
     } catch (e) {
       console.error(e);
       setTopics([]);
-      setTotalTopics(0);
       const msg =
         e?.response?.data?.message ||
         e?.message ||
@@ -84,26 +86,23 @@ export default function DiscussionPage() {
       setTopicsError(msg);
     } finally {
       setLoadingTopics(false);
+      initialLoadDone.current = true;
     }
-  }, [pageSize]);
+  }, []);
 
   useEffect(() => {
-    fetchTopics(search, currentPage);
-  }, [currentPage, fetchTopics]);
+    fetchTopics(search);
+  }, [fetchTopics]);
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-      } else {
-        fetchTopics(search, 1);
-      }
+      setCurrentPage(1);
+      fetchTopics(search);
     }, 400);
     return () => clearTimeout(t);
   }, [search, fetchTopics]); // debounce search only
 
   useEffect(() => {
-    // Server doesn't support Task vs General filtering; keep it client-side.
     setCurrentPage(1);
   }, [activeTab]);
 
@@ -221,8 +220,12 @@ export default function DiscussionPage() {
     } catch (e) { message.error("Delete failed"); }
   };
 
-  const filteredTopics = topics.filter((t) =>
+  const allFilteredTopics = topics.filter((t) =>
     activeTab === "General" ? !t.task_id : !!t.task_id
+  );
+  const filteredTopics = allFilteredTopics.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   const formatTime = (date) => {
@@ -361,12 +364,12 @@ export default function DiscussionPage() {
         </div>
 
         {/* Pagination */}
-        {totalTopics > pageSize && (
+        {allFilteredTopics.length > pageSize && (
           <div className="disc-pagination">
             <Pagination
               size="small"
               current={currentPage}
-              total={totalTopics}
+              total={allFilteredTopics.length}
               pageSize={pageSize}
               onChange={(p) => setCurrentPage(p)}
               showSizeChanger={false}

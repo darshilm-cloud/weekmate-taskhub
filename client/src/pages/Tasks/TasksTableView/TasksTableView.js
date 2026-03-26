@@ -4,7 +4,6 @@ import { Table } from "antd";
 import "../style.css";
 import moment from "moment";
 import TaskKanbanController from "../TasksKanbanBoard/TaskKanbanController";
-import MyAvatarGroup from "../../../components/AvatarGroup/MyAvatarGroup";
 import AddTimeModal from "../../../components/Modal/AddTimeModal";
 import LoggedTimeDetail from "../../../components/Modal/LoggedTimeDetail";
 import ManagePeopleModal from "../../../components/Modal/ManagePeopleModal";
@@ -187,13 +186,13 @@ const TasksTableView = ({
         render: (assignees) => {
           const list = Array.isArray(assignees) ? assignees : [];
           if (list.length === 0) return <span className="ttv-muted">—</span>;
-          const record = list
-            .map((a) => ({
-              ...a,
-              name: a?.full_name || a?.name || a?.email || "",
-            }))
-            .filter((a) => a?.name);
-          return <MyAvatarGroup record={record} maxCount={3} />;
+          const names = list
+            .map((a) => a?.full_name || a?.name || a?.email || "")
+            .map((n) => String(n || "").trim())
+            .filter(Boolean);
+          const shown = names.slice(0, 2).join(", ");
+          const extra = names.length > 2 ? ` +${names.length - 2}` : "";
+          return <span className="ttv-members-text" title={names.join(", ")}>{shown || "—"}{extra}</span>;
         },
       },
       {

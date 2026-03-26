@@ -9,6 +9,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  LinkOutlined,
   LikeOutlined,
   PlusOutlined,
   QuestionCircleOutlined,
@@ -282,7 +283,7 @@ const PositiveReview = () => {
     if (userHasAccess) {
       base.push({
         title: "Actions",
-        width: 110,
+        width: 170,
         render: (_, record) => (
           <div className="pr-action-row">
             <Tooltip title="View feedback">
@@ -293,6 +294,18 @@ const PositiveReview = () => {
                 <EyeOutlined />
               </button>
             </Tooltip>
+            <Tooltip title="Action details">
+              <Link to={`/${companySlug}/add/reviewForm-action-details/${record._id}`}>
+                <button className="pr-action-btn view"><FileTextOutlined /></button>
+              </Link>
+            </Tooltip>
+            {record.review_url && (
+              <Tooltip title={record.feedback_type === "Clutch Review" ? "View on Clutch" : "Open Review URL"}>
+                <a href={record.review_url} target="_blank" rel="noopener noreferrer">
+                  <button className="pr-action-btn clutch"><LinkOutlined /></button>
+                </a>
+              </Tooltip>
+            )}
             <Tooltip title="Edit">
               <Link to={`/${companySlug}/edit/positiveReviewForm/${record._id}`}>
                 <button className="pr-action-btn edit"><EditOutlined /></button>

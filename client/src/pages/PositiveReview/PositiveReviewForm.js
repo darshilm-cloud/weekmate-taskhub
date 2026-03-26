@@ -8,6 +8,7 @@ import {
   MessageOutlined,
   ArrowLeftOutlined,
   StarOutlined,
+  LinkOutlined,
 } from "@ant-design/icons";
 import { useHistory, useParams } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
@@ -74,6 +75,7 @@ const PositiveReviewForm = () => {
       client_name: values.client_name,
       feedback_type: selectedFeedbackType,
       feedback: values.feedback,
+      review_url: values.review_url || "",
       client_nda_sign: values.client_nda_sign || false,
     };
     try {
@@ -161,6 +163,7 @@ const PositiveReviewForm = () => {
             feedback_type: d.feedback_type,
             project_manager: d.manager?.full_name || "",
             account_manager: d.acc_manager?.full_name || "",
+            review_url: d.review_url || "",
             client_nda_sign: d.client_nda_sign || false,
           });
         }
@@ -294,6 +297,17 @@ const PositiveReviewForm = () => {
                   />
                 </Form.Item>
               </Col>
+              {(selectedFeedbackType === "Clutch Review" || selectedFeedbackType === "Video Testimonial") && (
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="review_url"
+                    label={selectedFeedbackType === "Clutch Review" ? "Clutch Review URL" : "Video URL"}
+                    rules={[{ type: "url", message: "Please enter a valid URL" }]}
+                  >
+                    <Input placeholder={selectedFeedbackType === "Clutch Review" ? "https://clutch.co/..." : "https://..."} prefix={<LinkOutlined style={{ color: "#cbd5e1" }} />} />
+                  </Form.Item>
+                </Col>
+              )}
               <Col xs={24} md={12}>
                 <Form.Item
                   label="Did the client sign the NDA?"
