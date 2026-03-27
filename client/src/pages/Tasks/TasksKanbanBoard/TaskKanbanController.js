@@ -885,12 +885,6 @@ useEffect(() => {
           getTaskByIdDetails(taskId);
         }
         refreshProjectMainTasks?.({ suppressBoardReload: true });
-        setTimeout(() => {
-          const currentListId = selectedTask?._id || updatedTask?.main_task_id;
-          if (currentListId) {
-            getBoardTasks(currentListId, { silent: true });
-          }
-        }, 900);
       } else {
         const currentListId = selectedTask?._id;
         if (currentListId) {
@@ -990,7 +984,7 @@ useEffect(() => {
   const onDragLeave = (evt) => {
     const currentTarget = evt.currentTarget;
     const newTarget = evt.relatedTarget;
-    if (newTarget.parentNode === currentTarget || newTarget === currentTarget)
+    if (!newTarget || newTarget.parentNode === currentTarget || newTarget === currentTarget)
       return;
     evt.preventDefault();
     const element = evt.currentTarget;

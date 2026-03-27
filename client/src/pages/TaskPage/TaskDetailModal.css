@@ -10,45 +10,49 @@
   border: none;
 }
 
-.task-page-detail-modal .ant-modal-close {
-  top: 12px;
-  right: 26px;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 50%;
-  color: #ffffff;
-  background: #7f94a8;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  position: absolute;
-  z-index: 12;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
+.task-page-detail-modal button.ant-modal-close {
+  position: absolute !important;
+  top: 33px !important;
+  right: 24px !important;
+  z-index: 30 !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  background: #456c88 !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  transition: background 0.2s !important;
 }
 
-.task-page-detail-modal .ant-modal-close-x,
-.task-page-detail-modal .ant-modal-close-x .anticon {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x,
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x .anticon {
+  width: 100% !important;
+  min-width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
   color: #ffffff !important;
 }
 
-.task-page-detail-modal .ant-modal-close-x svg,
-.task-page-detail-modal .ant-modal-close-x .anticon svg {
-  width: 14px;
-  height: 14px;
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x svg,
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x .anticon svg {
+  width: 13px !important;
+  height: 13px !important;
   fill: currentColor !important;
   stroke: currentColor !important;
 }
 
-.task-page-detail-modal .ant-modal-close:hover {
-  background: #8ea1b3;
+.task-page-detail-modal button.ant-modal-close:hover {
+  background: #456c88 !important;
 }
 
 .task-page-detail-modal .ant-modal-body {
