@@ -198,17 +198,6 @@ exports.getProjectExpenses = async (req, res) => {
 
     let orFilter = {};
 
-    if ( !(await checkUserIsAdmin(userId))) {
-      orFilter = {
-        $or: [
-          { "manager._id": new mongoose.Types.ObjectId(userId) },
-          { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-          { "createdBy": new mongoose.Types.ObjectId(userId) },
-          { "project.assignees": new mongoose.Types.ObjectId(userId) }
-        ]
-      };
-    }
-
     let matchQuery = {
       isDeleted: false,
       companyId: newObjectId(decodedCompanyId),
@@ -263,25 +252,18 @@ exports.getProjectExpenses = async (req, res) => {
     }
 
     // Apply filters based on role
+    // Note: orFilter with lookup fields (manager._id, project.assignees) must be
+    // applied AFTER $lookup stages, not before. Only createdBy exists pre-lookup.
     if (!hasFullAccess) {
       if (hasLimitedAccess) {
-        // TL and PC can only see their own created data
+        // TL and PC can only see their own created data (createdBy exists pre-lookup)
         orFilter = {
           $or: [{ createdBy: new mongoose.Types.ObjectId(userId) }]
         };
-      } else {
-        // Other users can see data related to them
-        orFilter = {
-          $or: [
-            { "manager._id": new mongoose.Types.ObjectId(userId) },
-            { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-            { createdBy: new mongoose.Types.ObjectId(userId) },
-            { "project.assignees": new mongoose.Types.ObjectId(userId) }
-          ]
-        };
+        matchQuery = { ...matchQuery, ...orFilter };
       }
+      // For other roles, orFilter is applied after lookups (see postLookupMatch below)
     }
-    matchQuery = { ...matchQuery, ...orFilter };
 
     const mainQuery = [
       { $match: matchQuery },
@@ -371,6 +353,19 @@ exports.getProjectExpenses = async (req, res) => {
         }
       },
       { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+
+      // Post-lookup role filter: manager._id and project.assignees now exist
+      // Must be BEFORE getCreatedUpdatedDeletedByQuery which replaces createdBy with object
+      ...(!hasFullAccess && !hasLimitedAccess ? [{
+        $match: {
+          $or: [
+            { "manager._id": new mongoose.Types.ObjectId(userId) },
+            { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
+            { "createdBy": new mongoose.Types.ObjectId(userId) },
+            { "project.assignees": new mongoose.Types.ObjectId(userId) }
+          ]
+        }
+      }] : []),
 
       ...(await getCreatedUpdatedDeletedByQuery()),
       {

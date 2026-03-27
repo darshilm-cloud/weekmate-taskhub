@@ -811,12 +811,20 @@ useEffect(() => {
         editType && typeof editType === "object" ? editType : null;
       const projectIdForReq =
         override?.projectId ||
+        projectId ||
+        taskDetails?.project?._id ||
+        taskDetails?.project_id ||
+        taskDetails?.projectId ||
         selectedTask?.project?._id ||
         selectedTask?.project_id ||
         selectedTask?.projectId ||
         selectedTask?.project?._id;
       const mainTaskIdForReq =
         override?.mainTaskId ||
+        listID ||
+        taskDetails?.mainTask?._id ||
+        taskDetails?.main_task_id ||
+        taskDetails?.mainTaskId ||
         selectedTask?._id ||
         selectedTask?.main_task_id ||
         selectedTask?.mainTaskId;

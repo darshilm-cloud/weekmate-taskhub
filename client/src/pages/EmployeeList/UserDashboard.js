@@ -3,16 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Tabs,
   Select,
-  Avatar,
   Table,
-  Modal,
-  Form,
-  Input,
-  DatePicker,
-  message,
   Spin,
   Empty,
-  Popconfirm,
   Tooltip,
 } from "antd";
 import {
@@ -25,17 +18,16 @@ import {
   ClockCircleFilled,
   FileDoneOutlined,
   EditOutlined,
-  DeleteOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
+import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
-const { TextArea } = Input;
 
 /* ─── helpers ──────────────────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -69,9 +61,6 @@ const StatCard = ({ label, value, iconEl, variant, loading }) => (
 
 /* ─── Main Component ────────────────────────────────────────────── */
 const UserDashboard = ({ user }) => {
-  const loggedUser = JSON.parse(localStorage.getItem("user_data") || "{}");
-  const isOwnProfile = loggedUser?._id === user?._id;
-
   const userName = removeTitle(
     user?.full_name || `${user?.first_name || ""} ${user?.last_name || ""}`.trim()
   );
@@ -83,8 +72,6 @@ const UserDashboard = ({ user }) => {
   const [loading,     setLoading]     = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addForm]                      = Form.useForm();
-  const [addLoading,  setAddLoading]  = useState(false);
 
   /* ── analytics state ── */
   const [stats, setStats] = useState({ completed: 0, incomplete: 0, total: 0 });
@@ -190,34 +177,29 @@ const UserDashboard = ({ user }) => {
     if (!user) return;
     setLoading(true);
     try {
-      let fetchedTasks = [];
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: { view_all: true },
+      });
 
-      /* Try 1: dashboard/get/my-task (works for own profile) */
-      try {
-        const res = await Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: "/dashboard/get/my-task",
-        });
-        const d = res?.data?.data;
-        if (Array.isArray(d) && d.length > 0) {
-          fetchedTasks = d;
-        } else if (d && typeof d === "object" && !Array.isArray(d)) {
-          /* structured counts response — use directly */
-          setStats({
-            completed: d.completed_tasks ?? d.completedTasks ?? 0,
-            incomplete: d.pending_tasks  ?? d.incompleteTasks ?? 0,
-            total:      d.total_tasks    ?? d.totalTasks ?? 0,
-          });
-          setLoading(false);
-          return;
-        }
-      } catch { /* fall through */ }
+      const rawTasks = Array.isArray(res?.data?.data) ? res.data.data : [];
+      const matchedTasks = rawTasks.filter((task) =>
+        Array.isArray(task?.assignees) &&
+        task.assignees.some(
+          (assignee) =>
+            String(assignee?._id || assignee?.id || assignee) === String(user?._id)
+        )
+      );
 
-      if (fetchedTasks.length > 0) {
-        processTaskArray(fetchedTasks);
-      }
+      processTaskArray(matchedTasks);
     } catch (err) {
       console.error("UserDashboard fetchData error:", err);
+      setStats({ completed: 0, incomplete: 0, total: 0 });
+      setPriorityData({ low: 0, medium: 0, high: 0 });
+      setPerformanceData({ onTrack: 0, beforeTime: 0, delayed: 0 });
+      setIncompleteByStatus([]);
+      setTasks([]);
     } finally {
       setLoading(false);
       setPageLoading(false);
@@ -229,41 +211,6 @@ const UserDashboard = ({ user }) => {
     /* reset tab when user changes */
     setActiveTab("overviews");
   }, [user?._id, dateFilter]); // eslint-disable-line
-
-  /* ── Add Task ── */
-  const handleAddTask = async () => {
-    try {
-      const values = await addForm.validateFields();
-      setAddLoading(true);
-
-      /* Build minimal create-task payload; project_id + main_task_id are
-         required by the server but may not be available here — show info */
-      await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.addTask || "/projects/tasks/add",
-        body: {
-          title:      values.title,
-          descriptions: values.description || "",
-          priority:   values.priority || "low",
-          due_date:   values.due_date?.toISOString() || null,
-          assignees:  user?._id ? [user._id] : [],
-          status:     "active",
-        },
-      });
-
-      message.success("Task added successfully");
-      setAddModalOpen(false);
-      addForm.resetFields();
-      fetchData();
-    } catch (err) {
-      if (err?.errorFields) return; // validation
-      message.info(
-        "Task creation requires a Project. Please add tasks from inside a project."
-      );
-    } finally {
-      setAddLoading(false);
-    }
-  };
 
   /* ────────────────────────────────────────────────
      CHART OPTIONS
@@ -581,21 +528,9 @@ const UserDashboard = ({ user }) => {
 
   return (
     <div className="user-dashboard">
-      {/* ── Header ── */}
+      {/* ── Action Bar ── */}
       <div className="ud-header">
-        <div className="ud-header-left">
-          <Avatar
-            size={38}
-            style={{
-              backgroundColor: avatarColor(userName),
-              fontSize: 14,
-              fontWeight: 700,
-            }}
-          >
-            {initials(userName)}
-          </Avatar>
-          <h2 className="ud-header-name">{userName}</h2>
-        </div>
+        <div className="ud-header-spacer" />
         <button className="ud-add-task-btn" onClick={() => setAddModalOpen(true)}>
           <PlusOutlined />
           Add Task
@@ -666,54 +601,16 @@ const UserDashboard = ({ user }) => {
         )}
       </div>
 
-      {/* ── Add Task Modal ── */}
-      <Modal
-        className="ud-modal"
-        title="Add Task"
+      <AddTaskModal
         open={addModalOpen}
-        onCancel={() => { setAddModalOpen(false); addForm.resetFields(); }}
-        onOk={handleAddTask}
-        confirmLoading={addLoading}
-        okText="Save"
-        cancelText="Cancel"
-        okButtonProps={{ style: { borderRadius: 8, background: "#2563eb", borderColor: "#2563eb" } }}
-        cancelButtonProps={{ style: { borderRadius: 8 } }}
-        width={520}
-      >
-        <Form form={addForm} layout="vertical" requiredMark="optional">
-          <Form.Item
-            name="title"
-            label="Task Title"
-            rules={[{ required: true, message: "Please enter a task title" }]}
-          >
-            <Input placeholder="Enter task title" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Description">
-            <TextArea rows={3} placeholder="Add description (optional)" />
-          </Form.Item>
-
-          <Form.Item name="priority" label="Priority" initialValue="low">
-            <Select placeholder="Select priority">
-              <Option value="low">Low</Option>
-              <Option value="medium">Medium</Option>
-              <Option value="high">High</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="status" label="Status" initialValue="active">
-            <Select placeholder="Select status">
-              <Option value="active">Active</Option>
-              <Option value="in_progress">In Progress</Option>
-              <Option value="done">Done</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="due_date" label="Due Date">
-            <DatePicker style={{ width: "100%" }} />
-          </Form.Item>
-        </Form>
-      </Modal>
+        onCancel={() => setAddModalOpen(false)}
+        onSuccess={() => {
+          setAddModalOpen(false);
+          fetchData();
+        }}
+        standalone
+        defaultAssigneeIds={user?._id ? [user._id] : []}
+      />
     </div>
   );
 };

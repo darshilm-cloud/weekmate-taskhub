@@ -109,7 +109,7 @@ exports.addProjectsTask = async (req, res) => {
       main_task_id: Joi.string().required(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
-      task_labels: Joi.string().optional().allow(""),
+      task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
       start_date: Joi.date().optional(),
       due_date: Joi.date().optional(),
       assignees: Joi.array().optional(),
@@ -147,8 +147,15 @@ exports.addProjectsTask = async (req, res) => {
     // } else {
     // data type of task_labels changed array to string .. need to manage here cause of this use in other module
     let task_labels = [];
-    if (value?.task_labels && value?.task_labels != "")
-      task_labels = [new mongoose.Types.ObjectId(value.task_labels)];
+    if (value?.task_labels && value?.task_labels != "") {
+      const labels = Array.isArray(value.task_labels)
+        ? value.task_labels
+        : [value.task_labels];
+
+      task_labels = labels
+        .filter(Boolean)
+        .map((labelId) => new mongoose.Types.ObjectId(labelId));
+    }
 
     value.task_labels = task_labels;
 

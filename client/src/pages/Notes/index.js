@@ -127,7 +127,29 @@ export default function NotesPage() {
     }
   };
 
-  const openAddNote = async () => { setAddOpen(true); try { await loadProjects(); } catch (e) { console.error(e); } };
+  const loadAllUsers = useCallback(async () => {
+    if (allUsers.length > 0) return;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getUsermaster,
+        body: { pageNo: 1, limit: 500 },
+      });
+      const list = res?.data?.data?.data || res?.data?.data || [];
+      setAllUsers(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error("loadAllUsers error", e);
+    }
+  }, [allUsers.length]);
+
+  const openAddNote = async () => {
+    setAddOpen(true);
+    try {
+      await Promise.all([loadProjects(), loadAllUsers()]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const onProjectChange = async (pid) => {
     addForm.setFieldValue("noteBook_id", undefined);
@@ -150,10 +172,18 @@ export default function NotesPage() {
     try {
       const values = await addForm.validateFields();
       setSubmitting(true);
+      const subscribers = Array.isArray(values.subscribers) ? values.subscribers : [];
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addNotes,
-        body: { title: values.title, project_id: values.project_id, ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}), isPrivate: false, subscribers: [], pms_clients: [] },
+        body: {
+          title: values.title,
+          project_id: values.project_id,
+          ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}),
+          isPrivate: false,
+          subscribers,
+          pms_clients: [],
+        },
       });
       if (res?.data?.status === 1 || res?.data?.success) {
         message.success("Note added successfully");
@@ -273,9 +303,12 @@ export default function NotesPage() {
 
   const filteredNotes = notes.filter((note) => {
     const isCreator = note.createdBy === currentUserId || note.createdBy?._id === currentUserId || note.createdBy?.toString() === currentUserId;
-    if (activeTab === "created") return isCreator;
     const isSubscriber = (note.subscribers || []).some(s => (s?._id || s?.toString()) === currentUserId);
-    return !isCreator && isSubscriber;
+    const isClientRecipient = (note.pms_clients || []).some(c => (c?._id || c?.toString()) === currentUserId);
+    const isSharedNote = (note.subscribers || []).length > 0 || (note.pms_clients || []).length > 0;
+
+    if (activeTab === "created") return isCreator && !isSharedNote;
+    return isSharedNote && (isCreator || isSubscriber || isClientRecipient);
   });
 
   const colorPickerContent = (noteId) => (
@@ -427,6 +460,17 @@ export default function NotesPage() {
           <Form.Item name="noteBook_id" label="Notebook (optional)">
             <Select showSearch placeholder="Select notebook" loading={notebooksLoading} allowClear
               options={notebooks.map((nb) => ({ value: nb._id, label: nb.title }))} />
+          </Form.Item>
+          <Form.Item name="subscribers" label="Subscribers">
+            <Select
+              mode="multiple"
+              showSearch
+              allowClear
+              placeholder="Select subscribers"
+              optionFilterProp="label"
+              filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+              options={allUsers.map((u) => ({ value: u._id, label: u.full_name || u.name || u.email }))}
+            />
           </Form.Item>
         </Form>
       </Modal>

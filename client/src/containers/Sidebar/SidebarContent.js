@@ -65,11 +65,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [location.pathname]);
 
   const getDefaultOpenKeys = useCallback(() => {
-    const path = location.pathname;
-    if (path.includes("/project-runnig-reports") || path.includes("/timesheet-reports")) return ["Analytics"];
-    if (path.includes("/positive-review") || path.includes("/complaints")) return ["Feedback"];
     return [];
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
@@ -199,6 +196,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         openKeys={openKeys}
         onOpenChange={handleOpenChange}
         triggerSubMenuAction="hover"
+        subMenuCloseDelay={0.08}
         items={item}
       />
     ),

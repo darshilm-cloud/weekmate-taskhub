@@ -599,6 +599,179 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
 .fileAttachment_Box .fileNameTxtellipsis {
     word-wrap: break-word;
 }
+
+.file-folder-modal {
+    width: min(760px, 92vw) !important;
+}
+
+.file-folder-modal .ant-modal-content {
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.22) !important;
+}
+
+.file-folder-modal .ant-modal-header {
+    padding: 22px 28px 20px !important;
+    background: linear-gradient(135deg, #0b3a5b 0%, #114a70 100%) !important;
+    border-bottom: none !important;
+}
+
+.file-folder-modal .ant-modal-title {
+    color: #ffffff !important;
+}
+
+.file-folder-modal__title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.file-folder-modal__eyebrow {
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.file-folder-modal__title {
+    margin: 0;
+    font-size: 29px;
+    line-height: 1.1;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.file-folder-modal button.ant-modal-close {
+    top: 18px !important;
+    right: 18px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: none !important;
+}
+
+.file-folder-modal button.ant-modal-close:hover,
+.file-folder-modal button.ant-modal-close:focus {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.file-folder-modal .ant-modal-close-x {
+    width: 38px !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-folder-modal .ant-modal-body {
+    padding: 0 !important;
+    background:
+        radial-gradient(circle at top right, rgba(17, 74, 112, 0.09), transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, #ffffff 30%);
+}
+
+.file-folder-modal__body {
+    padding: 28px 28px 26px;
+}
+
+.file-folder-modal__form .ant-form-item {
+    margin-bottom: 18px;
+}
+
+.file-folder-modal__form .ant-form-item-label > label {
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #53657d;
+}
+
+.file-folder-modal__intro {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    border: 1px solid #dfe9f3;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #61758f;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.file-folder-modal__form .ant-input {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid #d7e1ec;
+    background: #ffffff;
+    color: #18293d;
+    font-size: 15px;
+    padding-inline: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.file-folder-modal__form .ant-input::placeholder {
+    color: #a8b6c7;
+}
+
+.file-folder-modal__footer {
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #e4edf6;
+}
+
+.file-folder-modal__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-folder-modal__primary.ant-btn,
+.file-folder-modal__secondary.ant-btn {
+    min-width: 110px;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+.file-folder-modal__primary.ant-btn {
+    background: #0b3a5b !important;
+    border-color: #0b3a5b !important;
+    color: #ffffff !important;
+}
+
+.file-folder-modal__primary.ant-btn:hover,
+.file-folder-modal__primary.ant-btn:focus {
+    background: #0b3a5b !important;
+    border-color: #0b3a5b !important;
+    color: #ffffff !important;
+}
+
+.file-folder-modal__secondary.ant-btn {
+    background: #f4f8fc !important;
+    border: 1px solid #d7e4ef !important;
+    color: #56708b !important;
+}
+
+.file-folder-modal__secondary.ant-btn:hover,
+.file-folder-modal__secondary.ant-btn:focus {
+    background: #f4f8fc !important;
+    border-color: #d7e4ef !important;
+    color: #56708b !important;
+}
 @media screen and (max-width: 1400px) {
     .upload-file-left > span {
         flex: 0 0 calc(25% - 12px) !important;

@@ -388,8 +388,13 @@
      Settings Modal (v2)
      ────────────────────────────────────────────────────────── */
   .setting-main-wrapper.wm-settings-modal .ant-modal-content {
-    border-radius: 14px;
+    border-radius: 24px;
     overflow: hidden;
+    border: 1px solid rgba(14, 116, 144, 0.12);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+    background:
+      radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 28%),
+      linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   }
 
   .setting-main-wrapper.wm-settings-modal .ant-modal-body {
@@ -397,32 +402,32 @@
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__header {
-    padding: 18px 22px 14px;
-    border-bottom: 1px solid #eef2f7;
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid #e0edf6;
+    background: linear-gradient(135deg, rgba(8, 47, 73, 0.98) 0%, rgba(12, 74, 110, 0.95) 52%, rgba(14, 116, 144, 0.9) 100%);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__title {
-    font-size: 18px;
+    font-size: 24px;
     font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.01em;
+    color: #f8fbff;
+    letter-spacing: -0.02em;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__subtitle {
-    margin-top: 4px;
-    font-size: 12.5px;
-    color: #64748b;
+    margin-top: 6px;
+    font-size: 13px;
+    color: rgba(232, 241, 248, 0.86);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__form {
-    padding: 18px 22px 0;
+    padding: 22px 24px 0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__content {
     display: grid;
     grid-template-columns: 300px 1fr;
-    gap: 16px;
+    gap: 18px;
     align-items: start;
   }
 
@@ -431,15 +436,16 @@
     font-weight: 800;
     color: #0f172a;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 10px;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__left {
-    border: 1px solid #eef2f7;
-    border-radius: 12px;
-    padding: 14px;
-    background: #ffffff;
+    border: 1px solid #dcecf6;
+    border-radius: 20px;
+    padding: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5fbff 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioWrap {
@@ -449,33 +455,34 @@
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioGroup {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard {
     display: flex;
-    gap: 10px;
-    padding: 12px 12px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
+    gap: 12px;
+    padding: 14px 14px;
+    border-radius: 16px;
+    border: 1px solid #d7e7f2;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard:hover {
-    border-color: #c7d2fe;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    border-color: #8bd3dd;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
     transform: translateY(-1px);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard.active {
-    border-color: #93c5fd;
-    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.12);
+    border-color: #0ea5a4;
+    background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+    box-shadow: 0 14px 30px rgba(14, 165, 164, 0.16);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__radioTitle {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 800;
     color: #0f172a;
     line-height: 1.1;
@@ -488,23 +495,24 @@
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__hint {
-    margin-top: 10px;
+    margin-top: 14px;
     font-size: 12px;
-    color: #64748b;
-    background: #f8fafc;
-    border: 1px dashed #e2e8f0;
-    border-radius: 10px;
-    padding: 10px 10px;
+    color: #4b6479;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef8ff 100%);
+    border: 1px dashed #c8e1ef;
+    border-radius: 14px;
+    padding: 12px 12px;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__right {
-    border: 1px solid #eef2f7;
-    border-radius: 12px;
-    padding: 14px;
-    background: #ffffff;
+    border: 1px solid #dcecf6;
+    border-radius: 20px;
+    padding: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
     min-height: 360px;
     display: flex;
     flex-direction: column;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__rightTop {
@@ -512,12 +520,29 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dcecf6;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__search {
     flex: 1;
     min-width: 200px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input,
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input-affix-wrapper {
+    border-radius: 14px;
+    border-color: #cfe1ef;
+    background: rgba(255, 255, 255, 0.92);
+    min-height: 40px;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input-affix-wrapper:hover,
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input-affix-wrapper:focus,
+  .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input-affix-wrapper-focused {
+    border-color: #0ea5a4;
+    box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions {
@@ -527,13 +552,24 @@
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn {
-    padding: 0 6px;
-    height: 28px;
+    padding: 0 12px;
+    height: 32px;
+    border-radius: 999px;
+    background: #eff8ff;
+    color: #0f5f8a;
+    border: 1px solid #cfe1ef;
+    font-weight: 700;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn:hover {
+    background: #dcf6f4;
+    color: #0f766e;
+    border-color: #81d8d0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__list {
     margin-top: 2px;
-    padding-right: 6px;
+    padding-right: 8px;
     overflow: auto;
     max-height: 420px;
   }
@@ -545,14 +581,14 @@
   .setting-main-wrapper.wm-settings-modal .wm-settings__groupTitle {
     font-size: 12px;
     font-weight: 800;
-    color: #334155;
-    margin-bottom: 8px;
+    color: #355268;
+    margin-bottom: 10px;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__groupBody {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__row {
@@ -560,10 +596,11 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid #eef2f7;
-    border-radius: 12px;
-    background: #fbfdff;
+    padding: 12px 14px;
+    border: 1px solid #ddebf4;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__row.disabled {
@@ -571,7 +608,7 @@
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__rowLabel {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     color: #0f172a;
   }
@@ -587,21 +624,71 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 14px 22px 18px;
-    border-top: 1px solid #eef2f7;
-    background: #ffffff;
+    padding: 16px 24px 22px;
+    border-top: 1px solid #dfebf3;
+    background: linear-gradient(180deg, rgba(248, 251, 255, 0.92) 0%, #ffffff 100%);
     margin-top: 16px;
     position: sticky;
     bottom: 0;
+    backdrop-filter: blur(8px);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__btnCancel {
-    border-radius: 10px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border-color: #d6e4ef;
+    background: #ffffff;
+    color: #24435a;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave {
-    border-radius: 10px;
-    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: none;
+    color: #ffffff;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0f766e 0%, #0ea5a4 48%, #22c55e 100%);
+    box-shadow: 0 14px 26px rgba(14, 165, 164, 0.28);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__btnCancel:hover {
+    border-color: #8bd3dd;
+    color: #0f5f8a;
+    background: #f7fcff;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave:hover,
+  .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave:focus {
+    color: #ffffff;
+    background: linear-gradient(135deg, #0b5f59 0%, #0d9488 48%, #16a34a 100%);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .ant-switch {
+    background: #c7d7e5;
+  }
+
+  .setting-main-wrapper.wm-settings-modal .ant-switch.ant-switch-checked {
+    background: linear-gradient(135deg, #0f766e 0%, #0ea5a4 100%);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .ant-modal-close {
+    top: 18px;
+    inset-inline-end: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    color: #f8fbff;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+  }
+
+  .setting-main-wrapper.wm-settings-modal .ant-modal-close:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
   }
 
   @media (max-width: 900px) {
@@ -622,7 +709,7 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__header,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__header {
-    background: linear-gradient(180deg, #0f1923 0%, #132238 100%) !important;
+    background: linear-gradient(135deg, #08131d 0%, #0f2d3a 58%, #0f3c4a 100%) !important;
     border-bottom-color: #1e3a52 !important;
   }
 
@@ -643,7 +730,7 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__left,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__left {
-    background: #132238 !important;
+    background: linear-gradient(180deg, #132238 0%, #10202f 100%) !important;
     border-color: #1e3a52 !important;
   }
 
@@ -661,9 +748,9 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard.active,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__radioCard.active {
-    border-color: #2563eb !important;
-    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.2) !important;
-    background: #1a2f4a !important;
+    border-color: #14b8a6 !important;
+    box-shadow: 0 8px 22px rgba(20, 184, 166, 0.2) !important;
+    background: linear-gradient(180deg, #13353e 0%, #12313a 100%) !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__radioTitle,
@@ -678,14 +765,14 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__hint,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__hint {
-    background: #1a2f4a !important;
+    background: #102a36 !important;
     border-color: #1e3a52 !important;
     color: #7a8fa6 !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__right,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__right {
-    background: #132238 !important;
+    background: linear-gradient(180deg, #132238 0%, #10202f 100%) !important;
     border-color: #1e3a52 !important;
   }
 
@@ -708,7 +795,7 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__row,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__row {
-    background: #0f1923 !important;
+    background: linear-gradient(180deg, #0f1923 0%, #12202d 100%) !important;
     border-color: #1e3a52 !important;
   }
 
@@ -738,21 +825,29 @@
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__btnCancel:hover,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__btnCancel:hover {
     background: #243b56 !important;
-    border-color: #2563eb !important;
+    border-color: #14b8a6 !important;
     color: #e3ecfb !important;
+  }
+
+  body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave,
+  body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__btnSave {
+    background: linear-gradient(135deg, #0d5b57 0%, #0f9d8f 48%, #16a34a 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn {
-    background: transparent !important;
-    color: #7a8fa6 !important;
+    background: rgba(19, 47, 74, 0.9) !important;
+    color: #9fd9d3 !important;
     border-color: #1e3a52 !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn:hover,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn:hover {
-    color: #60a5fa !important;
-    border-color: #2563eb !important;
+    color: #ccfbf1 !important;
+    border-color: #14b8a6 !important;
+    background: rgba(16, 64, 78, 0.96) !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .ant-radio-inner,
@@ -763,8 +858,8 @@
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .ant-radio-checked .ant-radio-inner,
   body[data-theme="dark"] .setting-main-wrapper.wm-settings-modal .ant-radio-checked .ant-radio-inner {
-    background: #2563eb !important;
-    border-color: #2563eb !important;
+    background: #14b8a6 !important;
+    border-color: #14b8a6 !important;
   }
 
   body.dark-theme .setting-main-wrapper.wm-settings-modal .ant-modal-close,

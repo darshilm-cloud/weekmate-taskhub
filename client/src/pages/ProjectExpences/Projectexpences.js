@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Link, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import {
   Button,
   Col,
@@ -63,6 +63,35 @@ const fmtUSD = (v) => {
   return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(2)}`;
 };
 
+const toExpenseArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+};
+
+const normalizeExpenseRecord = (expense) => {
+  if (!expense || typeof expense !== "object") return expense;
+
+  const creatorName =
+    expense?.createdBy?.full_name ||
+    expense?.created_by?.full_name ||
+    expense?.created_by_name ||
+    expense?.creator?.full_name ||
+    expense?.creator_name ||
+    expense?.user?.full_name ||
+    expense?.user_name ||
+    "";
+
+  return {
+    ...expense,
+    project: expense?.project || expense?.project_id || null,
+    createdBy: expense?.createdBy || expense?.created_by || expense?.creator || expense?.user || {
+      full_name: creatorName,
+    },
+  };
+};
+
 const statusClass = (s = "") => {
   switch (s.toLowerCase()) {
     case "approved": return "approved";
@@ -71,6 +100,49 @@ const statusClass = (s = "") => {
     case "paid":     return "paid";
     default:         return "default";
   }
+};
+
+const buildExpenseFilterBody = ({
+  selectedProject,
+  technology,
+  manager,
+  accontManager,
+  createdBy,
+  need_to_bill_customer,
+}) => {
+  const body = {};
+
+  if (Array.isArray(selectedProject) && selectedProject.length > 0) {
+    body.project_id = selectedProject;
+  }
+  if (Array.isArray(technology) && technology.length > 0) {
+    body.technology = technology;
+  }
+  if (Array.isArray(manager) && manager.length > 0) {
+    body.manager_id = manager;
+  }
+  if (Array.isArray(accontManager) && accontManager.length > 0) {
+    body.acc_manager_id = accontManager;
+  }
+  if (Array.isArray(createdBy) && createdBy.length > 0) {
+    body.createdBy = createdBy;
+  }
+  if (need_to_bill_customer !== "All" && need_to_bill_customer !== undefined) {
+    body.need_to_bill_customer = need_to_bill_customer;
+  }
+
+  return body;
+};
+
+const mergeExpensesById = (primary = [], secondary = []) => {
+  const map = new Map();
+  [...primary, ...secondary].forEach((expense) => {
+    const normalizedExpense = normalizeExpenseRecord(expense);
+    if (normalizedExpense?._id) {
+      map.set(normalizedExpense._id, normalizedExpense);
+    }
+  });
+  return Array.from(map.values());
 };
 
 /* ─── Stat Card ─────────────────────────────────────────────────── */
@@ -91,6 +163,8 @@ const StatCard = ({ icon, label, value, sub, color }) => (
 const Projectexpences = () => {
   const dispatch      = useDispatch();
   const companySlug   = localStorage.getItem("companyDomain");
+  const history       = useHistory();
+  const location      = useLocation();
   const { emitEvent, listenEvent } = useSocketAction();
 
   /* ── filter state (wired to existing FilterComponent) ── */
@@ -109,6 +183,10 @@ const Projectexpences = () => {
   /* ── data ── */
   const [allExpenses,          setAllExpenses]          = useState([]); // for analytics
   const [projectexpencesList,  setprojectexpencesList]  = useState([]); // paginated table
+  const [optimisticExpenses,   setOptimisticExpenses]   = useState([]);
+  const optimisticRef = React.useRef([]);
+  // Keep ref in sync so fetch callbacks always read latest value
+  React.useEffect(() => { optimisticRef.current = optimisticExpenses; }, [optimisticExpenses]);
   const [analyticsLoading,     setAnalyticsLoading]     = useState(false);
   const [tableLoading,         setTableLoading]         = useState(false);
   const [pageLoading,          setPageLoading]          = useState(true);
@@ -142,17 +220,22 @@ const Projectexpences = () => {
         body: {
           pageNo:  1,
           limit:   1000,
-          project_id:          selectedProject,
-          technology,
-          manager_id:          manager,
-          acc_manager_id:      accontManager,
-          createdBy,
-          need_to_bill_customer:
-            need_to_bill_customer === "All" ? undefined : need_to_bill_customer,
+          sort: "_id",
+          sortBy: "desc",
+          ...buildExpenseFilterBody({
+            selectedProject,
+            technology,
+            manager,
+            accontManager,
+            createdBy,
+            need_to_bill_customer,
+          }),
         },
       });
       if (response?.data?.data) {
-        setAllExpenses(response.data.data);
+        const serverExpenses = toExpenseArray(response.data.data).map(normalizeExpenseRecord);
+        setAllExpenses(serverExpenses);
+        setOptimisticExpenses([]);
       }
     } catch (err) {
       console.error("Analytics fetch error:", err);
@@ -174,19 +257,30 @@ const Projectexpences = () => {
         body: {
           pageNo:   pagination.current,
           limit:    pagination.pageSize,
-          project_id:     selectedProject,
-          technology,
-          manager_id:     manager,
-          acc_manager_id: accontManager,
-          createdBy,
-          need_to_bill_customer:
-            need_to_bill_customer === "All" ? undefined : need_to_bill_customer,
+          sort: "_id",
+          sortBy: "desc",
+          ...buildExpenseFilterBody({
+            selectedProject,
+            technology,
+            manager,
+            accontManager,
+            createdBy,
+            need_to_bill_customer,
+          }),
         },
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
-        setprojectexpencesList(response.data.data);
-        setPagination((p) => ({ ...p, total: response.data.metadata?.total || 0 }));
+        const serverExpenses = toExpenseArray(response.data.data).map(normalizeExpenseRecord);
+        const serverTotal = response.data.metadata?.total || serverExpenses.length;
+
+        setprojectexpencesList(serverExpenses);
+        setPagination((p) => ({ ...p, total: serverTotal }));
+        setOptimisticExpenses([]);
+
+        if (pagination.current === 1) {
+          setAllExpenses(serverExpenses);
+        }
       }
     } catch (err) {
       dispatch(hideAuthLoader());
@@ -200,6 +294,23 @@ const Projectexpences = () => {
     selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer,
     dispatch,
   ]);
+
+  useEffect(() => {
+    const justCreatedExpense = location?.state?.justCreatedExpense;
+    if (!justCreatedExpense?._id) return;
+
+    setOptimisticExpenses((prev) => mergeExpensesById([justCreatedExpense], prev));
+    setAllExpenses((prev) => mergeExpensesById([justCreatedExpense], prev));
+    setprojectexpencesList((prev) =>
+      pagination.current === 1 ? mergeExpensesById([justCreatedExpense], prev) : prev
+    );
+    setPagination((prev) => ({
+      ...prev,
+      total: Math.max((prev.total || 0) + 1, 1),
+    }));
+
+    history.replace(location.pathname, {});
+  }, [history, location.pathname, location.state, pagination.current]);
 
   useEffect(() => {
     fetchAllForAnalytics();
@@ -225,7 +336,7 @@ const Projectexpences = () => {
      ANALYTICS — computed from allExpenses
   ───────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
-    let expenses = allExpenses;
+    let expenses = allExpenses.length ? allExpenses : projectexpencesList;
 
     /* local filters (status, billable, date range) */
     if (statusFilter !== "All") {
@@ -294,7 +405,7 @@ const Projectexpences = () => {
       billableAmt2:     billableAmt,
       nonBillableAmt,
     };
-  }, [allExpenses, statusFilter, billableToggle, dateRange]);
+  }, [allExpenses, projectexpencesList, statusFilter, billableToggle, dateRange]);
 
   /* ─────────────────────────────────────────────────────────────
      CHART OPTIONS
@@ -487,7 +598,15 @@ const Projectexpences = () => {
         title: "Created By",
         key: "createdBy",
         width: 130,
-        render: (_, r) => r?.createdBy?.full_name || "—",
+        render: (_, r) =>
+          r?.createdBy?.full_name ||
+          r?.created_by?.full_name ||
+          r?.created_by_name ||
+          r?.creator?.full_name ||
+          r?.creator_name ||
+          r?.user?.full_name ||
+          r?.user_name ||
+          "—",
       },
       {
         title: "Date",

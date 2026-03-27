@@ -13,6 +13,19 @@ const RIGHT_W = 170;
 function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
 function parseDate(d) { if (!d) return null; const m = moment(d); return m.isValid() ? m.startOf("day") : null; }
 function buildRange(s, e) { const r = [], c = s.clone(); while (c.isSameOrBefore(e, "day")) { r.push(c.clone()); c.add(1, "day"); } return r; }
+function getLabelTitle(label) {
+  if (!label) return "";
+  if (typeof label === "string") return label;
+  return (
+    label.title ||
+    label.name ||
+    label.label ||
+    label.label_name ||
+    label.task_label?.title ||
+    label.label_id?.title ||
+    ""
+  );
+}
 
 const BAR_COLORS = ["#a78bfa", "#f472b6", "#fb7185", "#fdba74", "#fbbf24", "#34d399", "#2dd4bf", "#60a5fa"];
 function barColor(seed) {
@@ -22,7 +35,7 @@ function barColor(seed) {
   return BAR_COLORS[Math.abs(h) % BAR_COLORS.length];
 }
 
-export default function TasksGanttView({ tasks = [], onTaskClick }) {
+export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = null, rangeEnd = null }) {
   const ref = useRef(null);
   const [hovered, setHovered] = useState(null);
   const [dayPx, setDayPx] = useState(BASE_DAY_PX);
@@ -47,9 +60,11 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
       .filter((s) => s.tasks.length > 0)
   ), [tasks]);
 
-	  const { start, days } = useMemo(() => {
-	    let lo = null, hi = null;
-	    sections.forEach((sec) => {
+  const { start, days } = useMemo(() => {
+    let lo = rangeStart ? parseDate(rangeStart) : null;
+    let hi = rangeEnd ? parseDate(rangeEnd) : null;
+
+    sections.forEach((sec) => {
       sec.tasks.forEach((t) => {
         const s = parseDate(t.start_date) || parseDate(t.created_at);
         const e = parseDate(t.due_date);
@@ -57,12 +72,15 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
         if (e && (!hi || e.isAfter(hi))) hi = e.clone();
       });
     });
-	    if (!lo) lo = moment().startOf("day").subtract(7, "days");
-	    if (!hi) hi = moment().startOf("day").add(30, "days");
-	    const s = lo.clone().startOf("month");
-	    const e = s.clone().endOf("month");
-	    return { start: s, days: buildRange(s, e) };
-	  }, [sections]);
+
+    if (!lo) lo = moment().startOf("day").subtract(7, "days");
+    if (!hi) hi = moment().startOf("day").add(30, "days");
+
+    const s = rangeStart ? lo.clone().startOf("day") : lo.clone().startOf("month");
+    const e = rangeEnd ? hi.clone().endOf("day") : s.clone().endOf("month");
+
+    return { start: s, days: buildRange(s, e) };
+  }, [sections, rangeStart, rangeEnd]);
 
   const total = days.length;
   const totalW = total * dayPx;
@@ -198,8 +216,8 @@ export default function TasksGanttView({ tasks = [], onTaskClick }) {
                   Array.isArray(task.assignees) && task.assignees.length > 0
                     ? (task.assignees[0]?.full_name || task.assignees[0]?.name || task.assignees[0]?.email || "")
                     : "";
-                const labelTitles = (task?.taskLabels || task?.task_labels || [])
-                  .map((l) => (typeof l === "string" ? l : l?.title))
+                const labelTitles = (task?.taskLabels || task?.task_labels || task?.labels || [])
+                  .map(getLabelTitle)
                   .filter(Boolean);
 
                 return (

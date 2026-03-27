@@ -101,9 +101,25 @@ function getTaskPageStateFromSearch(search, isAdmin) {
   const finalStatus =
     statusParam && ["all", "incomplete", "completed"].includes(statusParam) ? statusParam : base.statusFilter;
 
+  const shouldDefaultToCurrentMonthGantt =
+    view === "gantt" &&
+    !base.taskStartDate &&
+    !base.taskEndDate &&
+    !params.get("start_date") &&
+    !params.get("end_date");
+
+  const finalTaskStartDate = shouldDefaultToCurrentMonthGantt
+    ? dayjs().startOf("month").format("YYYY-MM-DD")
+    : base.taskStartDate;
+  const finalTaskEndDate = shouldDefaultToCurrentMonthGantt
+    ? dayjs().endOf("month").format("YYYY-MM-DD")
+    : base.taskEndDate;
+
   return {
     ...base,
     statusFilter: finalStatus,
+    taskStartDate: finalTaskStartDate,
+    taskEndDate: finalTaskEndDate,
     projectIds,
     view,
     section,
@@ -285,6 +301,17 @@ const TaskPage = () => {
     }
   }, []);
 
+  const handleViewChange = useCallback((nextView) => {
+    setView(nextView);
+
+    if (nextView === "gantt" && !taskStartDate && !taskEndDate) {
+      const now = dayjs();
+      setTaskStartDate(now.startOf("month").format("YYYY-MM-DD"));
+      setTaskEndDate(now.endOf("month").format("YYYY-MM-DD"));
+      setDatePreset("this_month");
+    }
+  }, [taskEndDate, taskStartDate]);
+
   const sortedTasks = useMemo(() => sortTaskList(tasks, sortMode), [tasks, sortMode]);
 
   const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
@@ -430,25 +457,25 @@ const TaskPage = () => {
         <div className="task-page-tabs">
           <button
             className={`task-tab ${view === "list" ? "active" : ""}`}
-            onClick={() => setView("list")}
+            onClick={() => handleViewChange("list")}
           >
             <UnorderedListOutlined className="task-tab-icon" /> List
           </button>
           <button
             className={`task-tab ${view === "kanban" ? "active" : ""}`}
-            onClick={() => setView("kanban")}
+            onClick={() => handleViewChange("kanban")}
           >
             <AppstoreOutlined className="task-tab-icon" /> Kanban
           </button>
           <button
             className={`task-tab ${view === "calendar" ? "active" : ""}`}
-            onClick={() => setView("calendar")}
+            onClick={() => handleViewChange("calendar")}
           >
             <CalendarOutlined className="task-tab-icon" /> Calendar
           </button>
           <button
             className={`task-tab ${view === "gantt" ? "active" : ""}`}
-            onClick={() => setView("gantt")}
+            onClick={() => handleViewChange("gantt")}
           >
             <BarChartOutlined className="task-tab-icon" /> Gantt
           </button>
@@ -570,6 +597,8 @@ const TaskPage = () => {
         <div className="task-gantt-wrapper">
           <TasksGanttView
             tasks={ganttBoards}
+            rangeStart={taskStartDate}
+            rangeEnd={taskEndDate}
             onTaskClick={handleOpenTask}
           />
         </div>

@@ -147,6 +147,7 @@ const TaskDetailModal = ({
   open,
   onClose,
   task,
+  mode = "detail",
   companySlug,
   onOpenInProject,
   // Edit mode props
@@ -163,6 +164,9 @@ const TaskDetailModal = ({
   newBugData,
   onNewBugDataChange,
   onIssueDataKeypress,
+  createLeftPanel = null,
+  createRightPanel = null,
+  createWidth = 1100,
 }) => {
   const isDark = document.body.classList.contains("dark-theme") || document.body.getAttribute("data-theme") === "dark";
   const [details, setDetails] = useState(null);
@@ -1138,6 +1142,29 @@ const TaskDetailModal = ({
       )}
     </div>
   );
+
+  if (mode === "create") {
+    return (
+      <Modal
+        className="task-page-detail-modal"
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        width={createWidth}
+        closable={false}
+        destroyOnClose
+      >
+        <div className="task-detail-modal-body">
+          <div className="task-detail-modal-left">
+            {createLeftPanel}
+          </div>
+          <div className="task-detail-modal-right">
+            {createRightPanel}
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal

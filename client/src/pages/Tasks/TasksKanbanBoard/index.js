@@ -1051,7 +1051,11 @@ const TaskList = ({
                                   className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    getTaskByIdDetails(task?._id);
+                                    getTaskByIdDetails(task?._id, {
+                                      projectId,
+                                      mainTaskId:
+                                        selectedTask?._id || listID || task?.mainTask?._id,
+                                    });
                                     getComment(task?._id);
                                     setTempBoard(boardData);
                                     setSelectedTaskId(task?._id);
