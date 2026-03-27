@@ -367,26 +367,11 @@ const BugList = ({
                                   ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ")
                                   : "Unassigned"}
                               </span>
-                              <span className="wm-card-meta">
-                                {task.progress || "0"}%
-                              </span>
                             </div>
 
                           </div>
-                          {/* Checkbox + 3-dot menu */}
+                          {/* 3-dot menu */}
                           <div>
-                            <input
-                              type="checkbox"
-                              style={{
-                                position: "absolute",
-                                top: "17px",
-                                right: "34px",
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                              }}
-                            />
                             <Dropdown
                               overlay={
                                 <Menu>

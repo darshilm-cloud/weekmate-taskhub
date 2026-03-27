@@ -26,6 +26,8 @@ const TaskKanbanController = ({
   getProjectMianTask,
   getBoardTasks,
   updateBoardTaskLocally,
+  moveBoardTaskLocally,
+  refreshProjectMainTasks,
 }) => {
   const location = useLocation();
   const history = useHistory();
@@ -803,12 +805,38 @@ useEffect(() => {
     }
   };
 
-  const getTaskByIdDetails = async (projectId, editType, refresh) => {
+  const getTaskByIdDetails = async (taskId, editType, refresh) => {
     try {
+      const override =
+        editType && typeof editType === "object" ? editType : null;
+      const projectIdForReq =
+        override?.projectId ||
+        projectId ||
+        taskDetails?.project?._id ||
+        taskDetails?.project_id ||
+        taskDetails?.projectId ||
+        selectedTask?.project?._id ||
+        selectedTask?.project_id ||
+        selectedTask?.projectId ||
+        selectedTask?.project?._id;
+      const mainTaskIdForReq =
+        override?.mainTaskId ||
+        listID ||
+        taskDetails?.mainTask?._id ||
+        taskDetails?.main_task_id ||
+        taskDetails?.mainTaskId ||
+        selectedTask?._id ||
+        selectedTask?.main_task_id ||
+        selectedTask?.mainTaskId;
+
+      if (!projectIdForReq || !mainTaskIdForReq || !taskId) {
+        message.error("Unable to open task details (missing context).");
+        return;
+      }
       const reqBody = {
-        project_id: selectedTask.project._id,
-        main_task_id: selectedTask._id,
-        _id: projectId,
+        project_id: projectIdForReq,
+        main_task_id: mainTaskIdForReq,
+        _id: taskId,
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -835,7 +863,13 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
-    dispatch(showAuthLoader());
+    const targetStatus =
+      (projectWorkflowStage || []).find((item) => item?._id === workFlowStatusId) ||
+      (tasks || []).find((column) => column?.workflowStatus?._id === workFlowStatusId)?.workflowStatus ||
+      null;
+
+    moveBoardTaskLocally?.(taskId, workFlowStatusId, targetStatus || {});
+
     try {
       const reqBody = {
         task_status: workFlowStatusId,
@@ -847,17 +881,31 @@ useEffect(() => {
       });
 
       if (response?.data?.data && response?.data?.status) {
-        // getBoardTasks(response.data.data.main_task_id)
-        getProjectMianTask("", true);
+        const updatedTask = response.data.data;
+        updateBoardTaskLocally?.({
+          ...updatedTask,
+          _stId:
+            updatedTask?._stId ||
+            updatedTask?.task_status?._id ||
+            workFlowStatusId,
+        });
         if (isPopoverVisible) {
           getTaskByIdDetails(taskId);
         }
+        refreshProjectMainTasks?.({ suppressBoardReload: true });
       } else {
-        message.error(response.data.message);
+        const currentListId = selectedTask?._id;
+        if (currentListId) {
+          getBoardTasks(currentListId, { silent: true });
+        }
+        message.error(response?.data?.message || "Failed to update task status");
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
-      dispatch(hideAuthLoader());
+      const currentListId = selectedTask?._id;
+      if (currentListId) {
+        getBoardTasks(currentListId, { silent: true });
+      }
+      message.error(error?.response?.data?.message || "Failed to update task status");
       console.log(error);
     }
   };
@@ -944,7 +992,7 @@ useEffect(() => {
   const onDragLeave = (evt) => {
     const currentTarget = evt.currentTarget;
     const newTarget = evt.relatedTarget;
-    if (newTarget.parentNode === currentTarget || newTarget === currentTarget)
+    if (!newTarget || newTarget.parentNode === currentTarget || newTarget === currentTarget)
       return;
     evt.preventDefault();
     const element = evt.currentTarget;

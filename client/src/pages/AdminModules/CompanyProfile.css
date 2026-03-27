@@ -480,3 +480,133 @@ body[data-theme="dark"] .cm-shimmer {
   .cm-skeleton-assets { grid-template-columns: 1fr; }
   .cm-hero { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── Edit Company Modal — Dark Theme ─────────────────────── */
+body.dark-theme .cm-modal .ant-modal-content,
+body[data-theme="dark"] .cm-modal .ant-modal-content {
+  background: #0f1923 !important;
+  border-color: #1e3a52 !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-header,
+body[data-theme="dark"] .cm-modal .ant-modal-header {
+  background: linear-gradient(135deg, #0f1923 0%, #132238 100%) !important;
+  border-bottom-color: #1e3a52 !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-title,
+body[data-theme="dark"] .cm-modal .ant-modal-title {
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-body,
+body[data-theme="dark"] .cm-modal .ant-modal-body {
+  background: #0f1923 !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-footer,
+body[data-theme="dark"] .cm-modal .ant-modal-footer {
+  background: #0f1923 !important;
+  border-top-color: #1e3a52 !important;
+}
+
+body.dark-theme .cm-modal .ant-form-item-label > label,
+body[data-theme="dark"] .cm-modal .ant-form-item-label > label {
+  color: #94a8c2 !important;
+}
+
+body.dark-theme .cm-modal .ant-input,
+body.dark-theme .cm-modal .ant-input-affix-wrapper,
+body[data-theme="dark"] .cm-modal .ant-input,
+body[data-theme="dark"] .cm-modal .ant-input-affix-wrapper {
+  background: #132238 !important;
+  border-color: #1e3a52 !important;
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .cm-modal .ant-input:hover,
+body.dark-theme .cm-modal .ant-input:focus,
+body.dark-theme .cm-modal .ant-input-affix-wrapper:hover,
+body.dark-theme .cm-modal .ant-input-affix-wrapper-focused,
+body[data-theme="dark"] .cm-modal .ant-input:hover,
+body[data-theme="dark"] .cm-modal .ant-input:focus,
+body[data-theme="dark"] .cm-modal .ant-input-affix-wrapper:hover,
+body[data-theme="dark"] .cm-modal .ant-input-affix-wrapper-focused {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+}
+
+body.dark-theme .cm-modal .ant-input::placeholder,
+body[data-theme="dark"] .cm-modal .ant-input::placeholder {
+  color: #4a6380 !important;
+}
+
+body.dark-theme .cm-modal .ant-input-prefix,
+body[data-theme="dark"] .cm-modal .ant-input-prefix {
+  color: #4a6380 !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-close,
+body[data-theme="dark"] .cm-modal .ant-modal-close {
+  color: #7a8fa6 !important;
+}
+
+body.dark-theme .cm-modal .ant-modal-close:hover,
+body[data-theme="dark"] .cm-modal .ant-modal-close:hover {
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .cm-modal .cm-section-title,
+body[data-theme="dark"] .cm-modal .cm-section-title {
+  color: #94a8c2 !important;
+}
+
+body.dark-theme .cm-modal-cancel.ant-btn,
+body[data-theme="dark"] .cm-modal-cancel.ant-btn {
+  background: #1a2f4a !important;
+  border-color: #1e3a52 !important;
+  color: #c8d6e5 !important;
+}
+
+body.dark-theme .cm-modal-cancel.ant-btn:hover,
+body[data-theme="dark"] .cm-modal-cancel.ant-btn:hover {
+  background: #243b56 !important;
+  border-color: #2563eb !important;
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .asset-card,
+body[data-theme="dark"] .asset-card {
+  background: #132238 !important;
+  border-color: #1e3a52 !important;
+}
+
+body.dark-theme .asset-preview,
+body[data-theme="dark"] .asset-preview {
+  background: #0f1923 !important;
+  border-color: #1e3a52 !important;
+}
+
+body.dark-theme .asset-placeholder,
+body[data-theme="dark"] .asset-placeholder {
+  color: #4a6380 !important;
+}
+
+body.dark-theme .asset-upload-btn.ant-btn,
+body[data-theme="dark"] .asset-upload-btn.ant-btn {
+  background: #1a2f4a !important;
+  border-color: #1e3a52 !important;
+  color: #c8d6e5 !important;
+}
+
+body.dark-theme .asset-upload-btn.ant-btn:hover,
+body[data-theme="dark"] .asset-upload-btn.ant-btn:hover {
+  background: #243b56 !important;
+  border-color: #2563eb !important;
+  color: #e3ecfb !important;
+}
+
+body.dark-theme .cm-modal .ant-form-item-explain-error,
+body[data-theme="dark"] .cm-modal .ant-form-item-explain-error {
+  color: #f87171 !important;
+}

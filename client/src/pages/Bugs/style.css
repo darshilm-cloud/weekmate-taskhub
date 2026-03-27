@@ -15,6 +15,17 @@
     background: #ffffff !important;
 }
 
+/* Bugs page uses Tasks styling (task-wrapper) but has no left sidebar list.
+   Undo Tasks-specific rightbar max-width (calc(100% - 270px)) so views use full width. */
+.bugs-task-wrapper.task-wrapper .profilerightbar {
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
+    min-width: 0;
+}
+
 /* ── Column header ─────────────────────────────────────────── */
 .bugs-task-wrapper .drag_column h4 {
     display: flex !important;
@@ -187,13 +198,6 @@
     flex-shrink: 0;
 }
 
-/* Checkbox in card */
-.bugs-task-wrapper .wm-task-card input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-}
-
 /* ── Dark theme overrides ──────────────────────────────────── */
 body.dark-theme .bugs-task-wrapper .order.small-box,
 body[data-theme="dark"] .bugs-task-wrapper .order.small-box {
@@ -250,4 +254,18 @@ body[data-theme="dark"] .bugs-task-wrapper .wm-card-footer {
 body.dark-theme .bugs-task-wrapper .kanbanView-bugs-data,
 body[data-theme="dark"] .bugs-task-wrapper .kanbanView-bugs-data {
     background: #16202d;
+}
+
+/* ── Bugs Gantt: match Tasks gantt right column ───────────── */
+.bugs-task-wrapper .gt-rcell {
+    justify-content: flex-start !important;
+    padding: 0 12px !important;
+}
+
+.bugs-task-wrapper .gt-assignee-rc {
+    align-items: flex-start !important;
+}
+
+.bugs-task-wrapper .gt-label-pills {
+    justify-content: flex-start;
 }

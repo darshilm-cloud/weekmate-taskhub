@@ -167,6 +167,7 @@ exports.addUser = async (req, res) => {
     }
 
     const { email, firstName, lastName, password, companyId, pmsRoleId } = value;
+    const isActivate = req.body.isActivate !== undefined ? req.body.isActivate : true;
 
     // Check for user email and username exist
     let isEmailExists = await employeeSchema.findOne({
@@ -177,11 +178,6 @@ exports.addUser = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
     }
 
-    // const roleData = await PMSRoles.findOne({
-    //   role_name: "User",
-    //   isDeleted: false
-    // });
-
     // Add user according company
     let employeeObject = {
       email,
@@ -190,7 +186,8 @@ exports.addUser = async (req, res) => {
       full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: pmsRoleId,
-      companyId: newObjectId(companyId)
+      companyId: newObjectId(companyId),
+      isActivate
     };
 
     let saveEmployee = await new employeeSchema(employeeObject).save();

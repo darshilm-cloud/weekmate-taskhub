@@ -33,7 +33,6 @@ import {
   Modal,
   Dropdown,
   DatePicker,
-  Tooltip,
   Menu,
   Select,
   Popover,
@@ -86,6 +85,8 @@ const TaskList = ({
   updateTasks,
   updateTaskDraftStatus,
   updateBoardTaskLocally,
+  moveBoardTaskLocally,
+  refreshProjectMainTasks,
   projectDetails,
   isEditTaskSave,
   setEditTaskSave
@@ -101,15 +102,23 @@ const TaskList = ({
     onDrop,
     showTextArea,
     setShowTextArea,
-    onDragStart,
-    getTaskByIdDetails,
-    getTimeLogged,
-    getComment,
-    modalIsOpen,
-    handleCancel,
-    taskDetails,
-    viewTask,
-    setViewTask,
+	    onDragStart,
+	    getTaskByIdDetails,
+	    getTimeLogged,
+	    getComment,
+	    comments,
+	    handleCancelCommentModel,
+	    formComment,
+	    handleComments,
+	    commentVal,
+	    setCommentVal,
+	    handleSelect,
+	    setIsTextAreaFocused,
+	    modalIsOpen,
+	    handleCancel,
+	    taskDetails,
+	    viewTask,
+	    setViewTask,
     handleTaskDelete,
     estError,
     visible,
@@ -233,6 +242,8 @@ const TaskList = ({
     getBoardTasks,
     updateTasks,
     updateBoardTaskLocally,
+    moveBoardTaskLocally,
+    refreshProjectMainTasks,
   });
   const userData = JSON.parse(localStorage.getItem("user_data"));
   const roleName = userData.pms_role_id.role_name;
@@ -942,7 +953,7 @@ const TaskList = ({
   };
   const isDisabled =
     taskDetails?.task_status?.isDefault ||
-    (projectDetails.projectHoursExceeded && !getRoles(["Client"])) || getRoles(["User"]);
+    getRoles(["User"]);
 
 
   const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"])
@@ -1040,7 +1051,11 @@ const TaskList = ({
                                   className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    getTaskByIdDetails(task?._id);
+                                    getTaskByIdDetails(task?._id, {
+                                      projectId,
+                                      mainTaskId:
+                                        selectedTask?._id || listID || task?.mainTask?._id,
+                                    });
                                     getComment(task?._id);
                                     setTempBoard(boardData);
                                     setSelectedTaskId(task?._id);
@@ -1091,9 +1106,6 @@ const TaskList = ({
                                         ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
                                         : "Unassigned"}
                                     </span>
-                                    <span className="wm-card-progress-badge">
-                                      {task.task_progress || "0"}%
-                                    </span>
                                   </div>
                                 </div>
                                 <div>
@@ -1104,52 +1116,30 @@ const TaskList = ({
                                       top: "17px",
                                       right: "25px",
                                     }}
-                                    onChange={(e) =>
-                                      moveTaskHandler(
-                                        task?._id,
-                                        e?.target?.checked
-                                      )
-                                    }
+                                    checked={Array.isArray(task_ids) && task_ids.includes(task?._id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      moveTaskHandler(task?._id, e?.target?.checked);
+                                    }}
                                   />
                                   <Dropdown
                                     overlay={
                                       <Menu>
                                         {hasPermission(["task_edit"]) ? (
-                                          projectDetails?.projectHoursExceeded ? (
-                                            <Tooltip
-                                              title="Project hours exceeded"
-                                              placement="top"
-                                            >
-                                              <Menu.Item
-                                                disabled
-                                                onClick={() => {
-                                                  getTaskByIdDetails(task?._id);
-                                                  getComment(task?._id);
-                                                  setTempBoard(boardData);
-                                                  setSelectedTaskId(task?._id);
-                                                }}
-                                              >
-                                                <EditOutlined
-                                                  style={{ color: "green" }}
-                                                />{" "}
-                                                Edit
-                                              </Menu.Item>
-                                            </Tooltip>
-                                          ) : (
-                                            <Menu.Item
-                                              onClick={() => {
-                                                getTaskByIdDetails(task?._id);
-                                                getComment(task?._id);
-                                                setTempBoard(boardData);
-                                                setSelectedTaskId(task?._id);
-                                              }}
-                                            >
-                                              <EditOutlined
-                                                style={{ color: "green" }}
-                                              />{" "}
-                                              Edit
-                                            </Menu.Item>
-                                          )
+                                          <Menu.Item
+                                            onClick={() => {
+                                              getTaskByIdDetails(task?._id);
+                                              getComment(task?._id);
+                                              setTempBoard(boardData);
+                                              setSelectedTaskId(task?._id);
+                                            }}
+                                          >
+                                            <EditOutlined
+                                              style={{ color: "green" }}
+                                            />{" "}
+                                            Edit
+                                          </Menu.Item>
                                         ) : null}
 
                                         {hasPermission(["task_delete"]) && (

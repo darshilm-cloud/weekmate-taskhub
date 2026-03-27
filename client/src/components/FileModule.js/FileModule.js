@@ -1784,15 +1784,20 @@ function FileModule() {
         open={isopenModelFolder}
         footer={null}
         onCancel={handleCancelFolder}
-        className="add-task-modal add-list-modal"
+        className="file-folder-modal"
+        width={760}
+        title={
+          <div className="file-folder-modal__title-wrap">
+            <span className="file-folder-modal__eyebrow">
+              {addEditFolder === "Add Folder" ? "Create" : "Update"}
+            </span>
+            <h2 className="file-folder-modal__title">
+              {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
+            </h2>
+          </div>
+        }
       >
-        <div className="modal-header">
-          <h1>
-            {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
-          </h1>
-        </div>
-
-        <div className="overview-modal-wrapper">
+        <div className="file-folder-modal__body">
           <Form
             form={addFolderForm}
             onFinish={(values) => {
@@ -1800,22 +1805,29 @@ function FileModule() {
                 ? handleSubmit(values)
                 : updateFolder(values);
             }}
+            layout="vertical"
+            className="file-folder-modal__form"
           >
-            <div className="topic-cancel-wrapper">
-              <Form.Item
-                name="title"
-                rules={[{ required: true, message: "Please add a title" }]}
-              >
-                <Input placeholder="Title" />
-              </Form.Item>
+            <div className="file-folder-modal__intro">
+              Create a clean space for files, proofs, and references inside this
+              project.
             </div>
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
+
+            <Form.Item
+              label="Folder Name"
+              name="title"
+              rules={[{ required: true, message: "Please add a title" }]}
+            >
+              <Input placeholder="Enter folder name" />
+            </Form.Item>
+
+            <div className="file-folder-modal__footer">
+              <div className="file-folder-modal__actions">
                 {addEditFolder === "Add Folder" ? (
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="file-folder-modal__primary"
                   >
                     Add
                   </Button>
@@ -1823,7 +1835,7 @@ function FileModule() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="file-folder-modal__primary"
                   >
                     Update
                   </Button>
@@ -1831,7 +1843,7 @@ function FileModule() {
 
                 <Button
                   onClick={handleCancelFolder}
-                  className="square-outline-btn ant-delete"
+                  className="file-folder-modal__secondary"
                 >
                   Cancel
                 </Button>

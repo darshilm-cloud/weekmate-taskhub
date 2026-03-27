@@ -658,11 +658,24 @@ exports.getTaskList = async (req, res) => {
     ];
 
     if (!viewAll) {
-      orFilter = {
-        $or: [
-          { assignees: new mongoose.Types.ObjectId(req.user._id) },
-        ],
-      };
+      const userId = new mongoose.Types.ObjectId(req.user._id);
+
+      // When project_ids are explicitly provided, trust access control
+      // from the caller (e.g. project-report already filtered by user's projects).
+      // Otherwise fall back to user-scoped filtering.
+      if (value.project_id.length > 0) {
+        // No extra orFilter — the project_id match already limits scope
+        orFilter = {};
+      } else {
+        orFilter = {
+          $or: [
+            { assignees: userId },
+            { createdBy: userId },
+            { "project.manager": userId },
+            { "project.acc_manager": userId },
+          ],
+        };
+      }
       mainTaskQuery = [
         ...mainTaskQuery,
         {
@@ -670,9 +683,9 @@ exports.getTaskList = async (req, res) => {
             { $eq: ["$isPrivateList", false] },
             {
               $or: [
-                { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+                { $eq: ["$createdBy", userId] },
+                { $in: [userId, "$subscribers"] },
+                { $in: [userId, "$pms_clients"] },
               ],
             },
           ],
@@ -793,6 +806,26 @@ exports.getTaskList = async (req, res) => {
       },
       {
         $lookup: {
+          from: "tasklabels",
+          let: { task_labels: "$task_labels" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", { $ifNull: ["$$task_labels", []] }] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1, title: 1, color: 1, name: 1, label_name: 1 } },
+          ],
+          as: "taskLabels",
+        },
+      },
+      {
+        $lookup: {
           from: "employees",
           let: { createdById: "$createdBy" },
           pipeline: [
@@ -823,6 +856,8 @@ exports.getTaskList = async (req, res) => {
           createdAt: 1,
           createdBy: 1,
           assignees: 1,
+          taskLabels: 1,
+          task_labels: 1,
           task_progress: 1,
           project: { _id: 1, title: 1, manager: 1 },
           mainTask: { _id: 1, title: 1, isPrivateList: 1 },

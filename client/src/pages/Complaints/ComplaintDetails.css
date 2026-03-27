@@ -3,21 +3,25 @@
    ============================================================ */
 
 .cad-page {
-  padding: 24px;
-  background: #f1f5f9;
+  padding: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 26%),
+    linear-gradient(180deg, #eef6fb 0%, #f7fbff 100%);
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 /* ── Header Info Card ─────────────────────────────────────── */
 .cad-info-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  background:
+    radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 28%),
+    linear-gradient(135deg, #ffffff 0%, #f9fcff 100%);
+  border: 1px solid #d8e7f2;
+  border-radius: 22px;
+  padding: 20px 22px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
   display: flex;
   align-items: flex-start;
   gap: 20px;
@@ -30,23 +34,24 @@
   content: "";
   position: absolute;
   top: 0; left: 0;
-  width: 4px;
+  width: 6px;
   height: 100%;
-  background: #dc2626;
-  border-radius: 14px 0 0 14px;
+  background: linear-gradient(180deg, #ef4444 0%, #f97316 50%, #f59e0b 100%);
+  border-radius: 22px 0 0 22px;
 }
 
 .cad-info-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: #fef2f2;
-  color: #dc2626;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #e11d48;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
 }
 
 .cad-info-body {
@@ -54,10 +59,11 @@
 }
 
 .cad-info-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 19px;
+  font-weight: 800;
+  color: #10233a;
   margin: 0 0 12px;
+  letter-spacing: -0.02em;
 }
 
 .cad-info-fields {
@@ -85,10 +91,10 @@
 
 /* ── Section Card ─────────────────────────────────────────── */
 .cad-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #d7e6f1;
+  border-radius: 22px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
 
@@ -96,26 +102,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fafbfc;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e7f0f6;
+  background: linear-gradient(180deg, #f8fbfe 0%, #fdfefe 100%);
 }
 
 .cad-section-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 16px;
+  font-weight: 800;
+  color: #10233a;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .cad-section-title .cad-section-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: #fef2f2;
-  color: #dc2626;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #e11d48;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +129,7 @@
 }
 
 .cad-section-body {
-  padding: 20px 24px;
+  padding: 24px 24px 22px;
 }
 
 /* ── Status read-only view ────────────────────────────────── */
@@ -174,23 +180,157 @@
 /* ── Status Form ──────────────────────────────────────────── */
 .cad-status-form .ant-form-item-label > label {
   font-size: 13px;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  color: #304860;
 }
 
 .cad-status-form .ant-input,
+.cad-status-form .ant-input-affix-wrapper,
 .cad-status-form .ant-select-selector,
 .cad-status-form textarea {
-  border-radius: 8px !important;
-  border-color: #e2e8f0 !important;
+  border-radius: 14px !important;
+  border-color: #d4e3ee !important;
   font-size: 13px;
+  min-height: 40px;
+  background: #fcfeff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cad-status-form .ant-form-item-control,
+.cad-status-form .ant-form-item-control-input,
+.cad-status-form .ant-form-item-control-input-content {
+  min-width: 0;
+  width: 100%;
+}
+
+.cad-status-form .ant-input-affix-wrapper,
+.cad-status-form .ant-select-selector,
+.cad-status-form textarea {
+  overflow: hidden;
+}
+
+.cad-status-form .ant-input-affix-wrapper .ant-input,
+.cad-status-form .ant-select-selection-item,
+.cad-status-form .ant-select-selection-placeholder {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cad-status-form .ant-input-affix-wrapper .ant-input {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.cad-status-form .ant-input-affix-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px !important;
+}
+
+.cad-status-form .ant-input-affix-wrapper > input.ant-input {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.cad-status-form .ant-input-affix-wrapper .ant-input-prefix,
+.cad-status-form .ant-input-affix-wrapper .ant-input-suffix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin: 0 !important;
+  color: #7aa3bf;
+}
+
+.cad-status-form .ant-input-affix-wrapper .ant-input-prefix {
+  padding-right: 0;
+}
+
+.cad-status-form .ant-input-affix-wrapper .ant-input-prefix + .ant-input {
+  margin-left: 0 !important;
 }
 
 .cad-status-form .ant-input:focus,
+.cad-status-form .ant-input-affix-wrapper:focus,
+.cad-status-form .ant-input-affix-wrapper-focused,
 .cad-status-form .ant-select-focused .ant-select-selector,
 .cad-status-form textarea:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.1) !important;
+  border-color: #0ea5a4 !important;
+  box-shadow: 0 0 0 4px rgba(14,165,164,0.12) !important;
+}
+
+.cad-field-block {
+  position: relative;
+}
+
+.cad-field-block--manager .ant-form-item-label > label,
+.cad-field-block--client .ant-form-item-label > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cad-field-block--manager .ant-form-item-label > label::after,
+.cad-field-block--client .ant-form-item-label > label::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.cad-field-block--manager .ant-form-item-label > label::after {
+  background: #7aa3bf;
+  box-shadow: 0 0 0 4px rgba(122, 163, 191, 0.14);
+}
+
+.cad-field-block--client .ant-form-item-label > label::after {
+  background: #0ea5a4;
+  box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12);
+}
+
+.cad-input--manager.ant-input-affix-wrapper,
+.cad-input--manager.ant-input {
+  background: linear-gradient(180deg, #f5faff 0%, #edf5fb 100%) !important;
+  border-color: #c6dbe9 !important;
+  color: #355268 !important;
+}
+
+.cad-input--manager.ant-input-affix-wrapper {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 18px rgba(15, 23, 42, 0.03) !important;
+}
+
+.cad-input--manager.ant-input-affix-wrapper .ant-input,
+.cad-input--manager.ant-input-affix-wrapper .ant-input::placeholder {
+  color: #6b8aa3 !important;
+}
+
+.cad-input--manager.ant-input-affix-wrapper-disabled,
+.cad-input--manager.ant-input:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.cad-input--client.ant-input-affix-wrapper,
+.cad-input--client.ant-input {
+  background: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%) !important;
+  border-color: #cfe0ec !important;
+}
+
+.cad-input--client.ant-input-affix-wrapper {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 10px 22px rgba(15, 23, 42, 0.04) !important;
+}
+
+.cad-input--client.ant-input-affix-wrapper:hover,
+.cad-input--client.ant-input:hover {
+  border-color: #9fc6dc !important;
 }
 
 .cad-form-grid {
@@ -202,7 +342,9 @@
 .cad-form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e6eff6;
 }
 
 /* ── Buttons ──────────────────────────────────────────────── */
@@ -210,25 +352,36 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 18px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #475569;
-  transition: all 0.15s ease;
+  border: 1px solid #d8e5ef;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfe 100%);
+  color: #38546d;
+  transition: all 0.18s ease;
   line-height: 1;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
 }
-.cad-btn:hover { background: #f8fafc; color: #1e293b; border-color: #cbd5e1; }
+.cad-btn:hover {
+  background: #f8fdff;
+  color: #16324a;
+  border-color: #04275a;
+}
 
 .cad-btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: linear-gradient(135deg, #0a2841 0%, #103a5c 52%, #154a72 100%);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 16px 28px rgba(10, 40, 65, 0.28);
 }
-.cad-btn.primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+.cad-btn.primary:hover {
+  background: linear-gradient(135deg, #081f33 0%, #0d314f 52%, #123f64 100%);
+  border-color: transparent;
+  color: #fff;
+  transform: translateY(-1px);
+}
 
 .cad-btn.danger {
   background: #fff;
@@ -417,15 +570,15 @@
 
 /* ── Form input prefix icon fix ───────────────────────────── */
 .cad-status-form .ant-input-affix-wrapper {
-  border-radius: 8px !important;
-  border-color: #e2e8f0 !important;
+  border-radius: 14px !important;
+  border-color: #d4e3ee !important;
 }
 .cad-status-form .ant-input-affix-wrapper:focus-within {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.1) !important;
+  border-color: #0ea5a4 !important;
+  box-shadow: 0 0 0 4px rgba(14,165,164,0.12) !important;
 }
 .cad-status-form .ant-input-affix-wrapper-disabled {
-  background: #f8fafc !important;
+  background: #f3f8fb !important;
 }
 
 /* ── Complaint textarea full width ────────────────────────── */
@@ -435,12 +588,12 @@
 
 /* ── Select option pill colors ────────────────────────────── */
 .cad-status-form .ant-select-selector {
-  border-radius: 8px !important;
-  border-color: #e2e8f0 !important;
+  border-radius: 14px !important;
+  border-color: #d4e3ee !important;
 }
 .cad-status-form .ant-select-focused .ant-select-selector {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.1) !important;
+  border-color: #0ea5a4 !important;
+  box-shadow: 0 0 0 4px rgba(14,165,164,0.12) !important;
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
@@ -457,14 +610,16 @@
 
 body.dark-theme .cad-page,
 body[data-theme="dark"] .cad-page {
-  background: #07111f;
+  background:
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.08), transparent 24%),
+    #07111f;
 }
 
 body.dark-theme .cad-info-card,
 body.dark-theme .cad-section,
 body[data-theme="dark"] .cad-info-card,
 body[data-theme="dark"] .cad-section {
-  background: #0c182b;
+  background: linear-gradient(180deg, #0c182b 0%, #0d1b30 100%);
   border-color: rgba(74, 104, 150, 0.24);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
@@ -482,7 +637,7 @@ body[data-theme="dark"] .cad-field-value {
 
 body.dark-theme .cad-section-header,
 body[data-theme="dark"] .cad-section-header {
-  background: #11213a;
+  background: linear-gradient(180deg, #10223a 0%, #0f2138 100%);
   border-bottom-color: rgba(74, 104, 150, 0.24);
 }
 
@@ -528,8 +683,8 @@ body.dark-theme .cad-status-form textarea:focus,
 body[data-theme="dark"] .cad-status-form .ant-input-affix-wrapper:focus-within,
 body[data-theme="dark"] .cad-status-form .ant-select-focused .ant-select-selector,
 body[data-theme="dark"] .cad-status-form textarea:focus {
-  border-color: #4d7bd6 !important;
-  box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.12) !important;
+  border-color: #14b8a6 !important;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.14) !important;
 }
 
 /* ── All form inputs / textareas / selects on cad-page ─────── */
@@ -563,8 +718,8 @@ body.dark-theme .cad-page .ant-select-focused .ant-select-selector,
 body[data-theme="dark"] .cad-page .ant-input:focus,
 body[data-theme="dark"] .cad-page textarea:focus,
 body[data-theme="dark"] .cad-page .ant-select-focused .ant-select-selector {
-  border-color: #4d7bd6 !important;
-  box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.12) !important;
+  border-color: #14b8a6 !important;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.14) !important;
 }
 
 /* ── Upload button ─────────────────────────────────────────── */
@@ -594,6 +749,13 @@ body.dark-theme .cad-btn:not(.primary):not(.danger):hover,
 body[data-theme="dark"] .cad-btn:not(.primary):not(.danger):hover {
   background: #1a2f4a !important;
   color: #dce7fb !important;
+}
+
+body.dark-theme .cad-btn.primary,
+body[data-theme="dark"] .cad-btn.primary {
+  background: linear-gradient(135deg, #0a2841 0%, #103a5c 52%, #154a72 100%) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
 }
 
 /* ── Section / card backgrounds ────────────────────────────── */

@@ -112,6 +112,7 @@ exports.getProjectLabels = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
+      project_id: Joi.string().allow(null, "").optional(),
       isDropdown: Joi.boolean().optional().default(false)
     });
 

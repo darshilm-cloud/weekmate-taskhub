@@ -10,39 +10,55 @@
   border: none;
 }
 
-.task-page-detail-modal .ant-modal-close {
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
+.task-page-detail-modal button.ant-modal-close {
+  position: absolute !important;
+  top: 33px !important;
+  right: 24px !important;
+  z-index: 30 !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  background: #456c88 !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  transition: background 0.2s !important;
 }
 
-.task-page-detail-modal .ant-modal-close-x,
-.task-page-detail-modal .ant-modal-close-x .anticon {
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x,
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x .anticon {
+  width: 100% !important;
+  min-width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
   color: #ffffff !important;
 }
 
-.task-page-detail-modal .ant-modal-close-x svg,
-.task-page-detail-modal .ant-modal-close-x .anticon svg {
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x svg,
+.task-page-detail-modal button.ant-modal-close .ant-modal-close-x .anticon svg {
+  width: 13px !important;
+  height: 13px !important;
   fill: currentColor !important;
   stroke: currentColor !important;
 }
 
-.task-page-detail-modal .ant-modal-close:hover {
-  background: rgba(255, 255, 255, 0.35);
+.task-page-detail-modal button.ant-modal-close:hover {
+  background: #456c88 !important;
 }
 
 .task-page-detail-modal .ant-modal-body {
   padding: 0;
-  max-height: 90vh;
-  overflow: auto;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -63,8 +79,9 @@
 .task-detail-modal-body {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) 360px;
-  min-height: 640px;
-  max-height: 90vh;
+  height: min(90vh, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  min-height: 0;
 }
 
 @media (max-width: 1000px) {
@@ -95,12 +112,21 @@
   border-right: 1px solid #e8edf3;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
 
 .task-detail-modal-left::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Opera */
+}
+
+.task-detail-modal-left > form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 100%;
+  min-width: 0;
 }
 
 /* ── Hero Header (dark navy) ─────────────────── */
@@ -245,6 +271,7 @@
   gap: 10px;
   padding: 14px 20px 18px;
   flex: 1;
+  min-height: 0;
 }
 
 /* ── Sections ────────────────────────────────── */
@@ -272,7 +299,7 @@
 
 .task-detail-section-featured .task-detail-section-head {
   margin: 0;
-  padding: 12px 14px 0;
+  padding: 12px 14px 10px;
 }
 
 .task-detail-label {
@@ -288,6 +315,7 @@
   color: #0f172a;
   font-size: 15px;
   font-weight: 700;
+  line-height: 1.35;
 }
 
 .task-detail-value {
@@ -303,10 +331,14 @@
 
 .task-detail-description {
   padding: 12px 14px 14px;
+  min-height: 88px;
   color: #334155;
   font-size: 13px;
   line-height: 1.6;
   background: #f8fafc;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .task-detail-description p {
@@ -315,6 +347,30 @@
 
 .task-detail-description p:last-child {
   margin-bottom: 0;
+}
+
+.task-detail-description > *:first-child {
+  margin-top: 0 !important;
+}
+
+.task-detail-description > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+.task-detail-description h1,
+.task-detail-description h2,
+.task-detail-description h3,
+.task-detail-description h4,
+.task-detail-description h5,
+.task-detail-description h6,
+.task-detail-description ul,
+.task-detail-description ol,
+.task-detail-description blockquote {
+  margin: 0 0 10px;
+}
+
+.task-detail-description li {
+  margin-bottom: 4px;
 }
 
 .task-detail-section-grid {
@@ -381,7 +437,14 @@
 .task-detail-modal-footer-actions {
   display: flex;
   gap: 10px;
-  padding-top: 4px;
+  padding-top: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  margin-top: 6px;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  background: #ffffff;
+  border-top: 1px solid #e8edf3;
 }
 
 .task-detail-primary-btn {
@@ -405,9 +468,10 @@
 }
 
 .task-detail-comment-submit {
+  /* Match primary Save button sizing */
   height: 40px;
   border-radius: 8px;
-  padding: 0 24px;
+  padding: 0 20px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -417,6 +481,10 @@
   color: #ffffff !important;
   box-shadow: 0 3px 10px rgba(11, 58, 91, 0.3);
   transition: all 0.2s;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center;
 }
 
 .task-detail-comment-submit:hover,
@@ -451,6 +519,7 @@
   flex-direction: column;
   overflow: hidden;
   background: #f8fafc;
+  min-height: 0;
 }
 
 .task-detail-sidebar-head {
@@ -478,6 +547,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .task-detail-tabs .ant-tabs-nav {
@@ -541,6 +611,7 @@
   overflow: hidden;
   padding: 10px 12px 12px;
   background: #f8fafc;
+  min-height: 0;
 }
 
 .task-detail-tabs .ant-tabs-content,
@@ -548,10 +619,31 @@
   height: 100%;
 }
 
+.task-detail-tabs .ant-tabs-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.task-detail-tabs .ant-tabs-tabpane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Ensure inactive panes never stack (safety) */
+.task-detail-tabs .ant-tabs-tabpane-inactive {
+  display: none !important;
+}
+
 .task-detail-tab-content {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  flex: 1;
 }
 
 .task-detail-tab-hint {
@@ -564,33 +656,83 @@
 }
 
 /* ── Comments ────────────────────────────────── */
-.task-detail-comments .comment-list-wrapper {
+.task-detail-comments {
+  min-height: 0;
+}
+
+.task-detail-comments .comment-list-box {
   flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
-  margin-bottom: 12px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.task-detail-comments .comment-list-wrapper::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
-}
-
-.task-detail-comment-item {
-  margin-bottom: 10px;
-  padding: 10px 12px;
+  min-height: 0;
+  height: 60vh;
+  max-height: 620px;
+  min-height: 300px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-detail-comments .comment-list-wrapper {
+  flex: 1;
+  overflow-y: scroll; /* always show scrollbar track */
+  height: 100%;
+  padding: 10px 10px 2px;
+  padding-right: 6px;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(148, 163, 184, 0.7) rgba(226, 232, 240, 0.65);
+}
+
+.task-detail-comments .comment-list-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-detail-comments .comment-list-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.7);
+  border-radius: 999px;
+}
+
+.task-detail-comments .comment-list-wrapper::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.65);
+  border-radius: 999px;
+}
+
+.task-detail-comments .comment-list-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.75);
+}
+
+.task-detail-comment-item {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04);
 }
 
 .task-detail-comment-item .main-avatar-wrapper {
   display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.task-detail-local-avatar {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  justify-content: center;
+  background: linear-gradient(135deg, #c7d2fe 0%, #60a5fa 100%);
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
 .task-detail-comment-item .comment-sender-name {
@@ -600,22 +742,22 @@
 .task-detail-comment-item .comment-sender-name h1 {
   margin: 0;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .task-detail-comment-item .comment-sender-name h4 {
-  margin: 2px 0 0;
+  margin: 1px 0 0;
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 }
 
 .task-detail-comment-item .comment-wrapper p {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: #334155;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 .task-detail-comment-item .task-all-file-wrapper {
@@ -628,17 +770,18 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: 1px solid #e8edf3;
   border-radius: 8px;
   background: #f8fafc;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .task-detail-comment-menu {
   margin-left: auto;
   border-radius: 8px !important;
   color: #64748b !important;
+  height: 28px;
 }
 
 /* ── Add Comment ─────────────────────────────── */
@@ -926,7 +1069,8 @@ body[data-theme="dark"] .task-detail-empty-state {
 
 body.dark-theme .task-detail-modal-footer-actions,
 body[data-theme="dark"] .task-detail-modal-footer-actions {
-  background: transparent;
+  background: #0d1b2e;
+  border-top-color: rgba(74, 104, 150, 0.2);
 }
 
 body.dark-theme .task-detail-secondary-btn,
@@ -955,8 +1099,25 @@ body[data-theme="dark"] .task-detail-sidebar-head {
 
 body.dark-theme .task-detail-tabs .ant-tabs-nav,
 body[data-theme="dark"] .task-detail-tabs .ant-tabs-nav {
-  background: #0d1b2e;
+  /* Match panel background to avoid lighter corner patches */
+  background: #0a1627 !important;
   border-bottom-color: rgba(74, 104, 150, 0.2);
+  overflow: hidden;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-nav::before,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-nav::before {
+  display: none !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-tab,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab {
+  background: transparent !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-tab:focus-visible,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab:focus-visible {
+  outline: none !important;
 }
 
 body.dark-theme .task-detail-tab-label,
@@ -1015,6 +1176,27 @@ body[data-theme="dark"] .task-detail-add-comment {
   border-color: rgba(74, 104, 150, 0.2);
 }
 
+body.dark-theme .task-detail-comments .comment-list-box,
+body[data-theme="dark"] .task-detail-comments .comment-list-box {
+  background: #0c1e33;
+  border-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .task-detail-comments .comment-list-wrapper,
+body[data-theme="dark"] .task-detail-comments .comment-list-wrapper {
+  scrollbar-color: rgba(148, 163, 184, 0.5) rgba(15, 23, 42, 0.55);
+}
+
+body.dark-theme .task-detail-comments .comment-list-wrapper::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .task-detail-comments .comment-list-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+body.dark-theme .task-detail-comments .comment-list-wrapper::-webkit-scrollbar-track,
+body[data-theme="dark"] .task-detail-comments .comment-list-wrapper::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.55);
+}
+
 body.dark-theme .task-detail-composer-title,
 body[data-theme="dark"] .task-detail-composer-title {
   color: #5eb3f0;
@@ -1031,6 +1213,32 @@ body.dark-theme .task-detail-add-comment .ant-input:focus,
 body[data-theme="dark"] .task-detail-add-comment .ant-input:focus {
   border-color: #5eb3f0 !important;
   box-shadow: 0 0 0 2px rgba(94, 179, 240, 0.15) !important;
+}
+
+/* Disabled "Add comment" button should not turn light in dark theme */
+body.dark-theme .task-detail-comment-submit.ant-btn:disabled,
+body.dark-theme .task-detail-comment-submit.ant-btn[disabled],
+body.dark-theme .task-detail-comment-submit.ant-btn-primary:disabled,
+body.dark-theme .task-detail-comment-submit.ant-btn-primary[disabled],
+body[data-theme="dark"] .task-detail-comment-submit.ant-btn:disabled,
+body[data-theme="dark"] .task-detail-comment-submit.ant-btn[disabled],
+body[data-theme="dark"] .task-detail-comment-submit.ant-btn-primary:disabled,
+body[data-theme="dark"] .task-detail-comment-submit.ant-btn-primary[disabled] {
+  background: rgba(11, 58, 91, 0.35) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Keep disabled button consistent in light theme too */
+.task-detail-comment-submit.ant-btn:disabled,
+.task-detail-comment-submit.ant-btn[disabled],
+.task-detail-comment-submit.ant-btn-primary:disabled,
+.task-detail-comment-submit.ant-btn-primary[disabled] {
+  background: rgba(11, 58, 91, 0.45) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
 }
 
 body.dark-theme .task-no-comments,
@@ -1067,6 +1275,46 @@ body.dark-theme .task-detail-comment-item .fileAttachment_Box,
 body[data-theme="dark"] .task-detail-comment-item .fileAttachment_Box {
   background: #0a1627;
   border-color: rgba(74, 104, 150, 0.2);
+}
+
+/* ── Dark: Left-panel attachments (Files section) ─────────── */
+body.dark-theme .task-detail-attachment-card,
+body[data-theme="dark"] .task-detail-attachment-card {
+  background: #0a1627;
+  border-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .task-detail-attachment-link,
+body[data-theme="dark"] .task-detail-attachment-link {
+  color: #dce7fb;
+}
+
+body.dark-theme .task-detail-attachment-link:hover,
+body[data-theme="dark"] .task-detail-attachment-link:hover {
+  color: #5eb3f0;
+}
+
+/* ── Dark: Tabs (force override for any remaining light pills) ─ */
+body.dark-theme .task-detail-tab-label,
+body[data-theme="dark"] .task-detail-tab-label {
+  background: #0c1e33 !important;
+  border-color: rgba(74, 104, 150, 0.22) !important;
+  color: rgba(220, 231, 251, 0.75) !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-tab-active .task-detail-tab-label,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab-active .task-detail-tab-label {
+  /* Keep active tab readable without a light fill */
+  background: #0c1e33 !important;
+  border-color: rgba(94, 179, 240, 0.32) !important;
+  color: #a7d9ff !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .task-detail-tabs .ant-tabs-tab-active .comment-badge,
+body[data-theme="dark"] .task-detail-tabs .ant-tabs-tab-active .comment-badge {
+  background: rgba(94, 179, 240, 0.22) !important;
+  color: #a7d9ff !important;
 }
 
 body.dark-theme .task-detail-attachment-list a,

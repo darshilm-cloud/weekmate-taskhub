@@ -36,7 +36,12 @@ import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
 
-const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDataLoaded = null }) => {
+const CombinedEmployeeList = ({
+  taskLikeDesign = false,
+  actionsRef = null,
+  onDataLoaded = null,
+  onMutationSuccess = null,
+}) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
   const companyId = user_data?.companyId;
@@ -182,6 +187,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDat
 
       if (response.status == 200) {
         fetchEmployees();
+        onMutationSuccess?.();
       } else {
         // Handle CSV download for errors
         if (response.data) {
@@ -231,6 +237,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDat
 
           message.warning("Upload completed with errors. CSV downloaded.");
           fetchEmployees();
+          onMutationSuccess?.();
         } else {
           message.error("Upload failed - no data received.");
         }
@@ -366,6 +373,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDat
 
       setModalVisible(false);
       fetchEmployees();
+      onMutationSuccess?.();
     } catch (err) {
       message.error(err?.response?.data?.message || "Something went wrong");
     }
@@ -379,6 +387,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false, actionsRef = null, onDat
       });
       message.success("Employee deleted successfully");
       fetchEmployees();
+      onMutationSuccess?.();
     } catch (err) {
       console.error("Failed to delete employee:", err);
       message.error("Failed to delete employee");

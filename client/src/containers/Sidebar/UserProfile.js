@@ -12,6 +12,7 @@ import {
   Tabs,
   Radio,
   Checkbox,
+  Switch,
   Menu,
 } from "antd";
 import PropTypes from "prop-types";
@@ -74,6 +75,7 @@ function UserProfile() {
   const [unReadId, setUnReadId] = useState([]);
   const { TabPane } = Tabs;
   const [selectedRadio, setSelectedRadio] = useState(null);
+  const [settingsSearch, setSettingsSearch] = useState("");
 
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -136,7 +138,9 @@ function UserProfile() {
   };
 
   const handleRadioChange = (e) => {
-    setSelectedRadio(e.target.value);
+    const next = e.target.value;
+    setSelectedRadio(next);
+    emailSetting.setFieldsValue({ notificationPreference: next });
   };
   const switchToTab = (tab) => {
     setActiveTab(tab);
@@ -479,12 +483,17 @@ function UserProfile() {
             ? reqBodyFour
             : reqBody,
       });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
+      dispatch(hideAuthLoader());
+      if (response?.data?.status === 1) {
+        message.success(response?.data?.message || "Settings updated successfully");
         setSettingModal(false);
+      } else {
+        message.error(response?.data?.message || "Failed to update settings");
       }
     } catch (error) {
+      dispatch(hideAuthLoader());
       console.log(error, "error");
+      message.error("Something went wrong. Please try again.");
     }
   };
   const formItemLayout = {
@@ -510,7 +519,7 @@ function UserProfile() {
               <li onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
                 Profile
               </li>
-              <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); emailPreference(); }}>
+              <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
                 General Settings
               </li>
             </>
@@ -1058,6 +1067,7 @@ function UserProfile() {
               open={userMenuOpen}
               onOpenChange={setUserMenuOpen}
               className="user-profile"
+              overlayClassName="wm-user-menu-popover"
             >
               <div className="user-pill">
                 {avatarSrc && !avatarLoadFailed ? (
@@ -1166,9 +1176,13 @@ function UserProfile() {
             </Modal>
 
             <Modal
-              className="setting-main-wrapper"
+              className="setting-main-wrapper wm-settings-modal"
               footer={false}
               visible={settingModal}
+              width={820}
+              centered
+              destroyOnClose
+              maskClosable={false}
               onOk={() => {
                 setSettingModal(false);
               }}
@@ -1176,194 +1190,205 @@ function UserProfile() {
                 setSettingModal(false);
               }}
             >
-              <div className="modal-header">
-                <h1>Settings</h1>
-              </div>
-              <Tabs>
-                <TabPane key="1" tab="Email Preference">
-                  <div className="overview-modal-wrapper">
-                    <Form onFinish={handleSettings} form={emailSetting}>
-                      <div className="topic-cancel-wrapper">
-                        <Form.Item name="notificationPreference">
-                          <Radio.Group
-                            onChange={handleRadioChange}
-                            value={selectedRadio}
-                          >
-                            <ul className="no-bullets">
-                              <li>
-                                <Radio value="Never" name="never">
-                                  <strong>Never</strong> send me email
-                                  notification
-                                </Radio>
-                              </li>
-                              <li>
-                                <Radio value="four_hours" name="four_hours">
-                                  Send me email digest after{" "}
-                                  <strong>every four hours</strong>
-                                </Radio>
-                              </li>
-                              <li>
-                                <Radio value="Immediate">
-                                  <strong>Immediately</strong> send me email
-                                  notification
-                                </Radio>
-                              </li>
-                            </ul>
-                          </Radio.Group>
-                        </Form.Item>
-                        <div style={{ paddingLeft: "70px" }}>
-                          <ul className="no-bullets">
-                            <Form.Item
-                              name="projectAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A project is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="discussionSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A Discussion is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="discussionComments"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                Somebody has mentioned me in discussion
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="tasklistSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A tasklist is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="taskAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A task is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="taskComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in task comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="bugAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A bug is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="bugComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in bug comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="noteAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A note is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="noteComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in notes comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="fileSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A file is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            {getRoles(["PC", "TL", "Admin", "Admin", "AM"]) && (
-                              <Form.Item
-                                name="hoursLogged"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has logged hours
-                                </Checkbox>
-                              </Form.Item>
-                            )}
-                          </ul>
-                        </div>
+              <div className="wm-settings">
+                <div className="wm-settings__header">
+                  <div>
+                    <div className="wm-settings__title">Settings</div>
+                    <div className="wm-settings__subtitle">Control how you receive email notifications.</div>
+                  </div>
+                </div>
+
+                <Form onFinish={handleSettings} form={emailSetting} className="wm-settings__form">
+                  <div className="wm-settings__content">
+                    <div className="wm-settings__left">
+                      <div className="wm-settings__sectionTitle">Email Delivery</div>
+                      <Form.Item name="notificationPreference" className="wm-settings__radioWrap">
+                        <Radio.Group onChange={handleRadioChange} value={selectedRadio} className="wm-settings__radioGroup">
+                          <label className={`wm-settings__radioCard ${selectedRadio === "Never" ? "active" : ""}`}>
+                            <Radio value="Never" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Never</div>
+                              <div className="wm-settings__radioDesc">Don’t send me email notifications.</div>
+                            </div>
+                          </label>
+                          <label className={`wm-settings__radioCard ${selectedRadio === "four_hours" ? "active" : ""}`}>
+                            <Radio value="four_hours" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Every 4 hours</div>
+                              <div className="wm-settings__radioDesc">Send me a digest email every four hours.</div>
+                            </div>
+                          </label>
+                          <label className={`wm-settings__radioCard ${selectedRadio === "Immediate" ? "active" : ""}`}>
+                            <Radio value="Immediate" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Immediate</div>
+                              <div className="wm-settings__radioDesc">Send emails as soon as things happen.</div>
+                            </div>
+                          </label>
+                        </Radio.Group>
+                      </Form.Item>
+                      <div className="wm-settings__hint">
+                        {selectedRadio !== "Immediate"
+                          ? "Event-level toggles are available only for Immediate emails."
+                          : "Choose what should trigger an email."}
                       </div>
-                      <div className="modal-footer-flex">
-                        <div className="flex-btn">
-                          <Button type="primary" htmlType="submit">
-                            Update
+                    </div>
+
+                    <div className="wm-settings__right">
+                      <div className="wm-settings__rightTop">
+                        <div className="wm-settings__sectionTitle">Event Triggers</div>
+                        <Input
+                          placeholder="Search triggers..."
+                          value={settingsSearch}
+                          onChange={(e) => setSettingsSearch(e.target.value)}
+                          allowClear
+                          className="wm-settings__search"
+                        />
+                        <div className="wm-settings__bulkActions">
+                          <Button
+                            type="link"
+                            disabled={selectedRadio !== "Immediate"}
+                            onClick={() => {
+                              const next = {
+                                projectAssigned: true,
+                                discussionSubscribed: true,
+                                discussionComments: true,
+                                tasklistSubscribed: true,
+                                taskAssigned: true,
+                                taskComments: true,
+                                bugAssigned: true,
+                                bugComments: true,
+                                noteAssigned: true,
+                                noteComments: true,
+                                fileSubscribed: true,
+                              };
+                              if (getRoles(["PC", "TL", "Admin", "AM"])) next.hoursLogged = true;
+                              emailSetting.setFieldsValue(next);
+                            }}
+                          >
+                            Enable all
                           </Button>
                           <Button
+                            type="link"
+                            disabled={selectedRadio !== "Immediate"}
                             onClick={() => {
-                              setSettingModal(false);
+                              const next = {
+                                projectAssigned: false,
+                                discussionSubscribed: false,
+                                discussionComments: false,
+                                tasklistSubscribed: false,
+                                taskAssigned: false,
+                                taskComments: false,
+                                bugAssigned: false,
+                                bugComments: false,
+                                noteAssigned: false,
+                                noteComments: false,
+                                fileSubscribed: false,
+                                hoursLogged: false,
+                              };
+                              emailSetting.setFieldsValue(next);
                             }}
-                            className="ant-delete"
                           >
-                            Cancel
+                            Clear
                           </Button>
                         </div>
                       </div>
-                    </Form>
+
+                      <div className="wm-settings__list">
+                        {[
+                          {
+                            group: "Projects",
+                            items: [{ name: "projectAssigned", label: "A project is assigned to me" }],
+                          },
+                          {
+                            group: "Discussions",
+                            items: [
+                              { name: "discussionSubscribed", label: "A discussion is subscribed to me" },
+                              { name: "discussionComments", label: "Somebody has mentioned me in discussion" },
+                            ],
+                          },
+                          {
+                            group: "Tasks",
+                            items: [
+                              { name: "tasklistSubscribed", label: "A tasklist is subscribed to me" },
+                              { name: "taskAssigned", label: "A task is assigned to me" },
+                              { name: "taskComments", label: "Somebody has mentioned me in task comments" },
+                            ],
+                          },
+                          {
+                            group: "Bugs",
+                            items: [
+                              { name: "bugAssigned", label: "A bug is assigned to me" },
+                              { name: "bugComments", label: "Somebody has mentioned me in bug comments" },
+                            ],
+                          },
+                          {
+                            group: "Notes",
+                            items: [
+                              { name: "noteAssigned", label: "A note is assigned to me" },
+                              { name: "noteComments", label: "Somebody has mentioned me in notes comments" },
+                            ],
+                          },
+                          {
+                            group: "Files",
+                            items: [{ name: "fileSubscribed", label: "A file is subscribed to me" }],
+                          },
+                          ...(getRoles(["PC", "TL", "Admin", "AM"])
+                            ? [
+                                {
+                                  group: "Timesheet",
+                                  items: [{ name: "hoursLogged", label: "Somebody has logged hours" }],
+                                },
+                              ]
+                            : []),
+                        ]
+                          .map((g) => ({
+                            ...g,
+                            items: g.items.filter((it) =>
+                              settingsSearch?.trim()
+                                ? it.label.toLowerCase().includes(settingsSearch.trim().toLowerCase())
+                                : true
+                            ),
+                          }))
+                          .filter((g) => g.items.length > 0)
+                          .map((g) => (
+                            <div key={g.group} className="wm-settings__group">
+                              <div className="wm-settings__groupTitle">{g.group}</div>
+                              <div className="wm-settings__groupBody">
+                                {g.items.map((it) => (
+                                  <div key={it.name} className={`wm-settings__row ${selectedRadio !== "Immediate" ? "disabled" : ""}`}>
+                                    <div className="wm-settings__rowLabel">{it.label}</div>
+                                    <Form.Item name={it.name} valuePropName="checked" noStyle>
+                                      <Switch size="small" disabled={selectedRadio !== "Immediate"} />
+                                    </Form.Item>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        {settingsSearch?.trim() && (
+                          <div className="wm-settings__emptyNote">No triggers match your search.</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </TabPane>
-                
-              </Tabs>
+
+                  <div className="wm-settings__footer">
+                    <Button
+                      onClick={() => {
+                        setSettingModal(false);
+                        setSettingsSearch("");
+                      }}
+                      className="wm-settings__btnCancel"
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="primary" htmlType="submit" className="wm-settings__btnSave">
+                      Save changes
+                    </Button>
+                  </div>
+                </Form>
+              </div>
             </Modal>
 
             <UserProfileModal

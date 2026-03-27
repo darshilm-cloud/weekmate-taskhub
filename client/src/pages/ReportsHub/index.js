@@ -145,15 +145,80 @@ function ReportsHub() {
     [users]
   );
 
+  const fetchAllProjects = useCallback(async ({ includeClosed = true, search = "" } = {}) => {
+    const pageSize = 200;
+    let page = 1;
+    let hasMore = true;
+    const allProjects = [];
+
+    while (hasMore) {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getProjectList,
+        params: `page=${page}&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+      });
+
+      const rows = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const meta = response?.data?.meta || {};
+
+      allProjects.push(...rows);
+
+      if (meta?.totalPages) {
+        hasMore = page < meta.totalPages;
+      } else {
+        hasMore = rows.length === pageSize;
+      }
+
+      page += 1;
+    }
+
+    return allProjects;
+  }, []);
+
+  const fetchAllProjectReportRows = useCallback(async () => {
+    const pageSize = 200;
+    let pageNo = 1;
+    let hasMore = true;
+    const allRows = [];
+
+    while (hasMore) {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectRunningReportsDetails,
+        body: {
+          technologies: [],
+          types: [],
+          managers: [],
+          pageNo,
+          limit: pageSize,
+          sort: "title",
+          sortBy: "asc",
+          isExport: false,
+        },
+      });
+
+      const rows = Array.isArray(response?.data?.data?.data) ? response.data.data.data : [];
+      const meta = response?.data?.meta || {};
+
+      allRows.push(...rows);
+
+      if (meta?.totalPages) {
+        hasMore = pageNo < meta.totalPages;
+      } else {
+        hasMore = rows.length === pageSize;
+      }
+
+      pageNo += 1;
+    }
+
+    return allRows;
+  }, []);
+
   const loadDropdowns = useCallback(async () => {
     try {
       setOptionsLoading(true);
-      const [projectResponse, employeeResponse] = await Promise.all([
-        Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: Service.getProjectList,
-          params: "limit=200&includeClosed=false",
-        }),
+      const [projectList, employeeResponse] = await Promise.all([
+        fetchAllProjects({ includeClosed: true }),
         Service.makeAPICall({
           methodName: Service.getMethod,
           api_url: "/master/get/employees",
@@ -161,9 +226,6 @@ function ReportsHub() {
         }),
       ]);
 
-      const projectList = Array.isArray(projectResponse?.data?.data)
-        ? projectResponse.data.data
-        : [];
       const employeeList = Array.isArray(employeeResponse?.data?.data)
         ? employeeResponse.data.data
         : [];
@@ -188,7 +250,7 @@ function ReportsHub() {
     } finally {
       setOptionsLoading(false);
     }
-  }, []);
+  }, [fetchAllProjects]);
 
   const loadReportData = useCallback(async () => {
     if (!reportKey) {
@@ -211,35 +273,36 @@ function ReportsHub() {
       });
 
       if (reportKey === "project-report") {
-        const [projectsResponse, tasksResponse] = await Promise.all([
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectRunningReportsDetails,
-            body: {
-              technologies: [],
-              types: [],
-              managers: [],
-              pageNo: 1,
-              limit: 100,
-              sort: "title",
-              sortBy: "asc",
-              isExport: false,
-            },
-          }),
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.taskList,
-            body: commonTaskPayload,
-          }),
+        const [projectsResponse, projectListResponse] = await Promise.all([
+          fetchAllProjectReportRows(),
+          fetchAllProjects({ includeClosed: true }),
         ]);
 
-        const projectRows = Array.isArray(projectsResponse?.data?.data?.data)
-          ? projectsResponse.data.data.data
-          : [];
+        const reportProjects = Array.isArray(projectsResponse) ? projectsResponse : [];
+        const masterProjects = Array.isArray(projectListResponse) ? projectListResponse : [];
+        const projectRows = mergeProjectRows(reportProjects, masterProjects);
+
+        // Step 2: Collect all project IDs and fetch tasks scoped to those projects
+        const allProjectIds = projectRows
+          .map((p) => getProjectRecordId(p))
+          .filter(Boolean);
+
+        const tasksResponse = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: {
+            ...commonTaskPayload,
+            project_id: allProjectIds,
+          },
+        });
+
         const taskRows = Array.isArray(tasksResponse?.data?.data) ? tasksResponse.data.data : [];
 
         const groupedTasks = taskRows.reduce((acc, task) => {
-          const key = task?.project?._id || "unknown";
+          const key = getTaskProjectId(task);
+          if (!key) {
+            return acc;
+          }
           if (!acc[key]) {
             acc[key] = { total: 0, completed: 0 };
           }
@@ -251,14 +314,15 @@ function ReportsHub() {
         }, {});
 
         const rows = projectRows.map((project) => {
-          const stats = groupedTasks[project._id] || { total: 0, completed: 0 };
+          const projectId = getProjectRecordId(project);
+          const stats = groupedTasks[projectId] || { total: 0, completed: 0 };
           return {
-            key: project._id,
-            taskName: project.title,
+            key: projectId,
+            taskName: getProjectRecordTitle(project),
             progress: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
-            startDate: formatDate(project.start_date),
-            endDate: formatDate(project.end_date),
-            status: project.project_statusName || "-",
+            startDate: formatDate(getProjectRecordStartDate(project)),
+            endDate: formatDate(getProjectRecordEndDate(project)),
+            status: getProjectRecordStatus(project),
           };
         });
 
@@ -460,7 +524,7 @@ function ReportsHub() {
     } finally {
       setLoading(false);
     }
-  }, [filters, reportKey, userMap, users]);
+  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users]);
 
   useEffect(() => {
     loadDropdowns();
@@ -892,6 +956,20 @@ function UserReportResults({ rows, filters }) {
        null)
     : null;
 
+  const sortedMembers = useMemo(() => {
+    return [...filteredMembers].sort((a, b) => {
+      const totalDiff = Number(b.total || 0) - Number(a.total || 0);
+      if (totalDiff !== 0) {
+        return totalDiff;
+      }
+
+      return String(a.user || "").localeCompare(String(b.user || ""));
+    });
+  }, [filteredMembers]);
+
+  const visibleMembers = useMemo(() => sortedMembers.slice(0, 10), [sortedMembers]);
+  const overflowMembers = useMemo(() => sortedMembers.slice(10), [sortedMembers]);
+
   const chartRows = useMemo(() => {
     const source = filteredMembers.length > 0 ? filteredMembers : rows;
     if (selectedMember) {
@@ -1144,7 +1222,7 @@ function UserReportResults({ rows, filters }) {
             <span className="user-report-member-tab-count">{rows.length}</span>
           </button>
 
-          {filteredMembers.filter((r) => (r.total || 0) > 0).slice(0, 10).map((row) => (
+          {visibleMembers.map((row) => (
             <button
               key={row.key}
               type="button"
@@ -1156,10 +1234,10 @@ function UserReportResults({ rows, filters }) {
             </button>
           ))}
 
-          {filteredMembers.filter((r) => (r.total || 0) > 0).length > 10 && (
+          {overflowMembers.length > 0 && (
             <Dropdown
               menu={{
-                items: filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).map((m) => ({
+                items: overflowMembers.map((m) => ({
                   key: m.key,
                   label: (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "150px" }}>
@@ -1177,12 +1255,12 @@ function UserReportResults({ rows, filters }) {
               <button
                 type="button"
                 className={`user-report-member-tab more-tab ${
-                  filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).some((m) => m.key === selectedMember) ? "active" : ""
+                  overflowMembers.some((m) => m.key === selectedMember) ? "active" : ""
                 }`}
               >
                 <span className="user-report-member-tab-name">
-                  {filteredMembers.filter((r) => (r.total || 0) > 0).slice(10).some((m) => m.key === selectedMember)
-                    ? filteredMembers.find((m) => m.key === selectedMember)?.user
+                  {overflowMembers.some((m) => m.key === selectedMember)
+                    ? sortedMembers.find((m) => m.key === selectedMember)?.user
                     : "More"}
                 </span>
                 <DownOutlined style={{ fontSize: "10px", marginLeft: "4px" }} />
@@ -1517,6 +1595,84 @@ function buildTaskPayload({ viewAll = false, status = "all", startDate = null, e
   }
 
   return payload;
+}
+
+function getProjectRecordId(project) {
+  if (!project) {
+    return "";
+  }
+
+  const rawId =
+    project._id ||
+    project.id ||
+    project.project_id?._id ||
+    project.project_id ||
+    project.project?._id;
+
+  return rawId ? String(rawId) : "";
+}
+
+function getProjectRecordTitle(project) {
+  return (
+    project?.title ||
+    project?.project_name ||
+    project?.name ||
+    project?.project_id?.title ||
+    "Untitled Project"
+  );
+}
+
+function getProjectRecordStartDate(project) {
+  return (
+    project?.start_date ||
+    project?.project_id?.start_date ||
+    null
+  );
+}
+
+function getProjectRecordEndDate(project) {
+  return (
+    project?.end_date ||
+    project?.project_id?.end_date ||
+    null
+  );
+}
+
+function getProjectRecordStatus(project) {
+  return (
+    project?.project_statusName ||
+    project?.project_status?.title ||
+    project?.statusName ||
+    project?.status?.title ||
+    project?.status ||
+    "-"
+  );
+}
+
+function mergeProjectRows(primaryProjects = [], fallbackProjects = []) {
+  const merged = new Map();
+
+  [...fallbackProjects, ...primaryProjects].forEach((project) => {
+    const projectId = getProjectRecordId(project);
+    if (!projectId) {
+      return;
+    }
+
+    const existing = merged.get(projectId) || {};
+    merged.set(projectId, { ...existing, ...project });
+  });
+
+  return Array.from(merged.values());
+}
+
+function getTaskProjectId(task) {
+  const rawId =
+    task?.project?._id ||
+    task?.project_id?._id ||
+    task?.project_id ||
+    task?.project;
+
+  return rawId ? String(rawId) : "";
 }
 
 function extractTaskRows(result) {

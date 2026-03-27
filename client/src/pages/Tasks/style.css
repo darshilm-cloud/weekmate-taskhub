@@ -742,14 +742,85 @@
     gap: 10px;
     margin-bottom: 10px;
     justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .task-elipse-pop .sample-csv h6 {
-    color: #e2e8f0;
     margin: 0;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     align-self: center;
+    color: #334155;
+}
+
+.task-elipse-pop .sample-csv i,
+.task-elipse-pop .status-content i {
+    color: #2563eb;
+    font-size: 16px;
+}
+
+.task-elipse-pop .sample-csv:hover,
+.task-elipse-pop .status-content:hover {
+    background: #f1f5f9;
+}
+
+/* Bugs popover uses `.status-content` rows inside `.task-elipse-pop` */
+.task-elipse-pop .status-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.task-elipse-pop .status-content h6 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Dark theme: keep popover items readable on dark surfaces */
+body.dark-theme .task-elipse-pop .sample-csv h6,
+body[data-theme="dark"] .task-elipse-pop .sample-csv h6,
+body.dark-theme .task-elipse-pop .status-content h6,
+body[data-theme="dark"] .task-elipse-pop .status-content h6 {
+    color: #e2e8f0;
+}
+
+/* Ellipsis popover (CSV actions) — ensure readable in dark theme.
+   Note: Ant Popover renders in a portal under <body>, so `.wm-force-dark-page`
+   scoped rules don't apply. Use an overlay class for consistent theming. */
+.wm-ellipsis-popover .ant-popover-inner {
+    border-radius: 14px;
+}
+
+.wm-ellipsis-popover .ant-popover-inner-content {
+    padding: 10px 10px 6px;
+}
+
+body.dark-theme .wm-ellipsis-popover .ant-popover-inner,
+body[data-theme="dark"] .wm-ellipsis-popover .ant-popover-inner {
+    background: #0f1722;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-theme .wm-ellipsis-popover .ant-popover-arrow:before,
+body[data-theme="dark"] .wm-ellipsis-popover .ant-popover-arrow:before {
+    background: #0f1722;
+}
+
+body.dark-theme .wm-ellipsis-popover .task-elipse-pop .sample-csv:hover,
+body.dark-theme .wm-ellipsis-popover .task-elipse-pop .status-content:hover,
+body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .sample-csv:hover,
+body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:hover {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .task-logged-details-wrapper .ant-table-body {
@@ -950,6 +1021,307 @@
 .profile-sub-head.update-task .head-box-inner .update-workflow-status .update-workflow-status-form {
     display: flex;
     gap: 10%;
+}
+
+/* Make move-task selects properly visible (avoid cramped 30% container) */
+.profile-sub-head.update-task .update-workflow-status {
+    max-width: 100%;
+    margin: 0;
+}
+
+.profile-sub-head.update-task .update-workflow-status .update-workflow-status-form {
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-select {
+    min-width: 220px;
+}
+
+/* Make the whole move bar look like a boxed row */
+.profile-sub-head.update-task .update-workflow-status {
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status {
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Keep List + Stage selects side-by-side (like screenshot) */
+.profile-sub-head.update-task .update-workflow-status .update-workflow-status-form {
+    flex-wrap: nowrap;
+    gap: 18px;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-form-item {
+    margin-bottom: 0;
+}
+
+/* Align move controls in one row (List + Stage + Apply + Clear) */
+.profile-sub-head.update-task .update-workflow-status .ant-form {
+    justify-content: flex-start;
+    align-items: center;
+    gap: 18px;
+}
+
+.profile-sub-head.update-task .update-workflow-status .update-workflow-status-form {
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Keep all 4 controls tightly grouped (match older UI) */
+.profile-sub-head.update-task .head-box-inner .update-workflow-status .update-workflow-status-form {
+    gap: 12px;
+    justify-content: flex-start;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-form {
+    justify-content: flex-start;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-form-item {
+    flex: 0 0 auto;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-select {
+    min-width: 260px;
+}
+
+@media screen and (max-width: 980px) {
+    .profile-sub-head.update-task .update-workflow-status .update-workflow-status-form {
+        flex-wrap: wrap;
+    }
+    .profile-sub-head.update-task .update-workflow-status .ant-select {
+        min-width: 220px;
+        width: 100%;
+    }
+}
+
+/* Darker borders for Move Task selects (light theme) */
+.profile-sub-head.update-task .update-workflow-status .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    border: 1.5px solid #64748b !important;
+    background: #ffffff !important;
+    min-height: 42px;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    padding: 4px 12px !important;
+}
+
+/* Move Task selects (dark theme) */
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select:not(.ant-select-customize-input) .ant-select-selector,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    background: var(--wm-task-surface-2) !important;
+    background-color: var(--wm-task-surface-2) !important;
+    color: var(--wm-task-text) !important;
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    box-shadow: none !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-selection-placeholder,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-selection-placeholder {
+    color: rgba(226, 232, 240, 0.65) !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-selection-item,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-selection-item {
+    color: var(--wm-task-text) !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-arrow,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select .ant-select-arrow {
+    color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-select:hover:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+    border-color: #475569 !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select:hover:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select:hover:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+    border-color: rgba(56, 189, 248, 0.6) !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-select-focused:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+    border-color: #0b3a5b !important;
+    box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.14) !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select-focused:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select-focused:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+    border-color: rgba(56, 189, 248, 0.9) !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18) !important;
+}
+
+/* Dropdown border */
+.profile-sub-head.update-task .update-workflow-status .ant-select-dropdown {
+    border: 1.5px solid #64748b !important;
+    border-radius: 12px !important;
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.12) !important;
+    padding: 6px !important;
+    overflow: hidden;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select-dropdown,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select-dropdown {
+    background: var(--wm-task-surface-3) !important;
+    background-color: var(--wm-task-surface-3) !important;
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Dropdown items (match screenshot feel) */
+.profile-sub-head.update-task .update-workflow-status .ant-select-item {
+    border-radius: 10px !important;
+    margin: 2px 0;
+    padding: 10px 12px !important;
+    font-weight: 600;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select-item,
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select-item {
+    color: var(--wm-task-text) !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.profile-sub-head.update-task .update-workflow-status .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(2, 132, 199, 0.10) !important;
+}
+
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+body.dark-theme .profile-sub-head.update-task .update-workflow-status .ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(56, 189, 248, 0.16) !important;
+}
+
+/* Apply/Clear buttons (same sizing) */
+.profile-sub-head.update-task .update-workflow-status .ant-btn {
+    height: 42px;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-weight: 700;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-btn-primary:not(.ant-delete) {
+    background: #4b8bb3 !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-btn-primary:not(.ant-delete):hover {
+    background: #3e7ea7 !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-btn-primary:not(.ant-delete):disabled,
+.profile-sub-head.update-task .update-workflow-status .ant-btn-primary:not(.ant-delete)[disabled] {
+    background: rgba(75, 139, 179, 0.35) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    opacity: 1 !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-delete {
+    background: #0b3a5b !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.profile-sub-head.update-task .update-workflow-status .ant-delete:hover {
+    background: #082f4a !important;
+}
+
+/* Stage dropdown tiles (4 sections) */
+.move-task-stage-dropdown {
+    padding: 6px 0 0;
+}
+
+.move-task-stage-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px 12px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.move-task-stage-tile {
+    appearance: none;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+    min-height: 62px;
+}
+
+.move-task-stage-tile:hover {
+    border-color: #94a3b8;
+    background: #ffffff;
+}
+
+.move-task-stage-tile.active {
+    border-color: rgba(75, 139, 179, 0.55);
+    box-shadow: 0 0 0 2px rgba(75, 139, 179, 0.16);
+}
+
+.move-task-stage-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.move-task-stage-top {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.move-task-stage-count {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
+    background: #64748b;
+    flex: 0 0 auto;
+}
+
+body.dark-theme .move-task-stage-tiles,
+body[data-theme="dark"] .move-task-stage-tiles {
+    background: rgba(15, 23, 42, 0.92);
+    border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+body.dark-theme .move-task-stage-tile,
+body[data-theme="dark"] .move-task-stage-tile {
+    background: rgba(2, 6, 23, 0.62);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.dark-theme .move-task-stage-title,
+body[data-theme="dark"] .move-task-stage-title {
+    color: #e2e8f0;
 }
 
 @media screen and (max-width: 916px) {
@@ -1419,6 +1791,21 @@ body[data-theme="dark"] .wm-force-dark-page .task-inner-card {
     background-color: var(--wm-task-surface-2) !important;
     color: var(--wm-task-text) !important;
     border-color: var(--wm-task-border) !important;
+}
+
+/* Avatars in header (assignees) */
+body.dark-theme .wm-force-dark-page .avtar-group .ant-avatar,
+body[data-theme="dark"] .wm-force-dark-page .avtar-group .ant-avatar {
+    background: var(--wm-task-surface-3) !important;
+    background-color: var(--wm-task-surface-3) !important;
+    color: var(--wm-task-text) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+body.dark-theme .wm-force-dark-page .avtar-group .ant-avatar-string,
+body[data-theme="dark"] .wm-force-dark-page .avtar-group .ant-avatar-string {
+    color: var(--wm-task-text) !important;
+    -webkit-text-fill-color: var(--wm-task-text) !important;
 }
 
 body.dark-theme .wm-force-dark-page .wm-task-card,
@@ -4693,4 +5080,170 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     border-radius: 16px 0 0 16px;
     overflow: hidden;
     box-shadow: -24px 0 80px rgba(11, 58, 91, 0.18);
+}
+
+/* ══════════════════════════════════════════════
+   ADD LIST MODAL — Refined Light Theme
+   ══════════════════════════════════════════════ */
+
+.ant-modal.add-task-modal.add-list-modal:not(.copy-task-modal) {
+    width: 980px !important;
+    max-width: 94vw !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-content {
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    box-shadow: 0 26px 90px rgba(11, 58, 91, 0.20) !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-header {
+    padding: 18px 24px !important;
+    background: #0b3a5b !important;
+    border-bottom: none !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-title {
+    color: #ffffff !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) button.ant-modal-close {
+    top: 18px !important;
+    right: 18px !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) button.ant-modal-close:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-close-x {
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-body {
+    padding: 0 !important;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 24%) !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .overview-modal-wrapper {
+    padding: 28px 26px 24px !important;
+    background: transparent !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-row {
+    row-gap: 12px;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-form-item {
+    margin-bottom: 16px !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-form-item-label > label,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-section label,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .client-section label {
+    color: #52637a !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-select-selector,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input-affix-wrapper {
+    min-height: 48px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d7e1ec !important;
+    background: #ffffff !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input::placeholder,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-select-selection-placeholder {
+    color: #a7b6c8 !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-section,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .client-section,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stages-section {
+    padding: 18px 18px 14px;
+    border: 1px solid #e3ebf4;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stages-section h4 {
+    color: #183b56 !important;
+    font-weight: 700 !important;
+    margin-bottom: 18px !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stage-card {
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid #e4ecf5;
+    background: #f8fbff;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-name {
+    color: #183b56;
+    font-weight: 600;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn-link {
+    color: #0f5f9a !important;
+    font-weight: 700 !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-checkbox-wrapper {
+    color: #344256 !important;
+    font-weight: 600;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-footer {
+    padding: 16px 24px 20px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e7eef6 !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.delete-btn {
+    min-width: 104px;
+    height: 42px;
+    border-radius: 12px !important;
+    background: #f3f7fb !important;
+    border: 1px solid #d9e5f0 !important;
+    color: #52637a !important;
+    font-weight: 700 !important;
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.square-primary-btn {
+    min-width: 104px;
+    height: 42px;
+    border-radius: 12px !important;
+    background: #0b3a5b !important;
+    border-color: #0b3a5b !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 10px 24px rgba(11, 58, 91, 0.22);
+}
+
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.square-primary-btn:hover,
+.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.delete-btn:hover {
+    transform: none !important;
 }

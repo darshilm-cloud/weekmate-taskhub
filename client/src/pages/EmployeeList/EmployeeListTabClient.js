@@ -25,7 +25,11 @@ import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
 import ClientFilterComponent from "./ClientFilterComponent";
 
-const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) => {
+const EmployeeListTabClient = ({
+  taskLikeDesign = false,
+  actionsRef = null,
+  onMutationSuccess = null,
+}) => {
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
@@ -115,6 +119,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) =>
       });
       if (response.data.statusCode == 200) {
         message.success(response.data.message);
+        onMutationSuccess?.();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }
@@ -148,6 +153,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) =>
       if (response.data.statusCode !== 201) {
         return message.error(response.data.message);
       }
+      message.success(response.data.message || "Client added successfully");
+      onMutationSuccess?.();
     } catch (error) {
       console.log(error);
     }
@@ -196,6 +203,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false, actionsRef = null }) =>
       if (response.data.statusCode == 200) {
         setdelete(response.data);
         message.success(response.data.message);
+        onMutationSuccess?.();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }

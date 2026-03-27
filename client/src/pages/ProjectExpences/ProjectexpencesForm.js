@@ -110,8 +110,13 @@ const ProjectExpensesForm = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url:    Service.myProjects,
+        body:       {},
       });
-      if (response?.data?.data) updateState({ projects: response.data.data });
+      const projects =
+        response?.data?.data?.data ||
+        response?.data?.data ||
+        [];
+      updateState({ projects: Array.isArray(projects) ? projects : [] });
     } catch (error) {
       console.error(error);
       message.error("Failed to fetch projects");
@@ -229,12 +234,12 @@ const ProjectExpensesForm = () => {
             message.error(response.data.message);
           }
         } else {
+          const selectedProject = state.projects.find((project) => project?._id === values.project);
           const reviewData = {
             cost_in_usd:               values.cost_in_usd,
             project_id:                values.project,
             purchase_request_details:  values.purchase_request_details,
             need_to_bill_customer:     values.need_to_bill_customer,
-            status:                    values.status,
           };
           if (values.billing_cycle && values.is_recuring) {
             reviewData.billing_cycle = values.billing_cycle;
@@ -244,15 +249,47 @@ const ProjectExpensesForm = () => {
             methodName: Service.postMethod,
             api_url:    Service.addprojectexpanses,
             body:       reviewData,
-            headers:    { "Content-Type": "multipart/form-data" },
           });
           if (response?.data?.statusCode === 201) {
             message.success(response.data.message);
+            const createdExpense = {
+              ...(response?.data?.data || {}),
+              _id: response?.data?.data?._id || response?.data?.data?.id,
+              cost_in_usd: values.cost_in_usd,
+              need_to_bill_customer: values.need_to_bill_customer,
+              purchase_request_details: values.purchase_request_details,
+              status: response?.data?.data?.status || "Pending",
+              createdAt: response?.data?.data?.createdAt || new Date().toISOString(),
+              project:
+                response?.data?.data?.project || {
+                  _id: values.project,
+                  title: selectedProject?.title || form.getFieldValue("project"),
+                },
+              manager:
+                response?.data?.data?.manager || {
+                  full_name: values.project_manager || form.getFieldValue("project_manager") || "",
+                },
+              acc_manager:
+                response?.data?.data?.acc_manager || {
+                  full_name: values.account_manager || form.getFieldValue("account_manager") || "",
+                },
+              createdBy:
+                response?.data?.data?.createdBy || {
+                  _id: userRole?._id,
+                  full_name:
+                    userRole?.full_name ||
+                    [userRole?.first_name, userRole?.last_name].filter(Boolean).join(" ") ||
+                    userRole?.name ||
+                    "You",
+                },
+            };
             await emitEvent(socketEvents.PROJECT_EXPENSE_UPDATED, {
               type: "add",
-              id: response.data.data._id,
+              id: createdExpense._id,
             });
-            history.push(`/${companySlug}/projectexpense`);
+            history.push(`/${companySlug}/projectexpense`, {
+              justCreatedExpense: createdExpense,
+            });
           } else {
             message.error(response.data.message);
           }
@@ -264,7 +301,7 @@ const ProjectExpensesForm = () => {
         dispatch(hideAuthLoader());
       }
     },
-    [state, dispatch, history, companySlug]
+    [state, dispatch, history, companySlug, emitEvent, form, userRole]
   );
 
   /* ── Render ──────────────────────────────────────────────── */

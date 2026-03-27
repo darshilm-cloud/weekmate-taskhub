@@ -23,12 +23,13 @@ import {
   CloseOutlined,
   UserOutlined,
   CalendarOutlined,
-  TagsOutlined,
-  ClockCircleOutlined,
-  CheckCircleFilled,
-  MoreOutlined,
-  DownloadOutlined,
-} from "@ant-design/icons";
+	  TagsOutlined,
+	  ClockCircleOutlined,
+	  CheckCircleFilled,
+	  SaveOutlined,
+	  MoreOutlined,
+	  DownloadOutlined,
+	} from "@ant-design/icons";
 import dayjs from "dayjs";
 import moment from "moment";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -363,15 +364,15 @@ const BugDetailModal = ({
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={onCancel}
-      footer={null}
-      width={1040}
-      centered
-      className="modern-bug-detail-modal"
-      closeIcon={<CloseOutlined style={{ color: "white" }} />}
-    >
+	    <Modal
+	      open={open}
+	      onCancel={onCancel}
+	      footer={null}
+	      width={1100}
+	      centered
+	      className="modern-bug-detail-modal"
+	      closeIcon={<CloseOutlined style={{ color: "white" }} />}
+	    >
       <div className="bug-detail-content-premium">
         <div className="bug-detail-modal-left">
           <div className="bug-detail-header-premium">
@@ -437,7 +438,28 @@ const BugDetailModal = ({
                 <div className="meta-card-label">DUE DATE</div>
                 <div className="meta-card-value">
                   <CalendarOutlined style={{ marginRight: "8px" }} />
-                  <span>{viewBug?.due_date ? moment(viewBug.due_date).format("MMM DD, YYYY") : "Set Date"}</span>
+                  {isEditable?.end_date ? (
+                    <DatePicker
+                      size="small"
+                      style={{ width: "100%" }}
+                      value={viewBug?.due_date ? dayjs(viewBug.due_date) : null}
+                      onChange={(date) =>
+                        handleViewBug("due_date", date ? date.toISOString() : null)
+                      }
+                      allowClear
+                      getPopupContainer={(trigger) => trigger?.parentElement || document.body}
+                    />
+                  ) : (
+                    <span
+                      onClick={() => handleFieldClick?.("end_date")}
+                      style={{ cursor: "pointer" }}
+                      title="Click to edit due date"
+                    >
+                      {viewBug?.due_date
+                        ? moment(viewBug.due_date).format("MMM DD, YYYY")
+                        : "Set Date"}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="meta-card">
@@ -612,8 +634,8 @@ const BugDetailModal = ({
             </div>
           </div>
 
-          <div className="bug-footer-toggles">
-            <div className="footer-left">
+	            <div className="bug-footer-toggles">
+	            <div className="footer-left">
               <Checkbox
                 checked={viewBug?.isRepeated}
                 onChange={(e) => handleViewBug("isRepeated", e.target.checked)}
@@ -646,21 +668,23 @@ const BugDetailModal = ({
                   />
                 </div>
               </div>
-            </div>
-            {isGlobalEditActive && (
-              <div className="bug-global-save-section">
-                <Button 
-                  type="primary" 
-                  className="premium-global-save-btn"
-                  icon={<CheckCircleFilled />}
-                  onClick={() => updateviewBug(viewBug)}
-                >
-                  Save All Changes
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+	            </div>
+	          </div>
+		          <div className="bug-detail-modal-footer-actions">
+		            <Button
+		              className="bug-detail-primary-btn"
+		              type="primary"
+		              icon={<SaveOutlined />}
+		              onClick={() => updateviewBug(viewBug)}
+		              title="Save changes"
+		            >
+		              Save
+		            </Button>
+		            <Button className="bug-detail-secondary-btn" onClick={onCancel}>
+		              Close
+	            </Button>
+	          </div>
+	        </div>
 
         <div className="bug-detail-modal-right">
           <div className="sidebar-header">
@@ -696,27 +720,29 @@ const BugDetailModal = ({
           <div className="sidebar-content">
             {activeTab === "comments" && (
               <div className="bug-detail-discussion">
-                <div className="comment-list-wrapper">
-                  {comments && comments.length > 0 ? (
-                    comments.map((comment, index) => (
-                      <div key={comment._id || index} className="main-comment-wrapper">
-                        <MoreOutlined className="comment-options-trigger" />
-                        <div className="main-avatar-wrapper">
-                          <MyAvatar
-                            full_name={comment.user_id?.full_name || comment.user_id?.name || comment.sender}
-                            src={comment.user_id?.profile_image || comment.user_id?.emp_img || comment.profile_pic}
-                          />
-                          <div className="comment-sender-name">
-                            <h1>{comment.user_id?.full_name || comment.user_id?.name || removeTitle(comment.sender)}</h1>
-                            <h4>{calculateTimeDifference(comment.createdAt)} {comment.createdAt ? `(${moment(comment.createdAt).format("DD-MM-YYYY")})` : ""}</h4>
+                <div className="bug-comment-list-box">
+                  <div className="comment-list-wrapper">
+                    {comments && comments.length > 0 ? (
+                      comments.map((comment, index) => (
+                        <div key={comment._id || index} className="main-comment-wrapper">
+                          <MoreOutlined className="comment-options-trigger" />
+                          <div className="main-avatar-wrapper">
+                            <MyAvatar
+                              full_name={comment.user_id?.full_name || comment.user_id?.name || comment.sender}
+                              src={comment.user_id?.profile_image || comment.user_id?.emp_img || comment.profile_pic}
+                            />
+                            <div className="comment-sender-name">
+                              <h1>{comment.user_id?.full_name || comment.user_id?.name || removeTitle(comment.sender)}</h1>
+                              <h4>{calculateTimeDifference(comment.createdAt)} {comment.createdAt ? `(${moment(comment.createdAt).format("DD-MM-YYYY")})` : ""}</h4>
+                            </div>
                           </div>
+                          <div className="comment-content" dangerouslySetInnerHTML={{ __html: comment.comment }} />
                         </div>
-                        <div className="comment-content" dangerouslySetInnerHTML={{ __html: comment.comment }} />
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
-                  )}
+                      ))
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                    )}
+                  </div>
                 </div>
                 <div className="bug-detail-sidebar-footer-card">
                   <div className="bug-detail-composer-title">Add to the conversation</div>
@@ -729,9 +755,6 @@ const BugDetailModal = ({
                     disabled={!taskDetails?._id}
                   />
                   <div className="bug-detail-composer-actions">
-                    <span className="bug-detail-composer-hint">
-                      Comments stay attached to this task for the team.
-                    </span>
                     <Button
                       className="bug-detail-comment-submit"
                       type="primary"
@@ -739,7 +762,7 @@ const BugDetailModal = ({
                       loading={postingComment}
                       disabled={!commentValue.trim()}
                     >
-                      Post update
+                      Add comment
                     </Button>
                   </div>
                 </div>
@@ -748,28 +771,43 @@ const BugDetailModal = ({
 
             {activeTab === "files" && (
               <div className="bug-files-list">
-                {[...fileViewAttachment, ...populatedViewFiles].map((file, index) => (
-                  <div key={file._id || index} className="bug-file-card">
-                    <div className="bug-file-info">
-                      {fileImageSelect(file.file_type || file.type)}
-                      <a
-                        href={getPublicFileUrl(file.path || file.file_path)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {file.name || file.file_name}
-                      </a>
+                {(() => {
+                  const files = [
+                    ...(Array.isArray(fileViewAttachment) ? fileViewAttachment : []),
+                    ...(Array.isArray(populatedViewFiles) ? populatedViewFiles : []),
+                  ];
+
+                  if (files.length === 0) {
+                    return (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>
+                        No uploaded files yet.
+                      </div>
+                    );
+                  }
+
+                  return files.map((file, index) => (
+                    <div key={file._id || index} className="bug-file-card">
+                      <div className="bug-file-info">
+                        {fileImageSelect(file.file_type || file.type)}
+                        <a
+                          href={getPublicFileUrl(file.path || file.file_path)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {file.name || file.file_name}
+                        </a>
+                      </div>
+                      <div className="bug-file-actions">
+                        <Button
+                          type="text"
+                          icon={<DownloadOutlined />}
+                          onClick={() => handleDownloadFile(file)}
+                          title="Download"
+                        />
+                      </div>
                     </div>
-                    <div className="bug-file-actions">
-                      <Button
-                        type="text"
-                        icon={<DownloadOutlined />}
-                        onClick={() => handleDownloadFile(file)}
-                        title="Download"
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             )}
 

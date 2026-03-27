@@ -182,12 +182,15 @@ const ComplaintsForm = () => {
         });
       }
 
-      if (response?.data?.data) {
+      if (response?.data?.status === 1) {
         message.success(response.data.message);
         history.push(`/${companySlug}/complaints`);
+      } else {
+        message.error(response?.data?.message || "Failed to save complaint");
       }
     } catch (error) {
       console.error(error);
+      message.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -261,36 +264,58 @@ const ComplaintsForm = () => {
               <Form.Item
                 name="project_manager"
                 label="Project Manager"
+                className="cad-field-block cad-field-block--manager"
                 rules={[{ required: true, message: "Project manager is required" }]}
               >
-                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+                <Input
+                  className="cad-input cad-input--manager"
+                  placeholder="Auto-filled from project"
+                  disabled
+                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
+                />
               </Form.Item>
 
               <Form.Item
                 name="account_manager"
                 label="Account Manager"
+                className="cad-field-block cad-field-block--manager"
                 rules={[{ required: true, message: "Account manager is required" }]}
               >
-                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+                <Input
+                  className="cad-input cad-input--manager"
+                  placeholder="Auto-filled from project"
+                  disabled
+                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
+                />
               </Form.Item>
 
               <Form.Item
                 name="client_name"
                 label="Client Name"
+                className="cad-field-block cad-field-block--client"
                 rules={[{ required: true, message: "Please enter client name" }]}
               >
-                <Input placeholder="Enter client name" prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+                <Input
+                  className="cad-input cad-input--client"
+                  placeholder="Enter client name"
+                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
+                />
               </Form.Item>
 
               <Form.Item
                 name="client_email"
                 label="Client Email"
+                className="cad-field-block cad-field-block--client"
                 rules={[
                   { required: true, message: "Please enter client email" },
                   { type: "email", message: "Please enter a valid email" },
                 ]}
               >
-                <Input placeholder="Enter client email" prefix={<MailOutlined style={{ color: "#cbd5e1" }} />} />
+                <Input
+                  className="cad-input cad-input--client"
+                  placeholder="Enter client email"
+                  prefix={<MailOutlined style={{ color: "#7aa3bf" }} />}
+                />
               </Form.Item>
 
               <Form.Item

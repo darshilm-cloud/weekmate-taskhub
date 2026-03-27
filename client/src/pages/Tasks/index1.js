@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Button,
   Menu,
@@ -18,6 +18,7 @@ import {
   ConfigProvider,
   Row,
   Col,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -28,6 +29,7 @@ import {
   MoreOutlined,
   DeleteOutlined,
   CloseCircleOutlined,
+  CloseOutlined,
   CopyOutlined,
 } from "@ant-design/icons";
 import TaskList from "./TasksKanbanBoard";
@@ -40,11 +42,28 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import TasksController from "./TasksController";
 import { getRoles, hasPermission } from "../../util/hasPermission";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
-import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import TasksTableView from "./TasksTableView/TasksTableView";
 import FilterUI from "./FilterUI";
+
+function stageBadgeColor(title, fallback) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "#64748b";
+  if (t.includes("progress")) return "#ef4444";
+  if (t.includes("hold")) return "#f59e0b";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
+  return fallback || "#64748b";
+}
+
+function normalizeStageKey(title) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "todo";
+  if (t.includes("progress")) return "inprogress";
+  if (t.includes("hold")) return "onhold";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
+  return "";
+}
 
 function TasksPMS({ flag }) {
   const {
@@ -205,28 +224,74 @@ function TasksPMS({ flag }) {
     </Menu>
   );
 
-  const handleSubmit = () => {
+  const [movingTasks, setMovingTasks] = useState(false);
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
+  const stageTiles = useMemo(() => {
+    const list = Array.isArray(workflowStatusList)
+      ? workflowStatusList
+        .map((ws) => {
+          const title = ws?.title || "";
+          const color = ws?.color || "";
+          return { id: ws?._id || ws?.id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count: 0 };
+        })
+        .filter((x) => x.id)
+      : [];
+
+    const byKey = new Map(list.filter((x) => x.key).map((x) => [x.key, x]));
+    const wanted = [
+      { key: "todo", label: "To-Do" },
+      { key: "inprogress", label: "In progress" },
+      { key: "onhold", label: "On Hold" },
+      { key: "done", label: "Done" },
+    ];
+
+    return wanted.map((w) => {
+      const hit = byKey.get(w.key);
+      if (hit) return { ...hit, title: w.label };
+      return { id: w.key, key: w.key, title: w.label, badgeColor: stageBadgeColor(w.label), count: 0 };
+    });
+  }, [workflowStatusList]);
+
+  const handleSubmit = async () => {
+    if (!Array.isArray(task_ids) || task_ids.length === 0) return;
+    if (movingTasks) return;
+    setStageDropdownOpen(false);
     if (
       selectedMainTask &&
       selectedMainTask != "a" &&
       selectedWorkflowStatus == "a"
     ) {
-      updateSubTaskListInMainTask(selectedMainTask);
-      setSelectedMainTask("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInMainTask(selectedMainTask);
+        setSelectedMainTask("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (
       selectedWorkflowStatus &&
       selectedWorkflowStatus != "a" &&
       selectedMainTask == "a"
     ) {
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
-      updateSubTaskListInMainTask(selectedMainTask);
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedMainTask("a");
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInMainTask(selectedMainTask);
+        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        setSelectedMainTask("a");
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else {
-      return;
+      message.info("Select a list or stage to move task(s).");
     }
   };
 
@@ -374,8 +439,9 @@ function TasksPMS({ flag }) {
                           className="update-workflow-status-formitem"
                         >
                           <Select
-                            defaultValue={selectedMainTask}
-                            onChange={(data) => setSelectedMainTask(data)}
+                            value={selectedMainTask === "a" ? undefined : selectedMainTask}
+                            placeholder="Select list to move task"
+                            onChange={(data) => setSelectedMainTask(data || "a")}
                             style={{ width: 200 }}
                             showSearch
                             filterOption={(input, option) =>
@@ -384,9 +450,6 @@ function TasksPMS({ flag }) {
                                 ?.indexOf(input?.toLowerCase()) >= 0
                             }
                           >
-                            <Option key={"a"} disabled>
-                              Select list to move task
-                            </Option>
                             {projectMianTask?.map((item, index) => (
                               <Option
                                 key={index}
@@ -401,9 +464,38 @@ function TasksPMS({ flag }) {
                       )}
                       <Form.Item name="workflowStatus">
                         <Select
-                          defaultValue={selectedWorkflowStatus}
-                          onChange={(data) => setSelectedWorkflowStatus(data)}
+                          value={selectedWorkflowStatus === "a" ? undefined : selectedWorkflowStatus}
+                          placeholder="Select stage to move task"
+                          onChange={(data) => setSelectedWorkflowStatus(data || "a")}
                           style={{ width: 210 }}
+                          open={stageDropdownOpen}
+                          onDropdownVisibleChange={setStageDropdownOpen}
+                          dropdownRender={(menu) => (
+                            <div className="move-task-stage-dropdown">
+                              <div className="move-task-stage-tiles">
+                                {stageTiles.map((s) => (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    className={`move-task-stage-tile${(selectedWorkflowStatus === s.id) ? " active" : ""}`}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setSelectedWorkflowStatus(s.id);
+                                      setStageDropdownOpen(false);
+                                    }}
+                                  >
+                                    <div className="move-task-stage-top">
+                                      <span className="move-task-stage-count" style={{ background: s.badgeColor || s.color || undefined }}>
+                                        {s.count || 0}
+                                      </span>
+                                    </div>
+                                    <div className="move-task-stage-title">{s.title || "Stage"}</div>
+                                  </button>
+                                ))}
+                              </div>
+                              {menu}
+                            </div>
+                          )}
                           showSearch
                           filterOption={(input, option) =>
                             option.children
@@ -411,9 +503,6 @@ function TasksPMS({ flag }) {
                               ?.indexOf(input?.toLowerCase()) >= 0
                           }
                         >
-                          <Option key={"a"} disabled>
-                            Select stage to move task
-                          </Option>
                           {workflowStatusList?.map((item, index) => (
                             <Option
                               key={index}
@@ -430,11 +519,12 @@ function TasksPMS({ flag }) {
                           className="ant-btn-primary"
                           type="primary"
                           htmlType="submit"
+                          loading={movingTasks}
                           disabled={
-                            selectedMainTask == "a" &&
-                            selectedWorkflowStatus == "a"
-                              ? true
-                              : false
+                            movingTasks ||
+                            (selectedMainTask == "a" &&
+                              selectedWorkflowStatus == "a")
+                              ? true : false
                           }
                         >
                           Apply
@@ -445,9 +535,11 @@ function TasksPMS({ flag }) {
                           className="ant-delete"
                           type="primary"
                           htmlType="reset"
+                          icon={<CloseOutlined />}
                           onClick={() => {
                             setSelectedMainTask("a");
                             setSelectedWorkflowStatus("a");
+                            setStageDropdownOpen(false);
                           }}
                         >
                           Clear
@@ -517,16 +609,6 @@ function TasksPMS({ flag }) {
   setFilterSchema={setFilterSchema}
                     />
 
-                    <div className="status-content after-border">
-                      <div className="avtar-group">
-                        <MyAvatarGroup
-                          key={projectId}
-                          customStyle={{ height: "30px", width: "30px" }}
-                          record={projectAssignees?.assignees}
-                          maxPopoverTrigger={"click"}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 

@@ -208,6 +208,7 @@
 .user-report-layout {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 .user-report-chart-card,
@@ -217,6 +218,8 @@
   background: #fff;
   padding: 18px 18px 20px;
   box-shadow: 0 14px 32px rgba(15, 39, 68, 0.04);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .user-report-card-head,
@@ -225,6 +228,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .user-report-card-head h2,
@@ -274,6 +278,7 @@
 .user-report-view-toggle {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .user-report-view-toggle .ant-btn {
@@ -293,21 +298,26 @@
 .user-report-chart-wrap {
   margin-top: 16px;
   padding: 8px 4px 0;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .user-report-chart-wrap .apexcharts-canvas {
   margin: 0 auto;
+  max-width: 100% !important;
 }
 
 .user-report-summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
   margin-top: 18px;
+  min-width: 0;
 }
 
 .user-report-summary-pill {
-  padding: 14px 16px;
+  min-width: 0;
+  padding: 12px 14px;
   border: 1px solid #e7eef7;
   border-radius: 14px;
   background: linear-gradient(180deg, #fbfdff 0%, #f8fbff 100%);
@@ -325,8 +335,9 @@
   display: block;
   margin-top: 6px;
   color: #102a43;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .user-report-summary-pill.success {
@@ -404,10 +415,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 320px;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .user-report-member-search {
-  width: 265px;
+  width: min(265px, 100%);
+  min-width: 0;
 }
 
 .user-report-member-search.ant-input-affix-wrapper {
@@ -426,25 +441,25 @@
 .user-report-member-tabs {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 18px;
   padding: 4px 2px 14px;
   border-bottom: 1px solid #edf2f7;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  overflow: visible;
 }
 
 .user-report-member-tab {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  white-space: nowrap;
+  max-width: 100%;
+  padding: 9px 12px;
   border: 1px solid #dbe5ef;
   border-radius: 999px;
   background: #f8fbff;
   color: #55697f;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -464,11 +479,14 @@
 
 .user-report-member-tab-name {
   color: inherit;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-report-member-tab-count {
-  min-width: 28px;
-  height: 28px;
+  min-width: 24px;
+  height: 24px;
   padding: 0 8px;
   border-radius: 999px;
   display: inline-flex;
@@ -476,8 +494,9 @@
   justify-content: center;
   background: #e7f1fb;
   color: #234361;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .user-report-member-tab.active .user-report-member-tab-count {
@@ -1399,5 +1418,10 @@ body[data-theme="dark"] .user-report-member-search .ant-input::placeholder {
   .project-report-search,
   .user-report-member-search {
     width: 100%;
+  }
+
+  .user-report-member-actions {
+    width: 100%;
+    justify-content: stretch;
   }
 }

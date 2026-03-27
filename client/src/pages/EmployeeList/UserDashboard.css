@@ -15,24 +15,15 @@
 .ud-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 14px 24px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
 
-.ud-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ud-header-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
+.ud-header-spacer {
+  display: none;
 }
 
 .ud-add-task-btn {
@@ -40,7 +31,7 @@
   align-items: center;
   gap: 7px;
   padding: 8px 16px;
-  background: #2563eb;
+  background: #0b3a5b;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -52,7 +43,7 @@
 }
 
 .ud-add-task-btn:hover {
-  background: #1d4ed8;
+  background: #0b3a5b;
 }
 
 /* ── Navigation Tabs ──────────────────────────────────────────── */

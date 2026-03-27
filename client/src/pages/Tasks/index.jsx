@@ -27,6 +27,7 @@ import {
   MoreOutlined,
   DeleteOutlined,
   CloseCircleOutlined,
+  CloseOutlined,
   CopyOutlined,
 } from "@ant-design/icons";
 import { useParams, useLocation, useHistory } from "react-router-dom";
@@ -61,13 +62,31 @@ import TasksTableView from "./TasksTableView/TasksTableView";
 import TasksGanttView from "./TasksGanttView";
 import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
-import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
 import TaskDetailModal from "../TaskPage/TaskDetailModal";
 import "../TaskPage/TaskDetailModal.css";
+import AddTaskModal from "./AddTaskModal";
+
+function stageBadgeColor(title, fallback) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "#64748b";
+  if (t.includes("progress")) return "#ef4444";
+  if (t.includes("hold")) return "#f59e0b";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
+  return fallback || "#64748b";
+}
+
+function normalizeStageKey(title) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "todo";
+  if (t.includes("progress")) return "inprogress";
+  if (t.includes("hold")) return "onhold";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
+  return "";
+}
 
 const TasksPMS = ({ flag }) => {
   const location = useLocation();
@@ -79,6 +98,7 @@ const TasksPMS = ({ flag }) => {
   const [selectedView, setSelectedView] = useState("table");
   const [tableTrue, setTableTrue] = useState(true);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
 
   const [isModalOpenList, setIsModalOpenList] = useState(false);
@@ -99,7 +119,6 @@ const TasksPMS = ({ flag }) => {
   const [selectedTaskToView, setSelectedTaskToView] = useState(null);
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [isPrivate, setIsprivate] = useState();
   const [sortColumn] = useState("_id");
   const [sortOrder] = useState("des");
   const [filterData] = useState([]);
@@ -127,6 +146,8 @@ const TasksPMS = ({ flag }) => {
   const [html, setHtml] = useState([]);
   const importRef = useRef(null);
   const boardTasksInitiatedRef = useRef(false);
+  const suppressNextBoardReloadRef = useRef(false);
+  const lastApplyRef = useRef(0);
 
   //Filter Subscribers & Clients for List Notification:
   const [filteredSubscriber, setFilteredSubscribers] = useState([]);
@@ -136,6 +157,7 @@ const TasksPMS = ({ flag }) => {
   const [newFilteredClients, setNewFilteredClients] = useState([]);
 
   const [isEditTaskSave, setEditTaskSave] = useState(false);
+  const [isSavingList, setIsSavingList] = useState(false);
 
   const [editorData, setEditorData] = useState("");
   const [editModalDescription, seteditModalDescription] = useState("");
@@ -146,6 +168,16 @@ const TasksPMS = ({ flag }) => {
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [listSubscriberSearch, setListSubscriberSearch] = useState("");
+  const [listClientSearch, setListClientSearch] = useState("");
+  const [listAllUsers, setListAllUsers] = useState([]);
+  const [userMasterSearchUsers, setUserMasterSearchUsers] = useState([]);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [isAddSubscriberModalOpen, setIsAddSubscriberModalOpen] = useState(false);
+  const [creatingSubscriber, setCreatingSubscriber] = useState(false);
+  const [subscriberRoles, setSubscriberRoles] = useState([]);
+  const [subscriberRolesLoading, setSubscriberRolesLoading] = useState(false);
   const [projectDetails, setProjectDetails] = useState({});
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyTaskListData, setCopyTaskListData] = useState({
@@ -175,8 +207,46 @@ const TasksPMS = ({ flag }) => {
     setCookie("view_tasks", JSON.stringify("table"), { expires: 365 });
   }, []);
 
+  const userMasterSearchTimerRef = useRef(null);
+  const requestUserMasterSearch = useCallback((searchText) => {
+    if (userMasterSearchTimerRef.current) {
+      clearTimeout(userMasterSearchTimerRef.current);
+    }
+
+    const term = String(searchText || "").trim();
+    if (!term) {
+      setUserMasterSearchUsers([]);
+      return;
+    }
+
+    userMasterSearchTimerRef.current = setTimeout(() => {
+      Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getUsermaster,
+        body: { pageNo: 1, limit: 100, search: term },
+      })
+        .then((res) => {
+          const users = res?.data?.data || [];
+          if (Array.isArray(users)) {
+            setUserMasterSearchUsers(
+              users
+                .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+                .filter((u) => u?._id)
+            );
+          }
+        })
+        .catch(() => {});
+    }, 250);
+  }, []);
+
   const handleSearch = (searchValue) => {
     setSearchKeyword(searchValue);
+    requestUserMasterSearch(searchValue);
+  };
+
+  const handleListSubscriberSearch = (searchValue) => {
+    setListSubscriberSearch(searchValue);
+    requestUserMasterSearch(searchValue);
   };
 
   const handleChangeTableView = (view) => {
@@ -236,12 +306,23 @@ const TasksPMS = ({ flag }) => {
     setSelectedListClient(
       clientsList.filter((item) => selectedItemIds.includes(item._id))
     );
-    setSearchKeyword("");
+    setListClientSearch("");
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
+    const mergedUsers = [
+      ...(assigneeOptions || []),
+      ...(listAllUsers || []),
+      ...(userMasterSearchUsers || []),
+    ];
+    const userById = new Map();
+    mergedUsers.forEach((u) => {
+      if (!u?._id) return;
+      userById.set(u._id, { ...u, full_name: u.full_name || u.name || "" });
+    });
+
     setSelectedItems(
-      assigneeOptions.filter((item) => selectedItemIds.includes(item._id))
+      selectedItemIds.map((id) => userById.get(id)).filter(Boolean)
     );
     setSearchKeyword("");
   };
@@ -315,11 +396,85 @@ const TasksPMS = ({ flag }) => {
     return Array.from(uniqueUsers.values());
   }, [employeeList, subscribersList]);
 
+  const assigneesDropdownData = useMemo(() => {
+    const searchUsers =
+      Array.isArray(userMasterSearchUsers) && userMasterSearchUsers.length > 0
+        ? userMasterSearchUsers
+        : listAllUsers || [];
+
+    const merged = [
+      ...(assigneeOptions || []),
+      ...(selectedItems || []),
+      ...(searchKeyword ? searchUsers : []),
+    ];
+
+    const uniqueUsers = new Map();
+    merged.forEach((user) => {
+      if (!user?._id) return;
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [assigneeOptions, listAllUsers, searchKeyword, selectedItems, userMasterSearchUsers]);
+
+  const subscribersDropdownData = useMemo(() => {
+    const searchUsers =
+      Array.isArray(userMasterSearchUsers) && userMasterSearchUsers.length > 0
+        ? userMasterSearchUsers
+        : listAllUsers || [];
+
+    const mergedUsers = [
+      ...(assigneeOptions || []),
+      ...(listAllUsers || []),
+      ...(userMasterSearchUsers || []),
+    ];
+    const userById = new Map();
+    mergedUsers.forEach((u) => {
+      if (!u?._id) return;
+      userById.set(u._id, { ...u, full_name: u.full_name || u.name || "" });
+    });
+
+    const selectedUsers = (selectSubscriber || [])
+      .map((id) => userById.get(id))
+      .filter(Boolean);
+
+    const merged = [
+      ...(assigneeOptions || []),
+      ...selectedUsers,
+      ...(listSubscriberSearch ? searchUsers : []),
+    ];
+
+    const uniqueUsers = new Map();
+    merged.forEach((user) => {
+      if (!user?._id) return;
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [assigneeOptions, listAllUsers, listSubscriberSearch, selectSubscriber, userMasterSearchUsers]);
+
+  const listSubscriberOptions = useMemo(() => {
+    if (Array.isArray(listAllUsers) && listAllUsers.length > 0) return listAllUsers;
+    return assigneeOptions;
+  }, [assigneeOptions, listAllUsers]);
+
   const { task_ids } = useSelector(({ common }) => common);
 
-  const defaultStageId = projectWorkflowStage.find(
-    (item) => item.title === "To-Do" && item?.isDefault === true
-  )?._id;
+  const defaultStageId =
+    projectWorkflowStage.find(
+      (item) => item.title === "To-Do" && item?.isDefault === true
+    )?._id ||
+    projectWorkflowStage?.[0]?._id ||
+    workflowStatusList.find(
+      (item) => item.title === "To-Do" && item?.isDefault === true
+    )?._id ||
+    workflowStatusList?.[0]?._id;
 
   const { Option } = Select;
   const { companySlug, projectId } = useParams();
@@ -327,15 +482,41 @@ const TasksPMS = ({ flag }) => {
   const [addform] = Form.useForm();
   const [editform] = Form.useForm();
   const [listForm] = Form.useForm();
+  const [addClientForm] = Form.useForm();
+  const [addSubscriberForm] = Form.useForm();
   const [copyTaskList] = Form.useForm();
   const searchRef = useRef();
   const attachmentfileRef = useRef();
   const Search = Input.Search;
 
+  const generateTempPassword = () => {
+    const seed = Math.random().toString(36).slice(2, 8);
+    return `Temp@${seed}`;
+  };
+
+  const fetchSubscriberRoles = useCallback(async () => {
+    try {
+      setSubscriberRolesLoading(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getAllRole,
+      });
+      if (response?.data?.data?.length > 0) {
+        setSubscriberRoles(response.data.data);
+      } else {
+        setSubscriberRoles([]);
+      }
+    } catch (error) {
+      setSubscriberRoles([]);
+    } finally {
+      setSubscriberRolesLoading(false);
+    }
+  }, []);
+
   const handleSubscribersChange = (selectedItemIds) => {
     // This ensures that we keep track of selected items by their full details, not just ID
     setSelectSubscribers(selectedItemIds);
-    setSearchKeyword("");
+    setListSubscriberSearch("");
   };
   const getProjectByID = async () => {
     try {
@@ -353,8 +534,20 @@ const TasksPMS = ({ flag }) => {
         },
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setProjectDetails(response.data.data);
-        setStagesId(response.data.data?.workFlow?._id);
+        const project = response.data.data;
+        const workflowId =
+          project?.workFlow?._id ||
+          project?.workflow?._id ||
+          project?.work_flow?._id ||
+          project?.workFlow ||
+          project?.workflow ||
+          project?.work_flow ||
+          project?.workflow_id ||
+          project?.work_flow_id ||
+          "";
+
+        setProjectDetails(project);
+        setStagesId(typeof workflowId === "string" ? workflowId : "");
       } else {
         message.error(response?.data?.message);
       }
@@ -591,7 +784,6 @@ const TasksPMS = ({ flag }) => {
           "assignees",
           "estimated_hours",
           "estimated_minutes",
-          "task_progress",
           "attachments",
           "task_status",
           "pms_clients",
@@ -607,7 +799,6 @@ const TasksPMS = ({ flag }) => {
         task_status: editTaskData.workflow_id,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
-        task_progress: "0",
         start_date: addInputTaskData.start_date
           ? addInputTaskData.start_date
           : null,
@@ -678,9 +869,11 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const getBoardTasks = async (main_task_id) => {
+  const getBoardTasks = async (main_task_id, { silent = false } = {}) => {
     try {
-      setIsTasksLoading(true);
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
@@ -693,7 +886,9 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         // Show tasks immediately — no waiting for hasDraft
         setBoardTasks(response.data.data);
-        setIsTasksLoading(false);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
         // Update hasDraft in background after UI is unblocked
         Promise.all(
           response.data.data.map(async (column) => ({
@@ -710,11 +905,15 @@ const TasksPMS = ({ flag }) => {
         });
       } else {
         message.error(response.data.message);
-        setIsTasksLoading(false);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
       }
     } catch (error) {
       console.log(error);
-      setIsTasksLoading(false);
+      if (!silent) {
+        setIsTasksLoading(false);
+      }
     }
   };
 
@@ -750,9 +949,53 @@ const TasksPMS = ({ flag }) => {
     );
   }, []);
 
-  const getProjectMianTask = async (taskID, selectionFalse) => {
+  const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
+    if (!taskId || !nextStatusId) return;
+
+    setBoardTasks((prevBoards) => {
+      if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
+
+      let movedTask = null;
+      const strippedBoards = prevBoards.map((column) => {
+        const remainingTasks = [];
+
+        (column?.tasks || []).forEach((task) => {
+          if (task?._id === taskId) {
+            movedTask = {
+              ...task,
+              _stId: nextStatusId,
+              task_status:
+                typeof task.task_status === "object" && task.task_status !== null
+                  ? { ...task.task_status, ...nextStatusPatch, _id: nextStatusId }
+                  : { ...nextStatusPatch, _id: nextStatusId },
+            };
+          } else {
+            remainingTasks.push(task);
+          }
+        });
+
+        return { ...column, tasks: remainingTasks };
+      });
+
+      if (!movedTask) return prevBoards;
+
+      return strippedBoards.map((column) => {
+        const columnStatusId = column?.workflowStatus?._id;
+        if (columnStatusId !== nextStatusId) return column;
+
+        return {
+          ...column,
+          tasks: [movedTask, ...(column?.tasks || [])],
+        };
+      });
+    });
+  }, []);
+
+  const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
-      setIsTasksLoading(true);
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         search: searchText,
         sort: sortColumn,
@@ -785,7 +1028,7 @@ const TasksPMS = ({ flag }) => {
         }
         setProjectMianTask(response.data.data);
         if (selectionFalse) {
-          getBoardTasks(selectedTask._id);
+          getBoardTasks(selectedTask._id, { silent });
           return;
         }
         if (!listID) {
@@ -806,9 +1049,21 @@ const TasksPMS = ({ flag }) => {
     } catch (error) {
       console.log(error);
     } finally {
-      setIsTasksLoading(false);
+      if (!silent) {
+        setIsTasksLoading(false);
+      }
     }
   };
+
+  const refreshProjectMainTasks = useCallback(
+    async ({ suppressBoardReload = false } = {}) => {
+      if (suppressBoardReload) {
+        suppressNextBoardReloadRef.current = true;
+      }
+      await getProjectMianTask("", false, { silent: true });
+    },
+    [getProjectMianTask]
+  );
 
   const exportCsv = async () => {
     try {
@@ -928,6 +1183,10 @@ const TasksPMS = ({ flag }) => {
     setIsModalOpenTaskModal(true);
   };
 
+  const handleAddTaskClick = () => {
+    showModalTaskModal();
+  };
+
   const handleMenuClick = (e) => {
     console.log(e);
   };
@@ -940,17 +1199,9 @@ const TasksPMS = ({ flag }) => {
 
   const yourMenu = (
     <Menu onClick={handleMenuClick}>
-      {(projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
-        <Tooltip title="Project hours exceeded" placement="top">
-          <Menu.Item disabled onClick={showModalTaskModal} key="1">
-            Task
-          </Menu.Item>
-        </Tooltip>
-      ) : (
-        <Menu.Item onClick={showModalTaskModal} key="1">
-          Task
-        </Menu.Item>
-      )}
+      <Menu.Item onClick={handleAddTaskClick} key="1">
+        Task
+      </Menu.Item>
       <Menu.Item onClick={openEditList} key="2">
         List
       </Menu.Item>
@@ -983,7 +1234,7 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const updateSubTaskListInStatus = async (id) => {
+  const updateSubTaskListInStatus = async (id, { suppressRefresh = false, suppressClearSelection = false } = {}) => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
@@ -1005,9 +1256,14 @@ const TasksPMS = ({ flag }) => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
-        getProjectMianTask();
-        dispatch(moveWorkFlowTaskHandler([]));
+        if (!suppressRefresh) {
+          const currentListId = listID || selectedTask?._id;
+          if (currentListId) await getBoardTasks(currentListId);
+          setTimeout(() => getProjectMianTask(), 0);
+        }
+        if (!suppressClearSelection) {
+          dispatch(moveWorkFlowTaskHandler([]));
+        }
       } else {
         message.error(response.data.message);
       }
@@ -1016,7 +1272,7 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const updateSubTaskListInMainTask = async (id) => {
+  const updateSubTaskListInMainTask = async (id, { suppressRefresh = false, suppressClearSelection = false } = {}) => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
@@ -1038,9 +1294,14 @@ const TasksPMS = ({ flag }) => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
-        getProjectMianTask();
-        dispatch(moveWorkFlowTaskHandler([]));
+        if (!suppressRefresh) {
+          const currentListId = listID || selectedTask?._id;
+          if (currentListId) await getBoardTasks(currentListId);
+          setTimeout(() => getProjectMianTask(), 0);
+        }
+        if (!suppressClearSelection) {
+          dispatch(moveWorkFlowTaskHandler([]));
+        }
       } else {
         message.error(response.data.message);
       }
@@ -1051,7 +1312,9 @@ const TasksPMS = ({ flag }) => {
 
   // add projectmaintask
   const addProjectMainTask = async (values) => {
+    if (isSavingList) return;
     try {
+      setIsSavingList(true);
       dispatch(showAuthLoader());
       const subscriberStages = [];
       for (let i = 0; i < selectSubscriber.length; i++) {
@@ -1081,7 +1344,16 @@ const TasksPMS = ({ flag }) => {
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        getProjectMianTask();
+        const createdListId = response?.data?.data?._id;
+        if (createdListId) {
+          const searchParams = new URLSearchParams(location.search);
+          searchParams.set("listID", createdListId);
+          history.push({
+            pathname: window.location.pathname,
+            search: searchParams.toString(),
+          });
+        }
+        await getProjectMianTask();
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
@@ -1093,6 +1365,8 @@ const TasksPMS = ({ flag }) => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsSavingList(false);
     }
   };
 
@@ -1128,7 +1402,9 @@ const TasksPMS = ({ flag }) => {
   };
 
   const editProjectmainTask = async (values) => {
+    if (isSavingList) return;
     try {
+      setIsSavingList(true);
       dispatch(showAuthLoader());
       const subscriberStages = [];
       for (let i = 0; i < selectSubscriber.length; i++) {
@@ -1180,6 +1456,8 @@ const TasksPMS = ({ flag }) => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsSavingList(false);
     }
   };
 
@@ -1305,7 +1583,7 @@ const TasksPMS = ({ flag }) => {
     } else {
       setShowSelectTask(false);
     }
-    if (data.pms_clients.length > 0) {
+    if ((data?.pms_clients || []).length > 0) {
       setShowSelectClient(true);
     } else {
       setShowSelectClient(false);
@@ -1561,8 +1839,176 @@ const TasksPMS = ({ flag }) => {
   }, []);
 
   useEffectAfterMount(() => {
+    if (!stagesId) return;
     dispatch(getSpecificProjectWorkflowStage(stagesId));
+    getListWorkflowStatus();
   }, [stagesId]);
+
+  useEffect(() => {
+    if (!isModalOpenList) return;
+    setListSubscriberSearch("");
+    setListClientSearch("");
+
+    // Always refresh dropdown data when the List modal opens
+    if (projectId) dispatch(getSubscribersList(projectId));
+    // Do NOT filter clients by project here — show full client master list
+    dispatch(getClientList());
+
+    if (!stagesId) getProjectByID();
+    if (stagesId) dispatch(getSpecificProjectWorkflowStage(stagesId));
+
+    // Load full employee master list (for "pure data" in Subscribers dropdown)
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getUsermaster,
+      body: { pageNo: 1, limit: 500, search: "" },
+    })
+      .then((res) => {
+        const users = res?.data?.data || [];
+        if (Array.isArray(users) && users.length > 0) {
+          setListAllUsers(
+            users
+              .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+              .filter((u) => u?._id)
+          );
+        }
+      })
+      .catch(() => {});
+  }, [isModalOpenList, projectId, stagesId, dispatch]);
+
+  useEffect(() => {
+    if (!isModalOpenTaskModal) return;
+
+    // Ensure we can search/select assignees outside current subscriber/employee lists
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getUsermaster,
+      body: { pageNo: 1, limit: 500, search: "" },
+    })
+      .then((res) => {
+        const users = res?.data?.data || [];
+        if (Array.isArray(users) && users.length > 0) {
+          setListAllUsers(
+            users
+              .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+              .filter((u) => u?._id)
+          );
+        }
+      })
+      .catch(() => {});
+  }, [isModalOpenTaskModal]);
+
+  const createClientFromListModal = async (values) => {
+    const fullName = `${values.first_name} ${values.last_name}`.trim();
+    const reqBody = {
+      last_name: values.last_name,
+      first_name: values.first_name,
+      company_name: values.company_name,
+      phone_number: values.phone_number,
+      password: values?.plain_password,
+      full_name: fullName,
+      email: values.email,
+      extra_details: values.extra_details,
+      isActivate: values.status === "Active",
+    };
+
+    try {
+      setCreatingClient(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.clientAdd,
+        body: reqBody,
+      });
+      if (response?.data?.statusCode !== 201) {
+        return message.error(response?.data?.message || "Unable to add client");
+      }
+
+      message.success(response?.data?.message || "Client added");
+      setIsAddClientModalOpen(false);
+      addClientForm.resetFields();
+      dispatch(getClientList());
+    } catch (e) {
+      console.log(e);
+      message.error("Unable to add client");
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
+  const openAddSubscriberModal = () => {
+    addSubscriberForm.setFieldsValue({
+      first_name: "",
+      last_name: "",
+      email: "",
+      pmsRoleId: undefined,
+      password: generateTempPassword(),
+      status: "Active",
+    });
+    setIsAddSubscriberModalOpen(true);
+    fetchSubscriberRoles();
+  };
+
+  const createSubscriberFromListModal = async (values) => {
+    const companyId = JSON.parse(localStorage.getItem("user_data") || "{}")?.companyId;
+    if (!companyId) {
+      return message.error("Company ID not found");
+    }
+
+    const payload = {
+      firstName: values.first_name?.trim(),
+      lastName: values.last_name?.trim(),
+      companyId,
+      isActivate: values.status === "Active",
+      email: values.email?.trim(),
+      password: values.password,
+      pmsRoleId: values.pmsRoleId,
+    };
+
+    try {
+      setCreatingSubscriber(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addUser,
+        body: payload,
+      });
+
+      if (!response?.data?.data || !response?.data?.status) {
+        return message.error(response?.data?.message || "Failed to create subscriber");
+      }
+
+      const newUser = response.data.data;
+      const normalizedUser = {
+        ...newUser,
+        full_name:
+          newUser?.full_name ||
+          newUser?.name ||
+          `${payload.firstName || ""} ${payload.lastName || ""}`.trim(),
+      };
+
+      setListAllUsers((prev) => {
+        const existing = Array.isArray(prev) ? prev : [];
+        const exists = existing.some((u) => u?._id === normalizedUser?._id);
+        return exists ? existing : [...existing, normalizedUser];
+      });
+      setUserMasterSearchUsers((prev) => {
+        const existing = Array.isArray(prev) ? prev : [];
+        const exists = existing.some((u) => u?._id === normalizedUser?._id);
+        return exists ? existing : [...existing, normalizedUser];
+      });
+
+      setSelectSubscribers((prev) => Array.from(new Set([...(prev || []), normalizedUser._id])).filter(Boolean));
+      setListSubscriberSearch("");
+
+      message.success(response?.data?.message || "Subscriber created");
+      setIsAddSubscriberModalOpen(false);
+      addSubscriberForm.resetFields();
+    } catch (error) {
+      const apiMsg = error?.response?.data?.message || error?.message;
+      message.error(apiMsg || "Failed to create subscriber");
+    } finally {
+      setCreatingSubscriber(false);
+    }
+  };
 
   //Get Task By Redirect Link:
   useEffect(() => {
@@ -1572,6 +2018,8 @@ const TasksPMS = ({ flag }) => {
       getListWorkflowStatus();
       if (boardTasksInitiatedRef.current) {
         boardTasksInitiatedRef.current = false;
+      } else if (suppressNextBoardReloadRef.current) {
+        suppressNextBoardReloadRef.current = false;
       } else {
         getBoardTasks(listID);
       }
@@ -1622,28 +2070,212 @@ const TasksPMS = ({ flag }) => {
     </Menu>
   );
 
-  const handleSubmit = () => {
+  const [movingTasks, setMovingTasks] = useState(false);
+  const stageTiles = useMemo(() => {
+    const fromBoard = Array.isArray(boardTasks)
+      ? boardTasks
+        .map((col) => {
+          const ws = col?.workflowStatus || col?.workflow_status || col?.status || {};
+          const id = ws?._id || ws?.id || col?._id;
+          const title = ws?.title || col?.title || "";
+          const color = ws?.color || col?.color || "";
+          const count = Array.isArray(col?.tasks) ? col.tasks.length : (col?.tasks_count || 0);
+          return id ? { id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count } : null;
+        })
+        .filter(Boolean)
+      : [];
+
+    const fromWorkflow = Array.isArray(workflowStatusList)
+      ? workflowStatusList
+        .map((ws) => {
+          const title = ws?.title || "";
+          const color = ws?.color || "";
+          return { id: ws?._id || ws?.id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count: 0 };
+        })
+        .filter((x) => x.id)
+      : [];
+
+    const list = fromBoard.length ? fromBoard : fromWorkflow;
+    const byKey = new Map(list.filter((x) => x.key).map((x) => [x.key, x]));
+
+    // Fixed 4 columns: To-Do / In progress / On Hold / Done
+    const wanted = [
+      { key: "todo", label: "To-Do" },
+      { key: "inprogress", label: "In progress" },
+      { key: "onhold", label: "On Hold" },
+      { key: "done", label: "Done" },
+    ];
+
+    return wanted.map((w) => {
+      const hit = byKey.get(w.key);
+      if (hit) return { ...hit, title: w.label };
+      return { id: w.key, key: w.key, title: w.label, badgeColor: stageBadgeColor(w.label), count: 0 };
+    });
+  }, [boardTasks, workflowStatusList]);
+
+  const listStageOptions = useMemo(() => {
+    const wanted = [
+      { key: "todo", label: "To-Do" },
+      { key: "inprogress", label: "In progress" },
+      { key: "onhold", label: "On Hold" },
+      { key: "done", label: "Done" },
+    ];
+
+    const fromApi =
+      Array.isArray(projectWorkflowStage) && projectWorkflowStage.length > 0
+        ? projectWorkflowStage
+        : Array.isArray(workflowStatusList) && workflowStatusList.length > 0
+          ? workflowStatusList
+          : [];
+
+    if (fromApi.length > 0) {
+      const byKey = new Map(
+        fromApi
+          .map((ws) => {
+            const title = ws?.title || ws?.name || "";
+            return [normalizeStageKey(title), ws];
+          })
+          .filter(([k]) => Boolean(k))
+      );
+      return wanted
+        .map((w) => {
+          const hit = byKey.get(w.key);
+          if (!hit) return null;
+          return { ...hit, _id: hit?._id || hit?.id, title: w.label };
+        })
+        .filter(Boolean);
+    }
+
+    const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+    const hasRealIds =
+      Array.isArray(stageTiles) &&
+      stageTiles.some(
+        (t) => typeof t?.id === "string" && t.id.length > 8 && !placeholderIds.has(t.id)
+      );
+    if (!hasRealIds) return [];
+    return wanted
+      .map((w) => {
+        const hit = stageTiles.find((t) => t?.key === w.key);
+        if (!hit) return null;
+        return { _id: hit.id, title: w.label };
+      })
+      .filter(Boolean);
+  }, [projectWorkflowStage, stageTiles, workflowStatusList]);
+
+  const handleSubmit = async () => {
+    const now = Date.now();
+    if (now - lastApplyRef.current < 600) return;
+    lastApplyRef.current = now;
+
+    const hasSelectedTasks = Array.isArray(task_ids) && task_ids.length > 0;
+    if (movingTasks) return;
+    setStageDropdownOpen(false);
+
+    // If no tasks are selected, treat list/stage as view filters (not bulk move)
+    if (!hasSelectedTasks) {
+      setFilterSchema((prev) => ({
+        ...(prev || {}),
+        workflowStatusId:
+          selectedWorkflowStatus && selectedWorkflowStatus !== "a"
+            ? selectedWorkflowStatus
+            : undefined,
+      }));
+
+      if (selectedMainTask && selectedMainTask !== "a") {
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set("listID", selectedMainTask);
+        history.push({
+          pathname: window.location.pathname,
+          search: searchParams.toString(),
+        });
+      }
+      return;
+    }
+
+    const currentListId = listID || selectedTask?._id;
+
     if (
       selectedMainTask &&
       selectedMainTask != "a" &&
       selectedWorkflowStatus == "a"
     ) {
-      updateSubTaskListInMainTask(selectedMainTask);
-      setSelectedMainTask("a");
+      setMovingTasks(true);
+      try {
+        // Optimistic: moved out of current list, remove locally
+        if (currentListId && selectedMainTask !== currentListId) {
+          setBoardTasks((prev) =>
+            (prev || []).map((col) => ({
+              ...col,
+              tasks: (col?.tasks || []).filter((t) => !task_ids.includes(t?._id)),
+            }))
+          );
+        }
+        await updateSubTaskListInMainTask(selectedMainTask);
+        setSelectedMainTask("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (
       selectedWorkflowStatus &&
       selectedWorkflowStatus != "a" &&
       selectedMainTask == "a"
     ) {
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        // Optimistic: move cards between columns immediately
+        setBoardTasks((prev) => {
+          const boards = Array.isArray(prev) ? prev : [];
+          const moved = [];
+          const stripped = boards.map((col) => {
+            const remaining = [];
+            (col?.tasks || []).forEach((t) => {
+              if (task_ids.includes(t?._id)) moved.push(t);
+              else remaining.push(t);
+            });
+            return { ...col, tasks: remaining };
+          });
+
+          return stripped.map((col) => {
+            const colId = col?.workflowStatus?._id;
+            if (colId && colId === selectedWorkflowStatus) {
+              return { ...col, tasks: [...moved, ...(col?.tasks || [])] };
+            }
+            return col;
+          });
+        });
+        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
-      updateSubTaskListInMainTask(selectedMainTask);
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedMainTask("a");
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        // Optimistic: if moving to a different list, remove from current view
+        if (currentListId && selectedMainTask !== currentListId) {
+          setBoardTasks((prev) =>
+            (prev || []).map((col) => ({
+              ...col,
+              tasks: (col?.tasks || []).filter((t) => !task_ids.includes(t?._id)),
+            }))
+          );
+        }
+        await updateSubTaskListInMainTask(selectedMainTask, { suppressRefresh: true, suppressClearSelection: true });
+        await updateSubTaskListInStatus(selectedWorkflowStatus, { suppressRefresh: true, suppressClearSelection: true });
+        // Single refresh/clear at the end (prevents multiple refreshes)
+        if (currentListId) await getBoardTasks(currentListId);
+        dispatch(moveWorkFlowTaskHandler([]));
+        // Refresh left list in background (avoid blocking UI)
+        setTimeout(() => {
+          getProjectMianTask();
+        }, 0);
+        setSelectedMainTask("a");
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else {
-      return;
+      message.info("Select a list or stage to move task(s).");
     }
   };
 
@@ -1787,7 +2419,10 @@ const TasksPMS = ({ flag }) => {
                 <div className="head-box-inner">
                   <div className="update-workflow-status">
                     <Form
-                      onFinish={handleSubmit}
+                      onSubmitCapture={(e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                      }}
                       className="update-workflow-status-form"
                     >
                       {hasPermission(["task_add"]) && (
@@ -1796,8 +2431,9 @@ const TasksPMS = ({ flag }) => {
                           className="update-workflow-status-formitem"
                         >
                           <Select
-                            defaultValue={selectedMainTask}
-                            onChange={(data) => setSelectedMainTask(data)}
+                            value={selectedMainTask === "a" ? undefined : selectedMainTask}
+                            placeholder="Select list to move task"
+                            onChange={(data) => setSelectedMainTask(data || "a")}
                             style={{ width: 200 }}
                             showSearch
                             filterOption={(input, option) =>
@@ -1806,9 +2442,6 @@ const TasksPMS = ({ flag }) => {
                                 ?.indexOf(input?.toLowerCase()) >= 0
                             }
                           >
-                            <Option key={"a"} disabled>
-                              Select list to move task
-                            </Option>
                             {projectMianTask?.map((item, index) => (
                               <Option
                                 key={index}
@@ -1823,9 +2456,17 @@ const TasksPMS = ({ flag }) => {
                       )}
                       <Form.Item name="workflowStatus">
                         <Select
-                          defaultValue={selectedWorkflowStatus}
-                          onChange={(data) => setSelectedWorkflowStatus(data)}
+                          value={selectedWorkflowStatus === "a" ? undefined : selectedWorkflowStatus}
+                          placeholder="Select stage to move task"
+                          onChange={(data) => setSelectedWorkflowStatus(data || "a")}
                           style={{ width: 210 }}
+                          open={stageDropdownOpen}
+                          onDropdownVisibleChange={(open) => {
+                            setStageDropdownOpen(open);
+                            if (!open || !stagesId) return;
+                            dispatch(getSpecificProjectWorkflowStage(stagesId));
+                            getListWorkflowStatus();
+                          }}
                           showSearch
                           filterOption={(input, option) =>
                             option.children
@@ -1833,10 +2474,7 @@ const TasksPMS = ({ flag }) => {
                               ?.indexOf(input?.toLowerCase()) >= 0
                           }
                         >
-                          <Option key={"a"} disabled>
-                            Select stage to move task
-                          </Option>
-                          {workflowStatusList?.map((item, index) => (
+                          {listStageOptions.map((item, index) => (
                             <Option
                               key={index}
                               value={item?._id}
@@ -1851,10 +2489,13 @@ const TasksPMS = ({ flag }) => {
                         <Button
                           className="ant-btn-primary"
                           type="primary"
-                          htmlType="submit"
+                          htmlType="button"
+                          onClick={handleSubmit}
+                          loading={movingTasks}
                           disabled={
-                            selectedMainTask == "a" &&
-                            selectedWorkflowStatus == "a"
+                            movingTasks ||
+                            (selectedMainTask == "a" &&
+                              selectedWorkflowStatus == "a")
                               ? true
                               : false
                           }
@@ -1866,10 +2507,14 @@ const TasksPMS = ({ flag }) => {
                         <Button
                           className="ant-delete"
                           type="primary"
-                          htmlType="reset"
+                          htmlType="button"
+                          icon={<CloseOutlined />}
                           onClick={() => {
                             setSelectedMainTask("a");
                             setSelectedWorkflowStatus("a");
+                            setStageDropdownOpen(false);
+                            setFilterSchema((prev) => ({ ...(prev || {}), workflowStatusId: undefined }));
+                            dispatch(moveWorkFlowTaskHandler([]));
                           }}
                         >
                           Clear
@@ -1911,17 +2556,6 @@ const TasksPMS = ({ flag }) => {
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
                     />
-
-                    <div className="status-content after-border">
-                      <div className="avtar-group">
-                        <MyAvatarGroup
-                          key={projectId}
-                          customStyle={{ height: "30px", width: "30px" }}
-                          record={projectDetails?.assignees}
-                          maxPopoverTrigger={"click"}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -1941,24 +2575,22 @@ const TasksPMS = ({ flag }) => {
                   </div>
                   <Popover
                     placement="bottomRight"
-                    content={
-                      <div className="task-elipse-pop">
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Sample CSV:</h6>
-                              <i
-                                onClick={() => exportSampleCSVfile()}
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                className="fi fi-rr-file-download"
-                              ></i>
-                              <input
-                                type="file"
-                                size="small"
+                    overlayClassName="wm-ellipsis-popover"
+	                    content={
+	                      <div className="task-elipse-pop">
+	                        {hasPermission(["task_add"]) && (
+	                          <>
+	                            <div
+	                              className="sample-csv"
+	                              onClick={() => exportSampleCSVfile()}
+	                              role="button"
+	                              tabIndex={0}
+	                            >
+	                              <h6>Sample CSV:</h6>
+	                              <i className="fi fi-rr-file-download"></i>
+	                              <input
+	                                type="file"
+	                                size="small"
                                 onChange={(e) => {
                                   const file = e.target.files[0];
                                   importCsvFile(file);
@@ -1972,39 +2604,33 @@ const TasksPMS = ({ flag }) => {
                           </>
                         )}
 
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Import CSV:</h6>
-                              <i
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => importRef.current.click()}
-                                className="fi fi-rr-file-import"
-                              ></i>
-                            </div>
-                          </>
-                        )}
-                        <div className="sample-csv">
-                          <h6>Export CSV:</h6>
-                          <i
-                            onClick={() => {
-                              exportCsv();
-                              csvRef.click();
-                            }}
-                            style={{
-                              color: "#358CC0",
-                              fontSize: "16px",
-                              cursor: "pointer",
-                            }}
-                            className="fi fi-rr-file-download"
-                          ></i>
-                        </div>
-                      </div>
-                    }
+	                        {hasPermission(["task_add"]) && (
+	                          <>
+	                            <div
+	                              className="sample-csv"
+	                              onClick={() => importRef.current.click()}
+	                              role="button"
+	                              tabIndex={0}
+	                            >
+	                              <h6>Import CSV:</h6>
+	                              <i className="fi fi-rr-file-import"></i>
+	                            </div>
+	                          </>
+	                        )}
+	                        <div
+	                          className="sample-csv"
+	                          onClick={() => {
+	                            exportCsv();
+	                            csvRef.click();
+	                          }}
+	                          role="button"
+	                          tabIndex={0}
+	                        >
+	                          <h6>Export CSV:</h6>
+	                          <i className="fi fi-rr-file-download"></i>
+	                        </div>
+	                      </div>
+	                    }
                     trigger="click"
                   >
                     <div style={{ cursor: "pointer" }}>
@@ -2067,10 +2693,12 @@ const TasksPMS = ({ flag }) => {
                 <p>No task found</p>
               </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading || !hasVisibleTasks ? null : selectedView === "board" ? (
+            {isLoadingTasksPage || isTasksLoading || projectMianTask.length === 0 ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
                 checkTaskDrafts={""}
                 boardTasks={boardTasks}
                 tasks={filteredBoardTasks}
@@ -2087,11 +2715,13 @@ const TasksPMS = ({ flag }) => {
             ) : selectedView === "gantt" ? (
               <TasksGanttView
                 tasks={filteredBoardTasks}
-                onTaskClick={(task) => showEditTaskModal(task)}
+                onTaskClick={(task) => showEditTaskModal(task, task?._stId || task?.task_status?._id || task?.task_status)}
               />
             ) : (
               <TasksTableView
                 updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
                 tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
@@ -2120,6 +2750,7 @@ const TasksPMS = ({ flag }) => {
             onClick={handleCancelList}
             className="delete-btn"
             size="large"
+            disabled={isSavingList}
           >
             Cancel
           </Button>,
@@ -2129,6 +2760,8 @@ const TasksPMS = ({ flag }) => {
             className="square-primary-btn"
             size="large"
             onClick={() => listForm.submit()}
+            loading={isSavingList}
+            disabled={isSavingList}
           >
             Save
           </Button>,
@@ -2138,7 +2771,7 @@ const TasksPMS = ({ flag }) => {
           <Form
             form={listForm}
             layout="vertical"
-            initialValues={{ isPrivateList: false }}
+            initialValues={{ markAsPrivate: false }}
             onFinish={(values) => {
               modalMode === "add"
                 ? addProjectMainTask(values)
@@ -2165,13 +2798,27 @@ const TasksPMS = ({ flag }) => {
 
               {/* Subscribers */}
               <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item label="Subscribers" className="subscriber-section">
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Subscribers</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={openAddSubscriberModal}
+                      >
+                        + Add subscriber
+                      </Button>
+                    </div>
+                  }
+                  className="subscriber-section"
+                >
                   <MultiSelect
-                    onSearch={handleSearch}
+                    onSearch={handleListSubscriberSearch}
                     onChange={handleSubscribersChange}
                     values={selectSubscriber}
-                    listData={subscribersList}
-                    search={searchKeyword}
+                    listData={subscribersDropdownData}
+                    search={listSubscriberSearch}
                   />
 
                   {selectSubscriber.length > 0 && (
@@ -2190,9 +2837,23 @@ const TasksPMS = ({ flag }) => {
 
               {/* Client */}
               <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item label="Client" className="client-section">
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Client</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={() => setIsAddClientModalOpen(true)}
+                      >
+                        + Add client
+                      </Button>
+                    </div>
+                  }
+                  className="client-section"
+                >
                   <MultiSelect
-                    onSearch={handleSearch}
+                    onSearch={setListClientSearch}
                     onChange={handleListClientChange}
                     values={
                       selectedListClient
@@ -2200,7 +2861,7 @@ const TasksPMS = ({ flag }) => {
                         : []
                     }
                     listData={clientsList}
-                    search={searchKeyword}
+                    search={listClientSearch}
                   />
 
                   {selectedListClient && selectedListClient.length > 0 && (
@@ -2233,7 +2894,7 @@ const TasksPMS = ({ flag }) => {
                     </h4>
                     <Row gutter={[16, 16]}>
                       {selectSubscriber.map((subscriberId, index) => {
-                        const subscriber = subscribersList.find(
+                        const subscriber = subscribersDropdownData.find(
                           (item) => item?._id === subscriberId
                         );
 
@@ -2272,28 +2933,29 @@ const TasksPMS = ({ flag }) => {
     placeholder="Select Stage"
     showSearch
     filterOption={(input, option) =>
-      option.children
+      String(option?.children || "")
         .toLowerCase()
-        .indexOf(input.toLowerCase()) >= 0
+        .includes(input.toLowerCase())
     }
     filterSort={(optionA, optionB) =>
-      optionA.children
+      String(optionA?.children || "")
         .toLowerCase()
-        .localeCompare(optionB.children.toLowerCase())
+        .localeCompare(String(optionB?.children || "").toLowerCase())
     }
-    onDropdownVisibleChange={(open) =>
-      open &&
-      dispatch(getSpecificProjectWorkflowStage(stagesId))
-    }
-    // Remove defaultValue and use initialValue in Form.Item instead
+    onDropdownVisibleChange={(open) => {
+      if (!open || !stagesId) return;
+      // Keep both in sync; some flows rely on local state
+      dispatch(getSpecificProjectWorkflowStage(stagesId));
+      getListWorkflowStatus();
+    }}
   >
-    {projectWorkflowStage.map((item, stageIndex) => (
+    {listStageOptions.map((item, stageIndex) => (
       <Option
-        key={stageIndex}
+        key={item?._id || stageIndex}
         value={item?._id}
         style={{ textTransform: "capitalize" }}
       >
-        {item.title}
+        {item?.title || item?.name || "-"}
       </Option>
     ))}
   </Select>
@@ -2312,12 +2974,7 @@ const TasksPMS = ({ flag }) => {
                   name="markAsPrivate"
                   valuePropName="checked"
                 >
-                  <Checkbox
-                    checked={isPrivate === true ? true : false}
-                    onChange={(e) => setIsprivate(e.target.checked)}
-                  >
-                    Mark as Private
-                  </Checkbox>
+                  <Checkbox>Mark as Private</Checkbox>
                 </Form.Item>
               </Col>
             </Row>
@@ -2326,15 +2983,21 @@ const TasksPMS = ({ flag }) => {
       </Modal>
 
       <Modal
-        title="Add Task"
-        open={isModalOpenTaskModal}
-        onCancel={handleCancelTaskModal}
-        className="add-task-modal edit-details-task-model"
-        width={1000}
+        open={isAddSubscriberModalOpen}
+        onCancel={() => {
+          setIsAddSubscriberModalOpen(false);
+          addSubscriberForm.resetFields();
+        }}
+        title="Add Subscriber"
+        width={720}
+        className="add-task-modal add-subscriber-from-list-modal"
         footer={[
           <Button
             key="cancel"
-            onClick={handleCancelTaskModal}
+            onClick={() => {
+              setIsAddSubscriberModalOpen(false);
+              addSubscriberForm.resetFields();
+            }}
             size="large"
             className="square-outline-btn ant-delete"
           >
@@ -2345,412 +3008,236 @@ const TasksPMS = ({ flag }) => {
             type="primary"
             size="large"
             className="square-primary-btn"
-            onClick={() => addform.submit()}
+            loading={creatingSubscriber}
+            onClick={() => addSubscriberForm.submit()}
           >
-            Save
+            Add
           </Button>,
         ]}
       >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={addform}
-            layout="vertical"
-            onFinish={(values) => {
-              handleTaskOps(values);
-            }}
-          >
-            <Row gutter={[0, 0]}>
-              {/* Task Title - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Title" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Description - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Description" name="descriptions" rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a descriptions",
-                    },
-                  ]}>
-                  <CKEditor
-                    editor={Custombuild}
-                    data={editorData}
-                    onChange={handleChangeData}
-                    onPaste={handlePaste}
-                    config={{
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
-                        ],
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Form.Item>
-                <Col xs={24} sm={24} md={24} lg={24}>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.start_date &&
-                                dayjs(
-                                  addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
-                                )
-                              }
-                              placeholder="Start Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("start_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                              }
-                              placeholder="End Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("end_date", dateString)
-                              }
-                              disabledDate={(current) =>
-                                current &&
-                                current <
-                                  dayjs(
-                                    addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
-                                  )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              value={addInputTaskData?.labels}
-                              allowClear
-                              placeholder="Select labels"
-                              onChange={(value) =>
-                                handleTaskInput("labels", value)
-                              }
-                            >
-                              {projectLabels.map((item) => (
-                                <Option
-                                  key={item?._id}
-                                  value={item?._id}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {item.title}
-                                </Option>
-                              ))}
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">Assignees</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <MultiSelect
-                              onSearch={handleSearch}
-                              onChange={handleSelectedItemsChange}
-                              values={
-                                selectedItems
-                                  ? selectedItems.map((item) => item?._id)
-                                  : []
-                              }
-                              listData={assigneeOptions}
-                              search={searchKeyword}
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              {!getRoles(["Client"]) && (
-                                <span style={{ color: "red" }}>*</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <div className="estimated_time_input_container">
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  value={estHrs}
-                                  type="number"
-                                  onChange={(e) =>
-                                    handleEstTimeInput(
-                                      "est_hrs",
-                                      e.target.value
-                                    )
-                                  }
-                                  className={`hours_input ${
-                                    estHrsError && "error-border"
-                                  }`}
-                                  placeholder="Hours"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estHrsError}
-                                </div>
-                              </div>
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  max={59}
-                                  type="number"
-                                  value={estMins}
-                                  onChange={(e) => {
-                                    if (e.target.value * 1 > 60)
-                                      return e.preventDefault();
-                                    handleEstTimeInput(
-                                      "est_mins",
-                                      e.target.value
-                                    );
-                                  }}
-                                  className={`hours_input ${
-                                    estMinsError && "error-border"
-                                  }`}
-                                  placeholder="Minutes"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estMinsError}
-                                </div>
-                              </div>
-                            </div>
-                            {!isAlterEstimatedTime && estTime && (
-                              <div className="estimated_setTime_container">
-                                <span
-                                  onClick={() => setIsAlterEstimatedTime(true)}
-                                  className="schedule-label"
-                                >
-                                  Estimated Time: {estTime}
-                                </span>
-                                <div className="est_time_crossIcon">
-                                  <CloseCircleOutlined
-                                    onClick={removeEstTIme}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-refresh"></i>
-                            <span className="schedule-label">Recurring</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              value={addInputTaskData?.recurringType}
-                              allowClear
-                              onChange={(value) =>
-                                handleTaskInput("recurringType", value)
-                              }
-                            >
-                              <Option value="monthly" style={{ textTransform: "capitalize" }}>
-                                Monthly
-                              </Option>
-                              <Option value="yearly" style={{ textTransform: "capitalize" }}>
-                                Yearly
-                              </Option>
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
+        <Form
+          form={addSubscriberForm}
+          layout="vertical"
+          initialValues={{ status: "Active" }}
+          onFinish={createSubscriberFromListModal}
+        >
+          <Row gutter={[16, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="First name"
+                name="first_name"
+                rules={[{ required: true, message: "First name is required" }]}
+              >
+                <Input size="large" placeholder="First name" />
               </Form.Item>
-
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <div className="fileAttachment_container">
-                  {fileAttachment.map((file, index) => (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentFile(index, file)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <a
-                          className="fileNameTxtellipsis"
-                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          {file.name.length > 15
-                            ? `${file.name.slice(0, 15)}.....${file.file_type}`
-                            : file.name + file.file_type}
-                        </a>
-                      </div>
-                    </Badge>
-                  ))}
-                </div>
-              </Col>
-              <Col xs={24} sm={24} md={24} lg={24}>
-                {fileAttachment.length > 0 && (
-                  <div className="folder-comment">
-                    <Form.Item
-                      label="Folder"
-                      name="folder"
-                      initialValue={
-                        foldersList.length > 0 ? foldersList[0]?._id : undefined
-                      }
-                      rules={[
-                        {
-                          required: true,
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Please Select Folder" showSearch>
-                        {foldersList.map((data) => (
-                          <Option
-                            key={data?._id}
-                            value={data?._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {data.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </div>
-                )}
-              </Col>
-
-              <Col xs={24} sm={24}>
-                <Tooltip key="attach" placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={() => attachmentfileRef.current.click()}
-                    size="large"
-                  >
-                    <i className="fi fi-ss-link"></i> Attach files
-                  </Button>
-                </Tooltip>
-              </Col>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={onFileChange}
-                  hidden
-                  ref={attachmentfileRef}
-                />
-              </Col>
-            </Row>
-          </Form>
-        </div>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Last name"
+                name="last_name"
+                rules={[{ required: true, message: "Last name is required" }]}
+              >
+                <Input size="large" placeholder="Last name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  { required: true, message: "Email is required" },
+                  { type: "email", message: "Enter a valid email" },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Role"
+                name="pmsRoleId"
+                rules={[{ required: true, message: "Role is required" }]}
+              >
+                <Select
+                  size="large"
+                  placeholder="Select role"
+                  loading={subscriberRolesLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {(subscriberRoles || [])
+                    .filter((r) => r?._id)
+                    .map((r) => (
+                      <Option key={r?._id} value={r?._id}>
+                        {r?.role_name || r?.name || r?.title || "-"}
+                      </Option>
+                    ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={[{ required: true, message: "Password is required" }]}
+              >
+                <Input.Password size="large" placeholder="Password" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Status"
+                name="status"
+                rules={[{ required: true, message: "Status is required" }]}
+              >
+                <Select size="large" placeholder="Status">
+                  <Option value="Active">Active</Option>
+                  <Option value="Inactive">Inactive</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
       </Modal>
+
+      <Modal
+        open={isAddClientModalOpen}
+        onCancel={() => {
+          setIsAddClientModalOpen(false);
+          addClientForm.resetFields();
+        }}
+        title="Add Client"
+        width={720}
+        className="add-task-modal add-client-from-list-modal"
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => {
+              setIsAddClientModalOpen(false);
+              addClientForm.resetFields();
+            }}
+            size="large"
+            className="square-outline-btn ant-delete"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            className="square-primary-btn"
+            loading={creatingClient}
+            onClick={() => addClientForm.submit()}
+          >
+            Add
+          </Button>,
+        ]}
+      >
+        <Form
+          form={addClientForm}
+          layout="vertical"
+          initialValues={{ status: "Active" }}
+          onFinish={createClientFromListModal}
+        >
+          <Row gutter={[16, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="First name"
+                name="first_name"
+                rules={[{ required: true, message: "First name is required" }]}
+              >
+                <Input size="large" placeholder="First name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Last name"
+                name="last_name"
+                rules={[{ required: true, message: "Last name is required" }]}
+              >
+                <Input size="large" placeholder="Last name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Company name"
+                name="company_name"
+                rules={[{ required: true, message: "Company name is required" }]}
+              >
+                <Input size="large" placeholder="Company" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  { required: true, message: "Email is required" },
+                  { type: "email", message: "Enter a valid email" },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Phone" name="phone_number">
+                <Input size="large" placeholder="Phone (optional)" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Password"
+                name="plain_password"
+                rules={[{ required: true, message: "Password is required" }]}
+              >
+                <Input.Password size="large" placeholder="Password" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Status"
+                name="status"
+                rules={[{ required: true, message: "Status is required" }]}
+              >
+                <Select size="large" placeholder="Status">
+                  <Option value="Active">Active</Option>
+                  <Option value="Inactive">Inactive</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={24}>
+              <Form.Item label="Extra details" name="extra_details">
+                <Input.TextArea rows={3} placeholder="Notes (optional)" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+
+      <AddTaskModal
+        open={isModalOpenTaskModal}
+        onCancel={handleCancelTaskModal}
+        onSuccess={async (newTask) => {
+          if (newTask) {
+            await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, newTask);
+          }
+          handleCancelTaskModal();
+          getProjectMianTask("", true);
+          if (selectedTask?._id) {
+            getBoardTasks(selectedTask._id);
+          }
+        }}
+        projectId={projectId}
+        mainTaskId={selectedTask?._id}
+        boardTasks={boardTasks}
+        subscribersList={assigneeOptions}
+        projectLabels={projectLabels}
+        fileAttachment={fileAttachment}
+        onFileChange={onFileChange}
+        removeAttachmentFile={removeAttachmentFile}
+        attachmentfileRef={attachmentfileRef}
+        foldersList={foldersList}
+      />
 
       <TaskDetailModal
         open={isEditTaskModalOpen}
@@ -2759,26 +3246,106 @@ const TasksPMS = ({ flag }) => {
           setSelectedTaskToView(null);
           handleCancelTaskModal();
         }}
-        task={selectedTaskToView}
+        task={
+          selectedTaskToView
+            ? {
+                ...selectedTaskToView,
+                project:
+                  selectedTaskToView?.project ||
+                  (projectDetails?._id
+                    ? { _id: projectDetails._id, title: projectDetails.title }
+                    : selectedTaskToView?.project),
+                mainTask:
+                  selectedTaskToView?.mainTask ||
+                  (selectedTask?._id
+                    ? { _id: selectedTask._id, title: selectedTask.title }
+                    : selectedTaskToView?.mainTask),
+              }
+            : selectedTaskToView
+        }
         companySlug={companySlug}
         onOpenInProject={(url) => {
           window.location.href = url;
         }}
-        onUpdateTask={async (updatedValues) => {
+        onUpdateTask={async (updatedValues, uploadedFiles) => {
           try {
-            const values = {
-              title: updatedValues.title,
-              folder: foldersList[0]?._id,
+            const selectedTaskId = editTaskData?.id || updatedValues?._id;
+            if (!selectedTaskId) throw new Error("missing_task_id");
+
+            const taskLabels = Array.isArray(updatedValues?.taskLabels) ? updatedValues.taskLabels : [];
+            const assignees = Array.isArray(updatedValues?.assignees) ? updatedValues.assignees : [];
+
+            const existingAttachments = Array.isArray(updatedValues?.attachments) ? updatedValues.attachments : [];
+            const normalizedExisting = existingAttachments
+              .map((a) => ({
+                file_name: a?.file_name || a?.name,
+                file_path: a?.file_path || a?.path,
+                _id: a?._id,
+                file_type: a?.file_type,
+              }))
+              .filter((a) => a.file_name && a.file_path);
+
+            const normalizedUploaded = Array.isArray(uploadedFiles)
+              ? uploadedFiles
+                  .map((a) => ({
+                    file_name: a?.file_name || a?.name,
+                    file_path: a?.file_path || a?.path,
+                    _id: a?._id,
+                    file_type: a?.file_type,
+                  }))
+                  .filter((a) => a.file_name && a.file_path)
+              : [];
+
+            const hasAttachmentsPayload = normalizedExisting.length > 0 || normalizedUploaded.length > 0;
+
+            const updatedKeys = [
+              "title",
+              "descriptions",
+              "task_labels",
+              "start_date",
+              "due_date",
+              "assignees",
+              "estimated_hours",
+              "estimated_minutes",
+              ...(hasAttachmentsPayload ? ["attachments"] : []),
+              ...(editTaskData?.workflow_id ? ["task_status"] : []),
+            ];
+
+            const reqBody = {
+              updated_key: updatedKeys,
+              project_id: projectId,
+              main_task_id: selectedTask?._id,
+              title: (updatedValues?.title || "").trim(),
+              descriptions: updatedValues?.descriptions || "",
+              task_labels: taskLabels.filter(Boolean),
+              assignees: assignees.filter(Boolean),
+              ...(editTaskData?.workflow_id ? { task_status: editTaskData.workflow_id } : {}),
+              estimated_hours: estHrs && estHrs !== "" ? String(estHrs) : "00",
+              estimated_minutes: estMins && estMins !== "" ? String(estMins) : "00",
+              start_date: updatedValues?.start_date || null,
+              due_date: updatedValues?.due_date || null,
+              ...(hasAttachmentsPayload ? { attachments: [...normalizedExisting, ...normalizedUploaded] } : {}),
             };
-            seteditModalDescription(updatedValues.descriptions);
-            setAddInputTaskData({
-              ...addInputTaskData,
-              end_date: updatedValues.due_date
+
+            dispatch(showAuthLoader());
+            const response = await Service.makeAPICall({
+              methodName: Service.putMethod,
+              api_url: `${Service.taskPropUpdation}/${selectedTaskId}`,
+              body: reqBody,
             });
-            await updateTasks(values);
+            dispatch(hideAuthLoader());
+
+            if (response?.data?.status) {
+              message.success(response.data.message || "Task updated");
+              await getBoardTasks(selectedTask?._id);
+            } else {
+              message.error(response?.data?.message || "Failed to update task");
+              return false;
+            }
             return true;
           } catch (e) {
             console.error("Update failed", e);
+            dispatch(hideAuthLoader());
             return false;
           }
         }}

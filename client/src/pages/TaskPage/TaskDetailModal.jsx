@@ -41,6 +41,53 @@ import "./TaskDetailModal.css";
 
 const { TextArea } = Input;
 
+function getMaybeId(v) {
+  if (!v) return null;
+  if (typeof v === "string") return v;
+  if (typeof v === "object") return v._id || v.id || null;
+  return null;
+}
+
+function looksLikeObjectId(v) {
+  const s = typeof v === "string" ? v : "";
+  return /^[a-f0-9]{24}$/i.test(s);
+}
+
+function pickObjectId(...vals) {
+  for (const v of vals) {
+    const id = getMaybeId(v);
+    if (looksLikeObjectId(id)) return id;
+  }
+  return null;
+}
+
+function getProjectIdFromUrl() {
+  try {
+    const m = String(window.location.pathname || "").match(/\/project\/app\/([^/?#]+)/);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function getListIdFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    return params.get("listID") || params.get("listId") || null;
+  } catch {
+    return null;
+  }
+}
+
+function getTaskIdFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    return params.get("taskID") || params.get("taskId") || null;
+  } catch {
+    return null;
+  }
+}
+
 function getAssigneeName(a) {
   if (!a) return "";
   if (typeof a === "object") {
@@ -53,10 +100,54 @@ function getAssigneeName(a) {
   return "";
 }
 
+function htmlToPlainText(html) {
+  const s = typeof html === "string" ? html : "";
+  if (!s) return "";
+  // Fast path: already looks like plain text.
+  if (!/[<>]/.test(s) && !/&[a-zA-Z]+;/.test(s)) return s;
+
+  try {
+    const doc = new DOMParser().parseFromString(s, "text/html");
+    // Replace non-breaking spaces that commonly come from rich text editors.
+    return String(doc.body.textContent || "").replace(/\u00a0/g, " ");
+  } catch {
+    return s
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+}
+
+function getTaskContext(task) {
+  const projectId = pickObjectId(
+    task?.project?._id,
+    task?.project,
+    task?.project_id,
+    task?.projectId,
+    getProjectIdFromUrl()
+  );
+
+  const mainTaskId = pickObjectId(
+    task?.mainTask?._id,
+    task?.mainTask,
+    task?.main_task_id,
+    task?.mainTaskId,
+    task?.main_task?._id,
+    getListIdFromUrl()
+  );
+
+  const taskId = pickObjectId(task?._id, getTaskIdFromUrl());
+
+  return { projectId, mainTaskId, taskId };
+}
+
 const TaskDetailModal = ({
   open,
   onClose,
   task,
+  mode = "detail",
   companySlug,
   onOpenInProject,
   // Edit mode props
@@ -73,6 +164,9 @@ const TaskDetailModal = ({
   newBugData,
   onNewBugDataChange,
   onIssueDataKeypress,
+  createLeftPanel = null,
+  createRightPanel = null,
+  createWidth = 1100,
 }) => {
   const isDark = document.body.classList.contains("dark-theme") || document.body.getAttribute("data-theme") === "dark";
   const [details, setDetails] = useState(null);
@@ -86,6 +180,12 @@ const TaskDetailModal = ({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [expandHistoryId, setExpandHistoryId] = useState(null);
 
+  // Internal bugs (used when parent doesn't provide bug props)
+  const [internalBugs, setInternalBugs] = useState([]);
+  const [internalBugStatuses, setInternalBugStatuses] = useState([]);
+  const [internalIssueTitle, setInternalIssueTitle] = useState("");
+  const [internalBugsLoading, setInternalBugsLoading] = useState(false);
+
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
@@ -96,17 +196,20 @@ const TaskDetailModal = ({
   const [assigneeOptions, setAssigneeOptions] = useState([]);
   const [labelOptions, setLabelOptions] = useState([]);
 
+  const hasExternalBugControls = Boolean(onBugAdd || onBugDelete || onBugEdit || onBugStatusUpdate);
+
   const fetchTaskDetails = useCallback(async () => {
-    if (!task?.project?._id || !task?.mainTask?._id || !task?._id) return;
+    const { projectId, mainTaskId, taskId } = getTaskContext(task);
+    if (!projectId || !mainTaskId || !taskId) return;
     setLoading(true);
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getTasks,
         body: {
-          project_id: task.project._id,
-          main_task_id: task.mainTask._id,
-          _id: task._id,
+          project_id: projectId,
+          main_task_id: mainTaskId,
+          _id: taskId,
         },
       });
       if (res?.data?.data) {
@@ -119,7 +222,185 @@ const TaskDetailModal = ({
     } finally {
       setLoading(false);
     }
-  }, [task?._id, task?.project?._id, task?.mainTask?._id]);
+  }, [task]);
+
+  const fetchInternalBugStatuses = useCallback(async () => {
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getBugWorkFlowStatus,
+      });
+      if (res?.data?.status) setInternalBugStatuses(res.data.data || []);
+    } catch {
+      setInternalBugStatuses([]);
+    }
+  }, []);
+
+  const fetchInternalBugs = useCallback(async () => {
+    const base = details || task;
+    const { projectId, taskId } = getTaskContext(base);
+    if (!projectId || !taskId) return;
+    setInternalBugsLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getissuedata,
+        body: { project_id: projectId, task_id: taskId },
+      });
+      if (res?.data?.status && Array.isArray(res?.data?.data)) {
+        setInternalBugs(res.data.data);
+      } else {
+        setInternalBugs([]);
+      }
+    } catch {
+      setInternalBugs([]);
+    } finally {
+      setInternalBugsLoading(false);
+    }
+  }, [details, task]);
+
+  const addInternalBug = useCallback(async () => {
+    const title = String(internalIssueTitle || "").trim();
+    if (!title) return false;
+    const base = details || task;
+    const { projectId, taskId } = getTaskContext(base);
+    if (!projectId || !taskId) {
+      message.error("Unable to add bug (missing project/task context).");
+      return false;
+    }
+
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addBug,
+        body: { project_id: projectId, title, task_id: taskId },
+      });
+      if (res?.data?.status) {
+        setInternalIssueTitle("");
+        await fetchInternalBugs();
+        return true;
+      }
+      message.error(res?.data?.message || "Failed to add bug");
+      return false;
+    } catch {
+      message.error("Failed to add bug");
+      return false;
+    }
+  }, [details, task, internalIssueTitle, fetchInternalBugs]);
+
+  const editInternalBug = useCallback(async (bugId, title, additionalFields = {}) => {
+    const base = details || task;
+    const { projectId } = getTaskContext(base);
+    if (!bugId || !projectId) return false;
+
+    try {
+      const updatedKeys = ["title", ...Object.keys(additionalFields)];
+      const res = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.editBugTask}/${bugId}`,
+        body: {
+          updated_key: updatedKeys,
+          title,
+          project_id: projectId,
+          ...additionalFields,
+        },
+      });
+      if (res?.data?.status) {
+        await fetchInternalBugs();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [details, task, fetchInternalBugs]);
+
+  const deleteInternalBug = useCallback(async (bugId) => {
+    if (!bugId) return false;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteBugs}/${bugId}`,
+      });
+      if (res?.data?.status) {
+        await fetchInternalBugs();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [fetchInternalBugs]);
+
+  const updateTaskViaApi = useCallback(async (updatedTask, uploadedFiles) => {
+    const base = updatedTask || details || task;
+    const { projectId, mainTaskId, taskId } = getTaskContext(base);
+    if (!projectId || !mainTaskId || !taskId) {
+      message.error("Unable to update task (missing project/list context).");
+      return false;
+    }
+
+    const existingAttachments = Array.isArray(details?.attachments) ? details.attachments : [];
+    const normalizedExisting = existingAttachments
+      .map((a) => ({
+        file_name: a?.file_name || a?.name,
+        file_path: a?.file_path || a?.path,
+        _id: a?._id,
+        file_type: a?.file_type,
+      }))
+      .filter((a) => a.file_name && a.file_path);
+
+    const normalizedUploaded = Array.isArray(uploadedFiles)
+      ? uploadedFiles
+        .map((a) => ({
+          file_name: a?.file_name || a?.name,
+          file_path: a?.file_path || a?.path,
+          _id: a?._id,
+          file_type: a?.file_type,
+        }))
+        .filter((a) => a.file_name && a.file_path)
+      : [];
+
+    const taskStatusId =
+      getMaybeId(base?.task_status?._id) || getMaybeId(base?.task_status) || undefined;
+
+    const hasAttachmentsPayload = normalizedExisting.length > 0 || normalizedUploaded.length > 0;
+
+    const updatedKeys = [
+      "title",
+      "descriptions",
+      "task_labels",
+      "start_date",
+      "due_date",
+      "assignees",
+      ...(hasAttachmentsPayload ? ["attachments"] : []),
+      ...(taskStatusId ? ["task_status"] : []),
+    ];
+
+    const reqBody = {
+      updated_key: updatedKeys,
+      project_id: projectId,
+      main_task_id: mainTaskId,
+      title: String(editData.title || "").trim(),
+      descriptions: editData.descriptions || "",
+      start_date: editData.start_date || null,
+      due_date: editData.due_date || null,
+      assignees: Array.isArray(editData.assignees) ? editData.assignees : [],
+      task_labels: Array.isArray(editData.taskLabels) ? editData.taskLabels.filter(Boolean) : [],
+      ...(taskStatusId ? { task_status: taskStatusId } : {}),
+      ...(hasAttachmentsPayload ? { attachments: [...normalizedExisting, ...normalizedUploaded] } : {}),
+    };
+
+    const res = await Service.makeAPICall({
+      methodName: Service.putMethod,
+      api_url: `${Service.taskPropUpdation}/${taskId}`,
+      body: reqBody,
+    });
+
+    if (res?.data?.status) return true;
+    message.error(res?.data?.message || "Failed to update task");
+    return false;
+  }, [details, task, editData]);
 
   const getComment = useCallback(async (taskId) => {
     if (!taskId) return;
@@ -285,8 +566,17 @@ const TaskDetailModal = ({
       setExpandHistoryId(null);
       setIsEditing(false);
       setEditData({});
+      setInternalBugs([]);
+      setInternalIssueTitle("");
     }
   }, [open, task, fetchTaskDetails, fetchDropdownOptions]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (hasExternalBugControls) return;
+    void fetchInternalBugStatuses();
+    void fetchInternalBugs();
+  }, [open, hasExternalBugControls, fetchInternalBugStatuses, fetchInternalBugs]);
 
 
   useEffect(() => {
@@ -309,18 +599,20 @@ const TaskDetailModal = ({
     const assigneeIds = (src?.assignees || []).map((a) =>
       typeof a === "object" ? a._id : a
     ).filter(Boolean);
-    const labelIds = (details?.taskLabels || []).map((l) =>
-      typeof l === "object" ? l._id : l
-    ).filter(Boolean);
+    const labelIds = (src?.taskLabels || src?.task_labels || details?.taskLabels || details?.task_labels || [])
+      .map((l) => (typeof l === "object" ? l._id : l))
+      .filter(Boolean);
+
+    const bugsForEdit = hasExternalBugControls ? (bugs || []) : (internalBugs || []);
 
     setEditData({
       title: src?.title || "",
-      descriptions: src?.descriptions || "",
+      descriptions: htmlToPlainText(src?.descriptions || ""),
       due_date: src?.due_date || null,
       start_date: src?.start_date || null,
       assignees: assigneeIds,
       taskLabels: labelIds,
-      bugs: bugs || [],
+      bugs: bugsForEdit,
     });
     setIsEditing(true);
   };
@@ -332,11 +624,6 @@ const TaskDetailModal = ({
   };
 
   const handleSaveEdit = async () => {
-    if (!onUpdateTask) {
-      message.warning("Save not available in this view");
-      setIsEditing(false);
-      return;
-    }
     setSaving(true);
     try {
       let uploadedFiles = undefined;
@@ -359,38 +646,55 @@ const TaskDetailModal = ({
         taskLabels: editData.taskLabels || [],
         labels: editData.taskLabels || [],
       };
-      await onUpdateTask(updatedTask, uploadedFiles, true);
+      if (onUpdateTask) {
+        const ok = await onUpdateTask(updatedTask, uploadedFiles, true);
+        if (ok === false) throw new Error("task_update_failed");
+      } else {
+        const ok = await updateTaskViaApi(updatedTask, uploadedFiles);
+        if (!ok) throw new Error("update_failed");
+      }
 
       // Save bug edits if there are any changes
-      if (editData.bugs && onBugEdit) {
+      if (editData.bugs && (onBugEdit || (!hasExternalBugControls && editInternalBug))) {
         for (const bug of editData.bugs) {
           const originalBug = bugs.find((b) => b._id === bug._id);
+          const internalOriginalBug = internalBugs.find((b) => b._id === bug._id);
+          const baseOriginalBug = originalBug || internalOriginalBug;
           // Check if anything actually changed
           const reporterId = typeof bug.createdBy === "object" ? bug.createdBy?._id : bug.createdBy || (typeof bug.reporter === "object" ? bug.reporter?._id : null);
-          const originalReporterId = typeof originalBug?.createdBy === "object" ? originalBug?.createdBy?._id : originalBug?.createdBy || (typeof originalBug?.reporter === "object" ? originalBug?.reporter?._id : null);
-          const assigneesChanged = JSON.stringify(bug.assignees) !== JSON.stringify((originalBug?.assignees || []).map(a => typeof a === "object" ? a._id : a));
+          const originalReporterId = typeof baseOriginalBug?.createdBy === "object" ? baseOriginalBug?.createdBy?._id : baseOriginalBug?.createdBy || (typeof baseOriginalBug?.reporter === "object" ? baseOriginalBug?.reporter?._id : null);
+          const assigneesChanged = JSON.stringify(bug.assignees) !== JSON.stringify((baseOriginalBug?.assignees || []).map(a => typeof a === "object" ? a._id : a));
           
           let bugStatusId = typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status;
-          if (typeof bugStatusId === "string" && !bugStatuses.some(s => s._id === bugStatusId)) {
-            // Reverse lookup ID if it's the title string
-            const matchedStatus = bugStatuses.find(s => s.title === bugStatusId);
+          const statusPool = (hasExternalBugControls ? bugStatuses : internalBugStatuses) || [];
+          if (typeof bugStatusId === "string" && !statusPool.some(s => s._id === bugStatusId)) {
+            const matchedStatus = statusPool.find(s => s.title === bugStatusId);
             if (matchedStatus) bugStatusId = matchedStatus._id;
           }
-          
-          let originalBugStatusId = typeof originalBug?.bug_status === "object" ? originalBug?.bug_status?._id : originalBug?.bug_status;
-          if (typeof originalBugStatusId === "string" && !bugStatuses.some(s => s._id === originalBugStatusId)) {
-            const matchedOriginalStatus = bugStatuses.find(s => s.title === originalBugStatusId);
+
+          let originalBugStatusId = typeof baseOriginalBug?.bug_status === "object" ? baseOriginalBug?.bug_status?._id : baseOriginalBug?.bug_status;
+          if (typeof originalBugStatusId === "string" && !statusPool.some(s => s._id === originalBugStatusId)) {
+            const matchedOriginalStatus = statusPool.find(s => s.title === originalBugStatusId);
             if (matchedOriginalStatus) originalBugStatusId = matchedOriginalStatus._id;
           }
 
           const statusChanged = bugStatusId && originalBugStatusId && (bugStatusId !== originalBugStatusId);
 
-          if (bug.title !== originalBug?.title || reporterId !== originalReporterId || assigneesChanged || statusChanged) {
-             await onBugEdit(bug._id, bug.title, {
+          if (bug.title !== baseOriginalBug?.title || reporterId !== originalReporterId || assigneesChanged || statusChanged) {
+            if (onBugEdit) {
+              await onBugEdit(bug._id, bug.title, {
                 createdBy: reporterId || originalReporterId,
                 assignees: bug.assignees,
                 bug_status: bugStatusId,
-             });
+              });
+            } else {
+              const ok = await editInternalBug(bug._id, bug.title, {
+                createdBy: reporterId || originalReporterId,
+                assignees: bug.assignees,
+                bug_status: bugStatusId,
+              });
+              if (!ok) throw new Error("bug_update_failed");
+            }
           }
         }
       }
@@ -407,7 +711,7 @@ const TaskDetailModal = ({
   };
 
   const handleAddComment = async () => {
-    const taskId = details?._id || task?._id;
+    const taskId = details?._id || task?._id || getTaskIdFromUrl();
     if (!taskId || !commentText.trim()) return;
     setSubmittingComment(true);
     try {
@@ -418,11 +722,12 @@ const TaskDetailModal = ({
   };
 
   const handleOpenInProject = () => {
-    if (task?.project?._id) {
-      const listId = task?.mainTask?._id;
+    const { projectId, mainTaskId } = getTaskContext(task);
+    if (projectId) {
+      const listId = mainTaskId;
       const q = listId ? `?tab=Tasks&listID=${listId}` : "?tab=Tasks";
       if (onOpenInProject) {
-        onOpenInProject(`/${companySlug}/project/app/${task.project._id}${q}`);
+        onOpenInProject(`/${companySlug}/project/app/${projectId}${q}`);
       }
     }
     onClose();
@@ -437,94 +742,96 @@ const TaskDetailModal = ({
       ? displayTask.assignees.map((a) => getAssigneeName(a)).filter(Boolean)
       : []
     : [];
-  const labelNames = (details?.taskLabels || details?.task_labels || [])
-    .map(l => typeof l === 'object' ? l.title : null)
+  const labelNames = (displayTask?.taskLabels || displayTask?.task_labels || [])
+    .map((l) => (typeof l === "object" ? l.title : String(l || "").trim() || null))
     .filter(Boolean);
   const attachmentCount = details?.attachments?.length || 0;
   const descriptionHtml = displayTask?.descriptions || "<p>No detailed description has been added yet.</p>";
 
   const renderCommentsTab = () => (
     <div className="task-detail-tab-content task-detail-comments">
-      <div className="comment-list-wrapper">
-        {commentsLoading ? (
-          <div className="task-detail-loading-inline"><Spin size="small" /></div>
-        ) : comments?.length > 0 ? (
-          comments.map((item, index) => (
-            <div className="main-comment-wrapper task-detail-comment-item" key={item._id || index}>
-              <div className="main-avatar-wrapper">
-                <MyAvatar
-                  src={item.profile_pic}
-                  userName={item.sender}
-                  alt={item.sender}
-                />
-                <div className="comment-sender-name">
-                  <h1>{removeTitle(item.sender)}</h1>
-                  <h4>
-                    {calculateTimeDifference(item.createdAt)} (
-                    {moment(item?.createdAt).format("DD-MM-YYYY")})
-                  </h4>
-                </div>
-                {isCreatedBy(item?.sender_id) && (
-                  <Dropdown
-                    trigger={["click"]}
-                    overlay={
-                      <Menu>
-                        <Menu.Item
-                          key="delete"
-                          onClick={() => deleteComment(item._id)}
-                          className="ant-delete"
-                        >
-                          <DeleteOutlined style={{ color: "red" }} /> Delete
-                        </Menu.Item>
-                      </Menu>
-                    }
-                  >
-                    <Button
-                      className="task-detail-comment-menu"
-                      type="text"
-                      size="small"
-                      icon={<MoreOutlined />}
-                    />
-                  </Dropdown>
-                )}
-              </div>
-              <div className="comment-wrapper">
-                <p dangerouslySetInnerHTML={{ __html: item?.comment }} />
-                {item?.attachments?.length > 0 && (
-                  <div className="task-all-file-wrapper">
-                    {item.attachments.map((file, i) => (
-                      <Badge key={i}>
-                        <div className="fileAttachment_Box">
-                          <div className="fileAttachment_box-img">
-                            {fileImageSelect(file?.file_type)}
-                          </div>
-                          <a
-                            className="fileNameTxtellipsis"
-                            href={`${process.env.REACT_APP_API_URL || ""}/public/${file?.path}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {(file.name || "").length > 15
-                              ? `${(file.name || "").slice(0, 15)}.....${file.file_type || ""}`
-                              : (file.name || "") + (file.file_type || "")}
-                          </a>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<DownloadOutlined />}
-                            onClick={() => handleDownloadFile(file)}
-                          />
-                        </div>
-                      </Badge>
-                    ))}
+      <div className="comment-list-box">
+        <div className="comment-list-wrapper">
+          {commentsLoading ? (
+            <div className="task-detail-loading-inline"><Spin size="small" /></div>
+          ) : comments?.length > 0 ? (
+            comments.map((item, index) => (
+              <div className="main-comment-wrapper task-detail-comment-item" key={item._id || index}>
+                <div className="main-avatar-wrapper">
+                  <MyAvatar
+                    src={item.profile_pic}
+                    userName={item.sender}
+                    alt={item.sender}
+                  />
+                  <div className="comment-sender-name">
+                    <h1>{removeTitle(item.sender)}</h1>
+                    <h4>
+                      {calculateTimeDifference(item.createdAt)} (
+                      {moment(item?.createdAt).format("DD-MM-YYYY")})
+                    </h4>
                   </div>
-                )}
+                  {isCreatedBy(item?.sender_id) && (
+                    <Dropdown
+                      trigger={["click"]}
+                      overlay={
+                        <Menu>
+                          <Menu.Item
+                            key="delete"
+                            onClick={() => deleteComment(item._id)}
+                            className="ant-delete"
+                          >
+                            <DeleteOutlined style={{ color: "red" }} /> Delete
+                          </Menu.Item>
+                        </Menu>
+                      }
+                    >
+                      <Button
+                        className="task-detail-comment-menu"
+                        type="text"
+                        size="small"
+                        icon={<MoreOutlined />}
+                      />
+                    </Dropdown>
+                  )}
+                </div>
+                <div className="comment-wrapper">
+                  <p dangerouslySetInnerHTML={{ __html: item?.comment }} />
+                  {item?.attachments?.length > 0 && (
+                    <div className="task-all-file-wrapper">
+                      {item.attachments.map((file, i) => (
+                        <Badge key={i}>
+                          <div className="fileAttachment_Box">
+                            <div className="fileAttachment_box-img">
+                              {fileImageSelect(file?.file_type)}
+                            </div>
+                            <a
+                              className="fileNameTxtellipsis"
+                              href={`${process.env.REACT_APP_API_URL || ""}/public/${file?.path}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {(file.name || "").length > 15
+                                ? `${(file.name || "").slice(0, 15)}.....${file.file_type || ""}`
+                                : (file.name || "") + (file.file_type || "")}
+                            </a>
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<DownloadOutlined />}
+                              onClick={() => handleDownloadFile(file)}
+                            />
+                          </div>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <div className="task-no-comments">No comments</div>
-        )}
+            ))
+          ) : (
+            <div className="task-no-comments">No comments</div>
+          )}
+        </div>
       </div>
       <div className="task-detail-add-comment" style={isDark ? { background: 'rgba(10,18,32,0.98)', backgroundColor: 'rgba(10,18,32,0.98)', borderColor: 'rgba(51,65,85,0.6)' } : {}}>
         <div className="task-detail-composer-title">Add to the conversation</div>
@@ -538,9 +845,6 @@ const TaskDetailModal = ({
           styles={{ textarea: isDark ? { background: 'rgba(7,17,31,0.9)', backgroundColor: 'rgba(7,17,31,0.9)', color: '#e2e8f0' } : {} }}
         />
         <div className="task-detail-composer-actions" style={isDark ? { background: 'transparent' } : {}}>
-          <span className="task-detail-composer-hint" style={isDark ? { color: '#64748b' } : {}}>
-            Comments stay attached to this task for the team.
-          </span>
           <Button
             className="task-detail-comment-submit"
             type="primary"
@@ -548,7 +852,7 @@ const TaskDetailModal = ({
             loading={submittingComment}
             disabled={!commentText.trim()}
           >
-            Post update
+            Add comment
           </Button>
         </div>
       </div>
@@ -657,25 +961,36 @@ const TaskDetailModal = ({
           <div className="task-detail-label">Quality control</div>
           <div className="task-detail-section-title">Bugs</div>
         </div>
-        <span className="task-detail-section-count">{bugs?.length || 0}</span>
+        <span className="task-detail-section-count">
+          {(hasExternalBugControls ? (bugs?.length || 0) : (internalBugs?.length || 0))}
+        </span>
       </div>
 
       {/* Quick add bug input */}
-      {onBugAdd && (
+      {(onBugAdd || (!hasExternalBugControls && taskId)) && (
         <div className="task-detail-bug-input-wrapper">
           <span className="task-detail-bug-input-plus">+</span>
           <input
             className="task-detail-bug-input"
             type="text"
             placeholder="Quick add an issue title and press Enter..."
-            value={issueTitle || ""}
-            onChange={(e) => onIssueTitleChange && onIssueTitleChange(e.target.value)}
+            value={onBugAdd ? (issueTitle || "") : internalIssueTitle}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (onBugAdd) {
+                onIssueTitleChange && onIssueTitleChange(v);
+              } else {
+                setInternalIssueTitle(v);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 if (onIssueDataKeypress) {
                   onIssueDataKeypress(e);
                 } else if (onBugAdd) {
                   onBugAdd();
+                } else {
+                  void addInternalBug();
                 }
               }
             }}
@@ -684,7 +999,7 @@ const TaskDetailModal = ({
       )}
 
       {/* Bug table */}
-      {bugs?.length > 0 ? (
+      {((hasExternalBugControls ? bugs : internalBugs) || []).length > 0 ? (
         <div className="task-detail-bug-table-wrapper">
           <table className="task-detail-bug-table">
             <thead>
@@ -698,7 +1013,7 @@ const TaskDetailModal = ({
               </tr>
             </thead>
             <tbody>
-              {(isEditing ? editData.bugs || [] : bugs).map((bug, idx) => {
+              {(isEditing ? editData.bugs || [] : (hasExternalBugControls ? bugs : internalBugs)).map((bug, idx) => {
                 return (
                   <tr key={bug._id || idx}>
                     <td className="bug-id-cell">{bug.bugId || idx + 1}</td>
@@ -718,7 +1033,7 @@ const TaskDetailModal = ({
                       )}
                     </td>
                     <td className="bug-status-cell">
-                      {isEditing && bugStatuses?.length > 0 ? (
+                      {isEditing && (hasExternalBugControls ? bugStatuses : internalBugStatuses)?.length > 0 ? (
                       <Select
                         size="small"
                         value={typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status}
@@ -732,14 +1047,14 @@ const TaskDetailModal = ({
                         showSearch
                         optionFilterProp="children"
                       >
-                        {bugStatuses.map((s) => (
+                        {(hasExternalBugControls ? bugStatuses : internalBugStatuses).map((s) => (
                           <Select.Option key={s._id} value={s._id}>
                             {s.title}
                           </Select.Option>
                         ))}
                       </Select>
                     ) : (
-                      <span>{typeof bug.bug_status === "string" && !bugStatuses.some(s => s._id === bug.bug_status) ? bug.bug_status : (bugStatuses?.find(s => s._id === (typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status))?.title || bug.bug_status?.title || bug.bug_status_details?.[0]?.title || "—")}</span>
+                      <span>{typeof bug.bug_status === "string" && !(hasExternalBugControls ? bugStatuses : internalBugStatuses).some(s => s._id === bug.bug_status) ? bug.bug_status : ((hasExternalBugControls ? bugStatuses : internalBugStatuses)?.find(s => s._id === (typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status))?.title || bug.bug_status?.title || bug.bug_status_details?.[0]?.title || "—")}</span>
                     )}
                     </td>
                     <td className="bug-reporter-cell">
@@ -802,13 +1117,16 @@ const TaskDetailModal = ({
                     </td>
                     {!isEditing && (
                       <td className="bug-actions-cell">
-                        {onBugDelete && (
+                        {(onBugDelete || (!hasExternalBugControls && deleteInternalBug)) && (
                           <Button
                             type="text"
                             size="small"
                             danger
                             icon={<DeleteOutlined />}
-                            onClick={() => onBugDelete(bug._id)}
+                            onClick={() => {
+                              if (onBugDelete) return onBugDelete(bug._id);
+                              void deleteInternalBug(bug._id);
+                            }}
                           />
                         )}
                       </td>
@@ -824,6 +1142,29 @@ const TaskDetailModal = ({
       )}
     </div>
   );
+
+  if (mode === "create") {
+    return (
+      <Modal
+        className="task-page-detail-modal"
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        width={createWidth}
+        closable={false}
+        destroyOnClose
+      >
+        <div className="task-detail-modal-body">
+          <div className="task-detail-modal-left">
+            {createLeftPanel}
+          </div>
+          <div className="task-detail-modal-right">
+            {createRightPanel}
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -1145,6 +1486,7 @@ const TaskDetailModal = ({
             activeKey={activeTab}
             onChange={setActiveTab}
             className="task-detail-tabs"
+            destroyInactiveTabPane
             items={[
               {
                 key: "comments",

@@ -65,9 +65,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [location.pathname]);
 
   const getDefaultOpenKeys = useCallback(() => {
-    const path = location.pathname;
     return [];
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
@@ -76,8 +75,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [location.pathname, getDefaultOpenKeys, getDefaultSelectedKey]);
 
   const handleOpenChange = useCallback((keys) => {
-    const latestKey = keys.includes("Analytics") ? ["Analytics"] : [];
-    setOpenKeys(latestKey);
+    const latestKey = keys.find((k) => k === "Analytics" || k === "Feedback");
+    setOpenKeys(latestKey ? [latestKey] : []);
   }, []);
 
   const handleMenuMouseLeave = useCallback(() => {
@@ -100,7 +99,14 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Projects",
         onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
       },
-      // 3. Users
+      // 3. Tasks
+      {
+        key: "Tasks",
+        icon: <CheckOutlined style={{ marginRight: 4 }} />,
+        label: "Tasks",
+        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
+      },
+      // 4. Users
       getRoles(["Admin"]) && {
         key: "Users",
         icon: <TeamOutlined />,
@@ -125,19 +131,23 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           },
         ],
       },
-      // 6. Feedback - Positive Reviews
+      // 6. Feedback
       getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Positive Reviews",
+        key: "Feedback",
         icon: <StarOutlined />,
-        label: "Positive Reviews",
-        onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
-      },
-      // 7. Feedback - Complaints
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "FeedBack-Complaints",
-        icon: <ExclamationCircleOutlined />,
-        label: "Complaints",
-        onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
+        label: "Feedback",
+        children: [
+          {
+            key: "FeedBack-Positive Reviews",
+            label: "Positive Reviews",
+            onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
+          },
+          {
+            key: "FeedBack-Complaints",
+            label: "Complaints",
+            onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
+          },
+        ],
       },
       // 8. Project Expense
       (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
@@ -147,12 +157,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
       },
       // --- rest remaining ---
-      {
-        key: "Tasks",
-        icon: <CheckOutlined style={{ marginRight: 4 }} />,
-        label: "Tasks",
-        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
-      },
       {
         key: "Notes",
         icon: <ReadOutlined />,
@@ -192,6 +196,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         openKeys={openKeys}
         onOpenChange={handleOpenChange}
         triggerSubMenuAction="hover"
+        subMenuCloseDelay={0.08}
         items={item}
       />
     ),

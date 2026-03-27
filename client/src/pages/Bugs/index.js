@@ -42,6 +42,7 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
+import BugsGanttView from "./BugsGanttView";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
@@ -160,21 +161,35 @@ const BugsPMS = () => {
 
   const csvRef = document.getElementById("test-table-xls-button");
   const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={ () => handleChangeTableView("table") }>
+    <Menu selectedKeys={[selectedView]}>
+      <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
+        <i className="fa-solid fa-list" style={{ marginRight: 8 }} />
         Table View
       </Menu.Item>
-      <Menu.Item key="2" onClick={ () => handleChangeTableView("board") }>
+      <Menu.Item key="board" onClick={() => handleChangeTableView("board")}>
+        <i className="fa-solid fa-table-columns" style={{ marginRight: 8 }} />
         Board View
+      </Menu.Item>
+      <Menu.Item key="gantt" onClick={() => handleChangeTableView("gantt")}>
+        <i className="fa-solid fa-bars-progress" style={{ marginRight: 8 }} />
+        Gantt View
       </Menu.Item>
     </Menu>
   );
-  if (pageLoading) return tableTrue === false ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
+
+  if (pageLoading) return selectedView === "board" ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
+
+  const viewIcon =
+    selectedView === "table"
+      ? "fa-solid fa-list"
+      : selectedView === "gantt"
+        ? "fa-solid fa-bars-progress"
+        : "fa-solid fa-table-columns";
 
   return (
     <>
-      <div className="project-wrapper discussion-wrapper bugs-task-wrapper">
-        <div className="peoject-page">
+	      <div className="project-wrapper discussion-wrapper task-wrapper bugs-task-wrapper wm-force-dark-page">
+	        <div className="peoject-page">
           <div className="profilerightbar">
             <div className="profile-sub-head">
               <div className="task-sub-header">
@@ -201,15 +216,12 @@ const BugsPMS = () => {
                     <div className="status-content">
                       <ConfigProvider>
                         <Dropdown overlay={ menu } trigger={ ["click"] }>
-                          <div className="dropdown-trigger">
-                            { selectedView === "table"
-                              ? ""
-                              : "" }
-                            <i className="fa-solid fa-table"></i>
-                          </div>
-                        </Dropdown>
-                      </ConfigProvider>
-                    </div>
+	                          <div className="dropdown-trigger">
+	                            <i className={viewIcon}></i>
+	                          </div>
+	                        </Dropdown>
+	                      </ConfigProvider>
+	                    </div>
                   </div>
                 </div>
 
@@ -243,18 +255,15 @@ const BugsPMS = () => {
 
                       <Popover
                         placement="bottomRight"
-                        content={
-                          <div className="task-elipse-pop">
-                            { hasPermission(["bug_add"]) && (
-                              <div className="status-content">
-                                <h6>Sample CSV:</h6>
-                                <i
-                                  onClick={ () => exportSampleCSVfile() }
-                                  style={ { color: "#358CC0", fontSize: "16px" } }
-                                  className="fi fi-rr-file-download"
-                                ></i>
-                              </div>
-                            ) }
+                        overlayClassName="wm-ellipsis-popover"
+	                        content={
+	                          <div className="task-elipse-pop">
+	                            { hasPermission(["bug_add"]) && (
+	                              <div className="status-content" onClick={ () => exportSampleCSVfile() } role="button" tabIndex={0}>
+	                                <h6>Sample CSV:</h6>
+	                                <i className="fi fi-rr-file-download"></i>
+	                              </div>
+	                            ) }
                             <input
                               className="employee-inoutbtn"
                               type="file"
@@ -271,30 +280,20 @@ const BugsPMS = () => {
                               accept="xlsx, .xls, .csv"
                             />
 
-                            { hasPermission(["bug_add"]) && (
-                              <div className="status-content">
-                                <h6>Import CSV:</h6>
-
-                                <i
-                                  style={ { color: "#358CC0", fontSize: "16px" } }
-                                  onClick={ () => importRef.current.click() }
-                                  className="fi fi-rr-file-import"
-                                ></i>
-                              </div>
-                            ) }
-                            <div className="status-content">
-                              <h6>Repeated Bug CSV:</h6>
-
-                              <i
-                                onClick={ () => {
-                                  csvRef.click();
-                                } }
-                                style={ { color: "#358CC0", fontSize: "16px" } }
-                                className="fi fi-rr-file-download"
-                              ></i>
-                            </div>
-                          </div>
-                        }
+	                            { hasPermission(["bug_add"]) && (
+	                              <div className="status-content" onClick={ () => importRef.current.click() } role="button" tabIndex={0}>
+	                                <h6>Import CSV:</h6>
+	
+	                                <i className="fi fi-rr-file-import"></i>
+	                              </div>
+	                            ) }
+	                            <div className="status-content" onClick={ () => { csvRef.click(); } } role="button" tabIndex={0}>
+	                              <h6>Repeated Bug CSV:</h6>
+	
+	                              <i className="fi fi-rr-file-download"></i>
+	                            </div>
+	                          </div>
+	                        }
                         trigger="click"
                       >
                         <div style={ { cursor: "pointer" } }>
@@ -306,35 +305,46 @@ const BugsPMS = () => {
                     </div>
                   </div>
 
-                </div>
-              </div>
-            </div>
+	                </div>
+	              </div>
+	            </div>
+
             { boardTasksBugs.length === 0 && (
               <div className="error-message">
                 <p>No Data</p>
               </div>
             ) }
-            { tableTrue === false ? (
-              <BugList
-                tasks={ filterTasks(boardTasksBugs, filterSchema) }
-                showEditTaskModal={ showEditTaskModal }
-                showModalTaskModal={ showModalTaskModal }
-                getBoardTasks={ getBoardTasks }
+	            {selectedView === "board" ? (
+	              <BugList
+	                tasks={ filterTasks(boardTasksBugs, filterSchema) }
+	                showEditTaskModal={ showEditTaskModal }
+	                showModalTaskModal={ showModalTaskModal }
+	                getBoardTasks={ getBoardTasks }
                 selectedTask={ selectedTask }
                 boardTasksBugs={ boardTasksBugs }
                 deleteTasks={ deleteTasks }
               />
-            ) : (
-              <BugsTable
-                tasks={ filterTasks(boardTasksBugs, filterSchema) }
-                showEditTaskModal={ showEditTaskModal }
-                showModalTaskModal={ showModalTaskModal }
-                getBoardTasks={ getBoardTasks }
+	            ) : selectedView === "table" ? (
+	              <BugsTable
+	                tasks={ filterTasks(boardTasksBugs, filterSchema) }
+	                showEditTaskModal={ showEditTaskModal }
+	                showModalTaskModal={ showModalTaskModal }
+	                getBoardTasks={ getBoardTasks }
                 selectedTask={ selectedTask }
                 boardTasksBugs={ boardTasksBugs }
                 deleteTasks={ deleteTasks }
-              />
-            ) }
+	              />
+	            ) : (
+	              <BugsGanttView
+	                tasks={filterTasks(boardTasksBugs, filterSchema)}
+	                showEditTaskModal={showEditTaskModal}
+	                showModalTaskModal={showModalTaskModal}
+	                getBoardTasks={getBoardTasks}
+	                selectedTask={selectedTask}
+	                boardTasksBugs={boardTasksBugs}
+	                deleteTasks={deleteTasks}
+	              />
+	            )}
           </div>
         </div>
       </div>

@@ -43,6 +43,14 @@ const avatarColor = (name = "") => {
 const initials = (name = "") =>
   name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
 
+const escapeCsvCell = (value) => {
+  const stringValue = value == null ? "" : String(value);
+  if (/[",\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
 /* ─── Analytics Card ────────────────────────────────────────────── */
 const AnalyticsCard = ({ icon, value, label, colorClass }) => (
   <div className="analytics-card">
@@ -191,6 +199,56 @@ const EmployeeMasterList = () => {
     const name = (c.full_name || `${c.first_name || ""} ${c.last_name || ""}`).toLowerCase();
     return name.includes(sidebarSearch.toLowerCase());
   });
+
+  const downloadCsvFile = useCallback((rows, fileName) => {
+    if (!rows.length) return;
+    const csvContent = rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, []);
+
+  const exportEmployeesCsv = useCallback(() => {
+    const rows = [
+      ["Name", "Email", "Role", "Status"],
+      ...filteredUsers.map((user) => {
+        const name = removeTitle(
+          user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim()
+        );
+        return [
+          name || "—",
+          user.email || "",
+          user?.pms_role?.role_name || "N/A",
+          user.isActivate ? "Active" : "Inactive",
+        ];
+      }),
+    ];
+    downloadCsvFile(rows, "Users Employees.csv");
+  }, [filteredUsers, downloadCsvFile]);
+
+  const exportClientsCsv = useCallback(() => {
+    const rows = [
+      ["Name", "Email", "Company", "Status"],
+      ...filteredClients.map((client) => {
+        const name = removeTitle(
+          client.full_name || `${client.first_name || ""} ${client.last_name || ""}`.trim()
+        );
+        return [
+          name || "—",
+          client.email || "",
+          client.company_name || "",
+          client.isActivate ? "Active" : "Inactive",
+        ];
+      }),
+    ];
+    downloadCsvFile(rows, "Users Clients.csv");
+  }, [filteredClients, downloadCsvFile]);
 
   const favoriteUsers = filteredUsers.filter((u) =>  favorites.includes(u._id));
   const regularUsers  = filteredUsers.filter((u) => !favorites.includes(u._id));
@@ -544,7 +602,7 @@ const EmployeeMasterList = () => {
           {sidebarMode === "employees" && !selectedUser && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
-                <button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportCSV()}>
+                <button className="header-action-btn" onClick={exportEmployeesCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
                 </button>
               </Tooltip>
@@ -568,7 +626,7 @@ const EmployeeMasterList = () => {
           {sidebarMode === "clients" && !selectedClient && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
-                <button className="header-action-btn" onClick={() => clientActionsRef.current?.exportCSV()}>
+                <button className="header-action-btn" onClick={exportClientsCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
                 </button>
               </Tooltip>
@@ -716,10 +774,12 @@ const EmployeeMasterList = () => {
           taskLikeDesign
           actionsRef={employeeActionsRef}
           onDataLoaded={computeAnalytics}
+          onMutationSuccess={fetchSidebarUsers}
         />
         <EmployeeListTabClient
           taskLikeDesign
           actionsRef={clientActionsRef}
+          onMutationSuccess={fetchSidebarClients}
         />
       </div>
 
