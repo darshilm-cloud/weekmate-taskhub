@@ -26,6 +26,8 @@ const TaskKanbanController = ({
   getProjectMianTask,
   getBoardTasks,
   updateBoardTaskLocally,
+  moveBoardTaskLocally,
+  refreshProjectMainTasks,
 }) => {
   const location = useLocation();
   const history = useHistory();
@@ -853,7 +855,13 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
-    dispatch(showAuthLoader());
+    const targetStatus =
+      (projectWorkflowStage || []).find((item) => item?._id === workFlowStatusId) ||
+      (tasks || []).find((column) => column?.workflowStatus?._id === workFlowStatusId)?.workflowStatus ||
+      null;
+
+    moveBoardTaskLocally?.(taskId, workFlowStatusId, targetStatus || {});
+
     try {
       const reqBody = {
         task_status: workFlowStatusId,
@@ -865,17 +873,37 @@ useEffect(() => {
       });
 
       if (response?.data?.data && response?.data?.status) {
-        // getBoardTasks(response.data.data.main_task_id)
-        getProjectMianTask("", true);
+        const updatedTask = response.data.data;
+        updateBoardTaskLocally?.({
+          ...updatedTask,
+          _stId:
+            updatedTask?._stId ||
+            updatedTask?.task_status?._id ||
+            workFlowStatusId,
+        });
         if (isPopoverVisible) {
           getTaskByIdDetails(taskId);
         }
+        refreshProjectMainTasks?.({ suppressBoardReload: true });
+        setTimeout(() => {
+          const currentListId = selectedTask?._id || updatedTask?.main_task_id;
+          if (currentListId) {
+            getBoardTasks(currentListId, { silent: true });
+          }
+        }, 900);
       } else {
-        message.error(response.data.message);
+        const currentListId = selectedTask?._id;
+        if (currentListId) {
+          getBoardTasks(currentListId, { silent: true });
+        }
+        message.error(response?.data?.message || "Failed to update task status");
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
-      dispatch(hideAuthLoader());
+      const currentListId = selectedTask?._id;
+      if (currentListId) {
+        getBoardTasks(currentListId, { silent: true });
+      }
+      message.error(error?.response?.data?.message || "Failed to update task status");
       console.log(error);
     }
   };

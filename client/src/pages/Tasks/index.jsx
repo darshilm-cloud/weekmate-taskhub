@@ -145,6 +145,7 @@ const TasksPMS = ({ flag }) => {
   const [html, setHtml] = useState([]);
   const importRef = useRef(null);
   const boardTasksInitiatedRef = useRef(false);
+  const suppressNextBoardReloadRef = useRef(false);
   const lastApplyRef = useRef(0);
 
   //Filter Subscribers & Clients for List Notification:
@@ -867,9 +868,11 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const getBoardTasks = async (main_task_id) => {
+  const getBoardTasks = async (main_task_id, { silent = false } = {}) => {
     try {
-      setIsTasksLoading(true);
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
@@ -882,7 +885,9 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         // Show tasks immediately — no waiting for hasDraft
         setBoardTasks(response.data.data);
-        setIsTasksLoading(false);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
         // Update hasDraft in background after UI is unblocked
         Promise.all(
           response.data.data.map(async (column) => ({
@@ -899,11 +904,15 @@ const TasksPMS = ({ flag }) => {
         });
       } else {
         message.error(response.data.message);
-        setIsTasksLoading(false);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
       }
     } catch (error) {
       console.log(error);
-      setIsTasksLoading(false);
+      if (!silent) {
+        setIsTasksLoading(false);
+      }
     }
   };
 
@@ -939,9 +948,53 @@ const TasksPMS = ({ flag }) => {
     );
   }, []);
 
-  const getProjectMianTask = async (taskID, selectionFalse) => {
+  const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
+    if (!taskId || !nextStatusId) return;
+
+    setBoardTasks((prevBoards) => {
+      if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
+
+      let movedTask = null;
+      const strippedBoards = prevBoards.map((column) => {
+        const remainingTasks = [];
+
+        (column?.tasks || []).forEach((task) => {
+          if (task?._id === taskId) {
+            movedTask = {
+              ...task,
+              _stId: nextStatusId,
+              task_status:
+                typeof task.task_status === "object" && task.task_status !== null
+                  ? { ...task.task_status, ...nextStatusPatch, _id: nextStatusId }
+                  : { ...nextStatusPatch, _id: nextStatusId },
+            };
+          } else {
+            remainingTasks.push(task);
+          }
+        });
+
+        return { ...column, tasks: remainingTasks };
+      });
+
+      if (!movedTask) return prevBoards;
+
+      return strippedBoards.map((column) => {
+        const columnStatusId = column?.workflowStatus?._id;
+        if (columnStatusId !== nextStatusId) return column;
+
+        return {
+          ...column,
+          tasks: [movedTask, ...(column?.tasks || [])],
+        };
+      });
+    });
+  }, []);
+
+  const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
-      setIsTasksLoading(true);
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         search: searchText,
         sort: sortColumn,
@@ -974,7 +1027,7 @@ const TasksPMS = ({ flag }) => {
         }
         setProjectMianTask(response.data.data);
         if (selectionFalse) {
-          getBoardTasks(selectedTask._id);
+          getBoardTasks(selectedTask._id, { silent });
           return;
         }
         if (!listID) {
@@ -995,9 +1048,21 @@ const TasksPMS = ({ flag }) => {
     } catch (error) {
       console.log(error);
     } finally {
-      setIsTasksLoading(false);
+      if (!silent) {
+        setIsTasksLoading(false);
+      }
     }
   };
+
+  const refreshProjectMainTasks = useCallback(
+    async ({ suppressBoardReload = false } = {}) => {
+      if (suppressBoardReload) {
+        suppressNextBoardReloadRef.current = true;
+      }
+      await getProjectMianTask("", false, { silent: true });
+    },
+    [getProjectMianTask]
+  );
 
   const exportCsv = async () => {
     try {
@@ -1952,6 +2017,8 @@ const TasksPMS = ({ flag }) => {
       getListWorkflowStatus();
       if (boardTasksInitiatedRef.current) {
         boardTasksInitiatedRef.current = false;
+      } else if (suppressNextBoardReloadRef.current) {
+        suppressNextBoardReloadRef.current = false;
       } else {
         getBoardTasks(listID);
       }
@@ -2629,6 +2696,8 @@ const TasksPMS = ({ flag }) => {
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
                 checkTaskDrafts={""}
                 boardTasks={boardTasks}
                 tasks={filteredBoardTasks}
@@ -2650,6 +2719,8 @@ const TasksPMS = ({ flag }) => {
             ) : (
               <TasksTableView
                 updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
                 tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}

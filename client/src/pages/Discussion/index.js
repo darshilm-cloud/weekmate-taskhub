@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination
 } from "antd";
@@ -95,16 +95,8 @@ export default function DiscussionPage() {
   }, [fetchTopics]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setCurrentPage(1);
-      fetchTopics(search);
-    }, 400);
-    return () => clearTimeout(t);
-  }, [search, fetchTopics]); // debounce search only
-
-  useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab]);
+  }, [activeTab, search]);
 
 
   const fetchComments = async (topicId, projectId, showLoader = true) => {
@@ -220,9 +212,26 @@ export default function DiscussionPage() {
     } catch (e) { message.error("Delete failed"); }
   };
 
-  const allFilteredTopics = topics.filter((t) =>
-    activeTab === "General" ? !t.task_id : !!t.task_id
-  );
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const allFilteredTopics = useMemo(() => {
+    return topics.filter((t) => {
+      const matchesTab = activeTab === "General" ? !t.task_id : !!t.task_id;
+      if (!matchesTab) return false;
+      if (!normalizedSearch) return true;
+
+      const topicTitle = String(t.title || t.topic || "").toLowerCase();
+      const projectTitle = String(t.project?.title || "").toLowerCase();
+      const creatorName = String(t.createdBy?.full_name || t.createdBy?.name || "").toLowerCase();
+
+      return (
+        topicTitle.includes(normalizedSearch) ||
+        projectTitle.includes(normalizedSearch) ||
+        creatorName.includes(normalizedSearch)
+      );
+    });
+  }, [topics, activeTab, normalizedSearch]);
+
   const filteredTopics = allFilteredTopics.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -465,7 +474,7 @@ export default function DiscussionPage() {
         confirmLoading={addSubmitting}
         okText="Create"
         destroyOnClose
-        className="global-app-modal"
+        className="global-app-modal disc-create-modal"
         width={640}
       >
         <Form form={addForm} layout="vertical">

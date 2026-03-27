@@ -28,6 +28,7 @@ import {
   CheckCircleOutlined,
   DownOutlined,
   CloseCircleOutlined,
+  ExclamationCircleOutlined,
   CalendarOutlined,
   LeftOutlined,
   RightOutlined,
@@ -165,11 +166,12 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
     e.stopPropagation();
     Modal.confirm({
       title: "Close Project",
-      icon: <CloseCircleOutlined style={{ color: "#ef4444" }} />,
+      icon: <ExclamationCircleOutlined />,
       content: `Are you sure you want to close "${formattedTitle}"? This will mark the project as completed.`,
       okText: "Yes, Close Project",
       okButtonProps: { danger: true },
       cancelText: "Cancel",
+      className: "ap-confirm-modal",
       onOk: () => onCloseProject(record._id),
     });
   };
