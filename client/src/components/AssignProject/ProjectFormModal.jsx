@@ -124,9 +124,22 @@ const ProjectFormModal = ({
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [isSavingEmployee, setIsSavingEmployee] = useState(false);
   const [employeeModalType, setEmployeeModalType] = useState("project_manager");
+  const [editorRefreshKey, setEditorRefreshKey] = useState(0);
+
+  const getLookupCollections = (overrides = {}) => ({
+    technologyList: overrides.technologyList ?? technologyList,
+    projectTypeList: overrides.projectTypeList ?? projectTypeList,
+    projectStatusList: overrides.projectStatusList ?? projectStatusList,
+    workflow: overrides.workflow ?? workflow,
+    projectManagerList: overrides.projectManagerList ?? projectManagerList,
+    projectAssigneesList: overrides.projectAssigneesList ?? projectAssigneesList,
+    projectClientList: overrides.projectClientList ?? projectClientList,
+    accountManagerList: overrides.accountManagerList ?? accountManagerList,
+  });
 
   useEffect(() => {
     const fetchAllData = async () => {
+      setIsLoading(true);
       try {
         // Only show loader / spinner when not pre-cached
         if (!cacheReady) dispatch(showAuthLoader());
@@ -152,7 +165,7 @@ const ProjectFormModal = ({
 
         // Fetch project details only for edit mode
         if (selectedProject) {
-          await fetchProjectDetails(selectedProject._id);
+          await fetchProjectDetails(selectedProject._id, lookupOverrides);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -249,6 +262,7 @@ const ProjectFormModal = ({
         setProjectTypeList(response.data.data);
       }
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const getProjectTypeSlug = async () => {
@@ -357,6 +371,7 @@ const ProjectFormModal = ({
         setProjectStatusList(response.data.data);
       }
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const getWorkflow = async () => {
@@ -377,6 +392,7 @@ const ProjectFormModal = ({
         message.error(response?.data?.message);
       }
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const handleSearch = (searchValue) => setSearchKeyword(searchValue);
