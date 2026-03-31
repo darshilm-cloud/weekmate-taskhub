@@ -662,7 +662,7 @@ export default function AddTaskModal({
       // Load all users upfront so Assignee/Follower dropdowns are pre-populated
       const cached = sessionStorage.getItem("atm_all_users");
       if (cached) {
-        try { setAssigneeOptions(normalizeMemberOptions(JSON.parse(cached))); } catch {}
+        try { setAssigneeOptions(normalizeMemberOptions(JSON.parse(cached))); } catch { }
       }
       // Always refresh in background
       Service.makeAPICall({
@@ -675,7 +675,7 @@ export default function AddTaskModal({
           setAssigneeOptions(normalizeMemberOptions(users));
           sessionStorage.setItem("atm_all_users", JSON.stringify(users));
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [open, isStandalone, fetchProjects, fetchMainTasks, normalizeMemberOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1020,6 +1020,13 @@ export default function AddTaskModal({
                 icon={<EditOutlined />}
                 title="Edit"
               />
+              <Button
+                className="task-detail-icon-btn"
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={onCancel}
+                title="Close"
+              />
             </div>
           </div>
 
@@ -1160,7 +1167,7 @@ export default function AddTaskModal({
             <div className="task-detail-metric-card">
               <span className="task-detail-metric-label">Assets</span>
               <span className="task-detail-metric-value">
-                  {effectiveFileAttachment?.length || 0} attachment{(effectiveFileAttachment?.length || 0) === 1 ? "" : "s"}
+                {effectiveFileAttachment?.length || 0} attachment{(effectiveFileAttachment?.length || 0) === 1 ? "" : "s"}
               </span>
             </div>
           </div>

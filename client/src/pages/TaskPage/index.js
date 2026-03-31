@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Dropdown } from "antd";
+import { Input, Select, Checkbox, Avatar, Dropdown, Modal, message } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -196,6 +196,7 @@ const TaskPage = () => {
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
 
   // Sync state when URL changes (e.g. user navigates to same page with different filter)
@@ -368,7 +369,7 @@ const TaskPage = () => {
       workflowStatus: { _id: col.id, title: col.title, color: col.color },
       tasks: col.tasks,
     })),
-  [kanbanColumns]);
+    [kanbanColumns]);
 
   const calendarTasksByDate = useMemo(() => {
     const map = {};
@@ -400,6 +401,50 @@ const TaskPage = () => {
   const handleOpenTask = (task) => {
     setSelectedTask(task);
     setTaskDetailModalOpen(true);
+  };
+
+  const handleSelectTask = (id, e) => {
+    e.stopPropagation();
+    setSelectedTaskIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleDeleteSelected = async () => {
+    Modal.confirm({
+      title: "Delete Task List",
+      content: "Are you sure you want to delete the selected task list(s)? Only lists with 0 related tasks will be deleted.",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          dispatch(showAuthLoader());
+          const tasksToDelete = tasks.filter(t => selectedTaskIds.includes(t._id));
+          const deletableTasks = tasksToDelete.filter(t => (t.tasksCount === 0 || (Array.isArray(t.tasks) && t.tasks.length === 0)));
+
+          if (deletableTasks.length === 0 && selectedTaskIds.length > 0) {
+            message.warning("None of the selected task lists have 0 related tasks.");
+            dispatch(hideAuthLoader());
+            return;
+          }
+
+          for (const t of deletableTasks) {
+            await Service.makeAPICall({
+              methodName: Service.deleteMethod,
+              api_url: `${Service.deleteTask}/${t._id}`,
+            });
+          }
+
+          message.success(`${deletableTasks.length} task list(s) deleted.`);
+          setSelectedTaskIds([]);
+          fetchTaskList();
+        } catch (e) {
+          console.error("handleDeleteSelected", e);
+          message.error("Failed to delete some items.");
+        } finally {
+          dispatch(hideAuthLoader());
+        }
+      }
+    });
   };
 
   const handleOpenInProject = (path) => {
@@ -442,6 +487,16 @@ const TaskPage = () => {
               <CalendarOutlined /> {DATE_PRESET_LABELS[datePreset]}
             </button>
           </Dropdown>
+          {selectedTaskIds.length > 0 && (
+            <button
+              type="button"
+              className="task-btn-ghost"
+              style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+              onClick={handleDeleteSelected}
+            >
+              <PlusOutlined rotate={45} /> Delete Selected ({selectedTaskIds.length})
+            </button>
+          )}
           <button
             type="button"
             className="task-btn-add"
@@ -553,6 +608,8 @@ const TaskPage = () => {
                 count={s.tasks.length}
                 tasks={s.tasks}
                 onOpenTask={handleOpenTask}
+                selectedTaskIds={selectedTaskIds}
+                onSelectTask={handleSelectTask}
               />
             ))}
         </div>
@@ -607,7 +664,7 @@ const TaskPage = () => {
   );
 };
 
-function TaskListSection({ title, count, tasks, onOpenTask }) {
+function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onSelectTask }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="task-list-section">
@@ -621,7 +678,15 @@ function TaskListSection({ title, count, tasks, onOpenTask }) {
           {tasks.length === 0 ? (
             <div className="task-list-empty">No tasks</div>
           ) : (
-            tasks.map((t) => <TaskRow key={t._id} task={t} onOpen={() => onOpenTask(t)} />)
+            tasks.map((t) => (
+              <TaskRow
+                key={t._id}
+                task={t}
+                onOpen={() => onOpenTask(t)}
+                isSelected={selectedTaskIds?.includes(t._id)}
+                onSelect={(e) => onSelectTask(t._id, e)}
+              />
+            ))
           )}
         </div>
       )}
@@ -629,7 +694,7 @@ function TaskListSection({ title, count, tasks, onOpenTask }) {
   );
 }
 
-function TaskRow({ task, onOpen }) {
+function TaskRow({ task, onOpen, isSelected, onSelect }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("YYYY-MM-DD") : null;
   const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
@@ -649,7 +714,9 @@ function TaskRow({ task, onOpen }) {
       onClick={onOpen}
       onKeyDown={(e) => e.key === "Enter" && onOpen()}
     >
-      <div className="task-row-checkbox" />
+      <div className="task-row-checkbox-wrap" onClick={onSelect}>
+        <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} onChange={onSelect} />
+      </div>
       <span className="task-row-pin" title="Pin"><i className="fi fi-rr-thumbtack" style={{ fontSize: 12, color: "#bbb" }} /></span>
       <span className="task-row-flag"><FlagOutlined style={{ color: "#52c41a", fontSize: 12 }} /></span>
       <div className="task-row-avatar-wrap">

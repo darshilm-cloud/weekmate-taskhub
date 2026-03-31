@@ -221,7 +221,7 @@ function ProgressBoardofProject() {
         _id: projectId,
       };
       let Key = generateCacheKey("project", reqBody);
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
@@ -261,25 +261,25 @@ function ProgressBoardofProject() {
     }
   };
 
-   const getAccountManager = async (values) => {
-      try {
-        dispatch(showAuthLoader());
-        const reqBody = {
-          ...values,
-        };
-        const response = await Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: Service.getAccountManager,
-          body: reqBody,
-        });
-        dispatch(hideAuthLoader());
-        if (response?.data && response?.data?.data) {
-          setAccountManagerList(response?.data?.data);
-        }
-      } catch (error) {
-        console.log(error);
+  const getAccountManager = async (values) => {
+    try {
+      dispatch(showAuthLoader());
+      const reqBody = {
+        ...values,
+      };
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getAccountManager,
+        body: reqBody,
+      });
+      dispatch(hideAuthLoader());
+      if (response?.data && response?.data?.data) {
+        setAccountManagerList(response?.data?.data);
       }
-    };
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getClients = async (values) => {
     try {
@@ -491,10 +491,8 @@ function ProgressBoardofProject() {
 
   const title = projectData?.title;
   const formattedTitle = title?.replace(
-    /(?:^|\s)([a-z])/g,
-    function (match, group1) {
-      return match?.charAt(0) + group1?.toUpperCase();
-    }
+    /(^|\s)([a-z])/g,
+    (match, p1, p2) => p1 + p2.toUpperCase()
   );
 
   const showDrawer = () => {

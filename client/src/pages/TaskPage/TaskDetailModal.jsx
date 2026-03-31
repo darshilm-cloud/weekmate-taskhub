@@ -664,7 +664,7 @@ const TaskDetailModal = ({
           const reporterId = typeof bug.createdBy === "object" ? bug.createdBy?._id : bug.createdBy || (typeof bug.reporter === "object" ? bug.reporter?._id : null);
           const originalReporterId = typeof baseOriginalBug?.createdBy === "object" ? baseOriginalBug?.createdBy?._id : baseOriginalBug?.createdBy || (typeof baseOriginalBug?.reporter === "object" ? baseOriginalBug?.reporter?._id : null);
           const assigneesChanged = JSON.stringify(bug.assignees) !== JSON.stringify((baseOriginalBug?.assignees || []).map(a => typeof a === "object" ? a._id : a));
-          
+
           let bugStatusId = typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status;
           const statusPool = (hasExternalBugControls ? bugStatuses : internalBugStatuses) || [];
           if (typeof bugStatusId === "string" && !statusPool.some(s => s._id === bugStatusId)) {
@@ -1034,28 +1034,28 @@ const TaskDetailModal = ({
                     </td>
                     <td className="bug-status-cell">
                       {isEditing && (hasExternalBugControls ? bugStatuses : internalBugStatuses)?.length > 0 ? (
-                      <Select
-                        size="small"
-                        value={typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status}
-                        onChange={(val) => {
-                          const newBugs = [...(editData.bugs || [])];
-                          newBugs[idx] = { ...bug, bug_status: val };
-                          setEditData({ ...editData, bugs: newBugs });
-                        }}
-                        style={{ width: 120 }}
-                        dropdownMatchSelectWidth={false}
-                        showSearch
-                        optionFilterProp="children"
-                      >
-                        {(hasExternalBugControls ? bugStatuses : internalBugStatuses).map((s) => (
-                          <Select.Option key={s._id} value={s._id}>
-                            {s.title}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <span>{typeof bug.bug_status === "string" && !(hasExternalBugControls ? bugStatuses : internalBugStatuses).some(s => s._id === bug.bug_status) ? bug.bug_status : ((hasExternalBugControls ? bugStatuses : internalBugStatuses)?.find(s => s._id === (typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status))?.title || bug.bug_status?.title || bug.bug_status_details?.[0]?.title || "—")}</span>
-                    )}
+                        <Select
+                          size="small"
+                          value={typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status}
+                          onChange={(val) => {
+                            const newBugs = [...(editData.bugs || [])];
+                            newBugs[idx] = { ...bug, bug_status: val };
+                            setEditData({ ...editData, bugs: newBugs });
+                          }}
+                          style={{ width: 120 }}
+                          dropdownMatchSelectWidth={false}
+                          showSearch
+                          optionFilterProp="children"
+                        >
+                          {(hasExternalBugControls ? bugStatuses : internalBugStatuses).map((s) => (
+                            <Select.Option key={s._id} value={s._id}>
+                              {s.title}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <span>{typeof bug.bug_status === "string" && !(hasExternalBugControls ? bugStatuses : internalBugStatuses).some(s => s._id === bug.bug_status) ? bug.bug_status : ((hasExternalBugControls ? bugStatuses : internalBugStatuses)?.find(s => s._id === (typeof bug.bug_status === "object" ? bug.bug_status?._id : bug.bug_status))?.title || bug.bug_status?.title || bug.bug_status_details?.[0]?.title || "—")}</span>
+                      )}
                     </td>
                     <td className="bug-reporter-cell">
                       {isEditing ? (
@@ -1151,7 +1151,7 @@ const TaskDetailModal = ({
         onCancel={onClose}
         footer={null}
         width={createWidth}
-        closable={false}
+        closeIcon={<CloseOutlined />}
         destroyOnClose
       >
         <div className="task-detail-modal-body">
@@ -1404,7 +1404,7 @@ const TaskDetailModal = ({
                 </div>
                 <span className="task-detail-section-count">{attachmentCount + fileList.length}</span>
               </div>
-              
+
               {isEditing ? (
                 <div className="task-detail-attachments-edit">
                   <div className="task-detail-attachments">

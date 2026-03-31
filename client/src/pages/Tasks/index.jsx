@@ -1116,7 +1116,7 @@ const TasksPMS = ({ flag }) => {
         setFilteredClients(
           response.data.data.pms_clients?.map((client) => client._id)
         );
-        setIsprivate(response.data.data.isPrivateList);
+        // setIsprivate(response.data.data.isPrivateList);
         listForm.setFieldsValue({
           title: response.data.data.title,
           subscriber_stages: response.data.data.subscriber_stages.map(
