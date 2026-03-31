@@ -9,6 +9,7 @@ import {
   BgColorsOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
+import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "./Notes.css";
 
 const CARD_COLORS_LIGHT = ["#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec", "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd"];
@@ -344,7 +345,13 @@ export default function NotesPage() {
 
       {/* Search */}
       <div className="notes-page-search">
-        <Input placeholder="Type here to Search" value={search} onChange={(e) => setSearch(e.target.value)} allowClear prefix={<span style={{ color: "#94a3b8" }}>🔍</span>} />
+        <Input.Search
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          allowClear
+          className="notes-search-input"
+        />
       </div>
 
       {/* Notes Grid */}

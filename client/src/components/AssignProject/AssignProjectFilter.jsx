@@ -17,6 +17,7 @@ const FILTER_TYPES = {
   TECHNOLOGY: "technology",
   PROJECT_TYPE: "project_type",
   ASSIGNEES: "assignees",
+  STATUS: "status",
 };
 
 // API and pagination config
@@ -67,11 +68,25 @@ const FILTER_CONFIG = {
     skipParam: "skipAssignees",
     searchKey: "assignees",
   },
+  [FILTER_TYPES.STATUS]: {
+    api: Service.getProjectStatus,
+    method: Service.postMethod,
+    limit: 20,
+    body: { isDropdown: true },
+    label: "Status",
+    getName: (item) => item?.title,
+    skipParam: "skipStatus",
+    searchKey: "status",
+  },
 };
 
 // Filter menu items based on roles
 const getMenuItems = (getRoles) => {
   const items = [
+    {
+      key: FILTER_TYPES.STATUS,
+      label: FILTER_CONFIG[FILTER_TYPES.STATUS].label,
+    },
     {
       key: FILTER_TYPES.TECHNOLOGY,
       label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label,
@@ -192,17 +207,14 @@ const FilterSection = ({
 
 const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(
-    getRoles(["Admin"])
-      ? FILTER_TYPES.ACCOUNT_MANAGER
-      : FILTER_TYPES.TECHNOLOGY
-  );
+  const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.STATUS);
   const [filterData, setFilterData] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: [],
     [FILTER_TYPES.MANAGER]: [],
     [FILTER_TYPES.TECHNOLOGY]: [],
     [FILTER_TYPES.PROJECT_TYPE]: [],
     [FILTER_TYPES.ASSIGNEES]: [],
+    [FILTER_TYPES.STATUS]: [],
   });
   const [selectedFilters, setSelectedFilters] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: [],
@@ -210,6 +222,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.TECHNOLOGY]: [],
     [FILTER_TYPES.PROJECT_TYPE]: [],
     [FILTER_TYPES.ASSIGNEES]: [],
+    [FILTER_TYPES.STATUS]: [],
   });
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: "",
@@ -217,6 +230,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.TECHNOLOGY]: "",
     [FILTER_TYPES.PROJECT_TYPE]: "",
     [FILTER_TYPES.ASSIGNEES]: "",
+    [FILTER_TYPES.STATUS]: "",
   });
   const [pagination, setPagination] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: {
@@ -254,6 +268,13 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
       loading: false,
       total: 0,
     },
+    [FILTER_TYPES.STATUS]: {
+      page: 1,
+      limit: 20,
+      hasMore: true,
+      loading: false,
+      total: 0,
+    },
   });
   const [initialLoadComplete, setInitialLoadComplete] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: false,
@@ -261,6 +282,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.TECHNOLOGY]: false,
     [FILTER_TYPES.PROJECT_TYPE]: false,
     [FILTER_TYPES.ASSIGNEES]: false,
+    [FILTER_TYPES.STATUS]: false,
   });
 
   const activeFiltersCount = useMemo(() => {

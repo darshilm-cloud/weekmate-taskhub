@@ -45,6 +45,7 @@ import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
 import AddTaskModal from "../../pages/Tasks/AddTaskModal";
+import GlobalSearchInput from "../common/GlobalSearchInput";
 import "./AssignProject.css";
 
 /* ─── Donut Chart ─────────────────────────────────────────── */
@@ -374,7 +375,6 @@ const AssignProject = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [activeTab, setActiveTab] = useState("created_by_me");
   const [memberBrowserTab, setMemberBrowserTab] = useState("Staff member");
-  const [statusFilter, setStatusFilter] = useState(undefined);
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
   const [projectCache, setProjectCache] = useState(() => {
@@ -465,7 +465,7 @@ const AssignProject = () => {
 
   useEffect(() => {
     getProjectListing(currentSkipFilters, currentFilters);
-  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, statusFilter, isViewAllProjects]);
+  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects]);
 
   const fetchStatusList = async () => {
     try {
@@ -502,6 +502,8 @@ const AssignProject = () => {
       reqBody.project_type = filterStats.project_type;
     if (!shouldSkip("skipAssignees") && filterStats?.assignees?.length > 0)
       reqBody.assignee_id = filterStats.assignees;
+    if (!shouldSkip("skipStatus") && filterStats?.status?.length > 0)
+      reqBody.project_status_id = filterStats.status;
     reqBody.includeMetrics = false;
     if (searchText?.trim()) {
       reqBody.search = searchText;
@@ -587,8 +589,9 @@ const AssignProject = () => {
 
       // If user selects "Archived" from status filter, fetch archived projects from backend.
       // Archived projects are stored separately and require `isArchived: true` in request body.
-      const selectedStatusForFetch = statusFilter
-        ? projectStatusList.find((status) => status._id === statusFilter)
+      const statusFilterId = filterStats?.status?.[0];
+      const selectedStatusForFetch = statusFilterId
+        ? projectStatusList.find((status) => status._id === statusFilterId)
         : null;
       const selectedStatusTitleForFetch = selectedStatusForFetch?.title?.toLowerCase?.() || "";
       if (selectedStatusTitleForFetch === "archived") {
@@ -707,7 +710,7 @@ const AssignProject = () => {
       if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current);
       const hasActiveFilters =
         Boolean(searchText?.trim()) ||
-        Boolean(statusFilter) ||
+        Boolean(currentFilters?.status?.length) ||
         (filterStats && Object.keys(filterStats).length > 0);
 
       if (ENABLE_TAB_PREFETCH && !hasActiveFilters) {
@@ -933,8 +936,9 @@ const AssignProject = () => {
     return false;
   };
 
-  const selectedStatusMeta = statusFilter
-    ? projectStatusList.find((status) => status._id === statusFilter)
+  const statusFilterId = currentFilters?.status?.[0];
+  const selectedStatusMeta = statusFilterId
+    ? projectStatusList.find((status) => status._id === statusFilterId)
     : null;
 
   const visibleProjects = columnDetails.filter((record) => {
@@ -960,7 +964,7 @@ const AssignProject = () => {
       if (!matchesSearch) return false;
     }
 
-    if (!statusFilter) return true;
+    if (!statusFilterId) return true;
 
     const recordStatusId = record?.project_status?._id || record?.project_status;
     const recordStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
@@ -976,12 +980,12 @@ const AssignProject = () => {
       if (archivedFlag === true || archivedFlag === 1 || archivedFlag === "true") return true;
     }
 
-    return recordStatusId === statusFilter || (!!selectedStatusTitle && recordStatusTitle === selectedStatusTitle);
+    return recordStatusId === statusFilterId || (!!selectedStatusTitle && recordStatusTitle === selectedStatusTitle);
   });
   const showInitialProjectSkeleton = isloadingProject && columnDetails.length === 0;
   const hasActiveProjectFilters =
     Boolean(searchText?.trim()) ||
-    Boolean(statusFilter) ||
+    Boolean(currentFilters?.status?.length) ||
     Boolean(selectedDate) ||
     (currentFilters && Object.keys(currentFilters).length > 0);
   const emptyProjectsMessage = hasActiveProjectFilters ? "No matches found" : "No projects found";
@@ -1428,7 +1432,7 @@ const AssignProject = () => {
   const totalCount =
     isViewAllProjects
       ? visibleProjects.length
-      : selectedDate || statusFilter
+      : selectedDate || currentFilters?.status?.length
       ? visibleProjects.length
       : (pagination.total || columnDetails.length);
   const calendarOverlay = (
@@ -1518,26 +1522,6 @@ const AssignProject = () => {
               getRoles={() => hasPermission}
               onFilterChange={handleFilterChange}
             />
-            <Select
-              placeholder="Status"
-              allowClear
-              className="ap-status-select"
-              suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
-              onChange={(val) => {
-                setStatusFilter(val || undefined);
-                setPagination((p) => ({ ...p, current: 1 }));
-              }}
-              value={statusFilter}
-            >
-              <Select.Option key="all-projects" value="">
-                All Projects
-              </Select.Option>
-              {projectStatusList.map((s) => (
-                <Select.Option key={s._id} value={s._id}>
-                  {s.title}
-                </Select.Option>
-              ))}
-            </Select>
             <SortByComponent
               sortOption={sortOption}
               handleSortFilter={handleSortFilter}
@@ -1712,26 +1696,6 @@ const AssignProject = () => {
                   </button>
                 </Dropdown>
               </div>
-              <Select
-                placeholder="Select status"
-                allowClear
-                className="ap-browser-side-status"
-                suffixIcon={<DownOutlined style={{ fontSize: 11 }} />}
-                onChange={(val) => {
-                  setStatusFilter(val || undefined);
-                  setPagination((p) => ({ ...p, current: 1 }));
-                }}
-                value={statusFilter}
-              >
-                <Select.Option key="all-projects-browser" value="">
-                  All Projects
-                </Select.Option>
-                {projectStatusList.map((s) => (
-                  <Select.Option key={s._id} value={s._id}>
-                    {s.title}
-                  </Select.Option>
-                ))}
-              </Select>
               <div className="ap-browser-project-list">
                 <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
                 {showInitialProjectSkeleton ? (

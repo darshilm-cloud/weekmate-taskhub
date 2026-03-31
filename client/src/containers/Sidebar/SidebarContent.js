@@ -53,8 +53,6 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     if (path.includes("/project-users")) return "Users";
     if (path.includes("/permission-access")) return "Permission";
     if (path.includes("/reports")) return "Reports";
-    if (path.includes("/project-runnig-reports")) return "Project Running";
-    if (path.includes("/timesheet-reports")) return "Timesheet";
     if (path.includes("/billable-hours")) return "Hours";
     if (path.includes("/positive-review")) return "FeedBack-Positive Reviews";
     if (path.includes("/complaints")) return "FeedBack-Complaints";
@@ -75,7 +73,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [location.pathname, getDefaultOpenKeys, getDefaultSelectedKey]);
 
   const handleOpenChange = useCallback((keys) => {
-    const latestKey = keys.find((k) => k === "Analytics" || k === "Feedback");
+    const latestKey = keys.find((k) => k === "Feedback");
     setOpenKeys(latestKey ? [latestKey] : []);
   }, []);
 
@@ -113,25 +111,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Users",
         onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
       },
-      // 5. Analytics
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
-        key: "Analytics",
-        icon: <LineChartOutlined />,
-        label: "Analytics",
-        children: [
-          {
-            key: "Project Running",
-            label: "Project Running",
-            onClick: () => handleMenuClick("Project Running", `/${companySlug}/project-runnig-reports`),
-          },
-          {
-            key: "Timesheet",
-            label: "Timesheet",
-            onClick: () => handleMenuClick("Timesheet", `/${companySlug}/timesheet-reports`),
-          },
-        ],
-      },
-      // 6. Feedback
+      // 5. Feedback
       getRoles(["Admin", "PC", "TL", "AM"]) && {
         key: "Feedback",
         icon: <StarOutlined />,

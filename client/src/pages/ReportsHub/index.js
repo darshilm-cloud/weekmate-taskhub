@@ -35,6 +35,7 @@ import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundSvg from "../../assets/images/no-data-found.svg";
 import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
+import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -53,6 +54,8 @@ const reportCards = [
   { key: "activity-report", title: "User Activity Report", icon: <LineChartOutlined />, colorClass: "lavender" },
   { key: "user-performance-report", title: "User Wise Performance", icon: <TeamOutlined />, colorClass: "mint" },
   { key: "daily-report", title: "Daily Report", icon: <CalendarOutlined />, colorClass: "blue" },
+  { key: "project-running", title: "Project Running", icon: <LineChartOutlined />, colorClass: "purple" },
+  { key: "timesheet", title: "Timesheet", icon: <ClockCircleOutlined />, colorClass: "orange" },
 ];
 
 const pageMeta = {
@@ -62,6 +65,8 @@ const pageMeta = {
   "user-performance-report": { title: "User Performance Report", emptyTitle: "No Report Found" },
   "project-report": { title: "Project Report" },
   "daily-report": { title: "Daily Report" },
+  "project-running": { title: "Project Running Report", emptyTitle: "No Report Found" },
+  "timesheet": { title: "Timesheet Report", emptyTitle: "No Report Found" },
 };
 
 const statusOptions = [
@@ -492,6 +497,7 @@ function ReportsHub() {
             methodName: Service.postMethod,
             api_url: Service.myTasks,
             body: buildTaskPayload({
+              viewAll: true,
               status: "all",
               startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
               endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
@@ -507,17 +513,81 @@ function ReportsHub() {
         return;
       }
 
-      const tasksResponse = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.taskList,
-        body: commonTaskPayload,
-      });
+      if (reportKey === "project-running") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectRunningReportsDetails,
+          body: {
+            technologies: [],
+            types: [],
+            managers: [],
+            pageNo: 1,
+            limit: 100,
+            sort: "title",
+            sortBy: "asc",
+            isExport: false,
+          },
+        });
 
-      const taskRows = Array.isArray(tasksResponse?.data?.data) ? tasksResponse.data.data : [];
+        if (response?.data && response?.data?.data) {
+          const projectRunningData = {
+            data: response.data.data.data || [],
+            managers: response.data.data.managers || [],
+            types: response.data.data.types || [],
+            technologies: response.data.data.technologies || [],
+            metadata: response.data.metadata || {},
+          };
+          setReportData((prev) => ({ ...prev, 'project-running': projectRunningData }));
+        } else {
+          setReportData((prev) => ({ ...prev, 'project-running': { data: [], managers: [], types: [], technologies: [], metadata: {} } }));
+        }
+        return;
+      }
 
       if (reportKey === "status-report") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: commonTaskPayload,
+        });
+
+        const taskRows = Array.isArray(response?.data?.data) ? response.data.data : [];
         const rows = buildStatusRows(taskRows, filters, selectedDate, userMap);
         setReportData((prev) => ({ ...prev, status: rows }));
+        return;
+      }
+
+      if (reportKey === "timesheet") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTimeSheetReportsDetails,
+          body: {
+            startDate: filters.date ? startDate.format("YYYY-MM-DD") : moment().startOf("month").format("YYYY-MM-DD"),
+            endDate: filters.date ? endDate.format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+            technologies: [],
+            types: [],
+            managers: [],
+            projects: [],
+            departments: [],
+            users: [],
+            pageNo: 1,
+            limit: 100,
+            sort: "logged_date",
+            sortBy: "desc",
+            isExport: false,
+          },
+        });
+
+        if (response?.data && response?.data?.data) {
+          const timesheetData = {
+            data: response.data.data.data || [],
+            summary: response.data.data.summary || {},
+            metadata: response.data.metadata || {},
+          };
+          setReportData((prev) => ({ ...prev, 'timesheet': timesheetData }));
+        } else {
+          setReportData((prev) => ({ ...prev, 'timesheet': { data: [], summary: {}, metadata: {} } }));
+        }
         return;
       }
 
@@ -740,13 +810,21 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
       { key: "userId", placeholder: "Select User", options: userOptions },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
+    "project-running": [
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
+    "timesheet": [
+      { key: "date", placeholder: "Select Date", type: "date" },
+    ],
   };
 
   const rowsByReport = {
     "user-report": data.user,
     "status-report": data.status,
     "activity-report": data.activity,
-    "user-performance-report": data.performance.rows,
+    "user-performance-report": data.performance?.rows || [],
+    "project-running": data['project-running']?.data || [],
+    "timesheet": data['timesheet']?.data || [],
   };
 
   const rowData = rowsByReport[reportKey] || [];
@@ -756,8 +834,12 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
       <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} onSearch={onSearch} />
       {reportKey === "user-report" && rowData.length > 0 ? (
         <UserReportResults rows={rowData} filters={filters} />
+      ) : reportKey === "project-running" && data['project-running'] ? (
+        <ProjectRunningReportContent data={data['project-running']} />
+      ) : reportKey === "timesheet" && data['timesheet'] ? (
+        <TimesheetReportContent data={data['timesheet']} />
       ) : rowData.length > 0 ? (
-        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance.summary} />
+        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance?.summary} />
       ) : (
         <EmptyReportState />
       )}
@@ -807,9 +889,12 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
           />
         )
       )}
-      <Button type="primary" className="reports-search-button" icon={<SearchOutlined />} onClick={onSearch}>
-        Search
-      </Button>
+      <Input.Search
+        placeholder="Search..."
+        className="reports-search-input"
+        onSearch={onSearch}
+        allowClear
+      />
     </div>
   );
 }
@@ -854,7 +939,11 @@ function ProjectReportContent({ data }) {
       <div className="project-report-table-card">
         <div className="project-report-table-header">
           <h2>Project List</h2>
-          <Input prefix={<SearchOutlined />} placeholder="Type here to search" className="project-report-search" />
+          <Input.Search
+            placeholder="Search..."
+            className="project-report-search"
+            allowClear
+          />
         </div>
         <Table columns={columns} dataSource={data.rows} pagination={false} rowClassName={() => "project-report-row"} locale={{ emptyText: <Empty description="No project data found" /> }} />
       </div>
@@ -1198,12 +1287,12 @@ function UserReportResults({ rows, filters }) {
         <div className="user-report-member-header">
           <h2>Member</h2>
           <div className="user-report-member-actions">
-            <Input
+            <Input.Search
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              prefix={<SearchOutlined />}
-              placeholder="Type here to search"
+              placeholder="Search..."
               className="user-report-member-search"
+              allowClear
             />
             <Button className="user-report-customize">
               Customize
@@ -1829,6 +1918,271 @@ function formatText(value) {
     .replace(/_/g, " ")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function ProjectRunningReportContent({ data }) {
+  const { data: projects = [], managers = [], types = [], technologies = [], metadata = {} } = data;
+
+  // Prepare chart data
+  const managerChartData = managers.map(manager => ({
+    name: manager.managerName,
+    value: manager.totalProjects
+  }));
+
+  const typeChartData = types.map(type => ({
+    name: type.project_typeName,
+    value: type.totalProjects
+  }));
+
+  const techChartData = technologies.map(tech => ({
+    name: tech.technologyName,
+    value: tech.totalProjects
+  }));
+
+  // Table columns
+  const columns = [
+    {
+      title: "Project Name",
+      dataIndex: "title",
+      key: "title",
+      render: (text, record) => (
+        <Link to={`/${localStorage.getItem("companyDomain")}/project/app/${record._id}`}>
+          {text}
+        </Link>
+      ),
+    },
+    {
+      title: "Project Manager",
+      dataIndex: "managerName",
+      key: "managerName",
+    },
+    {
+      title: "Department",
+      dataIndex: "technologyName",
+      key: "technologyName",
+      render: (techArray) => (
+        <div>
+          {techArray?.map((tech, index) => (
+            <span key={index} className="tech-tag">
+              {tech}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Project Type",
+      dataIndex: "project_typeName",
+      key: "project_typeName",
+    },
+    {
+      title: "Est. Hours",
+      dataIndex: "estimatedHours",
+      key: "estimatedHours",
+      align: "center",
+    },
+    {
+      title: "Used Hours",
+      dataIndex: "total_logged_time",
+      key: "total_logged_time",
+      align: "center",
+    },
+    {
+      title: "Start Date",
+      dataIndex: "start_date",
+      key: "start_date",
+      render: (date) => formatDate(date),
+      align: "center",
+    },
+    {
+      title: "End Date",
+      dataIndex: "end_date",
+      key: "end_date",
+      render: (date) => formatDate(date),
+      align: "center",
+    },
+  ];
+
+  return (
+    <div className="project-running-report">
+      {/* Summary Stats */}
+      <div className="report-summary-stats">
+        <div className="stat-card">
+          <h3>Total Projects</h3>
+          <span className="stat-value">{metadata.total || 0}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Total Managers</h3>
+          <span className="stat-value">{managers.length}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Total Types</h3>
+          <span className="stat-value">{types.length}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Total Technologies</h3>
+          <span className="stat-value">{technologies.length}</span>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="charts-section">
+        <div className="charts-grid">
+          {managerChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Projects by Manager</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'pie' },
+                  labels: managerChartData.map(item => item.name),
+                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                }}
+                series={managerChartData.map(item => item.value)}
+                type="pie"
+                height={300}
+              />
+            </div>
+          )}
+          
+          {typeChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Projects by Type</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'bar' },
+                  plotOptions: { bar: { horizontal: true } },
+                  xaxis: { categories: typeChartData.map(item => item.name) },
+                }}
+                series={[{ data: typeChartData.map(item => item.value) }]}
+                type="bar"
+                height={300}
+              />
+            </div>
+          )}
+          
+          {techChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Projects by Technology</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'bar' },
+                  xaxis: { categories: techChartData.map(item => item.name) },
+                }}
+                series={[{ data: techChartData.map(item => item.value) }]}
+                type="bar"
+                height={300}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Projects Table */}
+      <div className="projects-table-section">
+        <div className="table-header">
+          <h3>Projects List</h3>
+          <span className="total-count">Total: {projects.length}</span>
+        </div>
+        
+        {projects.length > 0 ? (
+          <Table
+            columns={columns}
+            dataSource={projects}
+            rowKey="_id"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ['10', '25', '50', '100'],
+            }}
+            scroll={{ x: 'max-content' }}
+            size="middle"
+          />
+        ) : (
+          <Empty description="No project data found" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimesheetReportContent({ data }) {
+  const { data: timesheets = [], summary = {}, metadata = {} } = data;
+
+  const columns = [
+    {
+      title: "User",
+      dataIndex: "userName",
+      key: "userName",
+    },
+    {
+      title: "Project",
+      dataIndex: "projectName",
+      key: "projectName",
+    },
+    {
+      title: "Task",
+      dataIndex: "taskName",
+      key: "taskName",
+    },
+    {
+      title: "Hours",
+      dataIndex: "loggedHours",
+      key: "loggedHours",
+      align: "center",
+    },
+    {
+      title: "Date",
+      dataIndex: "date",
+      key: "date",
+      render: (date) => formatDate(date),
+      align: "center",
+    },
+  ];
+
+  return (
+    <div className="timesheet-report">
+      {/* Summary Stats */}
+      <div className="report-summary-stats">
+        <div className="stat-card">
+          <h3>Total Hours</h3>
+          <span className="stat-value">{summary.totalHours || 0}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Total Entries</h3>
+          <span className="stat-value">{timesheets.length}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Avg Hours/Day</h3>
+          <span className="stat-value">{summary.avgHoursPerDay || 0}</span>
+        </div>
+      </div>
+
+      {/* Timesheet Table */}
+      <div className="timesheet-table-section">
+        <div className="table-header">
+          <h3>Timesheet Entries</h3>
+          <span className="total-count">Total: {timesheets.length}</span>
+        </div>
+        
+        {timesheets.length > 0 ? (
+          <Table
+            columns={columns}
+            dataSource={timesheets}
+            rowKey="_id"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ['10', '25', '50', '100'],
+            }}
+            scroll={{ x: 'max-content' }}
+            size="middle"
+          />
+        ) : (
+          <Empty description="No timesheet data found" />
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default ReportsHub;
