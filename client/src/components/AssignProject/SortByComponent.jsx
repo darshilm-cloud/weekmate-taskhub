@@ -12,9 +12,9 @@ const SORT_MENU_ITEMS = [{ key: SORT_TYPES.SORTBY, label: "Sort By" }];
 
 // Sort options
 const SORT_OPTIONS = [
-  { value: "createdAt", label: "Latest Updated" },
-  { value: "title", label: "Name" },
-  // { value: "project_type", label: "Status" },
+  { value: "updatedAt_desc", label: "Latest Updated" },
+  { value: "updatedAt_asc", label: "Oldest Updated" },
+  { value: "title", label: "Name (A-Z)" },
 ];
 
 const SortByComponent = ({
@@ -32,18 +32,17 @@ const SortByComponent = ({
 
   // Active sort indicator (always 1 since there's always a sort option selected)
   const activeSortCount = useMemo(() => {
-    // Show badge if not default (createdAt)
-    return sortOption && sortOption !== "createdAt" ? 1 : 0;
+    // Show badge if not default (updatedAt_desc)
+    return sortOption && sortOption !== "updatedAt_desc" && sortOption !== "createdAt_desc" && sortOption !== "createdAt" ? 1 : 0;
   }, [sortOption]);
 
   const resetSort = () => {
-    handleSortFilter("createdAt"); // Reset to default
-    setTempSortOption("createdAt"); // Reset temp state as well
+    handleSortFilter("updatedAt_desc"); // Reset to default
+    setTempSortOption("updatedAt_desc"); // Reset temp state as well
   };
 
   const applySort = () => {
     handleSortFilter(tempSortOption);
-    getProjectListing();
     setIsPopoverOpen(false);
   };
 

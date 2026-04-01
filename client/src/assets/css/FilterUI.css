@@ -455,10 +455,25 @@
     margin: 0;
   }
 
-  .filter-btn{
+  .filter-btn {
     display: flex;
     gap: 5px;
     align-items: center;
+  }
+
+  .filter-container .ant-btn.filter-btn {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    box-shadow: none;
+  }
+
+  .filter-container .ant-btn.filter-btn:hover,
+  .filter-container .ant-btn.filter-btn:focus {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #374151;
   }
 
   .radio-option {
@@ -635,19 +650,23 @@ body[data-theme="dark"] .projects-running-card .filter-btn:hover * {
 }
   
   .sort-btn {
-    background: #f0f8ff;
-    border: 1px solid #91d5ff;
-    color: #1890ff;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    box-shadow: none;
   }
-  
+
   .sort-btn:hover {
-    background: #e6f7ff;
-    border-color: #40a9ff;
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #374151;
   }
-  
+
   .sort-btn.ant-btn:focus {
-    background: #e6f7ff;
-    border-color: #40a9ff;
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #374151;
   }
   
   .radio-option {

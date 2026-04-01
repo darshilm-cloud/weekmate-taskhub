@@ -195,11 +195,14 @@ body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
   align-items: center !important;
   justify-content: space-between !important;
   padding: 0 20px !important;
-  height: 50px !important;
+  height: 56px !important;
   line-height: 1 !important;
   gap: 16px;
   background: #f3f4f6 !important;
   border-bottom: none;
+  position: sticky !important;
+  top: 0;
+  z-index: 200;
 }
 
 .weekmate-header-shell {

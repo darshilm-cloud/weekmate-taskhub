@@ -268,6 +268,7 @@ exports.login = async (req, res, next) => {
 
 exports.getDataForLoginUser = async (reqBody) => {
   try {
+
     let userData = null;
     let obj = {
       isDeleted: false,

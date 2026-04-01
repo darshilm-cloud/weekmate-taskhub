@@ -368,7 +368,7 @@ const AssignProject = () => {
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
-  const [sortOption, setSortOption] = useState("createdAt");
+  const [sortOption, setSortOption] = useState("updatedAt_desc");
   const [columnDetails, setColumnDetails] = useState([]);
   const [currentFilters, setCurrentFilters] = useState({});
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
@@ -481,12 +481,26 @@ const AssignProject = () => {
   };
 
   const buildReqBody = (filterBy, skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+    let actualSort = sortOption;
+    let actualSortBy = "desc";
+
+    if (sortOption === "updatedAt_desc" || sortOption === "createdAt_desc" || sortOption === "createdAt" || sortOption === "updatedAt") {
+      actualSort = "updatedAt";
+      actualSortBy = "desc";
+    } else if (sortOption === "updatedAt_asc" || sortOption === "createdAt_asc") {
+      actualSort = "updatedAt";
+      actualSortBy = "asc";
+    } else if (sortOption === "title") {
+      actualSort = "title";
+      actualSortBy = "asc";
+    }
+
     const reqBody = {
       pageNo: pagination.current,
       limit: pagination.pageSize,
-      sortBy: "desc",
+      sortBy: actualSortBy,
       filterBy,
-      sort: sortOption,
+      sort: actualSort,
     };
 
     const shouldSkip = (filterKey) =>
@@ -997,8 +1011,8 @@ const AssignProject = () => {
     const primaryIds = isGrid
       ? []
       : selectedWorkspaceProjectId
-      ? [selectedWorkspaceProjectId]
-      : [];
+        ? [selectedWorkspaceProjectId]
+        : [];
 
     const timer = setTimeout(() => {
       if (primaryIds.length) fetchTaskStatsForIds(primaryIds);
@@ -1433,8 +1447,8 @@ const AssignProject = () => {
     isViewAllProjects
       ? visibleProjects.length
       : selectedDate || currentFilters?.status?.length
-      ? visibleProjects.length
-      : (pagination.total || columnDetails.length);
+        ? visibleProjects.length
+        : (pagination.total || columnDetails.length);
   const calendarOverlay = (
     <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="ap-date-dropdown-header">
@@ -1666,36 +1680,7 @@ const AssignProject = () => {
         ) : (
           <div className="ap-browser-layout">
             <aside className="ap-browser-sidebar">
-              <div className="ap-browser-sidebar-toolbar">
-                <Input
-                  placeholder="Type here to search"
-                  value={searchText}
-                  onChange={(e) => {
-                    setSearchText(e.target.value);
-                    setPagination((prev) => ({ ...prev, current: 1 }));
-                  }}
-                  className="ap-browser-side-search"
-                />
-                <Dropdown
-                  open={isBrowserDateFilterOpen}
-                  onOpenChange={(open) => {
-                    setIsBrowserDateFilterOpen(open);
-                    if (open) setTempCalendarDate(selectedDate || dayjs());
-                  }}
-                  trigger={["click"]}
-                  dropdownRender={() => calendarOverlay}
-                  placement="bottomLeft"
-                  overlayClassName="ap-date-dropdown-overlay"
-                >
-                  <button
-                    type="button"
-                    className={`ap-date-trigger ap-browser-date-btn ${selectedDate ? "active" : ""}`}
-                    title="Date filter"
-                  >
-                    <CalendarOutlined />
-                  </button>
-                </Dropdown>
-              </div>
+
               <div className="ap-browser-project-list">
                 <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
                 {showInitialProjectSkeleton ? (
@@ -1843,146 +1828,146 @@ const AssignProject = () => {
 
                   {workspaceSubtab === "overview" && (
                     <div className="ap-browser-overview">
-                    <div className="ap-browser-overview-grid">
-                      <div className="ap-browser-card ap-browser-date-card">
-                        <div className="ap-browser-date-block">
-                          <div className="ap-browser-date-icon"><CalendarOutlined /></div>
+                      <div className="ap-browser-overview-grid">
+                        <div className="ap-browser-card ap-browser-date-card">
+                          <div className="ap-browser-date-block">
+                            <div className="ap-browser-date-icon"><CalendarOutlined /></div>
+                            <div>
+                              <div className="ap-browser-card-label">Starts</div>
+                              <div className="ap-browser-card-value">
+                                {selectedWorkspaceProject?.start_date ? moment(selectedWorkspaceProject.start_date).format("DD/MM/YYYY") : "N/A"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ap-browser-arrow">→</div>
                           <div>
-                            <div className="ap-browser-card-label">Starts</div>
+                            <div className="ap-browser-card-label">Ends</div>
                             <div className="ap-browser-card-value">
-                              {selectedWorkspaceProject?.start_date ? moment(selectedWorkspaceProject.start_date).format("DD/MM/YYYY") : "N/A"}
+                              {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD/MM/YYYY") : "N/A"}
+                            </div>
+                            <div className="ap-browser-updated">
+                              Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"}
                             </div>
                           </div>
                         </div>
-                        <div className="ap-browser-arrow">→</div>
+
+                        <div className="ap-browser-card ap-browser-priority-card">
+                          <div className="ap-browser-card-title">Task Snapshot</div>
+                          <div className="ap-browser-priority-grid">
+                            <div><span>Closed</span><strong>{selectedWorkspaceStats?.closed ?? 0}</strong></div>
+                            <div><span>Today</span><strong>{selectedWorkspaceStats?.today ?? 0}</strong></div>
+                            <div><span>Over Due</span><strong>{selectedWorkspaceStats?.overDue ?? 0}</strong></div>
+                            <div><span>Upcoming</span><strong>{selectedWorkspaceStats?.upComing ?? 0}</strong></div>
+                          </div>
+                          <div className="ap-browser-donut-wrap">
+                            <DonutChart percentage={completionPct} size={92} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="ap-browser-card">
+                        <div className="ap-browser-card-title">Project Members ({(selectedWorkspaceProject?.assignees?.length || 0) + (selectedWorkspaceProject?.manager ? 1 : 0) + (selectedWorkspaceProject?.pms_clients?.length || 0)})</div>
+                        <div className="ap-browser-member-tabs">
+                          {[
+                            { key: "Staff member", count: selectedWorkspaceProject?.assignees?.length || 0 },
+                            { key: "Project Manager", count: selectedWorkspaceProject?.manager ? 1 : 0 },
+                            { key: "Co-member", count: 0 },
+                            { key: "Client", count: selectedWorkspaceProject?.pms_clients?.length || 0 },
+                          ].map((tab) => (
+                            <span
+                              key={tab.key}
+                              className={memberBrowserTab === tab.key ? "active" : ""}
+                              style={{ cursor: "pointer" }}
+                              onClick={() => setMemberBrowserTab(tab.key)}
+                            >
+                              {tab.key} ({tab.count})
+                            </span>
+                          ))}
+                        </div>
+                        <div className="ap-browser-member-grid">
+                          {memberBrowserTab === "Staff member" && selectedWorkspaceProject?.assignees?.map((member) => (
+                            <div key={member?._id || member?.name} className="ap-browser-member-card">
+                              <MyAvatar
+                                src={member?.emp_img}
+                                alt={member?.name || member?.full_name}
+                                userName={member?.name || member?.full_name}
+                              />
+                              <div className="ap-browser-member-name">{member?.name || member?.full_name}</div>
+                              <div className="ap-browser-member-role">Staff Member</div>
+                            </div>
+                          ))}
+                          {memberBrowserTab === "Project Manager" && selectedWorkspaceProject?.manager && (
+                            <div className="ap-browser-member-card">
+                              <MyAvatar
+                                src={selectedWorkspaceProject.manager?.emp_img}
+                                alt={selectedWorkspaceProject.manager?.full_name}
+                                userName={selectedWorkspaceProject.manager?.full_name}
+                              />
+                              <div className="ap-browser-member-name">{selectedWorkspaceProject.manager?.full_name}</div>
+                              <div className="ap-browser-member-role">Project Manager</div>
+                            </div>
+                          )}
+                          {memberBrowserTab === "Client" && selectedWorkspaceProject?.pms_clients?.map((client) => (
+                            <div key={client?._id || client?.full_name} className="ap-browser-member-card">
+                              <MyAvatar
+                                src={client?.emp_img}
+                                alt={client?.full_name}
+                                userName={client?.full_name}
+                              />
+                              <div className="ap-browser-member-name">{client?.full_name}</div>
+                              <div className="ap-browser-member-role">Client</div>
+                            </div>
+                          ))}
+                          {memberBrowserTab === "Co-member" && (
+                            <div style={{ color: "#94a3b8", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="ap-browser-card ap-browser-chart-card">
+                        <div className="ap-browser-card-title">User Analysis</div>
+                        <div className="ap-browser-chart">
+                          <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
+                        </div>
+                      </div>
+
+                      <div className="ap-browser-card ap-browser-status-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, overflow: "visible", paddingBottom: 30 }}>
                         <div>
-                          <div className="ap-browser-card-label">Ends</div>
-                          <div className="ap-browser-card-value">
-                            {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD/MM/YYYY") : "N/A"}
-                          </div>
-                          <div className="ap-browser-updated">
-                            Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ap-browser-card ap-browser-priority-card">
-                        <div className="ap-browser-card-title">Task Snapshot</div>
-                        <div className="ap-browser-priority-grid">
-                          <div><span>Closed</span><strong>{selectedWorkspaceStats?.closed ?? 0}</strong></div>
-                          <div><span>Today</span><strong>{selectedWorkspaceStats?.today ?? 0}</strong></div>
-                          <div><span>Over Due</span><strong>{selectedWorkspaceStats?.overDue ?? 0}</strong></div>
-                          <div><span>Upcoming</span><strong>{selectedWorkspaceStats?.upComing ?? 0}</strong></div>
-                        </div>
-                        <div className="ap-browser-donut-wrap">
-                          <DonutChart percentage={completionPct} size={92} />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="ap-browser-card">
-                      <div className="ap-browser-card-title">Project Members ({(selectedWorkspaceProject?.assignees?.length || 0) + (selectedWorkspaceProject?.manager ? 1 : 0) + (selectedWorkspaceProject?.pms_clients?.length || 0)})</div>
-                      <div className="ap-browser-member-tabs">
-                        {[
-                          { key: "Staff member", count: selectedWorkspaceProject?.assignees?.length || 0 },
-                          { key: "Project Manager", count: selectedWorkspaceProject?.manager ? 1 : 0 },
-                          { key: "Co-member", count: 0 },
-                          { key: "Client", count: selectedWorkspaceProject?.pms_clients?.length || 0 },
-                        ].map((tab) => (
-                          <span
-                            key={tab.key}
-                            className={memberBrowserTab === tab.key ? "active" : ""}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => setMemberBrowserTab(tab.key)}
-                          >
-                            {tab.key} ({tab.count})
-                          </span>
-                        ))}
-                      </div>
-                      <div className="ap-browser-member-grid">
-                        {memberBrowserTab === "Staff member" && selectedWorkspaceProject?.assignees?.map((member) => (
-                          <div key={member?._id || member?.name} className="ap-browser-member-card">
-                            <MyAvatar
-                              src={member?.emp_img}
-                              alt={member?.name || member?.full_name}
-                              userName={member?.name || member?.full_name}
-                            />
-                            <div className="ap-browser-member-name">{member?.name || member?.full_name}</div>
-                            <div className="ap-browser-member-role">Staff Member</div>
-                          </div>
-                        ))}
-                        {memberBrowserTab === "Project Manager" && selectedWorkspaceProject?.manager && (
-                          <div className="ap-browser-member-card">
-                            <MyAvatar
-                              src={selectedWorkspaceProject.manager?.emp_img}
-                              alt={selectedWorkspaceProject.manager?.full_name}
-                              userName={selectedWorkspaceProject.manager?.full_name}
-                            />
-                            <div className="ap-browser-member-name">{selectedWorkspaceProject.manager?.full_name}</div>
-                            <div className="ap-browser-member-role">Project Manager</div>
-                          </div>
-                        )}
-                        {memberBrowserTab === "Client" && selectedWorkspaceProject?.pms_clients?.map((client) => (
-                          <div key={client?._id || client?.full_name} className="ap-browser-member-card">
-                            <MyAvatar
-                              src={client?.emp_img}
-                              alt={client?.full_name}
-                              userName={client?.full_name}
-                            />
-                            <div className="ap-browser-member-name">{client?.full_name}</div>
-                            <div className="ap-browser-member-role">Client</div>
-                          </div>
-                        ))}
-                        {memberBrowserTab === "Co-member" && (
-                          <div style={{ color: "#94a3b8", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="ap-browser-card ap-browser-chart-card">
-                      <div className="ap-browser-card-title">User Analysis</div>
-                      <div className="ap-browser-chart">
-                        <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
-                      </div>
-                    </div>
-
-                    <div className="ap-browser-card ap-browser-status-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, overflow: "visible", paddingBottom: 30 }}>
-                      <div>
-                        <div className="ap-browser-card-title">Status Analysis</div>
-                        <div className="ap-browser-status-metrics">
-                          <div className="ap-browser-status-item">
-                            <span className="ap-browser-status-bar ap-browser-status-bar--closed" />
-                            <div>
-                              <span className="ap-browser-status-label ap-browser-status-label--closed">Closed</span>
-                              <strong className="ap-browser-status-value">{closedCount}</strong>
+                          <div className="ap-browser-card-title">Status Analysis</div>
+                          <div className="ap-browser-status-metrics">
+                            <div className="ap-browser-status-item">
+                              <span className="ap-browser-status-bar ap-browser-status-bar--closed" />
+                              <div>
+                                <span className="ap-browser-status-label ap-browser-status-label--closed">Closed</span>
+                                <strong className="ap-browser-status-value">{closedCount}</strong>
+                              </div>
                             </div>
-                          </div>
-                          <div className="ap-browser-status-item">
-                            <span className="ap-browser-status-bar ap-browser-status-bar--pending" />
-                            <div>
-                              <span className="ap-browser-status-label ap-browser-status-label--pending">Pending</span>
-                              <strong className="ap-browser-status-value">{pendingCount}</strong>
+                            <div className="ap-browser-status-item">
+                              <span className="ap-browser-status-bar ap-browser-status-bar--pending" />
+                              <div>
+                                <span className="ap-browser-status-label ap-browser-status-label--pending">Pending</span>
+                                <strong className="ap-browser-status-value">{pendingCount}</strong>
+                              </div>
                             </div>
                           </div>
                         </div>
+                        <div style={{ flexShrink: 0 }}>
+                          <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
+                        </div>
                       </div>
-                      <div style={{ flexShrink: 0 }}>
-                        <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
-                      </div>
-                    </div>
 
-                    <div className="ap-browser-card">
-                      <div className="ap-browser-card-title">Details</div>
-                      <div className="ap-browser-details-text">
-                        {selectedWorkspaceProject?.descriptions ? (
-                          <div
-                            dangerouslySetInnerHTML={{ __html: selectedWorkspaceProject.descriptions }}
-                          />
-                        ) : (
-                          "No details provided for this project."
-                        )}
+                      <div className="ap-browser-card">
+                        <div className="ap-browser-card-title">Details</div>
+                        <div className="ap-browser-details-text">
+                          {selectedWorkspaceProject?.descriptions ? (
+                            <div
+                              dangerouslySetInnerHTML={{ __html: selectedWorkspaceProject.descriptions }}
+                            />
+                          ) : (
+                            "No details provided for this project."
+                          )}
+                        </div>
                       </div>
-                    </div>
                     </div>
                   )}
 
@@ -2014,9 +1999,8 @@ const AssignProject = () => {
                               section.items.map((task) => (
                                 <div
                                   key={task._id || task.id}
-                                  className={`ap-browser-list-row ${
-                                    selectedTaskForEdit?._id === (task._id || task.id) ? "ap-browser-list-row--active" : ""
-                                  }`}
+                                  className={`ap-browser-list-row ${selectedTaskForEdit?._id === (task._id || task.id) ? "ap-browser-list-row--active" : ""
+                                    }`}
                                   role="button"
                                   tabIndex={0}
                                   onClick={() => setSelectedTaskForEdit(task)}

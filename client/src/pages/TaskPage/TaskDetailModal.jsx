@@ -1247,6 +1247,27 @@ const TaskDetailModal = ({
 
             <div className="task-detail-meta">
               <div className="task-detail-metric-card">
+                <span className="task-detail-metric-label">Start date</span>
+                <span className="task-detail-metric-value">
+                  {isEditing ? (
+                    <DatePicker
+                      size="small"
+                      className="task-detail-edit-datepicker"
+                      value={editData.start_date ? dayjs(editData.start_date) : null}
+                      onChange={(d) => setEditData((p) => ({ ...p, start_date: d ? d.toISOString() : null }))}
+                      format="MMM D, YYYY"
+                      allowClear
+                      style={{ width: "100%" }}
+                    />
+                  ) : (
+                    <>
+                      <CalendarOutlined />
+                      {displayTask?.start_date ? moment(displayTask.start_date).format("MMM D, YYYY") : "Not set"}
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="task-detail-metric-card">
                 <span className="task-detail-metric-label">Due date</span>
                 <span className="task-detail-metric-value">
                   {isEditing ? (
@@ -1272,12 +1293,6 @@ const TaskDetailModal = ({
                 <span className="task-detail-metric-label">Assignees</span>
                 <span className="task-detail-metric-value">
                   {assigneeNames.length || 0} member{assigneeNames.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div className="task-detail-metric-card">
-                <span className="task-detail-metric-label">Assets</span>
-                <span className="task-detail-metric-value">
-                  {attachmentCount} attachment{attachmentCount === 1 ? "" : "s"}
                 </span>
               </div>
             </div>
@@ -1338,25 +1353,6 @@ const TaskDetailModal = ({
                     />
                   ) : (
                     assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"
-                  )}
-                </div>
-              </div>
-
-              <div className="task-detail-section">
-                <div className="task-detail-label">Start date</div>
-                <div className="task-detail-value">
-                  {isEditing ? (
-                    <DatePicker
-                      size="small"
-                      className="task-detail-edit-datepicker"
-                      value={editData.start_date ? dayjs(editData.start_date) : null}
-                      onChange={(d) => setEditData((p) => ({ ...p, start_date: d ? d.toISOString() : null }))}
-                      format="MMM D, YYYY"
-                      allowClear
-                      style={{ width: "100%" }}
-                    />
-                  ) : (
-                    displayTask?.start_date ? moment(displayTask.start_date).format("MMM D, YYYY") : "—"
                   )}
                 </div>
               </div>
