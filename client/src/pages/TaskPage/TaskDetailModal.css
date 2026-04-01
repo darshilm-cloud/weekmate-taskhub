@@ -2,6 +2,13 @@
    TASK DETAIL MODAL — Redesign (Navy Theme)
    ══════════════════════════════════════════════ */
 
+
+.task-page-detail-modal {
+  top: 3vh !important;
+  padding-bottom: 0 !important;
+  margin: 0 auto !important;
+}
+
 .task-page-detail-modal .ant-modal-content {
   overflow: hidden;
   border-radius: 16px;
@@ -57,14 +64,14 @@
 
 .task-page-detail-modal .ant-modal-body {
   padding: 0;
-  max-height: calc(100vh - 48px);
+  max-height: 90vh;
   overflow: hidden;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .task-page-detail-modal .ant-modal-body::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+  display: none;
 }
 
 /* ── Loading ──────────────────────────────────── */
@@ -79,8 +86,8 @@
 .task-detail-modal-body {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) 360px;
-  height: min(90vh, calc(100vh - 48px));
-  max-height: calc(100vh - 48px);
+  height: 85vh;
+  max-height: calc(100vh - 60px);
   min-height: 0;
 }
 
@@ -113,12 +120,10 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .task-detail-modal-left::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+  display: none;
 }
 
 .task-detail-modal-left > form {

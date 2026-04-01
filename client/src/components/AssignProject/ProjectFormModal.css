@@ -2,7 +2,13 @@
    ProjectFormModal – Taskopad-style redesign
    ================================================================ */
 
-/* ── Modal wrapper ─────────────────────────────────────────── */
+.pfm-modal {
+  top: 3vh !important;
+  padding-bottom: 0 !important;
+  margin: 0 auto !important;
+  max-width: 100vw !important;
+}
+
 .pfm-modal .ant-modal-content {
   border-radius: 18px;
   padding: 0;
@@ -15,6 +21,23 @@
   padding: 16px 18px 18px;
   background: #ffffff;
   color: #111111;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar for inner modal body */
+.pfm-modal .ant-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.pfm-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.pfm-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.pfm-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* ── Header ────────────────────────────────────────────────── */
@@ -695,4 +718,16 @@ body[data-theme="dark"] .pfm-editor-wrapper .ck.ck-editor__editable h3 {
 body.dark-theme .pfm-footer,
 body[data-theme="dark"] .pfm-footer {
   border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+/* ── Responsive styling ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pfm-fields-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .pfm-dates-row {
+    flex-direction: column;
+    gap: 12px;
+  }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Input, Avatar, Tooltip, Select, Pagination } from "antd";
+import { Avatar, Tooltip, Select, Pagination } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -83,7 +83,6 @@ const EmployeeMasterList = () => {
 
   /* ── sidebar ui ── */
   const [sidebarOpen,   setSidebarOpen]   = useState(true);
-  const [sidebarSearch, setSidebarSearch] = useState("");
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
@@ -187,18 +186,13 @@ const EmployeeMasterList = () => {
 
   /* ── filtered lists ────────────────────────────────────────────── */
   const filteredUsers = sidebarUsers.filter((u) => {
-    const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`).toLowerCase();
-    const matchesSearch = name.includes(sidebarSearch.toLowerCase());
-    const matchesStatus =
+    return (
       employeeStatusFilter === "all" ||
       (employeeStatusFilter === "active" && u.isActivate) ||
-      (employeeStatusFilter === "inactive" && !u.isActivate);
-    return matchesSearch && matchesStatus;
+      (employeeStatusFilter === "inactive" && !u.isActivate)
+    );
   });
-  const filteredClients = sidebarClients.filter((c) => {
-    const name = (c.full_name || `${c.first_name || ""} ${c.last_name || ""}`).toLowerCase();
-    return name.includes(sidebarSearch.toLowerCase());
-  });
+  const filteredClients = sidebarClients;
 
   const downloadCsvFile = useCallback((rows, fileName) => {
     if (!rows.length) return;
@@ -296,11 +290,7 @@ const EmployeeMasterList = () => {
 
   useEffect(() => {
     if (sidebarMode === "employees") setEmployeeListPage(1);
-  }, [sidebarMode, sidebarSearch, employeeStatusFilter]);
-
-  useEffect(() => {
-    if (sidebarMode === "clients") setClientListPage(1);
-  }, [sidebarMode, sidebarSearch]);
+  }, [sidebarMode, employeeStatusFilter]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(regularUsers.length / sidebarPageSize));
@@ -444,7 +434,6 @@ const EmployeeMasterList = () => {
               onClick={() => {
                 setSidebarMode("employees");
                 setSelectedClientId(null);
-                setSidebarSearch("");
                 setEmployeeStatusFilter("all");
               }}
             >
@@ -455,21 +444,11 @@ const EmployeeMasterList = () => {
               onClick={() => {
                 setSidebarMode("clients");
                 setSelectedUserId(null);
-                setSidebarSearch("");
               }}
             >
               Clients
             </button>
           </div>
-
-          <Input
-            className="sidebar-search-input"
-            prefix={<span style={{ color: "#94a3b8", fontSize: 13 }}>⌕</span>}
-            placeholder={sidebarMode === "employees" ? "Search employees…" : "Search clients…"}
-            value={sidebarSearch}
-            onChange={(e) => setSidebarSearch(e.target.value)}
-            allowClear
-          />
 
           {sidebarMode === "employees" && (
             <Select

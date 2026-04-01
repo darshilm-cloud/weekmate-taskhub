@@ -1140,8 +1140,24 @@ export default function AddTaskModal({
             </div>
           )}
 
-          {/* Meta info bar — Due Date / Assignees / Assets */}
+          {/* Meta info bar — Start Date / Due Date / Assignees */}
           <div className="task-detail-meta">
+            <div className="task-detail-metric-card">
+              <span className="task-detail-metric-label">Start date</span>
+              <span className="task-detail-metric-value">
+                <CalendarOutlined />
+                <Form.Item name="start_date" noStyle>
+                  <DatePicker
+                    size="small"
+                    className="task-detail-edit-datepicker"
+                    format="MMM D, YYYY"
+                    allowClear
+                    placeholder="Set date"
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+              </span>
+            </div>
             <div className="task-detail-metric-card">
               <span className="task-detail-metric-label">Due date</span>
               <span className="task-detail-metric-value">
@@ -1162,12 +1178,6 @@ export default function AddTaskModal({
               <span className="task-detail-metric-label">Assignees</span>
               <span className="task-detail-metric-value">
                 {selectedAssigneeNames.length || 0} member{selectedAssigneeNames.length === 1 ? "" : "s"}
-              </span>
-            </div>
-            <div className="task-detail-metric-card">
-              <span className="task-detail-metric-label">Assets</span>
-              <span className="task-detail-metric-value">
-                {effectiveFileAttachment?.length || 0} attachment{(effectiveFileAttachment?.length || 0) === 1 ? "" : "s"}
               </span>
             </div>
           </div>
@@ -1240,22 +1250,6 @@ export default function AddTaskModal({
                     onChange={(vals) => saveDraft(projectId, { assignees: vals || [] })}
                     filterOption={(input, opt) => (opt?.label ?? "").toLowerCase().includes(input.toLowerCase())}
                     allowClear
-                  />
-                </Form.Item>
-              </div>
-            </div>
-
-            <div className="task-detail-section">
-              <div className="task-detail-label">Start date</div>
-              <div className="task-detail-value">
-                <Form.Item name="start_date" noStyle>
-                  <DatePicker
-                    size="small"
-                    className="task-detail-edit-datepicker"
-                    format="MMM D, YYYY"
-                    allowClear
-                    placeholder="Set date"
-                    style={{ width: "100%" }}
                   />
                 </Form.Item>
               </div>
