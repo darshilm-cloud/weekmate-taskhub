@@ -264,6 +264,8 @@ function ReportsHub() {
 
     try {
       setLoading(true);
+      console.log('Loading report data for:', reportKey, 'with filters:', filters);
+      
       const selectedDate = filters.date ? moment(filters.date) : null;
       const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
       const endDate = selectedDate ? selectedDate.clone().endOf("day") : moment().endOf("day");
@@ -395,11 +397,11 @@ function ReportsHub() {
           body: {
             startDate: startDate.format("YYYY-MM-DD"),
             endDate: endDate.format("YYYY-MM-DD"),
-            technologies: [],
-            types: [],
-            managers: [],
-            projects: [],
-            departments: [],
+            technologies: filters.technologies || [],
+            types: filters.types || [],
+            managers: filters.managers || [],
+            projects: filters.projects || [],
+            departments: filters.departments || [],
             users:
               filters.userId && filters.userId !== "all" ? [filters.userId] : [],
             pageNo: 1,
@@ -562,8 +564,8 @@ function ReportsHub() {
           methodName: Service.postMethod,
           api_url: Service.getTimeSheetReportsDetails,
           body: {
-            startDate: filters.date ? startDate.format("YYYY-MM-DD") : moment().startOf("month").format("YYYY-MM-DD"),
-            endDate: filters.date ? endDate.format("YYYY-MM-DD") : moment().format("YYYY-MM-DD"),
+            startDate: moment().startOf("month").format("YYYY-MM-DD"),
+            endDate: moment().format("YYYY-MM-DD"),
             technologies: [],
             types: [],
             managers: [],
@@ -579,14 +581,10 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
-          const timesheetData = {
-            data: response.data.data.data || [],
-            summary: response.data.data.summary || {},
-            metadata: response.data.metadata || {},
-          };
+          const timesheetData = response.data.data; // Direct assignment since API returns the correct structure
           setReportData((prev) => ({ ...prev, 'timesheet': timesheetData }));
         } else {
-          setReportData((prev) => ({ ...prev, 'timesheet': { data: [], summary: {}, metadata: {} } }));
+          setReportData((prev) => ({ ...prev, 'timesheet': { data: [], totalHours: "0", manager: [], type: [], user: [] } }));
         }
         return;
       }
@@ -617,11 +615,10 @@ function ReportsHub() {
     let filename = `report_${key}_${moment().format("YYYY-MM-DD")}.csv`;
 
     if (key === "daily-report") {
-      items = reportData.daily[dailyTab] || [];
+      items = reportData.daily?.pending || [];
       headers = ["Member Name", "Today", "Overdue", "Upcoming", "Total"];
-      filename = `daily_report_${dailyTab}_${moment().format("YYYY-MM-DD")}.csv`;
       const rows = items.map((item) => [
-        item.name,
+        item.member,
         item.today,
         item.overdue,
         item.upcoming,
@@ -655,6 +652,34 @@ function ReportsHub() {
         item.incomplete,
       ]);
       downloadCSV(headers, rows, filename);
+    } else if (key === "project-running") {
+      items = reportData['project-running']?.data || [];
+      headers = ["Project Name", "Manager", "Department", "Project Type", "Est. Hours", "Used Hours", "Start Date", "End Date"];
+      const rows = items.map((item) => [
+        item.title || "",
+        item.managerName || "",
+        item.technologyName?.join(", ") || "",
+        item.project_typeName || "",
+        item.estimatedHours || "",
+        item.total_logged_time || "",
+        formatDate(item.start_date),
+        formatDate(item.end_date),
+      ]);
+      downloadCSV(headers, rows, filename);
+    } else if (key === "timesheet") {
+      items = reportData['timesheet']?.data || [];
+      headers = ["User", "Project", "Description", "Logged Time", "Date", "Project Manager", "Technology", "Project Type"];
+      const rows = items.map((item) => [
+        item.user || "",
+        item.project || "",
+        item.descriptions?.replace(/<[^>]*>/g, '') || "",
+        item.logged_time || "",
+        formatDate(item.logged_date),
+        item.projectManager || "",
+        item.projectTechnology?.join(", ") || "",
+        item.projectType || "",
+      ]);
+      downloadCSV(headers, rows, filename);
     } else if (key === "status-report") {
       items = reportData.status || [];
       headers = ["Status", "Tasks", "Projects", "Users"];
@@ -676,30 +701,47 @@ function ReportsHub() {
       return;
     }
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    // Ensure headers are properly quoted and escaped
+    const quotedHeaders = headers.map(header => `"${header}"`);
+    
+    // Ensure row data is properly quoted and escaped
+    const quotedRows = rows.map(row => 
+      row.map(cell => {
+        // Convert to string and escape quotes, then wrap in quotes
+        const cellStr = String(cell || '').replace(/"/g, '""');
+        return `"${cellStr}"`;
+      })
+    );
 
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [
+      quotedHeaders.join(","),
+      ...quotedRows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
     link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    message.success("Download started");
+    URL.revokeObjectURL(url);
+    
+    message.success("Download started successfully");
   };
 
   const handleSave = (key) => {
     message.success(`${formatText(key)} has been saved successfully!`);
   };
 
-  const handleHistory = (key) => {
-    message.info(`Viewing History for ${formatText(key)}...`);
-  };
-
   const handleSchedule = (key) => {
     message.success(`${formatText(key)} has been scheduled successfully!`);
+  };
+
+  const handleHistory = (key) => {
+    message.info(`Viewing History for ${formatText(key)}...`);
   };
 
   if (!reportKey) {
@@ -748,7 +790,6 @@ function ReportsHub() {
           reportKey={reportKey}
           onDownload={() => handleDownload(reportKey)}
           onSchedule={() => handleSchedule(reportKey)}
-          onSave={() => handleSave(reportKey)}
           onHistory={() => handleHistory(reportKey)}
         />
       </div>
@@ -811,10 +852,10 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "project-running": [
-      { key: "date", placeholder: "Select Date", type: "date" },
+      { key: "search", placeholder: "Search projects...", type: "search" },
     ],
     "timesheet": [
-      { key: "date", placeholder: "Select Date", type: "date" },
+      { key: "search", placeholder: "Search timesheets...", type: "search" },
     ],
   };
 
@@ -835,9 +876,14 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
       {reportKey === "user-report" && rowData.length > 0 ? (
         <UserReportResults rows={rowData} filters={filters} />
       ) : reportKey === "project-running" && data['project-running'] ? (
-        <ProjectRunningReportContent data={data['project-running']} />
-      ) : reportKey === "timesheet" && data['timesheet'] ? (
-        <TimesheetReportContent data={data['timesheet']} />
+        <ProjectRunningReportContent data={data['project-running']} filters={filters} />
+      ) : reportKey === "timesheet" && data['timesheet'] && data['timesheet'].data ? (
+        <TimesheetReportContent data={data['timesheet']} filters={filters} />
+      ) : reportKey === "timesheet" ? (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p>Loading timesheet data...</p>
+          <pre>{JSON.stringify(data['timesheet'], null, 2)}</pre>
+        </div>
       ) : rowData.length > 0 ? (
         <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance?.summary} />
       ) : (
@@ -848,6 +894,56 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
 }
 
 function CommonFilters({ fields, filters, setFilters, onSearch }) {
+  const [searchValue, setSearchValue] = useState(filters.search || "");
+  const [searchTimer, setSearchTimer] = useState(null);
+
+  // Debounced search function
+  const debouncedSearch = useCallback((value) => {
+    // Clear existing timer
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+
+    // Set new timer
+    const timer = setTimeout(() => {
+      setFilters((prev) => ({
+        ...prev,
+        search: value,
+      }));
+      onSearch();
+    }, 300); // 300ms debounce delay
+
+    setSearchTimer(timer);
+  }, [onSearch, setFilters, searchTimer]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    
+    // Only debounce if there's actual text, otherwise clear immediately
+    if (!value) {
+      setFilters((prev) => ({
+        ...prev,
+        search: "",
+      }));
+      onSearch();
+    } else {
+      debouncedSearch(value);
+    }
+  };
+
+  const handleSearchPress = () => {
+    // Immediate search when user presses search button
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+    setFilters((prev) => ({
+      ...prev,
+      search: searchValue,
+    }));
+    onSearch();
+  };
+
   return (
     <div className="reports-filter-bar">
       {fields.map((field) =>
@@ -858,12 +954,29 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
             className="reports-filter-control"
             suffixIcon={<CalendarOutlined />}
             value={filters[field.key] ? moment(filters[field.key]) : null}
-            onChange={(value) =>
+            onChange={(value, dateString) => {
               setFilters((prev) => ({
                 ...prev,
                 [field.key]: value ? value.toISOString() : null,
-              }))
-            }
+              }));
+            }}
+            onOk={(value) => {
+              // Trigger search only when date is confirmed
+              onSearch();
+            }}
+            allowClear
+            format="MMM DD, YYYY"
+          />
+        ) : field.type === "search" ? (
+          <Input.Search
+            key={field.key}
+            placeholder={field.placeholder}
+            className="reports-search-input"
+            value={searchValue}
+            onChange={handleSearchChange}
+            onSearch={handleSearchPress}
+            allowClear
+            onPressEnter={handleSearchPress}
           />
         ) : (
           <Select
@@ -873,7 +986,7 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
             className="reports-filter-control"
             options={field.options}
             allowClear={field.key !== "reportType" && field.key !== "status"}
-            onChange={(value) =>
+            onChange={(value) => {
               setFilters((prev) => ({
                 ...prev,
                 [field.key]:
@@ -884,17 +997,13 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
                     : field.key === "reportType" && !value
                     ? "project-wise"
                     : value,
-              }))
-            }
+              }));
+              // Trigger search for select changes
+              onSearch();
+            }}
           />
         )
       )}
-      <Input.Search
-        placeholder="Search..."
-        className="reports-search-input"
-        onSearch={onSearch}
-        allowClear
-      />
     </div>
   );
 }
@@ -1020,7 +1129,6 @@ function UserReportResults({ rows, filters }) {
   const [selectedMember, setSelectedMember] = useState(() =>
     filters?.userId && filters.userId !== "all" ? filters.userId : null
   );
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (filters?.userId && filters.userId !== "all") {
@@ -1032,12 +1140,8 @@ function UserReportResults({ rows, filters }) {
 
 
   const filteredMembers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      return rows;
-    }
-    return rows.filter((row) => String(row.user || "").toLowerCase().includes(query));
-  }, [rows, search]);
+    return rows;
+  }, [rows]);
 
   const selectedRow = selectedMember
     ? (filteredMembers.find((row) => row.key === selectedMember) ||
@@ -1287,13 +1391,6 @@ function UserReportResults({ rows, filters }) {
         <div className="user-report-member-header">
           <h2>Member</h2>
           <div className="user-report-member-actions">
-            <Input.Search
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search..."
-              className="user-report-member-search"
-              allowClear
-            />
             <Button className="user-report-customize">
               Customize
             </Button>
@@ -1443,7 +1540,7 @@ function EmptyReportState() {
   );
 }
 
-function DetailActions({ reportKey, onDownload, onSchedule, onSave, onHistory }) {
+function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
   if (reportKey === "project-report") {
     return null;
   }
@@ -1463,12 +1560,9 @@ function DetailActions({ reportKey, onDownload, onSchedule, onSave, onHistory })
 
   return (
     <div className="reports-actions">
-      <Button className="reports-action-button" onClick={onSave}>
-        Save Report <SaveOutlined />
-      </Button>
-      <Button className="reports-action-button" onClick={onHistory}>
+      {/* <Button className="reports-action-button" onClick={onHistory}>
         History <HistoryOutlined />
-      </Button>
+      </Button> */}
       <Button className="reports-action-button" onClick={onDownload}>
         Download <DownloadOutlined />
       </Button>
@@ -1920,24 +2014,59 @@ function formatText(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function ProjectRunningReportContent({ data }) {
+function ProjectRunningReportContent({ data, filters }) {
   const { data: projects = [], managers = [], types = [], technologies = [], metadata = {} } = data;
+  const searchText = filters.search || "";
 
-  // Prepare chart data
-  const managerChartData = managers.map(manager => ({
-    name: manager.managerName,
-    value: manager.totalProjects
-  }));
+  // Filter projects based on search text
+  const filteredProjects = projects.filter(project => {
+    if (!searchText) return true;
+    
+    const searchLower = searchText.toLowerCase();
+    return (
+      project.title?.toLowerCase().includes(searchLower) ||
+      project.managerName?.toLowerCase().includes(searchLower) ||
+      project.project_typeName?.toLowerCase().includes(searchLower) ||
+      project.technologyName?.some(tech => tech.toLowerCase().includes(searchLower)) ||
+      project.estimatedHours?.toLowerCase().includes(searchLower) ||
+      project.total_logged_time?.toLowerCase().includes(searchLower)
+    );
+  });
 
-  const typeChartData = types.map(type => ({
-    name: type.project_typeName,
-    value: type.totalProjects
-  }));
+  // Calculate chart data based on FILTERED projects
+  const calculateChartData = (projectList) => {
+    const managerStats = {};
+    const typeStats = {};
+    const techStats = {};
 
-  const techChartData = technologies.map(tech => ({
-    name: tech.technologyName,
-    value: tech.totalProjects
-  }));
+    projectList.forEach(project => {
+      // Manager stats
+      const manager = project.managerName || 'Unknown';
+      managerStats[manager] = (managerStats[manager] || 0) + 1;
+
+      // Type stats
+      const type = project.project_typeName || 'Unknown';
+      typeStats[type] = (typeStats[type] || 0) + 1;
+
+      // Technology stats
+      if (project.technologyName && Array.isArray(project.technologyName)) {
+        project.technologyName.forEach(tech => {
+          techStats[tech] = (techStats[tech] || 0) + 1;
+        });
+      }
+    });
+
+    return {
+      managers: Object.entries(managerStats).map(([name, value]) => ({ name, value })),
+      types: Object.entries(typeStats).map(([name, value]) => ({ name, value })),
+      technologies: Object.entries(techStats).map(([name, value]) => ({ name, value }))
+    };
+  };
+
+  const chartData = calculateChartData(filteredProjects);
+  const managerChartData = chartData.managers;
+  const typeChartData = chartData.types;
+  const techChartData = chartData.technologies;
 
   // Table columns
   const columns = [
@@ -2005,25 +2134,32 @@ function ProjectRunningReportContent({ data }) {
 
   return (
     <div className="project-running-report">
-      {/* Summary Stats */}
+      {/* Summary Stats - Based on FILTERED data */}
       <div className="report-summary-stats">
         <div className="stat-card">
           <h3>Total Projects</h3>
-          <span className="stat-value">{metadata.total || 0}</span>
+          <span className="stat-value">{filteredProjects.length}</span>
         </div>
         <div className="stat-card">
           <h3>Total Managers</h3>
-          <span className="stat-value">{managers.length}</span>
+          <span className="stat-value">{managerChartData.length}</span>
         </div>
         <div className="stat-card">
           <h3>Total Types</h3>
-          <span className="stat-value">{types.length}</span>
+          <span className="stat-value">{typeChartData.length}</span>
         </div>
         <div className="stat-card">
           <h3>Total Technologies</h3>
-          <span className="stat-value">{technologies.length}</span>
+          <span className="stat-value">{techChartData.length}</span>
         </div>
       </div>
+
+      {/* Search Result Info */}
+      {searchText && (
+        <div style={{ marginBottom: 16, padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px', color: '#0369a1' }}>
+          Showing {filteredProjects.length} of {projects.length} projects matching "{searchText}"
+        </div>
+      )}
 
       {/* Charts */}
       <div className="charts-section">
@@ -2033,9 +2169,32 @@ function ProjectRunningReportContent({ data }) {
               <h3>Projects by Manager</h3>
               <ReactApexChart
                 options={{
-                  chart: { type: 'pie' },
+                  chart: { 
+                    type: 'pie',
+                    height: 300
+                  },
                   labels: managerChartData.map(item => item.name),
-                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#06b6d4'],
+                  legend: {
+                    position: 'bottom',
+                    fontSize: '12px',
+                    labels: {
+                      colors: ['#374151']
+                    }
+                  },
+                  dataLabels: {
+                    enabled: true,
+                    formatter: function (val) {
+                      return val.toFixed(0);
+                    }
+                  },
+                  plotOptions: {
+                    pie: {
+                      dataLabels: {
+                        offset: -10
+                      }
+                    }
+                  }
                 }}
                 series={managerChartData.map(item => item.value)}
                 type="pie"
@@ -2049,11 +2208,46 @@ function ProjectRunningReportContent({ data }) {
               <h3>Projects by Type</h3>
               <ReactApexChart
                 options={{
-                  chart: { type: 'bar' },
-                  plotOptions: { bar: { horizontal: true } },
-                  xaxis: { categories: typeChartData.map(item => item.name) },
+                  chart: { 
+                    type: 'bar',
+                    height: 300
+                  },
+                  plotOptions: { 
+                    bar: { 
+                      horizontal: true,
+                      borderRadius: 4
+                    } 
+                  },
+                  xaxis: { 
+                    categories: typeChartData.map(item => item.name),
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                        colors: '#374151'
+                      }
+                    }
+                  },
+                  yaxis: {
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                        colors: '#374151'
+                      }
+                    }
+                  },
+                  colors: ['#3b82f6'],
+                  dataLabels: {
+                    enabled: true,
+                    style: {
+                      fontSize: '11px',
+                      colors: ['#fff']
+                    }
+                  }
                 }}
-                series={[{ data: typeChartData.map(item => item.value) }]}
+                series={[{ 
+                  data: typeChartData.map(item => item.value),
+                  name: 'Projects'
+                }]}
                 type="bar"
                 height={300}
               />
@@ -2065,10 +2259,46 @@ function ProjectRunningReportContent({ data }) {
               <h3>Projects by Technology</h3>
               <ReactApexChart
                 options={{
-                  chart: { type: 'bar' },
-                  xaxis: { categories: techChartData.map(item => item.name) },
+                  chart: { 
+                    type: 'bar',
+                    height: 300
+                  },
+                  plotOptions: { 
+                    bar: { 
+                      borderRadius: 4,
+                      columnWidth: '60%'
+                    } 
+                  },
+                  xaxis: { 
+                    categories: techChartData.map(item => item.name),
+                    labels: {
+                      style: {
+                        fontSize: '11px',
+                        colors: '#374151'
+                      },
+                      rotate: -45
+                    }
+                  },
+                  yaxis: {
+                    labels: {
+                      style: {
+                        fontSize: '12px',
+                        colors: '#374151'
+                      }
+                    }
+                  },
+                  colors: ['#10b981'],
+                  dataLabels: {
+                    enabled: false
+                  },
+                  grid: {
+                    borderColor: '#e5e7eb'
+                  }
                 }}
-                series={[{ data: techChartData.map(item => item.value) }]}
+                series={[{ 
+                  data: techChartData.map(item => item.value),
+                  name: 'Projects'
+                }]}
                 type="bar"
                 height={300}
               />
@@ -2081,13 +2311,13 @@ function ProjectRunningReportContent({ data }) {
       <div className="projects-table-section">
         <div className="table-header">
           <h3>Projects List</h3>
-          <span className="total-count">Total: {projects.length}</span>
+          <span className="total-count">Total: {filteredProjects.length}</span>
         </div>
         
-        {projects.length > 0 ? (
+        {filteredProjects.length > 0 ? (
           <Table
             columns={columns}
-            dataSource={projects}
+            dataSource={filteredProjects}
             rowKey="_id"
             pagination={{
               showSizeChanger: true,
@@ -2098,62 +2328,205 @@ function ProjectRunningReportContent({ data }) {
             size="middle"
           />
         ) : (
-          <Empty description="No project data found" />
+          <Empty description={searchText ? "No projects found matching your search" : "No project data found"} />
         )}
       </div>
     </div>
   );
 }
 
-function TimesheetReportContent({ data }) {
-  const { data: timesheets = [], summary = {}, metadata = {} } = data;
+function TimesheetReportContent({ data, filters }) {
+  const { data: timesheets = [], totalHours = "0", manager = [], type = [], user = [] } = data;
+  const searchText = filters.search || "";
+
+  // Filter timesheets based on search text
+  const filteredTimesheets = timesheets.filter(timesheet => {
+    if (!searchText) return true;
+    
+    const searchLower = searchText.toLowerCase();
+    return (
+      timesheet.user?.toLowerCase().includes(searchLower) ||
+      timesheet.project?.toLowerCase().includes(searchLower) ||
+      timesheet.descriptions?.toLowerCase().includes(searchLower) ||
+      timesheet.logged_time?.toLowerCase().includes(searchLower) ||
+      timesheet.projectManager?.toLowerCase().includes(searchLower) ||
+      timesheet.projectType?.toLowerCase().includes(searchLower) ||
+      timesheet.projectTechnology?.some(tech => tech.toLowerCase().includes(searchLower))
+    );
+  });
+
+  // Calculate chart data based on FILTERED timesheets
+  const calculateTimesheetChartData = (timesheetList) => {
+    const userStats = {};
+    const managerStats = {};
+    const typeStats = {};
+
+    timesheetList.forEach(timesheet => {
+      // User stats
+      const userName = timesheet.user || 'Unknown';
+      const hours = parseFloat(timesheet.logged_time?.split(':')[0] || '0');
+      userStats[userName] = (userStats[userName] || 0) + hours;
+
+      // Manager stats
+      const manager = timesheet.projectManager || 'Unknown';
+      managerStats[manager] = (managerStats[manager] || 0) + hours;
+
+      // Type stats
+      const projectType = timesheet.projectType || 'Unknown';
+      typeStats[projectType] = (typeStats[projectType] || 0) + hours;
+    });
+
+    return {
+      users: Object.entries(userStats).map(([name, value]) => ({ user: name, totalLoggedHours: value.toFixed(1) })),
+      managers: Object.entries(managerStats).map(([name, value]) => ({ projectManager: name, totalLoggedHours: value.toFixed(1) })),
+      types: Object.entries(typeStats).map(([name, value]) => ({ projectType: name, totalLoggedHours: value.toFixed(1) }))
+    };
+  };
+
+  const chartData = calculateTimesheetChartData(filteredTimesheets);
+  const userChartData = chartData.users;
+  const managerChartData = chartData.managers;
+  const typeChartData = chartData.types;
 
   const columns = [
     {
       title: "User",
-      dataIndex: "userName",
-      key: "userName",
+      dataIndex: "user",
+      key: "user",
     },
     {
       title: "Project",
-      dataIndex: "projectName",
-      key: "projectName",
+      dataIndex: "project",
+      key: "project",
     },
     {
-      title: "Task",
-      dataIndex: "taskName",
-      key: "taskName",
+      title: "Description",
+      dataIndex: "descriptions",
+      key: "descriptions",
+      render: (text) => {
+        if (!text) return "-";
+        // Strip HTML tags for display
+        const plainText = text.replace(/<[^>]*>/g, '');
+        return plainText.length > 50 ? plainText.substring(0, 50) + "..." : plainText;
+      },
     },
     {
-      title: "Hours",
-      dataIndex: "loggedHours",
-      key: "loggedHours",
+      title: "Logged Time",
+      dataIndex: "logged_time",
+      key: "logged_time",
       align: "center",
     },
     {
       title: "Date",
-      dataIndex: "date",
-      key: "date",
+      dataIndex: "logged_date",
+      key: "logged_date",
       render: (date) => formatDate(date),
       align: "center",
+    },
+    {
+      title: "Project Manager",
+      dataIndex: "projectManager",
+      key: "projectManager",
+    },
+    {
+      title: "Technology",
+      dataIndex: "projectTechnology",
+      key: "projectTechnology",
+      render: (techArray) => (
+        <div>
+          {techArray?.map((tech, index) => (
+            <span key={index} className="tech-tag">
+              {tech}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Project Type",
+      dataIndex: "projectType",
+      key: "projectType",
     },
   ];
 
   return (
     <div className="timesheet-report">
-      {/* Summary Stats */}
+      {/* Summary Stats - Based on FILTERED data */}
       <div className="report-summary-stats">
         <div className="stat-card">
           <h3>Total Hours</h3>
-          <span className="stat-value">{summary.totalHours || 0}</span>
+          <span className="stat-value">{calculateTimesheetChartData(filteredTimesheets).users.reduce((sum, user) => sum + parseFloat(user.totalLoggedHours), 0).toFixed(1)}</span>
         </div>
         <div className="stat-card">
           <h3>Total Entries</h3>
-          <span className="stat-value">{timesheets.length}</span>
+          <span className="stat-value">{filteredTimesheets.length}</span>
         </div>
         <div className="stat-card">
-          <h3>Avg Hours/Day</h3>
-          <span className="stat-value">{summary.avgHoursPerDay || 0}</span>
+          <h3>Unique Users</h3>
+          <span className="stat-value">{userChartData.length}</span>
+        </div>
+        <div className="stat-card">
+          <h3>Unique Projects</h3>
+          <span className="stat-value">{managerChartData.length}</span>
+        </div>
+      </div>
+
+      {/* Search Result Info */}
+      {searchText && (
+        <div style={{ marginBottom: 16, padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px', color: '#0369a1' }}>
+          Showing {filteredTimesheets.length} of {timesheets.length} entries matching "{searchText}"
+        </div>
+      )}
+
+      {/* Charts */}
+      <div className="charts-section">
+        <div className="charts-grid">
+          {userChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Hours by User</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'pie' },
+                  labels: userChartData.map(item => item.user),
+                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                }}
+                series={userChartData.map(item => parseFloat(item.totalLoggedHours))}
+                type="pie"
+                height={300}
+              />
+            </div>
+          )}
+          
+          {managerChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Hours by Manager</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'bar' },
+                  plotOptions: { bar: { horizontal: true } },
+                  xaxis: { categories: managerChartData.map(item => item.projectManager) },
+                }}
+                series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                type="bar"
+                height={300}
+              />
+            </div>
+          )}
+          
+          {typeChartData.length > 0 && (
+            <div className="chart-card">
+              <h3>Hours by Project Type</h3>
+              <ReactApexChart
+                options={{
+                  chart: { type: 'bar' },
+                  xaxis: { categories: typeChartData.map(item => item.projectType) },
+                }}
+                series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                type="bar"
+                height={300}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -2161,13 +2534,13 @@ function TimesheetReportContent({ data }) {
       <div className="timesheet-table-section">
         <div className="table-header">
           <h3>Timesheet Entries</h3>
-          <span className="total-count">Total: {timesheets.length}</span>
+          <span className="total-count">Total: {filteredTimesheets.length}</span>
         </div>
         
-        {timesheets.length > 0 ? (
+        {filteredTimesheets.length > 0 ? (
           <Table
             columns={columns}
-            dataSource={timesheets}
+            dataSource={filteredTimesheets}
             rowKey="_id"
             pagination={{
               showSizeChanger: true,
@@ -2178,7 +2551,7 @@ function TimesheetReportContent({ data }) {
             size="middle"
           />
         ) : (
-          <Empty description="No timesheet data found" />
+          <Empty description={searchText ? "No timesheet entries found matching your search" : "No timesheet data found"} />
         )}
       </div>
     </div>
