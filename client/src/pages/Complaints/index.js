@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Drawer, Popconfirm, Select, Table, Tooltip, message } from "antd";
+import { Drawer, Popconfirm, Table, Tooltip, message } from "antd";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   AlertOutlined,
@@ -28,15 +28,6 @@ import "./Complaints.css";
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
 const ADD_ROLES    = ["Admin", "PC", "AM", "TL"];
-
-const STATUS_OPTIONS = [
-  { value: "", label: "All Status" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved",    label: "Resolved" },
-  { value: "pending",     label: "Pending" },
-  { value: "closed",      label: "Closed" },
-  { value: "open",        label: "Open" },
-];
 
 /* ── helpers ────────────────────────────────────────────────── */
 const formatStatus = (s = "") =>
@@ -431,14 +422,11 @@ const Complaints = () => {
             </span>
           </div>
           <div className="cmp-table-toolbar">
-            <Select
-              size="small"
-              value={status}
-              onChange={(v) => { setStatus(v); setPagination((p) => ({ ...p, current: 1 })); }}
-              options={STATUS_OPTIONS}
-              style={{ width: 150 }}
+            <ComplaintFilterComponent
+              onFilterChange={onFilterChange}
+              containerClassName="cmp-filter-container"
+              triggerButtonClassName="cmp-filter-trigger"
             />
-            <ComplaintFilterComponent onFilterChange={onFilterChange} />
           </div>
         </div>
 

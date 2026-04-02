@@ -10,6 +10,39 @@
     box-shadow: none !important;
 }
 
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
+body.dark-theme .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean,
+body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    padding: 4px !important;
+    border-radius: 999px !important;
+    position: relative;
+    top: -4px;
+}
+
+.task-wrapper .csv-dropdown-anchor {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+}
+
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:focus,
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:active,
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+body.dark-theme .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean:hover {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
 /* Task detail title — always-editable Input styled as heading */
 .task-detail-title-input.ant-input {
     font-size: 22px !important;
@@ -181,6 +214,15 @@
 
 .page-layout .task-wrapper .block-status-content {
     align-items: center;
+}
+
+.task-wrapper .task-sub-header .block-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    width: 100%;
+    margin-left: auto;
 }
 
 /* .project-wrapper .add-task {

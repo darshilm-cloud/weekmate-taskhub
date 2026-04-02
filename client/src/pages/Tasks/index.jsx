@@ -2558,13 +2558,18 @@ const TasksPMS = ({ flag }) => {
                         dangerouslySetInnerHTML={{ __html: html["html"] }}
                       ></div>
                     </div>
-                    <Dropdown
-                      placement="bottomRight"
-                      trigger={["click"]}
-                      overlayClassName="wm-csv-dropdown"
-                      // overlay={
-                      //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                      overlay={
+                    <div className="csv-dropdown-anchor">
+                      <Dropdown
+                        placement="bottomRight"
+                        trigger={["click"]}
+                        overlayClassName="wm-csv-dropdown"
+                        getPopupContainer={(triggerNode) =>
+                          triggerNode?.closest(".csv-dropdown-anchor") ||
+                          document.body
+                        }
+                        // overlay={
+                        //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        overlay={
   <Menu style={{ 
     padding: '6px', 
     borderRadius: '10px', 
@@ -2623,12 +2628,13 @@ const TasksPMS = ({ flag }) => {
                             </div>
                           </Menu.Item>
                         </Menu>
-                      }
-                    >
-                      <div className="dropdown-trigger ellipsis-clean">
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </div>
-                    </Dropdown>
+                        }
+                      >
+                        <div className="dropdown-trigger ellipsis-clean">
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
+                        </div>
+                      </Dropdown>
+                    </div>
                   </div>
                 </div>
               </div>

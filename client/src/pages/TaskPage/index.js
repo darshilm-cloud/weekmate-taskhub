@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Dropdown, Modal, message } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -7,13 +7,11 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   DownOutlined,
+  FilterOutlined,
   FlagOutlined,
   MessageOutlined,
   BarChartOutlined,
 } from "@ant-design/icons";
-import TaskStatusFacetFilter from "./TaskStatusFacetFilter";
-import TaskSortFacetFilter from "./TaskSortFacetFilter";
-import TaskDateFacetFilter from "./TaskDateFacetFilter";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import Service from "../../service";
@@ -45,6 +43,21 @@ const SORT_MODE_LABELS = {
   title_asc: "A to Z",
   title_desc: "Z to A",
 };
+
+const TASK_STATUS_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "incomplete", label: "Incomplete" },
+  { value: "completed", label: "Completed" },
+];
+
+const TASK_SORT_OPTIONS = Object.entries(SORT_MODE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+const TASK_DATE_OPTIONS = Object.entries(DATE_PRESET_LABELS)
+  .filter(([value]) => value !== "any")
+  .map(([value, label]) => ({ value, label }));
 
 /** Get display name from assignee (populated object or raw id) */
 function getAssigneeName(a) {
@@ -168,6 +181,158 @@ function sortTaskList(items, sortMode) {
     return 0;
   });
   return sorted;
+}
+
+function TaskCombinedFacetFilter({
+  statusFilter,
+  setStatusFilter,
+  sortMode,
+  setSortMode,
+  datePreset,
+  applyDatePreset,
+}) {
+  const FILTER_SECTIONS = [
+    { key: "status", label: "Status", defaultValue: "all", options: TASK_STATUS_OPTIONS },
+    { key: "sort", label: "Default", defaultValue: "default", options: TASK_SORT_OPTIONS },
+    { key: "date", label: "Date Type", defaultValue: "any", options: TASK_DATE_OPTIONS },
+  ];
+
+  const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("status");
+  const [draftFilters, setDraftFilters] = useState({
+    status: statusFilter || "all",
+    sort: sortMode || "default",
+    date: datePreset || "any",
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setDraftFilters({
+        status: statusFilter || "all",
+        sort: sortMode || "default",
+        date: datePreset || "any",
+      });
+    }
+  }, [datePreset, open, sortMode, statusFilter]);
+
+  const activeCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter && statusFilter !== "all") count += 1;
+    if (sortMode && sortMode !== "default") count += 1;
+    if (datePreset && datePreset !== "any") count += 1;
+    return count;
+  }, [datePreset, sortMode, statusFilter]);
+
+  const activeConfig = FILTER_SECTIONS.find((section) => section.key === activeSection) || FILTER_SECTIONS[0];
+
+  const handleApply = () => {
+    setStatusFilter(draftFilters.status || "all");
+    setSortMode(draftFilters.sort || "default");
+    applyDatePreset(draftFilters.date || "any");
+    setOpen(false);
+  };
+
+  const handleReset = () => {
+    setDraftFilters((prev) => ({
+      ...prev,
+      [activeSection]: activeConfig.defaultValue,
+    }));
+  };
+
+  const panel = (
+    <div className="task-shared-filter-popover">
+      <div className="filter-sidebar">
+        <div className="filter-header">
+          <h4 className="filter-sidebar-title">Filters</h4>
+        </div>
+        <Divider style={{ margin: "8px 0" }} />
+        {FILTER_SECTIONS.map((section) => {
+          const currentValue = draftFilters[section.key];
+          const isSelected = currentValue && currentValue !== section.defaultValue;
+
+          return (
+            <div
+              key={section.key}
+              onClick={() => setActiveSection(section.key)}
+              className={`filter-menu-item ${activeSection === section.key ? "active" : ""}`}
+            >
+              <span>{section.label}</span>
+              {isSelected ? <Badge size="small" color="#1890ff" /> : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="filter-content">
+        <div className="filter-content-inner">
+          <h4 className="filter-title">{activeConfig.label}</h4>
+          <Radio.Group
+            value={draftFilters[activeSection]}
+            onChange={(e) =>
+              setDraftFilters((prev) => ({
+                ...prev,
+                [activeSection]: e.target.value,
+              }))
+            }
+            style={{ display: "flex", flexDirection: "column" }}
+          >
+            {activeConfig.options.map((opt) => (
+              <div
+                key={opt.value}
+                className={`assignee-item${draftFilters[activeSection] === opt.value ? " selected" : ""}`}
+                onClick={() =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    [activeSection]: opt.value,
+                  }))
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <Radio value={opt.value}>
+                  <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
+                </Radio>
+              </div>
+            ))}
+          </Radio.Group>
+          <div className="filter-actions">
+            <Button size="small" className="filter-btn" onClick={handleApply}>
+              Apply Filter
+            </Button>
+            <Button size="small" className="delete-btn" onClick={handleReset}>
+              Reset
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={panel}
+      trigger="click"
+      open={open}
+      onOpenChange={(visible) => {
+        if (visible) {
+          setDraftFilters({
+            status: statusFilter || "all",
+            sort: sortMode || "default",
+            date: datePreset || "any",
+          });
+        }
+        setOpen(visible);
+      }}
+      placement="bottomLeft"
+      overlayClassName="task-shared-filter-overlay"
+    >
+      <Button icon={<FilterOutlined />} className="task-combined-filter-btn">
+        Filter
+        {activeCount > 0 ? (
+          <Badge count={activeCount} size="small" offset={[6, 0]} color="#1890ff" />
+        ) : null}
+      </Button>
+    </Popover>
+  );
 }
 
 const TaskPage = () => {
@@ -403,22 +568,6 @@ const TaskPage = () => {
     return map;
   }, [sortedTasks]);
 
-  const sortMenu = {
-    items: Object.entries(SORT_MODE_LABELS).map(([key, label]) => ({
-      key,
-      label,
-    })),
-    onClick: ({ key }) => setSortMode(key),
-  };
-
-  const dateMenu = {
-    items: Object.entries(DATE_PRESET_LABELS).map(([key, label]) => ({
-      key,
-      label,
-    })),
-    onClick: ({ key }) => applyDatePreset(key),
-  };
-
   const handleOpenTask = (task) => {
     setSelectedTask(task);
     setTaskDetailModalOpen(true);
@@ -488,9 +637,14 @@ const TaskPage = () => {
             className="task-search"
             allowClear
           />
-          <TaskStatusFacetFilter value={statusFilter} onChange={setStatusFilter} />
-          <TaskSortFacetFilter value={sortMode} onChange={setSortMode} />
-          <TaskDateFacetFilter value={datePreset} onApply={applyDatePreset} />
+          <TaskCombinedFacetFilter
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            sortMode={sortMode}
+            setSortMode={setSortMode}
+            datePreset={datePreset}
+            applyDatePreset={applyDatePreset}
+          />
           {selectedTaskIds.length > 0 && (
             <button
               type="button"

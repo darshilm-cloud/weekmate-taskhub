@@ -193,6 +193,70 @@
   flex-wrap: wrap;
 }
 
+.cmp-table-toolbar .cmp-filter-container {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm {
+  min-width: 150px;
+}
+
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm .ant-select-selector {
+  height: 38px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  padding: 0 12px !important;
+}
+
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm .ant-select-selection-item,
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm .ant-select-selection-placeholder {
+  line-height: 36px !important;
+  color: #1e293b;
+}
+
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm:hover .ant-select-selector,
+.cmp-table-toolbar .cmp-status-select.ant-select.ant-select-sm.ant-select-focused .ant-select-selector {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.12) !important;
+}
+
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  gap: 6px;
+  height: 38px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #0f4c81 !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+}
+
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger:hover,
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger:focus {
+  border-color: #94a3b8 !important;
+  background: #ffffff !important;
+  color: #0f4c81 !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.12) !important;
+}
+
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger .anticon,
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger span {
+  color: inherit !important;
+}
+
+.cmp-table-toolbar .cmp-filter-container .ant-btn.filter-btn.cmp-filter-trigger .anticon {
+  color: #0f78be !important;
+}
+
 /* Ant Table overrides */
 .cmp-table-card .ant-table {
   font-size: 13px;

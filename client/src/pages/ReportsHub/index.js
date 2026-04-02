@@ -5,6 +5,7 @@ import {
   ClockCircleOutlined,
   DownloadOutlined,
   DownOutlined,
+  FilterOutlined,
   FundProjectionScreenOutlined,
   HistoryOutlined,
   LineChartOutlined,
@@ -23,8 +24,6 @@ import {
   Input,
   message,
   Progress,
-  Select,
-  Spin,
   Table,
   Tabs,
   Tag,
@@ -35,7 +34,6 @@ import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundSvg from "../../assets/images/no-data-found.svg";
 import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
-import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -84,11 +82,6 @@ const activityOptions = [
   { value: "DELETE", label: "Delete" },
 ];
 
-const reportTypeOptions = [
-  { value: "all-projects", label: "All Projects" },
-  { value: "project-wise", label: "Project Wise" },
-];
-
 const dailyTabs = [
   { key: "pending", label: "Today’s Pending Tasks Report" },
   { key: "completed", label: "Today’s Completed Tasks Report" },
@@ -97,7 +90,7 @@ const dailyTabs = [
 ];
 
 const defaultFilters = {
-  reportType: "all-projects",
+  projectIds: [],
   userId: "all",
   status: "all",
   date: null,
@@ -267,6 +260,9 @@ function ReportsHub() {
       const selectedDate = filters.date ? moment(filters.date) : null;
       const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
       const endDate = selectedDate ? selectedDate.clone().endOf("day") : moment().endOf("day");
+      const selectedProjectIds = Array.isArray(filters.projectIds)
+        ? filters.projectIds.filter(Boolean)
+        : [];
       const selectedUser =
         filters.userId && filters.userId !== "all" ? userMap[filters.userId] : null;
 
@@ -275,6 +271,7 @@ function ReportsHub() {
         status: "all",
         startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
         endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+        projectIds: selectedProjectIds,
       });
 
       if (reportKey === "project-report") {
@@ -398,7 +395,7 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
-            projects: [],
+            projects: selectedProjectIds,
             departments: [],
             users:
               filters.userId && filters.userId !== "all" ? [filters.userId] : [],
@@ -567,7 +564,7 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
-            projects: [],
+            projects: selectedProjectIds,
             departments: [],
             users: [],
             pageNo: 1,
@@ -771,6 +768,7 @@ function ReportsHub() {
                 reportKey={reportKey}
                 filters={filters}
                 setFilters={setFilters}
+                projects={projects}
                 users={users}
                 data={reportData}
                 onSearch={loadReportData}
@@ -783,31 +781,31 @@ function ReportsHub() {
   );
 }
 
-function DynamicReportContent({ reportKey, filters, setFilters, users, data, onSearch }) {
+function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data, onSearch }) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
+  const projectOptions = Array.isArray(projects) ? projects : [];
 
   const fieldsByReport = {
     "user-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "status-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "activity-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "activity", placeholder: "Select Activity", options: activityOptions },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "activity", label: "Activity", placeholder: "All Activity", options: activityOptions, defaultValue: "" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "user-performance-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "project-running": [
@@ -847,48 +845,284 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
   );
 }
 
+function cloneFacetValue(value, mode = "single", defaultValue) {
+  if (mode === "multiple") {
+    return Array.isArray(value) ? [...value] : Array.isArray(defaultValue) ? [...defaultValue] : [];
+  }
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return value;
+}
+
 function CommonFilters({ fields, filters, setFilters, onSearch }) {
+  const facetFields = fields.filter((field) => field.type !== "date");
+  const dateField = fields.find((field) => field.type === "date");
+  const [isFacetOpen, setIsFacetOpen] = useState(false);
+  const [anchorFieldKey, setAnchorFieldKey] = useState(facetFields[0]?.key || "");
+  const [activeFieldKey, setActiveFieldKey] = useState(facetFields[0]?.key || "");
+  const [searchText, setSearchText] = useState("");
+  const [draftFilters, setDraftFilters] = useState({});
+
+  useEffect(() => {
+    if (!facetFields.length) {
+      setAnchorFieldKey("");
+      setActiveFieldKey("");
+      return;
+    }
+
+    const hasAnchor = facetFields.some((field) => field.key === anchorFieldKey);
+    const hasActive = facetFields.some((field) => field.key === activeFieldKey);
+
+    if (!hasAnchor) {
+      setAnchorFieldKey(facetFields[0].key);
+    }
+
+    if (!hasActive) {
+      setActiveFieldKey(facetFields[0].key);
+    }
+  }, [activeFieldKey, anchorFieldKey, facetFields]);
+
+  const activeField = facetFields.find((field) => field.key === activeFieldKey) || facetFields[0];
+  const activeFacetCount = useMemo(
+    () =>
+      facetFields.reduce((count, field) => {
+        const fieldValue = filters[field.key];
+        const isSelected =
+          field.mode === "multiple"
+            ? Array.isArray(fieldValue) && fieldValue.length > 0
+            : fieldValue !== undefined &&
+              fieldValue !== null &&
+              fieldValue !== "" &&
+              fieldValue !== field.defaultValue;
+
+        return count + (isSelected ? 1 : 0);
+      }, 0),
+    [facetFields, filters]
+  );
+
+  const openFacetPanel = (fieldKey) => {
+    const nextDraftFilters = facetFields.reduce((acc, field) => {
+      acc[field.key] = cloneFacetValue(filters[field.key], field.mode, field.defaultValue);
+      return acc;
+    }, {});
+
+    setDraftFilters(nextDraftFilters);
+    setAnchorFieldKey(fieldKey);
+    setActiveFieldKey(fieldKey);
+    setSearchText("");
+    setIsFacetOpen(true);
+  };
+
+  const closeFacetPanel = () => {
+    setIsFacetOpen(false);
+    setSearchText("");
+  };
+
+  const filteredOptions = useMemo(() => {
+    if (!activeField) {
+      return [];
+    }
+
+    if (!searchText.trim()) {
+      return activeField.options || [];
+    }
+
+    return (activeField.options || []).filter((option) =>
+      String(option.label || "")
+        .toLowerCase()
+        .includes(searchText.trim().toLowerCase())
+    );
+  }, [activeField, searchText]);
+
+  const handleOptionToggle = (optionValue) => {
+    if (!activeField) {
+      return;
+    }
+
+    setDraftFilters((prev) => {
+      const currentValue = cloneFacetValue(prev[activeField.key], activeField.mode, activeField.defaultValue);
+
+      if (activeField.mode === "multiple") {
+        const currentValues = Array.isArray(currentValue) ? currentValue : [];
+        return {
+          ...prev,
+          [activeField.key]: currentValues.includes(optionValue)
+            ? currentValues.filter((item) => item !== optionValue)
+            : [...currentValues, optionValue],
+        };
+      }
+
+      return {
+        ...prev,
+        [activeField.key]: optionValue,
+      };
+    });
+  };
+
+  const applySelection = () => {
+    setFilters((prev) => {
+      const nextFilters = { ...prev };
+      facetFields.forEach((field) => {
+        nextFilters[field.key] = cloneFacetValue(draftFilters[field.key], field.mode, field.defaultValue);
+      });
+      return nextFilters;
+    });
+    closeFacetPanel();
+  };
+
+  const resetSelection = () => {
+    if (!activeField) {
+      return;
+    }
+
+    setDraftFilters((prev) => ({
+      ...prev,
+      [activeField.key]: cloneFacetValue(undefined, activeField.mode, activeField.defaultValue),
+    }));
+    setSearchText("");
+  };
+
+  const panel = activeField ? (
+    <div className="reports-facet-panel reports-facet-panel--split">
+      <aside className="reports-facet-sidebar">
+        <h3 className="reports-facet-sidebar-title">Filters</h3>
+        <div className="reports-facet-sidebar-list">
+          {facetFields.map((field) => {
+            const fieldValue = draftFilters[field.key];
+            const isSelected =
+              field.mode === "multiple"
+                ? Array.isArray(fieldValue) && fieldValue.length > 0
+                : fieldValue !== undefined && fieldValue !== null && fieldValue !== "" && fieldValue !== field.defaultValue;
+
+            return (
+              <button
+                key={field.key}
+                type="button"
+                className={`reports-facet-sidebar-item ${activeFieldKey === field.key ? "active" : ""}`}
+                onClick={() => {
+                  setActiveFieldKey(field.key);
+                  setSearchText("");
+                }}
+              >
+                <span>{field.label}</span>
+                {isSelected ? <i className="reports-facet-sidebar-dot" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+
+      <div className="reports-facet-main">
+        <div className="reports-facet-main-head">
+          <span className="reports-facet-main-accent" />
+          <div>
+            <h3>{activeField.label}</h3>
+            <p>{activeField.placeholder}</p>
+          </div>
+        </div>
+
+        {(activeField.options || []).length > 6 ? (
+          <Input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder={`Search ${String(activeField.label || "").toLowerCase()}...`}
+            prefix={<SearchOutlined />}
+            className="reports-facet-search"
+            allowClear
+          />
+        ) : null}
+
+        <div className="reports-facet-options">
+          {filteredOptions.length ? (
+            filteredOptions.map((option) => {
+              const draftValue = cloneFacetValue(
+                draftFilters[activeField.key],
+                activeField.mode,
+                activeField.defaultValue
+              );
+              const isSelected =
+                activeField.mode === "multiple"
+                  ? Array.isArray(draftValue) && draftValue.includes(option.value)
+                  : draftValue === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`reports-facet-option ${isSelected ? "active" : ""}`}
+                  onClick={() => handleOptionToggle(option.value)}
+                >
+                  <span
+                    className={`reports-facet-option-indicator ${activeField.mode === "multiple" ? "multiple" : ""} ${isSelected ? "active" : ""}`}
+                  />
+                  <span className="reports-facet-option-label">{option.label}</span>
+                </button>
+              );
+            })
+          ) : (
+            <div className="reports-facet-empty">No options found</div>
+          )}
+        </div>
+
+        <div className="reports-facet-actions">
+          <Button type="primary" className="reports-facet-apply-btn" onClick={applySelection}>
+            Apply Filter
+          </Button>
+          <button type="button" className="reports-facet-reset-btn" onClick={resetSelection}>
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="reports-filter-bar">
-      {fields.map((field) =>
-        field.type === "date" ? (
-          <DatePicker
-            key={field.key}
-            placeholder={field.placeholder}
-            className="reports-filter-control"
-            suffixIcon={<CalendarOutlined />}
-            value={filters[field.key] ? moment(filters[field.key]) : null}
-            onChange={(value) =>
-              setFilters((prev) => ({
-                ...prev,
-                [field.key]: value ? value.toISOString() : null,
-              }))
+      {facetFields.length ? (
+        <Dropdown
+          key="reports-shared-filter"
+          open={isFacetOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeFacetPanel();
             }
-          />
-        ) : (
-          <Select
-            key={field.key}
-            value={filters[field.key]}
-            placeholder={field.placeholder}
-            className="reports-filter-control"
-            options={field.options}
-            allowClear={field.key !== "reportType" && field.key !== "status"}
-            onChange={(value) =>
-              setFilters((prev) => ({
-                ...prev,
-                [field.key]:
-                  field.key === "status" && !value
-                    ? "all"
-                    : field.key === "userId" && !value
-                    ? "all"
-                    : field.key === "reportType" && !value
-                    ? "project-wise"
-                    : value,
-              }))
-            }
-          />
-        )
-      )}
+          }}
+          trigger={["click"]}
+          dropdownRender={() => panel}
+          placement="bottomLeft"
+          overlayClassName="reports-facet-dropdown"
+        >
+          <Button
+            type="button"
+            className={`reports-single-filter-btn ${isFacetOpen ? "active" : ""}`}
+            onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
+            icon={<FilterOutlined />}
+          >
+            Filter
+            {activeFacetCount > 0 ? (
+              <span className="reports-single-filter-count">{activeFacetCount}</span>
+            ) : null}
+          </Button>
+        </Dropdown>
+      ) : null}
+      {dateField ? (
+        <DatePicker
+          key={dateField.key}
+          placeholder={dateField.placeholder}
+          className="reports-filter-control"
+          suffixIcon={<CalendarOutlined />}
+          value={filters[dateField.key] ? moment(filters[dateField.key]) : null}
+          onChange={(value) =>
+            setFilters((prev) => ({
+              ...prev,
+              [dateField.key]: value ? value.toISOString() : null,
+            }))
+          }
+        />
+      ) : null}
       <Input.Search
         placeholder="Search..."
         className="reports-search-input"
@@ -1517,13 +1751,6 @@ function isCompletedTask(task) {
   return DONE_STATUSES.includes(String(task?.task_status?.title || "").trim().toLowerCase());
 }
 
-function isSameDay(dateValue, targetMoment) {
-  if (!dateValue || !targetMoment) {
-    return false;
-  }
-  return moment(dateValue).isSame(targetMoment, "day");
-}
-
 function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
   const today = selectedDate || moment();
   const selectedUser =
@@ -2106,7 +2333,7 @@ function ProjectRunningReportContent({ data }) {
 }
 
 function TimesheetReportContent({ data }) {
-  const { data: timesheets = [], summary = {}, metadata = {} } = data;
+  const { data: timesheets = [], summary = {} } = data;
 
   const columns = [
     {

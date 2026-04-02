@@ -69,6 +69,41 @@
   color: var(--app-primary);
 }
 
+.task-combined-filter-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.task-combined-filter-btn.ant-btn:hover,
+.task-combined-filter-btn.ant-btn:focus {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #374151;
+  box-shadow: none;
+}
+
+.task-shared-filter-overlay .ant-popover-inner {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.task-shared-filter-popover {
+  display: flex;
+  min-height: 330px;
+  border-radius: 12px;
+}
+
 .task-filter-select {
   min-width: 110px;
 }
