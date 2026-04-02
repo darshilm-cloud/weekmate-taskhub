@@ -1275,3 +1275,19 @@ body.dark-theme .gt-wrap.gt-sim .gt-trow:hover,
 body[data-theme="dark"] .gt-wrap.gt-sim .gt-trow:hover {
   background: rgba(148, 163, 184, 0.06);
 }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .gt-wrap { --left-w: 200px; --right-w: 120px; --day-px: 32px; }
+}
+
+@media (max-width: 768px) {
+  .gt-wrap { --left-w: 160px; --right-w: 100px; --day-px: 28px; }
+  .gt-scroll { max-height: calc(100vh - 160px); }
+}
+
+@media (max-width: 640px) {
+  .gt-wrap { --left-w: 120px; --right-w: 80px; --day-px: 24px; }
+  .gt-scroll { max-height: calc(100vh - 140px); }
+  .gt-header { border-radius: 8px 8px 0 0; }
+}

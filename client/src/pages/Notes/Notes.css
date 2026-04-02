@@ -452,3 +452,21 @@ body.dark-theme .notes-empty-sub,
 body[data-theme="dark"] .notes-empty-sub {
   color: #64748b;
 }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .notes-page { padding: 16px; }
+}
+
+@media (max-width: 768px) {
+  .notes-page { padding: 12px; }
+  .notes-page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .notes-page-search { max-width: 100%; width: 100%; }
+  .notes-page-tabs { overflow-x: auto; padding-bottom: 2px; }
+  .notes-tab-btn { padding: 8px 14px; font-size: 13px; white-space: nowrap; }
+}
+
+@media (max-width: 480px) {
+  .notes-page { padding: 8px; }
+  .notes-page-title { font-size: 18px; }
+}

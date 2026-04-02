@@ -415,7 +415,16 @@ const Projectexpences = () => {
     stroke: { curve: "smooth", width: 2 },
     colors: ["#2563eb"],
     fill:   { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.02 } },
-    xaxis:  { categories: analytics.monthlyLabels, labels: { style: { fontSize: "11px" } } },
+    xaxis: {
+      categories: analytics.monthlyLabels,
+      labels: {
+        style: { fontSize: "11px" },
+        rotate: -35,
+        rotateAlways: false,
+        hideOverlappingLabels: true,
+        trim: true,
+      },
+    },
     yaxis:  { labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } } },
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
@@ -433,12 +442,27 @@ const Projectexpences = () => {
     colors: ["#7c3aed"],
     xaxis: {
       categories: analytics.projectLabels.length ? analytics.projectLabels : ["No Data"],
-      labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } },
+      tickAmount: 5,
+      labels: {
+        formatter: (v) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`,
+        style: { fontSize: "10px" },
+        hideOverlappingLabels: true,
+        rotate: 0,
+      },
     },
-    yaxis: { labels: { style: { fontSize: "11px", maxWidth: 120 } } },
+    yaxis: {
+      labels: {
+        style: { fontSize: "11px" },
+        maxWidth: 160,
+        formatter: (v) => v && v.length > 18 ? v.substring(0, 16) + "…" : v,
+      },
+    },
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9" },
-    tooltip: { y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` } },
+    tooltip: {
+      y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+      x: { formatter: (_, { dataPointIndex }) => analytics.projectLabels[dataPointIndex] || "" },
+    },
   }), [analytics.projectLabels]);
 
   const barSeries = useMemo(() => [{

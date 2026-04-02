@@ -754,7 +754,11 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button
+          icon={<FilterOutlined />}
+          className="filter-btn"
+          style={{ background: "#fff", borderRadius: 8, borderColor: "#d1d5db", color: "#374151" }}
+        >
           Filter
           <Badge
             count={activeFiltersCount}

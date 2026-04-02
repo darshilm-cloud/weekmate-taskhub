@@ -658,6 +658,22 @@ body[data-theme="dark"] .pe-stat-card {
   border-color: rgba(74, 104, 150, 0.24);
 }
 
+/* ── Filter button override ──────────────────────────────────── */
+.pe-header-actions .filter-container .ant-btn.filter-btn,
+.pe-header-actions .filter-container .ant-btn.filter-btn:focus {
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.pe-header-actions .filter-container .ant-btn.filter-btn:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #374151 !important;
+}
+
 body.dark-theme .pe-clear-filters-btn,
 body[data-theme="dark"] .pe-clear-filters-btn {
   color: #8fa7cc;

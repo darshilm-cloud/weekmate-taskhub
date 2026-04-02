@@ -12,3 +12,13 @@
 .account-login .form-center .ant-input {
     background-color: #fff;
 }
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .account-login .form-center { padding: 20px 16px; }
+  .account-login .form-center .ant-input { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .account-login .form-center { padding: 16px 12px; }
+  .account-login .form-center .login-icon { font-size: 14px; }
+}

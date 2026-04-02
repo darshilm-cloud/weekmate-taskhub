@@ -85,7 +85,6 @@ exports.projectTaskExists = async (reqData, id = null) => {
         }
         : {})
     });
-    console.log("🚀 ~ exports.projectTaskExists= ~ data:", data);
     if (data) isExist = true;
     return isExist;
   } catch (error) {
@@ -218,7 +217,11 @@ exports.addProjectsTask = async (req, res) => {
 
     // send mail to assignee..
     // if (value.assignees && value.assignees.length > 0) {
-    await sendmailToAssignees(newData._id, [], decodedCompanyId);
+    try {
+      await sendmailToAssignees(newData._id, [], decodedCompanyId);
+    } catch (mailErr) {
+      console.error("Failed to send assignee mail:", mailErr);
+    }
     // }
     // console.log("🚀 ~ exports.addProjectsTask= ~ newData:", newData)
     return successResponse(
@@ -3667,9 +3670,19 @@ exports.getProjectsTaskOverview = async (req, res) => {
             }
           },
           isToday: {
-            $eq: [
-              { $dateToString: { format: "%Y-%m-%d", date: "$due_date" } },
-              moment().format("YYYY-MM-DD")
+            $or: [
+              {
+                $eq: [
+                  { $dateToString: { format: "%Y-%m-%d", date: "$due_date" } },
+                  moment().format("YYYY-MM-DD")
+                ]
+              },
+              {
+                $eq: [
+                  { $dateToString: { format: "%Y-%m-%d", date: "$start_date" } },
+                  moment().format("YYYY-MM-DD")
+                ]
+              }
             ]
           },
           isUpcoming: {

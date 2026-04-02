@@ -1551,7 +1551,8 @@ exports.getPMSClient = async (req, res) => {
       search: Joi.string().optional().allow(''),
     });
 
-    const { error, value } = validationSchema.validate(req.body);
+    const input = req.method === "GET" ? req.query : req.body;
+    const { error, value } = validationSchema.validate(input);
 
     if (error) {
       return errorResponse(

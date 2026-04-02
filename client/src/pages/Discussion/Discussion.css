@@ -1026,3 +1026,27 @@ body.dark-theme .disc-empty-topics,
 body[data-theme="dark"] .disc-empty-topics {
   color: #64748b;
 }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .disc-left { width: 240px; min-width: 220px; }
+}
+
+@media (max-width: 768px) {
+  .disc-page { flex-direction: column; height: auto; min-height: calc(100vh - 72px); }
+  .disc-left {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    max-height: 260px;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .disc-left-header { padding: 12px; }
+  .disc-left-title { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .disc-left { max-height: 200px; }
+  .disc-add-btns { padding: 8px; gap: 6px; }
+}

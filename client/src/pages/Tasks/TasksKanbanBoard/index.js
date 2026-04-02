@@ -70,7 +70,7 @@ import textColorPicker from "../../../util/textColorPicker";
 import { setData } from "../../../appRedux/reducers/ApiData";
 import { useDispatch, useSelector } from "react-redux";
 import { moveWorkFlowTaskHandler } from "../../../appRedux/actions/Common";
-import isEqual from "lodash/isEqual";
+import { isEqual } from "lodash";
 import Service from "../../../service";
 import queryString from "query-string";
 

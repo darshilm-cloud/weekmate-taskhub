@@ -11,6 +11,9 @@ import {
   MessageOutlined,
   BarChartOutlined,
 } from "@ant-design/icons";
+import TaskStatusFacetFilter from "./TaskStatusFacetFilter";
+import TaskSortFacetFilter from "./TaskSortFacetFilter";
+import TaskDateFacetFilter from "./TaskDateFacetFilter";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import Service from "../../service";
@@ -26,7 +29,7 @@ const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
 
 const { Option } = Select;
 
-const TODAY = dayjs().format("YYYY-MM-DD");
+
 const DATE_PRESET_LABELS = {
   any: "Date Type",
   today: "Today",
@@ -316,25 +319,43 @@ const TaskPage = () => {
   const sortedTasks = useMemo(() => sortTaskList(tasks, sortMode), [tasks, sortMode]);
 
   const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
+    const now = dayjs();
+    const todayStr = now.format("YYYY-MM-DD");
     const today = [];
     const overdue = [];
     const upcoming = [];
+
     sortedTasks.forEach((t) => {
       const due = t.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
-      if (!due) { upcoming.push(t); return; }
-      if (due === TODAY) today.push(t);
-      else if (dayjs(due).isBefore(dayjs(), "day")) overdue.push(t);
-      else upcoming.push(t);
+      const start = t.start_date ? dayjs(t.start_date).format("YYYY-MM-DD") : null;
+
+      if (!due && !start) {
+        upcoming.push(t);
+        return;
+      }
+
+      const isDueToday = due === todayStr;
+      const isStartingToday = start === todayStr;
+      const isPastDue = due && dayjs(due).isBefore(now, "day");
+
+      if (isDueToday || isStartingToday) {
+        today.push(t);
+      } else if (isPastDue) {
+        overdue.push(t);
+      } else {
+        upcoming.push(t);
+      }
     });
+
     return {
       todayTasks: today,
       overdueTasks:
         sortMode === "default"
-          ? overdue.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          ? overdue.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
           : overdue,
       upcomingTasks:
         sortMode === "default"
-          ? upcoming.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          ? upcoming.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
           : upcoming,
     };
   }, [sortedTasks, sortMode]);
@@ -467,26 +488,9 @@ const TaskPage = () => {
             className="task-search"
             allowClear
           />
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            className="task-filter-select"
-            options={[
-              { value: "all", label: "Status" },
-              { value: "incomplete", label: "Incomplete" },
-              { value: "completed", label: "Completed" },
-            ]}
-          />
-          <Dropdown menu={sortMenu} trigger={["click"]}>
-            <button type="button" className="task-filter-btn">
-              {SORT_MODE_LABELS[sortMode]} <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
-            </button>
-          </Dropdown>
-          <Dropdown menu={dateMenu} trigger={["click"]}>
-            <button type="button" className="task-filter-btn">
-              <CalendarOutlined /> {DATE_PRESET_LABELS[datePreset]}
-            </button>
-          </Dropdown>
+          <TaskStatusFacetFilter value={statusFilter} onChange={setStatusFilter} />
+          <TaskSortFacetFilter value={sortMode} onChange={setSortMode} />
+          <TaskDateFacetFilter value={datePreset} onApply={applyDatePreset} />
           {selectedTaskIds.length > 0 && (
             <button
               type="button"
