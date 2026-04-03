@@ -2421,6 +2421,8 @@ exports.getProjectsReports = async (req, res) => {
       technologies: Joi.array().optional(),
       types: Joi.array().optional(),
       managers: Joi.array().optional(),
+      date: Joi.date().optional().allow(null, ""),
+      search: Joi.string().trim().allow("").optional(),
       isExport: Joi.boolean().required()
     });
 
@@ -2453,9 +2455,38 @@ exports.getProjectsReports = async (req, res) => {
       sort: value?.sort,
       sortBy: value?.sortBy
     });
+    const selectedDate = value?.date ? new Date(value.date) : null;
+    const selectedDateStart = selectedDate
+      ? new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      : null;
+    const selectedDateEnd = selectedDate
+      ? new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      : null;
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(companyId)
+      companyId: newObjectId(companyId),
+      ...(selectedDateStart && selectedDateEnd
+        ? {
+            start_date: { $lte: selectedDateEnd },
+            $or: [{ end_date: null }, { end_date: { $gte: selectedDateStart } }]
+          }
+        : {})
     };
     if (value?.technologies && value?.technologies.length > 0) {
       matchQuery.technology = {
@@ -2492,6 +2523,22 @@ exports.getProjectsReports = async (req, res) => {
       ...matchQuery,
       $and: orFilter
     };
+    const searchMatchStages =
+      value?.search && value.search.trim()
+        ? [
+            {
+              $match: {
+                $or: [
+                  { title: { $regex: value.search.trim(), $options: "i" } },
+                  { descriptions: { $regex: value.search.trim(), $options: "i" } },
+                  { "managers.full_name": { $regex: value.search.trim(), $options: "i" } },
+                  { "type.project_type": { $regex: value.search.trim(), $options: "i" } },
+                  { "tech.project_tech": { $regex: value.search.trim(), $options: "i" } }
+                ]
+              }
+            }
+          ]
+        : [];
     let mainQuery = [
       {
         $lookup: {
@@ -2589,6 +2636,7 @@ exports.getProjectsReports = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      ...searchMatchStages,
       {
         $lookup: {
           from: "projecttaskhourlogs",

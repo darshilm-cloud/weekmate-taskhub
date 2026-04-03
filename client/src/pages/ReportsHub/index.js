@@ -95,6 +95,7 @@ const defaultFilters = {
   status: "all",
   date: null,
   activity: "",
+  search: "",
 };
 
 function ReportsHub() {
@@ -530,6 +531,8 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
+            date: filters.date || null,
+            search: filters.search?.trim() || "",
             pageNo: 1,
             limit: 100,
             sort: "title",
@@ -793,7 +796,6 @@ function ReportsHub() {
                 projects={projects}
                 users={users}
                 data={reportData}
-                onSearch={loadReportData}
               />
             )}
           </>
@@ -803,7 +805,7 @@ function ReportsHub() {
   );
 }
 
-function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data, onSearch }) {
+function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data }) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
   const projectOptions = Array.isArray(projects) ? projects : [];
 
@@ -851,7 +853,7 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
 
   return (
     <>
-      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} onSearch={onSearch} />
+      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} />
       {reportKey === "user-report" && rowData.length > 0 ? (
         <UserReportResults rows={rowData} filters={filters} />
       ) : reportKey === "project-running" && data['project-running'] ? (
@@ -879,14 +881,19 @@ function cloneFacetValue(value, mode = "single", defaultValue) {
   return value;
 }
 
-function CommonFilters({ fields, filters, setFilters, onSearch }) {
+function CommonFilters({ fields, filters, setFilters }) {
   const facetFields = fields.filter((field) => field.type !== "date");
   const dateField = fields.find((field) => field.type === "date");
   const [isFacetOpen, setIsFacetOpen] = useState(false);
   const [anchorFieldKey, setAnchorFieldKey] = useState(facetFields[0]?.key || "");
   const [activeFieldKey, setActiveFieldKey] = useState(facetFields[0]?.key || "");
   const [searchText, setSearchText] = useState("");
+  const [reportSearchText, setReportSearchText] = useState(filters?.search || "");
   const [draftFilters, setDraftFilters] = useState({});
+
+  useEffect(() => {
+    setReportSearchText(filters?.search || "");
+  }, [filters?.search]);
 
   useEffect(() => {
     if (!facetFields.length) {
@@ -1140,7 +1147,7 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
           onChange={(value) =>
             setFilters((prev) => ({
               ...prev,
-              [dateField.key]: value ? value.toISOString() : null,
+              [dateField.key]: value ? value.format("YYYY-MM-DD") : null,
             }))
           }
         />
@@ -1148,7 +1155,24 @@ function CommonFilters({ fields, filters, setFilters, onSearch }) {
       <Input.Search
         placeholder="Search..."
         className="reports-search-input"
-        onSearch={onSearch}
+        value={reportSearchText}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          setReportSearchText(nextValue);
+
+          if (!nextValue) {
+            setFilters((prev) => ({
+              ...prev,
+              search: "",
+            }));
+          }
+        }}
+        onSearch={(value) => {
+          setFilters((prev) => ({
+            ...prev,
+            search: (value ?? reportSearchText ?? "").trim(),
+          }));
+        }}
         allowClear
       />
     </div>
