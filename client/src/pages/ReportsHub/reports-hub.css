@@ -5,6 +5,10 @@
   background: #f5f8fc;
 }
 
+.reports-hub-main {
+  width: 100%;
+}
+
 .reports-hub-header,
 .reports-detail-topbar {
   display: flex;
@@ -1164,6 +1168,9 @@
 /* Project Running Report Styles */
 .project-running-report {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .report-summary-stats {
@@ -1195,27 +1202,67 @@
 }
 
 .charts-section {
-  margin-bottom: 32px;
+  width: 100%;
+  margin-bottom: 0;
 }
 
-.charts-grid {
+.project-running-report .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  width: 100%;
+  grid-template-columns: minmax(420px, 1.1fr) minmax(420px, 1fr);
   gap: 24px;
+  align-items: stretch;
+  justify-items: stretch;
 }
 
-.chart-card {
+.project-running-report .chart-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 20px 22px 12px;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 430px;
+  overflow: hidden;
+  justify-self: stretch;
 }
 
-.chart-card h3 {
-  margin: 0 0 16px 0;
+.project-running-report .chart-card h3 {
+  margin: 0 0 14px 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf2f7;
   font-size: 16px;
   font-weight: 600;
   color: #1e293b;
+}
+
+.project-running-report .chart-card--technology {
+  grid-column: 1 / -1;
+  min-height: 420px;
+}
+
+.project-running-report .chart-card .apexcharts-canvas,
+.project-running-report .chart-card .apexcharts-svg,
+.project-running-report .chart-card .apexcharts-inner {
+  max-width: 100%;
+  width: 100% !important;
+}
+
+.project-running-report .chart-card .apexcharts-canvas {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.project-running-report .chart-card .apexcharts-legend {
+  justify-content: center !important;
+}
+
+.project-running-report .chart-card .apexcharts-legend-series {
+  margin: 6px 8px !important;
 }
 
 .projects-table-section,
@@ -1281,15 +1328,17 @@ body[data-theme="dark"] .stat-value {
   color: #f1f5f9;
 }
 
-body.dark-theme .chart-card,
-body[data-theme="dark"] .chart-card {
+body.dark-theme .project-running-report .chart-card,
+body[data-theme="dark"] .project-running-report .chart-card {
   background: #1e293b;
   border-color: rgba(71, 85, 105, 0.4);
+  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.28);
 }
 
-body.dark-theme .chart-card h3,
-body[data-theme="dark"] .chart-card h3 {
+body.dark-theme .project-running-report .chart-card h3,
+body[data-theme="dark"] .project-running-report .chart-card h3 {
   color: #f1f5f9;
+  border-bottom-color: rgba(71, 85, 105, 0.35);
 }
 
 body.dark-theme .projects-table-section,
@@ -1323,7 +1372,7 @@ body[data-theme="dark"] .tech-tag {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .charts-grid {
+  .project-running-report .charts-grid {
     grid-template-columns: 1fr;
   }
   
@@ -1337,6 +1386,16 @@ body[data-theme="dark"] .tech-tag {
 @media (max-width: 480px) {
   .report-summary-stats {
     grid-template-columns: 1fr;
+  }
+
+  .project-running-report .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-running-report .chart-card {
+    min-height: 360px;
+    padding: 18px 16px 10px;
+    border-radius: 16px;
   }
 }
 

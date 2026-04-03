@@ -186,6 +186,12 @@ function sortTaskList(items, sortMode) {
 function TaskCombinedFacetFilter({
   statusFilter,
   setStatusFilter,
+  projectFilter,
+  setProjectFilter,
+  projects,
+  isAdmin,
+  viewAll,
+  setViewAll,
   sortMode,
   setSortMode,
   datePreset,
@@ -193,6 +199,20 @@ function TaskCombinedFacetFilter({
 }) {
   const FILTER_SECTIONS = [
     { key: "status", label: "Status", defaultValue: "all", options: TASK_STATUS_OPTIONS },
+    { key: "project", label: "Project", defaultValue: [], options: projects || [], mode: "multiple" },
+    ...(isAdmin
+      ? [
+          {
+            key: "scope",
+            label: "Task Scope",
+            defaultValue: true,
+            options: [
+              { value: true, label: "All Tasks" },
+              { value: false, label: "My Tasks" },
+            ],
+          },
+        ]
+      : []),
     { key: "sort", label: "Default", defaultValue: "default", options: TASK_SORT_OPTIONS },
     { key: "date", label: "Date Type", defaultValue: "any", options: TASK_DATE_OPTIONS },
   ];
@@ -201,6 +221,8 @@ function TaskCombinedFacetFilter({
   const [activeSection, setActiveSection] = useState("status");
   const [draftFilters, setDraftFilters] = useState({
     status: statusFilter || "all",
+    project: Array.isArray(projectFilter) ? projectFilter : [],
+    scope: Boolean(viewAll),
     sort: sortMode || "default",
     date: datePreset || "any",
   });
@@ -209,24 +231,32 @@ function TaskCombinedFacetFilter({
     if (!open) {
       setDraftFilters({
         status: statusFilter || "all",
+        project: Array.isArray(projectFilter) ? projectFilter : [],
+        scope: Boolean(viewAll),
         sort: sortMode || "default",
         date: datePreset || "any",
       });
     }
-  }, [datePreset, open, sortMode, statusFilter]);
+  }, [datePreset, open, projectFilter, sortMode, statusFilter, viewAll]);
 
   const activeCount = useMemo(() => {
     let count = 0;
     if (statusFilter && statusFilter !== "all") count += 1;
+    if (Array.isArray(projectFilter) && projectFilter.length > 0) count += 1;
+    if (isAdmin && Boolean(viewAll) !== true) count += 1;
     if (sortMode && sortMode !== "default") count += 1;
     if (datePreset && datePreset !== "any") count += 1;
     return count;
-  }, [datePreset, sortMode, statusFilter]);
+  }, [datePreset, isAdmin, projectFilter, sortMode, statusFilter, viewAll]);
 
   const activeConfig = FILTER_SECTIONS.find((section) => section.key === activeSection) || FILTER_SECTIONS[0];
 
   const handleApply = () => {
     setStatusFilter(draftFilters.status || "all");
+    setProjectFilter(Array.isArray(draftFilters.project) ? draftFilters.project : []);
+    if (isAdmin) {
+      setViewAll(Boolean(draftFilters.scope));
+    }
     setSortMode(draftFilters.sort || "default");
     applyDatePreset(draftFilters.date || "any");
     setOpen(false);
@@ -266,34 +296,61 @@ function TaskCombinedFacetFilter({
       <div className="filter-content">
         <div className="filter-content-inner">
           <h4 className="filter-title">{activeConfig.label}</h4>
-          <Radio.Group
-            value={draftFilters[activeSection]}
-            onChange={(e) =>
-              setDraftFilters((prev) => ({
-                ...prev,
-                [activeSection]: e.target.value,
-              }))
-            }
-            style={{ display: "flex", flexDirection: "column" }}
-          >
-            {activeConfig.options.map((opt) => (
-              <div
-                key={opt.value}
-                className={`assignee-item${draftFilters[activeSection] === opt.value ? " selected" : ""}`}
-                onClick={() =>
+          {activeSection === "project" ? (
+            <div className="task-filter-panel-select-wrap">
+              <Select
+                mode="multiple"
+                placeholder="Search project"
+                value={Array.isArray(draftFilters.project) ? draftFilters.project : []}
+                onChange={(value) =>
                   setDraftFilters((prev) => ({
                     ...prev,
-                    [activeSection]: opt.value,
+                    project: value,
                   }))
                 }
-                style={{ cursor: "pointer" }}
+                className="task-filter-panel-select"
+                allowClear
+                showSearch
+                optionFilterProp="children"
+                maxTagCount={2}
               >
-                <Radio value={opt.value}>
-                  <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
-                </Radio>
-              </div>
-            ))}
-          </Radio.Group>
+                {(projects || []).map((project) => (
+                  <Option key={project._id} value={project._id}>
+                    {project.title}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          ) : (
+            <Radio.Group
+              value={draftFilters[activeSection]}
+              onChange={(e) =>
+                setDraftFilters((prev) => ({
+                  ...prev,
+                  [activeSection]: e.target.value,
+                }))
+              }
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              {activeConfig.options.map((opt) => (
+                <div
+                  key={opt.value}
+                  className={`assignee-item${draftFilters[activeSection] === opt.value ? " selected" : ""}`}
+                  onClick={() =>
+                    setDraftFilters((prev) => ({
+                      ...prev,
+                      [activeSection]: opt.value,
+                    }))
+                  }
+                  style={{ cursor: "pointer" }}
+                >
+                  <Radio value={opt.value}>
+                    <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
+                  </Radio>
+                </div>
+              ))}
+            </Radio.Group>
+          )}
           <div className="filter-actions">
             <Button size="small" className="filter-btn" onClick={handleApply}>
               Apply Filter
@@ -316,6 +373,8 @@ function TaskCombinedFacetFilter({
         if (visible) {
           setDraftFilters({
             status: statusFilter || "all",
+            project: Array.isArray(projectFilter) ? projectFilter : [],
+            scope: Boolean(viewAll),
             sort: sortMode || "default",
             date: datePreset || "any",
           });
@@ -640,6 +699,12 @@ const TaskPage = () => {
           <TaskCombinedFacetFilter
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
+            projectFilter={projectFilter}
+            setProjectFilter={setProjectFilter}
+            projects={projects}
+            isAdmin={isAdmin}
+            viewAll={viewAll}
+            setViewAll={setViewAll}
             sortMode={sortMode}
             setSortMode={setSortMode}
             datePreset={datePreset}
@@ -692,30 +757,6 @@ const TaskPage = () => {
           >
             <BarChartOutlined className="task-tab-icon" /> Gantt
           </button>
-        </div>
-        <div className="task-page-tabs-right">
-          <Select
-            mode="multiple"
-            placeholder="Project"
-            value={projectFilter}
-            onChange={setProjectFilter}
-            className="task-filter-select task-filter-project"
-            allowClear
-            maxTagCount={1}
-          >
-            {projects.map((p) => (
-              <Option key={p._id} value={p._id}>{p.title}</Option>
-            ))}
-          </Select>
-          {isAdmin && (
-            <Checkbox
-              checked={viewAll}
-              onChange={(e) => setViewAll(e.target.checked)}
-              className="task-view-all"
-            >
-              All tasks
-            </Checkbox>
-          )}
         </div>
       </div>
 

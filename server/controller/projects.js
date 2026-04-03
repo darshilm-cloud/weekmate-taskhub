@@ -417,7 +417,7 @@ exports.getProjects = async (req, res) => {
           ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
           : {}),
         ...(value?.category?.length > 0
-          ? { project_type: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+          ? { technology: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
           : {}),
         ...(value?.manager_id?.length > 0
           ? { manager: { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
@@ -544,7 +544,7 @@ exports.getProjects = async (req, res) => {
         ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
         : {}),
       ...(value?.category?.length > 0
-        ? { project_type: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+        ? { technology: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
         : {}),
       ...(value?.project_type?.length > 0
         ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
@@ -685,6 +685,7 @@ exports.getProjects = async (req, res) => {
           end_date: 1,
           updatedAt: 1,
           estimatedHours: 1,
+          technology: 1,
           project_status: { _id: 1, title: 1 },
           manager: { _id: 1, full_name: 1, emp_img: 1 },
           assignees: { _id: 1, name: 1, emp_img: 1 }
@@ -803,6 +804,7 @@ exports.getProjects = async (req, res) => {
         start_date:           project.start_date,
         end_date:             project.end_date,
         updatedAt:            project.updatedAt,
+        technology:           project.technology,
         project_status:       project.project_status,
         manager:              project.manager,
         assignees:            project.assignees,

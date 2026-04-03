@@ -130,6 +130,18 @@ function ReportsHub() {
       morning: [],
       evening: [],
     },
+    "project-running": {
+      data: [],
+      managers: [],
+      types: [],
+      technologies: [],
+      metadata: {},
+    },
+    timesheet: {
+      data: [],
+      summary: {},
+      metadata: {},
+    },
   });
 
   const currentPage = pageMeta[reportKey];
@@ -528,10 +540,18 @@ function ReportsHub() {
 
         if (response?.data && response?.data?.data) {
           const projectRunningData = {
-            data: response.data.data.data || [],
-            managers: response.data.data.managers || [],
-            types: response.data.data.types || [],
-            technologies: response.data.data.technologies || [],
+            data: Array.isArray(response.data.data.data)
+              ? response.data.data.data
+              : [],
+            managers: Array.isArray(response.data.data.managers)
+              ? response.data.data.managers
+              : [],
+            types: Array.isArray(response.data.data.types)
+              ? response.data.data.types
+              : [],
+            technologies: Array.isArray(response.data.data.technologies)
+              ? response.data.data.technologies
+              : [],
             metadata: response.data.metadata || {},
           };
           setReportData((prev) => ({ ...prev, 'project-running': projectRunningData }));
@@ -577,7 +597,9 @@ function ReportsHub() {
 
         if (response?.data && response?.data?.data) {
           const timesheetData = {
-            data: response.data.data.data || [],
+            data: Array.isArray(response.data.data.data)
+              ? response.data.data.data
+              : [],
             summary: response.data.data.summary || {},
             metadata: response.data.metadata || {},
           };
@@ -2147,24 +2169,81 @@ function formatText(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+class ChartErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    console.error("ReportsHub chart render failed", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <Empty description="Chart unavailable" />;
+    }
+
+    return this.props.children;
+  }
+}
+
+function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.reduce((acc, item, index) => {
+    if (!item || typeof item !== "object") {
+      return acc;
+    }
+
+    const labelValue = item[labelKey];
+    const name =
+      typeof labelValue === "string" && labelValue.trim()
+        ? labelValue.trim()
+        : `${fallbackLabel} ${index + 1}`;
+    const value = Number(item.totalProjects || 0);
+
+    if (!Number.isFinite(value) || value <= 0) {
+      return acc;
+    }
+
+    acc.push({ name, value });
+    return acc;
+  }, []);
+}
+
 function ProjectRunningReportContent({ data }) {
-  const { data: projects = [], managers = [], types = [], technologies = [], metadata = {} } = data;
+  const projects = Array.isArray(data?.data) ? data.data : [];
+  const managers = Array.isArray(data?.managers) ? data.managers : [];
+  const types = Array.isArray(data?.types) ? data.types : [];
+  const technologies = Array.isArray(data?.technologies) ? data.technologies : [];
+  const metadata =
+    data?.metadata && typeof data.metadata === "object" ? data.metadata : {};
 
   // Prepare chart data
-  const managerChartData = managers.map(manager => ({
-    name: manager.managerName,
-    value: manager.totalProjects
-  }));
+  const managerChartData = buildRunningProjectChartData(
+    managers,
+    "managerName",
+    "Manager"
+  );
 
-  const typeChartData = types.map(type => ({
-    name: type.project_typeName,
-    value: type.totalProjects
-  }));
+  const typeChartData = buildRunningProjectChartData(
+    types,
+    "project_typeName",
+    "Type"
+  );
 
-  const techChartData = technologies.map(tech => ({
-    name: tech.technologyName,
-    value: tech.totalProjects
-  }));
+  const techChartData = buildRunningProjectChartData(
+    technologies,
+    "technologyName",
+    "Technology"
+  );
 
   // Table columns
   const columns = [
@@ -2189,7 +2268,7 @@ function ProjectRunningReportContent({ data }) {
       key: "technologyName",
       render: (techArray) => (
         <div>
-          {techArray?.map((tech, index) => (
+          {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
             <span key={index} className="tech-tag">
               {tech}
             </span>
@@ -2256,49 +2335,94 @@ function ProjectRunningReportContent({ data }) {
       <div className="charts-section">
         <div className="charts-grid">
           {managerChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--manager">
               <h3>Projects by Manager</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'pie' },
-                  labels: managerChartData.map(item => item.name),
-                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
-                }}
-                series={managerChartData.map(item => item.value)}
-                type="pie"
-                height={300}
-              />
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "pie" },
+                    legend: {
+                      position: "bottom",
+                      horizontalAlign: "center",
+                    },
+                    dataLabels: {
+                      enabled: true,
+                    },
+                    stroke: {
+                      width: 2,
+                      colors: ["#ffffff"],
+                    },
+                    labels: managerChartData.map((item) => String(item.name || "")),
+                    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"],
+                  }}
+                  series={managerChartData.map((item) => Number(item.value || 0))}
+                  type="pie"
+                  height={360}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
           
           {typeChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--type">
               <h3>Projects by Type</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'bar' },
-                  plotOptions: { bar: { horizontal: true } },
-                  xaxis: { categories: typeChartData.map(item => item.name) },
-                }}
-                series={[{ data: typeChartData.map(item => item.value) }]}
-                type="bar"
-                height={300}
-              />
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "bar" },
+                    legend: {
+                      show: false,
+                    },
+                    plotOptions: {
+                      bar: {
+                        horizontal: true,
+                        borderRadius: 6,
+                        barHeight: "52%",
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                    },
+                    xaxis: {
+                      categories: typeChartData.map((item) => String(item.name || "")),
+                    },
+                  }}
+                  series={[{ data: typeChartData.map((item) => Number(item.value || 0)) }]}
+                  type="bar"
+                  height={360}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
           
           {techChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--technology">
               <h3>Projects by Technology</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'bar' },
-                  xaxis: { categories: techChartData.map(item => item.name) },
-                }}
-                series={[{ data: techChartData.map(item => item.value) }]}
-                type="bar"
-                height={300}
-              />
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "bar" },
+                    legend: {
+                      show: false,
+                    },
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 6,
+                        columnWidth: "42%",
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                    },
+                    xaxis: {
+                      categories: techChartData.map((item) => String(item.name || "")),
+                    },
+                  }}
+                  series={[{ data: techChartData.map((item) => Number(item.value || 0)) }]}
+                  type="bar"
+                  height={340}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
         </div>
@@ -2315,7 +2439,16 @@ function ProjectRunningReportContent({ data }) {
           <Table
             columns={columns}
             dataSource={projects}
-            rowKey="_id"
+            rowKey={(record) =>
+              String(
+                record?._id ||
+                  record?.id ||
+                  record?.project_id ||
+                  record?.title ||
+                  record?.managerName ||
+                  "project-row"
+              )
+            }
             pagination={{
               showSizeChanger: true,
               showQuickJumper: true,

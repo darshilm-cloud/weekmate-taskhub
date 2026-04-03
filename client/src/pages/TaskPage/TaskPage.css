@@ -104,6 +104,27 @@
   border-radius: 12px;
 }
 
+.task-filter-panel-select-wrap {
+  margin-bottom: 8px;
+}
+
+.task-filter-panel-select.ant-select {
+  width: 100%;
+}
+
+.task-filter-panel-select .ant-select-selector {
+  min-height: 40px !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+}
+
+.task-filter-panel-select.ant-select-focused .ant-select-selector,
+.task-filter-panel-select:hover .ant-select-selector {
+  border-color: #94a3b8 !important;
+}
+
 .task-filter-select {
   min-width: 110px;
 }
@@ -203,6 +224,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 0;
+  margin-left: auto;
 }
 
 .task-view-all {
@@ -707,6 +729,7 @@ body[data-theme="dark"] .task-page {
 body.dark-theme .task-search.ant-input-affix-wrapper,
 body.dark-theme .task-filter-select .ant-select-selector,
 body.dark-theme .task-filter-project .ant-select-selector,
+body.dark-theme .task-filter-panel-select .ant-select-selector,
 body[data-theme="dark"] .task-search.ant-input-affix-wrapper,
 body[data-theme="dark"] .task-filter-select .ant-select-selector,
 body[data-theme="dark"] .task-filter-project .ant-select-selector {
@@ -723,13 +746,17 @@ body.dark-theme .task-filter-select:hover .ant-select-selector,
 body.dark-theme .task-filter-select.ant-select-focused .ant-select-selector,
 body.dark-theme .task-filter-project:hover .ant-select-selector,
 body.dark-theme .task-filter-project.ant-select-focused .ant-select-selector,
+body.dark-theme .task-filter-panel-select:hover .ant-select-selector,
+body.dark-theme .task-filter-panel-select.ant-select-focused .ant-select-selector,
 body[data-theme="dark"] .task-search.ant-input-affix-wrapper:hover,
 body[data-theme="dark"] .task-search.ant-input-affix-wrapper-focused,
 body[data-theme="dark"] .task-search.ant-input-affix-wrapper:focus-within,
 body[data-theme="dark"] .task-filter-select:hover .ant-select-selector,
 body[data-theme="dark"] .task-filter-select.ant-select-focused .ant-select-selector,
 body[data-theme="dark"] .task-filter-project:hover .ant-select-selector,
-body[data-theme="dark"] .task-filter-project.ant-select-focused .ant-select-selector {
+body[data-theme="dark"] .task-filter-project.ant-select-focused .ant-select-selector,
+body[data-theme="dark"] .task-filter-panel-select:hover .ant-select-selector,
+body[data-theme="dark"] .task-filter-panel-select.ant-select-focused .ant-select-selector {
   border-color: #4d7bd6 !important;
   box-shadow: 0 0 0 2px rgba(77, 123, 214, 0.14) !important;
 }
@@ -743,6 +770,9 @@ body.dark-theme .task-filter-project .ant-select-selection-item,
 body.dark-theme .task-filter-project .ant-select-selection-placeholder,
 body.dark-theme .task-filter-select .ant-select-arrow,
 body.dark-theme .task-filter-project .ant-select-arrow,
+body.dark-theme .task-filter-panel-select .ant-select-selection-item,
+body.dark-theme .task-filter-panel-select .ant-select-selection-placeholder,
+body.dark-theme .task-filter-panel-select .ant-select-arrow,
 body[data-theme="dark"] .task-search .ant-input,
 body[data-theme="dark"] .task-search input,
 body[data-theme="dark"] .task-search .ant-input::placeholder,
@@ -751,7 +781,10 @@ body[data-theme="dark"] .task-filter-select .ant-select-selection-placeholder,
 body[data-theme="dark"] .task-filter-project .ant-select-selection-item,
 body[data-theme="dark"] .task-filter-project .ant-select-selection-placeholder,
 body[data-theme="dark"] .task-filter-select .ant-select-arrow,
-body[data-theme="dark"] .task-filter-project .ant-select-arrow {
+body[data-theme="dark"] .task-filter-project .ant-select-arrow,
+body[data-theme="dark"] .task-filter-panel-select .ant-select-selection-item,
+body[data-theme="dark"] .task-filter-panel-select .ant-select-selection-placeholder,
+body[data-theme="dark"] .task-filter-panel-select .ant-select-arrow {
   color: #d5e4ff !important;
 }
 

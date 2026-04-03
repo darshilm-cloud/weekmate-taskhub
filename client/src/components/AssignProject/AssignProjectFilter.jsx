@@ -20,6 +20,42 @@ const FILTER_TYPES = {
   STATUS: "status",
 };
 
+const createDefaultSelectedFilters = () => ({
+  [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+  [FILTER_TYPES.MANAGER]: [],
+  [FILTER_TYPES.TECHNOLOGY]: [],
+  [FILTER_TYPES.PROJECT_TYPE]: [],
+  [FILTER_TYPES.ASSIGNEES]: [],
+  [FILTER_TYPES.STATUS]: [],
+});
+
+const normalizeSelectedFilters = (filters = {}) => ({
+  [FILTER_TYPES.ACCOUNT_MANAGER]: Array.isArray(filters[FILTER_TYPES.ACCOUNT_MANAGER]) ? [...filters[FILTER_TYPES.ACCOUNT_MANAGER]] : [],
+  [FILTER_TYPES.MANAGER]: Array.isArray(filters[FILTER_TYPES.MANAGER]) ? [...filters[FILTER_TYPES.MANAGER]] : [],
+  [FILTER_TYPES.TECHNOLOGY]: Array.isArray(filters[FILTER_TYPES.TECHNOLOGY]) ? [...filters[FILTER_TYPES.TECHNOLOGY]] : [],
+  [FILTER_TYPES.PROJECT_TYPE]: Array.isArray(filters[FILTER_TYPES.PROJECT_TYPE]) ? [...filters[FILTER_TYPES.PROJECT_TYPE]] : [],
+  [FILTER_TYPES.ASSIGNEES]: Array.isArray(filters[FILTER_TYPES.ASSIGNEES]) ? [...filters[FILTER_TYPES.ASSIGNEES]] : [],
+  [FILTER_TYPES.STATUS]: Array.isArray(filters[FILTER_TYPES.STATUS]) ? [...filters[FILTER_TYPES.STATUS]] : [],
+});
+
+const getSelectedItemsByIds = (items = [], ids = []) =>
+  items.filter((item) => ids.includes(item?._id));
+
+const buildAppliedFiltersPayload = (filters = {}, data = {}) => {
+  const normalized = normalizeSelectedFilters(filters);
+  const selectedTechnologyItems = getSelectedItemsByIds(
+    data[FILTER_TYPES.TECHNOLOGY],
+    normalized[FILTER_TYPES.TECHNOLOGY]
+  );
+
+  return {
+    ...normalized,
+    technology_labels: selectedTechnologyItems
+      .map((item) => item?.project_tech)
+      .filter(Boolean),
+  };
+};
+
 // API and pagination config
 const FILTER_CONFIG = {
   [FILTER_TYPES.ACCOUNT_MANAGER]: {
@@ -205,7 +241,7 @@ const FilterSection = ({
   </div>
 );
 
-const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
+const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: appliedFilters }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.STATUS);
   const [filterData, setFilterData] = useState({
@@ -216,14 +252,9 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.ASSIGNEES]: [],
     [FILTER_TYPES.STATUS]: [],
   });
-  const [selectedFilters, setSelectedFilters] = useState({
-    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
-    [FILTER_TYPES.MANAGER]: [],
-    [FILTER_TYPES.TECHNOLOGY]: [],
-    [FILTER_TYPES.PROJECT_TYPE]: [],
-    [FILTER_TYPES.ASSIGNEES]: [],
-    [FILTER_TYPES.STATUS]: [],
-  });
+  const [draftFilters, setDraftFilters] = useState(() =>
+    normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters())
+  );
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.ACCOUNT_MANAGER]: "",
     [FILTER_TYPES.MANAGER]: "",
@@ -285,12 +316,17 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.STATUS]: false,
   });
 
+  const canManageAdminOnlyFilters = useMemo(
+    () => (typeof getRoles === "function" ? Boolean(getRoles(["Admin"])) : false),
+    [getRoles]
+  );
+
   const activeFiltersCount = useMemo(() => {
-    return Object.values(selectedFilters).reduce(
+    return Object.values(draftFilters).reduce(
       (count, filters) => count + (filters.length > 0 ? 1 : 0),
       0
     );
-  }, [selectedFilters]);
+  }, [draftFilters]);
 
   const fetchFilterData = useCallback(
     async (filterType, page = 1, search = "", reset = false) => {
@@ -442,7 +478,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   );
 
   const handleFilterSelection = useCallback((item, filterType) => {
-    setSelectedFilters((prev) => {
+    setDraftFilters((prev) => {
       const current = prev[filterType];
       const updated = current.includes(item._id)
         ? current.filter((id) => id !== item._id)
@@ -452,21 +488,19 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   }, []);
 
   const resetFilter = useCallback((filterType) => {
-    setSelectedFilters((prev) => ({ ...prev, [filterType]: [] }));
-    onFilterChange(FILTER_CONFIG[filterType].skipParam);
-  }, []);
+    setDraftFilters((prev) => ({ ...prev, [filterType]: [] }));
+    onFilterChange([FILTER_CONFIG[filterType].skipParam]);
+  }, [onFilterChange]);
 
   const resetAllFilters = useCallback(() => {
-    setSelectedFilters({
-      [FILTER_TYPES.ACCOUNT_MANAGER]: [],
-      [FILTER_TYPES.MANAGER]: [],
-      [FILTER_TYPES.TECHNOLOGY]: [],
-      [FILTER_TYPES.PROJECT_TYPE]: [],
-      [FILTER_TYPES.ASSIGNEES]: [],
-    });
+    setDraftFilters(createDefaultSelectedFilters());
     onFilterChange(["skipAll"]);
     setIsPopoverOpen(false);
-  }, []);
+  }, [onFilterChange]);
+
+  useEffect(() => {
+    setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+  }, [appliedFilters]);
 
   useEffect(() => {
     if (
@@ -488,7 +522,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
   // Add this useEffect after your existing useEffects, around line 380
   useEffect(() => {
     if (activeFilter && initialLoadComplete[activeFilter]) {
-      const selectedIds = selectedFilters[activeFilter];
+      const selectedIds = draftFilters[activeFilter];
       if (selectedIds && selectedIds.length > 0) {
         setFilterData((prev) => {
           const items = [...prev[activeFilter]];
@@ -511,7 +545,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
         });
       }
     }
-  }, [activeFilter, initialLoadComplete, isPopoverOpen]);
+  }, [activeFilter, draftFilters, initialLoadComplete, isPopoverOpen]);
 
   useEffect(() => {
     return () => Object.values(debouncedSearch).forEach((fn) => fn.cancel());
@@ -523,13 +557,13 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
       !config ||
       ((activeFilter === FILTER_TYPES.ACCOUNT_MANAGER ||
         activeFilter === FILTER_TYPES.MANAGER) &&
-        !getRoles(["Admin"]))
+        !canManageAdminOnlyFilters)
     ) {
       return (
         <FilterSection
           config={FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY]}
           items={filterData[FILTER_TYPES.TECHNOLOGY]}
-          selectedItems={selectedFilters[FILTER_TYPES.TECHNOLOGY]}
+          selectedItems={draftFilters[FILTER_TYPES.TECHNOLOGY]}
           pagination={pagination[FILTER_TYPES.TECHNOLOGY]}
           searchTerm={searchTerms[FILTER_TYPES.TECHNOLOGY]}
           onSearch={(value) => handleSearch(FILTER_TYPES.TECHNOLOGY, value)}
@@ -538,7 +572,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
           }
           onLoadMore={() => handleLoadMore(FILTER_TYPES.TECHNOLOGY)}
           onApply={() => {
-            onFilterChange([], selectedFilters);
+            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
             setIsPopoverOpen(false);
           }}
           onReset={() => resetFilter(FILTER_TYPES.TECHNOLOGY)}
@@ -550,14 +584,14 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
       <FilterSection
         config={config}
         items={filterData[activeFilter]}
-        selectedItems={selectedFilters[activeFilter]}
+        selectedItems={draftFilters[activeFilter]}
         pagination={pagination[activeFilter]}
         searchTerm={searchTerms[activeFilter]}
         onSearch={(value) => handleSearch(activeFilter, value)}
         onSelect={(item) => handleFilterSelection(item, activeFilter)}
         onLoadMore={() => handleLoadMore(activeFilter)}
         onApply={() => {
-          onFilterChange([], selectedFilters);
+          onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
           setIsPopoverOpen(false);
         }}
         onReset={() => resetFilter(activeFilter)}
@@ -590,7 +624,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
                 <div
                   key={item.key}
                   onClick={() =>
-                    getRoles(["Admin"]) ||
+                    canManageAdminOnlyFilters ||
                     ![
                       FILTER_TYPES.ACCOUNT_MANAGER,
                       FILTER_TYPES.MANAGER,
@@ -603,7 +637,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
                   }`}
                 >
                   <span>{item.label}</span>
-                  {!isEmpty(selectedFilters[item.key]) && (
+                  {!isEmpty(draftFilters[item.key]) && (
                     <Badge size="small" color="#1890ff" />
                   )}
                 </div>
@@ -614,7 +648,12 @@ const AssignProjectFilter = ({ getRoles, onFilterChange }) => {
         }
         trigger="click"
         open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+          }
+          setIsPopoverOpen(open);
+        }}
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
