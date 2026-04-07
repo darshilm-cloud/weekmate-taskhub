@@ -124,35 +124,73 @@ const ProjectFormModal = ({
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [isSavingEmployee, setIsSavingEmployee] = useState(false);
   const [employeeModalType, setEmployeeModalType] = useState("project_manager");
+  const [editorRefreshKey, setEditorRefreshKey] = useState(0);
+
+  const getLookupCollections = (overrides = {}) => ({
+    technologyList: overrides.technologyList ?? technologyList,
+    projectTypeList: overrides.projectTypeList ?? projectTypeList,
+    projectStatusList: overrides.projectStatusList ?? projectStatusList,
+    workflow: overrides.workflow ?? workflow,
+    projectManagerList: overrides.projectManagerList ?? projectManagerList,
+    projectAssigneesList: overrides.projectAssigneesList ?? projectAssigneesList,
+    projectClientList: overrides.projectClientList ?? projectClientList,
+    accountManagerList: overrides.accountManagerList ?? accountManagerList,
+  });
 
   useEffect(() => {
     const fetchAllData = async () => {
+      setIsLoading(true);
       try {
-        // Only show loader / spinner when not pre-cached
-        if (!cacheReady) dispatch(showAuthLoader());
+        dispatch(showAuthLoader());
+        resetModalState();
 
-        if (!cacheReady) {
-          // Guard against duplicate in-flight fetches (e.g. StrictMode double mount)
-          if (!_fetchPromise) {
-            _fetchPromise = Promise.all([
-              getTechnologyList(),
-              getProjectType(),
-              getStatus(),
-              getProjectassignees(),
-              getProjectClients(),
-              getManager(),
-              getAccountManager(),
-              getWorkflow(),
-              getProjectTypeSlug(),
-            ]);
-          }
-          await _fetchPromise;
-          _fetchPromise = null;
+        if (selectedProject) {
+          hydrateProjectForm(selectedProject);
         }
 
-        // Fetch project details only for edit mode
+        const [
+          technologyListResult,
+          projectTypeListResult,
+          projectStatusListResult,
+          projectAssigneesListResult,
+          projectClientListResult,
+          projectManagerListResult,
+          accountManagerListResult,
+          workflowResult,
+        ] = await Promise.allSettled([
+          getTechnologyList(),
+          getProjectType(),
+          getStatus(),
+          getProjectassignees(),
+          getProjectClients(),
+          getManager(),
+          getAccountManager(),
+          getWorkflow(),
+          getProjectTypeSlug(),
+        ]);
+
+        const lookupOverrides = getLookupCollections({
+          technologyList:
+            technologyListResult.status === "fulfilled" ? technologyListResult.value : undefined,
+          projectTypeList:
+            projectTypeListResult.status === "fulfilled" ? projectTypeListResult.value : undefined,
+          projectStatusList:
+            projectStatusListResult.status === "fulfilled" ? projectStatusListResult.value : undefined,
+          projectAssigneesList:
+            projectAssigneesListResult.status === "fulfilled" ? projectAssigneesListResult.value : undefined,
+          projectClientList:
+            projectClientListResult.status === "fulfilled" ? projectClientListResult.value : undefined,
+          projectManagerList:
+            projectManagerListResult.status === "fulfilled" ? projectManagerListResult.value : undefined,
+          accountManagerList:
+            accountManagerListResult.status === "fulfilled" ? accountManagerListResult.value : undefined,
+          workflow:
+            workflowResult.status === "fulfilled" ? workflowResult.value : undefined,
+        });
+
+        // Fetch project details after dropdown lists are loaded so field labels resolve correctly.
         if (selectedProject) {
-          await fetchProjectDetails(selectedProject._id);
+          await fetchProjectDetails(selectedProject._id, lookupOverrides);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -165,8 +203,423 @@ const ProjectFormModal = ({
   }, [selectedProject]);
 
 
-  const fetchProjectDetails = async (id) => {
+  const resetModalState = () => {
+    form.resetFields();
+    setSelectedItems([]);
+    setSelectedClient([]);
+    setNewFilteredAssignees([]);
+    setNewFilteredClients([]);
+    setEditorData("");
+    setProjectTech([]);
+    setProjectTypeselect("");
+    setIsBillable(false);
+    setNoEndDate(false);
+    setEditorRefreshKey((prev) => prev + 1);
+  };
+
+  const getEntityId = (value) => {
+    if (!value) return undefined;
+    if (typeof value === "string") return value;
+    if (typeof value === "object") {
+      return value?._id || value?.id || value?.value;
+    }
+    return undefined;
+  };
+
+  const getNormalizedText = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  const resolveSingleSelectValue = (rawValue, options = [], nameKeys = []) => {
+    if (!rawValue) return undefined;
+
+    const directId = getEntityId(rawValue);
+    if (directId && options.some((item) => item?._id === directId)) {
+      return directId;
+    }
+
+    const candidateTexts = [
+      rawValue,
+      rawValue?.title,
+      rawValue?.name,
+      rawValue?.label,
+      rawValue?.full_name,
+      rawValue?.manager_name,
+      rawValue?.project_type,
+      rawValue?.project_workflow,
+      rawValue?.project_tech,
+      rawValue?.department_name,
+      rawValue?.sub_department_name,
+      rawValue?.technology_name,
+    ]
+      .map(getNormalizedText)
+      .filter(Boolean);
+
+    const matchedOption = options.find((item) =>
+      nameKeys.some((key) => candidateTexts.includes(getNormalizedText(item?.[key])))
+    );
+
+    return matchedOption?._id || directId;
+  };
+
+  const resolveMultiSelectValues = (rawValues, options = [], nameKeys = []) => {
+    if (!Array.isArray(rawValues)) return [];
+
+    return rawValues
+      .map((value) => resolveSingleSelectValue(value, options, nameKeys))
+      .filter(Boolean);
+  };
+
+  const resolveEntityList = (rawValues, options = [], nameKeys = []) => {
+    if (!Array.isArray(rawValues)) return [];
+
+    return rawValues
+      .map((value) => {
+        const resolvedId = resolveSingleSelectValue(value, options, nameKeys);
+        return (
+          options.find((item) => item?._id === resolvedId) ||
+          (typeof value === "object" ? value : null)
+        );
+      })
+      .filter(Boolean);
+  };
+
+  const mergeUniqueById = (prev = [], next = []) => {
+    const merged = [...prev];
+    next.forEach((item) => {
+      const itemId = item?._id;
+      if (!itemId) return;
+      if (!merged.some((existing) => existing?._id === itemId)) {
+        merged.push(item);
+      }
+    });
+    return merged;
+  };
+
+  const normalizeTechnologyOption = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      return { _id: value, project_tech: value };
+    }
+    if (Array.isArray(value)) {
+      return null;
+    }
+    return {
+      ...value,
+      _id: value?._id || value?.id || value?.value,
+      project_tech:
+        value?.project_tech ||
+        value?.department_name ||
+        value?.sub_department_name ||
+        value?.technology_name ||
+        value?.title ||
+        value?.name ||
+        "",
+    };
+  };
+
+  const extractTechnologyCandidates = (value, acc = []) => {
+    if (!value) return acc;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => extractTechnologyCandidates(item, acc));
+      return acc;
+    }
+
+    if (typeof value === "string") {
+      const text = value.trim();
+      if (text) acc.push({ _id: text, project_tech: text });
+      return acc;
+    }
+
+    if (typeof value === "object") {
+      const directOption = normalizeTechnologyOption(value);
+      if (directOption?._id || directOption?.project_tech) {
+        acc.push({
+          _id: directOption?._id || directOption?.project_tech,
+          project_tech: directOption?.project_tech || directOption?._id,
+        });
+      }
+
+      [
+        value?.technology,
+        value?.department,
+        value?.departments,
+        value?.projectDepartment,
+        value?.project_department,
+        value?.project_tech,
+        value?.department_name,
+        value?.sub_department_name,
+        value?.technology_name,
+        value?.name,
+        value?.title,
+        value?.label,
+      ].forEach((nested) => extractTechnologyCandidates(nested, acc));
+    }
+
+    return acc;
+  };
+
+  const normalizeProjectTypeOption = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      return { _id: value, project_type: value };
+    }
+    return {
+      ...value,
+      _id: value?._id || value?.id || value?.value,
+      project_type: value?.project_type || value?.title || value?.name || "",
+    };
+  };
+
+  const normalizeWorkflowOption = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      return { _id: value, project_workflow: value };
+    }
+    return {
+      ...value,
+      _id: value?._id || value?.id || value?.value,
+      project_workflow:
+        value?.project_workflow || value?.title || value?.name || value?.workflow || "",
+    };
+  };
+
+  const normalizeAccountManagerOption = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      return { _id: value, full_name: value };
+    }
+    return {
+      ...value,
+      _id: value?._id || value?.id || value?.value,
+      full_name: value?.full_name || value?.manager_name || value?.name || "",
+    };
+  };
+
+  const normalizeClientOption = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") {
+      return { _id: value, company_name: value };
+    }
+    return {
+      ...value,
+      _id: value?._id || value?.id || value?.value,
+      company_name:
+        value?.company_name || value?.client_name || value?.full_name || value?.name || "",
+    };
+  };
+
+  const hydrateProjectForm = (projectData = {}, lookupOverrides = {}) => {
+    if (!projectData || typeof projectData !== "object") return;
+
+    const {
+      technologyList: availableTechnologyList,
+      projectTypeList: availableProjectTypeList,
+      projectStatusList: availableProjectStatusList,
+      workflow: availableWorkflow,
+      projectManagerList: availableProjectManagerList,
+      projectAssigneesList: availableProjectAssigneesList,
+      projectClientList: availableProjectClientList,
+      accountManagerList: availableAccountManagerList,
+    } = getLookupCollections(lookupOverrides);
+
+    const rawDescription =
+      projectData?.descriptions ??
+      projectData?.description ??
+      projectData?.project_description ??
+      "";
+    const rawTechnology =
+      projectData?.technology ??
+      projectData?.department ??
+      projectData?.departments ??
+      projectData?.projectDepartment ??
+      projectData?.project_department ??
+      projectData?.project_tech ??
+      [];
+    const rawProjectType =
+      projectData?.project_type ??
+      projectData?.projectType ??
+      projectData?.type ??
+      projectData?.projectTypeId;
+    const rawWorkflow =
+      projectData?.workFlow ??
+      projectData?.workflow ??
+      projectData?.work_flow ??
+      projectData?.workflow_id ??
+      projectData?.work_flow_id;
+    const rawAccountManager =
+      projectData?.acc_manager ??
+      projectData?.account_manager ??
+      projectData?.accManager ??
+      projectData?.accountManager ??
+      projectData?.acc_manager_id;
+    const rawClients =
+      projectData?.pms_clients ??
+      projectData?.clients ??
+      projectData?.client ??
+      projectData?.client_name ??
+      [];
+    const rawRecurringType =
+      projectData?.recurringType ??
+      projectData?.recurring_type ??
+      projectData?.recurring ??
+      projectData?.billing_cycle ??
+      null;
+    const rawBillable =
+      projectData?.isBillable ??
+      projectData?.is_billable ??
+      projectData?.billable ??
+      projectData?.need_to_bill_customer ??
+      false;
+
+    const normalizedTechnologyOptions = extractTechnologyCandidates(projectData?.technology || []);
+    const normalizedFallbackTechnologyOptions = extractTechnologyCandidates(rawTechnology);
+    const normalizedProjectTypeOption = normalizeProjectTypeOption(rawProjectType);
+    const normalizedWorkflowOption = normalizeWorkflowOption(rawWorkflow);
+    const normalizedAccountManagerOption = normalizeAccountManagerOption(rawAccountManager);
+    const normalizedClientOptions = (Array.isArray(rawClients) ? rawClients : [rawClients])
+      .map(normalizeClientOption)
+      .filter(Boolean);
+    const allTechnologyOptions = mergeUniqueById(
+      normalizedTechnologyOptions,
+      normalizedFallbackTechnologyOptions
+    );
+
+    if (allTechnologyOptions.length > 0) {
+      setTechnologyList((prev) => mergeUniqueById(prev, allTechnologyOptions));
+    }
+    if (normalizedProjectTypeOption?._id) {
+      setProjectTypeList((prev) => mergeUniqueById(prev, [normalizedProjectTypeOption]));
+    }
+    if (normalizedWorkflowOption?._id) {
+      setWorkflow((prev) => mergeUniqueById(prev, [normalizedWorkflowOption]));
+    }
+    if (normalizedAccountManagerOption?._id) {
+      setAccountManagerList((prev) => mergeUniqueById(prev, [normalizedAccountManagerOption]));
+    }
+    if (normalizedClientOptions.length > 0) {
+      setProjectClientList((prev) => mergeUniqueById(prev, normalizedClientOptions));
+    }
+
+    const assignees = resolveEntityList(
+      projectData?.assignees || [],
+      availableProjectAssigneesList,
+      ["full_name", "name", "username"]
+    );
+    const clients = resolveEntityList(
+      Array.isArray(rawClients) ? rawClients : [rawClients],
+      mergeUniqueById(availableProjectClientList, normalizedClientOptions),
+      ["full_name", "company_name", "client_name", "name"]
+    );
+    const technologyIds = resolveMultiSelectValues(
+      Array.isArray(rawTechnology) ? rawTechnology : [rawTechnology],
+      mergeUniqueById(availableTechnologyList, allTechnologyOptions),
+      ["project_tech", "department_name", "sub_department_name", "technology_name", "title", "name"]
+    );
+    if (technologyIds.length === 0 && rawTechnology) {
+      console.debug("ProjectFormModal department debug", {
+        projectId: projectData?._id,
+        rawTechnology,
+        availableTechnologyList,
+        allTechnologyOptions,
+      });
+    }
+    const hasNoEndDate = !projectData?.end_date;
+    const projectTypeId = resolveSingleSelectValue(
+      rawProjectType,
+      mergeUniqueById(
+        availableProjectTypeList,
+        normalizedProjectTypeOption ? [normalizedProjectTypeOption] : []
+      ),
+      ["project_type", "title", "name"]
+    );
+    const workflowId =
+      resolveSingleSelectValue(
+        rawWorkflow,
+        mergeUniqueById(availableWorkflow, normalizedWorkflowOption ? [normalizedWorkflowOption] : []),
+        ["project_workflow", "title", "name"]
+      ) || availableWorkflow.find((item) => item?.isDefault)?._id;
+    const managerId = resolveSingleSelectValue(
+      projectData?.manager,
+      availableProjectManagerList,
+      ["manager_name", "full_name", "name"]
+    );
+    const accountManagerId = resolveSingleSelectValue(
+      rawAccountManager,
+      mergeUniqueById(
+        availableAccountManagerList,
+        normalizedAccountManagerOption ? [normalizedAccountManagerOption] : []
+      ),
+      ["full_name", "manager_name", "name"]
+    );
+    const projectStatusId = resolveSingleSelectValue(
+      projectData?.project_status,
+      availableProjectStatusList,
+      ["title", "name", "status"]
+    );
+    const estimatedHours =
+      projectData?.estimatedHours ??
+      projectData?.estimated_hours ??
+      projectData?.estimate_hours ??
+      projectData?.estimatedHour ??
+      projectData?.estimated_time ??
+      projectData?.total_estimated_hours ??
+      "";
+
+    setSelectedItems(assignees);
+    setSelectedClient(clients);
+    setNewFilteredAssignees(assignees);
+    setNewFilteredClients(clients);
+    setEditorData(rawDescription || "");
+    setEditorRefreshKey((prev) => prev + 1);
+    setIsBillable(Boolean(rawBillable));
+    setProjectTech(technologyIds);
+    setProjectTypeselect(projectTypeId || "");
+    setNoEndDate(hasNoEndDate);
+
+    form.setFieldsValue({
+      title: projectData?.title?.trim?.() || "",
+      technology: technologyIds,
+      project_type: projectTypeId,
+      descriptions: removeHTMLTags(rawDescription || ""),
+      workFlow: workflowId,
+      manager: managerId,
+      acc_manager: accountManagerId,
+      estimatedHours: estimatedHours,
+      project_status: projectStatusId,
+      start_date: projectData?.start_date ? dayjs(projectData.start_date) : null,
+      end_date: hasNoEndDate ? null : dayjs(projectData.end_date),
+      isBillable: Boolean(rawBillable),
+      recurringType:
+        typeof rawRecurringType === "boolean"
+          ? rawRecurringType
+            ? "monthly"
+            : null
+          : rawRecurringType,
+      assignees: assignees.map((item) => item?._id).filter(Boolean),
+      client: clients.map((item) => item?._id).filter(Boolean),
+    });
+  };
+
+  const fetchProjectDetails = async (id, lookupOverrides = {}) => {
     try {
+      const overviewResponse = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getOverview}/${id}`,
+      });
+
+      if (overviewResponse?.data?.statusCode === 401) {
+        window.location.href = `${process.env.REACT_APP_URL}unauthorised`;
+      }
+
+      const overviewProjectDetails = overviewResponse?.data?.data;
+      if (overviewProjectDetails) {
+        hydrateProjectForm(overviewProjectDetails, lookupOverrides);
+        return;
+      }
+
       let Key = generateCacheKey("project", { _id: id });
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -186,6 +639,7 @@ const ProjectFormModal = ({
         setEditorData(p?.descriptions || "");
         setIsBillable(p?.isBillable || false);
         const technologyIds = p?.technology?.map((item) => item?._id) || [];
+        setProjectTech(technologyIds);
         setProjectTypeselect(p?.project_type?._id || "");
         if (!p?.end_date) setNoEndDate(true);
         form.setFieldsValue({
@@ -244,11 +698,9 @@ const ProjectFormModal = ({
         methodName: Service.postMethod,
         api_url: Service.getProjectListing,
       });
-      if (response?.data?.data) {
-        _dropdownCache.projectTypeList = response.data.data;
-        setProjectTypeList(response.data.data);
-      }
+      if (response?.data?.data) setProjectTypeList(response.data.data);
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const getProjectTypeSlug = async () => {
@@ -352,11 +804,9 @@ const ProjectFormModal = ({
         api_url: Service.getProjectStatus,
         body: { isDropdown: true },
       });
-      if (response?.data?.data) {
-        _dropdownCache.projectStatusList = response.data.data;
-        setProjectStatusList(response.data.data);
-      }
+      if (response?.data?.data) setProjectStatusList(response.data.data);
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const getWorkflow = async () => {
@@ -371,12 +821,12 @@ const ProjectFormModal = ({
         body: { isDropdown: "true" },
       });
       if (response?.data?.data && response?.data?.status) {
-        _dropdownCache.workflow = response.data.data;
         setWorkflow(response.data.data);
       } else {
         message.error(response?.data?.message);
       }
     } catch (error) { console.error(error); }
+    return [];
   };
 
   const handleSearch = (searchValue) => setSearchKeyword(searchValue);
@@ -744,657 +1194,634 @@ const ProjectFormModal = ({
           </button>
         </div>
 
-        {isLoading ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "350px", flexDirection: "column", gap: "10px" }}>
-            <Spin size="large" />
-            <div style={{ color: "#6b7a90", fontSize: "14px", fontWeight: "600", marginTop: "12px" }}>Loading details...</div>
-          </div>
-        ) : (
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={(values) =>
-              isEdit
-                ? editProjectdetails(selectedProject?._id, values)
-                : addProjectDetails(values)
-            }
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={(values) =>
+          isEdit
+            ? editProjectdetails(selectedProject?._id, values)
+            : addProjectDetails(values)
+        }
+      >
+        {/* Project Title */}
+        <div className="pfm-field-row">
+          <FolderOutlined className="pfm-icon" />
+          <Form.Item
+            name="title"
+            className="pfm-form-item"
+            rules={[
+              { required: true, whitespace: true, message: "Please enter a valid title" },
+              () => ({
+                validator(_, value) {
+                  const trimmedValue = (value || "").trim();
+                  if (!trimmedValue) return Promise.resolve();
+
+                  if (generatePattern().test(trimmedValue)) {
+                    return Promise.resolve();
+                  }
+
+                  return Promise.reject(
+                    new Error(`Title must be in the format ${getTitleFormatExample()}`)
+                  );
+                },
+              }),
+            ]}
           >
-          {/* ── Project Title ── */}
-          <div className="pfm-field-row">
-            <FolderOutlined className="pfm-icon" />
             <div className="pfm-input-group">
               <div className="pfm-field-label pfm-field-label--required">Project Title</div>
-              {/* FIX: Form.Item directly wraps Input, not a div */}
-              <Form.Item
-                name="title"
-                className="pfm-form-item"
-                rules={[
-                  { required: true, whitespace: true, message: "Project title is required" },
-                  { min: 5, message: "Title must be at least 5 characters" },
-                  { max: 100, message: "Title cannot exceed 100 characters" },
-                  {
-                    pattern: /^[A-Z]{2}\d+\/[A-Z]{2,10}\/[^/]+$/,
-                    message: "Format must be like AB1234/TM/ProjectName",
-                  },
-                ]}
-              >
-                <Input
-                  placeholder="AB1234/TM/ABC"
-                  className="pfm-input"
-                  bordered={false}
-                />
-              </Form.Item>
+              <Input
+                placeholder={getTitleFormatExample()}
+                className="pfm-input"
+                bordered={false}
+              />
             </div>
-          </div>
-          <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-          {/* ── Description ── */}
-          <div className="pfm-field-row pfm-field-row--top">
-            <MessageOutlined className="pfm-icon" />
+        {/* Description */}
+        <div className="pfm-field-row pfm-field-row--top">
+          <MessageOutlined className="pfm-icon" />
+          <Form.Item name="descriptions" className="pfm-form-item">
             <div className="pfm-input-group">
               <div className="pfm-field-label">Description</div>
               {/* Description is NOT form-controlled — CKEditor manages its own state */}
               <div className="pfm-editor-wrapper">
-                <CKEditor
-                  editor={Custombuild}
-                  data={editorData}
-                  onChange={handleChange}
-                  onPaste={handlePaste}
-                  config={{
-                    toolbar: [
-                      "bold", "italic", "underline", "|",
-                      "fontColor", "fontBackgroundColor", "|", "link", "|",
-                      "numberedList", "bulletedList", "|",
-                      "alignment:left", "alignment:center", "alignment:right", "|",
-                      "fontSize", "|", "print",
-                    ],
-                    fontSize: { options: ["default", ...Array.from({ length: 32 }, (_, i) => i + 1)] },
-                    print: {},
-                  }}
-                />
+              <CKEditor
+                editor={Custombuild}
+                data={editorData}
+                onChange={handleChange}
+                onPaste={handlePaste}
+                config={{
+                  toolbar: [
+                    "bold", "italic", "underline", "|",
+                    "fontColor", "fontBackgroundColor", "|", "link", "|",
+                    "numberedList", "bulletedList", "|",
+                    "alignment:left", "alignment:center", "alignment:right", "|",
+                    "fontSize", "|", "print",
+                  ],
+                  fontSize: { options: ["default", ...Array.from({ length: 32 }, (_, i) => i + 1)] },
+                  print: {},
+                }}
+              />
               </div>
             </div>
           </div>
           <div className="pfm-divider" />
 
-          {/* ── Dates ── */}
-          <div className="pfm-dates-row">
-            <div className="pfm-date-col">
-              <CalendarOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label pfm-field-label--required">Start Date</div>
-                {/* FIX: Form.Item directly wraps DatePicker */}
-                <Form.Item
-                  name="start_date"
-                  className="pfm-form-item"
-                  rules={[{ required: true, message: "Please select a start date" }]}
-                >
-                  <DatePicker
-                    placeholder="Select start date"
-                    className="pfm-datepicker"
-                    bordered={false}
-                    format="DD/MM/YYYY"
-                    onChange={() => form.setFieldValue("end_date", null)}
-                  />
-                </Form.Item>
-              </div>
-            </div>
-            <div className="pfm-date-divider" />
-            <div className="pfm-date-col">
-              <CalendarOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label pfm-field-label--required">End Date</div>
-                {/* FIX: Form.Item directly wraps DatePicker */}
-                <Form.Item
-                  name="end_date"
-                  className="pfm-form-item"
-                  rules={
-                    noEndDate
-                      ? []
-                      : [
-                          { required: true, message: "Please select an end date" },
-                          ({ getFieldValue }) => ({
-                            validator(_, value) {
-                              if (!value || getFieldValue("start_date") < value)
-                                return Promise.resolve();
-                              return Promise.reject(new Error("End date must be later than start date"));
-                            },
-                          }),
-                        ]
-                  }
-                >
-                  <DatePicker
-                    placeholder="Select end date"
-                    className="pfm-datepicker"
-                    bordered={false}
-                    format="DD/MM/YYYY"
-                    disabled={noEndDate}
-                    disabledDate={(v) => v < form.getFieldValue("start_date")}
-                  />
-                </Form.Item>
-              </div>
-            </div>
-          </div>
-          <div className="pfm-no-end-date-row">
-            <Checkbox
-              checked={noEndDate}
-              onChange={(e) => {
-                setNoEndDate(e.target.checked);
-                if (e.target.checked) form.setFieldValue("end_date", null);
-              }}
+        {/* Dates */}
+        <div className="pfm-dates-row">
+          <div className="pfm-date-col">
+            <CalendarOutlined className="pfm-icon" />
+            <Form.Item
+              name="start_date"
+              className="pfm-form-item"
+              rules={[{ required: true, message: "Please select a start date" }]}
             >
-              No End Date
-            </Checkbox>
+              <div className="pfm-input-group">
+                <div className="pfm-field-label">Start Date</div>
+                <DatePicker
+                  placeholder="Select start date"
+                  className="pfm-datepicker"
+                  bordered={false}
+                  format="DD/MM/YYYY"
+                  onChange={() => form.setFieldValue("end_date", "")}
+                />
+              </div>
+            </Form.Item>
           </div>
-          <div className="pfm-divider" />
+          <div className="pfm-date-divider" />
+          <div className="pfm-date-col">
+            <CalendarOutlined className="pfm-icon" />
+            <Form.Item
+              name="end_date"
+              className="pfm-form-item"
+              rules={
+                noEndDate
+                  ? []
+                  : [
+                      { required: true, message: "Please select an end date" },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue("start_date") < value)
+                            return Promise.resolve();
+                          return Promise.reject(new Error("End date must be later than start date"));
+                        },
+                      }),
+                    ]
+              }
+            >
+              <div className="pfm-input-group">
+                <div className="pfm-field-label">End Date</div>
+                <DatePicker
+                  placeholder="Select end date"
+                  className="pfm-datepicker"
+                  bordered={false}
+                  format="DD/MM/YYYY"
+                  disabled={noEndDate}
+                  disabledDate={(v) => v < form.getFieldValue("start_date")}
+                />
+              </div>
+            </Form.Item>
+          </div>
+        </div>
+        <div className="pfm-no-end-date-row">
+          <Checkbox
+            checked={noEndDate}
+            onChange={(e) => {
+              setNoEndDate(e.target.checked);
+              if (e.target.checked) form.setFieldValue("end_date", null);
+            }}
+          >
+            No End Date
+          </Checkbox>
+        </div>
+        <div className="pfm-divider" />
 
           {/* ── 2-col grid ── */}
           <div className="pfm-fields-grid">
 
-            {/* Department (Technology) */}
-            <div className="pfm-field-row">
-              <AppstoreOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label-row">
-                  <div className="pfm-field-label pfm-field-label--required">Department</div>
-                  <button type="button" className="pfm-add-new-btn" onClick={openAddDepartmentModal}>
-                    <PlusOutlined /> Add New
-                  </button>
-                </div>
-                {/* FIX: Form.Item directly wraps Select. Removed value={projectTech} — Form controls it */}
-                <Form.Item
-                  name="technology"
-                  className="pfm-form-item"
-                  rules={[{ required: true, message: "Please select a department" }]}
+        {/* Department (Technology) */}
+        <div className="pfm-field-row">
+          <AppstoreOutlined className="pfm-icon" />
+          <Form.Item
+            name="technology"
+            className="pfm-form-item"
+            rules={[{ required: true, message: "Please select a department" }]}
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label-row">
+                <div className="pfm-field-label">Department</div>
+                <button type="button" className="pfm-add-new-btn" onClick={openAddDepartmentModal}>
+                  <PlusOutlined /> Add New
+                </button>
+              </div>
+              <Select
+                mode="multiple"
+                placeholder="Select department"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
+                }
+                onChange={handleProjectTech}
+                value={projectTech}
+              >
+                {technologyList.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {item.project_tech}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
+
+        {/* Project Type */}
+        <div className="pfm-field-row">
+          <TagOutlined className="pfm-icon" />
+          <Form.Item
+            name="project_type"
+            className="pfm-form-item"
+            rules={[{ required: true, message: "Please select a project type" }]}
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Project Type</div>
+              <Select
+                placeholder="Select project type"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
+                }
+                onChange={(value) => setProjectTypeselect(value)}
+              >
+                {projectTypeList.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {item.project_type}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
+
+        {/* Client */}
+        <div className="pfm-field-row">
+          <UserOutlined className="pfm-icon" />
+          <Form.Item name="client" className="pfm-form-item">
+            <div className="pfm-input-group">
+              <div className="pfm-field-label-row">
+                <div className="pfm-field-label">Client Name</div>
+                <button type="button" className="pfm-add-new-btn" onClick={openAddClientModal}>
+                  <PlusOutlined /> Add New
+                </button>
+              </div>
+              <div className="pfm-multiselect-wrapper">
+                <MultiSelect
+                  onSearch={handleSearch}
+                  onChange={handleClients}
+                  values={selectedClient?.map((item) => item._id)}
+                  listData={projectClientList}
+                  search={searchKeyword}
+                  placeholder="Select client"
+                />
+              </div>
+            </div>
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
+
+        {/* Assignees */}
+        <div className="pfm-field-row">
+          <UsergroupAddOutlined className="pfm-icon" />
+          <Form.Item name="assignees" className="pfm-form-item">
+            <div className="pfm-input-group">
+              <div className="pfm-field-label-row">
+                <div className="pfm-field-label">Assignee / Team Group</div>
+                <button
+                  type="button"
+                  className="pfm-add-new-btn"
+                  onClick={() => openAddEmployeeModal("assignee")}
                 >
-                  <Select
-                    mode="multiple"
-                    placeholder="Select department"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                    filterOption={(input, option) =>
-                      option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
-                    }
-                  >
-                    {technologyList.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {item.project_tech}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                  <PlusOutlined /> Add New
+                </button>
+              </div>
+              <div className="pfm-multiselect-wrapper">
+                <MultiSelect
+                  onSearch={handleSearch}
+                  onChange={handleSelectedItemsChange}
+                  values={selectedItems?.map((item) => item._id)}
+                  listData={projectAssigneesList}
+                  search={searchKeyword}
+                  placeholder="Select assignees"
+                />
               </div>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Project Type */}
-            <div className="pfm-field-row">
-              <TagOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label pfm-field-label--required">Project Type</div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item
-                  name="project_type"
-                  className="pfm-form-item"
-                  rules={[{ required: true, message: "Please select a project type" }]}
+        {/* Project Manager */}
+        <div className="pfm-field-row">
+          <UserOutlined className="pfm-icon" />
+          <Form.Item
+            name="manager"
+            className="pfm-form-item"
+            rules={[{ required: true, message: "Please select a project manager" }]}
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label-row">
+                <div className="pfm-field-label">Project Manager</div>
+                <button
+                  type="button"
+                  className="pfm-add-new-btn"
+                  onClick={() => openAddEmployeeModal("project_manager")}
                 >
-                  <Select
-                    placeholder="Select project type"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                    filterOption={(input, option) =>
-                      option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
-                    }
-                    onChange={(value) => setProjectTypeselect(value)}
-                  >
-                    {projectTypeList.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {item.project_type}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                  <PlusOutlined /> Add New
+                </button>
               </div>
+              <Select
+                placeholder="Select project manager"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
+                }
+              >
+                {projectManagerList.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {removeTitle(item.manager_name)}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Client */}
-            <div className="pfm-field-row">
-              <UserOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label-row">
-                  <div className="pfm-field-label">Client Name</div>
-                  <button type="button" className="pfm-add-new-btn" onClick={openAddClientModal}>
-                    <PlusOutlined /> Add New
-                  </button>
-                </div>
-                {/* Client uses MultiSelect (uncontrolled by Form) — no required rule needed */}
-                <div className="pfm-multiselect-wrapper">
-                  <MultiSelect
-                    onSearch={handleSearch}
-                    onChange={handleClients}
-                    values={selectedClient?.map((item) => item._id)}
-                    listData={projectClientList}
-                    search={searchKeyword}
-                    placeholder="Select client"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="pfm-divider" />
-
-            {/* Assignees */}
-            <div className="pfm-field-row">
-              <UsergroupAddOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label-row">
-                  <div className="pfm-field-label">Assignee / Team Group</div>
-                  <button
-                    type="button"
-                    className="pfm-add-new-btn"
-                    onClick={() => openAddEmployeeModal("assignee")}
-                  >
-                    <PlusOutlined /> Add New
-                  </button>
-                </div>
-                <div className="pfm-multiselect-wrapper">
-                  <MultiSelect
-                    onSearch={handleSearch}
-                    onChange={handleSelectedItemsChange}
-                    values={selectedItems?.map((item) => item._id)}
-                    listData={projectAssigneesList}
-                    search={searchKeyword}
-                    placeholder="Select assignees"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="pfm-divider" />
-
-            {/* Project Manager */}
-            <div className="pfm-field-row">
-              <UserOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label-row">
-                  <div className="pfm-field-label pfm-field-label--required">Project Manager</div>
-                  <button
-                    type="button"
-                    className="pfm-add-new-btn"
-                    onClick={() => openAddEmployeeModal("project_manager")}
-                  >
-                    <PlusOutlined /> Add New
-                  </button>
-                </div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item
-                  name="manager"
-                  className="pfm-form-item"
-                  rules={[{ required: true, message: "Please select a project manager" }]}
+        {/* Account Manager */}
+        <div className="pfm-field-row">
+          <UserOutlined className="pfm-icon" />
+          <Form.Item
+            name="acc_manager"
+            className="pfm-form-item"
+            rules={
+              projectTypeselect === "65b9e9e70f085dbd9bb12797"
+                ? []
+                : [{ required: true, message: "This field is required!" }]
+            }
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label-row">
+                <div className="pfm-field-label">Account Manager</div>
+                <button
+                  type="button"
+                  className="pfm-add-new-btn"
+                  onClick={() => openAddEmployeeModal("account_manager")}
                 >
-                  <Select
-                    placeholder="Select project manager"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                    filterOption={(input, option) =>
-                      option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
-                    }
-                  >
-                    {projectManagerList.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {removeTitle(item.manager_name)}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                  <PlusOutlined /> Add New
+                </button>
               </div>
+              <Select
+                placeholder="Select account manager"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
+                }
+              >
+                {accountManagerList.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {removeTitle(item.full_name)}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Account Manager */}
-            <div className="pfm-field-row">
-              <UserOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label-row">
-                  {/* FIX: Account Manager required only when project type is selected and is NOT the hardcoded in-house ID */}
-                  <div className={`pfm-field-label${!projectTypeselect || projectTypeselect === "65b9e9e70f085dbd9bb12797" ? "" : " pfm-field-label--required"}`}>
-                    Account Manager
-                  </div>
-                  <button
-                    type="button"
-                    className="pfm-add-new-btn"
-                    onClick={() => openAddEmployeeModal("account_manager")}
-                  >
-                    <PlusOutlined /> Add New
-                  </button>
-                </div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item
-                  name="acc_manager"
-                  className="pfm-form-item"
-                  rules={
-                    !projectTypeselect || projectTypeselect === "65b9e9e70f085dbd9bb12797"
-                      ? []
-                      : [{ required: true, message: "This field is required!" }]
-                  }
-                >
-                  <Select
-                    placeholder="Select account manager"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                    filterOption={(input, option) =>
-                      option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
-                    }
-                  >
-                    {accountManagerList.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {removeTitle(item.full_name)}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </div>
+        {/* Workflow */}
+        <div className="pfm-field-row">
+          <ApartmentOutlined className="pfm-icon" />
+          <Form.Item
+            name="workFlow"
+            className="pfm-form-item"
+            initialValue={workflow.find((w) => w.isDefault)?._id}
+            rules={[{ required: true, message: "Please select a workflow" }]}
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Associate Workflow</div>
+              <Select
+                placeholder="Select workflow"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+                onDropdownVisibleChange={(open) => open && getWorkflow()}
+              >
+                {workflow.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {item.project_workflow}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Workflow */}
-            <div className="pfm-field-row">
-              <ApartmentOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label pfm-field-label--required">Associate Workflow</div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item
-                  name="workFlow"
-                  className="pfm-form-item"
-                  rules={[{ required: true, message: "Please select a workflow" }]}
-                >
-                  <Select
-                    placeholder="Select workflow"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                    onDropdownVisibleChange={(open) => open && getWorkflow()}
-                  >
-                    {workflow.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {item.project_workflow}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </div>
+        {/* Status */}
+        <div className="pfm-field-row">
+          <CheckCircleOutlined className="pfm-icon" />
+          <Form.Item name="project_status" className="pfm-form-item">
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Status</div>
+              <Select
+                placeholder="Select status"
+                bordered={false}
+                className="pfm-select"
+                showSearch
+              >
+                {projectStatusList.map((item) => (
+                  <Select.Option key={item._id} value={item._id}>
+                    {item.title}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Status */}
-            <div className="pfm-field-row">
-              <CheckCircleOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label">Status</div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item name="project_status" className="pfm-form-item">
-                  <Select
-                    placeholder="Select status"
-                    bordered={false}
-                    className="pfm-select"
-                    showSearch
-                  >
-                    {projectStatusList.map((item) => (
-                      <Select.Option key={item._id} value={item._id}>
-                        {item.title}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </div>
+        {/* Estimated Hours */}
+        <div className="pfm-field-row">
+          <ClockCircleOutlined className="pfm-icon" />
+          <Form.Item
+            name="estimatedHours"
+            className="pfm-form-item"
+            rules={[{ required: true, message: "Please provide estimated hours" }]}
+          >
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Estimated Hours</div>
+              <Input
+                placeholder="Enter estimated hours"
+                className="pfm-input"
+                bordered={false}
+                disabled={modalMode !== "add" ? !getRoles(["Admin"]) : false}
+                type="number"
+                min={0}
+              />
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Estimated Hours */}
-            <div className="pfm-field-row">
-              <ClockCircleOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label pfm-field-label--required">Estimated Hours</div>
-                {/* FIX: Form.Item directly wraps Input */}
-                <Form.Item
-                  name="estimatedHours"
-                  className="pfm-form-item"
-                  rules={[
-                    { required: true, message: "Estimated hours is required" },
-                    {
-                      validator(_, value) {
-                        const num = Number(value);
-                        if (!value && value !== 0) return Promise.reject("Please enter estimated hours");
-                        if (isNaN(num)) return Promise.reject("Must be a valid number");
-                        if (num < 0) return Promise.reject("Hours cannot be negative");
-                        if (num > 99999) return Promise.reject("Hours cannot exceed 99,999");
-                        if (!Number.isInteger(num)) return Promise.reject("Hours must be a whole number");
-                        return Promise.resolve();
-                      },
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder="Enter estimated hours"
-                    className="pfm-input"
-                    bordered={false}
-                    disabled={modalMode !== "add" ? !getRoles(["Admin"]) : false}
-                    type="number"
-                    min={0}
-                  />
-                </Form.Item>
-              </div>
+        {/* Recurring */}
+        <div className="pfm-field-row">
+          <SyncOutlined className="pfm-icon" />
+          <Form.Item name="recurringType" className="pfm-form-item">
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Recurring</div>
+              <Select
+                placeholder="Select recurring type"
+                bordered={false}
+                className="pfm-select"
+                allowClear
+              >
+                <Select.Option value="monthly">Monthly</Select.Option>
+                <Select.Option value="yearly">Yearly</Select.Option>
+              </Select>
             </div>
-            <div className="pfm-divider" />
+          </Form.Item>
+        </div>
+        <div className="pfm-divider" />
 
-            {/* Recurring */}
-            <div className="pfm-field-row">
-              <SyncOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label">Recurring</div>
-                {/* FIX: Form.Item directly wraps Select */}
-                <Form.Item name="recurringType" className="pfm-form-item">
-                  <Select
-                    placeholder="Select recurring type"
-                    bordered={false}
-                    className="pfm-select"
-                    allowClear
-                  >
-                    <Select.Option value="monthly">Monthly</Select.Option>
-                    <Select.Option value="yearly">Yearly</Select.Option>
-                  </Select>
-                </Form.Item>
-              </div>
+        {/* Billable */}
+        <div className="pfm-field-row pfm-field-row--checkbox">
+          <DollarOutlined className="pfm-icon" />
+          <Form.Item name="isBillable" className="pfm-form-item" valuePropName="checked">
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Billable Project</div>
+              <Checkbox checked={isBillable} onChange={handleBillable}>
+                Yes
+              </Checkbox>
             </div>
-            <div className="pfm-divider" />
-
-            {/* Billable */}
-            <div className="pfm-field-row pfm-field-row--checkbox">
-              <DollarOutlined className="pfm-icon" />
-              <div className="pfm-input-group">
-                <div className="pfm-field-label">Billable Project</div>
-                {/* Checkbox is managed via local state — not Form-controlled */}
-                <Checkbox checked={isBillable} onChange={handleBillable}>
-                  Yes
-                </Checkbox>
-              </div>
-            </div>
+          </Form.Item>
+        </div>
 
           </div>{/* end pfm-fields-grid */}
 
-          {/* Footer */}
-          <div className="pfm-footer">
-            <Button className="pfm-cancel-btn" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button type="primary" htmlType="submit" className="pfm-submit-btn">
-              {isEdit ? "Update" : "Save"}
-            </Button>
-          </div>
-        </Form>
-        )}
-      </Modal>
-
-      {/* ── Add Department Modal ── */}
-      <Modal
-        title="Add Department"
-        open={isAddDepartmentOpen}
-        className="pfm-inline-modal"
-        onCancel={() => { setIsAddDepartmentOpen(false); departmentForm.resetFields(); }}
-        footer={[
-          <Button key="cancel" onClick={() => { setIsAddDepartmentOpen(false); departmentForm.resetFields(); }}>Cancel</Button>,
-          <Button key="submit" type="primary" loading={isSavingDepartment} onClick={() => departmentForm.submit()}>Add</Button>,
-        ]}
+        {/* Footer buttons */}
+        <div className="pfm-footer">
+          <Button className="pfm-cancel-btn" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button type="primary" htmlType="submit" className="pfm-submit-btn">
+            {isEdit ? "Update" : "Save"}
+          </Button>
+        </div>
+      </Form>
+    </Modal>
+    <Modal
+      title="Add Department"
+      open={isAddDepartmentOpen}
+      className="pfm-inline-modal"
+      onCancel={() => {
+        setIsAddDepartmentOpen(false);
+        departmentForm.resetFields();
+      }}
+      footer={[
+        <Button
+          key="cancel"
+          onClick={() => {
+            setIsAddDepartmentOpen(false);
+            departmentForm.resetFields();
+          }}
+        >
+          Cancel
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          loading={isSavingDepartment}
+          onClick={() => departmentForm.submit()}
+        >
+          Add
+        </Button>,
+      ]}
+    >
+      <Form form={departmentForm} layout="vertical" onFinish={handleCreateDepartment}>
+        <Form.Item
+          label="Department Name"
+          name="project_tech"
+          rules={[{ required: true, whitespace: true, message: "Department name is required" }]}
+        >
+          <Input placeholder="Enter department name" />
+        </Form.Item>
+      </Form>
+    </Modal>
+    <Modal
+      title="Add Client"
+      open={isAddClientOpen}
+      width={720}
+      className="pfm-inline-modal"
+      onCancel={() => {
+        setIsAddClientOpen(false);
+        clientCreateForm.resetFields();
+      }}
+      footer={[
+        <Button
+          key="cancel"
+          onClick={() => {
+            setIsAddClientOpen(false);
+            clientCreateForm.resetFields();
+          }}
+        >
+          Cancel
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          loading={isSavingClient}
+          onClick={() => clientCreateForm.submit()}
+        >
+          Add
+        </Button>,
+      ]}
+    >
+      <Form
+        form={clientCreateForm}
+        layout="vertical"
+        initialValues={{ status: "Active" }}
+        onFinish={handleCreateClient}
       >
-        <Form form={departmentForm} layout="vertical" onFinish={handleCreateDepartment}>
-          <Form.Item
-            label="Department Name"
-            name="project_tech"
-            rules={[
-              { required: true, whitespace: true, message: "Department name is required" },
-              { min: 2, message: "Must be at least 2 characters" },
-              { max: 50, message: "Cannot exceed 50 characters" },
-              { pattern: /^[a-zA-Z0-9 .&()-]+$/, message: "Only letters, numbers and basic symbols allowed" },
-            ]}
-          >
-            <Input placeholder="Enter department name" maxLength={50} showCount />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* ── Add Client Modal ── */}
-      <Modal
-        title="Add Client"
-        open={isAddClientOpen}
-        width={720}
-        className="pfm-inline-modal"
-        onCancel={() => { setIsAddClientOpen(false); clientCreateForm.resetFields(); }}
-        footer={[
-          <Button key="cancel" onClick={() => { setIsAddClientOpen(false); clientCreateForm.resetFields(); }}>Cancel</Button>,
-          <Button key="submit" type="primary" loading={isSavingClient} onClick={() => clientCreateForm.submit()}>Add</Button>,
-        ]}
-      >
-        <Form form={clientCreateForm} layout="vertical" initialValues={{ status: "Active" }} onFinish={handleCreateClient}>
-          <Row gutter={[16, 0]}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="First name"
-                name="first_name"
-                rules={[
-                  { required: true, whitespace: true, message: "First name is required" },
-                  { min: 2, message: "Minimum 2 characters" },
-                  { max: 50, message: "Cannot exceed 50 characters" },
-                  { pattern: /^[a-zA-Z ]+$/, message: "Only letters allowed" },
-                ]}
-              >
-                <Input placeholder="First name" maxLength={50} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Last name"
-                name="last_name"
-                rules={[
-                  { required: true, whitespace: true, message: "Last name is required" },
-                  { min: 2, message: "Minimum 2 characters" },
-                  { max: 50, message: "Cannot exceed 50 characters" },
-                  { pattern: /^[a-zA-Z ]+$/, message: "Only letters allowed" },
-                ]}
-              >
-                <Input placeholder="Last name" maxLength={50} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Company name"
-                name="company_name"
-                rules={[
-                  { required: true, whitespace: true, message: "Company name is required" },
-                  { min: 2, message: "Minimum 2 characters" },
-                  { max: 100, message: "Cannot exceed 100 characters" },
-                ]}
-              >
-                <Input placeholder="Company name" maxLength={100} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Email"
-                name="email"
-                rules={[
-                  { required: true, message: "Email is required" },
-                  { type: "email", message: "Enter a valid email address" },
-                  { max: 100, message: "Email cannot exceed 100 characters" },
-                ]}
-              >
-                <Input placeholder="Email" maxLength={100} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Phone"
-                name="phone_number"
-                rules={[
-                  {
-                    validator(_, value) {
-                      if (!value) return Promise.resolve(); // optional field
-                      const cleaned = value.replace(/\s+/g, "");
-                      if (!/^[0-9]+$/.test(cleaned)) return Promise.reject("Only digits allowed");
-                      if (cleaned.length !== 10) return Promise.reject("Phone number must be exactly 10 digits");
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <Input placeholder="Phone (10 digits)" maxLength={10} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Password"
-                name="plain_password"
-                rules={[
-                  { required: true, message: "Password is required" },
-                  { min: 8, message: "Password must be at least 8 characters" },
-                  { max: 64, message: "Password cannot exceed 64 characters" },
-                  {
-                    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                    message: "Must have uppercase, lowercase and a number",
-                  },
-                ]}
-              >
-                <Input.Password placeholder="Password" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item label="Status" name="status" rules={[{ required: true, message: "Status is required" }]}>
-                <Select placeholder="Status">
-                  <Select.Option value="Active">Active</Select.Option>
-                  <Select.Option value="Inactive">Inactive</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24}>
-              <Form.Item
-                label="Extra details"
-                name="extra_details"
-                rules={[{ max: 500, message: "Cannot exceed 500 characters" }]}
-              >
-                <Input.TextArea rows={3} placeholder="Notes (optional)" maxLength={500} showCount />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
-
-      {/* ── Add Employee Modal ── */}
-      <Modal
-        title={
-          employeeModalType === "account_manager" ? "Add Account Manager"
-          : employeeModalType === "assignee" ? "Add Assignee"
+        <Row gutter={[16, 0]}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="First name"
+              name="first_name"
+              rules={[{ required: true, message: "First name is required" }]}
+            >
+              <Input placeholder="First name" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="Last name"
+              name="last_name"
+              rules={[{ required: true, message: "Last name is required" }]}
+            >
+              <Input placeholder="Last name" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="Company name"
+              name="company_name"
+              rules={[{ required: true, message: "Company name is required" }]}
+            >
+              <Input placeholder="Company name" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: "Email is required" },
+                { type: "email", message: "Enter a valid email" },
+              ]}
+            >
+              <Input placeholder="Email" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item label="Phone" name="phone_number">
+              <Input placeholder="Phone (optional)" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="Password"
+              name="plain_password"
+              rules={[{ required: true, message: "Password is required" }]}
+            >
+              <Input.Password placeholder="Password" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              label="Status"
+              name="status"
+              rules={[{ required: true, message: "Status is required" }]}
+            >
+              <Select placeholder="Status">
+                <Select.Option value="Active">Active</Select.Option>
+                <Select.Option value="Inactive">Inactive</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col xs={24}>
+            <Form.Item label="Extra details" name="extra_details">
+              <Input.TextArea rows={3} placeholder="Notes (optional)" />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
+    </Modal>
+    <Modal
+      title={
+        employeeModalType === "account_manager"
+          ? "Add Account Manager"
+          : employeeModalType === "assignee"
+          ? "Add Assignee"
           : "Add Project Manager"
         }
         open={isAddEmployeeOpen}
