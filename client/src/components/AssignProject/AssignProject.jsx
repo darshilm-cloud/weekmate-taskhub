@@ -920,11 +920,8 @@ const AssignProject = () => {
         api_url: Service.getProjectdetails,
         body: { _id: editProjectId },
       });
-      const projectDetails = Array.isArray(response?.data?.data)
-        ? response.data.data[0]
-        : response?.data?.data;
-      if (response?.data?.status && projectDetails) {
-        setSelectedProject(projectDetails);
+      if (response?.data?.status) {
+        setSelectedProject(response.data.data);
         setModalMode("Edit");
         setIsModalOpen(true);
       }
