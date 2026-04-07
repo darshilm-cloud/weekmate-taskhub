@@ -202,3 +202,21 @@ table.tracked-hours-wrapper {
   align-items: center;
   justify-content: center;
 }
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .billable-hours-logged-hours-details .billable-hours-task { width: 160px; }
+}
+
+@media (max-width: 768px) {
+  .billable-hours .heading-main { flex-wrap: wrap; gap: 8px; }
+  .billable-hours-logged-hours-details .ant-modal-content { padding: 12px !important; }
+  .billable-hours-pc-approved-hours-modal .ant-modal-body { padding: 0 12px 12px; }
+  .billable-hours-pc-approved-hours-modal .ant-modal-body .modal-footer { flex-direction: column; gap: 8px; }
+  ul.assigness-data { height: auto; max-height: 150px; }
+}
+
+@media (max-width: 640px) {
+  .billable-hours-logged-hours-details .billable-hours-task { width: 120px; }
+  .billable-hours-logged-hours-details .billable-hours-aproved-date { white-space: normal; font-size: 11px; }
+  .billable-hours-pc-approved-hours-modal .ant-modal-body .modal-footer button { width: 100%; }
+}

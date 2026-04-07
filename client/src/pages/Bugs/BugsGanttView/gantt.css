@@ -241,3 +241,20 @@
   font-weight: 700;
 }
 
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .gt-wrap { --left-w: 200px; --right-w: 120px; }
+}
+
+@media (max-width: 768px) {
+  .gt-wrap { --left-w: 160px; --right-w: 100px; }
+  .gt-scroll { max-height: calc(100vh - 160px); }
+  .gt-lhd, .gt-lcell { padding: 8px; }
+  .gt-rhd, .gt-rcell { padding: 8px; }
+}
+
+@media (max-width: 640px) {
+  .gt-wrap { --left-w: 120px; --right-w: 80px; }
+  .gt-lhd, .gt-rhd, .gt-lcell, .gt-rcell { padding: 6px; font-size: 11px; }
+}

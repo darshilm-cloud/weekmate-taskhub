@@ -312,3 +312,19 @@
     max-width: 89px;
     margin-right: 2px;
 }
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .time-logged-main-wrapper .custom-table td { font-size: 12px; }
+}
+
+@media (max-width: 768px) {
+  .time-logged-main-wrapper .custom-table { display: block; overflow-x: auto; }
+  .time-logged-main-wrapper .custom-table td,
+  .time-logged-main-wrapper .custom-table th { padding: 4px 6px !important; height: 40px; font-size: 11px; }
+  .no-data-found-my-log-time { position: static; transform: none; text-align: center; padding: 20px; }
+}
+
+@media (max-width: 640px) {
+  .time-logged-main-wrapper .custom-table th:nth-child(1),
+  .time-logged-main-wrapper .custom-table td:nth-child(1) { white-space: nowrap; }
+}

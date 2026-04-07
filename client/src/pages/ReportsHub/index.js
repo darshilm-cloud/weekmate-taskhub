@@ -5,6 +5,7 @@ import {
   ClockCircleOutlined,
   DownloadOutlined,
   DownOutlined,
+  FilterOutlined,
   FundProjectionScreenOutlined,
   HistoryOutlined,
   LineChartOutlined,
@@ -23,8 +24,6 @@ import {
   Input,
   message,
   Progress,
-  Select,
-  Spin,
   Table,
   Tabs,
   Tag,
@@ -35,7 +34,6 @@ import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundSvg from "../../assets/images/no-data-found.svg";
 import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
-import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -84,11 +82,6 @@ const activityOptions = [
   { value: "DELETE", label: "Delete" },
 ];
 
-const reportTypeOptions = [
-  { value: "all-projects", label: "All Projects" },
-  { value: "project-wise", label: "Project Wise" },
-];
-
 const dailyTabs = [
   { key: "pending", label: "Today’s Pending Tasks Report" },
   { key: "completed", label: "Today’s Completed Tasks Report" },
@@ -97,11 +90,12 @@ const dailyTabs = [
 ];
 
 const defaultFilters = {
-  reportType: "all-projects",
+  projectIds: [],
   userId: "all",
   status: "all",
   date: null,
   activity: "",
+  search: "",
 };
 
 function ReportsHub() {
@@ -136,6 +130,18 @@ function ReportsHub() {
       completed: [],
       morning: [],
       evening: [],
+    },
+    "project-running": {
+      data: [],
+      managers: [],
+      types: [],
+      technologies: [],
+      metadata: {},
+    },
+    timesheet: {
+      data: [],
+      summary: {},
+      metadata: {},
     },
   });
 
@@ -269,6 +275,9 @@ function ReportsHub() {
       const selectedDate = filters.date ? moment(filters.date) : null;
       const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
       const endDate = selectedDate ? selectedDate.clone().endOf("day") : moment().endOf("day");
+      const selectedProjectIds = Array.isArray(filters.projectIds)
+        ? filters.projectIds.filter(Boolean)
+        : [];
       const selectedUser =
         filters.userId && filters.userId !== "all" ? userMap[filters.userId] : null;
 
@@ -277,6 +286,7 @@ function ReportsHub() {
         status: "all",
         startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
         endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+        projectIds: selectedProjectIds,
       });
 
       if (reportKey === "project-report") {
@@ -400,7 +410,7 @@ function ReportsHub() {
             technologies: filters.technologies || [],
             types: filters.types || [],
             managers: filters.managers || [],
-            projects: filters.projects || [],
+            projects: selectedProjectIds.length > 0 ? selectedProjectIds : (filters.projects || []),
             departments: filters.departments || [],
             users:
               filters.userId && filters.userId !== "all" ? [filters.userId] : [],
@@ -523,6 +533,8 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
+            date: filters.date || null,
+            search: filters.search?.trim() || "",
             pageNo: 1,
             limit: 100,
             sort: "title",
@@ -533,10 +545,18 @@ function ReportsHub() {
 
         if (response?.data && response?.data?.data) {
           const projectRunningData = {
-            data: response.data.data.data || [],
-            managers: response.data.data.managers || [],
-            types: response.data.data.types || [],
-            technologies: response.data.data.technologies || [],
+            data: Array.isArray(response.data.data.data)
+              ? response.data.data.data
+              : [],
+            managers: Array.isArray(response.data.data.managers)
+              ? response.data.data.managers
+              : [],
+            types: Array.isArray(response.data.data.types)
+              ? response.data.data.types
+              : [],
+            technologies: Array.isArray(response.data.data.technologies)
+              ? response.data.data.technologies
+              : [],
             metadata: response.data.metadata || {},
           };
           setReportData((prev) => ({ ...prev, 'project-running': projectRunningData }));
@@ -569,7 +589,7 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
-            projects: [],
+            projects: selectedProjectIds,
             departments: [],
             users: [],
             pageNo: 1,
@@ -581,7 +601,19 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
-          const timesheetData = response.data.data; // Direct assignment since API returns the correct structure
+          const timesheetData = {
+            data: Array.isArray(response.data.data.data)
+              ? response.data.data.data
+              : Array.isArray(response.data.data)
+              ? response.data.data
+              : [],
+            summary: response.data.data.summary || {},
+            metadata: response.data.metadata || {},
+            totalHours: response.data.data.totalHours || "0",
+            manager: response.data.data.manager || [],
+            type: response.data.data.type || [],
+            user: response.data.data.user || [],
+          };
           setReportData((prev) => ({ ...prev, 'timesheet': timesheetData }));
         } else {
           setReportData((prev) => ({ ...prev, 'timesheet': { data: [], totalHours: "0", manager: [], type: [], user: [] } }));
@@ -812,9 +844,9 @@ function ReportsHub() {
                 reportKey={reportKey}
                 filters={filters}
                 setFilters={setFilters}
+                projects={projects}
                 users={users}
                 data={reportData}
-                onSearch={loadReportData}
               />
             )}
           </>
@@ -824,31 +856,31 @@ function ReportsHub() {
   );
 }
 
-function DynamicReportContent({ reportKey, filters, setFilters, users, data, onSearch }) {
+function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data }) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
+  const projectOptions = Array.isArray(projects) ? projects : [];
 
   const fieldsByReport = {
     "user-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "status-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "status", placeholder: "Select Status", options: statusOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "activity-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
-      { key: "activity", placeholder: "Select Activity", options: activityOptions },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "activity", label: "Activity", placeholder: "All Activity", options: activityOptions, defaultValue: "" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "user-performance-report": [
-      { key: "reportType", placeholder: "Project Wise", options: reportTypeOptions },
-      { key: "userId", placeholder: "Select User", options: userOptions },
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
       { key: "date", placeholder: "Select Date", type: "date" },
     ],
     "project-running": [
@@ -872,7 +904,7 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
 
   return (
     <>
-      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} onSearch={onSearch} />
+      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} />
       {reportKey === "user-report" && rowData.length > 0 ? (
         <UserReportResults rows={rowData} filters={filters} />
       ) : reportKey === "project-running" && data['project-running'] ? (
@@ -893,116 +925,333 @@ function DynamicReportContent({ reportKey, filters, setFilters, users, data, onS
   );
 }
 
-function CommonFilters({ fields, filters, setFilters, onSearch }) {
-  const [searchValue, setSearchValue] = useState(filters.search || "");
-  const [searchTimer, setSearchTimer] = useState(null);
+function cloneFacetValue(value, mode = "single", defaultValue) {
+  if (mode === "multiple") {
+    return Array.isArray(value) ? [...value] : Array.isArray(defaultValue) ? [...defaultValue] : [];
+  }
 
-  // Debounced search function
-  const debouncedSearch = useCallback((value) => {
-    // Clear existing timer
-    if (searchTimer) {
-      clearTimeout(searchTimer);
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return value;
+}
+
+function CommonFilters({ fields, filters, setFilters }) {
+  const facetFields = fields.filter((field) => field.type !== "date" && field.type !== "search");
+  const dateField = fields.find((field) => field.type === "date");
+  const searchField = fields.find((field) => field.type === "search");
+  const [isFacetOpen, setIsFacetOpen] = useState(false);
+  const [anchorFieldKey, setAnchorFieldKey] = useState(facetFields[0]?.key || "");
+  const [activeFieldKey, setActiveFieldKey] = useState(facetFields[0]?.key || "");
+  const [searchText, setSearchText] = useState("");
+  const [reportSearchText, setReportSearchText] = useState(filters?.search || "");
+  const [draftFilters, setDraftFilters] = useState({});
+
+  useEffect(() => {
+    setReportSearchText(filters?.search || "");
+  }, [filters?.search]);
+
+  useEffect(() => {
+    if (!facetFields.length) {
+      setAnchorFieldKey("");
+      setActiveFieldKey("");
+      return;
     }
 
-    // Set new timer
-    const timer = setTimeout(() => {
-      setFilters((prev) => ({
-        ...prev,
-        search: value,
-      }));
-      onSearch();
-    }, 300); // 300ms debounce delay
+    const hasAnchor = facetFields.some((field) => field.key === anchorFieldKey);
+    const hasActive = facetFields.some((field) => field.key === activeFieldKey);
 
-    setSearchTimer(timer);
-  }, [onSearch, setFilters, searchTimer]);
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchValue(value);
-    
-    // Only debounce if there's actual text, otherwise clear immediately
-    if (!value) {
-      setFilters((prev) => ({
-        ...prev,
-        search: "",
-      }));
-      onSearch();
-    } else {
-      debouncedSearch(value);
+    if (!hasAnchor) {
+      setAnchorFieldKey(facetFields[0].key);
     }
+
+    if (!hasActive) {
+      setActiveFieldKey(facetFields[0].key);
+    }
+  }, [activeFieldKey, anchorFieldKey, facetFields]);
+
+  const activeField = facetFields.find((field) => field.key === activeFieldKey) || facetFields[0];
+  const activeFacetCount = useMemo(
+    () =>
+      facetFields.reduce((count, field) => {
+        const fieldValue = filters[field.key];
+        const isSelected =
+          field.mode === "multiple"
+            ? Array.isArray(fieldValue) && fieldValue.length > 0
+            : fieldValue !== undefined &&
+              fieldValue !== null &&
+              fieldValue !== "" &&
+              fieldValue !== field.defaultValue;
+
+        return count + (isSelected ? 1 : 0);
+      }, 0),
+    [facetFields, filters]
+  );
+
+  const openFacetPanel = (fieldKey) => {
+    const nextDraftFilters = facetFields.reduce((acc, field) => {
+      acc[field.key] = cloneFacetValue(filters[field.key], field.mode, field.defaultValue);
+      return acc;
+    }, {});
+
+    setDraftFilters(nextDraftFilters);
+    setAnchorFieldKey(fieldKey);
+    setActiveFieldKey(fieldKey);
+    setSearchText("");
+    setIsFacetOpen(true);
   };
 
-  const handleSearchPress = () => {
-    // Immediate search when user presses search button
-    if (searchTimer) {
-      clearTimeout(searchTimer);
+  const closeFacetPanel = () => {
+    setIsFacetOpen(false);
+    setSearchText("");
+  };
+
+  const filteredOptions = useMemo(() => {
+    if (!activeField) {
+      return [];
     }
-    setFilters((prev) => ({
+
+    if (!searchText.trim()) {
+      return activeField.options || [];
+    }
+
+    return (activeField.options || []).filter((option) =>
+      String(option.label || "")
+        .toLowerCase()
+        .includes(searchText.trim().toLowerCase())
+    );
+  }, [activeField, searchText]);
+
+  const handleOptionToggle = (optionValue) => {
+    if (!activeField) {
+      return;
+    }
+
+    setDraftFilters((prev) => {
+      const currentValue = cloneFacetValue(prev[activeField.key], activeField.mode, activeField.defaultValue);
+
+      if (activeField.mode === "multiple") {
+        const currentValues = Array.isArray(currentValue) ? currentValue : [];
+        return {
+          ...prev,
+          [activeField.key]: currentValues.includes(optionValue)
+            ? currentValues.filter((item) => item !== optionValue)
+            : [...currentValues, optionValue],
+        };
+      }
+
+      return {
+        ...prev,
+        [activeField.key]: optionValue,
+      };
+    });
+  };
+
+  const applySelection = () => {
+    setFilters((prev) => {
+      const nextFilters = { ...prev };
+      facetFields.forEach((field) => {
+        nextFilters[field.key] = cloneFacetValue(draftFilters[field.key], field.mode, field.defaultValue);
+      });
+      return nextFilters;
+    });
+    closeFacetPanel();
+  };
+
+  const resetSelection = () => {
+    if (!activeField) {
+      return;
+    }
+
+    setDraftFilters((prev) => ({
       ...prev,
-      search: searchValue,
+      [activeField.key]: cloneFacetValue(undefined, activeField.mode, activeField.defaultValue),
     }));
-    onSearch();
+    setSearchText("");
   };
+
+  const panel = activeField ? (
+    <div className="reports-facet-panel reports-facet-panel--split">
+      <aside className="reports-facet-sidebar">
+        <h3 className="reports-facet-sidebar-title">Filters</h3>
+        <div className="reports-facet-sidebar-list">
+          {facetFields.map((field) => {
+            const fieldValue = draftFilters[field.key];
+            const isSelected =
+              field.mode === "multiple"
+                ? Array.isArray(fieldValue) && fieldValue.length > 0
+                : fieldValue !== undefined && fieldValue !== null && fieldValue !== "" && fieldValue !== field.defaultValue;
+
+            return (
+              <button
+                key={field.key}
+                type="button"
+                className={`reports-facet-sidebar-item ${activeFieldKey === field.key ? "active" : ""}`}
+                onClick={() => {
+                  setActiveFieldKey(field.key);
+                  setSearchText("");
+                }}
+              >
+                <span>{field.label}</span>
+                {isSelected ? <i className="reports-facet-sidebar-dot" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+
+      <div className="reports-facet-main">
+        <div className="reports-facet-main-head">
+          <span className="reports-facet-main-accent" />
+          <div>
+            <h3>{activeField.label}</h3>
+            <p>{activeField.placeholder}</p>
+          </div>
+        </div>
+
+        {(activeField.options || []).length > 6 ? (
+          <Input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder={`Search ${String(activeField.label || "").toLowerCase()}...`}
+            prefix={<SearchOutlined />}
+            className="reports-facet-search"
+            allowClear
+          />
+        ) : null}
+
+        <div className="reports-facet-options">
+          {filteredOptions.length ? (
+            filteredOptions.map((option) => {
+              const draftValue = cloneFacetValue(
+                draftFilters[activeField.key],
+                activeField.mode,
+                activeField.defaultValue
+              );
+              const isSelected =
+                activeField.mode === "multiple"
+                  ? Array.isArray(draftValue) && draftValue.includes(option.value)
+                  : draftValue === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`reports-facet-option ${isSelected ? "active" : ""}`}
+                  onClick={() => handleOptionToggle(option.value)}
+                >
+                  <span
+                    className={`reports-facet-option-indicator ${activeField.mode === "multiple" ? "multiple" : ""} ${isSelected ? "active" : ""}`}
+                  />
+                  <span className="reports-facet-option-label">{option.label}</span>
+                </button>
+              );
+            })
+          ) : (
+            <div className="reports-facet-empty">No options found</div>
+          )}
+        </div>
+
+        <div className="reports-facet-actions">
+          <Button type="primary" className="reports-facet-apply-btn" onClick={applySelection}>
+            Apply Filter
+          </Button>
+          <button type="button" className="reports-facet-reset-btn" onClick={resetSelection}>
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="reports-filter-bar">
-      {fields.map((field) =>
-        field.type === "date" ? (
-          <DatePicker
-            key={field.key}
-            placeholder={field.placeholder}
-            className="reports-filter-control"
-            suffixIcon={<CalendarOutlined />}
-            value={filters[field.key] ? moment(filters[field.key]) : null}
-            onChange={(value, dateString) => {
-              setFilters((prev) => ({
-                ...prev,
-                [field.key]: value ? value.toISOString() : null,
-              }));
-            }}
-            onOk={(value) => {
-              // Trigger search only when date is confirmed
-              onSearch();
-            }}
-            allowClear
-            format="MMM DD, YYYY"
-          />
-        ) : field.type === "search" ? (
-          <Input.Search
-            key={field.key}
-            placeholder={field.placeholder}
-            className="reports-search-input"
-            value={searchValue}
-            onChange={handleSearchChange}
-            onSearch={handleSearchPress}
-            allowClear
-            onPressEnter={handleSearchPress}
-          />
-        ) : (
-          <Select
-            key={field.key}
-            value={filters[field.key]}
-            placeholder={field.placeholder}
-            className="reports-filter-control"
-            options={field.options}
-            allowClear={field.key !== "reportType" && field.key !== "status"}
-            onChange={(value) => {
-              setFilters((prev) => ({
-                ...prev,
-                [field.key]:
-                  field.key === "status" && !value
-                    ? "all"
-                    : field.key === "userId" && !value
-                    ? "all"
-                    : field.key === "reportType" && !value
-                    ? "project-wise"
-                    : value,
-              }));
-              // Trigger search for select changes
-              onSearch();
-            }}
-          />
-        )
+      {facetFields.length ? (
+        <Dropdown
+          key="reports-shared-filter"
+          open={isFacetOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeFacetPanel();
+            }
+          }}
+          trigger={["click"]}
+          dropdownRender={() => panel}
+          placement="bottomLeft"
+          overlayClassName="reports-facet-dropdown"
+        >
+          <Button
+            type="button"
+            className={`reports-single-filter-btn ${isFacetOpen ? "active" : ""}`}
+            onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
+            icon={<FilterOutlined />}
+          >
+            Filter
+            {activeFacetCount > 0 ? (
+              <span className="reports-single-filter-count">{activeFacetCount}</span>
+            ) : null}
+          </Button>
+        </Dropdown>
+      ) : null}
+      {dateField ? (
+        <DatePicker
+          key={dateField.key}
+          placeholder={dateField.placeholder}
+          className="reports-filter-control"
+          suffixIcon={<CalendarOutlined />}
+          value={filters[dateField.key] ? moment(filters[dateField.key]) : null}
+          onChange={(value) =>
+            setFilters((prev) => ({
+              ...prev,
+              [dateField.key]: value ? value.format("YYYY-MM-DD") : null,
+            }))
+          }
+          allowClear
+          format="MMM DD, YYYY"
+        />
+      ) : null}
+      {searchField ? (
+        <Input.Search
+          key={searchField.key}
+          placeholder={searchField.placeholder || "Search..."}
+          className="reports-search-input"
+          value={reportSearchText}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setReportSearchText(nextValue);
+            if (!nextValue) {
+              setFilters((prev) => ({ ...prev, search: "" }));
+            }
+          }}
+          onSearch={(value) => {
+            setFilters((prev) => ({
+              ...prev,
+              search: (value ?? reportSearchText ?? "").trim(),
+            }));
+          }}
+          allowClear
+        />
+      ) : (
+        <Input.Search
+          placeholder="Search..."
+          className="reports-search-input"
+          value={reportSearchText}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setReportSearchText(nextValue);
+            if (!nextValue) {
+              setFilters((prev) => ({ ...prev, search: "" }));
+            }
+          }}
+          onSearch={(value) => {
+            setFilters((prev) => ({
+              ...prev,
+              search: (value ?? reportSearchText ?? "").trim(),
+            }));
+          }}
+          allowClear
+        />
       )}
     </div>
   );
@@ -1611,13 +1860,6 @@ function isCompletedTask(task) {
   return DONE_STATUSES.includes(String(task?.task_status?.title || "").trim().toLowerCase());
 }
 
-function isSameDay(dateValue, targetMoment) {
-  if (!dateValue || !targetMoment) {
-    return false;
-  }
-  return moment(dateValue).isSame(targetMoment, "day");
-}
-
 function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
   const today = selectedDate || moment();
   const selectedUser =
@@ -2014,59 +2256,82 @@ function formatText(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function ProjectRunningReportContent({ data, filters }) {
-  const { data: projects = [], managers = [], types = [], technologies = [], metadata = {} } = data;
-  const searchText = filters.search || "";
+class ChartErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-  // Filter projects based on search text
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    console.error("ReportsHub chart render failed", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <Empty description="Chart unavailable" />;
+    }
+
+    return this.props.children;
+  }
+}
+
+function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.reduce((acc, item, index) => {
+    if (!item || typeof item !== "object") {
+      return acc;
+    }
+
+    const labelValue = item[labelKey];
+    const name =
+      typeof labelValue === "string" && labelValue.trim()
+        ? labelValue.trim()
+        : `${fallbackLabel} ${index + 1}`;
+    const value = Number(item.totalProjects || 0);
+
+    if (!Number.isFinite(value) || value <= 0) {
+      return acc;
+    }
+
+    acc.push({ name, value });
+    return acc;
+  }, []);
+}
+
+function ProjectRunningReportContent({ data, filters }) {
+  const projects = Array.isArray(data?.data) ? data.data : [];
+  const managers = Array.isArray(data?.managers) ? data.managers : [];
+  const types = Array.isArray(data?.types) ? data.types : [];
+  const technologies = Array.isArray(data?.technologies) ? data.technologies : [];
+  const metadata =
+    data?.metadata && typeof data.metadata === "object" ? data.metadata : {};
+  const searchText = filters?.search || "";
+
+  // Filter projects based on search text (from HEAD)
   const filteredProjects = projects.filter(project => {
     if (!searchText) return true;
-    
     const searchLower = searchText.toLowerCase();
     return (
       project.title?.toLowerCase().includes(searchLower) ||
       project.managerName?.toLowerCase().includes(searchLower) ||
       project.project_typeName?.toLowerCase().includes(searchLower) ||
       project.technologyName?.some(tech => tech.toLowerCase().includes(searchLower)) ||
-      project.estimatedHours?.toLowerCase().includes(searchLower) ||
-      project.total_logged_time?.toLowerCase().includes(searchLower)
+      String(project.estimatedHours || "").toLowerCase().includes(searchLower) ||
+      String(project.total_logged_time || "").toLowerCase().includes(searchLower)
     );
   });
 
-  // Calculate chart data based on FILTERED projects
-  const calculateChartData = (projectList) => {
-    const managerStats = {};
-    const typeStats = {};
-    const techStats = {};
-
-    projectList.forEach(project => {
-      // Manager stats
-      const manager = project.managerName || 'Unknown';
-      managerStats[manager] = (managerStats[manager] || 0) + 1;
-
-      // Type stats
-      const type = project.project_typeName || 'Unknown';
-      typeStats[type] = (typeStats[type] || 0) + 1;
-
-      // Technology stats
-      if (project.technologyName && Array.isArray(project.technologyName)) {
-        project.technologyName.forEach(tech => {
-          techStats[tech] = (techStats[tech] || 0) + 1;
-        });
-      }
-    });
-
-    return {
-      managers: Object.entries(managerStats).map(([name, value]) => ({ name, value })),
-      types: Object.entries(typeStats).map(([name, value]) => ({ name, value })),
-      technologies: Object.entries(techStats).map(([name, value]) => ({ name, value }))
-    };
-  };
-
-  const chartData = calculateChartData(filteredProjects);
-  const managerChartData = chartData.managers;
-  const typeChartData = chartData.types;
-  const techChartData = chartData.technologies;
+  // Prepare chart data from API metadata (from INCOMING)
+  const managerChartData = buildRunningProjectChartData(managers, "managerName", "Manager");
+  const typeChartData = buildRunningProjectChartData(types, "project_typeName", "Type");
+  const techChartData = buildRunningProjectChartData(technologies, "technologyName", "Technology");
 
   // Table columns
   const columns = [
@@ -2091,7 +2356,7 @@ function ProjectRunningReportContent({ data, filters }) {
       key: "technologyName",
       render: (techArray) => (
         <div>
-          {techArray?.map((tech, index) => (
+          {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
             <span key={index} className="tech-tag">
               {tech}
             </span>
@@ -2165,143 +2430,95 @@ function ProjectRunningReportContent({ data, filters }) {
       <div className="charts-section">
         <div className="charts-grid">
           {managerChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--manager">
               <h3>Projects by Manager</h3>
-              <ReactApexChart
-                options={{
-                  chart: { 
-                    type: 'pie',
-                    height: 300
-                  },
-                  labels: managerChartData.map(item => item.name),
-                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#06b6d4'],
-                  legend: {
-                    position: 'bottom',
-                    fontSize: '12px',
-                    labels: {
-                      colors: ['#374151']
-                    }
-                  },
-                  dataLabels: {
-                    enabled: true,
-                    formatter: function (val) {
-                      return val.toFixed(0);
-                    }
-                  },
-                  plotOptions: {
-                    pie: {
-                      dataLabels: {
-                        offset: -10
-                      }
-                    }
-                  }
-                }}
-                series={managerChartData.map(item => item.value)}
-                type="pie"
-                height={300}
-              />
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "pie" },
+                    legend: {
+                      position: "bottom",
+                      horizontalAlign: "center",
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: (val) => val.toFixed(0),
+                    },
+                    stroke: {
+                      width: 2,
+                      colors: ["#ffffff"],
+                    },
+                    labels: managerChartData.map((item) => String(item.name || "")),
+                    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316"],
+                  }}
+                  series={managerChartData.map((item) => Number(item.value || 0))}
+                  type="pie"
+                  height={360}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
-          
+
           {typeChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--type">
               <h3>Projects by Type</h3>
-              <ReactApexChart
-                options={{
-                  chart: { 
-                    type: 'bar',
-                    height: 300
-                  },
-                  plotOptions: { 
-                    bar: { 
-                      horizontal: true,
-                      borderRadius: 4
-                    } 
-                  },
-                  xaxis: { 
-                    categories: typeChartData.map(item => item.name),
-                    labels: {
-                      style: {
-                        fontSize: '12px',
-                        colors: '#374151'
-                      }
-                    }
-                  },
-                  yaxis: {
-                    labels: {
-                      style: {
-                        fontSize: '12px',
-                        colors: '#374151'
-                      }
-                    }
-                  },
-                  colors: ['#3b82f6'],
-                  dataLabels: {
-                    enabled: true,
-                    style: {
-                      fontSize: '11px',
-                      colors: ['#fff']
-                    }
-                  }
-                }}
-                series={[{ 
-                  data: typeChartData.map(item => item.value),
-                  name: 'Projects'
-                }]}
-                type="bar"
-                height={300}
-              />
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "bar" },
+                    legend: { show: false },
+                    plotOptions: {
+                      bar: {
+                        horizontal: true,
+                        borderRadius: 6,
+                        barHeight: "52%",
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      style: { fontSize: "11px", colors: ["#fff"] },
+                    },
+                    xaxis: {
+                      categories: typeChartData.map((item) => String(item.name || "")),
+                      labels: { style: { fontSize: "12px", colors: "#374151" } },
+                    },
+                    colors: ["#3b82f6"],
+                  }}
+                  series={[{ data: typeChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
+                  type="bar"
+                  height={360}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
-          
+
           {techChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--technology">
               <h3>Projects by Technology</h3>
-              <ReactApexChart
-                options={{
-                  chart: { 
-                    type: 'bar',
-                    height: 300
-                  },
-                  plotOptions: { 
-                    bar: { 
-                      borderRadius: 4,
-                      columnWidth: '60%'
-                    } 
-                  },
-                  xaxis: { 
-                    categories: techChartData.map(item => item.name),
-                    labels: {
-                      style: {
-                        fontSize: '11px',
-                        colors: '#374151'
+              <ChartErrorBoundary>
+                <ReactApexChart
+                  options={{
+                    chart: { type: "bar" },
+                    legend: { show: false },
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 6,
+                        columnWidth: "42%",
                       },
-                      rotate: -45
-                    }
-                  },
-                  yaxis: {
-                    labels: {
-                      style: {
-                        fontSize: '12px',
-                        colors: '#374151'
-                      }
-                    }
-                  },
-                  colors: ['#10b981'],
-                  dataLabels: {
-                    enabled: false
-                  },
-                  grid: {
-                    borderColor: '#e5e7eb'
-                  }
-                }}
-                series={[{ 
-                  data: techChartData.map(item => item.value),
-                  name: 'Projects'
-                }]}
-                type="bar"
-                height={300}
-              />
+                    },
+                    dataLabels: { enabled: false },
+                    xaxis: {
+                      categories: techChartData.map((item) => String(item.name || "")),
+                      labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
+                    },
+                    colors: ["#10b981"],
+                    grid: { borderColor: "#e5e7eb" },
+                  }}
+                  series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
+                  type="bar"
+                  height={340}
+                />
+              </ChartErrorBoundary>
             </div>
           )}
         </div>
@@ -2313,12 +2530,21 @@ function ProjectRunningReportContent({ data, filters }) {
           <h3>Projects List</h3>
           <span className="total-count">Total: {filteredProjects.length}</span>
         </div>
-        
+
         {filteredProjects.length > 0 ? (
           <Table
             columns={columns}
             dataSource={filteredProjects}
-            rowKey="_id"
+            rowKey={(record) =>
+              String(
+                record?._id ||
+                  record?.id ||
+                  record?.project_id ||
+                  record?.title ||
+                  record?.managerName ||
+                  "project-row"
+              )
+            }
             pagination={{
               showSizeChanger: true,
               showQuickJumper: true,
@@ -2336,13 +2562,12 @@ function ProjectRunningReportContent({ data, filters }) {
 }
 
 function TimesheetReportContent({ data, filters }) {
-  const { data: timesheets = [], totalHours = "0", manager = [], type = [], user = [] } = data;
-  const searchText = filters.search || "";
+  const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
+  const searchText = filters?.search || "";
 
-  // Filter timesheets based on search text
+  // Filter timesheets based on search text (from HEAD)
   const filteredTimesheets = timesheets.filter(timesheet => {
     if (!searchText) return true;
-    
     const searchLower = searchText.toLowerCase();
     return (
       timesheet.user?.toLowerCase().includes(searchLower) ||
@@ -2362,16 +2587,13 @@ function TimesheetReportContent({ data, filters }) {
     const typeStats = {};
 
     timesheetList.forEach(timesheet => {
-      // User stats
       const userName = timesheet.user || 'Unknown';
       const hours = parseFloat(timesheet.logged_time?.split(':')[0] || '0');
       userStats[userName] = (userStats[userName] || 0) + hours;
 
-      // Manager stats
-      const manager = timesheet.projectManager || 'Unknown';
-      managerStats[manager] = (managerStats[manager] || 0) + hours;
+      const mgr = timesheet.projectManager || 'Unknown';
+      managerStats[mgr] = (managerStats[mgr] || 0) + hours;
 
-      // Type stats
       const projectType = timesheet.projectType || 'Unknown';
       typeStats[projectType] = (typeStats[projectType] || 0) + hours;
     });
@@ -2379,7 +2601,7 @@ function TimesheetReportContent({ data, filters }) {
     return {
       users: Object.entries(userStats).map(([name, value]) => ({ user: name, totalLoggedHours: value.toFixed(1) })),
       managers: Object.entries(managerStats).map(([name, value]) => ({ projectManager: name, totalLoggedHours: value.toFixed(1) })),
-      types: Object.entries(typeStats).map(([name, value]) => ({ projectType: name, totalLoggedHours: value.toFixed(1) }))
+      types: Object.entries(typeStats).map(([name, value]) => ({ projectType: name, totalLoggedHours: value.toFixed(1) })),
     };
   };
 

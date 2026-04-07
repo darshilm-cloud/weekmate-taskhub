@@ -1,3 +1,48 @@
+/* Hide the ReactHTMLTableToExcel library button — it renders outside React into DOM */
+#test-table-xls-button {
+    display: none !important;
+}
+
+/* Remove white box from the ellipsis menu trigger while keeping its position/padding */
+.task-wrapper .dropdown-trigger.ellipsis-clean {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
+body.dark-theme .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean,
+body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    padding: 4px !important;
+    border-radius: 999px !important;
+    position: relative;
+    top: -4px;
+}
+
+.task-wrapper .csv-dropdown-anchor {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+}
+
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:focus,
+.task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:active,
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+body.dark-theme .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
+body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean:hover {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
 /* Task detail title — always-editable Input styled as heading */
 .task-detail-title-input.ant-input {
     font-size: 22px !important;
@@ -169,6 +214,15 @@
 
 .page-layout .task-wrapper .block-status-content {
     align-items: center;
+}
+
+.task-wrapper .task-sub-header .block-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    width: 100%;
+    margin-left: auto;
 }
 
 /* .project-wrapper .add-task {
@@ -822,6 +876,7 @@ body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .sample-csv:hover,
 body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:hover {
     background: rgba(255, 255, 255, 0.06);
 }
+
 
 .task-logged-details-wrapper .ant-table-body {
     max-height: calc(100vh - 260px) !important;
@@ -5246,4 +5301,47 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.square-primary-btn:hover,
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.delete-btn:hover {
     transform: none !important;
+}
+
+/* ── CSV Ellipsis Dropdown ──────────────────────────────────── */
+.wm-csv-dropdown .ant-dropdown-menu {
+  padding: 6px !important;
+  border-radius: 10px !important;
+  border: 1px solid #e8edf3 !important;
+  box-shadow: 0 6px 24px rgba(11, 58, 91, 0.13), 0 1px 4px rgba(0,0,0,0.06) !important;
+  background: #ffffff !important;
+  min-width: 160px !important;
+}
+
+.wm-csv-dropdown .ant-dropdown-menu-item {
+  border-radius: 8px !important;
+  margin-bottom: 2px !important;
+  padding: 8px 12px !important;
+  transition: background 0.15s ease !important;
+}
+
+.wm-csv-dropdown .ant-dropdown-menu-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.wm-csv-dropdown .ant-dropdown-menu-item:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Dark theme */
+body.dark-theme .wm-csv-dropdown .ant-dropdown-menu,
+body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu {
+  background: #0f1e30 !important;
+  border-color: rgba(74, 104, 150, 0.28) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .wm-csv-dropdown .ant-dropdown-menu-item:hover,
+body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-theme .wm-csv-dropdown .ant-dropdown-menu-item span,
+body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu-item span {
+  color: #dce7fb !important;
 }

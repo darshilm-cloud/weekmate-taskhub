@@ -8,7 +8,7 @@ import AddTimeModal from "../../../components/Modal/AddTimeModal";
 import LoggedTimeDetail from "../../../components/Modal/LoggedTimeDetail";
 import ManagePeopleModal from "../../../components/Modal/ManagePeopleModal";
 import EditCommentModal from "../../../components/Modal/EditCommentModal";
-import isEqual from "lodash/isEqual";
+import { isEqual } from "lodash";
 import TaskDetailModal from "../../TaskPage/TaskDetailModal";
 
 const TasksTableView = ({

@@ -88,6 +88,8 @@ function normalizeStageKey(title) {
   return "";
 }
 
+const { Search } = Input;
+
 const TasksPMS = ({ flag }) => {
   const location = useLocation();
   const history = useHistory();
@@ -487,7 +489,6 @@ const TasksPMS = ({ flag }) => {
   const [copyTaskList] = Form.useForm();
   const searchRef = useRef();
   const attachmentfileRef = useRef();
-  const Search = Input.Search;
 
   const generateTempPassword = () => {
     const seed = Math.random().toString(36).slice(2, 8);
@@ -732,9 +733,9 @@ const TasksPMS = ({ flag }) => {
         due_date: addInputTaskData.end_date,
         assignees: selectedItems.map((item) => item._id),
         pms_clients: selectedClients.map((item) => item._id),
-        task_status: boardTasks[0].workflowStatus._id,
-        estimated_hours: estHrs !== "" && estHrs != null ? estHrs : "00",
-        estimated_minutes: estMins !== "" && estMins != null ? estMins : "00",
+        task_status: boardTasks?.length > 0 ? boardTasks[0].workflowStatus._id : undefined,
+        estimated_hours: estHrs !== "" && estHrs !== null && estHrs !== undefined ? estHrs : "00",
+        estimated_minutes: estMins !== "" && estMins !== null && estMins !== undefined ? estMins : "00",
 
         task_progress: "0",
         recurringType:addInputTaskData?.recurringType || "",
@@ -797,8 +798,8 @@ const TasksPMS = ({ flag }) => {
         task_labels: addInputTaskData.labels ? addInputTaskData.labels : "",
         assignees: selectedItems.map((item) => item._id),
         task_status: editTaskData.workflow_id,
-        estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
-        estimated_minutes: estMins && estMins != "" ? estMins : "00",
+        estimated_hours: estHrs && estHrs !== "" ? estHrs : "00",
+        estimated_minutes: estMins && estMins !== "" ? estMins : "00",
         start_date: addInputTaskData.start_date
           ? addInputTaskData.start_date
           : null,
@@ -1015,7 +1016,7 @@ const TasksPMS = ({ flag }) => {
         body: reqBody,
       });
       if (response?.data?.data?.length > 0) {
-        if (filterData?.isActive == true) {
+        if (filterData?.isActive === true) {
           setPagination((prevPagination) => ({
             ...prevPagination,
             total: response.data.metadata.total,
@@ -1041,7 +1042,7 @@ const TasksPMS = ({ flag }) => {
         }
         if (listID) return;
       } else {
-        setSelectedTask(response.data.data[0]);
+        setSelectedTask(null);
         setProjectMianTask([]);
         setBoardTasks([]);
         setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
@@ -1177,7 +1178,7 @@ const TasksPMS = ({ flag }) => {
   };
 
   const showModalTaskModal = () => {
-    if (projectMianTask.length == 0) {
+    if (projectMianTask.length === 0) {
       return message.error("Please add Tasklist first");
     }
     setIsModalOpenTaskModal(true);
@@ -1380,7 +1381,7 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.deleteProjectMainTask + params,
       });
       dispatch(hideAuthLoader());
-      if (response?.data?.statusCode == 200 && response?.data?.status) {
+      if (response?.data?.statusCode === 200 && response?.data?.status) {
         getProjectMianTask(false, false);
         const searchParams = new URLSearchParams(window.location.search);
         searchParams.delete("listID", listID);
@@ -2013,7 +2014,7 @@ const TasksPMS = ({ flag }) => {
   //Get Task By Redirect Link:
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
-      let data = projectMianTask.filter((ele) => listID == ele?._id);
+      let data = projectMianTask.filter((ele) => listID === ele?._id);
       setSelectedTask(data[0]);
       getListWorkflowStatus();
       if (boardTasksInitiatedRef.current) {
@@ -2295,12 +2296,15 @@ const TasksPMS = ({ flag }) => {
                 </Dropdown>
               )}
               <Search
-                ref={searchRef}
+                value={searchText}
                 placeholder="Search..."
-                onSearch={onSearch}
-                onKeyUp={resetSearchFilter}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  if (!e.target.value) setSearchEnabled(false);
+                }}
                 style={{ width: 200 }}
                 className="mr2"
+                allowClear
               />
             </div>
 
@@ -2527,118 +2531,111 @@ const TasksPMS = ({ flag }) => {
             ) : (
               <div className="profile-sub-head">
                 <div className="task-sub-header">
-                  <div className="head-box-inner">
-                    <Search
-                      ref={searchRef}
-                      placeholder="Search..."
-                      onSearch={onSearchTask}
-                      style={{ width: 200 }}
-                      className="mr2"
-                    />
-                    <div style={{ cursor: "pointer" }}>
-                      <div className="status-content">
-                        <ConfigProvider>
-                          <Dropdown overlay={menu} trigger={["click"]}>
-                            <div className="dropdown-trigger">
-                              {selectedView === "table" ? "" : ""}
-                              <i className="fa-solid fa-table"></i>
-                            </div>
-                          </Dropdown>
-                        </ConfigProvider>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="block-status-content">
+                    <ConfigProvider>
+                      <Dropdown overlay={menu} trigger={["click"]}>
+                        <div className="dropdown-trigger">
+                          <i className="fa-solid fa-table"></i>
+                        </div>
+                      </Dropdown>
+                    </ConfigProvider>
                     <FilterUI
                       boardTasks={boardTasks}
                       subscribersList={subscribersList}
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
                     />
-                  </div>
-                </div>
-
-                <div style={{ cursor: "pointer" }}>
-                  <div hidden>
-                    <ReactHTMLTableToExcel
-                      id="test-table-xls-button"
-                      className="ant-btn-primary"
-                      table="table-to-xls"
-                      filename="ProjectTasks"
-                      sheet="tablexls"
-                      buttonText="Export XLS"
-                    />
-                    <div
-                      dangerouslySetInnerHTML={{ __html: html["html"] }}
-                    ></div>
-                  </div>
-                  <Popover
-                    placement="bottomRight"
-                    overlayClassName="wm-ellipsis-popover"
-	                    content={
-	                      <div className="task-elipse-pop">
-	                        {hasPermission(["task_add"]) && (
-	                          <>
-	                            <div
-	                              className="sample-csv"
-	                              onClick={() => exportSampleCSVfile()}
-	                              role="button"
-	                              tabIndex={0}
-	                            >
-	                              <h6>Sample CSV:</h6>
-	                              <i className="fi fi-rr-file-download"></i>
-	                              <input
-	                                type="file"
-	                                size="small"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  importCsvFile(file);
-                                }}
-                                onClick={(e) => (e.target.value = null)}
-                                style={{ display: "none" }}
-                                ref={importRef}
-                                accept="xlsx, .xls, .csv"
-                              />
-                            </div>
-                          </>
-                        )}
-
-	                        {hasPermission(["task_add"]) && (
-	                          <>
-	                            <div
-	                              className="sample-csv"
-	                              onClick={() => importRef.current.click()}
-	                              role="button"
-	                              tabIndex={0}
-	                            >
-	                              <h6>Import CSV:</h6>
-	                              <i className="fi fi-rr-file-import"></i>
-	                            </div>
-	                          </>
-	                        )}
-	                        <div
-	                          className="sample-csv"
-	                          onClick={() => {
-	                            exportCsv();
-	                            csvRef.click();
-	                          }}
-	                          role="button"
-	                          tabIndex={0}
-	                        >
-	                          <h6>Export CSV:</h6>
-	                          <i className="fi fi-rr-file-download"></i>
-	                        </div>
-	                      </div>
-	                    }
-                    trigger="click"
-                  >
-                    <div style={{ cursor: "pointer" }}>
-                      <label>
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                      </label>
+                    <div style={{ display: "none" }}>
+                      <ReactHTMLTableToExcel
+                        id="test-table-xls-button"
+                        className="ant-btn-primary"
+                        table="table-to-xls"
+                        filename="ProjectTasks"
+                        sheet="tablexls"
+                        buttonText="Export XLS"
+                      />
+                      <div
+                        dangerouslySetInnerHTML={{ __html: html["html"] }}
+                      ></div>
                     </div>
-                  </Popover>
+                    <div className="csv-dropdown-anchor">
+                      <Dropdown
+                        placement="bottomRight"
+                        trigger={["click"]}
+                        overlayClassName="wm-csv-dropdown"
+                        getPopupContainer={(triggerNode) =>
+                          triggerNode?.closest(".csv-dropdown-anchor") ||
+                          document.body
+                        }
+                        // overlay={
+                        //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        overlay={
+  <Menu style={{ 
+    padding: '6px', 
+    borderRadius: '10px', 
+    minWidth: '160px', 
+    boxShadow: '0 6px 20px rgba(0,0,0,0.12)', 
+    border: '1px solid #e8edf3',
+    background: '#ffffff'
+  }}>
+                          {hasPermission(["task_add"]) && (
+                            <Menu.Item
+                              key="sample-csv"
+                              onClick={() => exportSampleCSVfile()}
+                              style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
+                                <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                <input
+                                  type="file"
+                                  size="small"
+                                  onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    importCsvFile(file);
+                                  }}
+                                  onClick={(e) => (e.target.value = null)}
+                                  style={{ display: "none" }}
+                                  ref={importRef}
+                                  accept="xlsx, .xls, .csv"
+                                />
+                              </div>
+                            </Menu.Item>
+                          )}
+                          {hasPermission(["task_add"]) && (
+                            <Menu.Item
+                              key="import-csv"
+                              onClick={() => importRef.current.click()}
+                              style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
+                                <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                              </div>
+                            </Menu.Item>
+                          )}
+                          <Menu.Item
+                            key="export-csv"
+                            onClick={() => {
+                              exportCsv();
+                              csvRef.click();
+                            }}
+                            style={{ padding: '8px 12px', borderRadius: '8px' }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV:</span>
+                              <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                            </div>
+                          </Menu.Item>
+                        </Menu>
+                        }
+                      >
+                        <div className="dropdown-trigger ellipsis-clean">
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
+                        </div>
+                      </Dropdown>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

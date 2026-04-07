@@ -134,6 +134,132 @@ const buildExpenseFilterBody = ({
   return body;
 };
 
+const normalizeExpenseFilters = (filters = {}) => ({
+  project: Array.isArray(filters.project) ? [...filters.project] : [],
+  technology: Array.isArray(filters.technology) ? [...filters.technology] : [],
+  manager: Array.isArray(filters.manager) ? [...filters.manager] : [],
+  accountManager: Array.isArray(filters.accountManager) ? [...filters.accountManager] : [],
+  needToBillCustomer: filters.needToBillCustomer || "All",
+  createdBy: Array.isArray(filters.createdBy) ? [...filters.createdBy] : [],
+});
+
+const normalizeEntityId = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") return value?._id || value?.id || value?.value || "";
+  return String(value);
+};
+
+const toIdList = (...values) =>
+  values
+    .flatMap((value) => {
+      if (Array.isArray(value)) return value;
+      return value !== undefined && value !== null ? [value] : [];
+    })
+    .map(normalizeEntityId)
+    .filter(Boolean);
+
+const normalizeBillableValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["yes", "true", "1"].includes(normalized)) return true;
+    if (["no", "false", "0"].includes(normalized)) return false;
+  }
+  return null;
+};
+
+const hasLocalExpenseFilters = ({
+  selectedProject = [],
+  technology = [],
+  manager = [],
+  accontManager = [],
+  createdBy = [],
+  need_to_bill_customer,
+}) =>
+  selectedProject.length > 0 ||
+  technology.length > 0 ||
+  manager.length > 0 ||
+  accontManager.length > 0 ||
+  createdBy.length > 0 ||
+  need_to_bill_customer !== "All";
+
+const filterExpensesLocally = (
+  expenses = [],
+  {
+    selectedProject = [],
+    technology = [],
+    manager = [],
+    accontManager = [],
+    createdBy = [],
+    need_to_bill_customer = "All",
+  } = {}
+) => {
+  const selectedProjectIds = selectedProject.map(normalizeEntityId).filter(Boolean);
+  const selectedTechnologyIds = technology.map(normalizeEntityId).filter(Boolean);
+  const selectedManagerIds = manager.map(normalizeEntityId).filter(Boolean);
+  const selectedAccountManagerIds = accontManager.map(normalizeEntityId).filter(Boolean);
+  const selectedCreatorIds = createdBy.map(normalizeEntityId).filter(Boolean);
+  const selectedBillable = normalizeBillableValue(need_to_bill_customer);
+
+  return expenses.filter((expense) => {
+    const projectIds = toIdList(expense?.project, expense?.project?._id, expense?.project_id);
+    const technologyIds = toIdList(
+      expense?.technology,
+      expense?.technology?._id,
+      expense?.technology_id,
+      expense?.project?.technology,
+      expense?.project?.technology?._id,
+      expense?.project?.technology_id,
+      expense?.project?.project_tech,
+      expense?.project?.project_tech?._id
+    );
+    const managerIds = toIdList(expense?.manager, expense?.manager?._id, expense?.manager_id);
+    const accountManagerIds = toIdList(
+      expense?.acc_manager,
+      expense?.acc_manager?._id,
+      expense?.accountManager,
+      expense?.accountManager?._id,
+      expense?.acc_manager_id
+    );
+    const creatorIds = toIdList(
+      expense?.createdBy,
+      expense?.createdBy?._id,
+      expense?.created_by,
+      expense?.created_by?._id,
+      expense?.creator,
+      expense?.creator?._id,
+      expense?.user,
+      expense?.user?._id
+    );
+    const billableValue = normalizeBillableValue(expense?.need_to_bill_customer);
+
+    if (selectedProjectIds.length > 0 && !projectIds.some((id) => selectedProjectIds.includes(id))) {
+      return false;
+    }
+    if (selectedTechnologyIds.length > 0 && !technologyIds.some((id) => selectedTechnologyIds.includes(id))) {
+      return false;
+    }
+    if (selectedManagerIds.length > 0 && !managerIds.some((id) => selectedManagerIds.includes(id))) {
+      return false;
+    }
+    if (
+      selectedAccountManagerIds.length > 0 &&
+      !accountManagerIds.some((id) => selectedAccountManagerIds.includes(id))
+    ) {
+      return false;
+    }
+    if (selectedCreatorIds.length > 0 && !creatorIds.some((id) => selectedCreatorIds.includes(id))) {
+      return false;
+    }
+    if (selectedBillable !== null && billableValue !== selectedBillable) {
+      return false;
+    }
+
+    return true;
+  });
+};
+
 const mergeExpensesById = (primary = [], secondary = []) => {
   const map = new Map();
   [...primary, ...secondary].forEach((expense) => {
@@ -208,41 +334,90 @@ const Projectexpences = () => {
     isSuperAdmin:    getRoles(USER_ROLES.SUPER_ADMIN),
   }), [userData._id]);
 
+  const appliedFilters = useMemo(() => normalizeExpenseFilters({
+    project: selectedProject,
+    technology,
+    manager,
+    accountManager: accontManager,
+    needToBillCustomer: need_to_bill_customer,
+    createdBy,
+  }), [selectedProject, technology, manager, accontManager, need_to_bill_customer, createdBy]);
+
+  const fetchExpenseRecords = useCallback(async ({ pageNo, limit, filters } = {}) => {
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url:    Service.getprojectexpanses,
+      body: {
+        pageNo,
+        limit,
+        sort: "_id",
+        sortBy: "desc",
+        ...(filters || {}),
+      },
+    });
+
+    const rows = toExpenseArray(response?.data?.data).map(normalizeExpenseRecord);
+    const total = response?.data?.metadata?.total || rows.length;
+
+    return { rows, total };
+  }, []);
+
   /* ─────────────────────────────────────────────────────────────
      FETCH — full dataset for analytics (large limit, no pagination)
   ───────────────────────────────────────────────────────────── */
   const fetchAllForAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url:    Service.getprojectexpanses,
-        body: {
-          pageNo:  1,
-          limit:   1000,
-          sort: "_id",
-          sortBy: "desc",
-          ...buildExpenseFilterBody({
-            selectedProject,
-            technology,
-            manager,
-            accontManager,
-            createdBy,
-            need_to_bill_customer,
-          }),
-        },
+      const activeFilters = buildExpenseFilterBody({
+        selectedProject,
+        technology,
+        manager,
+        accontManager,
+        createdBy,
+        need_to_bill_customer,
       });
-      if (response?.data?.data) {
-        const serverExpenses = toExpenseArray(response.data.data).map(normalizeExpenseRecord);
-        setAllExpenses(serverExpenses);
-        setOptimisticExpenses([]);
+      const shouldFilterLocally = hasLocalExpenseFilters({
+        selectedProject,
+        technology,
+        manager,
+        accontManager,
+        createdBy,
+        need_to_bill_customer,
+      });
+
+      let { rows: serverExpenses } = await fetchExpenseRecords({
+        pageNo: 1,
+        limit: 1000,
+        filters: shouldFilterLocally ? {} : activeFilters,
+      });
+
+      if (shouldFilterLocally) {
+        serverExpenses = filterExpensesLocally(serverExpenses, {
+          selectedProject,
+          technology,
+          manager,
+          accontManager,
+          createdBy,
+          need_to_bill_customer,
+        });
       }
+
+      setAllExpenses(serverExpenses);
+      setOptimisticExpenses([]);
     } catch (err) {
       console.error("Analytics fetch error:", err);
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer]);
+  }, [
+    selectedProject,
+    technology,
+    manager,
+    accontManager,
+    createdBy,
+    need_to_bill_customer,
+    fetchExpenseRecords,
+  ]);
 
   /* ─────────────────────────────────────────────────────────────
      FETCH — paginated table data
@@ -251,37 +426,54 @@ const Projectexpences = () => {
     setTableLoading(true);
     try {
       dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url:    Service.getprojectexpanses,
-        body: {
-          pageNo:   pagination.current,
-          limit:    pagination.pageSize,
-          sort: "_id",
-          sortBy: "desc",
-          ...buildExpenseFilterBody({
-            selectedProject,
-            technology,
-            manager,
-            accontManager,
-            createdBy,
-            need_to_bill_customer,
-          }),
-        },
+      const activeFilters = buildExpenseFilterBody({
+        selectedProject,
+        technology,
+        manager,
+        accontManager,
+        createdBy,
+        need_to_bill_customer,
       });
-      dispatch(hideAuthLoader());
-      if (response?.data?.data) {
-        const serverExpenses = toExpenseArray(response.data.data).map(normalizeExpenseRecord);
-        const serverTotal = response.data.metadata?.total || serverExpenses.length;
+      const shouldFilterLocally = hasLocalExpenseFilters({
+        selectedProject,
+        technology,
+        manager,
+        accontManager,
+        createdBy,
+        need_to_bill_customer,
+      });
 
-        setprojectexpencesList(serverExpenses);
-        setPagination((p) => ({ ...p, total: serverTotal }));
-        setOptimisticExpenses([]);
+      let { rows: serverExpenses, total: serverTotal } = await fetchExpenseRecords({
+        pageNo: pagination.current,
+        limit: pagination.pageSize,
+        filters: shouldFilterLocally ? {} : activeFilters,
+      });
 
-        if (pagination.current === 1) {
-          setAllExpenses(serverExpenses);
-        }
+      if (shouldFilterLocally) {
+        const { rows: allServerExpenses } = await fetchExpenseRecords({
+          pageNo: 1,
+          limit: 1000,
+        });
+        const locallyFilteredExpenses = filterExpensesLocally(allServerExpenses, {
+          selectedProject,
+          technology,
+          manager,
+          accontManager,
+          createdBy,
+          need_to_bill_customer,
+        });
+        const startIndex = (pagination.current - 1) * pagination.pageSize;
+        const endIndex = startIndex + pagination.pageSize;
+
+        serverExpenses = locallyFilteredExpenses.slice(startIndex, endIndex);
+        serverTotal = locallyFilteredExpenses.length;
       }
+
+      dispatch(hideAuthLoader());
+
+      setprojectexpencesList(serverExpenses);
+      setPagination((p) => ({ ...p, total: serverTotal }));
+      setOptimisticExpenses([]);
     } catch (err) {
       dispatch(hideAuthLoader());
       console.error(err);
@@ -292,7 +484,7 @@ const Projectexpences = () => {
   }, [
     pagination.current, pagination.pageSize,
     selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer,
-    dispatch,
+    dispatch, fetchExpenseRecords,
   ]);
 
   useEffect(() => {
@@ -415,7 +607,16 @@ const Projectexpences = () => {
     stroke: { curve: "smooth", width: 2 },
     colors: ["#2563eb"],
     fill:   { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.02 } },
-    xaxis:  { categories: analytics.monthlyLabels, labels: { style: { fontSize: "11px" } } },
+    xaxis: {
+      categories: analytics.monthlyLabels,
+      labels: {
+        style: { fontSize: "11px" },
+        rotate: -35,
+        rotateAlways: false,
+        hideOverlappingLabels: true,
+        trim: true,
+      },
+    },
     yaxis:  { labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } } },
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
@@ -433,12 +634,27 @@ const Projectexpences = () => {
     colors: ["#7c3aed"],
     xaxis: {
       categories: analytics.projectLabels.length ? analytics.projectLabels : ["No Data"],
-      labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } },
+      tickAmount: 5,
+      labels: {
+        formatter: (v) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`,
+        style: { fontSize: "10px" },
+        hideOverlappingLabels: true,
+        rotate: 0,
+      },
     },
-    yaxis: { labels: { style: { fontSize: "11px", maxWidth: 120 } } },
+    yaxis: {
+      labels: {
+        style: { fontSize: "11px" },
+        maxWidth: 160,
+        formatter: (v) => v && v.length > 18 ? v.substring(0, 16) + "…" : v,
+      },
+    },
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9" },
-    tooltip: { y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` } },
+    tooltip: {
+      y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+      x: { formatter: (_, { dataPointIndex }) => analytics.projectLabels[dataPointIndex] || "" },
+    },
   }), [analytics.projectLabels]);
 
   const barSeries = useMemo(() => [{
@@ -533,26 +749,30 @@ const Projectexpences = () => {
   /* ─────────────────────────────────────────────────────────────
      FILTER COMPONENT callback (existing filter component wiring)
   ───────────────────────────────────────────────────────────── */
-  const onFilterChange = useCallback((skipParams, selectedFilters) => {
-    if (skipParams.includes("skipAll")) {
+  const onFilterChange = useCallback((skipParams = [], selectedFilters) => {
+    const nextSkipParams = Array.isArray(skipParams) ? skipParams : [];
+
+    if (nextSkipParams.includes("skipAll")) {
       setSelectedProject([]); setTechnology([]); setCreatedBy([]);
       setManager([]); setAccountManager([]); setFeedBackTypeFilter("All");
       setPagination((p) => ({ ...p, current: 1 }));
     } else {
-      if (skipParams.includes("skipProject"))          setSelectedProject([]);
-      if (skipParams.includes("skipDepartment"))       setTechnology([]);
-      if (skipParams.includes("skipManager"))          setManager([]);
-      if (skipParams.includes("skipAccountManager"))   setAccountManager([]);
-      if (skipParams.includes("skipNeedToBillCustomer")) setFeedBackTypeFilter("All");
-      if (skipParams.includes("skipCreatedBy"))        setCreatedBy([]);
+      if (nextSkipParams.includes("skipProject"))            setSelectedProject([]);
+      if (nextSkipParams.includes("skipDepartment"))         setTechnology([]);
+      if (nextSkipParams.includes("skipManager"))            setManager([]);
+      if (nextSkipParams.includes("skipAccountManager"))     setAccountManager([]);
+      if (nextSkipParams.includes("skipNeedToBillCustomer")) setFeedBackTypeFilter("All");
+      if (nextSkipParams.includes("skipCreatedBy"))          setCreatedBy([]);
     }
     if (selectedFilters) {
-      setSelectedProject(selectedFilters.project        || []);
-      setTechnology(selectedFilters.technology           || []);
-      setManager(selectedFilters.manager                 || []);
-      setAccountManager(selectedFilters.accountManager  || []);
-      setFeedBackTypeFilter(selectedFilters.needToBillCustomer || "All");
-      setCreatedBy(selectedFilters.createdBy             || []);
+      const normalizedFilters = normalizeExpenseFilters(selectedFilters);
+
+      setSelectedProject(normalizedFilters.project);
+      setTechnology(normalizedFilters.technology);
+      setManager(normalizedFilters.manager);
+      setAccountManager(normalizedFilters.accountManager);
+      setFeedBackTypeFilter(normalizedFilters.needToBillCustomer);
+      setCreatedBy(normalizedFilters.createdBy);
       setPagination((p) => ({ ...p, current: 1 }));
     }
   }, []);
@@ -689,6 +909,7 @@ const Projectexpences = () => {
         <div className="pe-header-actions">
           <ProjectExpenseFilterComponent
             onFilterChange={onFilterChange}
+            selectedFilters={appliedFilters}
             userPermissions={userPermissions}
           />
           <button

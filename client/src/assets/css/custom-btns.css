@@ -212,6 +212,26 @@
     display: flex;
     align-items: center;
 }
+
+.filter-container .ant-btn.filter-btn,
+.ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn,
+.ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn.ant-btn-primary {
+    background: #ffffff !important;
+    color: #0369a1 !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+.filter-container .ant-btn.filter-btn:hover,
+.filter-container .ant-btn.filter-btn:focus,
+.ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn:hover,
+.ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn:focus {
+    background: #ffffff !important;
+    color: #0369a1 !important;
+    border-color: #93c5fd !important;
+    box-shadow: none !important;
+}
 .ant-delete,
 .ant-layout .ant-layout-content .ant-reject,
 .ant-layout .ant-layout-content .ant-delete {

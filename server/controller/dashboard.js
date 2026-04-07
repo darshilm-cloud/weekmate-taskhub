@@ -306,31 +306,16 @@ exports.getMyProjects = async (req, res) => {
 
     // Apply complaints filter if needed (after aggregation to maintain count accuracy)
     if (isComplaints && isComplaints !== undefined) {
-      const filteredData = data.filter((ele) => {
-        // if ([].includes(ele?.project_types?.slug)) {
-        //   return ele;
-        // }
-      });
-      
-      // If complaints filter is applied after pagination, we need to recalculate total
+      data = data.filter((ele) =>
+        ["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)
+      );
+
       if (pageNum && limitNum) {
-        // For complaints filter, we need to run a separate count query
-        const complaintsCountQuery = [...countQuery];
-        const complaintsCountResult = await Project.aggregate(complaintsCountQuery);
-        const allData = complaintsCountResult.length > 0 ? await Project.aggregate([
-          ...mainQuery.slice(0, -2) // Remove skip and limit
-        ]) : [];
-        
-        const complaintsFilteredCount = allData.filter((ele) => {
-          if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
-            return ele;
-          }
-        }).length;
-        
-        totalDocuments = complaintsFilteredCount;
+        const allData = await Project.aggregate([...mainQuery.slice(0, -2)]);
+        totalDocuments = allData.filter((ele) =>
+          ["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)
+        ).length;
       }
-      
-      data = data;
     }
 
     // check project have project id or not...
@@ -424,26 +409,23 @@ exports.getMyTasks = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(value.start_date !== "" || value.end_date !== ""
         ? {
-          due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-          },
-        }
-        : {}),
-      ...(value.start_date == "" && value.end_date !== ""
-        ? {
-          due_date: { $lte: moment(value.end_date).endOf("day").toDate() },
-        }
-        : {}),
-
-      ...(value.start_date !== "" && value.end_date !== ""
-        ? {
-          due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).endOf("day").toDate(),
-          },
-        }
+            $or: [
+              {
+                due_date: {
+                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
+                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                },
+              },
+              {
+                start_date: {
+                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
+                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                },
+              },
+            ],
+          }
         : {}),
     };
 
@@ -704,18 +686,22 @@ exports.getTaskList = async (req, res) => {
       ...(value.project_id.length > 0
         ? { project_id: { $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)) } }
         : {}),
-      ...(value.start_date !== "" && value.end_date === ""
-        ? { due_date: { $gte: moment(value.start_date).startOf("day").toDate() } }
-        : {}),
-      ...(value.start_date === "" && value.end_date !== ""
-        ? { due_date: { $lte: moment(value.end_date).endOf("day").toDate() } }
-        : {}),
-      ...(value.start_date !== "" && value.end_date !== ""
+      ...(value.start_date !== "" || value.end_date !== ""
         ? {
-            due_date: {
-              $gte: moment(value.start_date).startOf("day").toDate(),
-              $lte: moment(value.end_date).endOf("day").toDate(),
-            },
+            $or: [
+              {
+                due_date: {
+                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
+                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                },
+              },
+              {
+                start_date: {
+                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
+                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                },
+              },
+            ],
           }
         : {}),
     };

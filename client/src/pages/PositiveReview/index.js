@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Drawer, Popconfirm, Select, Table, Tooltip, message } from "antd";
+import { Drawer, Popconfirm, Table, Tooltip, message } from "antd";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   CalendarOutlined,
@@ -392,14 +392,11 @@ const PositiveReview = () => {
             </span>
           </div>
           <div className="pr-table-toolbar">
-            <Select
-              size="small"
-              value={feedBackTypeFilter}
-              onChange={(v) => { setFeedBackTypeFilter(v); setPagination((p) => ({ ...p, current: 1 })); }}
-              options={FEEDBACK_TYPES}
-              style={{ width: 160 }}
+            <GenericFilterComponent
+              onFilterChange={onFilterChange}
+              containerClassName="pr-filter-container"
+              triggerButtonClassName="pr-filter-trigger"
             />
-            <GenericFilterComponent onFilterChange={onFilterChange} />
           </div>
         </div>
 

@@ -15,6 +15,7 @@ Router.get("/get/stages/:id", masterController.getStages);
 Router.get("/get/timesheets/:id", masterController.getTimesheets);
 Router.get("/get/bugs-workflow", masterController.getBugsWorkFlow);
 Router.post("/get/clients", masterController.getPMSClient);
+Router.get("/get/clients", masterController.getPMSClient);
 Router.get("/get/bugs/:taskId", masterController.getTaskWiseBugs);
 Router.get("/get/tasksAssigned/:id", masterController.getTasksAssigned);
 Router.post("/get/taggedUsersList", masterController.getTaggedUsersList);

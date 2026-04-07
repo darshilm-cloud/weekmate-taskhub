@@ -303,7 +303,11 @@ const RadioFilter = ({
   </div>
 );
 
-const ComplaintFilterComponent = ({ onFilterChange }) => {
+const ComplaintFilterComponent = ({
+  onFilterChange,
+  triggerButtonClassName = "",
+  containerClassName = "",
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT);
   const [filterData, setFilterData] = useState({
@@ -850,7 +854,7 @@ const ComplaintFilterComponent = ({ onFilterChange }) => {
   );
 
   return (
-    <div className="filter-container">
+    <div className={`filter-container ${containerClassName}`.trim()}>
       <Popover
         content={popoverContent}
         trigger="click"
@@ -859,7 +863,7 @@ const ComplaintFilterComponent = ({ onFilterChange }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
           <Badge
             count={activeFiltersCount}

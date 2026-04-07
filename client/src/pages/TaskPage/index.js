@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Dropdown, Modal, message } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -7,6 +7,7 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   DownOutlined,
+  FilterOutlined,
   FlagOutlined,
   MessageOutlined,
   BarChartOutlined,
@@ -26,7 +27,7 @@ const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
 
 const { Option } = Select;
 
-const TODAY = dayjs().format("YYYY-MM-DD");
+
 const DATE_PRESET_LABELS = {
   any: "Date Type",
   today: "Today",
@@ -42,6 +43,21 @@ const SORT_MODE_LABELS = {
   title_asc: "A to Z",
   title_desc: "Z to A",
 };
+
+const TASK_STATUS_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "incomplete", label: "Incomplete" },
+  { value: "completed", label: "Completed" },
+];
+
+const TASK_SORT_OPTIONS = Object.entries(SORT_MODE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+const TASK_DATE_OPTIONS = Object.entries(DATE_PRESET_LABELS)
+  .filter(([value]) => value !== "any")
+  .map(([value, label]) => ({ value, label }));
 
 /** Get display name from assignee (populated object or raw id) */
 function getAssigneeName(a) {
@@ -165,6 +181,217 @@ function sortTaskList(items, sortMode) {
     return 0;
   });
   return sorted;
+}
+
+function TaskCombinedFacetFilter({
+  statusFilter,
+  setStatusFilter,
+  projectFilter,
+  setProjectFilter,
+  projects,
+  isAdmin,
+  viewAll,
+  setViewAll,
+  sortMode,
+  setSortMode,
+  datePreset,
+  applyDatePreset,
+}) {
+  const FILTER_SECTIONS = [
+    { key: "status", label: "Status", defaultValue: "all", options: TASK_STATUS_OPTIONS },
+    { key: "project", label: "Project", defaultValue: [], options: projects || [], mode: "multiple" },
+    ...(isAdmin
+      ? [
+          {
+            key: "scope",
+            label: "Task Scope",
+            defaultValue: true,
+            options: [
+              { value: true, label: "All Tasks" },
+              { value: false, label: "My Tasks" },
+            ],
+          },
+        ]
+      : []),
+    { key: "sort", label: "Default", defaultValue: "default", options: TASK_SORT_OPTIONS },
+    { key: "date", label: "Date Type", defaultValue: "any", options: TASK_DATE_OPTIONS },
+  ];
+
+  const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("status");
+  const [draftFilters, setDraftFilters] = useState({
+    status: statusFilter || "all",
+    project: Array.isArray(projectFilter) ? projectFilter : [],
+    scope: Boolean(viewAll),
+    sort: sortMode || "default",
+    date: datePreset || "any",
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setDraftFilters({
+        status: statusFilter || "all",
+        project: Array.isArray(projectFilter) ? projectFilter : [],
+        scope: Boolean(viewAll),
+        sort: sortMode || "default",
+        date: datePreset || "any",
+      });
+    }
+  }, [datePreset, open, projectFilter, sortMode, statusFilter, viewAll]);
+
+  const activeCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter && statusFilter !== "all") count += 1;
+    if (Array.isArray(projectFilter) && projectFilter.length > 0) count += 1;
+    if (isAdmin && Boolean(viewAll) !== true) count += 1;
+    if (sortMode && sortMode !== "default") count += 1;
+    if (datePreset && datePreset !== "any") count += 1;
+    return count;
+  }, [datePreset, isAdmin, projectFilter, sortMode, statusFilter, viewAll]);
+
+  const activeConfig = FILTER_SECTIONS.find((section) => section.key === activeSection) || FILTER_SECTIONS[0];
+
+  const handleApply = () => {
+    setStatusFilter(draftFilters.status || "all");
+    setProjectFilter(Array.isArray(draftFilters.project) ? draftFilters.project : []);
+    if (isAdmin) {
+      setViewAll(Boolean(draftFilters.scope));
+    }
+    setSortMode(draftFilters.sort || "default");
+    applyDatePreset(draftFilters.date || "any");
+    setOpen(false);
+  };
+
+  const handleReset = () => {
+    setDraftFilters((prev) => ({
+      ...prev,
+      [activeSection]: activeConfig.defaultValue,
+    }));
+  };
+
+  const panel = (
+    <div className="task-shared-filter-popover">
+      <div className="filter-sidebar">
+        <div className="filter-header">
+          <h4 className="filter-sidebar-title">Filters</h4>
+        </div>
+        <Divider style={{ margin: "8px 0" }} />
+        {FILTER_SECTIONS.map((section) => {
+          const currentValue = draftFilters[section.key];
+          const isSelected = currentValue && currentValue !== section.defaultValue;
+
+          return (
+            <div
+              key={section.key}
+              onClick={() => setActiveSection(section.key)}
+              className={`filter-menu-item ${activeSection === section.key ? "active" : ""}`}
+            >
+              <span>{section.label}</span>
+              {isSelected ? <Badge size="small" color="#1890ff" /> : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="filter-content">
+        <div className="filter-content-inner">
+          <h4 className="filter-title">{activeConfig.label}</h4>
+          {activeSection === "project" ? (
+            <div className="task-filter-panel-select-wrap">
+              <Select
+                mode="multiple"
+                placeholder="Search project"
+                value={Array.isArray(draftFilters.project) ? draftFilters.project : []}
+                onChange={(value) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    project: value,
+                  }))
+                }
+                className="task-filter-panel-select"
+                allowClear
+                showSearch
+                optionFilterProp="children"
+                maxTagCount={2}
+              >
+                {(projects || []).map((project) => (
+                  <Option key={project._id} value={project._id}>
+                    {project.title}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          ) : (
+            <Radio.Group
+              value={draftFilters[activeSection]}
+              onChange={(e) =>
+                setDraftFilters((prev) => ({
+                  ...prev,
+                  [activeSection]: e.target.value,
+                }))
+              }
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              {activeConfig.options.map((opt) => (
+                <div
+                  key={opt.value}
+                  className={`assignee-item${draftFilters[activeSection] === opt.value ? " selected" : ""}`}
+                  onClick={() =>
+                    setDraftFilters((prev) => ({
+                      ...prev,
+                      [activeSection]: opt.value,
+                    }))
+                  }
+                  style={{ cursor: "pointer" }}
+                >
+                  <Radio value={opt.value}>
+                    <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
+                  </Radio>
+                </div>
+              ))}
+            </Radio.Group>
+          )}
+          <div className="filter-actions">
+            <Button size="small" className="filter-btn" onClick={handleApply}>
+              Apply Filter
+            </Button>
+            <Button size="small" className="delete-btn" onClick={handleReset}>
+              Reset
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={panel}
+      trigger="click"
+      open={open}
+      onOpenChange={(visible) => {
+        if (visible) {
+          setDraftFilters({
+            status: statusFilter || "all",
+            project: Array.isArray(projectFilter) ? projectFilter : [],
+            scope: Boolean(viewAll),
+            sort: sortMode || "default",
+            date: datePreset || "any",
+          });
+        }
+        setOpen(visible);
+      }}
+      placement="bottomLeft"
+      overlayClassName="task-shared-filter-overlay"
+    >
+      <Button icon={<FilterOutlined />} className="task-combined-filter-btn">
+        Filter
+        {activeCount > 0 ? (
+          <Badge count={activeCount} size="small" offset={[6, 0]} color="#1890ff" />
+        ) : null}
+      </Button>
+    </Popover>
+  );
 }
 
 const TaskPage = () => {
@@ -316,25 +543,43 @@ const TaskPage = () => {
   const sortedTasks = useMemo(() => sortTaskList(tasks, sortMode), [tasks, sortMode]);
 
   const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
+    const now = dayjs();
+    const todayStr = now.format("YYYY-MM-DD");
     const today = [];
     const overdue = [];
     const upcoming = [];
+
     sortedTasks.forEach((t) => {
       const due = t.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
-      if (!due) { upcoming.push(t); return; }
-      if (due === TODAY) today.push(t);
-      else if (dayjs(due).isBefore(dayjs(), "day")) overdue.push(t);
-      else upcoming.push(t);
+      const start = t.start_date ? dayjs(t.start_date).format("YYYY-MM-DD") : null;
+
+      if (!due && !start) {
+        upcoming.push(t);
+        return;
+      }
+
+      const isDueToday = due === todayStr;
+      const isStartingToday = start === todayStr;
+      const isPastDue = due && dayjs(due).isBefore(now, "day");
+
+      if (isDueToday || isStartingToday) {
+        today.push(t);
+      } else if (isPastDue) {
+        overdue.push(t);
+      } else {
+        upcoming.push(t);
+      }
     });
+
     return {
       todayTasks: today,
       overdueTasks:
         sortMode === "default"
-          ? overdue.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          ? overdue.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
           : overdue,
       upcomingTasks:
         sortMode === "default"
-          ? upcoming.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+          ? upcoming.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
           : upcoming,
     };
   }, [sortedTasks, sortMode]);
@@ -381,22 +626,6 @@ const TaskPage = () => {
     });
     return map;
   }, [sortedTasks]);
-
-  const sortMenu = {
-    items: Object.entries(SORT_MODE_LABELS).map(([key, label]) => ({
-      key,
-      label,
-    })),
-    onClick: ({ key }) => setSortMode(key),
-  };
-
-  const dateMenu = {
-    items: Object.entries(DATE_PRESET_LABELS).map(([key, label]) => ({
-      key,
-      label,
-    })),
-    onClick: ({ key }) => applyDatePreset(key),
-  };
 
   const handleOpenTask = (task) => {
     setSelectedTask(task);
@@ -467,26 +696,20 @@ const TaskPage = () => {
             className="task-search"
             allowClear
           />
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            className="task-filter-select"
-            options={[
-              { value: "all", label: "Status" },
-              { value: "incomplete", label: "Incomplete" },
-              { value: "completed", label: "Completed" },
-            ]}
+          <TaskCombinedFacetFilter
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            projectFilter={projectFilter}
+            setProjectFilter={setProjectFilter}
+            projects={projects}
+            isAdmin={isAdmin}
+            viewAll={viewAll}
+            setViewAll={setViewAll}
+            sortMode={sortMode}
+            setSortMode={setSortMode}
+            datePreset={datePreset}
+            applyDatePreset={applyDatePreset}
           />
-          <Dropdown menu={sortMenu} trigger={["click"]}>
-            <button type="button" className="task-filter-btn">
-              {SORT_MODE_LABELS[sortMode]} <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
-            </button>
-          </Dropdown>
-          <Dropdown menu={dateMenu} trigger={["click"]}>
-            <button type="button" className="task-filter-btn">
-              <CalendarOutlined /> {DATE_PRESET_LABELS[datePreset]}
-            </button>
-          </Dropdown>
           {selectedTaskIds.length > 0 && (
             <button
               type="button"
@@ -534,30 +757,6 @@ const TaskPage = () => {
           >
             <BarChartOutlined className="task-tab-icon" /> Gantt
           </button>
-        </div>
-        <div className="task-page-tabs-right">
-          <Select
-            mode="multiple"
-            placeholder="Project"
-            value={projectFilter}
-            onChange={setProjectFilter}
-            className="task-filter-select task-filter-project"
-            allowClear
-            maxTagCount={1}
-          >
-            {projects.map((p) => (
-              <Option key={p._id} value={p._id}>{p.title}</Option>
-            ))}
-          </Select>
-          {isAdmin && (
-            <Checkbox
-              checked={viewAll}
-              onChange={(e) => setViewAll(e.target.checked)}
-              className="task-view-all"
-            >
-              All tasks
-            </Checkbox>
-          )}
         </div>
       </div>
 
