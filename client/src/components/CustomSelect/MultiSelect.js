@@ -11,6 +11,7 @@ const MultiSelect = ({
   values = [],
   listData = [],
   search = "",
+  showTagLabel = false,
   ...otherProps
 }) => {
   const getDisplayName = (item) =>
@@ -60,14 +61,34 @@ const MultiSelect = ({
   const tagRender = (props) => {
     const { value, closable, onClose } = props;
     const item = listData.find((item) => item?._id === value);
+    const displayName = removeTitle(getDisplayName(item) || "-");
     return (
-      <>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: showTagLabel ? "6px" : "0",
+          maxWidth: "100%",
+        }}
+      >
         <MyAvatar
           userName={getDisplayName(item) || "-"}
           src={item?.emp_img || item?.profile_image || item?.avatar || item?.image}
           key={item?._id}
           alt={getDisplayName(item)}
         />
+        {showTagLabel && (
+          <span
+            style={{
+              maxWidth: "120px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {displayName}
+          </span>
+        )}
         <span
           onClick={onClose}
           style={{
@@ -81,7 +102,7 @@ const MultiSelect = ({
         >
           {closable && <CloseCircleOutlined />}
         </span>
-      </>
+      </span>
     );
   };
 

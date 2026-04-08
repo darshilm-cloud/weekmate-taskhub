@@ -85,6 +85,15 @@ const ProjectsRunning = () => {
   const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
+  const totalProjectsCount = useMemo(
+    () =>
+      pagination.total ||
+      metaDataOfReports?.total ||
+      metaDataOfReports?.totalProjects ||
+      tableData.length ||
+      0,
+    [pagination.total, metaDataOfReports, tableData.length]
+  );
 
   const getProjectReportsDetails = useCallback(
     async ({
@@ -779,11 +788,16 @@ const renderChart = useCallback(
               dataSource={tableData}
               rowKey="_id"
               pagination={{
+                position: ["bottomCenter"],
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "30", "50"],
                 showTotal: showTotal,
                 showQuickJumper: true,
-                ...pagination,
+                responsive: true,
+                showLessItems: true,
+                total: totalProjectsCount,
+                current: pagination.current,
+                pageSize: pagination.pageSize,
               }}
               onChange={handleTableChange}
               size="middle"

@@ -494,6 +494,55 @@ body[data-theme="dark"] .cm-modal .ant-modal-header {
   border-bottom-color: #1e3a52 !important;
 }
 
+.cm-modal .ant-modal-header {
+  background: linear-gradient(135deg, #0b3a5b 0%, #0f4c75 100%) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.cm-modal .ant-modal-title {
+  color: #ffffff !important;
+}
+
+.cm-modal .ant-modal-title .anticon,
+.cm-modal .ant-modal-title svg {
+  color: #ffffff !important;
+}
+
+.cm-modal .ant-modal-close {
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+.cm-modal .ant-modal-close:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #e0f2fe !important;
+}
+
+.cm-modal .ant-modal-close .ant-modal-close-x {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cm-modal .ant-modal-close .ant-modal-close-x,
+.cm-modal .ant-modal-close .ant-modal-close-x .anticon,
+.cm-modal .ant-modal-close .ant-modal-close-x svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 body.dark-theme .cm-modal .ant-modal-title,
 body[data-theme="dark"] .cm-modal .ant-modal-title {
   color: #e3ecfb !important;
@@ -544,6 +593,27 @@ body[data-theme="dark"] .cm-modal .ant-input::placeholder {
 body.dark-theme .cm-modal .ant-input-prefix,
 body[data-theme="dark"] .cm-modal .ant-input-prefix {
   color: #4a6380 !important;
+}
+
+.cm-modal .ant-input-affix-wrapper .ant-input {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  align-self: center;
+}
+
+.cm-modal .ant-input-affix-wrapper .ant-input:focus,
+.cm-modal .ant-input-affix-wrapper .ant-input:hover {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.cm-modal .ant-input-affix-wrapper {
+  align-items: center !important;
+}
+
+.cm-modal .ant-input-prefix {
+  align-self: center;
 }
 
 body.dark-theme .cm-modal .ant-modal-close,

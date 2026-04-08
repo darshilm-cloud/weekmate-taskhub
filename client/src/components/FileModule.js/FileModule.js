@@ -1632,11 +1632,6 @@ function FileModule() {
                     </h4>
                     <div
                       className="fileAttachment_container"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "8px",
-                      }}
                     >
                       {fileAttachment.map((file, index) => (
                         <Badge

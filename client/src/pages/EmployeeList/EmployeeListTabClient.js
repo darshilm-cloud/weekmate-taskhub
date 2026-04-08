@@ -683,11 +683,35 @@ const EmployeeListTabClient = ({
       {/* Add edit button modal */}
       <Modal
         className="add-and-edit-client"
-        title={ modalMode === "add" ? "Add Client" : "Edit Client" }
+        title={
+          <div className="client-modal-header">
+            <div className="client-modal-title-wrap">
+              <h2 className="client-modal-title">{ modalMode === "add" ? "Add Client" : "Edit Client" }</h2>
+              <p className="client-modal-subtitle">
+                {modalMode === "add"
+                  ? "Create a polished client profile with contact and company details."
+                  : "Update the client profile information and access details."}
+              </p>
+            </div>
+          </div>
+        }
         open={ addModal }
-        width={ 800 }
+        width={ 920 }
         footer={ [
-          <Button key="submit" type="primary" htmlType="submit" form="addClientForm">
+          <Button
+            key="submit"
+            className="client-modal-submit-btn"
+            htmlType="submit"
+            form="addClientForm"
+            style={{
+              background: "#0b3a5b",
+              backgroundColor: "#0b3a5b",
+              borderColor: "#0b3a5b",
+              color: "#ffffff",
+              backgroundImage: "none",
+              boxShadow: "none",
+            }}
+          >
             { modalMode === "add" ? "Add" : "Save" }
           </Button>,
           <Button
@@ -705,15 +729,16 @@ const EmployeeListTabClient = ({
         <div className="overview-modal-wrapper ">
 
           <Form
-          id="addClientForm"
+            id="addClientForm"
             form={ addemployee }
-   layout="vertical"
+            layout="vertical"
+            className="client-modal-form"
             onFinish={ (values) => {
               modalMode === "add" ? addemp(values) : UpdateClient(values);
             } }
           >
 
-             <Row gutter={ [0, 0] }>
+             <Row gutter={ [20, 8] } className="client-modal-grid">
               <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
                 <Form.Item
                   label="First name"

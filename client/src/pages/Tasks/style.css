@@ -2774,6 +2774,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     gap: 16px;
     padding: 6px 2px 16px;
     align-items: flex-start;
+    flex-wrap: nowrap;
 }
 
 /* ── Column outer shell ── */
@@ -2787,6 +2788,18 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
     background: #f4f6f9 !important;
+    align-self: flex-start;
+}
+
+.task-wrapper .order.small-box .drag_container,
+.task-wrapper .order.small-box .container.project-task-list,
+.task-wrapper .order.small-box .drag_column {
+    height: 100%;
+}
+
+.task-wrapper .order.small-box .drag_column {
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Column header ── */
@@ -2829,6 +2842,9 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
 .task-wrapper .drag_row {
     padding: 6px 10px 10px !important;
     min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
@@ -2839,6 +2855,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
+    width: 100%;
 }
 
 /* ── Task card wrapper ── */

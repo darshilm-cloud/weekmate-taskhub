@@ -530,6 +530,9 @@ const FilterUI = ({
         <Button size="small" className="delete-btn" onClick={resetStatusFilter}>
           Reset
         </Button>
+        <Button size="small" className="delete-btn" onClick={resetAllFilters}>
+          Reset All
+        </Button>
       </div>
     </div>
   );
@@ -632,6 +635,9 @@ const FilterUI = ({
             onClick={resetAssigneeFilter}
           >
             Reset
+          </Button>
+          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
+            Reset All
           </Button>
         </div>
       </div>
@@ -737,6 +743,9 @@ const FilterUI = ({
           </Button>
           <Button size="small" className="delete-btn" onClick={resetLabelsFilter}>
             Reset
+          </Button>
+          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
+            Reset All
           </Button>
         </div>
       </div>
@@ -859,6 +868,9 @@ const FilterUI = ({
             onClick={resetDateFilters}
           >
             Reset
+          </Button>
+          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
+            Reset All
           </Button>
         </div>
       </div>

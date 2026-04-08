@@ -59,6 +59,78 @@ const TASK_DATE_OPTIONS = Object.entries(DATE_PRESET_LABELS)
   .filter(([value]) => value !== "any")
   .map(([value, label]) => ({ value, label }));
 
+const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
+  value,
+  label,
+}));
+
+function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
+  const targetYear = Number.isInteger(nextYear) ? nextYear : currentDate.year();
+  const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
+  const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
+
+  return currentDate.year(targetYear).month(targetMonth).date(safeDay);
+}
+
+function getTaskProjectId(task) {
+  return (
+    task?.project?._id ||
+    task?.project?.id ||
+    task?.project_id?._id ||
+    task?.project_id?.id ||
+    task?.project_id ||
+    ""
+  );
+}
+
+function isCompletedTask(task) {
+  const statusTitle = String(task?.task_status?.title || task?.task_status?.name || task?.status || "").toLowerCase();
+  return statusTitle.includes("done") || statusTitle.includes("complete") || statusTitle.includes("closed");
+}
+
+function isTaskAssignedToUser(task, userId) {
+  if (!userId) return false;
+  const assignees = Array.isArray(task?.assignees) ? task.assignees : [];
+  return assignees.some((assignee) => {
+    const assigneeId = typeof assignee === "object" ? assignee?._id || assignee?.id : assignee;
+    return String(assigneeId || "") === String(userId);
+  });
+}
+
+function matchesDatePreset(task, presetKey) {
+  if (!presetKey || presetKey === "any") return true;
+
+  const today = dayjs().startOf("day");
+  const due = task?.due_date ? dayjs(task.due_date).startOf("day") : null;
+  const start = task?.start_date ? dayjs(task.start_date).startOf("day") : null;
+  const reference = due || start;
+
+  if (presetKey === "today") {
+    return Boolean((due && due.isSame(today, "day")) || (start && start.isSame(today, "day")));
+  }
+
+  if (presetKey === "this_week") {
+    const weekStart = today.startOf("week");
+    const weekEnd = today.endOf("week");
+    return Boolean(reference && !reference.isBefore(weekStart, "day") && !reference.isAfter(weekEnd, "day"));
+  }
+
+  if (presetKey === "this_month") {
+    return Boolean(reference && reference.isSame(today, "month"));
+  }
+
+  if (presetKey === "next_7_days") {
+    const end = today.add(7, "day");
+    return Boolean(reference && !reference.isBefore(today, "day") && !reference.isAfter(end, "day"));
+  }
+
+  if (presetKey === "overdue") {
+    return Boolean(due && due.isBefore(today, "day") && !isCompletedTask(task));
+  }
+
+  return true;
+}
+
 /** Get display name from assignee (populated object or raw id) */
 function getAssigneeName(a) {
   if (!a) return "";
@@ -117,25 +189,11 @@ function getTaskPageStateFromSearch(search, isAdmin) {
   const finalStatus =
     statusParam && ["all", "incomplete", "completed"].includes(statusParam) ? statusParam : base.statusFilter;
 
-  const shouldDefaultToCurrentMonthGantt =
-    view === "gantt" &&
-    !base.taskStartDate &&
-    !base.taskEndDate &&
-    !params.get("start_date") &&
-    !params.get("end_date");
-
-  const finalTaskStartDate = shouldDefaultToCurrentMonthGantt
-    ? dayjs().startOf("month").format("YYYY-MM-DD")
-    : base.taskStartDate;
-  const finalTaskEndDate = shouldDefaultToCurrentMonthGantt
-    ? dayjs().endOf("month").format("YYYY-MM-DD")
-    : base.taskEndDate;
-
   return {
     ...base,
     statusFilter: finalStatus,
-    taskStartDate: finalTaskStartDate,
-    taskEndDate: finalTaskEndDate,
+    taskStartDate: base.taskStartDate,
+    taskEndDate: base.taskEndDate,
     projectIds,
     view,
     section,
@@ -181,6 +239,41 @@ function sortTaskList(items, sortMode) {
     return 0;
   });
   return sorted;
+}
+
+function normalizeKanbanStatusKey(status) {
+  const title = String(status?.title || status?.name || status || "").toLowerCase();
+  const compact = title.replace(/[\s_-]+/g, "");
+
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
+
+  return title.trim() || "_none_";
+}
+
+function getKanbanStatusMeta(status) {
+  const key = normalizeKanbanStatusKey(status);
+
+  if (key === "todo") {
+    return { key, title: "To-Do", color: "#64748b" };
+  }
+  if (key === "inprogress") {
+    return { key, title: "In Progress", color: "#ef4444" };
+  }
+  if (key === "onhold") {
+    return { key, title: "On Hold", color: "#f59e0b" };
+  }
+  if (key === "done") {
+    return { key, title: "Done", color: "#22c55e" };
+  }
+
+  return {
+    key,
+    title: status?.title || status?.name || "No status",
+    color: status?.color || "#d9d9d9",
+  };
 }
 
 function TaskCombinedFacetFilter({
@@ -400,6 +493,13 @@ const TaskPage = () => {
   const location = useLocation();
   const companySlug = localStorage.getItem("companyDomain");
   const isAdmin = getRoles(["Admin"]);
+  const currentUserId = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user_data") || "{}")?._id || "";
+    } catch (error) {
+      return "";
+    }
+  }, []);
 
   const filterState = getTaskPageStateFromSearch(location.search, isAdmin);
 
@@ -413,6 +513,7 @@ const TaskPage = () => {
   const [viewAll, setViewAll] = useState(filterState.viewAll);
   const [taskStartDate, setTaskStartDate] = useState(filterState.taskStartDate);
   const [taskEndDate, setTaskEndDate] = useState(filterState.taskEndDate);
+  const [ganttAppliedDefaultRange, setGanttAppliedDefaultRange] = useState(false);
   const [sortMode, setSortMode] = useState("default");
   const [datePreset, setDatePreset] = useState(
     getDatePresetFromState(filterState.taskStartDate, filterState.taskEndDate)
@@ -425,6 +526,10 @@ const TaskPage = () => {
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const calendarYearOptions = useMemo(() => {
+    const currentYear = dayjs().year();
+    return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
+  }, []);
 
   // Sync state when URL changes (e.g. user navigates to same page with different filter)
   useEffect(() => {
@@ -437,6 +542,7 @@ const TaskPage = () => {
     setProjectFilter(next.projectIds || []);
     setListSection(next.section);
     setKanbanStatusFilter(next.kanbanStatus);
+    setGanttAppliedDefaultRange(false);
     if (next.view) setView(next.view);
   }, [location.search, isAdmin]);
 
@@ -499,6 +605,7 @@ const TaskPage = () => {
 
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
+    setGanttAppliedDefaultRange(false);
     setDatePreset(presetKey);
 
     switch (presetKey) {
@@ -530,17 +637,46 @@ const TaskPage = () => {
   }, []);
 
   const handleViewChange = useCallback((nextView) => {
-    setView(nextView);
-
-    if (nextView === "gantt" && !taskStartDate && !taskEndDate) {
-      const now = dayjs();
-      setTaskStartDate(now.startOf("month").format("YYYY-MM-DD"));
-      setTaskEndDate(now.endOf("month").format("YYYY-MM-DD"));
-      setDatePreset("this_month");
+    if (view === "gantt" && nextView !== "gantt" && ganttAppliedDefaultRange) {
+      setTaskStartDate(null);
+      setTaskEndDate(null);
+      setDatePreset("any");
+      setGanttAppliedDefaultRange(false);
     }
-  }, [taskEndDate, taskStartDate]);
 
-  const sortedTasks = useMemo(() => sortTaskList(tasks, sortMode), [tasks, sortMode]);
+    setView(nextView);
+  }, [ganttAppliedDefaultRange, taskEndDate, taskStartDate, view]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (statusFilter === "completed" && !isCompletedTask(task)) {
+        return false;
+      }
+
+      if (statusFilter === "incomplete" && isCompletedTask(task)) {
+        return false;
+      }
+
+      if (Array.isArray(projectFilter) && projectFilter.length > 0) {
+        const taskProjectId = String(getTaskProjectId(task) || "");
+        if (!projectFilter.map((id) => String(id)).includes(taskProjectId)) {
+          return false;
+        }
+      }
+
+      if (isAdmin && viewAll === false && !isTaskAssignedToUser(task, currentUserId)) {
+        return false;
+      }
+
+      if (!matchesDatePreset(task, datePreset)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [tasks, statusFilter, projectFilter, isAdmin, viewAll, currentUserId, datePreset]);
+
+  const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
 
   const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
     const now = dayjs();
@@ -586,24 +722,44 @@ const TaskPage = () => {
 
   const kanbanColumns = useMemo(() => {
     const byStatus = {};
+
     sortedTasks.forEach((t) => {
-      const key = t.task_status?._id ? String(t.task_status._id) : "_none_";
+      const meta = getKanbanStatusMeta(t.task_status);
+      const key = meta.key;
+
       if (!byStatus[key]) {
         byStatus[key] = {
           id: key,
-          title: t.task_status?.title || "No status",
-          color: t.task_status?.color || "#d9d9d9",
+          title: meta.title,
+          color: meta.color,
           tasks: [],
         };
       }
+
       byStatus[key].tasks.push(t);
     });
-    const all = Object.values(byStatus).sort((a, b) => a.title.localeCompare(b.title));
+
+    const statusOrder = ["todo", "inprogress", "onhold", "done"];
+    const all = Object.values(byStatus).sort((a, b) => {
+      const aIndex = statusOrder.indexOf(a.id);
+      const bIndex = statusOrder.indexOf(b.id);
+      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+
+      if (normalizedA !== normalizedB) {
+        return normalizedA - normalizedB;
+      }
+
+      return a.title.localeCompare(b.title);
+    });
+
     if (!kanbanStatusFilter) return all;
 
-    const needle = String(kanbanStatusFilter).toLowerCase();
+    const needle = normalizeKanbanStatusKey(kanbanStatusFilter);
     const filtered = all.filter(
-      (col) => String(col.id).toLowerCase() === needle || String(col.title || "").toLowerCase() === needle
+      (col) =>
+        normalizeKanbanStatusKey(col.id) === needle ||
+        normalizeKanbanStatusKey(col.title) === needle
     );
     return filtered.length ? filtered : all;
   }, [sortedTasks, kanbanStatusFilter]);
@@ -836,11 +992,38 @@ const TaskPage = () => {
         <div className="task-calendar-view">
           <div className="calendar-toolbar">
             <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
-            <span className="calendar-title">
-              {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "YYYY-MM-DD")}
-            </span>
+            <div className="calendar-title-group">
+              <span className="calendar-title">
+                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "YYYY-MM-DD")}
+              </span>
+              <div className="calendar-month-year-controls">
+                <Select
+                  value={calendarDate.month()}
+                  onChange={(month) => setCalendarDate((current) => updateCalendarMonthYear(current, month))}
+                  className="calendar-toolbar-select"
+                  size="middle"
+                >
+                  {CALENDAR_MONTH_OPTIONS.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+                <Select
+                  value={calendarDate.year()}
+                  onChange={(year) => setCalendarDate((current) => updateCalendarMonthYear(current, undefined, year))}
+                  className="calendar-toolbar-select calendar-toolbar-select-year"
+                  size="middle"
+                >
+                  {calendarYearOptions.map((year) => (
+                    <Option key={year} value={year}>
+                      {year}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
             <button type="button" onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</button>
-            <button type="button" onClick={() => setCalendarDate(dayjs())}>Today</button>
             <div className="calendar-mode">
               <button className={calendarMode === "month" ? "active" : ""} onClick={() => setCalendarMode("month")}>Month</button>
               <button className={calendarMode === "week" ? "active" : ""} onClick={() => setCalendarMode("week")}>Week</button>

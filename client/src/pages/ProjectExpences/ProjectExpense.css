@@ -200,6 +200,68 @@
   margin-top: 2px;
 }
 
+.pe-project-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pe-project-bars-row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 80px;
+  align-items: center;
+  gap: 12px;
+}
+
+.pe-project-bars-name {
+  font-size: 13px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-project-bars-track {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: #eef4fb;
+  overflow: hidden;
+}
+
+.pe-project-bars-fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d946ef 0%, #9333ea 100%);
+}
+
+.pe-project-bars-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pe-fixed-axis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: -4px;
+  margin-left: 192px;
+  margin-right: 38px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pe-fixed-axis-label {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
 /* ── Filter Bar ──────────────────────────────────────────────── */
 .pe-filter-bar {
   background: #ffffff;
@@ -528,6 +590,17 @@
   }
 
   .pe-header { flex-direction: column; align-items: flex-start; }
+
+  .pe-project-bars-row {
+    grid-template-columns: 120px minmax(0, 1fr) 64px;
+    gap: 10px;
+  }
+
+  .pe-fixed-axis {
+    margin-left: 130px;
+    margin-right: 22px;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -557,11 +630,37 @@ body[data-theme="dark"] .pe-chart-title {
   color: #e3ecfb;
 }
 
+
 body.dark-theme .pe-chart-sub,
 body.dark-theme .pe-filter-label,
 body[data-theme="dark"] .pe-chart-sub,
 body[data-theme="dark"] .pe-filter-label {
   color: #8fa7cc;
+}
+
+body.dark-theme .pe-fixed-axis,
+body[data-theme="dark"] .pe-fixed-axis {
+  border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .pe-fixed-axis-label,
+body[data-theme="dark"] .pe-fixed-axis-label {
+  color: #8fa7cc;
+}
+
+body.dark-theme .pe-project-bars-name,
+body[data-theme="dark"] .pe-project-bars-name {
+  color: #dce7fb;
+}
+
+body.dark-theme .pe-project-bars-track,
+body[data-theme="dark"] .pe-project-bars-track {
+  background: #11213a;
+}
+
+body.dark-theme .pe-project-bars-value,
+body[data-theme="dark"] .pe-project-bars-value {
+  color: #cfe0ff;
 }
 
 body.dark-theme .pe-filter-divider,

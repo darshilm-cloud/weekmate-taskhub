@@ -48,6 +48,7 @@ import {
   getSpecificProjectWorkflowStage,
   getSubscribersList,
   getClientList,
+  setData,
 } from "../../appRedux/reducers/ApiData";
 import { socketEvents } from "../../settings/socketEventName";
 import { getRoles, hasPermission } from "../../util/hasPermission";
@@ -72,18 +73,20 @@ import AddTaskModal from "./AddTaskModal";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
-  if (t.includes("to-do") || t.includes("todo")) return "#64748b";
+  const compact = t.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "#64748b";
   if (t.includes("progress")) return "#ef4444";
-  if (t.includes("hold")) return "#f59e0b";
+  if (t.includes("hold") || t.includes("review")) return "#3b82f6";
   if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
   return fallback || "#64748b";
 }
 
 function normalizeStageKey(title) {
   const t = String(title || "").toLowerCase();
-  if (t.includes("to-do") || t.includes("todo")) return "todo";
-  if (t.includes("progress")) return "inprogress";
-  if (t.includes("hold")) return "onhold";
+  const compact = t.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || t.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || t.includes("hold") || t.includes("review")) return "onhold";
   if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
   return "";
 }
@@ -476,7 +479,27 @@ const TasksPMS = ({ flag }) => {
     workflowStatusList.find(
       (item) => item.title === "To-Do" && item?.isDefault === true
     )?._id ||
-    workflowStatusList?.[0]?._id;
+    workflowStatusList?.[0]?._id ||
+    "todo";
+
+  const currentListWorkflowId = useMemo(() => {
+    const currentList =
+      (Array.isArray(projectMianTask) ? projectMianTask : []).find((item) => item?._id === listID) ||
+      selectedTask ||
+      editList;
+
+    const candidates = [
+      currentList?.workflows?._id,
+      currentList?.workflow?._id,
+      currentList?.workFlow?._id,
+      currentList?.workflows,
+      currentList?.workflow,
+      currentList?.workFlow,
+      stagesId,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  }, [editList, listID, projectMianTask, selectedTask, stagesId]);
 
   const { Option } = Select;
   const { companySlug, projectId } = useParams();
@@ -519,6 +542,79 @@ const TasksPMS = ({ flag }) => {
     setSelectSubscribers(selectedItemIds);
     setListSubscriberSearch("");
   };
+
+  const resolveWorkflowId = useCallback((project = {}) => {
+    const candidates = [
+      project?.workFlow?._id,
+      project?.workflow?._id,
+      project?.work_flow?._id,
+      project?.workFlow,
+      project?.workflow,
+      project?.work_flow,
+      project?.workflow_id,
+      project?.work_flow_id,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  }, []);
+
+  const fetchWorkflowStagesById = useCallback(
+    async (workflowId) => {
+      if (!workflowId) {
+        setWorkflowStatusList([]);
+        return [];
+      }
+
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: `${Service.getworkflowStatus}/${workflowId}`,
+        });
+
+        const stages = Array.isArray(response?.data?.data) ? response.data.data : [];
+        setWorkflowStatusList(stages);
+        if (stages.length > 0) {
+          dispatch(setData({ stateName: "projectWorkflowStage", data: stages }));
+        }
+        return stages;
+      } catch (error) {
+        setWorkflowStatusList([]);
+        return [];
+      }
+    },
+    [dispatch]
+  );
+
+  const fetchStageOptionsFromBoard = useCallback(
+    async (mainTaskId) => {
+      if (!projectId || !mainTaskId) return [];
+
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectBoardTasks,
+          body: {
+            project_id: projectId,
+            main_task_id: mainTaskId,
+          },
+        });
+
+        const columns = Array.isArray(response?.data?.data) ? response.data.data : [];
+        return columns
+          .map((column) => {
+            const workflowStatus = column?.workflowStatus || column?.workflow_status || {};
+            const id = workflowStatus?._id || workflowStatus?.id;
+            const title = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+            return id ? { _id: id, id, title } : null;
+          })
+          .filter(Boolean);
+      } catch (error) {
+        return [];
+      }
+    },
+    [projectId]
+  );
+
   const getProjectByID = async () => {
     try {
       const reqBody = {
@@ -536,19 +632,13 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         const project = response.data.data;
-        const workflowId =
-          project?.workFlow?._id ||
-          project?.workflow?._id ||
-          project?.work_flow?._id ||
-          project?.workFlow ||
-          project?.workflow ||
-          project?.work_flow ||
-          project?.workflow_id ||
-          project?.work_flow_id ||
-          "";
+        const workflowId = resolveWorkflowId(project);
 
         setProjectDetails(project);
-        setStagesId(typeof workflowId === "string" ? workflowId : "");
+        setStagesId(workflowId);
+        if (workflowId) {
+          fetchWorkflowStagesById(workflowId);
+        }
       } else {
         message.error(response?.data?.message);
       }
@@ -1214,6 +1304,11 @@ const TasksPMS = ({ flag }) => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
+      const workflowId = currentListWorkflowId || stagesId;
+      if (!workflowId) {
+        dispatch(hideAuthLoader());
+        return;
+      }
 
       const reqBody = {};
       const headers = {
@@ -1222,7 +1317,7 @@ const TasksPMS = ({ flag }) => {
 
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.getworkflowStatus + "/" + stagesId,
+        api_url: Service.getworkflowStatus + "/" + workflowId,
         headers: headers,
         body: reqBody,
       });
@@ -1317,20 +1412,11 @@ const TasksPMS = ({ flag }) => {
     try {
       setIsSavingList(true);
       dispatch(showAuthLoader());
-      const subscriberStages = [];
-      for (let i = 0; i < selectSubscriber.length; i++) {
-        const stageValue = values.subscriber_stages?.[i] || defaultStageId;
-
-        const subscriberStage = {
-          subscriber_id: selectSubscriber[i],
-          stages: stageValue,
-        };
-        subscriberStages.push(subscriberStage);
-      }
+      const subscriberStages = await buildSubscriberStagesForSubmit(values);
       const reqBody = {
         title: values.title.trim(),
         project_id: projectId,
-        subscriber_stages: subscriberStages,
+        subscriber_stages: subscriberStages || [],
         subscribers: selectSubscriber,
         pms_clients: selectedListClient.map((item) => item._id),
         status: "active",
@@ -1407,20 +1493,12 @@ const TasksPMS = ({ flag }) => {
     try {
       setIsSavingList(true);
       dispatch(showAuthLoader());
-      const subscriberStages = [];
-      for (let i = 0; i < selectSubscriber.length; i++) {
-        const subscriberStage = {
-          subscriber_id: selectSubscriber[i],
-          stages: values.subscriber_stages[i] || defaultStageId,
-        };
-        // Push the subscriber stages object to the array
-        subscriberStages.push(subscriberStage);
-      }
+      const subscriberStages = await buildSubscriberStagesForSubmit(values);
       const reqBody = {
         title: values.title.trim(),
         project_id: projectId,
         subscribers: selectSubscriber,
-        subscriber_stages: subscriberStages,
+        subscriber_stages: subscriberStages || [],
         status: "active",
         isPrivateList: values.markAsPrivate,
         isDisplayInGantt: false,
@@ -1758,11 +1836,6 @@ const TasksPMS = ({ flag }) => {
     };
   };
 
-  const filteredBoardTasks = filterTasks(boardTasks, filterSchema);
-  const hasVisibleTasks = filteredBoardTasks.some(
-    (board) => (board?.tasks?.length || 0) > 0
-  );
-
   const exportSampleCSVfile = () => {
     const link = document.createElement("a");
     link.setAttribute("href", taskCSV);
@@ -1840,10 +1913,12 @@ const TasksPMS = ({ flag }) => {
   }, []);
 
   useEffectAfterMount(() => {
-    if (!stagesId) return;
-    dispatch(getSpecificProjectWorkflowStage(stagesId));
+    const workflowId = currentListWorkflowId || stagesId;
+    if (!workflowId) return;
+    dispatch(getSpecificProjectWorkflowStage(workflowId));
     getListWorkflowStatus();
-  }, [stagesId]);
+    fetchWorkflowStagesById(workflowId);
+  }, [currentListWorkflowId, stagesId, fetchWorkflowStagesById]);
 
   useEffect(() => {
     if (!isModalOpenList) return;
@@ -1856,7 +1931,11 @@ const TasksPMS = ({ flag }) => {
     dispatch(getClientList());
 
     if (!stagesId) getProjectByID();
-    if (stagesId) dispatch(getSpecificProjectWorkflowStage(stagesId));
+    const workflowId = currentListWorkflowId || stagesId;
+    if (workflowId) {
+      dispatch(getSpecificProjectWorkflowStage(workflowId));
+      fetchWorkflowStagesById(workflowId);
+    }
 
     // Load full employee master list (for "pure data" in Subscribers dropdown)
     Service.makeAPICall({
@@ -1875,7 +1954,39 @@ const TasksPMS = ({ flag }) => {
         }
       })
       .catch(() => {});
-  }, [isModalOpenList, projectId, stagesId, dispatch]);
+  }, [isModalOpenList, projectId, stagesId, currentListWorkflowId, dispatch, fetchWorkflowStagesById]);
+
+  useEffect(() => {
+    if (!isModalOpenList) return;
+
+    const hasRealStageIds = [
+      ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+      ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+    ].some((stage) => {
+      const id = stage?._id || stage?.id;
+      return typeof id === "string" && id.length > 8;
+    });
+
+    if (hasRealStageIds) return;
+
+    const fallbackMainTaskId = listID || selectedTask?._id || projectMianTask?.[0]?._id;
+    if (!fallbackMainTaskId) return;
+
+    fetchStageOptionsFromBoard(fallbackMainTaskId).then((boardStages) => {
+      if (!Array.isArray(boardStages) || boardStages.length === 0) return;
+      setWorkflowStatusList(boardStages);
+      dispatch(setData({ stateName: "projectWorkflowStage", data: boardStages }));
+    });
+  }, [
+    dispatch,
+    fetchStageOptionsFromBoard,
+    isModalOpenList,
+    listID,
+    projectMianTask,
+    projectWorkflowStage,
+    selectedTask?._id,
+    workflowStatusList,
+  ]);
 
   useEffect(() => {
     if (!isModalOpenTaskModal) return;
@@ -2116,10 +2227,10 @@ const TasksPMS = ({ flag }) => {
 
   const listStageOptions = useMemo(() => {
     const wanted = [
-      { key: "todo", label: "To-Do" },
-      { key: "inprogress", label: "In progress" },
-      { key: "onhold", label: "On Hold" },
-      { key: "done", label: "Done" },
+      { _id: "todo", title: "To-Do" },
+      { _id: "inprogress", title: "In progress" },
+      { _id: "onhold", title: "On Hold" },
+      { _id: "done", title: "Done" },
     ];
 
     const fromApi =
@@ -2134,17 +2245,23 @@ const TasksPMS = ({ flag }) => {
         fromApi
           .map((ws) => {
             const title = ws?.title || ws?.name || "";
-            return [normalizeStageKey(title), ws];
+            const key = normalizeStageKey(title);
+            return key ? [key, ws] : null;
           })
-          .filter(([k]) => Boolean(k))
+          .filter(Boolean)
       );
-      return wanted
-        .map((w) => {
-          const hit = byKey.get(w.key);
-          if (!hit) return null;
-          return { ...hit, _id: hit?._id || hit?.id, title: w.label };
-        })
-        .filter(Boolean);
+
+      return wanted.map((wantedStage) => {
+        const matched = byKey.get(wantedStage._id);
+        if (matched) {
+          return {
+            ...matched,
+            _id: matched?._id || matched?.id || wantedStage._id,
+            title: wantedStage.title,
+          };
+        }
+        return wantedStage;
+      });
     }
 
     const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
@@ -2153,15 +2270,270 @@ const TasksPMS = ({ flag }) => {
       stageTiles.some(
         (t) => typeof t?.id === "string" && t.id.length > 8 && !placeholderIds.has(t.id)
       );
-    if (!hasRealIds) return [];
-    return wanted
-      .map((w) => {
-        const hit = stageTiles.find((t) => t?.key === w.key);
-        if (!hit) return null;
-        return { _id: hit.id, title: w.label };
-      })
-      .filter(Boolean);
+    if (hasRealIds) {
+      const tileBased = wanted
+        .map((w) => {
+          const hit = stageTiles.find((t) => t?.key === w._id);
+          if (!hit) return null;
+          return { _id: hit.id, title: w.title };
+        })
+        .filter(Boolean);
+
+      if (tileBased.length > 0) return tileBased;
+    }
+
+    return wanted;
   }, [projectWorkflowStage, stageTiles, workflowStatusList]);
+
+  const fixedBoardTasks = useMemo(() => {
+    const wanted = [
+      { key: "todo", title: "To-Do", color: "#64748b" },
+      { key: "inprogress", title: "In Progress", color: "#f59e0b" },
+      { key: "onhold", title: "On Hold", color: "#3b82f6" },
+      { key: "done", title: "Done", color: "#16a34a" },
+    ];
+
+    const byKey = new Map();
+    const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+    const realStageByKey = new Map(
+      [
+        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+      ]
+        .map((stage) => {
+          const title = stage?.title || stage?.name || "";
+          const key = normalizeStageKey(title);
+          const id = stage?._id || stage?.id || "";
+          if (!key || !id || placeholderIds.has(String(id))) return null;
+          return [key, stage];
+        })
+        .filter(Boolean)
+    );
+
+    (Array.isArray(boardTasks) ? boardTasks : []).forEach((column) => {
+      const workflowStatus = column?.workflowStatus || column?.workflow_status || column?.status || {};
+      const title = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+      const key = normalizeStageKey(title);
+      if (!key) return;
+
+      const existing = byKey.get(key);
+      if (!existing) {
+        byKey.set(key, {
+          ...column,
+          workflowStatus,
+          tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
+        });
+        return;
+      }
+
+      existing.tasks = [
+        ...(Array.isArray(existing.tasks) ? existing.tasks : []),
+        ...(Array.isArray(column?.tasks) ? column.tasks : []),
+      ];
+    });
+
+    return wanted.map((wantedColumn) => {
+      const existing = byKey.get(wantedColumn.key);
+      const matchedRealStage = realStageByKey.get(wantedColumn.key);
+      if (existing) {
+        const workflowStatus = existing?.workflowStatus || existing?.workflow_status || existing?.status || {};
+        const existingId = workflowStatus?._id || workflowStatus?.id || "";
+        const resolvedId =
+          matchedRealStage?._id ||
+          matchedRealStage?.id ||
+          (existingId && !placeholderIds.has(String(existingId)) ? existingId : "") ||
+          wantedColumn.key;
+
+        return {
+          ...existing,
+          workflowStatus: {
+            ...workflowStatus,
+            ...(matchedRealStage || {}),
+            _id: resolvedId,
+            title: wantedColumn.title,
+            color: wantedColumn.color,
+          },
+          tasks: Array.isArray(existing?.tasks) ? existing.tasks : [],
+        };
+      }
+
+      return {
+        _id: matchedRealStage?._id || matchedRealStage?.id || wantedColumn.key,
+        workflowStatus: {
+          ...(matchedRealStage || {}),
+          _id: matchedRealStage?._id || matchedRealStage?.id || wantedColumn.key,
+          title: wantedColumn.title,
+          color: wantedColumn.color,
+        },
+        tasks: [],
+      };
+    });
+  }, [boardTasks, projectWorkflowStage, workflowStatusList]);
+
+  const filteredBoardTasks = filterTasks(fixedBoardTasks, filterSchema);
+  const hasVisibleTasks = filteredBoardTasks.some(
+    (board) => (board?.tasks?.length || 0) > 0
+  );
+  const hasAnyBoardTasks = fixedBoardTasks.some(
+    (board) => (board?.tasks?.length || 0) > 0
+  );
+  const activeFilterCount = useMemo(() => {
+    const taskFilters = filterSchema?.tasks || {};
+    let count = 0;
+    if (filterSchema?.workflowStatusId) count += 1;
+    if (
+      Array.isArray(taskFilters.assigneeIds)
+        ? taskFilters.assigneeIds.length > 0
+        : Boolean(taskFilters.assigneeIds)
+    ) {
+      count += 1;
+    }
+    if (
+      Array.isArray(taskFilters.labelIds)
+        ? taskFilters.labelIds.length > 0
+        : Boolean(taskFilters.labelIds)
+    ) {
+      count += 1;
+    }
+    if (taskFilters.startDate) count += 1;
+    if (taskFilters.dueDate) count += 1;
+    if (String(taskFilters.title || "").trim()) count += 1;
+    return count;
+  }, [filterSchema]);
+  const ganttTasks = useMemo(() => {
+    if (!hasVisibleTasks && hasAnyBoardTasks) {
+      return fixedBoardTasks;
+    }
+    return filteredBoardTasks;
+  }, [filteredBoardTasks, fixedBoardTasks, hasAnyBoardTasks, hasVisibleTasks]);
+  const ganttDebugInfo = useMemo(() => {
+    const countNested = (boards = []) =>
+      (Array.isArray(boards) ? boards : []).reduce(
+        (sum, board) => sum + (Array.isArray(board?.tasks) ? board.tasks.length : 0),
+        0
+      );
+    const sectionCount = (Array.isArray(ganttTasks) ? ganttTasks : []).filter(
+      (board) => Array.isArray(board?.tasks) && board.tasks.length > 0
+    ).length;
+    return {
+      boardCount: countNested(fixedBoardTasks),
+      filteredCount: countNested(filteredBoardTasks),
+      ganttCount: countNested(ganttTasks),
+      sectionCount,
+    };
+  }, [filteredBoardTasks, fixedBoardTasks, ganttTasks]);
+
+  const resolveStageValueForSubmit = useCallback(
+    (value) => {
+      if (!value) return "";
+
+      const rawValue = String(value).trim();
+      const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+      if (!placeholderIds.has(rawValue)) return rawValue;
+
+      const realStages = [
+        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+      ];
+
+      const matchedStage = realStages.find(
+        (stage) => normalizeStageKey(stage?.title || stage?.name || "") === rawValue
+      );
+
+      if (matchedStage?._id || matchedStage?.id) {
+        return matchedStage?._id || matchedStage?.id;
+      }
+
+      const matchedTile = (Array.isArray(stageTiles) ? stageTiles : []).find(
+        (stage) => stage?.key === rawValue && stage?.id && !placeholderIds.has(String(stage.id))
+      );
+
+      if (matchedTile?.id) return matchedTile.id;
+
+      return "";
+    },
+    [projectWorkflowStage, stageTiles, workflowStatusList]
+  );
+
+  const buildSubscriberStagesForSubmit = useCallback(
+    async (values) => {
+      let stageSource = [
+        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+      ];
+
+      const hasRealStageIds = stageSource.some((stage) => {
+        const id = stage?._id || stage?.id;
+        return typeof id === "string" && id.length > 8;
+      });
+
+      if (!hasRealStageIds && stagesId) {
+        const fetchedStages = await fetchWorkflowStagesById(stagesId);
+        if (Array.isArray(fetchedStages) && fetchedStages.length > 0) {
+          stageSource = fetchedStages;
+        }
+      }
+
+      const stillHasNoRealStageIds = !stageSource.some((stage) => {
+        const id = stage?._id || stage?.id;
+        return typeof id === "string" && id.length > 8;
+      });
+
+      if (stillHasNoRealStageIds) {
+        const candidateMainTaskId =
+          listID || selectedTask?._id || projectMianTask?.[0]?._id || editList?._id;
+        const boardStages = await fetchStageOptionsFromBoard(candidateMainTaskId);
+        if (Array.isArray(boardStages) && boardStages.length > 0) {
+          stageSource = boardStages;
+        }
+      }
+
+      const resolveFromStageSource = (value) => {
+        if (!value) return "";
+
+        const rawValue = String(value).trim();
+        const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+        if (!placeholderIds.has(rawValue)) return rawValue;
+
+        const matchedStage = stageSource.find(
+          (stage) => normalizeStageKey(stage?.title || stage?.name || "") === rawValue
+        );
+
+        return matchedStage?._id || matchedStage?.id || "";
+      };
+
+      const subscriberStages = [];
+      for (let i = 0; i < selectSubscriber.length; i++) {
+        const selectedStageValue = values.subscriber_stages?.[i] || defaultStageId;
+        const stageValue =
+          resolveFromStageSource(selectedStageValue) ||
+          resolveStageValueForSubmit(selectedStageValue);
+
+        if (!stageValue) return null;
+
+        subscriberStages.push({
+          subscriber_id: selectSubscriber[i],
+          stages: stageValue,
+        });
+      }
+
+      return subscriberStages;
+    },
+    [
+      defaultStageId,
+      editList?._id,
+      fetchStageOptionsFromBoard,
+      fetchWorkflowStagesById,
+      listID,
+      projectMianTask,
+      projectWorkflowStage,
+      resolveStageValueForSubmit,
+      selectedTask?._id,
+      selectSubscriber,
+      stagesId,
+      workflowStatusList,
+    ]
+  );
 
   const handleSubmit = async () => {
     const now = Date.now();
@@ -2194,6 +2566,10 @@ const TasksPMS = ({ flag }) => {
     }
 
     const currentListId = listID || selectedTask?._id;
+    const resolvedWorkflowStatus =
+      selectedWorkflowStatus && selectedWorkflowStatus !== "a"
+        ? resolveStageValueForSubmit(selectedWorkflowStatus)
+        : selectedWorkflowStatus;
 
     if (
       selectedMainTask &&
@@ -2221,6 +2597,10 @@ const TasksPMS = ({ flag }) => {
       selectedWorkflowStatus != "a" &&
       selectedMainTask == "a"
     ) {
+      if (!resolvedWorkflowStatus || resolvedWorkflowStatus === "a") {
+        message.error("Please select a valid stage.");
+        return;
+      }
       setMovingTasks(true);
       try {
         // Optimistic: move cards between columns immediately
@@ -2238,18 +2618,22 @@ const TasksPMS = ({ flag }) => {
 
           return stripped.map((col) => {
             const colId = col?.workflowStatus?._id;
-            if (colId && colId === selectedWorkflowStatus) {
+            if (colId && colId === resolvedWorkflowStatus) {
               return { ...col, tasks: [...moved, ...(col?.tasks || [])] };
             }
             return col;
           });
         });
-        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        await updateSubTaskListInStatus(resolvedWorkflowStatus);
         setSelectedWorkflowStatus("a");
       } finally {
         setMovingTasks(false);
       }
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
+      if (!resolvedWorkflowStatus || resolvedWorkflowStatus === "a") {
+        message.error("Please select a valid stage.");
+        return;
+      }
       setMovingTasks(true);
       try {
         // Optimistic: if moving to a different list, remove from current view
@@ -2262,7 +2646,7 @@ const TasksPMS = ({ flag }) => {
           );
         }
         await updateSubTaskListInMainTask(selectedMainTask, { suppressRefresh: true, suppressClearSelection: true });
-        await updateSubTaskListInStatus(selectedWorkflowStatus, { suppressRefresh: true, suppressClearSelection: true });
+        await updateSubTaskListInStatus(resolvedWorkflowStatus, { suppressRefresh: true, suppressClearSelection: true });
         // Single refresh/clear at the end (prevents multiple refreshes)
         if (currentListId) await getBoardTasks(currentListId);
         dispatch(moveWorkFlowTaskHandler([]));
@@ -2467,9 +2851,11 @@ const TasksPMS = ({ flag }) => {
                           open={stageDropdownOpen}
                           onDropdownVisibleChange={(open) => {
                             setStageDropdownOpen(open);
-                            if (!open || !stagesId) return;
-                            dispatch(getSpecificProjectWorkflowStage(stagesId));
+                            const workflowId = currentListWorkflowId || stagesId;
+                            if (!open || !workflowId) return;
+                            dispatch(getSpecificProjectWorkflowStage(workflowId));
                             getListWorkflowStatus();
+                            fetchWorkflowStagesById(workflowId);
                           }}
                           showSearch
                           filterOption={(input, option) =>
@@ -2540,7 +2926,7 @@ const TasksPMS = ({ flag }) => {
                       </Dropdown>
                     </ConfigProvider>
                     <FilterUI
-                      boardTasks={boardTasks}
+                      boardTasks={fixedBoardTasks}
                       subscribersList={subscribersList}
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
@@ -2697,7 +3083,7 @@ const TasksPMS = ({ flag }) => {
                 moveBoardTaskLocally={moveBoardTaskLocally}
                 refreshProjectMainTasks={refreshProjectMainTasks}
                 checkTaskDrafts={""}
-                boardTasks={boardTasks}
+                boardTasks={fixedBoardTasks}
                 tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
@@ -2711,7 +3097,10 @@ const TasksPMS = ({ flag }) => {
               />
             ) : selectedView === "gantt" ? (
               <TasksGanttView
-                tasks={filteredBoardTasks}
+                tasks={ganttTasks}
+                activeFilterCount={activeFilterCount}
+                onResetFilters={() => setFilterSchema({ tasks: {} })}
+                debugInfo={ganttDebugInfo}
                 onTaskClick={(task) => showEditTaskModal(task, task?._stId || task?.task_status?._id || task?.task_status)}
               />
             ) : (

@@ -85,6 +85,49 @@
   flex-wrap: wrap;
 }
 
+.table-container {
+  background: var(--app-surface);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.projects-running-card .custom-table .ant-table-wrapper,
+.projects-running-card .custom-table .ant-table {
+  background: var(--app-surface);
+}
+
+.projects-running-card .custom-table .ant-table-pagination.ant-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 16px 18px 18px;
+  border-top: 1px solid var(--app-border, #e2e8f0);
+  background: var(--app-surface);
+}
+
+.projects-running-card .custom-table .ant-pagination-total-text {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.projects-running-card .custom-table .ant-pagination-item,
+.projects-running-card .custom-table .ant-pagination-prev,
+.projects-running-card .custom-table .ant-pagination-next {
+  border-radius: 10px;
+}
+
+.projects-running-card .custom-table .ant-pagination-item-active {
+  border-color: #0b3a5b;
+  background: #0b3a5b;
+}
+
+.projects-running-card .custom-table .ant-pagination-item-active a {
+  color: #fff;
+}
+
 .stat-item .stat-value {
   border-radius: 100%;
   padding: 2px;

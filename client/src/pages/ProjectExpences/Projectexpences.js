@@ -58,9 +58,36 @@ const USER_ROLES = {
 const PAGINATION_OPTIONS = ["10", "20", "30"];
 
 /* ─── helpers ───────────────────────────────────────────────────── */
-const fmtUSD = (v) => {
+const fmtINRCompact = (v) => {
   const n = parseFloat(v) || 0;
-  return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(2)}`;
+  return n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n.toFixed(2)}`;
+};
+
+const fmtINR = (v) => {
+  const n = parseFloat(v) || 0;
+  return `₹${n.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const fmtINRShort = (v) => {
+  const n = parseFloat(v) || 0;
+  if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
+  if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`;
+  if (n >= 1000) return `₹${(n / 1000).toFixed(0)}k`;
+  return `₹${Math.round(n)}`;
+};
+
+const fmtINRCroreAxis = (v) => {
+  const n = parseFloat(v) || 0;
+  if (n === 0) return "₹0";
+  if (n >= 10000000) {
+    const crores = n / 10000000;
+    return Number.isInteger(crores) ? `₹${crores}Cr` : `₹${crores.toFixed(2)}Cr`;
+  }
+  const lakhs = n / 100000;
+  return Number.isInteger(lakhs) ? `₹${lakhs}L` : `₹${lakhs.toFixed(1)}L`;
 };
 
 const toExpenseArray = (payload) => {
@@ -604,63 +631,71 @@ const Projectexpences = () => {
   ───────────────────────────────────────────────────────────── */
   const lineOptions = useMemo(() => ({
     chart:  { type: "area", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
-    stroke: { curve: "smooth", width: 2 },
+    stroke: { curve: "smooth", width: 3 },
     colors: ["#2563eb"],
-    fill:   { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0.02 } },
+    fill:   {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.22,
+        opacityTo: 0.04,
+        stops: [0, 90, 100],
+      },
+    },
+    markers: {
+      size: 4,
+      strokeWidth: 0,
+      hover: { size: 6 },
+    },
     xaxis: {
       categories: analytics.monthlyLabels,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       labels: {
-        style: { fontSize: "11px" },
-        rotate: -35,
+        style: { fontSize: "11px", colors: "#64748b" },
+        rotate: 0,
         rotateAlways: false,
         hideOverlappingLabels: true,
         trim: true,
       },
     },
-    yaxis:  { labels: { formatter: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + "k" : v}`, style: { fontSize: "11px" } } },
+    yaxis:  {
+      tickAmount: 4,
+      labels: {
+        formatter: (v) => fmtINRShort(v),
+        style: { fontSize: "11px", colors: "#64748b" },
+      },
+    },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", strokeDashArray: 4 },
-    tooltip: { y: { formatter: (v) => `$${parseFloat(v).toFixed(2)}` } },
+    grid: {
+      borderColor: "#eef2f7",
+      strokeDashArray: 3,
+      padding: { left: 6, right: 14, top: 8, bottom: 0 },
+    },
+    tooltip: { y: { formatter: (v) => fmtINR(v) } },
   }), [analytics.monthlyLabels]);
 
   const lineSeries = useMemo(() => [{
-    name: "Expense ($)",
+    name: "Expense (₹)",
     data: analytics.monthlyData,
   }], [analytics.monthlyData]);
 
-  const barOptions = useMemo(() => ({
-    chart:  { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
-    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "55%" } },
-    colors: ["#7c3aed"],
-    xaxis: {
-      categories: analytics.projectLabels.length ? analytics.projectLabels : ["No Data"],
-      tickAmount: 5,
-      labels: {
-        formatter: (v) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`,
-        style: { fontSize: "10px" },
-        hideOverlappingLabels: true,
-        rotate: 0,
-      },
-    },
-    yaxis: {
-      labels: {
-        style: { fontSize: "11px" },
-        maxWidth: 160,
-        formatter: (v) => v && v.length > 18 ? v.substring(0, 16) + "…" : v,
-      },
-    },
-    dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9" },
-    tooltip: {
-      y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
-      x: { formatter: (_, { dataPointIndex }) => analytics.projectLabels[dataPointIndex] || "" },
-    },
-  }), [analytics.projectLabels]);
+  const fixedProjectAxisLabels = ["₹0", "₹20L", "₹40L", "₹60L", "₹80L", "₹1Cr"];
 
-  const barSeries = useMemo(() => [{
-    name: "Total Expense ($)",
-    data: analytics.projectData.length ? analytics.projectData : [0],
-  }], [analytics.projectData]);
+  const projectBarRows = useMemo(
+    () =>
+      (analytics.projectLabels.length ? analytics.projectLabels : ["No Data"]).map((label, index) => {
+        const value = analytics.projectData[index] || 0;
+        const widthPercent = Math.min((value / 10000000) * 100, 100);
+
+        return {
+          label,
+          value,
+          widthPercent,
+        };
+      }),
+    [analytics.projectData, analytics.projectLabels]
+  );
 
   const donutOptions = useMemo(() => ({
     chart:  { type: "donut", fontFamily: "inherit" },
@@ -670,7 +705,7 @@ const Projectexpences = () => {
     plotOptions: { pie: { donut: { size: "68%" } } },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
-    tooltip: { y: { formatter: (v) => `$${parseFloat(v || 0).toFixed(2)}` } },
+    tooltip: { y: { formatter: (v) => fmtINR(v) } },
   }), []);
 
   const donutSeries = useMemo(() => [
@@ -800,8 +835,11 @@ const Projectexpences = () => {
         render: (_, r) =>
           r?.cost_in_usd ? (
             <span className="pe-amount-cell">
-              <span className="pe-amount-currency">$</span>
-              {parseFloat(r.cost_in_usd).toLocaleString()}
+              <span className="pe-amount-currency">₹</span>
+              {parseFloat(r.cost_in_usd).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
           ) : "—",
       },
@@ -934,28 +972,28 @@ const Projectexpences = () => {
         <StatCard
           icon={<WalletOutlined />}
           label="Total Expenses"
-          value={fmtUSD(analytics.totalAmt)}
+          value={fmtINRCompact(analytics.totalAmt)}
           sub={`${analytics.totalCount} records`}
           color="blue"
         />
         <StatCard
           icon={<CheckCircleOutlined />}
           label="Approved"
-          value={fmtUSD(analytics.approvedAmt)}
+          value={fmtINRCompact(analytics.approvedAmt)}
           sub={`${analytics.approvedCount} records`}
           color="green"
         />
         <StatCard
           icon={<ClockCircleOutlined />}
           label="Pending"
-          value={fmtUSD(analytics.pendingAmt)}
+          value={fmtINRCompact(analytics.pendingAmt)}
           sub={`${analytics.pendingCount} records`}
           color="orange"
         />
         <StatCard
           icon={<DollarCircleOutlined />}
           label="Billable"
-          value={fmtUSD(analytics.billableAmt)}
+          value={fmtINRCompact(analytics.billableAmt)}
           sub={`${analytics.billableCount} records`}
           color="purple"
         />
@@ -968,14 +1006,14 @@ const Projectexpences = () => {
           <div className="pe-chart-header">
             <div>
               <div className="pe-chart-title">Monthly Expense Trend</div>
-              <div className="pe-chart-sub">Last 6 months · USD</div>
+              <div className="pe-chart-sub">Last 6 months · INR</div>
             </div>
           </div>
           <ReactApexChart
             type="area"
             series={lineSeries}
             options={lineOptions}
-            height={210}
+            height={300}
           />
         </div>
 
@@ -984,15 +1022,34 @@ const Projectexpences = () => {
           <div className="pe-chart-header">
             <div>
               <div className="pe-chart-title">Expense by Project</div>
-              <div className="pe-chart-sub">Top 8 projects · USD</div>
+              <div className="pe-chart-sub">Top 8 projects · INR</div>
             </div>
           </div>
-          <ReactApexChart
-            type="bar"
-            series={barSeries}
-            options={barOptions}
-            height={210}
-          />
+          <div className="pe-project-bars">
+            {projectBarRows.map((project) => (
+              <div className="pe-project-bars-row" key={project.label}>
+                <div className="pe-project-bars-name" title={project.label}>
+                  {project.label}
+                </div>
+                <div className="pe-project-bars-track">
+                  <div
+                    className="pe-project-bars-fill"
+                    style={{ width: `${project.widthPercent}%` }}
+                  />
+                </div>
+                <div className="pe-project-bars-value">
+                  {fmtINRShort(project.value)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="pe-fixed-axis">
+            {fixedProjectAxisLabels.map((label) => (
+              <span key={label} className="pe-fixed-axis-label">
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Billable vs Non-Billable donut */}
@@ -1015,14 +1072,14 @@ const Projectexpences = () => {
                 <span className="pe-legend-dot" style={{ background: "#2563eb" }} />
                 Billable
               </div>
-              <span className="pe-legend-val">{fmtUSD(analytics.billableAmt2)}</span>
+              <span className="pe-legend-val">{fmtINRCompact(analytics.billableAmt2)}</span>
             </div>
             <div className="pe-legend-row">
               <div className="pe-legend-left">
                 <span className="pe-legend-dot" style={{ background: "#e2e8f0" }} />
                 Non-Billable
               </div>
-              <span className="pe-legend-val">{fmtUSD(analytics.nonBillableAmt)}</span>
+              <span className="pe-legend-val">{fmtINRCompact(analytics.nonBillableAmt)}</span>
             </div>
           </div>
         </div>
@@ -1120,7 +1177,7 @@ const Projectexpences = () => {
         <div className="pe-drawer-field">
           <div className="pe-drawer-label">Amount</div>
           <div className="pe-drawer-amount">
-            ${parseFloat(viewData?.cost_in_usd || 0).toLocaleString()}
+            {fmtINR(viewData?.cost_in_usd || 0)}
           </div>
         </div>
 

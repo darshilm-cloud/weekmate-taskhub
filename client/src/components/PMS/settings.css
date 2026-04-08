@@ -175,6 +175,40 @@
   padding: 8px 16px;
 }
 
+.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active {
+  background: #0a2e49 !important;
+  border-color: #0a2e49 !important;
+}
+
+.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
+  color: #ffffff !important;
+}
+
+.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active:hover,
+.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active:focus {
+  background: #08263d !important;
+  border-color: #08263d !important;
+}
+
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active,
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:hover,
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:focus {
+  background: #0a2e49 !important;
+  border-color: #0a2e49 !important;
+}
+
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active a,
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:hover a,
+.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:focus a {
+  color: #ffffff !important;
+}
+
+.workflow-container .ant-pagination .ant-pagination-item-active,
+.workflow-container .ant-pagination .ant-pagination-item-active a {
+  background-color: #08263d !important;
+  border-color: #08263d !important;
+}
+
 /* Inline edit/delete action buttons */
 .ps-action-btn {
   display: inline-flex;

@@ -89,6 +89,7 @@ exports.addNotes = async (req, res) => {
 
     const validationSchema = Joi.object({
       title: Joi.string().required(),
+      notesInfo: Joi.string().optional().allow(""),
       color: Joi.string().allow("").optional(),
       isPrivate: Joi.boolean().optional().default(false),
       project_id: Joi.string().required(),
@@ -110,6 +111,7 @@ exports.addNotes = async (req, res) => {
     } else {
       let data = new Notes({
         title: value.title,
+        notesInfo: value.notesInfo,
         project_id: value.project_id,
         ...(value.noteBook_id ? { noteBook_id: value.noteBook_id } : {}),
         isPrivate: value.isPrivate,

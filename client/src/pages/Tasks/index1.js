@@ -65,6 +65,15 @@ function normalizeStageKey(title) {
   return "";
 }
 
+function fallbackStageKey(title) {
+  const normalized = normalizeStageKey(title);
+  if (normalized) return normalized;
+  return String(title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "unknown";
+}
+
 function TasksPMS({ flag }) {
   const {
     yourMenu,
@@ -226,6 +235,45 @@ function TasksPMS({ flag }) {
 
   const [movingTasks, setMovingTasks] = useState(false);
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
+  const mergedBoardTasks = useMemo(() => {
+    if (!Array.isArray(boardTasks)) return [];
+
+    const merged = new Map();
+
+    boardTasks.forEach((column, index) => {
+      const title = column?.workflowStatus?.title || column?.title || "Untitled";
+      const key = fallbackStageKey(title);
+      const existing = merged.get(key);
+
+      if (!existing) {
+        merged.set(key, {
+          ...column,
+          _id: column?._id || key,
+          workflowStatus: {
+            ...(column?.workflowStatus || {}),
+            _id: column?.workflowStatus?._id || key,
+            title,
+            color:
+              column?.workflowStatus?.color ||
+              stageBadgeColor(title),
+          },
+          tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
+          __order: index,
+        });
+        return;
+      }
+
+      existing.tasks = [
+        ...(Array.isArray(existing.tasks) ? existing.tasks : []),
+        ...(Array.isArray(column?.tasks) ? column.tasks : []),
+      ];
+    });
+
+    return Array.from(merged.values())
+      .sort((a, b) => (a.__order ?? 0) - (b.__order ?? 0))
+      .map(({ __order, ...column }) => column);
+  }, [boardTasks]);
+
   const stageTiles = useMemo(() => {
     const list = Array.isArray(workflowStatusList)
       ? workflowStatusList
@@ -578,7 +626,7 @@ function TasksPMS({ flag }) {
                     <FilterUI
                       filterStatusSearchInput={filterStatusSearchInput}
                       setFilterStatusSearchInput={setFilterStatusSearchInput}
-                      boardTasks={boardTasks}
+                      boardTasks={mergedBoardTasks}
                       filterStatus={filterStatus}
                       handleFilterStatus={handleFilterStatus}
                       handleAllFilter={handleAllFilter}
@@ -714,8 +762,8 @@ function TasksPMS({ flag }) {
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 checkTaskDrafts={checkTaskDrafts}
-                boardTasks={boardTasks}
-                tasks={filterTasks(boardTasks, filterSchema)}
+                boardTasks={mergedBoardTasks}
+                tasks={filterTasks(mergedBoardTasks, filterSchema)}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -725,7 +773,7 @@ function TasksPMS({ flag }) {
               />
             ) : (
               <TasksTableView
-                tasks={filterTasks(boardTasks, filterSchema)}
+                tasks={filterTasks(mergedBoardTasks, filterSchema)}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}

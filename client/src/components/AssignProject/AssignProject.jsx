@@ -106,7 +106,8 @@ const getCompletionPercent = (record, stats) => {
 /* ─── Project Card ────────────────────────────────────────── */
 const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onCloseProject }) => {
   const history = useHistory();
-  const statusTitle = record?.project_status?.title || "Active";
+  const currentStatusMeta = getProjectStatusMeta(record?.project_status, projectStatusList);
+  const statusTitle = currentStatusMeta.title || "Active";
   const sc = getStatusStyle(statusTitle);
   const pct = getCompletionPercent(record, stats);
 
@@ -188,10 +189,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
           {s.title}
         </span>
       ),
-      onClick: ({ domEvent }) => {
-        domEvent.stopPropagation();
-        onStatusChange(record._id, s._id);
-      },
     };
   });
 
@@ -246,7 +243,13 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
           {/* Status → inline dropdown */}
           <div onClick={(e) => e.stopPropagation()}>
             <Dropdown
-              menu={{ items: statusMenuItems }}
+              menu={{
+                items: statusMenuItems,
+                onClick: ({ key, domEvent }) => {
+                  domEvent?.stopPropagation?.();
+                  onStatusChange(record._id, key);
+                },
+              }}
               trigger={["click"]}
               placement="bottomLeft"
             >
@@ -349,6 +352,17 @@ const normalizeProjectEntityId = (value) => {
   if (typeof value === "string") return value;
   if (typeof value === "object") return value?._id || value?.id || value?.value || "";
   return String(value);
+};
+
+const getProjectStatusMeta = (value, projectStatusList = []) => {
+  const statusId = normalizeProjectEntityId(value?._id || value);
+  const directTitle = typeof value === "object" ? value?.title || value?.name || "" : "";
+  const matchedStatus = projectStatusList.find((status) => status._id === statusId);
+
+  return {
+    _id: matchedStatus?._id || statusId,
+    title: matchedStatus?.title || directTitle || "",
+  };
 };
 
 const projectMatchesStatusFilter = (record, selectedStatusIds = [], projectStatusList = []) => {
@@ -1013,8 +1027,40 @@ const AssignProject = () => {
     }
   };
 
+  const applyProjectStatusLocally = useCallback((projectId, statusMeta) => {
+    if (!projectId || !statusMeta?._id) return;
+
+    setColumnDetails((prev) =>
+      prev.map((project) =>
+        project._id === projectId
+          ? {
+              ...project,
+              project_status: {
+                ...(typeof project.project_status === "object" ? project.project_status : {}),
+                _id: statusMeta._id,
+                title: statusMeta.title,
+              },
+            }
+          : project
+      )
+    );
+  }, []);
+
+  const syncProjectStatusChange = useCallback((projectId, statusMeta, action = "status") => {
+    invalidateProjectCaches();
+    sessionStorage.removeItem("dashboard_project_total_count_v1");
+    sessionStorage.removeItem("dashboard_project_list_v1");
+    window.dispatchEvent(
+      new CustomEvent("weekmate:projects-changed", {
+        detail: { action, projectId, statusId: statusMeta?._id, statusTitle: statusMeta?.title },
+      })
+    );
+    applyProjectStatusLocally(projectId, statusMeta);
+  }, [applyProjectStatusLocally, invalidateProjectCaches]);
+
   const handleStatusChange = async (projectId, statusId) => {
     try {
+      const statusMeta = projectStatusList.find((status) => status._id === statusId);
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: `${Service.updateProjectdetails}/${projectId}`,
@@ -1023,7 +1069,10 @@ const AssignProject = () => {
       });
       if (response?.data?.status) {
         message.success("Project status updated");
-        getProjectListing();
+        syncProjectStatusChange(projectId, statusMeta || { _id: statusId, title: statusMeta?.title || "" }, "status");
+        setTimeout(() => {
+          getProjectListing(currentSkipFilters, currentFilters, true);
+        }, 500);
       } else {
         message.error(response?.data?.message || "Failed to update status");
       }
@@ -1052,7 +1101,10 @@ const AssignProject = () => {
       });
       if (response?.data?.status) {
         message.success("Project closed successfully");
-        getProjectListing();
+        syncProjectStatusChange(projectId, closedStatus, "close");
+        setTimeout(() => {
+          getProjectListing(currentSkipFilters, currentFilters, true);
+        }, 500);
       } else {
         message.error(response?.data?.message || "Failed to close project");
       }
@@ -1486,7 +1538,7 @@ const AssignProject = () => {
       key: "project_status",
       width: 120,
       render: (_, record) => {
-        const statusTitle = record?.project_status?.title || "";
+        const statusTitle = getProjectStatusMeta(record?.project_status, projectStatusList).title || "";
         const sc = getStatusStyle(statusTitle);
         return (
           <span className="ap-status-pill ap-status-pill--sm" style={{ background: sc.bg, color: sc.color }}>
@@ -1836,6 +1888,8 @@ const AssignProject = () => {
                   pageSize={pagination.pageSize}
                   total={totalCount}
                   showSizeChanger
+                  responsive
+                  showLessItems
                   pageSizeOptions={["10", "20", "30"]}
                   showTotal={showTotal}
                   onChange={(page, size) => setPagination({ current: page, pageSize: size })}

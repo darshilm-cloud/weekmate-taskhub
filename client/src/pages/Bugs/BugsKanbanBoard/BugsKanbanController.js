@@ -476,6 +476,22 @@ const BugsKanbanController = ({
 
   const handleTabChange = (key) => {
     setActiveTab(key);
+    const currentBugId = bugId || taskDetails?._id || bugID;
+    if (!currentBugId) return;
+
+    if (key === "comments") {
+      getComment(currentBugId);
+      return;
+    }
+
+    if (key === "files") {
+      getTaskByIdDetails(currentBugId, null, true);
+      return;
+    }
+
+    if (key === "history" || key === "task") {
+      getBughistory(currentBugId);
+    }
   };
 
   const getBughistory = async (id) => {

@@ -374,7 +374,7 @@ const ActivityLogs = () => {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{
               width: 32, height: 32, borderRadius: 8,
-              background: "#fef2f2", color: "#dc2626",
+              background: "rgba(255, 255, 255, 0.16)", color: "#ffffff",
               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
             }}>
               <ClockCircleOutlined />
@@ -386,6 +386,7 @@ const ActivityLogs = () => {
         }
         open={isViewModalOpen}
         onCancel={closeModal}
+        className="activity-detail-modal"
         footer={
           <button className="cad-btn" onClick={closeModal}>
             Close

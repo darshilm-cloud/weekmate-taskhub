@@ -477,12 +477,19 @@
 
 .ap-date-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
 .ap-date-dropdown .ant-picker-cell .ant-picker-cell-inner:hover {
-  background: #c7d2fe;
-  color: #1e3a8a;
+  background: #0b3a5b !important;
+  color: #ffffff !important;
+}
+
+.ap-date-dropdown .ant-picker-cell:hover .ant-picker-cell-inner,
+.ap-date-dropdown .ant-picker-cell-selected:hover .ant-picker-cell-inner,
+.ap-date-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  background: #0b3a5b !important;
+  color: #ffffff !important;
 }
 
 .ap-date-dropdown .ant-picker-cell-today .ant-picker-cell-inner::before {
-  border-color: #2563eb;
+  border-color: #0b3a5b;
   border-radius: 999px;
 }
 
@@ -497,6 +504,7 @@
   border: none;
   border-radius: 10px;
   padding: 11px 18px;
+  min-width: 104px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -514,8 +522,12 @@
 }
 
 .ap-date-action--apply {
-  background: #38bdf8;
+  background: #0b3a5b;
   color: #ffffff;
+}
+
+.ap-date-action--apply:hover {
+  background: #0b3a5b;
 }
 
 .ap-browser-layout {
@@ -1638,9 +1650,91 @@ body[data-theme="dark"] .ap-browser-status-label {
 /* ── Pagination ───────────────────────────────────────────── */
 .ap-grid-pagination {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-  padding-bottom: 16px;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 12px 0 18px;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(245, 247, 251, 0) 0%, rgba(245, 247, 251, 0.92) 30%, #f5f7fb 100%);
+}
+
+.ap-grid-pagination .ant-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #dbe5f0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.ap-grid-pagination .ant-pagination-total-text {
+  margin-inline-end: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ap-grid-pagination .ant-pagination-item,
+.ap-grid-pagination .ant-pagination-prev,
+.ap-grid-pagination .ant-pagination-next,
+.ap-grid-pagination .ant-pagination-jump-prev,
+.ap-grid-pagination .ant-pagination-jump-next {
+  min-width: 34px;
+  height: 34px;
+  line-height: 32px;
+  border-radius: 10px;
+  border-color: #dbe5f0;
+  background: #fff;
+}
+
+.ap-grid-pagination .ant-pagination-item a {
+  color: #334155;
+  font-weight: 600;
+}
+
+.ap-grid-pagination .ant-pagination-item:hover,
+.ap-grid-pagination .ant-pagination-prev:hover,
+.ap-grid-pagination .ant-pagination-next:hover {
+  border-color: #2563eb;
+}
+
+.ap-grid-pagination .ant-pagination-item-active {
+  background: #0b3a5b;
+  border-color: #0b3a5b;
+}
+
+.ap-grid-pagination .ant-pagination-item-active a {
+  color: #fff;
+}
+
+.ap-grid-pagination .ant-pagination-options {
+  margin-inline-start: 4px;
+}
+
+.ap-grid-pagination .ant-select-selector {
+  border-radius: 10px !important;
+  border-color: #dbe5f0 !important;
+  min-height: 34px !important;
+}
+
+.ap-grid-pagination .ant-pagination-options-quick-jumper input {
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .ap-grid-pagination {
+    justify-content: stretch;
+    padding: 12px 0 14px;
+  }
+
+  .ap-grid-pagination .ant-pagination {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }
 
 /* ── Table section ────────────────────────────────────────── */

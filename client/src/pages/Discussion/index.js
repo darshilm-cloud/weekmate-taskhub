@@ -50,7 +50,10 @@ export default function DiscussionPage() {
   // Add Topic modal
   const [addOpen, setAddOpen] = useState(false);
   const [addForm] = Form.useForm();
+  const selectedAddProjectId = Form.useWatch("project_id", addForm);
   const [projects, setProjects] = useState([]);
+  const [projectTasksMap, setProjectTasksMap] = useState({});
+  const [loadingTasks, setLoadingTasks] = useState(false);
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addType, setAddType] = useState("General"); // General or Member
 
@@ -178,6 +181,32 @@ export default function DiscussionPage() {
     setAddType(type);
     setAddOpen(true);
     await loadProjects();
+  };
+
+  const loadProjectTasks = async (projectId) => {
+    if (!projectId) return;
+    if (projectTasksMap[projectId]) return;
+    setLoadingTasks(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
+      });
+      const list = res?.data?.data || [];
+      setProjectTasksMap((prev) => ({ ...prev, [projectId]: Array.isArray(list) ? list : [] }));
+    } catch (e) {
+      console.error("loadProjectTasks error", e);
+      setProjectTasksMap((prev) => ({ ...prev, [projectId]: [] }));
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
+  const handleAddProjectChange = async (projectId) => {
+    addForm.setFieldValue("task_id", undefined);
+    if (addType === "Member") {
+      await loadProjectTasks(projectId);
+    }
   };
 
   const handleAdd = async () => {
@@ -316,7 +345,6 @@ export default function DiscussionPage() {
         {/* Left Header */}
         <div className="disc-left-header">
           <span className="disc-left-title">Discussion</span>
-          <Tooltip title="Search"><button className="disc-icon-btn"><SearchOutlined /></button></Tooltip>
         </div>
 
         {/* Add buttons */}
@@ -482,10 +510,25 @@ export default function DiscussionPage() {
             <Input placeholder="Discussion title" />
           </Form.Item>
           <Form.Item name="project_id" label="Project" rules={[{ required: true, message: "Select a project" }]}>
-            <Select showSearch placeholder="Select project"
+            <Select showSearch placeholder="Select project" onChange={handleAddProjectChange}
               filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
               options={projects.map((p) => ({ value: p._id, label: p.title }))} />
           </Form.Item>
+          {addType === "Member" && (
+            <Form.Item name="task_id" label="Task" rules={[{ required: true, message: "Select a task" }]}>
+              <Select
+                showSearch
+                placeholder="Select task"
+                loading={loadingTasks}
+                optionFilterProp="label"
+                filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+                options={(projectTasksMap[selectedAddProjectId] || []).map((task) => ({
+                  value: task._id,
+                  label: task.title || task.task || task.name || "Untitled task",
+                }))}
+              />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

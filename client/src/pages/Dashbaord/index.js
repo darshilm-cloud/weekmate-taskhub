@@ -86,7 +86,11 @@ const Dashboard = () => {
   const [calendarValue, setCalendarValue] = useState(() => dayjs());
   const [isCalendarPickerOpen, setIsCalendarPickerOpen] = useState(false);
   const [hoveredChartIndex, setHoveredChartIndex] = useState(null);
+  const [canScrollCalendarLeft, setCanScrollCalendarLeft] = useState(false);
+  const [canScrollCalendarRight, setCanScrollCalendarRight] = useState(false);
   const calendarPickerRef = useRef(null);
+  const calendarStripRef = useRef(null);
+  const calendarStripItemRefs = useRef({});
   const calendarWeekdays = useMemo(() => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], []);
   const calendarMonths = useMemo(
     () => Array.from({ length: 12 }, (_, monthIndex) => ({
@@ -108,19 +112,17 @@ const Dashboard = () => {
     return title === "done" || title === "closed";
   }, []);
 
+  const isTaskAssignedToCurrentUser = useCallback((task) => {
+    const assignees = Array.isArray(task?.assignees) ? task.assignees : [];
+    return assignees.some((assignee) => {
+      const assigneeId = typeof assignee === "object" ? assignee?._id || assignee?.id : assignee;
+      return String(assigneeId || "").trim() === String(currentUserId || "").trim();
+    });
+  }, [currentUserId]);
+
   const { totalTask, assignedToMe, dueToday, pastDue } = useMemo(() => {
-    const assignedCount = isAdmin
-      ? (
-          assignedToMeTasks.length > 0
-            ? assignedToMeTasks.length
-            : myTask.filter((t) =>
-                (t.assignees || []).some((a) => {
-                  const id = a && (a._id ?? a);
-                  return id != null && String(id).trim() === String(currentUserId).trim();
-                })
-              ).length
-        )
-      : myTask.length;
+    const assignedSource = assignedToMeTasks.length > 0 ? assignedToMeTasks : myTask;
+    const assignedCount = assignedSource.filter(isTaskAssignedToCurrentUser).length;
     return {
       totalTask: myTask.length,
       assignedToMe: assignedCount,
@@ -134,7 +136,7 @@ const Dashboard = () => {
           !isDone(t)
       ).length,
     };
-  }, [myTask, today, isAdmin, currentUserId, assignedToMeTasks.length, isDone]);
+  }, [myTask, today, assignedToMeTasks, isDone, isTaskAssignedToCurrentUser]);
 
   const totalProjects = useMemo(() => {
     if (typeof projectTotalCount === "number" && projectTotalCount >= 0) {
@@ -152,8 +154,6 @@ const Dashboard = () => {
       monthStart.add(idx, "day")
     );
   }, [calendarValue]);
-
-  const visibleStripDays = useMemo(() => monthDays.slice(0, 9), [monthDays]);
 
   const calendarGrid = useMemo(() => {
     const monthStart = calendarValue.startOf("month");
@@ -179,6 +179,30 @@ const Dashboard = () => {
     setCalendarValue(next.date(safeDay));
   }, [calendarValue]);
 
+  const updateCalendarStripScrollState = useCallback(() => {
+    const stripNode = calendarStripRef.current;
+    if (!stripNode) return;
+
+    const maxScrollLeft = stripNode.scrollWidth - stripNode.clientWidth;
+    setCanScrollCalendarLeft(stripNode.scrollLeft > 4);
+    setCanScrollCalendarRight(stripNode.scrollLeft < maxScrollLeft - 4);
+  }, []);
+
+  const scrollCalendarStrip = useCallback((direction) => {
+    const stripNode = calendarStripRef.current;
+    if (!stripNode) return;
+
+    const firstItem = stripNode.querySelector(".db-cal-strip-item");
+    const itemWidth = firstItem?.offsetWidth || 54;
+    const computedGap = Number.parseFloat(window.getComputedStyle(stripNode).columnGap || window.getComputedStyle(stripNode).gap || "12") || 12;
+    const scrollOffset = (itemWidth + computedGap) * 5 * direction;
+
+    stripNode.scrollBy({
+      left: scrollOffset,
+      behavior: "smooth",
+    });
+  }, []);
+
   useEffect(() => {
     if (!isCalendarPickerOpen) {
       return undefined;
@@ -193,6 +217,33 @@ const Dashboard = () => {
     document.addEventListener("mousedown", handleCalendarOutsideClick);
     return () => document.removeEventListener("mousedown", handleCalendarOutsideClick);
   }, [isCalendarPickerOpen]);
+
+  useEffect(() => {
+    const activeNode = calendarStripItemRefs.current[calendarValue.format("YYYY-MM-DD")];
+    if (activeNode?.scrollIntoView) {
+      activeNode.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [calendarValue, monthDays]);
+
+  useEffect(() => {
+    const stripNode = calendarStripRef.current;
+    if (!stripNode) return undefined;
+
+    const handleStripScroll = () => updateCalendarStripScrollState();
+    handleStripScroll();
+
+    stripNode.addEventListener("scroll", handleStripScroll, { passive: true });
+    window.addEventListener("resize", handleStripScroll);
+
+    return () => {
+      stripNode.removeEventListener("scroll", handleStripScroll);
+      window.removeEventListener("resize", handleStripScroll);
+    };
+  }, [monthDays, updateCalendarStripScrollState]);
 
   // Memoized chart data — recalculate when myTask, chartView, or calendarValue changes
   const { labels, completedCounts, incompleteCounts } = useMemo(() => {
@@ -1005,7 +1056,7 @@ const Dashboard = () => {
                 options={chartOptions}
                 series={chartSeries}
                 type="line"
-                height={240}
+                height={190}
               />
             </div>
 
@@ -1080,22 +1131,60 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="db-cal-strip" role="list" aria-label="Month days">
-                {visibleStripDays.map((day) => {
-                  const isActive = day.isSame(calendarValue, "day");
-                  return (
-                    <button
-                      key={day.format("YYYY-MM-DD")}
-                      type="button"
-                      className={`db-cal-strip-item${isActive ? " active" : ""}`}
-                      onClick={() => setCalendarValue(day)}
-                      role="listitem"
-                    >
-                      <div className="db-cal-strip-dow">{day.format("ddd")}</div>
-                      <div className="db-cal-strip-day">{day.format("DD")}</div>
-                    </button>
-                  );
-                })}
+              <div className="db-cal-strip-slider">
+                <div
+                  className="db-cal-strip"
+                  ref={calendarStripRef}
+                  role="list"
+                  aria-label="Month days"
+                  style={{ "--db-cal-days-count": monthDays.length }}
+                >
+                  {monthDays.map((day) => {
+                    const isActive = day.isSame(calendarValue, "day");
+                    return (
+                      <button
+                        key={day.format("YYYY-MM-DD")}
+                        ref={(node) => {
+                          const key = day.format("YYYY-MM-DD");
+                          if (node) {
+                            calendarStripItemRefs.current[key] = node;
+                          } else {
+                            delete calendarStripItemRefs.current[key];
+                          }
+                        }}
+                        type="button"
+                        className={`db-cal-strip-item${isActive ? " active" : ""}`}
+                        onClick={() => setCalendarValue(day)}
+                        role="listitem"
+                      >
+                        <div className="db-cal-strip-dow">{day.format("ddd")}</div>
+                        <div className="db-cal-strip-day">{day.format("DD")}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="db-cal-strip-controls">
+                  <button
+                    type="button"
+                    className="db-cal-strip-arrow"
+                    onClick={() => scrollCalendarStrip(-1)}
+                    aria-label="Scroll dates left"
+                    disabled={!canScrollCalendarLeft}
+                  >
+                    <LeftOutlined />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="db-cal-strip-arrow"
+                    onClick={() => scrollCalendarStrip(1)}
+                    aria-label="Scroll dates right"
+                    disabled={!canScrollCalendarRight}
+                  >
+                    <RightOutlined />
+                  </button>
+                </div>
               </div>
 
               <div className="db-cal-strip-rule" />
@@ -1190,7 +1279,7 @@ const Dashboard = () => {
                   series={[priorityLow, priorityMedium, priorityHigh]}
                   type="donut"
                   width="100%"
-                  height={240}
+                  height={190}
                 />
               </div>
             )}

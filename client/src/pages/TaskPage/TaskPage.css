@@ -623,6 +623,40 @@
   text-align: center;
 }
 
+.calendar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-month-year-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar-select.ant-select {
+  min-width: 150px;
+}
+
+.calendar-toolbar-select-year.ant-select {
+  min-width: 110px;
+}
+
+.calendar-toolbar-select .ant-select-selector {
+  border-radius: 6px !important;
+  border-color: #d9d9d9 !important;
+  min-height: 36px !important;
+  box-shadow: none !important;
+}
+
+.calendar-toolbar-select.ant-select:hover .ant-select-selector,
+.calendar-toolbar-select.ant-select-focused .ant-select-selector {
+  border-color: #1677ff !important;
+}
+
 .calendar-mode {
   display: flex;
   gap: 4px;
@@ -962,6 +996,20 @@ body[data-theme="dark"] .calendar-toolbar button:hover {
 body.dark-theme .calendar-title,
 body[data-theme="dark"] .calendar-title {
   color: #f8fbff;
+}
+
+body.dark-theme .calendar-toolbar-select .ant-select-selector,
+body[data-theme="dark"] .calendar-toolbar-select .ant-select-selector {
+  border-color: rgba(69, 99, 145, 0.28) !important;
+  background: #132238 !important;
+  color: #dce8fb !important;
+}
+
+body.dark-theme .calendar-toolbar-select .ant-select-arrow,
+body[data-theme="dark"] .calendar-toolbar-select .ant-select-arrow,
+body.dark-theme .calendar-toolbar-select .ant-select-selection-item,
+body[data-theme="dark"] .calendar-toolbar-select .ant-select-selection-item {
+  color: #dce8fb !important;
 }
 
 body.dark-theme .calendar-mode button.active,

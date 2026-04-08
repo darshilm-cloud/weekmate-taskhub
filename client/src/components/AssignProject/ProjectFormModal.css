@@ -10,7 +10,7 @@
 }
 
 .pfm-modal .ant-modal-content {
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 0;
   overflow: hidden;
   background: #ffffff;
@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  margin: 0 0 14px;
+  margin: -18px -18px 14px;
   border-radius: 0;
   background: #0b3a5b;
 }
@@ -241,7 +241,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px 18px;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .pfm-fields-grid .pfm-field-row {
@@ -277,12 +277,35 @@
   border: 1px solid #d7e1ef !important;
   border-radius: 8px !important;
   background: #ffffff !important;
+  padding: 0 12px !important;
+  display: flex;
+  align-items: center;
+  box-shadow: none !important;
+}
+
+.pfm-datepicker.ant-picker-borderless,
+.pfm-datepicker.ant-picker {
+  border: 1px solid #d7e1ef !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  padding: 0 12px !important;
+  box-shadow: none !important;
 }
 
 .pfm-datepicker input {
   padding-left: 0 !important;
   color: #111111 !important;
   -webkit-text-fill-color: #111111 !important;
+}
+
+.pfm-datepicker .ant-picker-input {
+  display: flex;
+  align-items: center;
+}
+
+.pfm-datepicker .ant-picker-suffix,
+.pfm-datepicker .ant-picker-clear {
+  color: #9aacbf !important;
 }
 
 .pfm-datepicker.ant-picker-disabled {
@@ -294,8 +317,8 @@
 .pfm-no-end-date-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 10px;
-  margin-bottom: 0;
+  margin-top: 6px;
+  margin-bottom: 2px;
 }
 
 .pfm-no-end-date-row .ant-checkbox-wrapper {
@@ -434,7 +457,7 @@
 }
 
 .pfm-inline-modal .ant-modal-content {
-  border-radius: 18px;
+  border-radius: 8px;
   overflow: hidden;
   padding: 0;
   border: 1px solid rgba(11, 58, 91, 0.08);

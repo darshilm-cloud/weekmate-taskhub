@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
@@ -23,11 +23,13 @@ import {
   Empty,
   Input,
   message,
+  Pagination,
   Progress,
   Table,
   Tabs,
   Tag,
 } from "antd";
+import dayjs from "dayjs";
 import moment from "moment";
 import ReactApexChart from "react-apexcharts";
 import { Link, useHistory, useParams } from "react-router-dom";
@@ -144,6 +146,7 @@ function ReportsHub() {
       metadata: {},
     },
   });
+  const previousFiltersRef = useRef(defaultFilters);
 
   const currentPage = pageMeta[reportKey];
 
@@ -263,13 +266,15 @@ function ReportsHub() {
     }
   }, [fetchAllProjects]);
 
-  const loadReportData = useCallback(async () => {
+  const loadReportData = useCallback(async ({ silent = false } = {}) => {
     if (!reportKey) {
       return;
     }
 
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       console.log('Loading report data for:', reportKey, 'with filters:', filters);
       
       const selectedDate = filters.date ? moment(filters.date) : null;
@@ -401,35 +406,62 @@ function ReportsHub() {
       }
 
       if (reportKey === "user-performance-report") {
+        const performanceRequestBody = {
+          technologies: filters.technologies || [],
+          types: filters.types || [],
+          managers: filters.managers || [],
+          projects: selectedProjectIds.length > 0 ? selectedProjectIds : (filters.projects || []),
+          departments: filters.departments || [],
+          users:
+            filters.userId && filters.userId !== "all" ? [filters.userId] : [],
+          pageNo: 1,
+          limit: 100,
+          sort: "logged_date",
+          sortBy: "desc",
+          isExport: false,
+        };
+
+        if (filters.date) {
+          performanceRequestBody.startDate = startDate.format("YYYY-MM-DD");
+          performanceRequestBody.endDate = endDate.format("YYYY-MM-DD");
+        }
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getTimeSheetReportsDetails,
-          body: {
-            startDate: startDate.format("YYYY-MM-DD"),
-            endDate: endDate.format("YYYY-MM-DD"),
-            technologies: filters.technologies || [],
-            types: filters.types || [],
-            managers: filters.managers || [],
-            projects: selectedProjectIds.length > 0 ? selectedProjectIds : (filters.projects || []),
-            departments: filters.departments || [],
-            users:
-              filters.userId && filters.userId !== "all" ? [filters.userId] : [],
-            pageNo: 1,
-            limit: 100,
-            sort: "logged_date",
-            sortBy: "desc",
-            isExport: false,
-          },
+          body: performanceRequestBody,
         });
 
-        const entries = Array.isArray(response?.data?.data?.data) ? response.data.data.data : [];
+        const rawTimesheetData = response?.data?.data;
+        const entries = Array.isArray(rawTimesheetData?.data)
+          ? rawTimesheetData.data
+          : Array.isArray(rawTimesheetData)
+          ? rawTimesheetData
+          : [];
+        const aggregatedUsers = Array.isArray(rawTimesheetData?.user) ? rawTimesheetData.user : [];
         const userStats = entries.reduce((acc, entry) => {
-          const key = entry.employee_id || entry.user || "unknown";
-          const hours = Number(entry.logged_hours || 0) + Number(entry.logged_minutes || 0) / 60;
+          const userName =
+            entry.user ||
+            entry.employee_name ||
+            entry.full_name ||
+            entry.employee?.full_name ||
+            entry.employee?.name ||
+            "Unknown";
+          const key =
+            entry.employee_id ||
+            entry.user_id ||
+            entry.employee?._id ||
+            userName ||
+            "unknown";
+          const loggedTime = String(entry.logged_time || "");
+          const [loggedHourPart = "0", loggedMinutePart = "0"] = loggedTime.split(":");
+          const hours =
+            Number(entry.logged_hours || loggedHourPart || 0) +
+            Number(entry.logged_minutes || loggedMinutePart || 0) / 60;
           if (!acc[key]) {
             acc[key] = {
               key,
-              user: entry.user || "-",
+              user: userName,
               loggedHours: 0,
               entries: 0,
               projects: new Set(),
@@ -437,13 +469,19 @@ function ReportsHub() {
           }
           acc[key].loggedHours += hours;
           acc[key].entries += 1;
-          if (entry.project) {
-            acc[key].projects.add(entry.project);
+          const projectName =
+            entry.project ||
+            entry.project_name ||
+            entry.projectTitle ||
+            entry.project_id?.title ||
+            "";
+          if (projectName) {
+            acc[key].projects.add(projectName);
           }
           return acc;
         }, {});
 
-        const rows = Object.values(userStats).map((row) => ({
+        let rows = Object.values(userStats).map((row) => ({
           key: row.key,
           user: row.user,
           loggedHours: row.loggedHours.toFixed(2),
@@ -451,11 +489,38 @@ function ReportsHub() {
           projects: row.projects.size,
         }));
 
+        if (rows.length === 0 && aggregatedUsers.length > 0) {
+          rows = aggregatedUsers.map((row, index) => ({
+            key: row._id || row.userId || row.user || `user-${index}`,
+            user: row.user || row.name || row.full_name || "Unknown",
+            loggedHours: String(
+              row.totalLoggedHours ||
+              row.total_hours ||
+              row.loggedHours ||
+              row.logged_hours ||
+              "0"
+            ),
+            entries: Number(
+              row.entries ||
+              row.totalEntries ||
+              row.entryCount ||
+              row.count ||
+              0
+            ),
+            projects: Number(
+              row.projects ||
+              row.totalProjects ||
+              row.projectCount ||
+              0
+            ),
+          }));
+        }
+
         setReportData((prev) => ({
           ...prev,
           performance: {
             summary: {
-              totalHours: Number(response?.data?.data?.totalHours || 0),
+              totalHours: Number(rawTimesheetData?.totalHours || 0),
               totalEntries: entries.length,
             },
             rows,
@@ -580,12 +645,19 @@ function ReportsHub() {
       }
 
       if (reportKey === "timesheet") {
+        const timesheetStartDate = filters.date
+          ? moment(filters.date).startOf("day").format("YYYY-MM-DD")
+          : moment().subtract(12, "months").startOf("month").format("YYYY-MM-DD");
+        const timesheetEndDate = filters.date
+          ? moment(filters.date).endOf("day").format("YYYY-MM-DD")
+          : moment().format("YYYY-MM-DD");
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getTimeSheetReportsDetails,
           body: {
-            startDate: moment().startOf("month").format("YYYY-MM-DD"),
-            endDate: moment().format("YYYY-MM-DD"),
+            startDate: timesheetStartDate,
+            endDate: timesheetEndDate,
             technologies: [],
             types: [],
             managers: [],
@@ -622,7 +694,9 @@ function ReportsHub() {
       }
 
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users]);
 
@@ -633,13 +707,22 @@ function ReportsHub() {
   useEffect(() => {
     setFilters(defaultFilters);
     setDailyTab("pending");
+    previousFiltersRef.current = defaultFilters;
   }, [reportKey]);
 
   useEffect(() => {
     if (reportKey) {
-      loadReportData();
+      const previousFilters = previousFiltersRef.current || defaultFilters;
+      const previousWithoutSearch = { ...previousFilters, search: "" };
+      const currentWithoutSearch = { ...filters, search: "" };
+      const onlySearchChanged =
+        previousFilters.search !== filters.search &&
+        JSON.stringify(previousWithoutSearch) === JSON.stringify(currentWithoutSearch);
+
+      loadReportData({ silent: onlySearchChanged });
+      previousFiltersRef.current = filters;
     }
-  }, [reportKey, loadReportData]);
+  }, [filters, reportKey, loadReportData]);
 
   const handleDownload = (key) => {
     let items = [];
@@ -917,7 +1000,7 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
           <pre>{JSON.stringify(data['timesheet'], null, 2)}</pre>
         </div>
       ) : rowData.length > 0 ? (
-        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance?.summary} />
+        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance?.summary} filters={filters} />
       ) : (
         <EmptyReportState />
       )}
@@ -1071,10 +1154,29 @@ function CommonFilters({ fields, filters, setFilters }) {
     setSearchText("");
   };
 
+  const resetAllSelections = () => {
+    const clearedFilters = facetFields.reduce((acc, field) => {
+      acc[field.key] = cloneFacetValue(undefined, field.mode, field.defaultValue);
+      return acc;
+    }, {});
+
+    setDraftFilters(clearedFilters);
+    setSearchText("");
+    setFilters((prev) => ({
+      ...prev,
+      ...clearedFilters,
+    }));
+  };
+
   const panel = activeField ? (
     <div className="reports-facet-panel reports-facet-panel--split">
       <aside className="reports-facet-sidebar">
-        <h3 className="reports-facet-sidebar-title">Filters</h3>
+        <div className="reports-facet-sidebar-header">
+          <h3 className="reports-facet-sidebar-title">Filters</h3>
+          <button type="button" className="reports-facet-reset-all-btn" onClick={resetAllSelections}>
+            Reset All
+          </button>
+        </div>
         <div className="reports-facet-sidebar-list">
           {facetFields.map((field) => {
             const fieldValue = draftFilters[field.key];
@@ -1167,6 +1269,67 @@ function CommonFilters({ fields, filters, setFilters }) {
 
   return (
     <div className="reports-filter-bar">
+      {searchField ? (
+        <Input.Search
+          key={searchField.key}
+          placeholder={searchField.placeholder || "Search..."}
+          className="reports-search-input"
+          value={reportSearchText}
+          onChange={(event) => {
+            const nextValue = event.target.value || "";
+            setReportSearchText(nextValue);
+            setFilters((prev) => ({
+              ...prev,
+              search: nextValue,
+            }));
+          }}
+          onSearch={(value) => {
+            setFilters((prev) => ({
+              ...prev,
+              search: value ?? reportSearchText ?? "",
+            }));
+          }}
+          allowClear
+        />
+      ) : (
+        <Input.Search
+          placeholder="Search..."
+          className="reports-search-input"
+          value={reportSearchText}
+          onChange={(event) => {
+            const nextValue = event.target.value || "";
+            setReportSearchText(nextValue);
+            setFilters((prev) => ({
+              ...prev,
+              search: nextValue,
+            }));
+          }}
+          onSearch={(value) => {
+            setFilters((prev) => ({
+              ...prev,
+              search: value ?? reportSearchText ?? "",
+            }));
+          }}
+          allowClear
+        />
+      )}
+      {dateField ? (
+        <DatePicker
+          key={dateField.key}
+          placeholder={dateField.placeholder}
+          className="reports-filter-control"
+          suffixIcon={<CalendarOutlined />}
+          value={filters[dateField.key] ? dayjs(filters[dateField.key], "YYYY-MM-DD") : null}
+          onChange={(value) =>
+            setFilters((prev) => ({
+              ...prev,
+              [dateField.key]: value ? value.format("YYYY-MM-DD") : null,
+            }))
+          }
+          allowClear
+          format="MMM DD, YYYY"
+        />
+      ) : null}
       {facetFields.length ? (
         <Dropdown
           key="reports-shared-filter"
@@ -1194,65 +1357,6 @@ function CommonFilters({ fields, filters, setFilters }) {
           </Button>
         </Dropdown>
       ) : null}
-      {dateField ? (
-        <DatePicker
-          key={dateField.key}
-          placeholder={dateField.placeholder}
-          className="reports-filter-control"
-          suffixIcon={<CalendarOutlined />}
-          value={filters[dateField.key] ? moment(filters[dateField.key]) : null}
-          onChange={(value) =>
-            setFilters((prev) => ({
-              ...prev,
-              [dateField.key]: value ? value.format("YYYY-MM-DD") : null,
-            }))
-          }
-          allowClear
-          format="MMM DD, YYYY"
-        />
-      ) : null}
-      {searchField ? (
-        <Input.Search
-          key={searchField.key}
-          placeholder={searchField.placeholder || "Search..."}
-          className="reports-search-input"
-          value={reportSearchText}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setReportSearchText(nextValue);
-            if (!nextValue) {
-              setFilters((prev) => ({ ...prev, search: "" }));
-            }
-          }}
-          onSearch={(value) => {
-            setFilters((prev) => ({
-              ...prev,
-              search: (value ?? reportSearchText ?? "").trim(),
-            }));
-          }}
-          allowClear
-        />
-      ) : (
-        <Input.Search
-          placeholder="Search..."
-          className="reports-search-input"
-          value={reportSearchText}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setReportSearchText(nextValue);
-            if (!nextValue) {
-              setFilters((prev) => ({ ...prev, search: "" }));
-            }
-          }}
-          onSearch={(value) => {
-            setFilters((prev) => ({
-              ...prev,
-              search: (value ?? reportSearchText ?? "").trim(),
-            }));
-          }}
-          allowClear
-        />
-      )}
     </div>
   );
 }
@@ -1309,7 +1413,7 @@ function ProjectReportContent({ data }) {
   );
 }
 
-function ReportResults({ reportKey, rows, summary }) {
+function ReportResults({ reportKey, rows, summary, filters }) {
   const reportConfigs = {
     "user-report": {
       title: "User Summary",
@@ -1353,6 +1457,28 @@ function ReportResults({ reportKey, rows, summary }) {
   };
 
   const config = reportConfigs[reportKey];
+  const normalizedSearch = String(filters?.search || "").trim().toLowerCase();
+  const filteredRows = useMemo(() => {
+    if (!normalizedSearch) {
+      return rows;
+    }
+
+    return (Array.isArray(rows) ? rows : []).filter((row) => {
+      const searchHaystack = Object.values(row || {})
+        .flatMap((value) => {
+          if (Array.isArray(value)) {
+            return value.map((item) => String(item ?? "").toLowerCase());
+          }
+          if (value && typeof value === "object") {
+            return Object.values(value).map((item) => String(item ?? "").toLowerCase());
+          }
+          return [String(value ?? "").toLowerCase()];
+        })
+        .join(" ");
+
+      return searchHaystack.includes(normalizedSearch);
+    });
+  }, [normalizedSearch, rows]);
 
   return (
     <div className="reports-result-card">
@@ -1368,7 +1494,7 @@ function ReportResults({ reportKey, rows, summary }) {
           </div>
         </div>
       ) : null}
-      <Table columns={config.columns} dataSource={rows} pagination={{ pageSize: 10 }} rowKey="key" locale={{ emptyText: <Empty description="No report data found" /> }} />
+      <Table columns={config.columns} dataSource={filteredRows} pagination={{ pageSize: 10 }} rowKey="key" locale={{ emptyText: <Empty description="No report data found" /> }} />
     </div>
   );
 }
@@ -1378,6 +1504,7 @@ function UserReportResults({ rows, filters }) {
   const [selectedMember, setSelectedMember] = useState(() =>
     filters?.userId && filters.userId !== "all" ? filters.userId : null
   );
+  const normalizedSearch = String(filters?.search || "").trim().toLowerCase();
 
   useEffect(() => {
     if (filters?.userId && filters.userId !== "all") {
@@ -1389,8 +1516,27 @@ function UserReportResults({ rows, filters }) {
 
 
   const filteredMembers = useMemo(() => {
-    return rows;
-  }, [rows]);
+    if (!normalizedSearch) {
+      return rows;
+    }
+
+    return rows.filter((row) => {
+      const searchHaystack = [
+        row.user,
+        row.project,
+        row.total,
+        row.completed,
+        row.pending,
+        row.dueToday,
+        row.overdue,
+        row.incomplete,
+      ]
+        .map((value) => String(value ?? "").toLowerCase())
+        .join(" ");
+
+      return searchHaystack.includes(normalizedSearch);
+    });
+  }, [normalizedSearch, rows]);
 
   const selectedRow = selectedMember
     ? (filteredMembers.find((row) => row.key === selectedMember) ||
@@ -1454,7 +1600,7 @@ function UserReportResults({ rows, filters }) {
 
   const totalSummary = useMemo(
     () =>
-      rows.reduce(
+      filteredMembers.reduce(
         (acc, row) => {
           acc.members += 1;
           acc.total += Number(row.total || 0);
@@ -1467,7 +1613,7 @@ function UserReportResults({ rows, filters }) {
         },
         { members: 0, total: 0, completed: 0, pending: 0, incomplete: 0, dueToday: 0, overdue: 0 }
       ),
-    [rows]
+    [filteredMembers]
   );
 
   const chartOptions = useMemo(
@@ -1528,13 +1674,13 @@ function UserReportResults({ rows, filters }) {
         { label: "Incomplete", value: selectedRow.incomplete || 0 },
       ]
     : [
-        { label: "Total Members", value: rows.length },
-        { label: "Total Tasks", value: rows.reduce((s, r) => s + (r.total || 0), 0) },
-        { label: "Pending Tasks", value: rows.reduce((s, r) => s + (r.pending || 0), 0) },
-        { label: "Due Today", value: rows.reduce((s, r) => s + (r.dueToday || 0), 0) },
-        { label: "Past Due Tasks", value: rows.reduce((s, r) => s + (r.overdue || 0), 0) },
-        { label: "Completed", value: rows.reduce((s, r) => s + (r.completed || 0), 0) },
-        { label: "Incomplete", value: rows.reduce((s, r) => s + (r.incomplete || 0), 0) },
+        { label: "Total Members", value: filteredMembers.length },
+        { label: "Total Tasks", value: filteredMembers.reduce((s, r) => s + (r.total || 0), 0) },
+        { label: "Pending Tasks", value: filteredMembers.reduce((s, r) => s + (r.pending || 0), 0) },
+        { label: "Due Today", value: filteredMembers.reduce((s, r) => s + (r.dueToday || 0), 0) },
+        { label: "Past Due Tasks", value: filteredMembers.reduce((s, r) => s + (r.overdue || 0), 0) },
+        { label: "Completed", value: filteredMembers.reduce((s, r) => s + (r.completed || 0), 0) },
+        { label: "Incomplete", value: filteredMembers.reduce((s, r) => s + (r.incomplete || 0), 0) },
       ];
 
   return (
@@ -1619,7 +1765,7 @@ function UserReportResults({ rows, filters }) {
         ) : (
           <div className="user-report-table-view" style={{ padding: "20px" }}>
             <Table
-              dataSource={rows}
+              dataSource={filteredMembers}
               pagination={false}
               columns={[
                 { title: "User", dataIndex: "user", key: "user" },
@@ -1639,11 +1785,6 @@ function UserReportResults({ rows, filters }) {
       <div className="user-report-members-card">
         <div className="user-report-member-header">
           <h2>Member</h2>
-          <div className="user-report-member-actions">
-            <Button className="user-report-customize">
-              Customize
-            </Button>
-          </div>
         </div>
 
         <div className="user-report-member-tabs">
@@ -1654,7 +1795,7 @@ function UserReportResults({ rows, filters }) {
             onClick={() => setSelectedMember(null)}
           >
             <span className="user-report-member-tab-name">All</span>
-            <span className="user-report-member-tab-count">{rows.length}</span>
+            <span className="user-report-member-tab-count">{filteredMembers.length}</span>
           </button>
 
           {visibleMembers.map((row) => (
@@ -1718,6 +1859,26 @@ function UserReportResults({ rows, filters }) {
 }
 
 function DailyReportContent({ activeKey, onChange, items }) {
+  const [dailyPage, setDailyPage] = useState(1);
+  const [expandedKeys, setExpandedKeys] = useState([]);
+  const pageSize = 5;
+  const startCount = items.length ? (dailyPage - 1) * pageSize + 1 : 0;
+  const endCount = Math.min(dailyPage * pageSize, items.length);
+
+  useEffect(() => {
+    setDailyPage(1);
+    setExpandedKeys([]);
+  }, [activeKey]);
+
+  useEffect(() => {
+    setExpandedKeys([]);
+  }, [dailyPage]);
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (dailyPage - 1) * pageSize;
+    return items.slice(startIndex, startIndex + pageSize);
+  }, [dailyPage, items]);
+
   return (
     <>
       <div className="daily-report-toolbar">
@@ -1739,40 +1900,59 @@ function DailyReportContent({ activeKey, onChange, items }) {
             <Empty description="No daily report data found" />
           </div>
         ) : (
-          <Collapse
-            accordion={false}
-            className="daily-report-collapse"
-            defaultActiveKey={items.map((_, index) => String(index))}
-            items={items.map((item, index) => ({
-              key: String(index),
-              label: (
-                <div className="daily-report-summary-row">
-                  <span className="daily-report-member">
-                    <span className="daily-report-avatar">
-                      {item.name
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .slice(0, 2)}
+          <>
+            <div className="daily-report-meta">
+              <span>Showing {startCount}-{endCount} of {items.length} members</span>
+              <strong>Page {dailyPage}</strong>
+            </div>
+            <Collapse
+              ghost
+              className="daily-report-collapse"
+              activeKey={expandedKeys}
+              onChange={(keys) => setExpandedKeys(Array.isArray(keys) ? keys : keys ? [keys] : [])}
+              items={paginatedItems.map((item, index) => ({
+                key: String(index),
+                label: (
+                  <div className="daily-report-summary-row">
+                    <span className="daily-report-member">
+                      <span className="daily-report-avatar">
+                        {item.name
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("")
+                          .slice(0, 2)}
+                      </span>
+                      {item.name}
                     </span>
-                    {item.name}
-                  </span>
-                  <span>{item.today}</span>
-                  <span>{item.overdue}</span>
-                  <span>{item.upcoming}</span>
-                  <span>{item.total}</span>
-                </div>
-              ),
-              children: (
-                <div className="daily-report-expanded-grid">
-                  <DailyMetric label="Today’s task" value={item.today} color="#4caf50" />
-                  <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
-                  <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
-                  <DailyMetric label="Total" value={item.total} color="#dc2626" />
-                </div>
-              ),
-            }))}
-          />
+                    <span>{item.today}</span>
+                    <span>{item.overdue}</span>
+                    <span>{item.upcoming}</span>
+                    <span>{item.total}</span>
+                  </div>
+                ),
+                children: (
+                  <div className="daily-report-expanded-grid">
+                    <DailyMetric label="Today" value={item.today} color="#22c55e" />
+                    <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
+                    <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
+                    <DailyMetric label="Total" value={item.total} color="#dc2626" />
+                  </div>
+                ),
+              }))}
+            />
+            <div className="daily-report-pagination">
+              <Pagination
+                current={dailyPage}
+                pageSize={pageSize}
+                total={items.length}
+                onChange={setDailyPage}
+                size="small"
+                showLessItems
+                showSizeChanger={false}
+                responsive
+              />
+            </div>
+          </>
         )}
       </div>
     </>
@@ -1852,6 +2032,103 @@ function DailyMetric({ label, value, color }) {
       <span>{label}</span>
       <strong>{value}</strong>
       <div className="daily-report-line" style={{ backgroundColor: color }} />
+    </div>
+  );
+}
+
+function polarToCartesian(cx, cy, radius, angleInDegrees) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+
+  return {
+    x: cx + radius * Math.cos(angleInRadians),
+    y: cy + radius * Math.sin(angleInRadians),
+  };
+}
+
+function describePieSlice(cx, cy, radius, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, radius, endAngle);
+  const end = polarToCartesian(cx, cy, radius, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return [
+    `M ${cx} ${cy}`,
+    `L ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function SimplePieChart({ data, colors, size = 240 }) {
+  const [hoveredSlice, setHoveredSlice] = useState(null);
+  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const radius = size / 2 - 4;
+  const center = size / 2;
+  let accumulatedAngle = 0;
+
+  return (
+    <div className="simple-pie-chart-wrap">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="simple-pie-chart" role="img" aria-label="Hours by User pie chart">
+        {data.map((item, index) => {
+          const value = Number(item.value || 0);
+          const percentage = total > 0 ? value / total : 0;
+          const sliceAngle = percentage * 360;
+          const startAngle = accumulatedAngle;
+          const endAngle = accumulatedAngle + sliceAngle;
+          accumulatedAngle += sliceAngle;
+
+          const midAngle = startAngle + sliceAngle / 2;
+          const labelPosition = polarToCartesian(center, center, radius * 0.72, midAngle);
+          const tooltipPosition = polarToCartesian(center, center, radius * 0.95, midAngle);
+
+          return (
+            <g
+              key={`${item.label}-${index}`}
+              onMouseEnter={() =>
+                setHoveredSlice({
+                  label: item.label,
+                  value,
+                  x: tooltipPosition.x,
+                  y: tooltipPosition.y,
+                })
+              }
+              onMouseLeave={() => setHoveredSlice(null)}
+            >
+              <path
+                d={describePieSlice(center, center, radius, startAngle, endAngle)}
+                fill={colors[index % colors.length]}
+                stroke="#ffffff"
+                strokeWidth="2"
+              >
+                <title>{`${item.label}: ${value}`}</title>
+              </path>
+              {percentage >= 0.06 ? (
+                <text
+                  x={labelPosition.x}
+                  y={labelPosition.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="#ffffff"
+                  fontSize="12"
+                  fontWeight="700"
+                >
+                  {value}
+                </text>
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+      {hoveredSlice ? (
+        <div
+          className="simple-pie-tooltip"
+          style={{
+            left: hoveredSlice.x,
+            top: hoveredSlice.y,
+          }}
+        >
+          {hoveredSlice.label}: {hoveredSlice.value}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2437,8 +2714,7 @@ function ProjectRunningReportContent({ data, filters }) {
                   options={{
                     chart: { type: "pie" },
                     legend: {
-                      position: "bottom",
-                      horizontalAlign: "center",
+                      show: false,
                     },
                     dataLabels: {
                       enabled: true,
@@ -2453,7 +2729,7 @@ function ProjectRunningReportContent({ data, filters }) {
                   }}
                   series={managerChartData.map((item) => Number(item.value || 0))}
                   type="pie"
-                  height={360}
+                  height={290}
                 />
               </ChartErrorBoundary>
             </div>
@@ -2486,7 +2762,7 @@ function ProjectRunningReportContent({ data, filters }) {
                   }}
                   series={[{ data: typeChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
                   type="bar"
-                  height={360}
+                  height={290}
                 />
               </ChartErrorBoundary>
             </div>
@@ -2516,7 +2792,7 @@ function ProjectRunningReportContent({ data, filters }) {
                   }}
                   series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
                   type="bar"
-                  height={340}
+                  height={260}
                 />
               </ChartErrorBoundary>
             </div>
@@ -2564,6 +2840,7 @@ function ProjectRunningReportContent({ data, filters }) {
 function TimesheetReportContent({ data, filters }) {
   const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
   const searchText = filters?.search || "";
+  const timesheetUserChartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   // Filter timesheets based on search text (from HEAD)
   const filteredTimesheets = timesheets.filter(timesheet => {
@@ -2695,57 +2972,89 @@ function TimesheetReportContent({ data, filters }) {
 
       {/* Search Result Info */}
       {searchText && (
-        <div style={{ marginBottom: 16, padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px', color: '#0369a1' }}>
+        <div className="timesheet-search-summary">
           Showing {filteredTimesheets.length} of {timesheets.length} entries matching "{searchText}"
         </div>
       )}
 
       {/* Charts */}
-      <div className="charts-section">
-        <div className="charts-grid">
+      <div className="timesheet-charts-section">
+        <div className="timesheet-charts-grid">
           {userChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--timesheet chart-card--timesheet-user">
               <h3>Hours by User</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'pie' },
-                  labels: userChartData.map(item => item.user),
-                  colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
-                }}
-                series={userChartData.map(item => parseFloat(item.totalLoggedHours))}
-                type="pie"
-                height={300}
-              />
+              <div className="timesheet-user-pie-wrap">
+                <SimplePieChart
+                  size={240}
+                  colors={timesheetUserChartColors}
+                  data={userChartData.map((item) => ({
+                    label: item.user,
+                    value: parseFloat(item.totalLoggedHours),
+                  }))}
+                />
+              </div>
             </div>
           )}
           
           {managerChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
               <h3>Hours by Manager</h3>
               <ReactApexChart
                 options={{
-                  chart: { type: 'bar' },
-                  plotOptions: { bar: { horizontal: true } },
-                  xaxis: { categories: managerChartData.map(item => item.projectManager) },
+                  chart: { type: 'bar', toolbar: { show: false } },
+                  legend: { show: false },
+                  plotOptions: {
+                    bar: {
+                      horizontal: true,
+                      borderRadius: 6,
+                      barHeight: "46%",
+                    },
+                  },
+                  dataLabels: {
+                    enabled: true,
+                    style: { fontSize: "11px", colors: ["#ffffff"] },
+                  },
+                  xaxis: {
+                    categories: managerChartData.map(item => item.projectManager),
+                    labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                  },
+                  grid: { borderColor: "#e2e8f0" },
+                  colors: ["#60a5fa"],
                 }}
                 series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                 type="bar"
-                height={300}
+                height={250}
               />
             </div>
           )}
           
           {typeChartData.length > 0 && (
-            <div className="chart-card">
+            <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
               <h3>Hours by Project Type</h3>
               <ReactApexChart
                 options={{
-                  chart: { type: 'bar' },
-                  xaxis: { categories: typeChartData.map(item => item.projectType) },
+                  chart: { type: 'bar', toolbar: { show: false } },
+                  legend: { show: false },
+                  plotOptions: {
+                    bar: {
+                      borderRadius: 8,
+                      columnWidth: "42%",
+                    },
+                  },
+                  dataLabels: { enabled: false },
+                  xaxis: {
+                    categories: typeChartData.map(item => item.projectType),
+                    labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                  },
+                  yaxis: {
+                    labels: { style: { colors: "#64748b" } },
+                  },
+                  grid: { borderColor: "#e2e8f0" },
+                  colors: ["#34d399"],
                 }}
                 series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                 type="bar"
-                height={300}
+                height={240}
               />
             </div>
           )}

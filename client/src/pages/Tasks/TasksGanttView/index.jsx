@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import moment from "moment";
-import { Tooltip } from "antd";
+import { Button, Tooltip } from "antd";
 import "./gantt.css";
 
 const BASE_DAY_PX = 18;
@@ -35,30 +35,105 @@ function barColor(seed) {
   return BAR_COLORS[Math.abs(h) % BAR_COLORS.length];
 }
 
-export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = null, rangeEnd = null }) {
+function extractTaskDate(task, type = "start") {
+  if (!task || typeof task !== "object") return null;
+  if (type === "start") {
+    return task.start_date || task.startDate || task.created_at || task.createdAt || null;
+  }
+  return task.due_date || task.dueDate || task.end_date || task.endDate || null;
+}
+
+export default function TasksGanttView({
+  tasks = [],
+  onTaskClick,
+  rangeStart = null,
+  rangeEnd = null,
+  activeFilterCount = 0,
+  onResetFilters,
+  debugInfo = null,
+}) {
   const ref = useRef(null);
   const [hovered, setHovered] = useState(null);
   const [dayPx, setDayPx] = useState(BASE_DAY_PX);
 
-  const sections = useMemo(() => (
-    (tasks || [])
-      .map(({ workflowStatus: ws, tasks: list = [] }) => ({
-        key: ws?._id || ws?.title || "section",
-        title: ws?.title || "Tasks",
-        color: ws?.color || "#64748b",
-        tasks: (list || [])
-          .map((t) => ({ ...t, _stId: ws?._id, _stTitle: ws?.title, _stColor: ws?.color || "#64748b" }))
-          .sort((a, b) => {
-            const as = parseDate(a.start_date) || parseDate(a.created_at);
-            const bs = parseDate(b.start_date) || parseDate(b.created_at);
-            if (as && bs) return as.valueOf() - bs.valueOf();
-            if (as) return -1;
-            if (bs) return 1;
-            return String(a.title || "").localeCompare(String(b.title || ""));
-          }),
-      }))
-      .filter((s) => s.tasks.length > 0)
-  ), [tasks]);
+  const sections = useMemo(() => {
+    const input = Array.isArray(tasks) ? tasks : [];
+    const derivedSections = input
+      .map((entry) => {
+        const ws =
+          entry?.workflowStatus ||
+          entry?.workflow_status ||
+          entry?.status ||
+          entry?.task_status ||
+          {};
+        const list = Array.isArray(entry?.tasks)
+          ? entry.tasks
+          : Array.isArray(entry?.items)
+            ? entry.items
+            : [];
+
+        return {
+          key: ws?._id || ws?.id || entry?._id || entry?.title || "section",
+          title: ws?.title || ws?.name || entry?.title || "Tasks",
+          color: ws?.color || entry?.color || "#64748b",
+          tasks: list
+            .map((t) => ({
+              ...t,
+              _stId: ws?._id || ws?.id || t?._stId,
+              _stTitle: ws?.title || ws?.name || t?._stTitle || entry?.title,
+              _stColor: ws?.color || entry?.color || t?._stColor || "#64748b",
+            }))
+            .sort((a, b) => {
+              const as = parseDate(extractTaskDate(a, "start"));
+              const bs = parseDate(extractTaskDate(b, "start"));
+              if (as && bs) return as.valueOf() - bs.valueOf();
+              if (as) return -1;
+              if (bs) return 1;
+              return String(a.title || "").localeCompare(String(b.title || ""));
+            }),
+        };
+      })
+      .filter((s) => s.tasks.length > 0);
+
+    if (derivedSections.length > 0) return derivedSections;
+
+    const flatTasks = input
+      .filter(
+        (item) =>
+          item &&
+          typeof item === "object" &&
+          !Array.isArray(item?.tasks) &&
+          (item?.title || item?.name) &&
+          (extractTaskDate(item, "start") || extractTaskDate(item, "end"))
+      )
+      .map((task) => ({
+        ...task,
+        _stId: task?._stId || task?.task_status?._id || task?.workflowStatus?._id,
+        _stTitle:
+          task?._stTitle ||
+          task?.task_status?.title ||
+          task?.workflowStatus?.title ||
+          "Tasks",
+        _stColor:
+          task?._stColor ||
+          task?.task_status?.color ||
+          task?.workflowStatus?.color ||
+          "#64748b",
+      }));
+
+    if (flatTasks.length > 0) {
+      return [
+        {
+          key: "all_tasks",
+          title: "Tasks",
+          color: "#64748b",
+          tasks: flatTasks,
+        },
+      ];
+    }
+
+    return [];
+  }, [tasks]);
 
   const { start, days } = useMemo(() => {
     let lo = rangeStart ? parseDate(rangeStart) : null;
@@ -66,8 +141,8 @@ export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = n
 
     sections.forEach((sec) => {
       sec.tasks.forEach((t) => {
-        const s = parseDate(t.start_date) || parseDate(t.created_at);
-        const e = parseDate(t.due_date);
+        const s = parseDate(extractTaskDate(t, "start"));
+        const e = parseDate(extractTaskDate(t, "end"));
         if (s && (!lo || s.isBefore(lo))) lo = s.clone();
         if (e && (!hi || e.isAfter(hi))) hi = e.clone();
       });
@@ -132,8 +207,8 @@ export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = n
   }, [days]);
 
   function pos(task) {
-    let s = parseDate(task.start_date) || parseDate(task.created_at);
-    let e = parseDate(task.due_date);
+    let s = parseDate(extractTaskDate(task, "start"));
+    let e = parseDate(extractTaskDate(task, "end"));
     if (!s && !e) return null;
     if (!s) s = e.clone().subtract(7, "days");
     if (!e) e = s.clone().add(7, "days");
@@ -145,8 +220,22 @@ export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = n
   if (sections.length === 0) return (
     <div className="gt-empty">
       <span className="gt-empty-ico"><i className="fa-regular fa-calendar-xmark" /></span>
-      <strong>No tasks to display</strong>
-      <p>Add start or due dates to your tasks to see them here.</p>
+      <strong>{activeFilterCount > 0 ? "No tasks match current filters" : "No tasks to display"}</strong>
+      <p>
+        {activeFilterCount > 0
+          ? "Current filters are hiding all tasks in Gantt view. Reset filters to see the chart again."
+          : "Add start or due dates to your tasks to see them here."}
+      </p>
+      {debugInfo ? (
+        <div className="gt-empty-debug">
+          board: {debugInfo.boardCount} | filtered: {debugInfo.filteredCount} | gantt: {debugInfo.ganttCount} | sections: {debugInfo.sectionCount}
+        </div>
+      ) : null}
+      {activeFilterCount > 0 && typeof onResetFilters === "function" ? (
+        <Button className="gt-empty-btn" onClick={onResetFilters}>
+          Reset All Filters
+        </Button>
+      ) : null}
     </div>
   );
 
@@ -208,8 +297,8 @@ export default function TasksGanttView({ tasks = [], onTaskClick, rangeStart = n
               {sec.tasks.map((task, idx) => {
                 const p = pos(task);
                 const overdue =
-                  task.due_date &&
-                  moment(task.due_date).isBefore(moment(), "day") &&
+                  extractTaskDate(task, "end") &&
+                  moment(extractTaskDate(task, "end")).isBefore(moment(), "day") &&
                   String(task._stTitle || "").toLowerCase() !== "done";
                 const c = task._stColor || barColor(task._id || task.title || idx);
                 const assigneeName =

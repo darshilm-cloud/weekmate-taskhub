@@ -35,6 +35,7 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
+import "./EmployeeListTabUsers.css";
 
 const CombinedEmployeeList = ({
   taskLikeDesign = false,
@@ -657,38 +658,60 @@ const CombinedEmployeeList = ({
 
       <Modal
         title={
-          modalMode === "view"
-            ? "View Employee"
-            : editData
-            ? "Edit Employee"
-            : "Add Employee"
+          <div className="employee-modal-header">
+            <div className="employee-modal-title-wrap">
+              <h2 className="employee-modal-title">
+                {modalMode === "view"
+                  ? "View Employee"
+                  : editData
+                    ? "Edit Employee"
+                    : "Add Employee"}
+              </h2>
+              <p className="employee-modal-subtitle">
+                {modalMode === "view"
+                  ? "Review employee profile details and role information."
+                  : editData
+                    ? "Update employee identity, access role, and account settings."
+                    : "Create a polished employee profile with role and login access details."}
+              </p>
+            </div>
+          </div>
         }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
-        className="global-app-modal"
-        width={640}
+        className="global-app-modal add-and-edit-employee"
+        width={820}
         footer={
           modalMode === "view"
             ? null
             : [
                 <Button
                   key="cancel"
+                  className="ant-delete"
                   onClick={() => setModalVisible(false)}
-                  style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', boxShadow: 'none' }}
                 >
                   Cancel
                 </Button>,
                 <Button
                   key="submit"
-                  type="primary"
+                  className="employee-modal-submit-btn"
                   onClick={handleSubmit}
+                  style={{
+                    background: "#0b3a5b",
+                    backgroundColor: "#0b3a5b",
+                    borderColor: "#0b3a5b",
+                    color: "#ffffff",
+                    backgroundImage: "none",
+                    boxShadow: "none",
+                  }}
                 >
                   {editData ? "Update" : "Add"}
                 </Button>,
               ]
         }
       >
-        <Form form={form} layout="vertical">
+        <div className="employee-modal-body-wrap">
+        <Form form={form} layout="vertical" className="employee-modal-form">
           <Form.Item
             name="first_name"
             label="First Name"
@@ -781,6 +804,7 @@ const CombinedEmployeeList = ({
             </Row>
           )}
         </Form>
+        </div>
       </Modal>
     </div>
   );

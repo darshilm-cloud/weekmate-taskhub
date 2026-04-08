@@ -215,6 +215,28 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.45) transparent;
+}
+
+.user-analysis-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-analysis-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.user-analysis-list::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.45);
+  border-radius: 999px;
+}
+
+.user-analysis-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.65);
 }
 
 .user-analysis-list-head {
@@ -404,6 +426,28 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.45) transparent;
+}
+
+.members-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.members-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.members-grid::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.45);
+  border-radius: 999px;
+}
+
+.members-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.65);
 }
 
 .member-card {

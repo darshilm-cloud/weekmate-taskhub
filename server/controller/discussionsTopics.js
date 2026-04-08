@@ -86,6 +86,7 @@ exports.addDiscussionsTopics = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
+      task_id: Joi.string().allow("", null).optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
       subscribers: Joi.array().optional(),
@@ -123,6 +124,7 @@ exports.addDiscussionsTopics = async (req, res) => {
       let data = new DiscussionsTopics({
         title: value.title,
         project_id: value.project_id,
+        task_id: value.task_id || null,
         status: value.status,
         descriptions: value.descriptions || "",
         subscribers: value.subscribers || [],
@@ -328,6 +330,7 @@ exports.getDiscussionsTopics = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
+          task_id: 1,
           status: 1,
           descriptions: 1,
           isPinToTop: 1,
@@ -426,6 +429,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
+      task_id: Joi.string().allow("", null).optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
       subscribers: Joi.array().optional(),
@@ -470,6 +474,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
         {
           title: value.title,
           project_id: value.project_id,
+          task_id: value.task_id || null,
           status: value.status,
           descriptions: value.descriptions || "",
           subscribers: value.subscribers || [],

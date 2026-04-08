@@ -62,6 +62,241 @@
     align-items: flex-start;
 }
 
+.add-and-edit-client .ant-modal-content {
+    padding: 0;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+}
+
+.add-and-edit-client .ant-modal-header {
+    margin: 0;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.24), transparent 34%),
+        linear-gradient(135deg, #0b2f4a 0%, #123f63 48%, #0f2740 100%);
+}
+
+.add-and-edit-client .ant-modal-title {
+    padding-right: 28px;
+}
+
+.client-modal-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.client-modal-title-wrap {
+    min-width: 0;
+}
+
+.client-modal-title {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #f8fbff;
+    letter-spacing: -0.03em;
+}
+
+.client-modal-subtitle {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(219, 234, 254, 0.82);
+    max-width: 480px;
+}
+
+.add-and-edit-client .ant-modal-close {
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 999px;
+    color: #f8fbff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(191, 219, 254, 0.22);
+    transition: all 0.2s ease;
+}
+
+.add-and-edit-client .ant-modal-close .ant-modal-close-x {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.add-and-edit-client .ant-modal-close .anticon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transform: none;
+}
+
+.add-and-edit-client .ant-modal-close:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(191, 219, 254, 0.34);
+}
+
+.add-and-edit-client .ant-modal-body {
+    padding: 26px 28px 18px;
+    background:
+        linear-gradient(180deg, rgba(248, 250, 252, 0.62) 0%, rgba(255, 255, 255, 0.96) 100%);
+    overflow-x: hidden;
+    overflow-y: visible;
+    scrollbar-width: none;
+}
+
+.add-and-edit-client .ant-modal-body::-webkit-scrollbar,
+.add-and-edit-client .overview-modal-wrapper::-webkit-scrollbar,
+.add-and-edit-client .client-modal-form::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+.add-and-edit-client .overview-modal-wrapper,
+.add-and-edit-client .client-modal-form {
+    scrollbar-width: none;
+}
+
+.client-modal-form .ant-form-item {
+    margin-bottom: 18px;
+}
+
+.client-modal-form .ant-form-item-label > label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    letter-spacing: 0.01em;
+}
+
+.client-modal-form .ant-input,
+.client-modal-form .ant-input-affix-wrapper,
+.client-modal-form .ant-select-selector,
+.client-modal-form .ant-input-textarea textarea {
+    min-height: 46px;
+    border-radius: 14px !important;
+    border-color: #d7e1ee !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.client-modal-form .ant-input,
+.client-modal-form .ant-input-affix-wrapper,
+.client-modal-form .ant-select-selector {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+}
+
+.client-modal-form .ant-input::placeholder,
+.client-modal-form .ant-input-textarea textarea::placeholder {
+    color: #94a3b8;
+}
+
+.client-modal-form .ant-input-textarea textarea {
+    min-height: 108px;
+    padding: 14px;
+    resize: none;
+}
+
+.client-modal-form .ant-input:hover,
+.client-modal-form .ant-input:focus,
+.client-modal-form .ant-input-affix-wrapper:hover,
+.client-modal-form .ant-input-affix-wrapper-focused,
+.client-modal-form .ant-select-focused .ant-select-selector,
+.client-modal-form .ant-select:hover .ant-select-selector,
+.client-modal-form .ant-input-textarea textarea:hover,
+.client-modal-form .ant-input-textarea textarea:focus {
+    border-color: #7aa7ff !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08) !important;
+}
+
+.client-modal-form .client-input-password .ant-input-affix-wrapper .ant-input {
+    min-height: auto;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.client-modal-form .client-input-password .ant-input-affix-wrapper .ant-input:focus,
+.client-modal-form .client-input-password .ant-input-affix-wrapper .ant-input:hover {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.client-modal-form .client-input-password .ant-btn-link {
+    color: #2563eb;
+}
+
+.add-and-edit-client .ant-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin: 0;
+    padding: 0 28px 26px;
+    border-top: none;
+    background: #ffffff;
+}
+
+.add-and-edit-client .ant-modal-footer .ant-btn {
+    min-width: 94px;
+    height: 42px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:hover,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:focus,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:active,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:hover,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:focus,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:active {
+    border: 1px solid #0b3a5b !important;
+    background: #0b3a5b !important;
+    background-color: #0b3a5b !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    appearance: none !important;
+}
+
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:hover,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:focus:hover,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:hover,
+.add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:focus:hover {
+    border-color: #0d4a73 !important;
+    background: #0d4a73 !important;
+    background-color: #0d4a73 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+.add-and-edit-client .ant-modal-footer .ant-delete {
+    color: #29415c !important;
+    background: #eef4fb !important;
+    border: 1px solid #d8e3f0 !important;
+}
+
 body.dark-theme .add-and-edit-client .client-input-password .ant-input-affix-wrapper,
 body.dark-theme .add-and-edit-client .client-input-password .ant-input,
 body.dark-theme .add-and-edit-client .client-input-password .ant-input-suffix,
@@ -80,4 +315,68 @@ body.dark-theme .add-and-edit-client .client-input-password .ant-btn-link .antic
 body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-input::placeholder,
 body[data-theme="dark"] .add-and-edit-client .client-input-password .ant-btn-link .anticon {
     color: #9bb6dd !important;
+}
+
+body.dark-theme .add-and-edit-client .ant-modal-content,
+body[data-theme="dark"] .add-and-edit-client .ant-modal-content {
+    border-color: rgba(69, 99, 145, 0.24);
+    background: #0f1728;
+    box-shadow: 0 28px 80px rgba(2, 6, 23, 0.55);
+}
+
+body.dark-theme .add-and-edit-client .ant-modal-header,
+body[data-theme="dark"] .add-and-edit-client .ant-modal-header {
+    border-bottom-color: rgba(69, 99, 145, 0.22);
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 42%),
+        linear-gradient(180deg, #111d31 0%, #101a2b 100%);
+}
+
+body.dark-theme .client-modal-title,
+body[data-theme="dark"] .client-modal-title {
+    color: #f8fbff;
+}
+
+body.dark-theme .client-modal-subtitle,
+body[data-theme="dark"] .client-modal-subtitle {
+    color: #9fb3cf;
+}
+
+body.dark-theme .add-and-edit-client .ant-modal-close,
+body[data-theme="dark"] .add-and-edit-client .ant-modal-close {
+    color: #dce7fb;
+    background: rgba(19, 34, 56, 0.88);
+    border-color: rgba(69, 99, 145, 0.28);
+}
+
+body.dark-theme .add-and-edit-client .ant-modal-body,
+body[data-theme="dark"] .add-and-edit-client .ant-modal-body,
+body.dark-theme .add-and-edit-client .ant-modal-footer,
+body[data-theme="dark"] .add-and-edit-client .ant-modal-footer {
+    background: #0f1728;
+}
+
+body.dark-theme .client-modal-form .ant-form-item-label > label,
+body[data-theme="dark"] .client-modal-form .ant-form-item-label > label {
+    color: #dce7fb;
+}
+
+body.dark-theme .client-modal-form .ant-input,
+body.dark-theme .client-modal-form .ant-input-affix-wrapper,
+body.dark-theme .client-modal-form .ant-select-selector,
+body.dark-theme .client-modal-form .ant-input-textarea textarea,
+body[data-theme="dark"] .client-modal-form .ant-input,
+body[data-theme="dark"] .client-modal-form .ant-input-affix-wrapper,
+body[data-theme="dark"] .client-modal-form .ant-select-selector,
+body[data-theme="dark"] .client-modal-form .ant-input-textarea textarea {
+    background: #132238 !important;
+    border-color: #314866 !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .client-modal-form .ant-input::placeholder,
+body.dark-theme .client-modal-form .ant-input-textarea textarea::placeholder,
+body[data-theme="dark"] .client-modal-form .ant-input::placeholder,
+body[data-theme="dark"] .client-modal-form .ant-input-textarea textarea::placeholder {
+    color: #8da6c7;
 }

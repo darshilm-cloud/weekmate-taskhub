@@ -8,6 +8,7 @@ const DiscussionsTopics = new Schema({
     required: true,
   },
   project_id: { type: Schema.Types.ObjectId, ref: "projects", default: null },
+  task_id: { type: Schema.Types.ObjectId, ref: "tasks", default: null },
   status: {
     type: String,
     enum: ["active", "archived"],

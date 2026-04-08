@@ -329,11 +329,10 @@ const BugsController = () => {
 
   const onSearchTask = (value) => {
     setSearchText(value);
-    setFilterSchema({
-      ...filterSchema,
-      bugs: { ...filterSchema.bugs, title: value },
-    });
-    getBoardTasks();
+    setFilterSchema((prev) => ({
+      ...prev,
+      bugs: { ...prev.bugs, title: value },
+    }));
   };
 
   useEffect(() => {
@@ -557,8 +556,14 @@ const BugsController = () => {
 
   const showModalTaskModal = () => {
     setIsModalOpenTaskModal(true);
-    getFolderList(projectId);
-    setIsModalOpenTaskModal(true);
+    dispatch(getFolderList(projectId));
+    dispatch(getLables());
+    dispatch(getSubscribersList(projectId));
+    getTaskDetails();
+    setSelectedItems([]);
+    setEditorData("");
+    setAddInputTaskData({});
+    addform.resetFields();
   };
 
   const props = {

@@ -9,8 +9,9 @@ import {
   BgColorsOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
-import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "./Notes.css";
+
+const { TextArea } = Input;
 
 const CARD_COLORS_LIGHT = ["#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec", "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd"];
 const CARD_COLORS_DARK  = [
@@ -49,6 +50,15 @@ const isLightColor = (hex) => {
 const checkIsDark = () =>
   document.body.classList.contains("dark-theme") ||
   document.body.getAttribute("data-theme") === "dark";
+
+const MODAL_OK_BUTTON_PROPS = {
+  className: "notes-modal-save-btn",
+  style: {
+    background: "linear-gradient(135deg, #0a2e49, #123f63)",
+    borderColor: "#0a2e49",
+    boxShadow: "0 14px 26px rgba(10, 46, 73, 0.28)",
+  },
+};
 
 export default function NotesPage() {
   const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -179,6 +189,7 @@ export default function NotesPage() {
         api_url: Service.addNotes,
         body: {
           title: values.title,
+          notesInfo: values.notesInfo || "",
           project_id: values.project_id,
           ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}),
           isPrivate: false,
@@ -198,7 +209,7 @@ export default function NotesPage() {
   // ── Edit ──────────────────────────────────────────────────
   const openEdit = (note) => {
     setEditNote(note);
-    editForm.setFieldsValue({ title: note.title });
+    editForm.setFieldsValue({ title: note.title, notesInfo: note.notesInfo || "" });
     setEditOpen(true);
   };
 
@@ -209,7 +220,13 @@ export default function NotesPage() {
       const res = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: `${Service.updateNotes}/${editNote._id}`,
-        body: { title: values.title, project_id: editNote.project?._id || editNote.project_id, subscribers: (editNote.subscribers || []).map(s => s._id || s), pms_clients: editNote.pms_clients || [] },
+        body: {
+          title: values.title,
+          notesInfo: values.notesInfo || "",
+          project_id: editNote.project?._id || editNote.project_id,
+          subscribers: (editNote.subscribers || []).map(s => s._id || s),
+          pms_clients: editNote.pms_clients || [],
+        },
       });
       if (res?.data?.status === 1 || res?.data?.success) {
         message.success("Note updated");
@@ -302,11 +319,21 @@ export default function NotesPage() {
     }
   };
 
+  const normalizedSearch = search.trim().toLowerCase();
+
   const filteredNotes = notes.filter((note) => {
     const isCreator = note.createdBy === currentUserId || note.createdBy?._id === currentUserId || note.createdBy?.toString() === currentUserId;
     const isSubscriber = (note.subscribers || []).some(s => (s?._id || s?.toString()) === currentUserId);
     const isClientRecipient = (note.pms_clients || []).some(c => (c?._id || c?.toString()) === currentUserId);
     const isSharedNote = (note.subscribers || []).length > 0 || (note.pms_clients || []).length > 0;
+    const noteTitle = (note.title || "").toLowerCase();
+    const noteContent = (note.notesInfo || "").replace(/<[^>]*>/g, "").toLowerCase();
+    const matchesSearch =
+      !normalizedSearch ||
+      noteTitle.includes(normalizedSearch) ||
+      noteContent.includes(normalizedSearch);
+
+    if (!matchesSearch) return false;
 
     if (activeTab === "created") return isCreator && !isSharedNote;
     return isSharedNote && (isCreator || isSubscriber || isClientRecipient);
@@ -322,6 +349,15 @@ export default function NotesPage() {
           onClick={() => handleColorChange(noteId, c)}
         />
       ))}
+    </div>
+  );
+
+  const getModalTitle = (title, subtitle) => (
+    <div className="notes-modal-title-wrap">
+      <div>
+        <div className="notes-modal-title">{title}</div>
+        <p className="notes-modal-subtitle">{subtitle}</p>
+      </div>
     </div>
   );
 
@@ -454,10 +490,18 @@ export default function NotesPage() {
       )}
 
       {/* Add Note Modal */}
-      <Modal title="Add New Note" open={addOpen} onCancel={() => { setAddOpen(false); addForm.resetFields(); setNotebooks([]); }} onOk={handleAddNote} confirmLoading={submitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
-        <Form form={addForm} layout="vertical">
+      <Modal title={getModalTitle("Add New Note", "Set up a fresh note with project and subscriber details.")} open={addOpen} onCancel={() => { setAddOpen(false); addForm.resetFields(); setNotebooks([]); }} onOk={handleAddNote} confirmLoading={submitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
+        <Form form={addForm} layout="vertical" className="notes-modal-form">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
             <Input placeholder="Enter note title" />
+          </Form.Item>
+          <Form.Item name="notesInfo" label="Content">
+            <TextArea
+              rows={4}
+              placeholder="Write note content"
+              maxLength={1000}
+              showCount={{ formatter: ({ count, maxLength }) => `${count}/${maxLength}` }}
+            />
           </Form.Item>
           <Form.Item name="project_id" label="Project" rules={[{ required: true, message: "Select a project" }]}>
             <Select showSearch placeholder="Select project" onChange={onProjectChange}
@@ -483,17 +527,25 @@ export default function NotesPage() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal title="Edit Note" open={editOpen} onCancel={() => { setEditOpen(false); editForm.resetFields(); setEditNote(null); }} onOk={handleEdit} confirmLoading={editSubmitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
-        <Form form={editForm} layout="vertical">
+      <Modal title={getModalTitle("Edit Note", "Refresh the title and keep your note details tidy.")} open={editOpen} onCancel={() => { setEditOpen(false); editForm.resetFields(); setEditNote(null); }} onOk={handleEdit} confirmLoading={editSubmitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
+        <Form form={editForm} layout="vertical" className="notes-modal-form">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
             <Input placeholder="Enter note title" />
+          </Form.Item>
+          <Form.Item name="notesInfo" label="Content">
+            <TextArea
+              rows={4}
+              placeholder="Write note content"
+              maxLength={1000}
+              showCount={{ formatter: ({ count, maxLength }) => `${count}/${maxLength}` }}
+            />
           </Form.Item>
         </Form>
       </Modal>
 
       {/* Subscribers Modal */}
-      <Modal title="Manage Subscribers" open={subOpen} onCancel={() => { setSubOpen(false); setSubNote(null); }} onOk={handleSubSave} confirmLoading={subSubmitting} okText="Save" destroyOnClose className="global-app-modal" width={640}>
-        <Form form={subForm} layout="vertical">
+      <Modal title={getModalTitle("Manage Subscribers", "Choose who should be able to access this note.")} open={subOpen} onCancel={() => { setSubOpen(false); setSubNote(null); }} onOk={handleSubSave} confirmLoading={subSubmitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
+        <Form form={subForm} layout="vertical" className="notes-modal-form">
           <Form.Item name="subscribers" label="Subscribers">
             <Select
               mode="multiple"

@@ -623,6 +623,22 @@ const TaskDetailModal = ({
     setFileList([]);
   };
 
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const latestBugs = (hasExternalBugControls ? bugs : internalBugs) || [];
+    if (!latestBugs.length) return;
+
+    setEditData((prev) => {
+      const currentBugs = Array.isArray(prev?.bugs) ? prev.bugs.filter(Boolean) : [];
+      if (currentBugs.length > 0) return prev;
+      return {
+        ...prev,
+        bugs: latestBugs.filter(Boolean),
+      };
+    });
+  }, [isEditing, hasExternalBugControls, bugs, internalBugs]);
+
   const handleSaveEdit = async () => {
     setSaving(true);
     try {
@@ -953,6 +969,13 @@ const TaskDetailModal = ({
     );
   };
 
+  const liveBugList = (hasExternalBugControls ? bugs : internalBugs) || [];
+  const displayBugs = (
+    isEditing
+      ? ((Array.isArray(editData?.bugs) && editData.bugs.length > 0) ? editData.bugs : liveBugList)
+      : liveBugList
+  ).filter(Boolean);
+
   // ── Bugs Section ──
   const renderBugsSection = () => (
     <div className="task-detail-section task-detail-bugs-section">
@@ -962,7 +985,7 @@ const TaskDetailModal = ({
           <div className="task-detail-section-title">Bugs</div>
         </div>
         <span className="task-detail-section-count">
-          {(hasExternalBugControls ? (bugs?.length || 0) : (internalBugs?.length || 0))}
+          {displayBugs.length}
         </span>
       </div>
 
@@ -999,7 +1022,7 @@ const TaskDetailModal = ({
       )}
 
       {/* Bug table */}
-      {((hasExternalBugControls ? bugs : internalBugs) || []).length > 0 ? (
+      {displayBugs.length > 0 ? (
         <div className="task-detail-bug-table-wrapper">
           <table className="task-detail-bug-table">
             <thead>
@@ -1013,7 +1036,7 @@ const TaskDetailModal = ({
               </tr>
             </thead>
             <tbody>
-              {(isEditing ? editData.bugs || [] : (hasExternalBugControls ? bugs : internalBugs)).map((bug, idx) => {
+              {displayBugs.map((bug, idx) => {
                 return (
                   <tr key={bug._id || idx}>
                     <td className="bug-id-cell">{bug.bugId || idx + 1}</td>

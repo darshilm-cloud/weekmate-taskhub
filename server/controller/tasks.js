@@ -2,6 +2,7 @@ const Joi = require("joi");
 const XLSX = require("xlsx");
 const path = require("path");
 const moment = require("moment");
+const { removeCache } = require("../middleware/cacheStore");
 const {
   errorResponse,
   successResponse,
@@ -89,6 +90,96 @@ exports.projectTaskExists = async (reqData, id = null) => {
     return isExist;
   } catch (error) {
     console.log("🚀 ~ exports.projectTaskExists= ~ error:", error);
+  }
+};
+
+const normalizeWorkflowStageKey = (value) => {
+  const raw = String(value || "").toLowerCase().trim();
+  const compact = raw.replace(/[\s_-]+/g, "");
+
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || raw.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || raw.includes("hold") || raw.includes("review")) return "onhold";
+  if (raw.includes("done") || raw.includes("complete") || raw.includes("closed")) return "done";
+
+  return compact;
+};
+
+const resolveWorkflowStageIdForTask = async ({
+  statusValue,
+  workflowId,
+  userId,
+}) => {
+  if (!statusValue) return "";
+
+  const rawValue = String(statusValue).trim();
+  if (mongoose.Types.ObjectId.isValid(rawValue)) return rawValue;
+  if (!workflowId || !mongoose.Types.ObjectId.isValid(String(workflowId))) return "";
+
+  const targetKey = normalizeWorkflowStageKey(rawValue);
+  const stagePresets = {
+    todo: {
+      title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
+      color: "#616161",
+      isDefault: true,
+    },
+    inprogress: {
+      title: "In Progress",
+      color: "#FFA500",
+      isDefault: false,
+    },
+    onhold: {
+      title: "On Hold",
+      color: "#3b82f6",
+      isDefault: false,
+    },
+    done: {
+      title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
+      color: "#228B22",
+      isDefault: true,
+    },
+  };
+
+  if (!stagePresets[targetKey]) return "";
+
+  const existingStages = await ProjectWorkFlowStatus.find({
+    workflow_id: new mongoose.Types.ObjectId(workflowId),
+    isDeleted: false,
+  })
+    .sort({ sequence: 1 })
+    .lean();
+
+  const matchedStage = existingStages.find((stage) => {
+    const stageKey = normalizeWorkflowStageKey(stage?.title || stage?.name || "");
+    return stageKey === targetKey;
+  });
+
+  if (matchedStage?._id) return matchedStage._id.toString();
+
+  const lastSequence = existingStages.length
+    ? Math.max(...existingStages.map((stage) => Number(stage?.sequence) || 0))
+    : 0;
+
+  const preset = stagePresets[targetKey];
+  const createdStage = await ProjectWorkFlowStatus.create({
+    workflow_id: new mongoose.Types.ObjectId(workflowId),
+    title: preset.title,
+    color: preset.color,
+    sequence: lastSequence + 1,
+    isDefault: preset.isDefault,
+    createdBy: userId,
+    updatedBy: userId,
+    createdAt: configs.utcDefault(),
+    updatedAt: configs.utcDefault(),
+  });
+
+  return createdStage?._id?.toString() || "";
+};
+
+const invalidateTaskBoardCaches = (projectId) => {
+  removeCache("boardtasks:get:", true);
+  if (projectId) {
+    removeCache("maintasks:get:", true);
   }
 };
 
@@ -1141,6 +1232,46 @@ exports.updateMultipleTaskStatus = async (req, res) => {
       );
     }
 
+    const firstTask = await ProjectTasks.findOne(
+      {
+        project_id: new mongoose.Types.ObjectId(value.project_id),
+        _id: {
+          $in: value.task_ids.map((i) => new mongoose.Types.ObjectId(i))
+        }
+      },
+      {
+        project_id: 1,
+      }
+    ).lean();
+
+    const projectData = firstTask?.project_id
+      ? await Projects.findById(firstTask.project_id, {
+          workFlow: 1,
+          workflow: 1,
+          work_flow: 1,
+          workflow_id: 1,
+          work_flow_id: 1,
+        }).lean()
+      : null;
+
+    const workflowId =
+      projectData?.workFlow ||
+      projectData?.workflow ||
+      projectData?.work_flow ||
+      projectData?.workflow_id ||
+      projectData?.work_flow_id;
+
+    const resolvedTaskStatus =
+      (await resolveWorkflowStageIdForTask({
+        statusValue: value.task_status,
+        workflowId,
+        userId: req.user._id,
+      })) || value.task_status;
+
+    if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid task stage");
+    }
+
     const data = await ProjectTasks.updateMany(
       {
         project_id: new mongoose.Types.ObjectId(value.project_id),
@@ -1149,13 +1280,15 @@ exports.updateMultipleTaskStatus = async (req, res) => {
         }
       },
       {
-        task_status: new mongoose.Types.ObjectId(value.task_status),
+        task_status: new mongoose.Types.ObjectId(resolvedTaskStatus),
         updatedBy: req.user._id,
         updatedAt: configs.utcDefault(),
         ...(await getRefModelFromLoginUser(req?.user, true))
       },
       { new: true }
     );
+
+    invalidateTaskBoardCaches(value.project_id);
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
@@ -1319,11 +1452,32 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     };
 
     // manage update history..
+    const workflowId =
+      getData?.project?.workFlow?._id ||
+      getData?.project?.workflow?._id ||
+      getData?.project?.work_flow?._id ||
+      getData?.project?.workFlow ||
+      getData?.project?.workflow ||
+      getData?.project?.work_flow ||
+      getData?.project?.workflow_id ||
+      getData?.project?.work_flow_id;
+
+    const resolvedTaskStatus =
+      (await resolveWorkflowStageIdForTask({
+        statusValue: value?.task_status,
+        workflowId,
+        userId: loginUserId,
+      })) || value?.task_status;
+
+    if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid task stage");
+    }
+
     if (value?.task_status) {
-      updateObj.task_status = value?.task_status;
+      updateObj.task_status = resolvedTaskStatus;
 
       // if previous and new both value same no need to update..
-      if (getData?.task_status?._id.toString() !== value?.task_status) {
+      if (getData?.task_status?._id.toString() !== resolvedTaskStatus) {
         let previousTaskStatusTitle = "";
         let newTaskStatusTitle = "";
 
@@ -1336,9 +1490,9 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
             : "";
         }
 
-        if (value?.task_status) {
+        if (resolvedTaskStatus) {
           const newTaskStatus = await ProjectWorkFlowStatus.findById(
-            value?.task_status
+            resolvedTaskStatus
           );
           newTaskStatusTitle = newTaskStatus ? newTaskStatus.title : "";
         }
@@ -1360,7 +1514,7 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
               ? {
                 task_status_history: [
                   {
-                    task_status: value?.task_status,
+                    task_status: resolvedTaskStatus,
                     updatedBy: loginUserId,
                     updatedAt: configs.utcDefault(),
                     ...(await getRefModelFromLoginUser(req?.user, true))
@@ -1368,14 +1522,14 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
                 ]
               }
               : getData?.task_status?._id &&
-                value?.task_status &&
+                resolvedTaskStatus &&
                 getData?.task_status?._id.toString() !==
-                value?.task_status.toString()
+                resolvedTaskStatus.toString()
                 ? {
                   task_status_history: [
                     ...getData?.task_status_history,
                     {
-                      task_status: value?.task_status,
+                      task_status: resolvedTaskStatus,
                       updatedBy: loginUserId,
                       updatedAt: configs.utcDefault()
                     }
@@ -1401,6 +1555,8 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       updateObj,
       { new: true }
     );
+
+    invalidateTaskBoardCaches(getData?.project?._id || getData?.project_id);
 
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);

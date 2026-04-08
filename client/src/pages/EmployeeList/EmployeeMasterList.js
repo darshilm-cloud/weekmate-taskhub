@@ -52,14 +52,18 @@ const escapeCsvCell = (value) => {
 };
 
 /* ─── Analytics Card ────────────────────────────────────────────── */
-const AnalyticsCard = ({ icon, value, label, colorClass }) => (
-  <div className="analytics-card">
+const AnalyticsCard = ({ icon, value, label, colorClass, onClick, active = false }) => (
+  <button
+    type="button"
+    className={`analytics-card analytics-card-btn${active ? " analytics-card--active" : ""}`}
+    onClick={onClick}
+  >
     <div className={`analytics-card-icon ${colorClass}`}>{icon}</div>
     <div className="analytics-card-body">
       <div className="analytics-card-value">{value}</div>
       <div className="analytics-card-label">{label}</div>
     </div>
-  </div>
+  </button>
 );
 
 /* ══════════════════════════════════════════════════════════════════
@@ -87,6 +91,14 @@ const EmployeeMasterList = () => {
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
   const sidebarPageSize = 12;
+
+  const openEmployeeSegment = useCallback((segment) => {
+    setSidebarMode("employees");
+    setSelectedClientId(null);
+    setSelectedUserId(null);
+    setEmployeeListPage(1);
+    setEmployeeStatusFilter(segment);
+  }, []);
 
   /* ── employee favorites ── */
   const [favorites, setFavorites] = useState(() => {
@@ -186,10 +198,12 @@ const EmployeeMasterList = () => {
 
   /* ── filtered lists ────────────────────────────────────────────── */
   const filteredUsers = sidebarUsers.filter((u) => {
+    const role = String(u?.pms_role?.role_name || "").toLowerCase();
     return (
       employeeStatusFilter === "all" ||
       (employeeStatusFilter === "active" && u.isActivate) ||
-      (employeeStatusFilter === "inactive" && !u.isActivate)
+      (employeeStatusFilter === "inactive" && !u.isActivate) ||
+      (employeeStatusFilter === "admins" && role.includes("admin"))
     );
   });
   const filteredClients = sidebarClients;
@@ -277,6 +291,28 @@ const EmployeeMasterList = () => {
     };
   })();
 
+  const filteredClientAnalytics = (() => {
+    const companyBreakdown = {};
+    let active = 0;
+    let inactive = 0;
+
+    filteredClients.forEach((client) => {
+      if (client.isActivate) active++;
+      else inactive++;
+
+      const companyName = client.company_name?.trim() || "No Company";
+      companyBreakdown[companyName] = (companyBreakdown[companyName] || 0) + 1;
+    });
+
+    return {
+      total: filteredClients.length,
+      active,
+      inactive,
+      companyBreakdown,
+      statusBreakdown: { active, inactive },
+    };
+  })();
+
   useEffect(() => {
     if (selectedUserId && !filteredUsers.some((u) => u._id === selectedUserId)) {
       setSelectedUserId(null);
@@ -309,7 +345,13 @@ const EmployeeMasterList = () => {
   const displayName = sidebarMode === "employees"
     ? (selectedUser
         ? removeTitle(selectedUser.full_name   || `${selectedUser.first_name   || ""} ${selectedUser.last_name   || ""}`)
-        : "All Employees")
+        : employeeStatusFilter === "active"
+          ? "Active Employees"
+          : employeeStatusFilter === "inactive"
+            ? "Inactive Employees"
+            : employeeStatusFilter === "admins"
+              ? "Admins"
+              : "All Employees")
     : (selectedClient
         ? removeTitle(selectedClient.full_name || `${selectedClient.first_name || ""} ${selectedClient.last_name || ""}`)
         : "All Clients");
@@ -325,10 +367,19 @@ const EmployeeMasterList = () => {
     },
     labels: roleLabels.length ? roleLabels : ["No Data"],
     colors: ["#2563eb", "#7c3aed", "#16a34a", "#f59e0b", "#dc2626", "#0891b2"],
-    legend: { position: "bottom", fontSize: "12px" },
+    legend: {
+      position: "bottom",
+      fontSize: "12px",
+      onItemClick: { toggleDataSeries: false },
+      onItemHover: { highlightDataSeries: false },
+    },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
+    states: {
+      active: { filter: { type: "none" } },
+      hover: { filter: { type: "none" } },
+    },
     tooltip: { y: { formatter: (v) => `${v} users` } },
   };
   const barOptions = {
@@ -372,7 +423,7 @@ const EmployeeMasterList = () => {
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ backgroundColor: bg, fontSize: 13, fontWeight: 600 }}>
-            {initials(name)}
+            <span className="avatar-initials">{initials(name)}</span>
           </Avatar>
           <span className={`sidebar-status-dot ${user.isActivate ? "online" : "offline"}`} />
         </div>
@@ -404,7 +455,7 @@ const EmployeeMasterList = () => {
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ backgroundColor: bg, fontSize: 13, fontWeight: 600 }}>
-            {initials(name)}
+            <span className="avatar-initials">{initials(name)}</span>
           </Avatar>
           <span className={`sidebar-status-dot ${client.isActivate ? "online" : "offline"}`} />
         </div>
@@ -459,6 +510,7 @@ const EmployeeMasterList = () => {
                 { label: "All Status", value: "all" },
                 { label: "Active", value: "active" },
                 { label: "Inactive", value: "inactive" },
+                { label: "Admins", value: "admins" },
               ]}
             />
           )}
@@ -568,7 +620,7 @@ const EmployeeMasterList = () => {
                 size={36}
                 style={{ backgroundColor: avatarColor(displayName), fontSize: 14, fontWeight: 600, flexShrink: 0 }}
               >
-                {initials(displayName)}
+                <span className="avatar-initials">{initials(displayName)}</span>
               </Avatar>
             ) : (
               <Avatar size={36} icon={<TeamOutlined />} style={{ background: "#eff6ff", color: "#2563eb" }} />
@@ -643,7 +695,7 @@ const EmployeeMasterList = () => {
                   size={64}
                   style={{ backgroundColor: avatarColor(displayName), fontSize: 24, fontWeight: 700, flexShrink: 0 }}
                 >
-                  {initials(displayName)}
+                  <span className="avatar-initials avatar-initials-lg">{initials(displayName)}</span>
                 </Avatar>
                 <div>
                   <div className="client-detail-name">{displayName}</div>
@@ -696,10 +748,38 @@ const EmployeeMasterList = () => {
             {sidebarMode === "employees" ? (
               <>
                 <div className="analytics-cards-grid">
-                  <AnalyticsCard icon={<TeamOutlined />}        value={filteredAnalytics.total}    label="Total Employees" colorClass="blue" />
-                  <AnalyticsCard icon={<CheckCircleOutlined />} value={filteredAnalytics.active}   label="Active"          colorClass="green" />
-                  <AnalyticsCard icon={<CloseCircleOutlined />} value={filteredAnalytics.inactive} label="Inactive"        colorClass="red" />
-                  <AnalyticsCard icon={<CrownOutlined />}       value={filteredAnalytics.admins}   label="Admins"          colorClass="purple" />
+                  <AnalyticsCard
+                    icon={<TeamOutlined />}
+                    value={filteredAnalytics.total}
+                    label="Total Employees"
+                    colorClass="blue"
+                    onClick={() => openEmployeeSegment("all")}
+                    active={employeeStatusFilter === "all"}
+                  />
+                  <AnalyticsCard
+                    icon={<CheckCircleOutlined />}
+                    value={filteredAnalytics.active}
+                    label="Active"
+                    colorClass="green"
+                    onClick={() => openEmployeeSegment("active")}
+                    active={employeeStatusFilter === "active"}
+                  />
+                  <AnalyticsCard
+                    icon={<CloseCircleOutlined />}
+                    value={filteredAnalytics.inactive}
+                    label="Inactive"
+                    colorClass="red"
+                    onClick={() => openEmployeeSegment("inactive")}
+                    active={employeeStatusFilter === "inactive"}
+                  />
+                  <AnalyticsCard
+                    icon={<CrownOutlined />}
+                    value={filteredAnalytics.admins}
+                    label="Admins"
+                    colorClass="purple"
+                    onClick={() => openEmployeeSegment("admins")}
+                    active={employeeStatusFilter === "admins"}
+                  />
                 </div>
 
                 {filteredAnalytics.total > 0 && (
@@ -734,11 +814,63 @@ const EmployeeMasterList = () => {
                 )}
               </>
             ) : (
-              <div className="analytics-cards-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                <AnalyticsCard icon={<TeamOutlined />}        value={clientAnalytics.total}    label="Total Clients"    colorClass="blue" />
-                <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active}   label="Active Clients"   colorClass="green" />
-                <AnalyticsCard icon={<CloseCircleOutlined />} value={clientAnalytics.inactive} label="Inactive Clients" colorClass="red" />
-              </div>
+              <>
+                <div className="analytics-cards-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                  <AnalyticsCard icon={<TeamOutlined />}        value={clientAnalytics.total}    label="Total Clients"    colorClass="blue" />
+                  <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active}   label="Active Clients"   colorClass="green" />
+                  <AnalyticsCard icon={<CloseCircleOutlined />} value={clientAnalytics.inactive} label="Inactive Clients" colorClass="red" />
+                </div>
+
+                {filteredClientAnalytics.total > 0 && (
+                  <div className="charts-section">
+                    <div className="chart-card">
+                      <div className="chart-card-title">Client Distribution</div>
+                      <ReactApexChart
+                        type="donut"
+                        series={
+                          Object.values(filteredClientAnalytics.companyBreakdown).length
+                            ? Object.values(filteredClientAnalytics.companyBreakdown)
+                            : [1]
+                        }
+                        options={{
+                          ...donutOptions,
+                          labels: Object.keys(filteredClientAnalytics.companyBreakdown).length
+                            ? Object.keys(filteredClientAnalytics.companyBreakdown)
+                            : ["No Data"],
+                          tooltip: {
+                            y: {
+                              formatter: (v) => `${v} clients`,
+                            },
+                          },
+                        }}
+                        height={280}
+                      />
+                    </div>
+                    <div className="chart-card">
+                      <div className="chart-card-title">Client Status</div>
+                      <ReactApexChart
+                        type="bar"
+                        series={[{
+                          name: "Clients",
+                          data: [
+                            filteredClientAnalytics.statusBreakdown.active,
+                            filteredClientAnalytics.statusBreakdown.inactive,
+                          ],
+                        }]}
+                        options={{
+                          ...barOptions,
+                          tooltip: {
+                            y: {
+                              formatter: (v) => `${v} clients`,
+                            },
+                          },
+                        }}
+                        height={280}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
           </div>

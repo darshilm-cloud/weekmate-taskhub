@@ -97,6 +97,7 @@ const ProjectFormModal = ({
   const [newFilteredAssignees, setNewFilteredAssignees] = useState([]);
   const [newFilteredClients, setNewFilteredClients] = useState([]);
   const [editorData, setEditorData] = useState("");
+  const [projectTech, setProjectTech] = useState([]);
   const [projectTypeSlug, setProjectTypeSlug] = useState(_dropdownCache.projectTypeSlug || "");
   const [projectTypeselect, setProjectTypeselect] = useState("");
   const [isBillable, setIsBillable] = useState(false);
@@ -410,6 +411,10 @@ const ProjectFormModal = ({
         value?.company_name || value?.client_name || value?.full_name || value?.name || "",
     };
   };
+
+  const getTitleFormatExample = () => "AB123/MH/project-name";
+
+  const generatePattern = () => /^[A-Z]{2}\d{3}\/[A-Z]{2}\/[A-Za-z0-9_-]+$/;
 
   const hydrateProjectForm = (projectData = {}, lookupOverrides = {}) => {
     if (!projectData || typeof projectData !== "object") return;
@@ -841,6 +846,10 @@ const ProjectFormModal = ({
     setSearchKeyword("");
   };
 
+  const handleProjectTech = (values = []) => {
+    setProjectTech(Array.isArray(values) ? values : []);
+  };
+
   const handleClearAssignees = () => setSelectedItems([]);
   const handleClearClient = () => setSelectedClient([]);
 
@@ -1266,7 +1275,8 @@ const ProjectFormModal = ({
               />
               </div>
             </div>
-          </div>
+          </Form.Item>
+        </div>
           <div className="pfm-divider" />
 
         {/* Dates */}

@@ -162,7 +162,7 @@ const SortByComponent = ({
             hidden={!activeSortCount}
             size="small"
             offset={[10, 0]}
-            color="#52c41a"
+            color="#0b3a5b"
           />
         </Button>
       </Popover>

@@ -426,7 +426,7 @@
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__content {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
     gap: 18px;
     align-items: start;
   }
@@ -513,13 +513,14 @@
     display: flex;
     flex-direction: column;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    min-width: 0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__rightTop {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid #dcecf6;
@@ -527,7 +528,7 @@
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__search {
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__search .ant-input,
@@ -549,6 +550,7 @@
     display: flex;
     gap: 8px;
     margin-left: auto;
+    flex-shrink: 0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions .ant-btn {
@@ -611,6 +613,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #0f172a;
+    min-width: 0;
   }
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__emptyNote {
@@ -695,6 +698,11 @@
     .setting-main-wrapper.wm-settings-modal .wm-settings__content {
       grid-template-columns: 1fr;
     }
+
+    .setting-main-wrapper.wm-settings-modal .wm-settings__rightTop {
+      flex-wrap: wrap;
+    }
+
     .setting-main-wrapper.wm-settings-modal .wm-settings__bulkActions {
       margin-left: 0;
     }

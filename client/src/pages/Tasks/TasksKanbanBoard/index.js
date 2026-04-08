@@ -102,23 +102,24 @@ const TaskList = ({
     onDrop,
     showTextArea,
     setShowTextArea,
-	    onDragStart,
-	    getTaskByIdDetails,
-	    getTimeLogged,
-	    getComment,
-	    comments,
-	    handleCancelCommentModel,
-	    formComment,
-	    handleComments,
-	    commentVal,
-	    setCommentVal,
-	    handleSelect,
-	    setIsTextAreaFocused,
-	    modalIsOpen,
-	    handleCancel,
-	    taskDetails,
-	    viewTask,
-	    setViewTask,
+    onDragStart,
+    shouldIgnoreTaskClick,
+    getTaskByIdDetails,
+    getTimeLogged,
+    getComment,
+    comments,
+    handleCancelCommentModel,
+    formComment,
+    handleComments,
+    commentVal,
+    setCommentVal,
+    handleSelect,
+    setIsTextAreaFocused,
+    modalIsOpen,
+    handleCancel,
+    taskDetails,
+    viewTask,
+    setViewTask,
     handleTaskDelete,
     estError,
     visible,
@@ -970,9 +971,10 @@ const TaskList = ({
             style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6" }}
             onDragLeave={(e) => onDragLeave(e)}
             onDragEnter={(e) => onDragEnter(e)}
-            onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
+            onDragOverCapture={(e) => onDragOver(e)}
             onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
+            onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
           >
             <section className="drag_container">
               <div className="container project-task-list">
@@ -992,7 +994,15 @@ const TaskList = ({
                     </span>
                   </h4>
 
-                  <div className="drag_row">
+                  <div
+                    className="drag_row"
+                    onDragLeave={(e) => onDragLeave(e)}
+                    onDragEnter={(e) => onDragEnter(e)}
+                    onDragOver={(e) => onDragOver(e)}
+                    onDragOverCapture={(e) => onDragOver(e)}
+                    onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                    onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                  >
                     {showTextArea && index == 0 && (
                       <div className="project-add-task">
                         <Input.TextArea
@@ -1012,7 +1022,15 @@ const TaskList = ({
                       </div>
                     )}
 
-                    <div className="borad-task-data">
+                    <div
+                      className="borad-task-data"
+                      onDragLeave={(e) => onDragLeave(e)}
+                      onDragEnter={(e) => onDragEnter(e)}
+                      onDragOver={(e) => onDragOver(e)}
+                      onDragOverCapture={(e) => onDragOver(e)}
+                      onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                      onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                    >
                       {boardData.tasks
                         .slice(0, sliceStates[boardData.workflowStatus?._id])
                         .map((task, cardIndex) => {
@@ -1051,6 +1069,7 @@ const TaskList = ({
                                   className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (shouldIgnoreTaskClick?.()) return;
                                     getTaskByIdDetails(task?._id, {
                                       projectId,
                                       mainTaskId:

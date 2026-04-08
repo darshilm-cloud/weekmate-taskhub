@@ -173,6 +173,8 @@ const TaskKanbanController = ({
   const [editViewModalDescription, setEditViewModalDescription] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
+  const lastDropRef = useRef({ taskId: "", status: "", at: 0 });
+  const suppressClickUntilRef = useRef(0);
 
 useEffect(() => {
   const loadDrafts = async () => {
@@ -214,6 +216,66 @@ useEffect(() => {
   const [ManagePeople, setManagePeople] = useState(false);
   const [expandedRowKey, setExpandedRowKey] = useState(null);
   const [stagesId, setStagesId] = useState("");
+
+  const resolveWorkflowId = (item = {}) => {
+    const candidates = [
+      item?.workflows?._id,
+      item?.workflow?._id,
+      item?.workFlow?._id,
+      item?.workflows,
+      item?.workflow,
+      item?.workFlow,
+      item?.workflow_id,
+      item?.work_flow_id,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  };
+
+  const normalizeWorkflowStatusKey = (value) => {
+    const raw = String(value || "").toLowerCase().trim();
+    const compact = raw.replace(/[\s_-]+/g, "");
+
+    if (compact.includes("todo")) return "todo";
+    if (compact.includes("inprogress") || raw.includes("progress")) return "inprogress";
+    if (compact.includes("onhold") || raw.includes("hold") || raw.includes("review")) return "onhold";
+    if (raw.includes("done") || raw.includes("complete") || raw.includes("closed")) return "done";
+
+    return compact;
+  };
+
+  const resolveWorkflowStatusId = (statusValue) => {
+    if (!statusValue) return "";
+
+    const rawValue = String(statusValue).trim();
+    const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+    if (!placeholderIds.has(rawValue)) return rawValue;
+
+    const targetKey = normalizeWorkflowStatusKey(rawValue);
+    const realStages = [
+      ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+      ...(Array.isArray(tasks)
+        ? tasks
+            .map((column) => column?.workflowStatus || column?.workflow_status || column?.status)
+            .filter(Boolean)
+        : []),
+    ];
+
+    const matchedStage = realStages.find((stage) => {
+      const candidateId = stage?._id || stage?.id || "";
+      const stageKey = normalizeWorkflowStatusKey(candidateId);
+      const titleKey = normalizeWorkflowStatusKey(stage?.title || stage?.name);
+
+      const isRealId =
+        typeof candidateId === "string" &&
+        candidateId.length > 8 &&
+        !placeholderIds.has(candidateId);
+
+      return isRealId && (stageKey === targetKey || titleKey === targetKey);
+    });
+
+    return matchedStage?._id || matchedStage?.id || "";
+  };
 
   function removeHTMLTags(inputText) {
     const parser = new DOMParser();
@@ -310,11 +372,19 @@ useEffect(() => {
   useEffect(() => {
     getProjectByID();
     getTaskdropdown();
-    if (stagesId) {
-      dispatch(getSpecificProjectWorkflowStage(stagesId));
-    }
     getBugWorkflowStatuses();
   }, [projectId]);
+
+  useEffect(() => {
+    const currentListWorkflowId = resolveWorkflowId(selectedTask || {});
+    if (!currentListWorkflowId) return;
+    setStagesId(currentListWorkflowId);
+  }, [selectedTask]);
+
+  useEffect(() => {
+    if (!stagesId) return;
+    dispatch(getSpecificProjectWorkflowStage(stagesId));
+  }, [dispatch, stagesId]);
 
   useEffect(() => {
     if (selectedTaskId) {
@@ -863,16 +933,21 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
+    const resolvedStatusId = resolveWorkflowStatusId(workFlowStatusId);
+    const statusToSend = resolvedStatusId || workFlowStatusId;
+    const canMoveOptimistically = Boolean(resolvedStatusId);
     const targetStatus =
-      (projectWorkflowStage || []).find((item) => item?._id === workFlowStatusId) ||
-      (tasks || []).find((column) => column?.workflowStatus?._id === workFlowStatusId)?.workflowStatus ||
+      (projectWorkflowStage || []).find((item) => item?._id === statusToSend) ||
+      (tasks || []).find((column) => column?.workflowStatus?._id === statusToSend)?.workflowStatus ||
       null;
 
-    moveBoardTaskLocally?.(taskId, workFlowStatusId, targetStatus || {});
+    if (canMoveOptimistically) {
+      moveBoardTaskLocally?.(taskId, statusToSend, targetStatus || {});
+    }
 
     try {
       const reqBody = {
-        task_status: workFlowStatusId,
+        task_status: statusToSend,
       };
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
@@ -882,17 +957,24 @@ useEffect(() => {
 
       if (response?.data?.data && response?.data?.status) {
         const updatedTask = response.data.data;
+        const updatedStatusId =
+          updatedTask?._stId ||
+          updatedTask?.task_status?._id ||
+          resolvedStatusId ||
+          statusToSend;
+
+        moveBoardTaskLocally?.(
+          taskId,
+          updatedStatusId,
+          updatedTask?.task_status || targetStatus || {}
+        );
         updateBoardTaskLocally?.({
           ...updatedTask,
-          _stId:
-            updatedTask?._stId ||
-            updatedTask?.task_status?._id ||
-            workFlowStatusId,
+          _stId: updatedStatusId,
         });
         if (isPopoverVisible) {
           getTaskByIdDetails(taskId);
         }
-        refreshProjectMainTasks?.({ suppressBoardReload: true });
       } else {
         const currentListId = selectedTask?._id;
         if (currentListId) {
@@ -970,20 +1052,27 @@ useEffect(() => {
   };
 
   const onDragStart = (evt) => {
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.add("dragged");
     evt.dataTransfer.setData("text/plain", evt.currentTarget.id);
+    evt.dataTransfer.setData("application/x-task-id", evt.currentTarget.id);
     evt.dataTransfer.effectAllowed = "move";
+    suppressClickUntilRef.current = Date.now() + 400;
     setDragged(true);
   };
 
   const onDragEnd = (evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
     evt.currentTarget.classList.remove("dragged");
+    suppressClickUntilRef.current = Date.now() + 250;
     setDragged(false);
   };
 
   const onDragEnter = (evt) => {
     evt.preventDefault();
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.add("dragged-over");
     evt.dataTransfer.dropEffect = "move";
@@ -995,21 +1084,40 @@ useEffect(() => {
     if (!newTarget || newTarget.parentNode === currentTarget || newTarget === currentTarget)
       return;
     evt.preventDefault();
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.remove("dragged-over");
   };
 
   const onDragOver = (evt) => {
     evt.preventDefault();
+    evt.stopPropagation();
     evt.dataTransfer.dropEffect = "move";
   };
 
   const onDrop = (evt, status) => {
     evt.preventDefault();
+    evt.stopPropagation();
     evt.currentTarget.classList.remove("dragged-over");
-    const data = evt.dataTransfer.getData("text/plain");
+    const data =
+      evt.dataTransfer.getData("application/x-task-id") ||
+      evt.dataTransfer.getData("text/plain");
+    if (!data || !status) return;
+
+    const now = Date.now();
+    if (
+      lastDropRef.current.taskId === data &&
+      lastDropRef.current.status === status &&
+      now - lastDropRef.current.at < 250
+    ) {
+      return;
+    }
+
+    lastDropRef.current = { taskId: data, status, at: now };
     updateTaskWorkflowStats(status, data);
   };
+
+  const shouldIgnoreTaskClick = () => Date.now() < suppressClickUntilRef.current;
 
   const activeClass = () => {
     if (activeTab === "comments") {
@@ -1525,8 +1633,11 @@ useEffect(() => {
         },
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setProjectTitle(response.data.data?.title);
-        setStagesId(response.data.data?.workFlow?._id);
+        const project = response.data.data;
+        const workflowId = resolveWorkflowId(project);
+
+        setProjectTitle(project?.title);
+        setStagesId((prev) => prev || workflowId);
       } else {
         message.error(response?.data?.message);
       }
@@ -1662,6 +1773,7 @@ useEffect(() => {
     showTextArea,
     setShowTextArea,
     onDragStart,
+    shouldIgnoreTaskClick,
     getTaskByIdDetails,
     getTimeLogged,
     getComment,

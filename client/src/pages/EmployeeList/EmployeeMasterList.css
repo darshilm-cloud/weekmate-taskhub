@@ -211,6 +211,25 @@
 .sidebar-avatar-wrap .ant-avatar {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border: 2px solid var(--app-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.avatar-initials {
+  display: block;
+  text-align: center;
+  line-height: 1;
+  letter-spacing: 0;
+  transform: none;
+  white-space: nowrap;
+}
+
+.avatar-initials-lg {
+  letter-spacing: 0;
+  transform: none;
 }
 
 .sidebar-status-dot {
@@ -443,6 +462,26 @@
   overflow: hidden;
 }
 
+.analytics-card-btn {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analytics-card-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.analytics-card--active {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.12);
+}
+
+.analytics-card--active::before {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+}
+
 .analytics-card::before {
   content: '';
   position: absolute;
@@ -645,6 +684,29 @@
   padding-bottom: 24px;
   border-bottom: 2px dashed var(--app-border);
   margin-bottom: 24px;
+}
+
+.client-detail-header .ant-avatar,
+.dashboard-header-left .ant-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.sidebar-avatar-wrap .ant-avatar .ant-avatar-string,
+.client-detail-header .ant-avatar .ant-avatar-string,
+.dashboard-header-left .ant-avatar .ant-avatar-string {
+  position: static !important;
+  transform: none !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  inset: auto !important;
+  line-height: 1;
 }
 
 .client-detail-name {
