@@ -526,6 +526,8 @@ const TaskPage = () => {
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState(null);
   const calendarYearOptions = useMemo(() => {
     const currentYear = dayjs().year();
     return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
@@ -732,6 +734,8 @@ const TaskPage = () => {
           id: key,
           title: meta.title,
           color: meta.color,
+          statusId: t?._stId || t?.task_status?._id || null,
+          statusMeta: t?.task_status || { title: meta.title, color: meta.color },
           tasks: [],
         };
       }
@@ -792,6 +796,134 @@ const TaskPage = () => {
     e.stopPropagation();
     setSelectedTaskIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
+
+  const moveTaskLocally = useCallback((taskId, targetColumn) => {
+    if (!taskId || !targetColumn) return;
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task._id === taskId
+          ? {
+              ...task,
+              _stId: targetColumn.statusId || task?._stId || task?.task_status?._id || null,
+              task_status: {
+                ...(typeof task?.task_status === "object" && task?.task_status !== null ? task.task_status : {}),
+                ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
+                _id:
+                  targetColumn.statusId ||
+                  targetColumn?.statusMeta?._id ||
+                  task?._stId ||
+                  task?.task_status?._id ||
+                  null,
+                title: targetColumn?.statusMeta?.title || targetColumn.title,
+                color: targetColumn?.statusMeta?.color || targetColumn.color,
+              },
+            }
+          : task
+      )
+    );
+  }, []);
+
+  const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask) => {
+    const statusToSend = targetColumn?.statusId || targetColumn?.statusMeta?._id || targetColumn?.title;
+    if (!taskId || !statusToSend) {
+      message.error("Unable to move task to this column");
+      return;
+    }
+
+    moveTaskLocally(taskId, targetColumn);
+
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.taskUpdateWorkFlow}/${taskId}`,
+        body: { task_status: statusToSend },
+      });
+
+      if (!(response?.data?.status && response?.data?.data)) {
+        throw new Error(response?.data?.message || "Failed to update task status");
+      }
+
+      const updatedTask = response.data.data;
+      const normalizedStatusMeta =
+        typeof updatedTask?.task_status === "object" && updatedTask?.task_status !== null
+          ? {
+              ...updatedTask.task_status,
+              _id:
+                updatedTask?.task_status?._id ||
+                targetColumn?.statusId ||
+                targetColumn?.statusMeta?._id ||
+                null,
+              title: updatedTask?.task_status?.title || targetColumn?.statusMeta?.title || targetColumn?.title,
+              color: updatedTask?.task_status?.color || targetColumn?.statusMeta?.color || targetColumn?.color,
+            }
+          : {
+              ...(typeof targetColumn?.statusMeta === "object" && targetColumn.statusMeta !== null
+                ? targetColumn.statusMeta
+                : {}),
+              _id: targetColumn?.statusId || targetColumn?.statusMeta?._id || updatedTask?.task_status || null,
+              title: targetColumn?.statusMeta?.title || targetColumn?.title || "No status",
+              color: targetColumn?.statusMeta?.color || targetColumn?.color || "#d9d9d9",
+            };
+
+      setTasks((prev) =>
+        prev.map((task) =>
+          task._id === taskId
+            ? {
+                ...task,
+                ...updatedTask,
+                _stId:
+                  updatedTask?._stId ||
+                  updatedTask?.task_status?._id ||
+                  targetColumn?.statusId ||
+                  task?._stId,
+                task_status: normalizedStatusMeta,
+              }
+            : task
+        )
+      );
+      message.success("Task moved successfully");
+    } catch (error) {
+      setTasks((prev) =>
+        prev.map((task) => (task._id === taskId ? previousTask : task))
+      );
+      message.error(error?.response?.data?.message || error?.message || "Failed to update task status");
+    }
+  }, [moveTaskLocally]);
+
+  const handleKanbanDragStart = useCallback((task) => {
+    setDraggingTaskId(task?._id || null);
+  }, []);
+
+  const handleKanbanDragEnd = useCallback(() => {
+    setDraggingTaskId(null);
+    setDragOverColumnId(null);
+  }, []);
+
+  const handleKanbanDrop = useCallback(async (targetColumn) => {
+    if (!draggingTaskId || !targetColumn) {
+      setDragOverColumnId(null);
+      return;
+    }
+
+    const draggedTask = tasks.find((task) => task._id === draggingTaskId);
+    if (!draggedTask) {
+      setDragOverColumnId(null);
+      setDraggingTaskId(null);
+      return;
+    }
+
+    const currentStatusKey = normalizeKanbanStatusKey(draggedTask.task_status);
+    if (currentStatusKey === targetColumn.id) {
+      setDragOverColumnId(null);
+      setDraggingTaskId(null);
+      return;
+    }
+
+    setDragOverColumnId(null);
+    setDraggingTaskId(null);
+    await updateTaskKanbanStatus(draggedTask._id, targetColumn, draggedTask);
+  }, [draggingTaskId, tasks, updateTaskKanbanStatus]);
 
   const handleDeleteSelected = async () => {
     Modal.confirm({
@@ -980,9 +1112,36 @@ const TaskPage = () => {
                 <span className="kanban-column-title">{col.title}</span>
                 <span className="kanban-column-count">({col.tasks.length})</span>
               </div>
-              <div className="kanban-column-cards">
+              <div
+                className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragOverColumnId !== col.id) setDragOverColumnId(col.id);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragOverColumnId(col.id);
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setDragOverColumnId((prev) => (prev === col.id ? null : prev));
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleKanbanDrop(col);
+                }}
+              >
                 {col.tasks.map((t) => (
-                  <TaskCard key={t._id} task={t} onClick={() => handleOpenTask(t)} />
+                  <TaskCard
+                    key={t._id}
+                    task={t}
+                    onClick={() => handleOpenTask(t)}
+                    draggable
+                    isDragging={draggingTaskId === t._id}
+                    onDragStart={() => handleKanbanDragStart(t)}
+                    onDragEnd={handleKanbanDragEnd}
+                  />
                 ))}
               </div>
             </div>
@@ -1127,7 +1286,7 @@ function TaskRow({ task, onOpen, isSelected, onSelect }) {
   );
 }
 
-function TaskCard({ task, onClick }) {
+function TaskCard({ task, onClick, draggable = false, isDragging = false, onDragStart, onDragEnd }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
@@ -1135,9 +1294,12 @@ function TaskCard({ task, onClick }) {
     <div
       role="button"
       tabIndex={0}
-      className="task-card"
+      className={`task-card ${isDragging ? "is-dragging" : ""}`}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
     >
       <div className="task-card-title">{task.title}</div>
       {task.project?.title && <div className="task-card-project">{task.project.title}</div>}
