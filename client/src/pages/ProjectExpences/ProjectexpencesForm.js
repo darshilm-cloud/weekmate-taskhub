@@ -403,7 +403,7 @@ const ProjectExpensesForm = () => {
 
               {/* Cost in USD */}
               <Form.Item
-                label="Cost in USD"
+                label="Cost"
                 name="cost_in_usd"
                 rules={[
                   { required: true, message: "Please enter the cost in USD" },
