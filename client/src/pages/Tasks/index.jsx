@@ -1029,6 +1029,22 @@ const TasksPMS = ({ flag }) => {
             ? {
                 ...task,
                 ...updatedTask,
+                task_labels:
+                  Array.isArray(updatedTask.task_labels) && updatedTask.task_labels.length > 0
+                    ? updatedTask.task_labels
+                    : task.task_labels,
+                assignees:
+                  Array.isArray(updatedTask.assignees) && updatedTask.assignees.length > 0
+                    ? updatedTask.assignees
+                    : task.assignees,
+                subscribers:
+                  Array.isArray(updatedTask.subscribers) && updatedTask.subscribers.length > 0
+                    ? updatedTask.subscribers
+                    : task.subscribers,
+                attachments:
+                  Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
+                    ? updatedTask.attachments
+                    : task.attachments,
                 hasDraft:
                   typeof task.hasDraft === "boolean"
                     ? task.hasDraft

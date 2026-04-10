@@ -174,7 +174,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
       okButtonProps: { danger: true },
       cancelText: "Cancel",
       className: "ap-confirm-modal",
-      onOk: () => onCloseProject(record._id),
+      onOk: () => onCloseProject(record),
     });
   };
 
@@ -247,7 +247,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
                 items: statusMenuItems,
                 onClick: ({ key, domEvent }) => {
                   domEvent?.stopPropagation?.();
-                  onStatusChange(record._id, key);
+                  onStatusChange(record, key);
                 },
               }}
               trigger={["click"]}
@@ -1044,6 +1044,19 @@ const AssignProject = () => {
           : project
       )
     );
+
+    setSelectedProject((prev) =>
+      prev?._id === projectId
+        ? {
+            ...prev,
+            project_status: {
+              ...(typeof prev.project_status === "object" ? prev.project_status : {}),
+              _id: statusMeta._id,
+              title: statusMeta.title,
+            },
+          }
+        : prev
+    );
   }, []);
 
   const syncProjectStatusChange = useCallback((projectId, statusMeta, action = "status") => {
@@ -1058,21 +1071,71 @@ const AssignProject = () => {
     applyProjectStatusLocally(projectId, statusMeta);
   }, [applyProjectStatusLocally, invalidateProjectCaches]);
 
-  const handleStatusChange = async (projectId, statusId) => {
+  const buildProjectUpdatePayload = useCallback((project, statusId) => {
+    if (!project) return { project_status: statusId };
+
+    const getSingleEntityId = (value) => {
+      if (Array.isArray(value)) {
+        const first = value[0];
+        return first?._id || first?.id || (typeof first === "string" ? first : "");
+      }
+      if (typeof value === "object" && value !== null) {
+        return value._id || value.id || "";
+      }
+      return typeof value === "string" ? value : "";
+    };
+
+    const projectTypeId = getSingleEntityId(project?.project_type);
+    const managerId = getSingleEntityId(project?.manager);
+    const workflowId = getSingleEntityId(project?.workFlow);
+    const accountManagerId = getSingleEntityId(project?.acc_manager);
+
+    const payload = {
+      title: project?.title || "",
+      color: project?.color || "",
+      descriptions: project?.descriptions || "",
+      technology: Array.isArray(project?.technology)
+        ? project.technology.map((item) => item?._id || item).filter(Boolean)
+        : [],
+      project_status: statusId,
+      assignees: Array.isArray(project?.assignees)
+        ? project.assignees.map((item) => item?._id || item).filter(Boolean)
+        : [],
+      pms_clients: Array.isArray(project?.pms_clients)
+        ? project.pms_clients.map((item) => item?._id || item).filter(Boolean)
+        : [],
+      estimatedHours:
+        project?.estimatedHours !== undefined && project?.estimatedHours !== null
+          ? String(project.estimatedHours)
+          : "",
+      isBillable: Boolean(project?.isBillable),
+      recurringType: project?.recurringType || "",
+    };
+
+    if (projectTypeId) payload.project_type = projectTypeId;
+    if (managerId) payload.manager = managerId;
+    if (workflowId) payload.workFlow = workflowId;
+    if (accountManagerId) payload.acc_manager = accountManagerId;
+    if (project?.start_date) payload.start_date = project.start_date;
+    if (project?.end_date) payload.end_date = project.end_date;
+
+    return payload;
+  }, []);
+
+  const handleStatusChange = async (project, statusId) => {
     try {
+      const projectId = project?._id;
+      if (!projectId) return;
       const statusMeta = projectStatusList.find((status) => status._id === statusId);
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: `${Service.updateProjectdetails}/${projectId}`,
-        body: { project_status: statusId },
+        body: buildProjectUpdatePayload(project, statusId),
         options: { moduleprefix: "project" },
       });
       if (response?.data?.status) {
         message.success("Project status updated");
         syncProjectStatusChange(projectId, statusMeta || { _id: statusId, title: statusMeta?.title || "" }, "status");
-        setTimeout(() => {
-          getProjectListing(currentSkipFilters, currentFilters, true);
-        }, 500);
       } else {
         message.error(response?.data?.message || "Failed to update status");
       }
@@ -1081,8 +1144,10 @@ const AssignProject = () => {
     }
   };
 
-  const handleCloseProject = async (projectId) => {
+  const handleCloseProject = async (project) => {
     try {
+      const projectId = project?._id;
+      if (!projectId) return;
       const closedStatus =
         projectStatusList.find((s) =>
           ["completed", "closed", "done"].includes(s.title?.toLowerCase())
@@ -1096,15 +1161,12 @@ const AssignProject = () => {
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: `${Service.updateProjectdetails}/${projectId}`,
-        body: { project_status: closedStatus._id },
+        body: buildProjectUpdatePayload(project, closedStatus._id),
         options: { moduleprefix: "project" },
       });
       if (response?.data?.status) {
         message.success("Project closed successfully");
         syncProjectStatusChange(projectId, closedStatus, "close");
-        setTimeout(() => {
-          getProjectListing(currentSkipFilters, currentFilters, true);
-        }, 500);
       } else {
         message.error(response?.data?.message || "Failed to close project");
       }
