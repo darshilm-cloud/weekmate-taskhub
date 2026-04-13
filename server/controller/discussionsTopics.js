@@ -7,7 +7,7 @@ const {
 const mongoose = require("mongoose");
 const DiscussionsTopics = mongoose.model("discussionstopics");
 const DiscussionsTopicsDetails = mongoose.model("discussionstopicsdetails");
-const { searchDataArr } = require("../helpers/queryHelper");
+const { searchDataArr, getPaginationResult } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
@@ -45,6 +45,7 @@ exports.projectDiscussionTopicExists = async (reqData, id = null) => {
     const data = await DiscussionsTopics.aggregate([
       {
         $match: {
+          companyId: new mongoose.Types.ObjectId(reqData?.companyId),
           project_id: new mongoose.Types.ObjectId(reqData?.project_id),
           isDeleted: false,
           ...(id
@@ -118,10 +119,11 @@ exports.addDiscussionsTopics = async (req, res) => {
       );
     }
 
-    if (await this.projectDiscussionTopicExists(value)) {
+    if (await this.projectDiscussionTopicExists({ ...value, companyId: decodedCompanyId })) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new DiscussionsTopics({
+        companyId: decodedCompanyId,
         title: value.title,
         project_id: value.project_id,
         task_id: value.task_id || null,
@@ -140,6 +142,7 @@ exports.addDiscussionsTopics = async (req, res) => {
 
       // Add default topic
       let topicsDetails = new DiscussionsTopicsDetails({
+        companyId: decodedCompanyId,
         topic_id: newData._id,
         title: "Added this topic",
         isDefault: true,
@@ -195,7 +198,8 @@ exports.getDiscussionsTopics = async (req, res) => {
       project_id: Joi.string().optional().allow(""),
       limit: Joi.number().integer().min(1).default(20),
       pageNo: Joi.number().integer().min(1).default(1),
-      sortBy: Joi.string().optional().default("desc")
+      sortBy: Joi.string().optional().default("desc"),
+      type: Joi.string().valid("General", "Task").optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -207,12 +211,20 @@ exports.getDiscussionsTopics = async (req, res) => {
       );
     }
 
+    const { companyId: decodedCompanyId } = req.user;
+
     let matchQuery = {
+      $or: [
+        { companyId: new mongoose.Types.ObjectId(decodedCompanyId) },
+        { companyId: { $exists: false } }
+      ],
       isDeleted: false,
       ...(value.project_id
         ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
         : {}),
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value.type === "General" ? { task_id: null } : {}),
+      ...(value.type === "Task" ? { task_id: { $ne: null } } : {})
     };
 
     const [isAdmin, isManager, isAccManager] = await Promise.all([
@@ -383,12 +395,15 @@ exports.getDiscussionsTopics = async (req, res) => {
           },
           ...(await getClientQuery(true))
         }
-      }
+      },
+      ...getPaginationResult(value.pageNo, value.limit)
     ];
 
     const data = await DiscussionsTopics.aggregate(mainQuery);
 
-    data.filter((ele) => {
+    const finalTopics = data[0]?.data || [];
+
+    finalTopics.forEach((ele) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
         isAdmin ||
@@ -403,12 +418,22 @@ exports.getDiscussionsTopics = async (req, res) => {
       }
     });
 
+    if (value._id) {
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        messages.LISTING,
+        data[0]?.data?.[0] || {},
+        []
+      );
+    }
+
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.LISTING,
-      value._id ? data[0] : data,
-      []
+      data[0]?.data || [],
+      data[0]?.metadata?.[0] || {}
     );
   } catch (error) {
     console.log("🚀 ~ exports.getDiscussionsTopics= ~ error:", error);

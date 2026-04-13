@@ -20,6 +20,17 @@ class QueryHelper {
       ],
     ];
   };
+  getPaginationResult = (pageNo, limit) => {
+    const skip = (pageNo - 1) * limit;
+    return [
+      {
+        $facet: {
+          metadata: [{ $count: "total" }, { $addFields: { pageNo: pageNo, limit: limit } }],
+          data: [{ $skip: skip }, { $limit: limit }]
+        }
+      }
+    ];
+  };
   getTotalCountQuery = (mainQuery) => {
     return [
       ...mainQuery,

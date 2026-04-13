@@ -501,12 +501,28 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    // Fire tab-setting sync in background — its result is not needed for the query.
-    // Running it concurrently with checkUserIsAdmin via Promise.all caused DB contention
-    // that made checkUserIsAdmin return undefined, incorrectly applying the user filter
-    // even for admin users and returning fewer projects than expected.
-    manageAllProjectTabSetting(req.user).catch(() => {});
-    const isAdmin = await checkUserIsAdmin(req?.user?._id);
+    // Tab-setting sync intentionally removed from the listing path.
+    // manageAllProjectTabSetting does Projects.find({}) (no filter) + N sequential
+    // writes for every project, which saturates the connection pool and adds 10-20s
+    // of contention on every request.  Tab settings are seeded correctly in
+    // getProjectTabsSetting when a user opens a specific project's tabs.
+
+    // Fetch admin status and archived project-status IDs concurrently.
+    // Archived IDs let us filter by project_status directly in preMatch so
+    // countDocuments(preMatch) works without any $lookup round-trip.
+    const [isAdmin, archivedStatuses] = await Promise.all([
+      checkUserIsAdmin(req?.user?._id),
+      (!value?._id && !value?.project_status?.length)
+        ? ProjectStatus.find({
+            isDeleted: false,
+            companyId: newObjectId(decodedCompanyId),
+            title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+          }).select("_id").lean()
+        : Promise.resolve([])
+    ]);
+    // Default-status seed runs in background — not needed for the listing response
+    this.checkDefaultProjectAndBugStatus(req.user._id).catch(() => {});
+    const archivedStatusIds = archivedStatuses.map((s) => s._id);
 
     // ── Build filters ────────────────────────────────────────────────────────
     // All filter conditions reference raw document fields (ObjectIds) so they
@@ -561,21 +577,14 @@ exports.getProjects = async (req, res) => {
       ...(rawOrFilter ? { $and: [rawOrFilter] } : {})
     };
 
-    // Post project_status lookup match — title comparison requires the join
-    const postStatusMatch = {
-      ...(value?._id
-        ? {}
-        : value?.isArchived
-        ? { "project_status.title": { $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }
-        : { "project_status.title": { $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }),
-      ...(value?.project_status?.length > 0
-        ? {
-            "project_status._id": {
-              $in: value.project_status.map((s) => new mongoose.Types.ObjectId(s))
-            }
-          }
-        : {})
-    };
+    // Inject archived-status filter by ID directly into preMatch so
+    // countDocuments(preMatch) needs no $lookup.  Only applied when the caller
+    // has not already supplied explicit project_status IDs.
+    if (!value?._id && !value?.project_status?.length && archivedStatusIds.length > 0) {
+      preMatch.project_status = value?.isArchived
+        ? { $in: archivedStatusIds }
+        : { $nin: archivedStatusIds };
+    }
 
     // Search evaluated last — may reference manager.full_name (post-join field)
     const searchMatch = value?.search
@@ -612,7 +621,6 @@ exports.getProjects = async (req, res) => {
         }
       },
       { $unwind: { path: "$project_status", preserveNullAndEmptyArrays: true } },
-      { $match: postStatusMatch },
       {
         $lookup: {
           from: "employees",
@@ -693,25 +701,19 @@ exports.getProjects = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    // const totalCountResult = await Project.aggregate(countQuery);
-
     let listQuery = [];
     if (!value?.isSearch) {
       listQuery = await getAggregationPagination(mainQuery, pagination);
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    // let data = await Project.aggregate(listQuery);
 
-    const [totalCountResult, data, _] = await Promise.all([
-      Project.aggregate(countQuery),
-      Project.aggregate(listQuery),
-      // Need to check project status..(we need Active and Archived status default)
-      this.checkDefaultProjectAndBugStatus(req.user._id)
+    // countDocuments(preMatch) uses the compound index directly — no joins, no full scan.
+    // isSearch mode skips the count (no pagination needed).
+    const [totalCount, data] = await Promise.all([
+      value?.isSearch ? Promise.resolve(0) : Project.countDocuments(preMatch),
+      Project.aggregate(listQuery)
     ]);
-
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     let metaData = {};
     if (!value?.isSearch) {
@@ -762,7 +764,7 @@ exports.getProjects = async (req, res) => {
     // instead of 2N sequential queries (N+1 problem).
     const allProjectIds = data.map((p) => p._id);
     const [allTasks, allLoggedHours] = await Promise.all([
-      ProjectTasks.find({ project_id: { $in: allProjectIds } })
+      ProjectTasks.find({ project_id: { $in: allProjectIds }, isDeleted: false })
         .populate("task_status", "title")
         .lean(),
       LoggedHours.find({ project_id: { $in: allProjectIds }, isDeleted: false })

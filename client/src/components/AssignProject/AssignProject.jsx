@@ -328,9 +328,7 @@ const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROJECT_CACHE_MAX_CHARS = 250_000;
 const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
 const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
-const DEFAULT_PAGE_SIZE = 12;
-const VIEW_ALL_PAGE_SIZE = 30;
-const VIEW_ALL_MAX_PAGES = 50;
+const DEFAULT_PAGE_SIZE = 50;
 
 const normalizeProjectFilters = (filters = {}) => ({
   account_manager: Array.isArray(filters.account_manager) ? [...filters.account_manager] : [],
@@ -365,126 +363,6 @@ const getProjectStatusMeta = (value, projectStatusList = []) => {
   };
 };
 
-const projectMatchesStatusFilter = (record, selectedStatusIds = [], projectStatusList = []) => {
-  if (!Array.isArray(selectedStatusIds) || selectedStatusIds.length === 0) return true;
-
-  const recordStatusId = normalizeProjectEntityId(record?.project_status?._id || record?.project_status);
-  const recordStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
-  const archivedFlag =
-    record?.isArchived ??
-    record?.is_archived ??
-    record?.archived ??
-    record?.isArchive ??
-    null;
-
-  return selectedStatusIds.some((statusId) => {
-    const selectedStatusMeta = projectStatusList.find((status) => status._id === statusId);
-    const selectedStatusTitle = selectedStatusMeta?.title?.toLowerCase?.() || "";
-
-    if (selectedStatusTitle === "archived") {
-      return (
-        archivedFlag === true ||
-        archivedFlag === 1 ||
-        archivedFlag === "true" ||
-        recordStatusId === statusId ||
-        recordStatusTitle === selectedStatusTitle
-      );
-    }
-
-    return recordStatusId === statusId || (!!selectedStatusTitle && recordStatusTitle === selectedStatusTitle);
-  });
-};
-
-const toProjectEntityIds = (...values) =>
-  values
-    .flatMap((value) => {
-      if (Array.isArray(value)) return value;
-      return value !== undefined && value !== null ? [value] : [];
-    })
-    .map(normalizeProjectEntityId)
-    .filter(Boolean);
-
-const toProjectEntityLabels = (...values) =>
-  values
-    .flatMap((value) => {
-      if (Array.isArray(value)) return value;
-      return value !== undefined && value !== null ? [value] : [];
-    })
-    .map((value) => {
-      if (!value) return "";
-      if (typeof value === "string") return value.trim().toLowerCase();
-      if (typeof value === "object") {
-        return String(
-          value?.project_tech ||
-          value?.title ||
-          value?.name ||
-          value?.label ||
-          ""
-        )
-          .trim()
-          .toLowerCase();
-      }
-      return String(value).trim().toLowerCase();
-    })
-    .filter(Boolean);
-
-const projectMatchesTechnologyFilter = (
-  record,
-  selectedTechnologyIds = [],
-  selectedTechnologyLabels = []
-) => {
-  const normalizedSelectedTechnologyIds = Array.isArray(selectedTechnologyIds) ? selectedTechnologyIds : [];
-  const normalizedSelectedTechnologyLabels = Array.isArray(selectedTechnologyLabels)
-    ? selectedTechnologyLabels.map((label) => String(label).trim().toLowerCase()).filter(Boolean)
-    : [];
-
-  if (
-    normalizedSelectedTechnologyIds.length === 0 &&
-    normalizedSelectedTechnologyLabels.length === 0
-  ) {
-    return true;
-  }
-
-  const technologyIds = toProjectEntityIds(
-    record?.technology,
-    record?.technology?._id,
-    record?.technology_id,
-    record?.category,
-    record?.category?._id,
-    record?.project_tech,
-    record?.project_tech?._id
-  );
-  const technologyLabels = toProjectEntityLabels(
-    record?.technology,
-    record?.category,
-    record?.project_tech
-  );
-
-  return (
-    normalizedSelectedTechnologyIds.some((id) => technologyIds.includes(id)) ||
-    normalizedSelectedTechnologyLabels.some((label) => technologyLabels.includes(label))
-  );
-};
-
-const filterProjectsLocally = (projects = [], filters = {}, projectStatusList = []) => {
-  const normalizedFilters = normalizeProjectFilters(filters);
-
-  return projects.filter((record) => {
-    if (!projectMatchesStatusFilter(record, normalizedFilters.status, projectStatusList)) {
-      return false;
-    }
-    if (
-      !projectMatchesTechnologyFilter(
-        record,
-        normalizedFilters.technology,
-        normalizedFilters.technology_labels
-      )
-    ) {
-      return false;
-    }
-    return true;
-  });
-};
 
 const GridSkeletonCard = ({ index }) => (
   <div className="ap-skeleton-card" key={`project-skeleton-${index}`}>
@@ -764,15 +642,10 @@ const AssignProject = () => {
     try {
       const normalizedSkipFilters = Array.isArray(skipFilters) ? skipFilters : [skipFilters].filter(Boolean);
       const normalizedFilters = normalizeProjectFilters(filterStats);
-      const shouldLocalFilterProjects =
-        normalizedFilters.status.length > 0 || normalizedFilters.technology.length > 0;
-      const requestSkipFilters = shouldLocalFilterProjects
-        ? Array.from(new Set([...normalizedSkipFilters, "skipStatus", "skipTechnology"]))
-        : normalizedSkipFilters;
-      const reqBody = buildReqBody(TAB_FILTER_MAP[activeTab] || "all", requestSkipFilters, normalizedFilters);
+      // All filters (status, technology, manager, assignees, etc.) are sent directly to the backend.
+      const reqBody = buildReqBody(TAB_FILTER_MAP[activeTab] || "all", normalizedSkipFilters, normalizedFilters);
 
-      // If user selects "Archived" from status filter, fetch archived projects from backend.
-      // Archived projects are stored separately and require `isArchived: true` in request body.
+      // Archived status requires isArchived: true on the request body.
       const statusFilterId = normalizedFilters?.status?.[0];
       const selectedStatusForFetch = statusFilterId
         ? projectStatusList.find((status) => status._id === statusFilterId)
@@ -780,13 +653,14 @@ const AssignProject = () => {
       const selectedStatusTitleForFetch = selectedStatusForFetch?.title?.toLowerCase?.() || "";
       if (selectedStatusTitleForFetch === "archived") {
         reqBody.isArchived = true;
-        // Archived listing behaves like global archived page (not per-tab).
+        // Archived listing is global (not per-tab).
         reqBody.filterBy = "all";
       }
 
-      if (isViewAllProjects || shouldLocalFilterProjects) {
+      // View All: ask the backend for a large single page instead of looping over all pages.
+      if (isViewAllProjects) {
         reqBody.pageNo = 1;
-        reqBody.limit = VIEW_ALL_PAGE_SIZE;
+        reqBody.limit = 500;
       }
 
       const Key = generateCacheKey("project", reqBody);
@@ -794,13 +668,13 @@ const AssignProject = () => {
       if (!forceRefresh && inflightProjectsReqRef.current.pending && inflightProjectsReqRef.current.key === requestKey) {
         return;
       }
-      const shouldUseCache = !isViewAllProjects && !shouldLocalFilterProjects && !forceRefresh;
+      const shouldUseCache = !isViewAllProjects && !forceRefresh;
       const cached = shouldUseCache ? projectCache[Key] : null;
       if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
         setIsloadingProject(false);
-        return; // skip API call — data already cached
+        return;
       }
       if (cached && cached.projects.length === 0) {
         setColumnDetails([]);
@@ -810,96 +684,33 @@ const AssignProject = () => {
 
       inflightProjectsReqRef.current = { key: requestKey, pending: true };
 
-      if (isViewAllProjects || shouldLocalFilterProjects) {
-        const combined = [];
-        let total = 0;
-        let pageNo = 1;
-        const limit = VIEW_ALL_PAGE_SIZE;
-        const maxPages = VIEW_ALL_MAX_PAGES;
-
-        while (pageNo <= maxPages) {
-          const pageBody = { ...reqBody, pageNo, limit };
-          const response = await Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectdetails,
-            body: pageBody,
-          });
-
-          if (requestId !== latestRequestIdRef.current) return;
-
-          const rows = response?.data?.data;
-          const metaTotal = response?.data?.metadata?.total;
-          if (typeof metaTotal === "number") total = metaTotal;
-
-          if (Array.isArray(rows) && rows.length > 0) {
-            combined.push(...rows);
-          } else {
-            break;
-          }
-
-          if (total && combined.length >= total) break;
-          if (rows.length < limit) break;
-          pageNo += 1;
-        }
-
-        if (requestId !== latestRequestIdRef.current) return;
-
-        const processedProjects = shouldLocalFilterProjects
-          ? filterProjectsLocally(combined, normalizedFilters, projectStatusList)
-          : combined;
-
-        if (processedProjects.length > 0) {
-          if (shouldLocalFilterProjects && !isViewAllProjects) {
-            const startIndex = (pagination.current - 1) * pagination.pageSize;
-            const endIndex = startIndex + pagination.pageSize;
-            setColumnDetails(processedProjects.slice(startIndex, endIndex));
-            setPagination((prev) => ({ ...prev, total: processedProjects.length }));
-          } else {
-            setColumnDetails(processedProjects);
-            setPagination((prev) => ({ ...prev, total: total || processedProjects.length, current: 1 }));
-          }
-        } else {
-          setColumnDetails([]);
-          setPagination((prev) => ({ ...prev, total: 0, current: shouldLocalFilterProjects ? prev.current : 1 }));
-          setTaskStats({});
-        }
-        setIsloadingProject(false);
-        return;
-      }
-
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
         body: reqBody,
-        options: { cachekey: Key },
+        options: { cachekey: !isViewAllProjects ? Key : undefined },
       });
 
       if (requestId !== latestRequestIdRef.current) return;
 
-      if (response?.data?.data?.length > 0) {
-        const projects = response.data.data;
-        setColumnDetails(projects);
-        setPagination((prev) => ({ ...prev, total: response.data.metadata.total }));
-        setIsloadingProject(false);
-        if (reqBody.limit <= PROJECT_CACHE_MAX_PAGE_SIZE) {
-          setProjectCache((prev) => ({
-            ...prev,
-            [Key]: {
-              projects,
-              total: response.data.metadata.total,
-              taskStats: prev[Key]?.taskStats || {},
-            },
-          }));
-        }
-      } else {
-        setColumnDetails([]);
-        setPagination((prev) => ({ ...prev, total: 0 }));
+      const projects = response?.data?.data || [];
+      const metaTotal = response?.data?.metadata?.total ?? projects.length;
+
+      setColumnDetails(projects);
+      setPagination((prev) => ({ ...prev, total: metaTotal }));
+      setIsloadingProject(false);
+
+      if (!isViewAllProjects && reqBody.limit <= PROJECT_CACHE_MAX_PAGE_SIZE) {
+        setProjectCache((prev) => ({
+          ...prev,
+          [Key]: { projects, total: metaTotal, taskStats: prev[Key]?.taskStats || {} },
+        }));
+      } else if (projects.length === 0) {
         setTaskStats({});
         setProjectCache((prev) => ({
           ...prev,
           [Key]: { projects: [], total: 0, taskStats: {} },
         }));
-        setIsloadingProject(false);
       }
 
       if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current);
@@ -1234,47 +1045,11 @@ const AssignProject = () => {
     return false;
   };
 
-  const normalizedCurrentFilters = normalizeProjectFilters(currentFilters);
-
-  const visibleProjects = columnDetails.filter((record) => {
-    const matchesDate = selectedDate ? doesProjectMatchDate(record, selectedDate) : true;
-    if (!matchesDate) return false;
-
-    const normalizedSearch = searchText?.trim().toLowerCase();
-    if (normalizedSearch) {
-      const projectTitle = record?.title?.toLowerCase?.() || "";
-      const projectCode = record?.project_id?.toLowerCase?.() || "";
-      const projectStatusTitle = record?.project_status?.title?.toLowerCase?.() || "";
-      const ownerName =
-        record?.created_by?.full_name?.toLowerCase?.() ||
-        record?.created_by?.name?.toLowerCase?.() ||
-        "";
-
-      const matchesSearch =
-        projectTitle.includes(normalizedSearch) ||
-        projectCode.includes(normalizedSearch) ||
-        projectStatusTitle.includes(normalizedSearch) ||
-        ownerName.includes(normalizedSearch);
-
-      if (!matchesSearch) return false;
-    }
-
-    if (!projectMatchesStatusFilter(record, normalizedCurrentFilters.status, projectStatusList)) {
-      return false;
-    }
-
-    if (
-      !projectMatchesTechnologyFilter(
-        record,
-        normalizedCurrentFilters.technology,
-        normalizedCurrentFilters.technology_labels
-      )
-    ) {
-      return false;
-    }
-
-    return true;
-  });
+  // All filtering (status, technology, search, manager, etc.) is handled by the backend.
+  // The only local pass is the date-picker filter, which is a UI-only feature not sent to the server.
+  const visibleProjects = selectedDate
+    ? columnDetails.filter((record) => doesProjectMatchDate(record, selectedDate))
+    : columnDetails;
   const showInitialProjectSkeleton = isloadingProject && columnDetails.length === 0;
   const hasActiveProjectFilters =
     Boolean(searchText?.trim()) ||
@@ -1284,8 +1059,12 @@ const AssignProject = () => {
   const emptyProjectsMessage = hasActiveProjectFilters ? "No matches found" : "No projects found";
 
   useEffect(() => {
+    // Note: Automatic fetching of task stats for projects in the grid/list has been heartially disabled 
+    // because it causes excessive API calls when many projects are present.
+    // The user prefers these stats to be loaded only when explicitly needed or clicked.
     if (!visibleProjects.length) return;
 
+    /*
     const isGrid = viewMode === "grid";
     const primaryIds = isGrid
       ? []
@@ -1336,6 +1115,7 @@ const AssignProject = () => {
         }
       }
     };
+    */
   }, [visibleProjects, viewMode, selectedWorkspaceProjectId, fetchTaskStatsForIds]);
 
   useEffect(() => {
@@ -1722,12 +1502,7 @@ const AssignProject = () => {
     });
   }
 
-  const totalCount =
-    isViewAllProjects
-      ? visibleProjects.length
-      : selectedDate || currentFilters?.status?.length
-        ? visibleProjects.length
-        : (pagination.total || columnDetails.length);
+  const totalCount = pagination.total || columnDetails.length;
   const calendarOverlay = (
     <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="ap-date-dropdown-header">
@@ -1952,7 +1727,7 @@ const AssignProject = () => {
                   showSizeChanger
                   responsive
                   showLessItems
-                  pageSizeOptions={["10", "20", "30"]}
+                  pageSizeOptions={["25", "50", "100"]}
                   showTotal={showTotal}
                   onChange={(page, size) => setPagination({ current: page, pageSize: size })}
                 />
