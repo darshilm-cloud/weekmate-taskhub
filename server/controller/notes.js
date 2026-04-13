@@ -9,7 +9,8 @@ const Notes = mongoose.model("notes_pms");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr
+  searchDataArr,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -48,6 +49,7 @@ exports.projectNoteExists = async (reqData, id = null) => {
     const data = await Notes.aggregate([
       {
         $match: {
+          companyId: new mongoose.Types.ObjectId(reqData?.companyId),
           project_id: new mongoose.Types.ObjectId(reqData?.project_id),
           isDeleted: false,
           ...(id
@@ -106,10 +108,11 @@ exports.addNotes = async (req, res) => {
       );
     }
 
-    if (await this.projectNoteExists(value)) {
+    if (await this.projectNoteExists({ ...value, companyId: decodedCompanyId })) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new Notes({
+        companyId: decodedCompanyId,
         title: value.title,
         notesInfo: value.notesInfo,
         project_id: value.project_id,
@@ -181,7 +184,13 @@ exports.getNotes = async (req, res) => {
       value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
     ]);
 
+    const { companyId: decodedCompanyId } = req.user;
+
     let matchQuery = {
+      $or: [
+        { companyId: new mongoose.Types.ObjectId(decodedCompanyId) },
+        { companyId: { $exists: false } }
+      ],
       isDeleted: false,
       ...(!isManager && !isAdmin && !isAccManager
         ? {
@@ -368,11 +377,8 @@ exports.getNotes = async (req, res) => {
     const totalCountResult = await Notes.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Notes.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
-    ]);
+    const listQuery = await getAggregationPagination(mainQuery, pagination);
+    let data = await Notes.aggregate(listQuery);
 
     data.filter((ele) => {
       if (

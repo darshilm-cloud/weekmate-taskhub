@@ -47,7 +47,10 @@ exports.getEmployees = async (req, res) => {
         .valid("csv", "xlsx")
         .insensitive()
         .default("csv"),
-      includeDeactivated: Joi.boolean().default(false)
+      includeDeactivated: Joi.boolean().default(false),
+      excludeIds: Joi.array().items(Joi.string()).optional(),
+      ids: Joi.array().items(Joi.string()).optional(),
+      isActivate: Joi.boolean().optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -73,9 +76,19 @@ exports.getEmployees = async (req, res) => {
       // Apply filters..
       ...(value.first_name && { first_name: value.first_name }),
       ...(value.last_name && { last_name: value.last_name }),
-      ...(value.full_name && { last_name: value.last_name }),
-      ...(value.pms_role_id && {
+      ...(value.full_name && { full_name: value.full_name }),
+      ...(value.isActivate !== undefined && { isActivate: value.isActivate }),
+      ...(value.pms_role_id && value.pms_role_id !== "admins" && {
         "pms_role._id": new mongoose.Types.ObjectId(value.pms_role_id)
+      }),
+      ...(value.pms_role_id === "admins" && {
+        "pms_role.role_name": { $regex: "admin", $options: "i" }
+      }),
+      ...(value.excludeIds && value.excludeIds.length > 0 && {
+        _id: { $nin: value.excludeIds.map(id => new mongoose.Types.ObjectId(id)) }
+      }),
+      ...(value.ids && value.ids.length > 0 && {
+        _id: { $in: value.ids.map(id => new mongoose.Types.ObjectId(id)) }
       })
     };
 
@@ -140,6 +153,48 @@ exports.getEmployees = async (req, res) => {
     const totalCountResult = await Employees.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
+    // Get analytics counts
+    const analyticsQuery = [
+      {
+        $lookup: {
+          from: "pms_roles",
+          localField: "pms_role_id",
+          foreignField: "_id",
+          as: "role"
+        }
+      },
+      {
+        $unwind: { path: "$role", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $facet: {
+          active: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: true } },
+            { $count: "count" }
+          ],
+          inactive: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: false } },
+            { $count: "count" }
+          ],
+          admins: [
+            {
+              $match: {
+                companyId: newObjectId(decodedCompanyId),
+                isDeleted: false,
+                isSoftDeleted: false,
+                "role.role_name": { $regex: "admin", $options: "i" }
+              }
+            },
+            { $count: "count" }
+          ]
+        }
+      }
+    ];
+    const analyticsResult = await Employees.aggregate(analyticsQuery);
+    const activeCount = analyticsResult[0]?.active[0]?.count || 0;
+    const inactiveCount = analyticsResult[0]?.inactive[0]?.count || 0;
+    const adminCount = analyticsResult[0]?.admins[0]?.count || 0;
+
     const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await Employees.aggregate(listQuery);
 
@@ -150,6 +205,9 @@ exports.getEmployees = async (req, res) => {
     } else {
       metaData = {
         total: totalCount,
+        active: activeCount,
+        inactive: inactiveCount,
+        admins: adminCount,
         limit: pagination.limit,
         pageNo: pagination.page,
         totalPages:

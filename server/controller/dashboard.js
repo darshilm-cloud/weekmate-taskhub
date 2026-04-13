@@ -519,7 +519,7 @@ exports.getTaskList = async (req, res) => {
       end_date: Joi.date().optional().default(""),
       pageNo: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
-    });
+    }).unknown(true);
 
     const { error, value } = validationSchema.validate(req.body);
     if (error) {

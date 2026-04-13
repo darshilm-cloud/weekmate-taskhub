@@ -39,12 +39,14 @@ export default function DiscussionPage() {
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [folderId, setFolderId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [topicsError, setTopicsError] = useState("");
-  const pageSize = 15;
+  const [totalTopics, setTotalTopics] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const bottomRef = useRef(null);
 
   // Add Topic modal
@@ -71,14 +73,17 @@ export default function DiscussionPage() {
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
         body: {
-          pageNo: 1,
-          limit: 9999,
+          pageNo: currentPage,
+          limit: pageSize,
           sortBy: "desc",
+          type: activeTab,
           ...(searchVal ? { search: searchVal } : {}),
         },
       });
       const data = res?.data?.data;
+      const meta = res?.data?.metadata;
       setTopics(Array.isArray(data) ? data : []);
+      setTotalTopics(meta?.total || 0);
     } catch (e) {
       console.error(e);
       setTopics([]);
@@ -91,15 +96,23 @@ export default function DiscussionPage() {
       setLoadingTopics(false);
       initialLoadDone.current = true;
     }
-  }, []);
+  }, [activeTab, currentPage, pageSize]);
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
-    fetchTopics(search);
-  }, [fetchTopics]);
+    fetchTopics(debouncedSearch);
+  }, [fetchTopics, currentPage, pageSize, activeTab, debouncedSearch]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, search]);
+  }, [activeTab, debouncedSearch]);
 
 
   const fetchComments = async (topicId, projectId, showLoader = true) => {
@@ -243,28 +256,7 @@ export default function DiscussionPage() {
 
   const normalizedSearch = search.trim().toLowerCase();
 
-  const allFilteredTopics = useMemo(() => {
-    return topics.filter((t) => {
-      const matchesTab = activeTab === "General" ? !t.task_id : !!t.task_id;
-      if (!matchesTab) return false;
-      if (!normalizedSearch) return true;
-
-      const topicTitle = String(t.title || t.topic || "").toLowerCase();
-      const projectTitle = String(t.project?.title || "").toLowerCase();
-      const creatorName = String(t.createdBy?.full_name || t.createdBy?.name || "").toLowerCase();
-
-      return (
-        topicTitle.includes(normalizedSearch) ||
-        projectTitle.includes(normalizedSearch) ||
-        creatorName.includes(normalizedSearch)
-      );
-    });
-  }, [topics, activeTab, normalizedSearch]);
-
-  const filteredTopics = allFilteredTopics.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const filteredTopics = topics;
 
   const formatTime = (date) => {
     if (!date) return "";
@@ -401,15 +393,19 @@ export default function DiscussionPage() {
         </div>
 
         {/* Pagination */}
-        {allFilteredTopics.length > pageSize && (
+        {totalTopics > 0 && (
           <div className="disc-pagination">
             <Pagination
               size="small"
               current={currentPage}
-              total={allFilteredTopics.length}
+              total={totalTopics}
               pageSize={pageSize}
-              onChange={(p) => setCurrentPage(p)}
-              showSizeChanger={false}
+              onChange={(p, s) => {
+                setCurrentPage(p);
+                setPageSize(s);
+              }}
+              showSizeChanger
+              pageSizeOptions={["10", "25", "50", "100"]}
             />
           </div>
         )}

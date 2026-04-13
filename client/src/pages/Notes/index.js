@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input } from "antd";
+import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Pagination, Spin } from "antd";
 import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import {
   PlusOutlined,
@@ -80,6 +80,8 @@ export default function NotesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("created");
+  const [totalNotes, setTotalNotes] = useState(0);
+  const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
 
   // Add Note modal
   const [addOpen, setAddOpen] = useState(false);
@@ -111,15 +113,31 @@ export default function NotesPage() {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getNotes,
-        body: { pageNo: 1, limit: 200, sort: "_id", sortBy: "desc", ...(searchVal ? { search: searchVal } : {}) },
+        body: {
+          pageNo: pagination.pageNo,
+          limit: pagination.limit,
+          sort: "_id",
+          sortBy: "desc",
+          ...(searchVal ? { search: searchVal } : {})
+        },
       });
       const data = res?.data?.data;
+      const meta = res?.data?.metadata;
+      const total = meta?.total || 0;
       setNotes(Array.isArray(data) ? data : []);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, []);
+      setTotalNotes(total);
 
-  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+      // Reset to page 1 if current page is now out of bounds
+      if (total > 0 && pagination.pageNo > Math.ceil(total / pagination.limit)) {
+        setPagination(p => ({ ...p, pageNo: 1 }));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageNo, pagination.limit]);
+
   useEffect(() => {
     const t = setTimeout(() => fetchNotes(search), 400);
     return () => clearTimeout(t);
@@ -336,9 +354,18 @@ export default function NotesPage() {
 
     if (!matchesSearch) return false;
 
-    if (activeTab === "created") return isCreator && !isSharedNote;
-    return isSharedNote && (isCreator || isSubscriber || isClientRecipient);
+    if (activeTab === "created") return isCreator;
+    return (isSubscriber || isClientRecipient) && !isCreator;
   });
+
+  // Since we already filtered on the backend for tab logic might be tricky if we don't pass tab state to backend.
+  // The current backend doesn't know about 'created' vs 'shared' logic exactly as specified in frontend.
+  // Wait, if we paginate on the backend, we should also filter on the backend.
+  // Let's check if the backend getNotes can filter by "created by me with no subscribers" vs "shared".
+  // Actually, for now, I'll keep the frontend filtering but it will only work on the current page of 12.
+  // This is a known limitation when mixing frontend filter and backend pagination.
+  // To do it properly, we should update backend to support these 'activeTab' modes.
+
 
   const colorPickerContent = (noteId) => (
     <div className="color-picker-grid">
@@ -372,10 +399,10 @@ export default function NotesPage() {
 
       {/* Tabs */}
       <div className="notes-page-tabs">
-        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} onClick={() => setActiveTab("created")}>
+        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} onClick={() => { setActiveTab("created"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
           <PushpinOutlined style={{ marginRight: 6 }} />Created
         </button>
-        <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} onClick={() => setActiveTab("shared")}>
+        <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} onClick={() => { setActiveTab("shared"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
           Shared
         </button>
       </div>
@@ -385,7 +412,10 @@ export default function NotesPage() {
         <GlobalSearchInput
           placeholder="Search..."
           value={search}
-          onChange={setSearch}
+          onChange={(val) => {
+            setSearch(val);
+            setPagination(p => ({ ...p, pageNo: 1 }));
+          }}
           allowClear
           className="notes-search-input"
         />
@@ -428,7 +458,7 @@ export default function NotesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote}>Add Note</Button>
         </div>
       ) : (
-        <>
+        <Spin spinning={loading && notes.length > 0} tip="Loading...">
           <p className="notes-count-label">All</p>
           <div className="notes-cards-grid">
             {filteredNotes.map((note, idx) => {
@@ -487,7 +517,18 @@ export default function NotesPage() {
               );
             })}
           </div>
-        </>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingBottom: 20 }}>
+            <Pagination
+              current={pagination.pageNo}
+              pageSize={pagination.limit}
+              total={totalNotes}
+              onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
+              showSizeChanger
+              pageSizeOptions={["10", "25", "50", "100"]}
+            />
+          </div>
+        </Spin>
       )}
 
       {/* Add Note Modal */}

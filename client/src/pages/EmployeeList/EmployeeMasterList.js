@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Avatar, Tooltip, Select, Pagination, Button } from "antd";
+import { Avatar, Tooltip, Select, Pagination, Button, Spin, Skeleton } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -90,7 +90,7 @@ const EmployeeMasterList = () => {
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
-  const sidebarPageSize = 12;
+  const sidebarPageSize = 10;
 
   const openEmployeeSegment = useCallback((segment) => {
     setSidebarMode("employees");
@@ -110,6 +110,10 @@ const EmployeeMasterList = () => {
   const [selectedUserId,   setSelectedUserId]   = useState(null);
   const [selectedClientId, setSelectedClientId] = useState(null);
 
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [totalClients,   setTotalClients]   = useState(0);
+  const [favoriteUserObjects, setFavoriteUserObjects] = useState([]);
+
   /* ── employee data ── */
   const [sidebarUsers,   setSidebarUsers]   = useState([]);
   const [sidebarLoading, setSidebarLoading] = useState(false);
@@ -125,33 +129,63 @@ const EmployeeMasterList = () => {
   const [clientAnalytics, setClientAnalytics] = useState({ total: 0, active: 0, inactive: 0 });
 
   /* ── fetch employees ───────────────────────────────────────────── */
-  const fetchSidebarUsers = useCallback(async () => {
-    setSidebarLoading(true);
+  const fetchFavoriteUsers = useCallback(async () => {
+    if (favorites.length === 0) {
+      setFavoriteUserObjects([]);
+      return;
+    }
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getUsermaster,
-        body: { pageNo: 1, limit: 200, includeDeactivated: true },
+        body: { ids: favorites, includeDeactivated: true, limit: favorites.length },
       });
+      setFavoriteUserObjects(response?.data?.data || []);
+    } catch (e) {
+      console.error("fetchFavoriteUsers", e);
+    }
+  }, [favorites]);
+
+  const fetchSidebarUsers = useCallback(async () => {
+    setSidebarLoading(true);
+    try {
+      const body = {
+        pageNo: employeeListPage,
+        limit: sidebarPageSize,
+        includeDeactivated: true,
+        excludeIds: favorites,
+        ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
+        ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
+        ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
+      };
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getUsermaster,
+        body,
+      });
+
       const users = response?.data?.data || [];
+      const meta = response?.data?.metadata || {};
+
       setSidebarUsers(users);
-      computeAnalytics(users);
-    } catch {
-      try {
-        const response = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getUsersList,
-          body: { page: 1, limit: 200 },
-        });
-        const users = response?.data?.data || [];
-        setSidebarUsers(users);
-        computeAnalytics(users);
-      } catch { /* silent */ }
+      setTotalEmployees(meta.total || 0);
+
+      setAnalytics(prev => ({
+        ...prev,
+        total: (meta.total || 0) + favorites.length,
+        active: meta.active || 0,
+        inactive: meta.inactive || 0,
+        admins: meta.admins || 0,
+      }));
+
+    } catch (e) {
+      console.error("fetchSidebarUsers", e);
     } finally {
       setSidebarLoading(false);
       setPageLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [employeeListPage, sidebarPageSize, employeeStatusFilter, favorites]);
 
   /* ── fetch clients ─────────────────────────────────────────────── */
   const fetchSidebarClients = useCallback(async () => {
@@ -160,18 +194,26 @@ const EmployeeMasterList = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
-        body: { pageNo: 1, limit: 200 },
+        body: { pageNo: clientListPage, limit: sidebarPageSize },
       });
       const clients = response?.data?.data || [];
+      const meta = response?.data?.metadata || {};
+
       setSidebarClients(clients);
-      const active = clients.filter((c) => c.isActivate).length;
-      setClientAnalytics({ total: clients.length, active, inactive: clients.length - active });
+      setTotalClients(meta.total || 0);
+
+      setClientAnalytics({
+        total: meta.total || 0,
+        active: meta.active || 0,
+        inactive: meta.inactive || 0
+      });
     } catch { /* silent */ }
     finally { setClientsLoading(false); }
-  }, []);
+  }, [clientListPage, sidebarPageSize]);
 
   useEffect(() => { fetchSidebarUsers();   }, [fetchSidebarUsers]);
   useEffect(() => { fetchSidebarClients(); }, [fetchSidebarClients]);
+  useEffect(() => { fetchFavoriteUsers(); }, [fetchFavoriteUsers]);
 
   /* ── analytics from employee list ─────────────────────────────── */
   const computeAnalytics = (users) => {
@@ -197,15 +239,7 @@ const EmployeeMasterList = () => {
   };
 
   /* ── filtered lists ────────────────────────────────────────────── */
-  const filteredUsers = sidebarUsers.filter((u) => {
-    const role = String(u?.pms_role?.role_name || "").toLowerCase();
-    return (
-      employeeStatusFilter === "all" ||
-      (employeeStatusFilter === "active" && u.isActivate) ||
-      (employeeStatusFilter === "inactive" && !u.isActivate) ||
-      (employeeStatusFilter === "admins" && role.includes("admin"))
-    );
-  });
+  const filteredUsers = sidebarUsers;
   const filteredClients = sidebarClients;
 
   const downloadCsvFile = useCallback((rows, fileName) => {
@@ -258,17 +292,10 @@ const EmployeeMasterList = () => {
     downloadCsvFile(rows, "Users Clients.csv");
   }, [filteredClients, downloadCsvFile]);
 
-  const favoriteUsers = filteredUsers.filter((u) =>  favorites.includes(u._id));
-  const regularUsers  = filteredUsers.filter((u) => !favorites.includes(u._id));
-  const paginatedRegularUsers = regularUsers.slice(
-    (employeeListPage - 1) * sidebarPageSize,
-    employeeListPage * sidebarPageSize
-  );
-
-  const paginatedClients = filteredClients.slice(
-    (clientListPage - 1) * sidebarPageSize,
-    clientListPage * sidebarPageSize
-  );
+  const favoriteUsers = favoriteUserObjects;
+  const regularUsers  = sidebarUsers;
+  const paginatedRegularUsers = sidebarUsers;
+  const paginatedClients = sidebarClients;
 
   const filteredAnalytics = (() => {
     const roleBreakdown = {};
@@ -320,23 +347,12 @@ const EmployeeMasterList = () => {
   }, [filteredUsers, selectedUserId]);
 
   useEffect(() => {
-    if (sidebarMode === "employees") setEmployeeListPage(1);
-    else setClientListPage(1);
+    setEmployeeListPage(1);
+    setClientListPage(1);
   }, [sidebarMode]);
 
-  useEffect(() => {
-    if (sidebarMode === "employees") setEmployeeListPage(1);
-  }, [sidebarMode, employeeStatusFilter]);
+  // Page validation effects can be removed if handled by API safely or reset logic above
 
-  useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil(regularUsers.length / sidebarPageSize));
-    if (employeeListPage > maxPage) setEmployeeListPage(maxPage);
-  }, [employeeListPage, regularUsers.length]);
-
-  useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil(filteredClients.length / sidebarPageSize));
-    if (clientListPage > maxPage) setClientListPage(maxPage);
-  }, [clientListPage, filteredClients.length]);
 
   /* ── selected objects ──────────────────────────────────────────── */
   const selectedUser   = selectedUserId   ? sidebarUsers.find((u) => u._id === selectedUserId)   : null;
@@ -517,87 +533,91 @@ const EmployeeMasterList = () => {
         </div>
 
         <div className="sidebar-user-list">
-          {sidebarMode === "employees" ? (
-            <>
-              {/* All Employees */}
-              <div
-                className={`sidebar-all-users-btn ${!selectedUserId ? "active" : ""}`}
-                onClick={() => setSelectedUserId(null)}
-              >
-                <div className="all-users-avatar"><TeamOutlined /></div>
-                <span className="sidebar-all-users-label">All Employees</span>
-              </div>
-
-              {favoriteUsers.length > 0 && (
+          <Spin spinning={sidebarLoading || clientsLoading} tip="Loading...">
+            <div style={{ minHeight: "200px" }}>
+              {sidebarMode === "employees" ? (
                 <>
-                  <div className="sidebar-section-label">Favourites</div>
-                  {favoriteUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
-                </>
-              )}
+                  {/* All Employees */}
+                  <div
+                    className={`sidebar-all-users-btn ${!selectedUserId ? "active" : ""}`}
+                    onClick={() => setSelectedUserId(null)}
+                  >
+                    <div className="all-users-avatar"><TeamOutlined /></div>
+                    <span className="sidebar-all-users-label">All Employees</span>
+                  </div>
 
-              {regularUsers.length > 0 && (
-                <>
                   {favoriteUsers.length > 0 && (
-                    <div className="sidebar-section-label">All Members</div>
+                    <>
+                      <div className="sidebar-section-label">Favourites</div>
+                      {favoriteUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                    </>
                   )}
-                  {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
-                </>
-              )}
 
-              {!sidebarLoading && filteredUsers.length === 0 && (
-                <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-	                  No employees found
-	                </div>
-	              )}
+                  {regularUsers.length > 0 && (
+                    <>
+                      {favoriteUsers.length > 0 && (
+                        <div className="sidebar-section-label">All Members</div>
+                      )}
+                      {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                    </>
+                  )}
 
-                {regularUsers.length > sidebarPageSize && (
-                  <div className="sidebar-pagination">
-                    <Pagination
-                      size="small"
-                      current={employeeListPage}
-                      pageSize={sidebarPageSize}
-                      total={regularUsers.length}
-                      showLessItems
-                      onChange={(page) => setEmployeeListPage(page)}
-                    />
+                  {!sidebarLoading && filteredUsers.length === 0 && (
+                    <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                        No employees found
+                      </div>
+                    )}
+
+                    {totalEmployees > sidebarPageSize && (
+                      <div className="sidebar-pagination">
+                        <Pagination
+                          size="small"
+                          current={employeeListPage}
+                          pageSize={sidebarPageSize}
+                          total={totalEmployees}
+                          showLessItems
+                          onChange={(page) => setEmployeeListPage(page)}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                  {/* All Clients */}
+                  <div
+                    className={`sidebar-all-users-btn ${!selectedClientId ? "active" : ""}`}
+                    onClick={() => setSelectedClientId(null)}
+                  >
+                    <div className="all-users-avatar"><TeamOutlined /></div>
+                    <span className="sidebar-all-users-label">All Clients</span>
                   </div>
+
+                    {paginatedClients.map((c) => (
+                      <SidebarClientItem key={c._id} client={c} />
+                    ))}
+
+                  {!clientsLoading && filteredClients.length === 0 && (
+                    <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                        No clients found
+                      </div>
+                    )}
+
+                    {totalClients > sidebarPageSize && (
+                      <div className="sidebar-pagination">
+                        <Pagination
+                          size="small"
+                          current={clientListPage}
+                          pageSize={sidebarPageSize}
+                          total={totalClients}
+                          showLessItems
+                          onChange={(page) => setClientListPage(page)}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
-	            </>
-	          ) : (
-	            <>
-              {/* All Clients */}
-              <div
-                className={`sidebar-all-users-btn ${!selectedClientId ? "active" : ""}`}
-                onClick={() => setSelectedClientId(null)}
-              >
-                <div className="all-users-avatar"><TeamOutlined /></div>
-                <span className="sidebar-all-users-label">All Clients</span>
-              </div>
-
-	              {paginatedClients.map((c) => (
-	                <SidebarClientItem key={c._id} client={c} />
-	              ))}
-
-              {!clientsLoading && filteredClients.length === 0 && (
-                <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-	                  No clients found
-	                </div>
-	              )}
-
-                {filteredClients.length > sidebarPageSize && (
-                  <div className="sidebar-pagination">
-                    <Pagination
-                      size="small"
-                      current={clientListPage}
-                      pageSize={sidebarPageSize}
-                      total={filteredClients.length}
-                      showLessItems
-                      onChange={(page) => setClientListPage(page)}
-                    />
-                  </div>
-                )}
-	            </>
-	          )}
+            </div>
+          </Spin>
 	        </div>
       </aside>
 

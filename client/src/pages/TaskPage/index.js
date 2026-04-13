@@ -1208,7 +1208,7 @@ const TaskPage = () => {
             total={totalTasks}
             showSizeChanger
             hideOnSinglePage={false}
-            pageSizeOptions={["10", "20", "50", "100"]}
+            pageSizeOptions={["10", "25", "50", "100"]}
             onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
             onShowSizeChange={(page, pageSize) => setPagination({ pageNo: 1, limit: pageSize })}
           />

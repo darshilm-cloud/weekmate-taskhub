@@ -272,6 +272,25 @@ exports.getClients = async (req, res) => {
     const totalCountResult = await PMSClient.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
+    // Get analytics counts
+    const analyticsQuery = [
+      {
+        $facet: {
+          active: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: true } },
+            { $count: "count" }
+          ],
+          inactive: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: false } },
+            { $count: "count" }
+          ]
+        }
+      }
+    ];
+    const analyticsResult = await PMSClient.aggregate(analyticsQuery);
+    const activeCount = analyticsResult[0]?.active[0]?.count || 0;
+    const inactiveCount = analyticsResult[0]?.inactive[0]?.count || 0;
+
     const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await PMSClient.aggregate(listQuery);
 
@@ -282,6 +301,8 @@ exports.getClients = async (req, res) => {
     } else {
       metaData = {
         total: totalCount,
+        active: activeCount,
+        inactive: inactiveCount,
         limit: pagination.limit,
         pageNo: pagination.page,
         totalPages:
