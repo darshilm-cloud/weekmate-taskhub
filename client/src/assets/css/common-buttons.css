@@ -1,0 +1,329 @@
+/* 
+  Common Button Styles - Consolidated for All Repeated Buttons
+  Primary: Solid background with white text
+  Secondary: White background with colored border
+  Filter: Special filter style
+*/
+
+/* Base Button Styles */
+.ant-btn {
+    line-height: 1.3;
+    position: relative;
+    background-image: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    user-select: none;
+    touch-action: manipulation;
+    padding: 8px 16px;
+    display: inline-block;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-radius: var(--border-radius, 6px);
+    margin-bottom: 0;
+    color: var(--font-color, #545454);
+    background: var(--white-bg-color, #fff);
+    height: 36px;
+    font-size: 14px;
+}
+
+/* Primary Button - Solid Style */
+.btn-primary,
+.ant-btn-primary,
+.ant-modal-footer .ant-btn-primary,
+.ant-modal-wrap .ant-modal-body .ant-btn-primary,
+.ant-layout .ant-btn-primary,
+.ant-layout-header .ant-btn-primary {
+    position: relative;
+    padding: 8px 16px;
+    overflow: hidden;
+    text-align: center;
+    border-radius: var(--border-radius, 6px);
+    transition: all 0.3s ease-in-out;
+    border-color: var(--add-button-border-color, #185d87);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
+    margin-bottom: 0;
+    color: var(--add-button-color, #ffffff);
+}
+.ant-layout .ant-layout-content .ant-btn-primary:hover,
+.btn-primary:hover,
+.ant-btn-primary:hover,
+.ant-modal-footer .ant-btn-primary:hover,
+.ant-modal-wrap .ant-modal-body .ant-btn-primary:hover,
+.ant-layout .ant-btn-primary:hover,
+.ant-layout-header .ant-btn-primary:hover {
+    color: var(--add-button-color, #ffffff);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
+    border-color: var(--add-button-border-color, #185d87);
+}
+
+/* Secondary Button - Outline Style */
+.btn-secondary,
+.ant-btn-secondary,
+.ant-btn-default,
+.ant-layout .btn-secondary {
+    background: var(--secondary-btn-bg, #ffffff);
+    color: var(--secondary-btn-color, #005282);
+    border: 1px solid var(--secondary-btn-border, #005282);
+    border-radius: var(--border-radius, 6px);
+    padding: 8px 16px;
+    font-weight: 500;
+    height: 36px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    font-size: 14px;
+    box-shadow: none;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-secondary:hover,
+.ant-btn-secondary:hover,
+.ant-btn-default:hover,
+.ant-layout .btn-secondary:hover {
+    background: var(--secondary-light-color, #EAF3FF);
+    color: var(--secondary-btn-color, #005282);
+    border: 1px solid var(--secondary-btn-border, #005282);
+}
+
+/* Filter Button - Special Style */
+.filter-btn,
+.ant-layout .ant-layout-content .filter-btn {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    height: auto;
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+    border-radius: 6px;
+}
+
+
+.filter-btn:hover,
+.ant-layout .ant-layout-content .filter-btn:hover {
+    background: var(--secondary-light-color, #EAF3FF);
+    border-color: var(--primary-border-color, #006CB880);
+    color: var(--tertiary-color, #00BDF2);
+}
+
+/* Delete Button - Danger Style */
+.ant-delete,
+.delete-btn,
+.ant-btn.delete-btn,
+.ant-layout .ant-layout-content .ant-delete {
+    background: var(--dashboard-negative, #fef2f2);
+    color: var(--dashboard-negative, #dc2626);
+    border: 1px solid var(--dashboard-negative, #fee2e2);
+    border-radius: var(--border-radius, 6px);
+    height: 36px;
+    padding: 8px 16px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.ant-delete:hover,
+.delete-btn:hover,
+.ant-btn.delete-btn:hover,
+.ant-layout .ant-layout-content .ant-delete:hover {
+    background: var(--dashboard-negative, #fee2e2);
+    border-color: var(--dashboard-negative, #fecaca);
+    color: var(--dashboard-negative, #dc2626);
+}
+
+/* Import Button */
+.import-btn {
+    align-items: center;
+    background: var(--secondary-btn-bg, #ffffff);
+    color: var(--secondary-btn-color, #005282);
+    border: 1px solid var(--secondary-btn-border, #005282);
+    display: inline-flex;
+    justify-content: center;
+    padding: 8px 16px;
+    height: 36px;
+    font-weight: 500;
+    border-radius: var(--border-radius, 6px);
+    line-height: 1;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    position: relative;
+}
+
+.import-btn:hover {
+    background-color: var(--white-bg-color, #ffffff);
+    border-color: var(--secondary-btn-color, #005282);
+    color: var(--secondary-btn-color, #005282);
+}
+
+/* Export Button */
+.export-btn {
+    background: var(--light-grey-color, #f1f1f1);
+    border: 1px solid var(--add-button-border-color, #185d87);
+    color: var(--primary-color, #006CB8);
+    display: inline-flex;
+    justify-content: center;
+    font-weight: 500;
+    line-height: normal;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    position: relative;
+    height: 36px;
+    padding: 8px 16px;
+    border-radius: var(--border-radius, 6px);
+}
+
+.export-btn:hover {
+    background-color: var(--white-bg-color, #ffffff);
+    border-color: var(--add-button-border-color, #185d87);
+    color: var(--primary-color, #006CB8);
+}
+
+/* Add Button with Animation */
+.add-btn {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+    color: var(--add-button-color, #ffffff);
+    border-color: var(--add-button-border-color, #185d87);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
+    height: 36px;
+    padding: 8px 16px;
+    border-radius: var(--border-radius, 6px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.add-btn:hover {
+    color: var(--add-button-color, #ffffff);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
+    border-color: var(--add-button-border-color, #185d87);
+}
+
+.add-btn::before {
+    content: '';
+    display: block;
+    width: 0px;
+    height: 86%;
+    position: absolute;
+    top: 7%;
+    left: 0%;
+    opacity: 0;
+    background: #fff;
+    box-shadow: 0 0 50px 30px #fff;
+    transform: skewX(-20deg);
+    transition: all 0.5s ease;
+}
+
+.add-btn:hover::before {
+    animation: sh02 0.5s 0s linear;
+}
+
+/* Button Sizes */
+.ant-btn.ant-btn-sm {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+}
+
+.ant-btn.ant-btn-lg {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 15px;
+}
+
+/* Link Buttons */
+.ant-btn.ant-btn-link {
+    height: 36px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1;
+    color: #2563eb;
+    border: none;
+    background: transparent;
+}
+
+.ant-btn.ant-btn-link:hover {
+    color: #1d4ed8;
+}
+
+/* Icon Alignment */
+.ant-btn .anticon,
+.btn-primary .anticon,
+.btn-secondary .anticon,
+.filter-btn .anticon,
+.ant-delete .anticon,
+.import-btn .anticon,
+.export-btn .anticon,
+.add-btn .anticon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ant-btn .anticon:first-child,
+.btn-primary .anticon:first-child,
+.btn-secondary .anticon:first-child,
+.filter-btn .anticon:first-child,
+.ant-delete .anticon:first-child,
+.import-btn .anticon:first-child,
+.export-btn .anticon:first-child,
+.add-btn .anticon:first-child {
+    margin-right: 4px;
+}
+
+.ant-btn .anticon:last-child,
+.btn-primary .anticon:last-child,
+.btn-secondary .anticon:last-child,
+.filter-btn .anticon:last-child,
+.ant-delete .anticon:last-child,
+.import-btn .anticon:last-child,
+.export-btn .anticon:last-child,
+.add-btn .anticon:last-child {
+    margin-left: 4px;
+    margin-right: 0;
+}
+
+/* Disabled States */
+.ant-btn:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.filter-btn:disabled,
+.ant-delete:disabled,
+.import-btn:disabled,
+.export-btn:disabled,
+.add-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Animation */
+@keyframes sh02 {
+    from {
+        opacity: 0;
+        left: 0%;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        left: 100%;
+    }
+}

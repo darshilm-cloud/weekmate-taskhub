@@ -7,6 +7,7 @@ import {
   Spin,
   Empty,
   Tooltip,
+  Button,
 } from "antd";
 import {
   PlusOutlined,
@@ -531,10 +532,10 @@ const UserDashboard = ({ user }) => {
       {/* ── Action Bar ── */}
       <div className="ud-header">
         <div className="ud-header-spacer" />
-        <button className="ud-add-task-btn" onClick={() => setAddModalOpen(true)}>
+        <Button className="ud-add-task-btn"    type="primary" onClick={() => setAddModalOpen(true)}>
           <PlusOutlined />
           Add Task
-        </button>
+        </Button>
       </div>
 
       {/* ── Tab Bar ── */}

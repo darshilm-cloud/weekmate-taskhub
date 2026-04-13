@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import "./dashboard.css";
-import { Form, Modal, Select, Input, message } from "antd";
+import { Form, Modal, Select, Input, message, Button } from "antd";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
@@ -24,6 +24,7 @@ import {
   LeftOutlined,
   RightOutlined,
   FolderOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
@@ -1348,12 +1349,13 @@ const Dashboard = () => {
         </div>
         <p className="standalone-add-task-title">You haven't added any tasks.</p>
         <p className="standalone-add-task-sub">Welcome Let's get started.</p>
-        <button
-          className="standalone-add-task-btn"
+        <Button
+           type="primary"
+           icon={<PlusOutlined />}
           onClick={() => setAddTaskOpen(true)}
         >
           Add Task
-        </button>
+        </Button>
       </div>}
 
       {/* ── Bottom sections ──────────────────────────────────── */}
@@ -1425,9 +1427,9 @@ const Dashboard = () => {
         <div className="db-bottom-card db-discussion">
           <div className="db-section-header">
             <h3>Recent Discussion</h3>
-            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/discussion`)}>
+            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/discussion`)}>
               View All <span>›</span>
-            </button>
+            </Button>
           </div>
           <div className="db-discussion-tabs">
             <button
@@ -1490,9 +1492,9 @@ const Dashboard = () => {
         <div className="db-bottom-card db-activity">
           <div className="db-section-header">
             <h3>Activity</h3>
-            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
+            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
               View All <span>›</span>
-            </button>
+            </Button>
           </div>
           <div className="db-activity-table-wrap">
             {activityLogs.length > 0 ? (
@@ -1554,9 +1556,9 @@ const Dashboard = () => {
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
             <h3>Pin Notes</h3>
-            <button className="db-view-all" onClick={() => history.push(`/${companySlug}/notes`)}>
+            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/notes`)}>
               View All <span>›</span>
-            </button>
+            </Button>
           </div>
           {pinnedNotes.length > 0 ? (
             <div className="db-notes-list">

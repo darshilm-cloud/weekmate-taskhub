@@ -4,11 +4,11 @@ import {
   Form,
   message,
   Table,
-  Input,
   Modal,
   Popconfirm,
   Row,
   Col,
+  Input,
 } from "antd";
 import {
   EditOutlined,
@@ -17,34 +17,16 @@ import {
   PlusOutlined,
   NodeIndexOutlined,
 } from "@ant-design/icons";
-import Service from "../../service";
 import { AiOutlineDelete } from "react-icons/ai";
-import "./settings.css";
+import SkeletonTable from "../common/SkeletonTable";
+import GlobalSearchInput from "../common/GlobalSearchInput";
+import Service from "../../service";
+import "./ProjectStatus.css";
 
-const SKELETON_ROWS = 6;
-
-function SkeletonTable({ cols = 2 }) {
-  return (
-    <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
-        {Array.from({ length: cols }).map((_, i) => (
-          <div key={i} className="ps-shimmer" style={{ width: i === 0 ? "55%" : "20%", height: 12 }} />
-        ))}
-      </div>
-      {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-        <div className="ps-skeleton-row" key={i}>
-          <div className="ps-shimmer" style={{ width: `${45 + Math.random() * 30}%` }} />
-          <div className="ps-shimmer" style={{ width: "15%", marginLeft: "auto" }} />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function ProjectStatus() {
   const [addProjectStatus] = Form.useForm();
   const searchRef = useRef();
-  const Search = Input.Search;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectstatus, setProjectStatus] = useState("");
@@ -191,21 +173,21 @@ function ProjectStatus() {
         <div style={{ display: "flex", gap: 4 }}>
           {flag && editid === record?._id ? (
             <>
-              <Button type="link" style={{ padding: 4 }}>
-                <SaveTwoTone style={{ fontSize: 18 }} onClick={() => { handleEdit(record?._id); setFlag(false); setEditid(""); }} />
+              <Button type="link" className="btn-secondary">
+                <SaveTwoTone onClick={() => { handleEdit(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button type="link" style={{ padding: 4 }} onClick={() => setEditid("")}>
-                <CloseCircleTwoTone style={{ fontSize: 18 }} />
+              <Button type="link" className="btn-secondary" onClick={() => setEditid("")}>
+                <CloseCircleTwoTone />
               </Button>
             </>
           ) : (
             <>
-              <Button disabled={record.isDefault} type="link" style={{ padding: 4 }}>
-                <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record?._id); setFlag(true); }} />
+              <Button disabled={record.isDefault} type="link" className="btn-secondary">
+                <EditOutlined onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
-                <Button disabled={record.isDefault} type="link" style={{ padding: 4 }}>
-                  <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
+                <Button disabled={record.isDefault} type="link" className="ant-delete">
+                  <AiOutlineDelete />
                 </Button>
               </Popconfirm>
             </>
@@ -225,7 +207,7 @@ function ProjectStatus() {
             Project Status
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            <Button className="btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
               Add Status
             </Button>
           </div>
@@ -233,12 +215,13 @@ function ProjectStatus() {
 
         {/* Search */}
         <div className="ps-search">
-          <Search
+          <GlobalSearchInput
             ref={searchRef}
             placeholder="Search status..."
+            value={searchText}
+            onChange={setSearchText}
             onSearch={onSearch}
-            onChange={(e) => onSearch(e.target.value)}
-            allowClear
+            className="ps-search-input"
             style={{ width: 260 }}
           />
         </div>

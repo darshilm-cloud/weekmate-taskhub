@@ -241,17 +241,14 @@
 
   /* Topbar user pill */
   .user-pill {
-    display: inline-flex;
+    background: var(--user-name-btn-bg);
+    border-radius: 30px;
+    color: var(--white-color);
+    flex-wrap: wrap;
+    padding: 5px 10px 5px 5px;
+    display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 0 6px;
-    background: #0b3a5b;
-    color: #ffffff;
-    border-radius: 999px;
     cursor: pointer;
-    min-width: 184px;
-    justify-content: space-between;
-    height: 44px;
   }
 
   .user-pill .avatar-user {
@@ -259,7 +256,7 @@
     height: 30px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #ffffff;
+    margin-right: 6px;
   }
 
   .user-pill .avatar-user-fallback {
@@ -276,11 +273,12 @@
   }
 
   .user-pill-name {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 400;
     color: #ffffff;
     text-transform: capitalize;
     white-space: nowrap;
+    margin-right: 6px;
   }
 
   .user-pill-caret {
@@ -378,7 +376,7 @@
     margin: 0;
   }
 
-  .ant-modal  .permission-modal-close-icon {
+  .ant-modal .permission-modal-close-icon {
     display: flex;
     justify-content: space-between;
     padding-top: 10px;
@@ -576,7 +574,7 @@
     max-height: 420px;
   }
 
-  .setting-main-wrapper.wm-settings-modal .wm-settings__group + .wm-settings__group {
+  .setting-main-wrapper.wm-settings-modal .wm-settings__group+.wm-settings__group {
     margin-top: 14px;
   }
 

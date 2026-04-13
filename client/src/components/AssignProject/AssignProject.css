@@ -175,24 +175,6 @@
   flex-wrap: wrap;
 }
 
-/* Ensure consistent unified styling for both Filter and Sort buttons */
-.ap-header-actions .filter-container .ant-btn {
-  background-color: #ffffff !important;
-  border-radius: 8px !important;
-  border: 1px solid #d1d5db !important;
-  color: #374151 !important;
-  box-shadow: none !important;
-  height: 34px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.ap-header-actions .filter-container .ant-btn:hover {
-  background-color: #f9fafb !important;
-  border-color: #2563eb !important;
-  color: #2563eb !important;
-}
 
 .ap-search-input {
   width: 220px !important;
@@ -204,7 +186,7 @@
   background: #f9fafb;
   height: 34px;
 }
-
+.ap-search-input .ant-input-affix-wrapper
 .ap-search-input .ant-input-affix-wrapper:hover,
 .ap-search-input .ant-input-affix-wrapper:focus-within {
   border-color: #2563eb;
@@ -298,23 +280,23 @@
 
 /* Add project button */
 .ap-add-btn {
-  background: #2563eb !important;
-  border: 1px solid #2563eb !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  height: 34px !important;
-  padding: 0 14px !important;
-  font-size: 13px !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-  transition: all 0.15s ease !important;
+  background: #2563eb ;
+  border: 1px solid #2563eb ;
+  border-radius: 8px ;
+  font-weight: 500 ;
+  height: 34px ;
+  padding: 0 14px ;
+  font-size: 13px ;
+  color: #ffffff ;
+  box-shadow: none ;
+  transition: all 0.15s ease ;
 }
 
 .ap-add-btn:hover {
-  background: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
-  color: #ffffff !important;
-  transform: none !important;
+  background: #1d4ed8 ;
+  border-color: #1d4ed8 ;
+  color: #ffffff ;
+  transform: none ;
 }
 
 /* ── Tabs toolbar (tabs on left, count + view-all on right) ── */
@@ -1653,8 +1635,6 @@ body[data-theme="dark"] .ap-browser-status-label {
   justify-content: center;
   margin-top: 24px;
   padding: 12px 0 18px;
-  position: sticky;
-  bottom: 0;
   z-index: 5;
   background: linear-gradient(180deg, rgba(245, 247, 251, 0) 0%, rgba(245, 247, 251, 0.92) 30%, #f5f7fb 100%);
 }

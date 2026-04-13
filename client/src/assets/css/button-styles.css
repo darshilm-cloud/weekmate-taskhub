@@ -1,0 +1,383 @@
+/* 
+  Button System Styles - Converted from LESS to CSS
+  All buttons standardized with consistent height, padding, and alignment
+*/
+
+/* App Theme Wrapper - Ant Design Button Overrides */
+
+.app-theme .ant-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.app-theme .ant-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.app-theme .ant-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Primary buttons */
+.app-theme .ant-btn.ant-btn-primary {
+  background-color: #0b3a5b;
+  border-color: #0b3a5b;
+  color: #ffffff;
+}
+
+.app-theme .ant-btn.ant-btn-primary:hover,
+.app-theme .ant-btn.ant-btn-primary:focus {
+  background-color: #0d4a73;
+  border-color: #0d4a73;
+  color: #ffffff;
+}
+
+.app-theme .ant-btn.ant-btn-primary:disabled {
+  background-color: #b0c4d4;
+  border-color: #b0c4d4;
+  color: #ffffff;
+}
+
+/* Default/secondary buttons */
+.app-theme .ant-btn.ant-btn-default {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.app-theme .ant-btn.ant-btn-default:hover,
+.app-theme .ant-btn.ant-btn-default:focus {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+/* Link buttons */
+.app-theme .ant-btn.ant-btn-link {
+  height: 36px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.app-theme .ant-btn.ant-btn-link:hover,
+.app-theme .ant-btn.ant-btn-link:focus {
+  color: #0b3a5b;
+}
+
+/* Small buttons */
+.app-theme .ant-btn.ant-btn-sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Large buttons */
+.app-theme .ant-btn.ant-btn-lg {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 15px;
+}
+
+/* Custom Button Classes */
+.app-theme .btn-primary {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #0b3a5b;
+  border-color: #0b3a5b;
+  color: #ffffff;
+}
+
+.app-theme .btn-primary:hover,
+.app-theme .btn-primary:focus {
+  background-color: #0d4a73;
+  border-color: #0d4a73;
+  color: #ffffff;
+}
+
+.app-theme .btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.app-theme .btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.app-theme .btn-secondary {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.app-theme .btn-secondary:hover,
+.app-theme .btn-secondary:focus {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.app-theme .btn-secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.app-theme .btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.app-theme .filter-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
+.app-theme .filter-btn:hover,
+.app-theme .filter-btn:focus {
+  background-color: #bae6fd;
+  border-color: #93c5fd;
+  color: #0369a1;
+}
+
+.app-theme .filter-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.app-theme .filter-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Filter Container Specific */
+.app-theme .filter-container .filter-btn {
+  background-color: #ffffff;
+  border-color: #bfdbfe;
+}
+
+.app-theme .filter-container .filter-btn:hover,
+.app-theme .filter-container .filter-btn:focus {
+  background-color: #ffffff;
+  border-color: #93c5fd;
+}
+
+/* Legacy Button Class Support */
+.app-theme .add-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #0b3a5b;
+  border-color: #0b3a5b;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.app-theme .add-btn:hover,
+.app-theme .add-btn:focus {
+  background-color: #0d4a73;
+  border-color: #0d4a73;
+  color: #ffffff;
+}
+
+.app-theme .add-btn::before {
+  content: '';
+  display: block;
+  width: 0px;
+  height: 86%;
+  position: absolute;
+  top: 7%;
+  left: 0%;
+  opacity: 0;
+  background: #fff;
+  box-shadow: 0 0 50px 30px #fff;
+  transform: skewX(-20deg);
+  transition: all 0.5s ease;
+}
+
+.app-theme .add-btn:hover::before {
+  animation: sh02 0.5s 0s linear;
+}
+
+.app-theme .export-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #f1f1f1;
+  border-color: #185d87;
+  color: var(--primary-color, #0b3a5b);
+}
+
+.app-theme .export-btn:hover,
+.app-theme .export-btn:focus {
+  background-color: #ffffff;
+  border-color: #185d87;
+  color: var(--primary-color, #0b3a5b);
+}
+
+.app-theme .import-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #ffffff;
+  border-color: #185d87;
+  color: var(--primary-color, #0b3a5b);
+}
+
+.app-theme .import-btn:hover,
+.app-theme .import-btn:focus {
+  background-color: #ffffff;
+  border-color: #185d87;
+  color: var(--primary-color, #0b3a5b);
+}
+
+.app-theme .ant-delete {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-width: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  border: 1px solid transparent;
+  outline: none;
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+  color: #dc2626;
+}
+
+.app-theme .ant-delete:hover,
+.app-theme .ant-delete:focus {
+  background-color: #fee2e2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* Animations */
+@keyframes sh02 {
+  from {
+    opacity: 0;
+    left: 0%;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    left: 100%;
+  }
+}

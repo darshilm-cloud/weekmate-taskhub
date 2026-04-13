@@ -1105,7 +1105,7 @@ export default function AddTaskModal({
                     }}
                     notFoundContent={
                       listSearchText?.trim()
-                        ? <Button type="link" onClick={() => createListFromSearch(listSearchText)} style={{ padding: 0 }}>Create list "{listSearchText.trim()}"</Button>
+                        ? <Button type="link" onClick={() => createListFromSearch(listSearchText)}>Create list "{listSearchText.trim()}"</Button>
                         : "No lists found"
                     }
                     onChange={(mid) => {
@@ -1244,7 +1244,7 @@ export default function AddTaskModal({
                     }}
                     notFoundContent={
                       assigneeSearchText?.trim()
-                        ? <Button type="link" onClick={() => openCreateUser(assigneeSearchText.trim(), "assignees")} style={{ padding: 0 }}>Create user "{assigneeSearchText.trim()}"</Button>
+                        ? <Button type="link" onClick={() => openCreateUser(assigneeSearchText.trim(), "assignees")}>Create user "{assigneeSearchText.trim()}"</Button>
                         : null
                     }
                     onChange={(vals) => saveDraft(projectId, { assignees: vals || [] })}
@@ -1277,7 +1277,7 @@ export default function AddTaskModal({
                     }}
                     notFoundContent={
                       followerSearchText?.trim()
-                        ? <Button type="link" onClick={() => openCreateUser(followerSearchText.trim(), "followers")} style={{ padding: 0 }}>Create user "{followerSearchText.trim()}"</Button>
+                        ? <Button type="link" onClick={() => openCreateUser(followerSearchText.trim(), "followers")}>Create user "{followerSearchText.trim()}"</Button>
                         : null
                     }
                     onChange={(vals) => saveDraft(projectId, { followers: vals || [] })}
@@ -1343,7 +1343,7 @@ export default function AddTaskModal({
               type="link"
               icon={<PaperClipOutlined />}
               onClick={() => effectiveAttachmentfileRef?.current?.click?.()}
-              style={{ marginTop: 8, padding: 0 }}
+              style={{ marginTop: 8 }}
             >
               Attach files
             </Button>

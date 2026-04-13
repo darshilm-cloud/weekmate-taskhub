@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Input, Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover } from "antd";
+import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input } from "antd";
+import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import {
   PlusOutlined,
   PushpinOutlined,
@@ -381,10 +382,10 @@ export default function NotesPage() {
 
       {/* Search */}
       <div className="notes-page-search">
-        <Input.Search
+        <GlobalSearchInput
           placeholder="Search..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={setSearch}
           allowClear
           className="notes-search-input"
         />

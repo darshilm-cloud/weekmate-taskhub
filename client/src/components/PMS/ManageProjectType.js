@@ -2,14 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Button,
   Table,
-  Input,
   Modal,
   Form,
   message,
   Popconfirm,
   Col,
   Row,
+  Input,
 } from "antd";
+import GlobalSearchInput from "../common/GlobalSearchInput";
 import {
   CloseCircleTwoTone,
   SaveTwoTone,
@@ -43,7 +44,6 @@ function SkeletonTable() {
 }
 
 function ManageProjectType() {
-  const Search = Input.Search;
   const [addprojectform] = Form.useForm();
   const searchRef = useRef();
 
@@ -95,20 +95,20 @@ function ManageProjectType() {
         <div style={{ display: "flex", gap: 4 }}>
           {flag && editid === record?._id ? (
             <>
-              <Button type="link" style={{ padding: 4 }}>
+              <Button type="link" >
                 <SaveTwoTone style={{ fontSize: 18 }} onClick={() => { handleEditProjectName(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button type="link" style={{ padding: 4 }} onClick={() => setEditid("")}>
+              <Button type="link"  onClick={() => setEditid("")}>
                 <CloseCircleTwoTone style={{ fontSize: 18 }} />
               </Button>
             </>
           ) : (
             <>
-              <Button type="link" style={{ padding: 4 }}>
+              <Button type="link" >
                 <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this project type?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
-                <Button type="link" style={{ padding: 4 }}>
+                <Button type="link" >
                   <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
                 </Button>
               </Popconfirm>
@@ -233,12 +233,13 @@ function ManageProjectType() {
         </div>
 
         <div className="ps-search">
-          <Search
+          <GlobalSearchInput
             ref={searchRef}
             placeholder="Search project types..."
+            value={searchText}
+            onChange={setSearchText}
             onSearch={onSearch}
-            onChange={(e) => onSearch(e.target.value)}
-            allowClear
+            className="ps-search-input"
             style={{ width: 260 }}
           />
         </div>

@@ -4,11 +4,70 @@
 
 
 :root {
-    --primary-color: #03497A;
-    --secondary-color: #007AC1;
-    --tertiary-color: #00BDF2;
-    --quaternary-color: #F56F07;
-    --transparent-color: #FFFFFF00;
+  --white-color: #FFFFFF;
+  --white-bg-color: #ffff;
+  --primary-color: #006CB8;
+  --secondary-light-color: #EAF3FF;
+  --tertiary-color: #00BDF2;
+  --tertiary-bg-color: #EEFBFFCC;
+  --light-grey-color: #F9FAFB;
+  --grey-bg-color: #eeeeee;
+  --light-border-color: #F3F3F3;
+  --border-radius: 5px;
+  --primary-border-color: #006CB880;
+
+  /* ---- Font color ------------- */
+  --font-color: #4A4A4A;
+
+  /* =================== Theme color =============== */
+  --header-bg-color: #ffff;
+  --gradient-background: linear-gradient(180deg, #03497a, #007ac1);
+  --sidebar-bg-color: #02558F;
+  /*============== Button css ======================*/
+  --add-button-color: #ffffff;
+  --add-button-bg-color: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%);
+  --add-button-border-color: #185d87;
+  --header-waffle-btn-bg: linear-gradient(102.37deg, #FFCF95 27.64%, #FFA622 54.77%, #FF8D05 95.77%);
+  --waffle-btn-color: #FFFFFF;
+  --user-name-btn-bg: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%);
+
+  /* ====================  secondary-btn ==================== */
+
+  --secondary-btn-border: #005282;
+  --secondary-btn-bg: #ffff;
+  --secondary-btn-color: #005282;
+
+
+  /* ================ Dashboard  Card Color================== */
+
+  --dashboard-card-bg: #FFFFFF;
+  --dashboard-card-border: #EEEEEE;
+  --dashboard-card-value-color: #006CB8;
+  --dashboard-card-color: #4A4A4A;
+  --dashboard-positive-color: #339F74;
+  --dashboard-negative: #ff4d4f;
+  --filter-select-bg-color: #F9FAFB;
+  --filter-select-border-color: #EFEFEF;
+  --filter-select-color: #1A1A1A;
+
+  /* ================ Table Color================== */
+
+  --table-header-bg-color: #F2F5F8;
+  --table-border-color: #E8E8E8;
+
+  --table-font-color: #313131;
+  --table-data-bg-color: #FAF9FF;
+  --background-white-color: #FFFFFF;
+  /* ------------------ Content Css ---------------- */
+  --search-box-bg: #F6F8FA;
+  --search-box-radius: 8px;
+  --card-box-shadow: 0px 7px 32px 0px #EBECED;
+  --card-border-radius: 20px;
+
+  /* Legacy variables - keeping for compatibility */
+  --secondary-color: #007AC1;
+  --quaternary-color: #F56F07;
+  --transparent-color: #FFFFFF00;
 
     --bg-primary: #002742;
     --ant-modal-header: #002742;
@@ -559,7 +618,7 @@ i.width-18 {
 }
 
 .status-label {
-    border-radius: 3px;
+    border-radius: 6px;
     background: #E7E7E7;
     padding: 6px;
     color: rgb(19 19 19 / 50%);
@@ -1555,7 +1614,7 @@ button.ant-btn>.fi-ss-link:before {
 
 .list-modal-stages .ant-form-item .ant-select-selector {
     height: 32px;
-    border-radius: 3px;
+    border-radius: 6px;
     background: #E9EDEE;
     font-style: italic;
     border-color: #E9EDEE;
@@ -1697,7 +1756,7 @@ button.ant-btn>.fi-ss-link:before {
 }
 
 .drag_row {
-    border-radius: 3px;
+    border-radius: 6px;
     background: #fff;
     padding: 0px;
     height: calc(100% - 50px);
@@ -1759,7 +1818,7 @@ body[data-theme="dark"] .wm-task-box {
 .task-box .highlabel,
 .wm-task-box .highlabel {
     /* background: #ff0000e3; */
-    border-radius: 3px;
+    border-radius: 6px;
     padding: 2px 5px;
     font-size: 10px;
     letter-spacing: .5px;
@@ -4469,7 +4528,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-btn.ant-btn-primary.delete-btn {
     background: #fef2f2;
     border: 1px solid #fee2e2;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
     cursor: pointer;
     font-size: 14px;
@@ -4482,7 +4541,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-btn.ant-btn-primary.delete-btn:hover {
     background: #fee2e2;
     border: 1px solid #fee2e2;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
 }
 
@@ -4490,7 +4549,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-btn.delete-btn {
     background-color: #fef2f2;
     border: 1px solid #ffcfcf;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
     cursor: pointer;
     font-size: 14px;
@@ -4506,7 +4565,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-btn.delete-btn:hover {
     background-color: #fef2f2;
     border: 1px solid #ffcfcf;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
 }
 
@@ -4616,7 +4675,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 [data-theme="dark"] .admin-user .ant-btn.ant-btn-primary.delete-btn {
     background: #fef2f2;
     border: 1px solid #fee2e2;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
     cursor: pointer;
     font-size: 14px;
@@ -4629,7 +4688,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 [data-theme="dark"] .admin-user .ant-btn.ant-btn-primary.delete-btn:hover {
     background: #fee2e2;
     border: 1px solid #fee2e2;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
 }
 
@@ -4637,7 +4696,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 [data-theme="dark"] .admin-user .ant-btn.delete-btn {
     background-color: #290000;
     border: 1px solid #6d0a0a;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
     cursor: pointer;
     font-size: 14px;
@@ -4651,7 +4710,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 [data-theme="dark"] .admin-user .ant-btn.delete-btn:hover {
     background-color: #290000;
     border: 1px solid #6d0a0a;
-    border-radius: 3px;
+    border-radius: 6px;
     color: #dc2626;
 }
 
@@ -4876,7 +4935,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 
 .admin-user .ant-layout.admin .ant-layout-content {
     background-color: #f5f8fa;
-    padding: 10px;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
@@ -4910,7 +4968,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
     align-items: center;
     background-color: #fff;
-    border-radius: 3px;
+    border-radius: 6px;
     box-shadow: 0 1px 2px #0000000d;
     display: flex;
     flex-wrap: wrap;
@@ -5328,7 +5386,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 [data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
     align-items: center;
     background-color: #1c1d23;
-    border-radius: 3px;
+    border-radius: 6px;
     box-shadow: 0 1px 2px #0000000d;
     display: flex;
     flex-wrap: wrap;
@@ -5631,7 +5689,7 @@ overflow: unset;
     padding: 8px 12px;
     color: #0c3f64;
     border: 1px solid rgb(223, 227, 235);
-    border-radius: 3px;
+    border-radius: 6px;
     background: #f1f7fb;
     line-height: normal;
     height: 40px;

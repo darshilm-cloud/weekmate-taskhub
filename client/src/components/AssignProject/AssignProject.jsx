@@ -1635,7 +1635,7 @@ const AssignProject = () => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                className="ap-add-btn"
+                className="add-btn"
                 onClick={() => showModal()}
               >
                 Add Project
@@ -1816,7 +1816,7 @@ const AssignProject = () => {
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
-                        className="ap-add-btn ap-add-task-btn"
+                        className="add-btn ap-add-task-btn"
                         onClick={() => setIsAddTaskOpen(true)}
                       >
                         Add Task

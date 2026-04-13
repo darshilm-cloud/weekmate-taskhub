@@ -4,9 +4,10 @@ import {
   Form,
   message,
   Table,
-  Input,
   Modal,
+  Input,
 } from "antd";
+import GlobalSearchInput from "../../common/GlobalSearchInput";
 import {
   PlusOutlined,
   TeamOutlined,
@@ -32,7 +33,6 @@ function SkeletonTable() {
 }
 
 function Resource() {
-  const Search = Input.Search;
   const searchRef = useRef();
   const [addprojectTech] = Form.useForm();
 
@@ -129,12 +129,13 @@ function Resource() {
         </div>
 
         <div className="ps-search">
-          <Search
+          <GlobalSearchInput
             ref={searchRef}
             placeholder="Search resources..."
+            value={searchText}
+            onChange={setSearchText}
             onSearch={onSearch}
-            onChange={(e) => onSearch(e.target.value)}
-            allowClear
+            className="ps-search-input"
             style={{ width: 260 }}
           />
         </div>

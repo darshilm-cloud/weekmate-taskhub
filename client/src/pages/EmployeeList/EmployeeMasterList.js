@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Avatar, Tooltip, Select, Pagination } from "antd";
+import { Avatar, Tooltip, Select, Pagination, Button } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -633,23 +633,23 @@ const EmployeeMasterList = () => {
           {sidebarMode === "employees" && !selectedUser && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
-                <button className="header-action-btn" onClick={exportEmployeesCsv}>
+                <Button className="header-action-btn" onClick={exportEmployeesCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
-                </button>
+                </Button>
               </Tooltip>
               <Tooltip title="Download sample CSV">
-                <button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportSampleCSV()}>
+                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportSampleCSV()}>
                   <DownloadOutlined /> <span>Sample CSV</span>
-                </button>
+                </Button>
               </Tooltip>
               <Tooltip title="Import users via CSV">
-                <button className="header-action-btn" onClick={() => employeeActionsRef.current?.triggerImport()}>
+                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.triggerImport()}>
                   <UploadOutlined /> <span>Import CSV</span>
-                </button>
+                </Button>
               </Tooltip>
-              <button className="header-action-btn primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
+              <Button  type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Employee</span>
-              </button>
+              </Button>
             </div>
           )}
 
@@ -657,13 +657,13 @@ const EmployeeMasterList = () => {
           {sidebarMode === "clients" && !selectedClient && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
-                <button className="header-action-btn" onClick={exportClientsCsv}>
+                <Button className="header-action-btn" onClick={exportClientsCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
-                </button>
+                </Button>
               </Tooltip>
-              <button className="header-action-btn primary" onClick={() => clientActionsRef.current?.openAddModal()}>
+              <Button   type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Client</span>
-              </button>
+              </Button>
             </div>
           )}
 

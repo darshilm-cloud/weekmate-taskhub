@@ -59,7 +59,7 @@ export function getAntdTheme(themeType) {
           : "0 10px 24px rgba(17, 24, 39, 0.10)",
       },
       Button: {
-        borderRadius: 10,
+        borderRadius: 6,
         controlHeight: 36,
         controlHeightLG: 40,
       },

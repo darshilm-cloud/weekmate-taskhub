@@ -17623,6 +17623,7 @@ textarea.ant-input {
 
 .ant-input-search>.ant-input-group>.ant-input-affix-wrapper {
   border-right: 0;
+  background: #fff;
 }
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon {
@@ -17632,11 +17633,11 @@ textarea.ant-input {
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button {
   border-radius: 0 6px 6px 0;
+    border: 1px solid #d1d5db ;
 }
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button:not(.ant-btn-primary) {
   color: #595959;
-  line-height: 34px;
   display: inline-block;
   height: 40px;
 }
@@ -36962,7 +36963,8 @@ h6,
 .gx-user-popover li {
   cursor: pointer;
   margin: 3px 15px;
-  width: 150px;
+    padding: 3px;
+  width: 180px;
 }
 
 .gx-user-popover li:hover,

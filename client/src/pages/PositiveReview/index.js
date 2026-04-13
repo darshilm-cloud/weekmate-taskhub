@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Drawer, Popconfirm, Table, Tooltip, message } from "antd";
+import { Button, Drawer, Popconfirm, Table, Tooltip, message } from "antd";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   CalendarOutlined,
@@ -341,8 +341,10 @@ const PositiveReview = () => {
         <h1 className="pr-title">Positive Reviews</h1>
         {canAddReview && (
           <div className="pr-header-actions">
-            <Link to={`/${companySlug}/add/positiveReviewForm`} className="pr-btn primary">
+            <Link to={`/${companySlug}/add/positiveReviewForm`}  >
+            <Button type="primary">
               <PlusOutlined /> Add Review
+            </Button>
             </Link>
           </div>
         )}
@@ -432,7 +434,7 @@ const PositiveReview = () => {
         extra={
           drawerRecord && userHasAccess && (
             <Link to={`/${companySlug}/edit/positiveReviewForm/${drawerRecord._id}`}>
-              <button className="pr-btn" style={{ fontSize: 12, padding: "6px 12px" }}>
+              <button className="btn-primary">
                 <EditOutlined /> Edit
               </button>
             </Link>

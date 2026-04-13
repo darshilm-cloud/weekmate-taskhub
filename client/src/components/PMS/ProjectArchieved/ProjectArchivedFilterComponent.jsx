@@ -154,7 +154,7 @@ const FilterSection = ({
       )}
     </InfiniteScroll>
     <div className="filter-actions">
-      <Button onClick={onApply} size="small" className="filter-btn">
+      <Button type="primary" onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
       <Button onClick={onReset} size="small" className="delete-btn">
@@ -550,7 +550,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button type="primary" icon={<FilterOutlined />} className="filter-btn">
           Filter
           <Badge
             count={activeFiltersCount}
