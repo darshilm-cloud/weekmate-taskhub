@@ -19,7 +19,7 @@ import {
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
-import WeekmateLogo from "../../assets/images/WEEKMATE_LOGO.png";
+import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
 

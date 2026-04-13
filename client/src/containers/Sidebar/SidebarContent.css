@@ -11,9 +11,9 @@
     --wm-sidebar-text: #dfe7f1;
     --wm-sidebar-text-strong: #e8eef6;
     --wm-sidebar-muted: #aab7c6;
-    --wm-sidebar-hover: rgba(255, 255, 255, 0.10);
-    --wm-sidebar-active: rgba(255, 255, 255, 0.12);
-    --wm-sidebar-accent: #4fb1ff;
+    --wm-sidebar-hover: #ffffff17;
+    --wm-sidebar-active:#ffffff17;
+    --wm-sidebar-accent: #ffff;
 }
 
 /* Dark theme palette: match the logo area's dark surface everywhere in the sidebar. */
@@ -65,14 +65,12 @@ body.admin-user[data-theme="dark"] {
 }
 
 .weekmate-logo {
-    width: 250px;
-    height: 120px;
+    width: 120px;
+    height: 75px;
     justify-content: center;
 }
 
 .weekmate-logo-img {
-    width: 140%;
-    height: 140%;
     display: block;
     object-fit: contain;
 }
@@ -215,14 +213,7 @@ body.admin-user[data-theme="dark"] {
     border-radius: 9px;
 }
 
-.weekmate-sidebar .ant-menu-item.ant-menu-item-selected {
-    border-radius: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-    background: var(--wm-sidebar-active) !important;
-    border-left: 3px solid var(--wm-sidebar-accent) !important;
-}
+
 
 /* Sidebar menu overrides for dark style */
 .weekmate-sidebar .ant-menu,

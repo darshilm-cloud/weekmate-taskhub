@@ -534,6 +534,7 @@ const BugFilter = ({
       
       <div className="filter-actions">
         <Button
+        type="primary"
           onClick={applyAllFilters}
           size="small"
           className="filter-btn"

@@ -259,7 +259,7 @@ const SubscribersFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button icon={<FilterOutlined />} type="primary" className="filter-btn">
           Filter
           <Badge
             count={activeFiltersCount}

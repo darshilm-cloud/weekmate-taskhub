@@ -959,9 +959,9 @@ const Projectexpences = () => {
           </button>
           {userPermissions.canAddExpense && (
             <Link to={`/${companySlug}/add/projectexpenseform`}>
-              <button className="pe-btn primary">
+              <Button className="pe-btn primary">
                 <PlusOutlined /> <span>Add Expense</span>
-              </button>
+              </Button>
             </Link>
           )}
         </div>

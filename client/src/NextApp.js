@@ -9,18 +9,20 @@ import './assets/css/style.css';
 import './assets/css/pms.css';
 import './assets/css/Scroll.css'
 import { BrowserRouter } from "react-router-dom/cjs/react-router-dom.min";
-import './assets/css/custom-btns.css';
+import './assets/css/common-buttons.css';
 
 function NextApp() {
 
   return <Provider store={ configureStore }>
-    <ErrorBoundary>
-      <ConnectedRouter history={ history }>
-        <BrowserRouter>
-          <Route path="/" component={ App } />
-        </BrowserRouter>
-      </ConnectedRouter>
-    </ErrorBoundary>
+    <div className="app-theme">
+      <ErrorBoundary>
+        <ConnectedRouter history={ history }>
+          <BrowserRouter>
+            <Route path="/" component={ App } />
+          </BrowserRouter>
+        </ConnectedRouter>
+      </ErrorBoundary>
+    </div>
   </Provider>
 }
 

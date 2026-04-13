@@ -21,6 +21,7 @@ import { getRoles } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import TasksGanttView from "../Tasks/TasksGanttView";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskPage.css";
 
 const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
@@ -975,13 +976,12 @@ const TaskPage = () => {
       <div className="task-page-topbar">
         <h1 className="task-page-title">Task</h1>
         <div className="task-page-controls">
-          <Input
+          <Input.Search
             placeholder="Search..."
-            prefix={<SearchOutlined />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onPressEnter={fetchTaskList}
-            className="task-search"
+            onSearch={fetchTaskList}
+            className="ap-search-input"
             allowClear
           />
           <TaskCombinedFacetFilter
@@ -1008,13 +1008,12 @@ const TaskPage = () => {
               <PlusOutlined rotate={45} /> Delete Selected ({selectedTaskIds.length})
             </button>
           )}
-          <button
-            type="button"
-            className="task-btn-add"
+          <Button
+             type="primary"
             onClick={() => setAddTaskModalOpen(true)}
           >
             <PlusOutlined /> Add Task
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -1217,7 +1216,10 @@ function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onS
       {!collapsed && (
         <div className="task-list-body">
           {tasks.length === 0 ? (
-            <div className="task-list-empty">No tasks</div>
+            <div className="task-list-empty">
+              <NoDataFoundIcon/>
+              <p>No tasks found</p>
+            </div>
           ) : (
             tasks.map((t) => (
               <TaskRow

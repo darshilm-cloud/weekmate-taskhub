@@ -98,9 +98,6 @@
 }
 
 .sidebar-pagination {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   padding: 10px 6px 6px;
   margin-top: 10px;
   border-top: 1px solid var(--app-border);

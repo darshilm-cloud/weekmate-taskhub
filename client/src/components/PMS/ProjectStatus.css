@@ -1,0 +1,104 @@
+/* Project Status Component Styles */
+
+.ps-page {
+  padding: 20px;
+}
+
+.ps-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.ps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ps-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.ps-title-icon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.ps-header-right {
+  display: flex;
+  gap: 12px;
+}
+
+.ps-search {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ps-search-input {
+  max-width: 300px;
+}
+
+.ps-table-wrap {
+  padding: 0;
+}
+
+.ps-skeleton-wrap {
+  padding: 20px 24px;
+}
+
+.ps-skeleton-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.ps-skeleton-header-row {
+  margin-bottom: 16px;
+}
+
+.ps-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  height: 12px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .ps-page {
+    padding: 12px;
+  }
+  
+  .ps-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .ps-search {
+    padding: 12px 16px;
+  }
+  
+  .ps-search-input {
+    max-width: 100%;
+  }
+}

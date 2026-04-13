@@ -2799,7 +2799,7 @@ const TasksPMS = ({ flag }) => {
                             <button
                               type="button"
                               onClick={(e) => e.preventDefault()}
-                              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+                              style={{ background: "transparent", border: "none", cursor: "pointer" }}
                               aria-label="More actions"
                             >
                               <MoreOutlined className="moreoutline-icon" />

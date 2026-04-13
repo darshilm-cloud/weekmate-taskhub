@@ -365,7 +365,7 @@ export default function DiscussionPage() {
 
         {/* Search */}
         <div className="disc-search">
-          <Input placeholder="Search discussions..." value={search} onChange={(e) => setSearch(e.target.value)} prefix={<SearchOutlined style={{ color: "#94a3b8" }} />} allowClear />
+          <Input.Search placeholder="Search discussions..." value={search} onChange={(e) => setSearch(e.target.value)} allowClear className="ap-search-input" />
         </div>
 
         {/* Topic List */}

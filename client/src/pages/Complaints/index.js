@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Drawer, Popconfirm, Table, Tooltip, message } from "antd";
+import { Button, Drawer, Popconfirm, Table, Tooltip, message } from "antd";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   AlertOutlined,
@@ -371,8 +371,11 @@ const Complaints = () => {
         <h1 className="cmp-title">Complaints</h1>
         {canAdd && (
           <div>
-            <Link to={`/${companySlug}/add/complaintsform`} className="cmp-btn primary">
+            <Link to={`/${companySlug}/add/complaintsform`}>
+            <Button type="primary">
+
               <PlusOutlined /> Add Complaint
+            </Button>
             </Link>
           </div>
         )}
@@ -463,12 +466,12 @@ const Complaints = () => {
           drawerRecord && userHasAccess && (
             <div style={{ display: "flex", gap: 8 }}>
               <Link to={`/${companySlug}/add/complaintForm-action-details/${drawerRecord._id}`}>
-                <button className="cmp-btn" style={{ fontSize: 12, padding: "6px 12px" }}>
+                <button className="btn-secondary">
                   <FileTextOutlined /> Actions
                 </button>
               </Link>
               <Link to={`/${companySlug}/edit/complaintsForm/${drawerRecord._id}`}>
-                <button className="cmp-btn" style={{ fontSize: 12, padding: "6px 12px" }}>
+                <button className="btn-secondary">
                   <EditOutlined /> Edit
                 </button>
               </Link>

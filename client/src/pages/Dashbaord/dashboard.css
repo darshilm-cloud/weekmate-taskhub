@@ -943,7 +943,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   justify-content: flex-start;
   gap: 6px;
   padding: 14px 0 10px;
-  overflow: hidden;
+  overflow-x: auto;
   width: 100%;
   flex: 1 1 auto;
 }
@@ -986,7 +986,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 .dashboard-calendar .db-cal-strip-item {
   width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-  min-width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
+  /* min-width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31)); */
   max-width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
   padding: 8px 0 7px;
   border: 1px solid #e2e8f0;
@@ -1364,7 +1364,8 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
 }
 
 .db-tab-btn.active {
-  background: #0ea5e9;
+    border-color: var(--add-button-border-color, #185d87);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
   color: #ffffff;
 }
 
@@ -1508,7 +1509,7 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   gap: 8px;
   max-height: 270px;
   overflow-y: auto;
-  padding-right: 2px;
+  padding: 4px;
 }
 
 .db-notes-list::-webkit-scrollbar { width: 4px; }
@@ -1524,21 +1525,8 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   border-radius: 14px;
   background: #ffffff;
   border: 1px solid #a7f3d0;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
   position: relative;
-  overflow: hidden;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
-
-.db-note-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 4px 0 0 4px;
-  background: linear-gradient(180deg, #34d399 0%, #06b6d4 100%);
 }
 
 .db-note-item:hover {

@@ -1340,7 +1340,7 @@ function TimeForPMS() {
       >
         All
       </Checkbox>
-      <Input.Search placeholder="Search" onChange={handleSearch} />
+      <Input.Search placeholder="Search" onChange={handleSearch} className="ap-search-input" />
       <div className="assigness-data">
         {filteredSubscribers.map((item) => (
           <Checkbox
