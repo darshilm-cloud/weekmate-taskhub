@@ -110,6 +110,9 @@ function ReportsHub() {
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [reportData, setReportData] = useState({
     project: {
       summary: {
@@ -295,14 +298,38 @@ function ReportsHub() {
       });
 
       if (reportKey === "project-report") {
+        // Only fetch all projects for summary if we don't have them or filters changed
+        const isPageChangeOnly = previousFiltersRef.current === filters;
+        
         const [projectsResponse, projectListResponse] = await Promise.all([
-          fetchAllProjectReportRows(),
-          fetchAllProjects({ includeClosed: true }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectRunningReportsDetails,
+            body: {
+              technologies: [],
+              types: [],
+              managers: [],
+              pageNo: pageNo,
+              limit: pageSize,
+              sort: "title",
+              sortBy: "asc",
+              isExport: false,
+            },
+          }),
+          Service.makeAPICall({
+            methodName: Service.getMethod,
+            api_url: Service.getProjectList,
+            params: `page=${pageNo}&limit=${pageSize}&includeClosed=true`,
+          }),
         ]);
 
-        const reportProjects = Array.isArray(projectsResponse) ? projectsResponse : [];
-        const masterProjects = Array.isArray(projectListResponse) ? projectListResponse : [];
+
+        const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
+        const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
         const projectRows = mergeProjectRows(reportProjects, masterProjects);
+
+        const paginationInfo = projectsResponse?.data?.data?.pagination || projectsResponse?.data?.meta || {};
+        const totalProjectsCount = paginationInfo.totalCount || paginationInfo.total || projectRows.length;
 
         // Step 2: Collect all project IDs and fetch tasks scoped to those projects
         const allProjectIds = projectRows
@@ -347,18 +374,19 @@ function ReportsHub() {
             status: getProjectRecordStatus(project),
           };
         });
-
-        const totalTasks = taskRows.length;
+        
         const completedTasks = taskRows.filter(isCompletedTask).length;
 
+
+        setTotal(totalProjectsCount);
         setReportData((prev) => ({
           ...prev,
           project: {
             summary: {
-              totalProjects: projectRows.length,
-              totalTasks,
+              totalProjects: totalProjectsCount,
+              totalTasks: taskRows.length, // approximation based on current page if not full list
               completedTasks,
-              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+              incompleteTasks: Math.max(taskRows.length - completedTasks, 0),
             },
             rows,
           },
@@ -371,8 +399,8 @@ function ReportsHub() {
           methodName: Service.postMethod,
           api_url: Service.getActivityLogList,
           body: {
-            page: 1,
-            limit: 100,
+            page: pageNo,
+            limit: pageSize,
             operationName: filters.activity || "",
             fromDate: filters.date ? startDate.toISOString() : undefined,
             toDate: filters.date ? endDate.toISOString() : undefined,
@@ -386,6 +414,9 @@ function ReportsHub() {
           : Array.isArray(response?.data?.data)
           ? response.data.data
           : [];
+        
+        const paginationInfo = response?.data?.data?.pagination || response?.data?.meta || {};
+        setTotal(paginationInfo.totalCount || paginationInfo.total || logs.length);
 
         const rows = logs
           .filter((log) => {
@@ -414,8 +445,8 @@ function ReportsHub() {
           departments: filters.departments || [],
           users:
             filters.userId && filters.userId !== "all" ? [filters.userId] : [],
-          pageNo: 1,
-          limit: 100,
+          pageNo: pageNo,
+          limit: pageSize,
           sort: "logged_date",
           sortBy: "desc",
           isExport: false,
@@ -438,6 +469,9 @@ function ReportsHub() {
           : Array.isArray(rawTimesheetData)
           ? rawTimesheetData
           : [];
+        
+        const meta = response?.data?.meta || {};
+        setTotal(meta.total || entries.length);
         const aggregatedUsers = Array.isArray(rawTimesheetData?.user) ? rawTimesheetData.user : [];
         const userStats = entries.reduce((acc, entry) => {
           const userName =
@@ -556,9 +590,11 @@ function ReportsHub() {
           }
         }
 
+        const dailyData = buildDailyData(dailyTaskRows, moment(), userMap);
+        setTotal(dailyData[dailyTab]?.length || 0);
         setReportData((prev) => ({
           ...prev,
-          daily: buildDailyData(dailyTaskRows, moment(), userMap),
+          daily: dailyData,
         }));
         return;
       }
@@ -586,6 +622,7 @@ function ReportsHub() {
         const myTaskRows = extractTaskRows(myTasksResponse);
         const mergedTaskRows = mergeUniqueTasks([...taskRows, ...myTaskRows]);
         const rows = buildUserRows(mergedTaskRows, filters, selectedDate, userMap, users);
+        setTotal(rows.length);
         setReportData((prev) => ({ ...prev, user: rows }));
         return;
       }
@@ -600,8 +637,8 @@ function ReportsHub() {
             managers: [],
             date: filters.date || null,
             search: filters.search?.trim() || "",
-            pageNo: 1,
-            limit: 100,
+            pageNo: pageNo,
+            limit: pageSize,
             sort: "title",
             sortBy: "asc",
             isExport: false,
@@ -609,6 +646,8 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
+          const meta = response.data.meta || {};
+          setTotal(meta.total || 0);
           const projectRunningData = {
             data: Array.isArray(response.data.data.data)
               ? response.data.data.data
@@ -664,8 +703,8 @@ function ReportsHub() {
             projects: selectedProjectIds,
             departments: [],
             users: [],
-            pageNo: 1,
-            limit: 100,
+            pageNo: pageNo,
+            limit: pageSize,
             sort: "logged_date",
             sortBy: "desc",
             isExport: false,
@@ -673,6 +712,8 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
+          const meta = response.data.meta || {};
+          setTotal(meta.total || 0);
           const timesheetData = {
             data: Array.isArray(response.data.data.data)
               ? response.data.data.data
@@ -698,7 +739,7 @@ function ReportsHub() {
         setLoading(false);
       }
     }
-  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users]);
+  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
 
   useEffect(() => {
     loadDropdowns();
@@ -707,6 +748,7 @@ function ReportsHub() {
   useEffect(() => {
     setFilters(defaultFilters);
     setDailyTab("pending");
+    setPageNo(1);
     previousFiltersRef.current = defaultFilters;
   }, [reportKey]);
 
@@ -715,14 +757,26 @@ function ReportsHub() {
       const previousFilters = previousFiltersRef.current || defaultFilters;
       const previousWithoutSearch = { ...previousFilters, search: "" };
       const currentWithoutSearch = { ...filters, search: "" };
-      const onlySearchChanged =
+      
+      const filtersChanged = JSON.stringify(previousFilters) !== JSON.stringify(filters);
+      const isSearchOnly =
         previousFilters.search !== filters.search &&
         JSON.stringify(previousWithoutSearch) === JSON.stringify(currentWithoutSearch);
 
-      loadReportData({ silent: onlySearchChanged });
+      // If filters changed significantly (not just search), reset to page 1
+      if (filtersChanged && !isSearchOnly) {
+        setPageNo(prev => prev === 1 ? 1 : 1); 
+        // Note: setPageNo(1) might not trigger the effect if it's already 1, 
+        // but loadReportData will still catch it because of the combined effect.
+      }
+
+      // If pageNo or pageSize changed but NOT filters, load silently
+      const isPageChange = previousFiltersRef.current === filters;
+      
+      loadReportData({ silent: isSearchOnly || isPageChange });
       previousFiltersRef.current = filters;
     }
-  }, [filters, reportKey, loadReportData]);
+  }, [filters, reportKey, pageNo, pageSize, loadReportData]);
 
   const handleDownload = (key) => {
     let items = [];
@@ -915,12 +969,24 @@ function ReportsHub() {
         ) : (
           <>
             {reportKey === "project-report" ? (
-              <ProjectReportContent data={reportData.project} />
+              <ProjectReportContent
+                data={reportData.project}
+                pageNo={pageNo}
+                pageSize={pageSize}
+                total={total}
+                setPageNo={setPageNo}
+                setPageSize={setPageSize}
+              />
             ) : reportKey === "daily-report" ? (
               <DailyReportContent
                 activeKey={dailyTab}
                 onChange={setDailyTab}
                 items={reportData.daily[dailyTab] || []}
+                pageNo={pageNo}
+                pageSize={pageSize}
+                total={total}
+                setPageNo={setPageNo}
+                setPageSize={setPageSize}
               />
             ) : (
               <DynamicReportContent
@@ -930,6 +996,11 @@ function ReportsHub() {
                 projects={projects}
                 users={users}
                 data={reportData}
+                pageNo={pageNo}
+                pageSize={pageSize}
+                total={total}
+                setPageNo={setPageNo}
+                setPageSize={setPageSize}
               />
             )}
           </>
@@ -939,7 +1010,7 @@ function ReportsHub() {
   );
 }
 
-function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data }) {
+function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
   const projectOptions = Array.isArray(projects) ? projects : [];
 
@@ -989,18 +1060,47 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
     <>
       <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} />
       {reportKey === "user-report" && rowData.length > 0 ? (
-        <UserReportResults rows={rowData} filters={filters} />
+        <UserReportResults
+          rows={rowData}
+          filters={filters}
+          pageNo={pageNo}
+          pageSize={pageSize}
+          total={total}
+          setPageNo={setPageNo}
+          setPageSize={setPageSize}
+        />
       ) : reportKey === "project-running" && data['project-running'] ? (
-        <ProjectRunningReportContent data={data['project-running']} filters={filters} />
+        <ProjectRunningReportContent
+          data={data['project-running']}
+          filters={filters}
+          pageNo={pageNo}
+          pageSize={pageSize}
+          total={total}
+          setPageNo={setPageNo}
+          setPageSize={setPageSize}
+        />
       ) : reportKey === "timesheet" && data['timesheet'] && data['timesheet'].data ? (
-        <TimesheetReportContent data={data['timesheet']} filters={filters} />
-      ) : reportKey === "timesheet" ? (
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <p>Loading timesheet data...</p>
-          <pre>{JSON.stringify(data['timesheet'], null, 2)}</pre>
-        </div>
+        <TimesheetReportContent
+          data={data['timesheet']}
+          filters={filters}
+          pageNo={pageNo}
+          pageSize={pageSize}
+          total={total}
+          setPageNo={setPageNo}
+          setPageSize={setPageSize}
+        />
       ) : rowData.length > 0 ? (
-        <ReportResults reportKey={reportKey} rows={rowData} summary={data.performance?.summary} filters={filters} />
+        <ReportResults
+          reportKey={reportKey}
+          rows={rowData}
+          summary={data.performance?.summary}
+          filters={filters}
+          pageNo={pageNo}
+          pageSize={pageSize}
+          total={total}
+          setPageNo={setPageNo}
+          setPageSize={setPageSize}
+        />
       ) : (
         <EmptyReportState />
       )}
@@ -1361,7 +1461,7 @@ function CommonFilters({ fields, filters, setFilters }) {
   );
 }
 
-function ProjectReportContent({ data }) {
+function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const columns = [
     { title: "Task Name", dataIndex: "taskName", key: "taskName" },
     {
@@ -1407,13 +1507,29 @@ function ProjectReportContent({ data }) {
             allowClear
           />
         </div>
-        <Table columns={columns} dataSource={data.rows} pagination={false} rowClassName={() => "project-report-row"} locale={{ emptyText: <Empty description="No project data found" /> }} />
+        <Table
+          columns={columns}
+          dataSource={data.rows}
+          pagination={{
+            current: pageNo,
+            pageSize: pageSize,
+            total: total,
+            onChange: (page, size) => {
+              setPageNo(page);
+              setPageSize(size);
+            },
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "25", "50", "100"],
+          }}
+          rowClassName={() => "project-report-row"}
+          locale={{ emptyText: <Empty description="No project data found" /> }}
+        />
       </div>
     </>
   );
 }
 
-function ReportResults({ reportKey, rows, summary, filters }) {
+function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const reportConfigs = {
     "user-report": {
       title: "User Summary",
@@ -1494,12 +1610,28 @@ function ReportResults({ reportKey, rows, summary, filters }) {
           </div>
         </div>
       ) : null}
-      <Table columns={config.columns} dataSource={filteredRows} pagination={{ pageSize: 10 }} rowKey="key" locale={{ emptyText: <Empty description="No report data found" /> }} />
+      <Table
+        columns={config.columns}
+        dataSource={rows}
+        pagination={{
+          current: pageNo,
+          pageSize: pageSize,
+          total: total,
+          onChange: (page, size) => {
+            setPageNo(page);
+            setPageSize(size);
+          },
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "25", "50", "100"],
+        }}
+        rowKey="key"
+        locale={{ emptyText: <Empty description="No report data found" /> }}
+      />
     </div>
   );
 }
 
-function UserReportResults({ rows, filters }) {
+function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const [viewMode, setViewMode] = useState("chart");
   const [selectedMember, setSelectedMember] = useState(() =>
     filters?.userId && filters.userId !== "all" ? filters.userId : null
@@ -1765,8 +1897,18 @@ function UserReportResults({ rows, filters }) {
         ) : (
           <div className="user-report-table-view" style={{ padding: "20px" }}>
             <Table
-              dataSource={filteredMembers}
-              pagination={false}
+              dataSource={rows}
+              pagination={{
+                current: pageNo,
+                pageSize: pageSize,
+                total: total,
+                onChange: (page, size) => {
+                  setPageNo(page);
+                  setPageSize(size);
+                },
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "25", "50", "100"],
+              }}
               columns={[
                 { title: "User", dataIndex: "user", key: "user" },
                 { title: "Project", dataIndex: "project", key: "project" },
@@ -1858,26 +2000,24 @@ function UserReportResults({ rows, filters }) {
   );
 }
 
-function DailyReportContent({ activeKey, onChange, items }) {
-  const [dailyPage, setDailyPage] = useState(1);
+function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const [expandedKeys, setExpandedKeys] = useState([]);
-  const pageSize = 5;
-  const startCount = items.length ? (dailyPage - 1) * pageSize + 1 : 0;
-  const endCount = Math.min(dailyPage * pageSize, items.length);
+  const startCount = items.length ? (pageNo - 1) * pageSize + 1 : 0;
+  const endCount = Math.min(pageNo * pageSize, items.length);
 
   useEffect(() => {
-    setDailyPage(1);
+    setPageNo(1);
     setExpandedKeys([]);
-  }, [activeKey]);
+  }, [activeKey, setPageNo]);
 
   useEffect(() => {
     setExpandedKeys([]);
-  }, [dailyPage]);
+  }, [pageNo]);
 
   const paginatedItems = useMemo(() => {
-    const startIndex = (dailyPage - 1) * pageSize;
+    const startIndex = (pageNo - 1) * pageSize;
     return items.slice(startIndex, startIndex + pageSize);
-  }, [dailyPage, items]);
+  }, [pageNo, items, pageSize]);
 
   return (
     <>
@@ -1903,7 +2043,7 @@ function DailyReportContent({ activeKey, onChange, items }) {
           <>
             <div className="daily-report-meta">
               <span>Showing {startCount}-{endCount} of {items.length} members</span>
-              <strong>Page {dailyPage}</strong>
+              <strong>Page {pageNo}</strong>
             </div>
             <Collapse
               ghost
@@ -1911,7 +2051,7 @@ function DailyReportContent({ activeKey, onChange, items }) {
               activeKey={expandedKeys}
               onChange={(keys) => setExpandedKeys(Array.isArray(keys) ? keys : keys ? [keys] : [])}
               items={paginatedItems.map((item, index) => ({
-                key: String(index),
+                key: String((pageNo - 1) * pageSize + index),
                 label: (
                   <div className="daily-report-summary-row">
                     <span className="daily-report-member">
@@ -1942,13 +2082,16 @@ function DailyReportContent({ activeKey, onChange, items }) {
             />
             <div className="daily-report-pagination">
               <Pagination
-                current={dailyPage}
+                current={pageNo}
                 pageSize={pageSize}
                 total={items.length}
-                onChange={setDailyPage}
-                size="small"
-                showLessItems
-                showSizeChanger={false}
+                onChange={(page, size) => {
+                  setPageNo(page);
+                  setPageSize(size);
+                }}
+                size="middle"
+                showSizeChanger={true}
+                pageSizeOptions={["10", "25", "50", "100"]}
                 responsive
               />
             </div>
@@ -2582,7 +2725,7 @@ function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
   }, []);
 }
 
-function ProjectRunningReportContent({ data, filters }) {
+function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const projects = Array.isArray(data?.data) ? data.data : [];
   const managers = Array.isArray(data?.managers) ? data.managers : [];
   const types = Array.isArray(data?.types) ? data.types : [];
@@ -2590,22 +2733,7 @@ function ProjectRunningReportContent({ data, filters }) {
   const metadata =
     data?.metadata && typeof data.metadata === "object" ? data.metadata : {};
   const searchText = filters?.search || "";
-
-  // Filter projects based on search text (from HEAD)
-  const filteredProjects = projects.filter(project => {
-    if (!searchText) return true;
-    const searchLower = searchText.toLowerCase();
-    return (
-      project.title?.toLowerCase().includes(searchLower) ||
-      project.managerName?.toLowerCase().includes(searchLower) ||
-      project.project_typeName?.toLowerCase().includes(searchLower) ||
-      project.technologyName?.some(tech => tech.toLowerCase().includes(searchLower)) ||
-      String(project.estimatedHours || "").toLowerCase().includes(searchLower) ||
-      String(project.total_logged_time || "").toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Prepare chart data from API metadata (from INCOMING)
+  // Prepared chart data from API metadata (from INCOMING)
   const managerChartData = buildRunningProjectChartData(managers, "managerName", "Manager");
   const typeChartData = buildRunningProjectChartData(types, "project_typeName", "Type");
   const techChartData = buildRunningProjectChartData(technologies, "technologyName", "Technology");
@@ -2680,7 +2808,7 @@ function ProjectRunningReportContent({ data, filters }) {
       <div className="report-summary-stats">
         <div className="stat-card">
           <h3>Total Projects</h3>
-          <span className="stat-value">{filteredProjects.length}</span>
+          <span className="stat-value">{total}</span>
         </div>
         <div className="stat-card">
           <h3>Total Managers</h3>
@@ -2699,7 +2827,7 @@ function ProjectRunningReportContent({ data, filters }) {
       {/* Search Result Info */}
       {searchText && (
         <div style={{ marginBottom: 16, padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px', color: '#0369a1' }}>
-          Showing {filteredProjects.length} of {projects.length} projects matching "{searchText}"
+          Showing {projects.length} of {total} projects matching "{searchText}"
         </div>
       )}
 
@@ -2804,13 +2932,13 @@ function ProjectRunningReportContent({ data, filters }) {
       <div className="projects-table-section">
         <div className="table-header">
           <h3>Projects List</h3>
-          <span className="total-count">Total: {filteredProjects.length}</span>
+          <span className="total-count">Total: {total}</span>
         </div>
 
-        {filteredProjects.length > 0 ? (
+        {projects.length > 0 ? (
           <Table
             columns={columns}
-            dataSource={filteredProjects}
+            dataSource={projects}
             rowKey={(record) =>
               String(
                 record?._id ||
@@ -2822,11 +2950,18 @@ function ProjectRunningReportContent({ data, filters }) {
               )
             }
             pagination={{
+              current: pageNo,
+              pageSize: pageSize,
+              total: total,
+              onChange: (page, size) => {
+                setPageNo(page);
+                setPageSize(size);
+              },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
+              pageSizeOptions: ["10", "25", "50", "100"],
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: "max-content" }}
             size="middle"
           />
         ) : (
@@ -2837,27 +2972,12 @@ function ProjectRunningReportContent({ data, filters }) {
   );
 }
 
-function TimesheetReportContent({ data, filters }) {
+function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
   const searchText = filters?.search || "";
   const timesheetUserChartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-  // Filter timesheets based on search text (from HEAD)
-  const filteredTimesheets = timesheets.filter(timesheet => {
-    if (!searchText) return true;
-    const searchLower = searchText.toLowerCase();
-    return (
-      timesheet.user?.toLowerCase().includes(searchLower) ||
-      timesheet.project?.toLowerCase().includes(searchLower) ||
-      timesheet.descriptions?.toLowerCase().includes(searchLower) ||
-      timesheet.logged_time?.toLowerCase().includes(searchLower) ||
-      timesheet.projectManager?.toLowerCase().includes(searchLower) ||
-      timesheet.projectType?.toLowerCase().includes(searchLower) ||
-      timesheet.projectTechnology?.some(tech => tech.toLowerCase().includes(searchLower))
-    );
-  });
-
-  // Calculate chart data based on FILTERED timesheets
+  // Calculate chart data based on timesheets
   const calculateTimesheetChartData = (timesheetList) => {
     const userStats = {};
     const managerStats = {};
@@ -2882,7 +3002,7 @@ function TimesheetReportContent({ data, filters }) {
     };
   };
 
-  const chartData = calculateTimesheetChartData(filteredTimesheets);
+  const chartData = calculateTimesheetChartData(timesheets);
   const userChartData = chartData.users;
   const managerChartData = chartData.managers;
   const typeChartData = chartData.types;
@@ -2954,11 +3074,11 @@ function TimesheetReportContent({ data, filters }) {
       <div className="report-summary-stats">
         <div className="stat-card">
           <h3>Total Hours</h3>
-          <span className="stat-value">{calculateTimesheetChartData(filteredTimesheets).users.reduce((sum, user) => sum + parseFloat(user.totalLoggedHours), 0).toFixed(1)}</span>
+          <span className="stat-value">{calculateTimesheetChartData(timesheets).users.reduce((sum, user) => sum + parseFloat(user.totalLoggedHours), 0).toFixed(1)}</span>
         </div>
         <div className="stat-card">
           <h3>Total Entries</h3>
-          <span className="stat-value">{filteredTimesheets.length}</span>
+          <span className="stat-value">{total}</span>
         </div>
         <div className="stat-card">
           <h3>Unique Users</h3>
@@ -2973,7 +3093,7 @@ function TimesheetReportContent({ data, filters }) {
       {/* Search Result Info */}
       {searchText && (
         <div className="timesheet-search-summary">
-          Showing {filteredTimesheets.length} of {timesheets.length} entries matching "{searchText}"
+          Showing {timesheets.length} of {total} entries matching "{searchText}"
         </div>
       )}
 
@@ -3065,20 +3185,27 @@ function TimesheetReportContent({ data, filters }) {
       <div className="timesheet-table-section">
         <div className="table-header">
           <h3>Timesheet Entries</h3>
-          <span className="total-count">Total: {filteredTimesheets.length}</span>
+          <span className="total-count">Total: {total}</span>
         </div>
         
-        {filteredTimesheets.length > 0 ? (
+        {timesheets.length > 0 ? (
           <Table
             columns={columns}
-            dataSource={filteredTimesheets}
+            dataSource={timesheets}
             rowKey="_id"
             pagination={{
+              current: pageNo,
+              pageSize: pageSize,
+              total: total,
+              onChange: (page, size) => {
+                setPageNo(page);
+                setPageSize(size);
+              },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ['10', '25', '50', '100'],
+              pageSizeOptions: ["10", "25", "50", "100"],
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: "max-content" }}
             size="middle"
           />
         ) : (

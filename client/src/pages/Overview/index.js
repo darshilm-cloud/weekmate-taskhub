@@ -353,9 +353,6 @@ const Overview = () => {
               <i className="fi fi-rr-document"></i>
             </span>
             <span className="card-title">Details</span>
-            <button className="edit-btn" onClick={goToEditProjectPage}>
-              <i className="fi fi-rr-pencil"></i> Edit
-            </button>
           </div>
           <div className="details-body">
             {projectOverviewData?.descriptions ? (

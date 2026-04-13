@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Avatar, Tooltip, Select, Pagination, Button, Spin, Skeleton } from "antd";
+import { Avatar, Tooltip, Select, Pagination, Button, Spin, Skeleton, Input } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -18,6 +18,9 @@ import {
   MailOutlined,
   PhoneOutlined,
   BankOutlined,
+  SearchOutlined,
+  FileDoneOutlined,
+  ClockCircleFilled,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -29,6 +32,8 @@ import UserDashboard from "./UserDashboard";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
+
+const { Search } = Input;
 
 /* ─── avatar colour helper ──────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -90,7 +95,11 @@ const EmployeeMasterList = () => {
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
+  const [sidebarSearch, setSidebarSearch] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
   const sidebarPageSize = 10;
+
+
 
   const openEmployeeSegment = useCallback((segment) => {
     setSidebarMode("employees");
@@ -154,6 +163,7 @@ const EmployeeMasterList = () => {
         limit: sidebarPageSize,
         includeDeactivated: true,
         excludeIds: favorites,
+        search: sidebarSearch,
         ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
         ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
         ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
@@ -185,7 +195,8 @@ const EmployeeMasterList = () => {
       setSidebarLoading(false);
       setPageLoading(false);
     }
-  }, [employeeListPage, sidebarPageSize, employeeStatusFilter, favorites]);
+  }, [employeeListPage, sidebarPageSize, employeeStatusFilter, favorites, sidebarSearch]);
+
 
   /* ── fetch clients ─────────────────────────────────────────────── */
   const fetchSidebarClients = useCallback(async () => {
@@ -194,7 +205,11 @@ const EmployeeMasterList = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
-        body: { pageNo: clientListPage, limit: sidebarPageSize },
+        body: { 
+          pageNo: clientListPage, 
+          limit: sidebarPageSize,
+          search: sidebarSearch
+        },
       });
       const clients = response?.data?.data || [];
       const meta = response?.data?.metadata || {};
@@ -209,7 +224,7 @@ const EmployeeMasterList = () => {
       });
     } catch { /* silent */ }
     finally { setClientsLoading(false); }
-  }, [clientListPage, sidebarPageSize]);
+  }, [clientListPage, sidebarPageSize, sidebarSearch]);
 
   useEffect(() => { fetchSidebarUsers();   }, [fetchSidebarUsers]);
   useEffect(() => { fetchSidebarClients(); }, [fetchSidebarClients]);
@@ -241,6 +256,39 @@ const EmployeeMasterList = () => {
   /* ── filtered lists ────────────────────────────────────────────── */
   const filteredUsers = sidebarUsers;
   const filteredClients = sidebarClients;
+
+  const [globalStats, setGlobalStats] = useState(null);
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: "/v1/dashboard/get/global-team-report",
+      });
+      if (res?.data?.data) {
+        setGlobalStats(res.data.data);
+      }
+    } catch (e) { console.error(e); }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUserId && !selectedClientId) {
+      fetchGlobalStats();
+    }
+  }, [selectedUserId, selectedClientId, fetchGlobalStats]);
+
+  /* ── auto-search debounce ────────────────────────────────────── */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== sidebarSearch) {
+        setSidebarSearch(localSearch);
+        setEmployeeListPage(1);
+        setClientListPage(1);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localSearch, sidebarSearch]);
+
+
 
   const downloadCsvFile = useCallback((rows, fileName) => {
     if (!rows.length) return;
@@ -537,13 +585,17 @@ const EmployeeMasterList = () => {
             <div style={{ minHeight: "200px" }}>
               {sidebarMode === "employees" ? (
                 <>
-                  {/* All Employees */}
-                  <div
-                    className={`sidebar-all-users-btn ${!selectedUserId ? "active" : ""}`}
-                    onClick={() => setSelectedUserId(null)}
-                  >
-                    <div className="all-users-avatar"><TeamOutlined /></div>
-                    <span className="sidebar-all-users-label">All Employees</span>
+                  {/* Search Bar */}
+                  <div className="sidebar-search-container" style={{ padding: "8px 16px" }}>
+                    <Search
+                      placeholder="Search employees..."
+                      allowClear
+                      value={localSearch}
+                      onChange={(e) => {
+                        setLocalSearch(e.target.value);
+                      }}
+                      className="sidebar-search-input"
+                    />
                   </div>
 
                   {favoriteUsers.length > 0 && (
@@ -583,13 +635,17 @@ const EmployeeMasterList = () => {
                   </>
                 ) : (
                   <>
-                  {/* All Clients */}
-                  <div
-                    className={`sidebar-all-users-btn ${!selectedClientId ? "active" : ""}`}
-                    onClick={() => setSelectedClientId(null)}
-                  >
-                    <div className="all-users-avatar"><TeamOutlined /></div>
-                    <span className="sidebar-all-users-label">All Clients</span>
+                  {/* Search Bar */}
+                  <div className="sidebar-search-container" style={{ padding: "8px 16px" }}>
+                    <Search
+                      placeholder="Search clients..."
+                      allowClear
+                      value={localSearch}
+                      onChange={(e) => {
+                        setLocalSearch(e.target.value);
+                      }}
+                      className="sidebar-search-input"
+                    />
                   </div>
 
                     {paginatedClients.map((c) => (
@@ -770,68 +826,92 @@ const EmployeeMasterList = () => {
                 <div className="analytics-cards-grid">
                   <AnalyticsCard
                     icon={<TeamOutlined />}
-                    value={filteredAnalytics.total}
+                    value={globalStats?.employees?.total ?? analytics.total}
                     label="Total Employees"
                     colorClass="blue"
-                    onClick={() => openEmployeeSegment("all")}
                     active={employeeStatusFilter === "all"}
                   />
                   <AnalyticsCard
                     icon={<CheckCircleOutlined />}
-                    value={filteredAnalytics.active}
+                    value={globalStats?.employees?.active ?? analytics.active}
                     label="Active"
                     colorClass="green"
-                    onClick={() => openEmployeeSegment("active")}
                     active={employeeStatusFilter === "active"}
                   />
                   <AnalyticsCard
                     icon={<CloseCircleOutlined />}
-                    value={filteredAnalytics.inactive}
+                    value={globalStats?.employees?.inactive ?? analytics.inactive}
                     label="Inactive"
                     colorClass="red"
-                    onClick={() => openEmployeeSegment("inactive")}
                     active={employeeStatusFilter === "inactive"}
                   />
                   <AnalyticsCard
                     icon={<CrownOutlined />}
-                    value={filteredAnalytics.admins}
+                    value={globalStats?.employees?.admins ?? analytics.admins}
                     label="Admins"
                     colorClass="purple"
-                    onClick={() => openEmployeeSegment("admins")}
                     active={employeeStatusFilter === "admins"}
                   />
                 </div>
 
-                {filteredAnalytics.total > 0 && (
-                  <div className="charts-section">
-                    <div className="chart-card">
-                      <div className="chart-card-title">Role Distribution</div>
-                      <ReactApexChart
-                        type="donut"
-                        series={Object.values(filteredAnalytics.roleBreakdown).length ? Object.values(filteredAnalytics.roleBreakdown) : [1]}
-                        options={{
-                          ...donutOptions,
-                          labels: Object.keys(filteredAnalytics.roleBreakdown).length
-                            ? Object.keys(filteredAnalytics.roleBreakdown)
-                            : ["No Data"],
-                        }}
-                        height={280}
+                {globalStats && (
+                  <>
+                    <div className="sidebar-section-label" style={{ marginTop: 24, marginBottom: 12, fontSize: 16 }}>Task Report Overview</div>
+                    <div className="analytics-cards-grid">
+                      <AnalyticsCard
+                        icon={<FileDoneOutlined />}
+                        value={globalStats.tasks.total}
+                        label="Total Tasks"
+                        colorClass="blue"
+                      />
+                      <AnalyticsCard
+                        icon={<CheckCircleOutlined />}
+                        value={globalStats.tasks.completed}
+                        label="Completed Tasks"
+                        colorClass="green"
+                      />
+                      <AnalyticsCard
+                        icon={<ClockCircleFilled />}
+                        value={globalStats.tasks.incomplete}
+                        label="Incomplete Tasks"
+                        colorClass="orange"
                       />
                     </div>
-                    <div className="chart-card">
-                      <div className="chart-card-title">Employee Status</div>
-                      <ReactApexChart
-                        type="bar"
-                        series={[{
-                          name: "Employees",
-                          data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
-                        }]}
-                        options={barOptions}
-                        height={280}
-                      />
-                    </div>
-                  </div>
+                  </>
                 )}
+                
+                <div className="analytics-charts-section" style={{ marginTop: 32 }}>
+                  {filteredAnalytics.total > 0 && (
+                    <div className="charts-section">
+                      <div className="chart-card">
+                        <div className="chart-card-title">Role Distribution</div>
+                        <ReactApexChart
+                          type="donut"
+                          series={Object.values(filteredAnalytics.roleBreakdown).length ? Object.values(filteredAnalytics.roleBreakdown) : [1]}
+                          options={{
+                            ...donutOptions,
+                            labels: Object.keys(filteredAnalytics.roleBreakdown).length
+                              ? Object.keys(filteredAnalytics.roleBreakdown)
+                              : ["No Data"],
+                          }}
+                          height={280}
+                        />
+                      </div>
+                      <div className="chart-card">
+                        <div className="chart-card-title">Employee Status</div>
+                        <ReactApexChart
+                          type="bar"
+                          series={[{
+                            name: "Employees",
+                            data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
+                          }]}
+                          options={barOptions}
+                          height={280}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>

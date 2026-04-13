@@ -524,13 +524,13 @@ function UserProfile() {
               </li>
             </>
           )}
-          {getRoles(["Admin"]) && (
+          {/* {getRoles(["Admin"]) && (
             <li onClick={() => setUserMenuOpen(false)}>
               <Link to={`/${companySlug}/admin/company-management`} style={{ color: "inherit" }}>
                 Company Management
               </Link>
             </li>
-          )}
+          )} */}
           <li onClick={() => { setUserMenuOpen(false); dispatch(userSignOut()); }}>Logout</li>
         </>
       )}

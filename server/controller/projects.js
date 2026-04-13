@@ -337,6 +337,7 @@ exports.getProjects = async (req, res) => {
       filterBy: Joi.string().default("all"),
       color: Joi.string().allow(""),
       project_status: Joi.array().optional().default([]),
+      project_status_id: Joi.array().optional().default([]),
       manager_id: Joi.array().optional().default([]),
       acc_manager_id: Joi.array().optional().default([]),
       assignee_id: Joi.array().optional().default([]),
@@ -434,9 +435,10 @@ exports.getProjects = async (req, res) => {
       };
 
       if (!value?._id) {
-        if (value?.project_status?.length > 0) {
+        const reqProjStatuses = value?.project_status?.length > 0 ? value.project_status : (value?.project_status_id || []);
+        if (reqProjStatuses.length > 0) {
           countMatchQuery.project_status = {
-            $in: value.project_status.map((s) => new mongoose.Types.ObjectId(s))
+            $in: reqProjStatuses.map((s) => new mongoose.Types.ObjectId(s))
           };
         } else if (archivedStatusIds.length > 0) {
           countMatchQuery.project_status = value?.isArchived
@@ -524,6 +526,28 @@ exports.getProjects = async (req, res) => {
     this.checkDefaultProjectAndBugStatus(req.user._id).catch(() => {});
     const archivedStatusIds = archivedStatuses.map((s) => s._id);
 
+    // postStatusMatch mirrors the original filter that ran AFTER the $lookup.
+    // It filters by project_status._id (joined field) and excludes archived by title.
+    // Since pagination now runs before lookups, this only processes 25 docs — essentially free.
+    const reqProjStatusesForPost = value?.project_status?.length > 0
+      ? value.project_status
+      : (value?.project_status_id || []);
+
+    const postStatusMatch = {
+      ...(value?._id
+        ? {}
+        : value?.isArchived
+        ? { "project_status.title": { $eq: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }
+        : { "project_status.title": { $ne: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED } }),
+      ...(reqProjStatusesForPost.length > 0
+        ? {
+            "project_status._id": {
+              $in: reqProjStatusesForPost.map((s) => new mongoose.Types.ObjectId(s))
+            }
+          }
+        : {})
+    };
+
     // ── Build filters ────────────────────────────────────────────────────────
     // All filter conditions reference raw document fields (ObjectIds) so they
     // can be evaluated in a single $match BEFORE any $lookup stages.
@@ -577,29 +601,60 @@ exports.getProjects = async (req, res) => {
       ...(rawOrFilter ? { $and: [rawOrFilter] } : {})
     };
 
-    // Inject archived-status filter by ID directly into preMatch so
-    // countDocuments(preMatch) needs no $lookup.  Only applied when the caller
-    // has not already supplied explicit project_status IDs.
-    if (!value?._id && !value?.project_status?.length && archivedStatusIds.length > 0) {
-      preMatch.project_status = value?.isArchived
-        ? { $in: archivedStatusIds }
-        : { $nin: archivedStatusIds };
+    // Inject archived-status filter into preMatch for accurate countDocuments(preMatch).
+    // When explicit status IDs are provided, use them directly (avoids needing archived IDs).
+    const reqProjStatuses = value?.project_status?.length > 0 ? value.project_status : (value?.project_status_id || []);
+    if (!value?._id) {
+      if (reqProjStatuses.length > 0) {
+        // Explicit status filter provided: scope preMatch to just those IDs for count accuracy
+        preMatch.project_status = {
+          $in: reqProjStatuses.map((s) => new mongoose.Types.ObjectId(s))
+        };
+      } else if (archivedStatusIds.length > 0) {
+        // No explicit filter: exclude (or include) archived by ID
+        preMatch.project_status = value?.isArchived
+          ? { $in: archivedStatusIds }
+          : { $nin: archivedStatusIds };
+      }
     }
 
-    // Search evaluated last — may reference manager.full_name (post-join field)
-    const searchMatch = value?.search
-      ? searchDataArr(
-          ["title", ...(!value.isSearch ? ["manager.full_name"] : [])],
-          value.search
-        )
-      : null;
+    // Search evaluated first so we can apply pagination BEFORE lookups
+    if (value?.search) {
+      let additionalSearchMatch = [];
+      const searchRegexStr = searchDataArr(["title"], value.search)["$or"][0]["title"]["$regex"];
+      const searchRegexObj = { $regex: searchRegexStr, $options: "i" };
+      additionalSearchMatch.push({ title: searchRegexObj });
+      additionalSearchMatch.push({ projectId: searchRegexObj });
+      additionalSearchMatch.push({ descriptions: searchRegexObj });
+
+      if (!value.isSearch) {
+        const Employee = mongoose.model("employees");
+        const matchedEmployees = await Employee.find({
+          full_name: searchRegexObj,
+          isDeleted: false
+        }).select("_id").lean();
+
+        if (matchedEmployees.length > 0) {
+          const matchedEmpIds = matchedEmployees.map(e => e._id);
+          additionalSearchMatch.push({ manager: { $in: matchedEmpIds } });
+        }
+      }
+
+      preMatch.$and = preMatch.$and || [];
+      preMatch.$and.push({ $or: additionalSearchMatch });
+    }
+
+    const baseQuery = [{ $match: preMatch }];
+
+    let listQuery = [];
+    if (!value?.isSearch) {
+      listQuery = await getAggregationPagination(baseQuery, pagination);
+    } else {
+      listQuery = [...baseQuery, { $sort: pagination.sort }];
+    }
 
     // ── Pipeline — only 2 lookups remain ──────────────────────────────────────
-    // Removed: projecttechs, projecttypes, acc_manager employees,
-    //          getCreatedUpdatedDeletedByQuery, assignees employees,
-    //          getClientQuery, projectworkflows, getProjectDefaultSettingQuery
-    const mainQuery = [
-      { $match: preMatch },
+    listQuery.push(
       {
         $lookup: {
           from: "projectstatuses",
@@ -621,6 +676,9 @@ exports.getProjects = async (req, res) => {
         }
       },
       { $unwind: { path: "$project_status", preserveNullAndEmptyArrays: true } },
+      // Restore original postStatusMatch: filter by project_status._id / title after join.
+      // Runs on only 25 paginated docs — negligible cost.
+      { $match: postStatusMatch },
       {
         $lookup: {
           from: "employees",
@@ -638,13 +696,12 @@ exports.getProjects = async (req, res) => {
                 }
               }
             },
-            { $project: { _id: 1, full_name: 1 } }
+            { $project: { _id: 1, full_name: 1, emp_img: 1 } }
           ],
           as: "manager"
         }
       },
       { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
-      ...(searchMatch ? [{ $match: searchMatch }] : []),
       {
         $lookup: {
           from: "employees",
@@ -699,14 +756,7 @@ exports.getProjects = async (req, res) => {
           assignees: { _id: 1, name: 1, emp_img: 1 }
         }
       }
-    ];
-
-    let listQuery = [];
-    if (!value?.isSearch) {
-      listQuery = await getAggregationPagination(mainQuery, pagination);
-    } else {
-      listQuery = [...mainQuery, { $sort: pagination.sort }];
-    }
+    );
 
     // countDocuments(preMatch) uses the compound index directly — no joins, no full scan.
     // isSearch mode skips the count (no pagination needed).
@@ -1567,12 +1617,12 @@ exports.getProjectOverviewData = async (req, res) => {
             {
               $and: [
                 {
-                  $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
+                  $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$assignees", []] }]
                 },
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$mainTask.subscribers"
+                    { $ifNull: ["$mainTask.subscribers", []] }
                   ]
                 }
               ]
@@ -1582,13 +1632,13 @@ exports.getProjectOverviewData = async (req, res) => {
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$pms_clients"
+                    { $ifNull: ["$pms_clients", []] }
                   ]
                 },
                 {
                   $in: [
                     new mongoose.Types.ObjectId(req.user._id),
-                    "$mainTask.pms_clients"
+                    { $ifNull: ["$mainTask.pms_clients", []] }
                   ]
                 }
               ]
@@ -1605,7 +1655,7 @@ exports.getProjectOverviewData = async (req, res) => {
               $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$$pms_clients"]
+              $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$$pms_clients", []] }]
             }
           ]
         }
@@ -1672,12 +1722,8 @@ exports.getProjectOverviewData = async (req, res) => {
         $addFields: {
           total_assignees: {
             $add: [
-              {
-                $size: "$assignees"
-              },
-              {
-                $size: "$pms_clients"
-              }
+              { $size: { $ifNull: ["$assignees", []] } },
+              { $size: { $ifNull: ["$pms_clients", []] } }
             ]
           }
         }
@@ -1740,7 +1786,7 @@ exports.getProjectOverviewData = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          let: { assigneesIds: "$assignees" },
+          let: { assigneesIds: { $ifNull: ["$assignees", []] } },
           pipeline: [
             {
               $match: {
@@ -2300,13 +2346,13 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
       {
         $or: [
           { $eq: ["$createdBy", new mongoose.Types.ObjectId(userId)] },
-          { $in: [new mongoose.Types.ObjectId(userId), "$assignees"] },
+          { $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ["$assignees", []] }] },
           {
-            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.subscribers"]
+            $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ["$mainTask.subscribers", []] }]
           },
-          { $in: [new mongoose.Types.ObjectId(userId), "$pms_clients"] },
+          { $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ["$pms_clients", []] }] },
           {
-            $in: [new mongoose.Types.ObjectId(userId), "$mainTask.pms_clients"]
+            $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ["$mainTask.pms_clients", []] }]
           }
         ]
       }

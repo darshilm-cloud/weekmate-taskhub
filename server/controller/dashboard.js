@@ -21,6 +21,110 @@ const {
 const { addProjectRandomId } = require("./projects");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
 const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
+const { newObjectId } = require("../helpers/common");
+
+// Global Team Report (Summary for the whole company)
+exports.getGlobalTeamReport = async (req, res) => {
+  try {
+    const { companyId } = req.user;
+    const cid = new mongoose.Types.ObjectId(companyId);
+
+    const [empStats, projectCount, taskStats] = await Promise.all([
+      // 1. Employee stats
+      mongoose.model("employees").aggregate([
+        { $match: { companyId: cid, isDeleted: false, isSoftDeleted: false } },
+        {
+          $lookup: {
+            from: "pms_roles",
+            localField: "pms_role_id",
+            foreignField: "_id",
+            as: "role"
+          }
+        },
+        { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            active: { $sum: { $cond: [{ $eq: ["$isActivate", true] }, 1, 0] } },
+            admins: {
+              $sum: {
+                $cond: [
+                  { $regexMatch: { input: "$role.role_name", regex: /admin/i } },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ]),
+      // 2. Project counts
+      Project.countDocuments({ companyId: cid, isDeleted: false }),
+      // 3. Task aggregation (Scoped to company projects)
+      ProjectTasks.aggregate([
+        {
+          $lookup: {
+            from: "projects",
+            localField: "project_id",
+            foreignField: "_id",
+            as: "project"
+          }
+        },
+        { $unwind: "$project" },
+        { 
+          $match: { 
+            "project.companyId": cid, 
+            isDeleted: false,
+            status: "active" 
+          } 
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            completed: {
+              $sum: {
+                $cond: [
+                  { 
+                    $or: [
+                      { $in: [{ $toLower: "$status" }, ["done", "complete", "closed", "finish"]] },
+                      // If task_status is populated/looked up, but usually we just check title keywords
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ])
+    ]);
+
+    const emps = empStats[0] || { total: 0, active: 0 };
+    const tasks = taskStats[0] || { total: 0, completed: 0 };
+
+    return successResponse(res, statusCode.SUCCESS, "Global team report data", {
+      employees: {
+        total: emps.total,
+        active: emps.active,
+        inactive: emps.total - emps.active,
+        admins: emps.admins || 0
+      },
+      projects: {
+        total: projectCount
+      },
+      tasks: {
+        total: tasks.total,
+        completed: tasks.completed,
+        incomplete: Math.max(0, tasks.total - tasks.completed)
+      }
+    });
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
 
 //Get Project :
 exports.getMyProjects = async (req, res) => {
@@ -242,6 +346,7 @@ exports.getMyTasks = async (req, res) => {
       project_id: Joi.array().optional().default([]),
       start_date: Joi.date().optional().default(""),
       end_date: Joi.date().optional().default(""),
+      view_all: Joi.boolean().optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -519,7 +624,7 @@ exports.getTaskList = async (req, res) => {
       end_date: Joi.date().optional().default(""),
       pageNo: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
-    }).unknown(true);
+    });
 
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
