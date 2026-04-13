@@ -2035,7 +2035,8 @@ exports.getTimesheetsReports = async (req, res) => {
       users: Joi.array().optional(), // employees or assignes to project
       isExport: Joi.boolean().required(),
       startDate: Joi.date().optional().allow(""),
-      endDate: Joi.date().optional().allow("")
+      endDate: Joi.date().optional().allow(""),
+      search: Joi.string().trim().allow("").optional()
     });
 
     const { value, error } = validationSchema.validate(req.body);
@@ -2371,6 +2372,17 @@ exports.getTimesheetsReports = async (req, res) => {
         }
       }
     ];
+    if (value.search && value.search.trim()) {
+      mainQuery.push({
+        $match: {
+          $or: [
+            { user: { $regex: value.search.trim(), $options: "i" } },
+            { project: { $regex: value.search.trim(), $options: "i" } },
+            { descriptions: { $regex: value.search.trim(), $options: "i" } }
+          ]
+        }
+      });
+    }
 
     const countQuery = getTotalCountQuery(mainQuery);
     let listQuery = getAggregationPagination(mainQuery, pagination);
