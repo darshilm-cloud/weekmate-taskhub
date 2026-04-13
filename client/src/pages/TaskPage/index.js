@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Pagination } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -508,6 +508,7 @@ const TaskPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(filterState.statusFilter);
   const [projectFilter, setProjectFilter] = useState(filterState.projectIds || []);
   const [viewAll, setViewAll] = useState(filterState.viewAll);
@@ -528,6 +529,9 @@ const TaskPage = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
+  const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
+  const [totalTasks, setTotalTasks] = useState(0);
+
   const calendarYearOptions = useMemo(() => {
     const currentYear = dayjs().year();
     return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
@@ -549,6 +553,14 @@ const TaskPage = () => {
   }, [location.search, isAdmin]);
 
 
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   const fetchProjects = useCallback(async () => {
     try {
       const res = await Service.makeAPICall({
@@ -569,12 +581,14 @@ const TaskPage = () => {
     dispatch(showAuthLoader());
     try {
       const body = {
-        search: search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         status: statusFilter,
         project_id: projectFilter?.length ? projectFilter : undefined,
         view_all: isAdmin ? viewAll : false,
         ...(taskStartDate ? { start_date: taskStartDate } : {}),
         ...(taskEndDate ? { end_date: taskEndDate } : {}),
+        pageNo: pagination.pageNo,
+        limit: pagination.limit,
       };
 
       const res = await Service.makeAPICall({
@@ -585,9 +599,12 @@ const TaskPage = () => {
       dispatch(hideAuthLoader());
       if (res?.status === 200) {
         const raw = res?.data?.data;
+        const meta = res?.data?.metadata || {};
         setTasks(Array.isArray(raw) ? raw : []);
+        setTotalTasks(meta.total || 0);
       } else {
         setTasks([]);
+        setTotalTasks(0);
       }
     } catch (e) {
       dispatch(hideAuthLoader());
@@ -595,7 +612,7 @@ const TaskPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [dispatch, search, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate]);
+  }, [dispatch, debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate, pagination.pageNo, pagination.limit]);
 
   useEffect(() => {
     fetchProjects();
@@ -603,7 +620,12 @@ const TaskPage = () => {
 
   useEffect(() => {
     fetchTaskList();
-  }, [fetchTaskList]);
+  }, [fetchTaskList, pagination.pageNo, pagination.limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, pageNo: 1 }));
+  }, [debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate]);
 
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
@@ -650,33 +672,10 @@ const TaskPage = () => {
   }, [ganttAppliedDefaultRange, taskEndDate, taskStartDate, view]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      if (statusFilter === "completed" && !isCompletedTask(task)) {
-        return false;
-      }
-
-      if (statusFilter === "incomplete" && isCompletedTask(task)) {
-        return false;
-      }
-
-      if (Array.isArray(projectFilter) && projectFilter.length > 0) {
-        const taskProjectId = String(getTaskProjectId(task) || "");
-        if (!projectFilter.map((id) => String(id)).includes(taskProjectId)) {
-          return false;
-        }
-      }
-
-      if (isAdmin && viewAll === false && !isTaskAssignedToUser(task, currentUserId)) {
-        return false;
-      }
-
-      if (!matchesDatePreset(task, datePreset)) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [tasks, statusFilter, projectFilter, isAdmin, viewAll, currentUserId, datePreset]);
+    // Backend now handles all filtering (status, project, search, dates).
+    // The frontend filteredTasks is kept as a simple pass-through to avoid breaking down-stream dependencies.
+    return tasks;
+  }, [tasks]);
 
   const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
 
@@ -1201,6 +1200,21 @@ const TaskPage = () => {
           />
         </div>
       ) : null}
+      {/* ── Pagination ── */}
+      {!loading && totalTasks > 0 && (
+        <div className="task-pagination-wrap" style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+          <Pagination
+            current={pagination.pageNo}
+            pageSize={pagination.limit}
+            total={totalTasks}
+            showSizeChanger
+            hideOnSinglePage={false}
+            pageSizeOptions={["10", "20", "50", "100"]}
+            onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
+            onShowSizeChange={(page, pageSize) => setPagination({ pageNo: 1, limit: pageSize })}
+          />
+        </div>
+      )}
     </div>
   );
 };
