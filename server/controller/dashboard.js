@@ -45,127 +45,73 @@ exports.getMyProjects = async (req, res) => {
 
     const { error, value } = validationSchema.validate(req?.body);
     if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
     const { manager_id, project_status, category, project_type, isComplaints, pageNo, limit, search } = value;
 
-    // Convert page and limit to integers with default values
     const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
     const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
 
-    // Or filter..
-    let orFilter = {};
-    // get login user role ...
-    if (!(await checkUserIsAdmin(req?.user?._id))) {
-      orFilter = {
-        $or: [
-          { assignees: new mongoose.Types.ObjectId(req?.user?._id) },
-          { pms_clients: new mongoose.Types.ObjectId(req?.user?._id) },
-          { manager: new mongoose.Types.ObjectId(req?.user?._id) },
-          { createdBy: new mongoose.Types.ObjectId(req?.user?._id) },
-          { acc_manager: new mongoose.Types.ObjectId(req?.user?._id) },
-        ],
-      };
-    }
+    // Tab-setting sync removed from the listing path — see projects.js getProjects for explanation.
 
-    // Manage projects default tabs in background (non-blocking)
-    manageAllProjectTabSetting(req.user).catch(() => {});
-    
+    // Admin check must complete before building the match query
+    const isAdmin = await checkUserIsAdmin(req?.user?._id);
+
+    const userId = new mongoose.Types.ObjectId(req?.user?._id);
+
+    // Build match query using ONLY raw document fields (ObjectIds, booleans, strings).
+    // Applied as the VERY FIRST pipeline stage so MongoDB uses the compound index
+    // { companyId: 1, isDeleted: 1 } and eliminates the bulk of 10 k docs before any $lookup.
     let matchQuery = {
       isDeleted: false,
       companyId: newObjectId(decodedCompanyId),
-      // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-
-      // filters..
       ...(project_status.length > 0
-        ? {
-          project_status: {
-            $in: project_status.map(
-              (s) => new mongoose.Types.ObjectId(s)
-            ),
-          },
-        }
+        ? { project_status: { $in: project_status.map((s) => new mongoose.Types.ObjectId(s)) } }
         : {}),
-
       ...(category.length > 0
-        ? {
-          technology: {
-            $in: category.map((c) => new mongoose.Types.ObjectId(c)),
-          },
-        }
+        ? { technology: { $in: category.map((c) => new mongoose.Types.ObjectId(c)) } }
         : {}),
-
       ...(project_type.length > 0
+        ? { project_type: { $in: project_type.map((t) => new mongoose.Types.ObjectId(t)) } }
+        : {}),
+      ...(manager_id ? { manager: new mongoose.Types.ObjectId(manager_id) } : {}),
+      ...(!isAdmin
         ? {
-          project_type: {
-            $in: project_type.map(
-              (t) => new mongoose.Types.ObjectId(t)
-            ),
-          },
-        }
-        : {}),
-
-      ...(manager_id
-        ? { manager: new mongoose.Types.ObjectId(manager_id) }
+            $or: [
+              { assignees: userId },
+              { pms_clients: userId },
+              { manager: userId },
+              { createdBy: userId },
+              { acc_manager: userId },
+            ],
+          }
         : {}),
     };
 
-    matchQuery = {
-      ...matchQuery,
-      ...orFilter,
-    };
-
-    // Add search condition if provided
     if (search && search.trim()) {
       matchQuery.$and = matchQuery.$and || [];
       matchQuery.$and.push({
         $or: [
           { title: { $regex: search, $options: "i" } },
           { projectId: { $regex: search, $options: "i" } },
-          { descriptions: { $regex: search, $options: "i" } }
-        ]
+          { descriptions: { $regex: search, $options: "i" } },
+        ],
       });
     }
 
-    // Count query for pagination metadata
-    const countQuery = [
-      {
-        $lookup: {
-          from: "star_projects",
-          let: { project: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$project_id", "$$project"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req?.user?._id),
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "starProects",
-        },
-      },
-      {
-        $unwind: {
-          path: "$starProects",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+    const COMPLAINT_SLUGS = ["DY", "AMC", "FC", "TM", "DD"];
+
+    // Fetch tab-setting pipeline stages and projection object in one round-trip
+    // (previously called 3 separate times — once per countQuery/mainQuery/$project)
+    const [tabSettingStages, tabSettingProjection] = await Promise.all([
+      getProjectDefaultSettingQuery("_id"),
+      getProjectDefaultSettingQuery("_id", true),
+    ]);
+
+    // projecttypes lookup — reused by both count (isComplaints) and main pipeline
+    const typesLookupStages = [
       {
         $lookup: {
           from: "projecttypes",
@@ -185,23 +131,30 @@ exports.getMyProjects = async (req, res) => {
           as: "project_types",
         },
       },
-      {
-        $unwind: {
-          path: "$project_types",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      ...(await getProjectDefaultSettingQuery("_id")),
-      { $match: matchQuery },
-      {
-        $count: "total"
-      }
+      { $unwind: { path: "$project_types", preserveNullAndEmptyArrays: true } },
     ];
 
-    const countResult = await Project.aggregate(countQuery);
-    let totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+    // ── Count — fast path ────────────────────────────────────────────────────
+    // matchQuery references only raw fields → countDocuments uses the index directly
+    // (no joins, no full collection scan).  Only isComplaints needs a $lookup.
+    let totalDocuments;
+    if (!isComplaints) {
+      totalDocuments = await Project.countDocuments(matchQuery);
+    } else {
+      const countResult = await Project.aggregate([
+        { $match: matchQuery },
+        ...typesLookupStages,
+        { $match: { "project_types.slug": { $in: COMPLAINT_SLUGS } } },
+        { $count: "total" },
+      ]);
+      totalDocuments = countResult[0]?.total || 0;
+    }
 
+    // ── Main pipeline ────────────────────────────────────────────────────────
     const mainQuery = [
+      // $match FIRST — eliminates most documents before any $lookup
+      { $match: matchQuery },
+      // Star lookup — needed for sort order (isStarred desc)
       {
         $lookup: {
           from: "star_projects",
@@ -213,12 +166,7 @@ exports.getMyProjects = async (req, res) => {
                   $and: [
                     { $eq: ["$project_id", "$$project"] },
                     { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req?.user?._id),
-                      ],
-                    },
+                    { $eq: ["$createdBy", userId] },
                   ],
                 },
               },
@@ -227,39 +175,13 @@ exports.getMyProjects = async (req, res) => {
           as: "starProects",
         },
       },
-      {
-        $unwind: {
-          path: "$starProects",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "projecttypes",
-          let: { typeId: "$project_type" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$typeId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "project_types",
-        },
-      },
-      {
-        $unwind: {
-          path: "$project_types",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      ...(await getProjectDefaultSettingQuery("_id")),
-      { $match: matchQuery },
+      { $unwind: { path: "$starProects", preserveNullAndEmptyArrays: true } },
+      // projecttypes lookup — needed for isComplaints filter and projection
+      ...typesLookupStages,
+      // Apply complaints slug filter inside the pipeline (replaces JS post-filter + second full aggregate)
+      ...(isComplaints ? [{ $match: { "project_types.slug": { $in: COMPLAINT_SLUGS } } }] : []),
+      // Tab-setting nested lookup (project_tabs_settings → project_tabs)
+      ...tabSettingStages,
       {
         $project: {
           _id: 1,
@@ -267,7 +189,7 @@ exports.getMyProjects = async (req, res) => {
           isBillable: 1,
           projectId: 1,
           isStarred: "$starProects.isStarred",
-          ...(await getProjectDefaultSettingQuery("_id", true)),
+          ...tabSettingProjection,
           end_date: 1,
           start_date: 1,
           descriptions: 1,
@@ -285,43 +207,19 @@ exports.getMyProjects = async (req, res) => {
           updatedAt: 1,
         },
       },
-      {
-        $sort: {
-          isStarred: -1,
-          _id: -1,
-        },
-      },
+      { $sort: { isStarred: -1, _id: -1 } },
     ];
 
-    // Add pagination if both page and limit are provided
     if (pageNum && limitNum) {
       const skip = (pageNum - 1) * limitNum;
-      mainQuery.push(
-        { $skip: skip },
-        { $limit: limitNum }
-      );
+      mainQuery.push({ $skip: skip }, { $limit: limitNum });
     }
 
-    let data = await Project.aggregate(mainQuery);
+    const data = await Project.aggregate(mainQuery);
 
-    // Apply complaints filter if needed (after aggregation to maintain count accuracy)
-    if (isComplaints && isComplaints !== undefined) {
-      data = data.filter((ele) =>
-        ["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)
-      );
+    // Backfill missing projectIds in background — do not block the response
+    setImmediate(() => addProjectRandomId(data).catch(() => {}));
 
-      if (pageNum && limitNum) {
-        const allData = await Project.aggregate([...mainQuery.slice(0, -2)]);
-        totalDocuments = allData.filter((ele) =>
-          ["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)
-        ).length;
-      }
-    }
-
-    // check project have project id or not...
-    await addProjectRandomId(data);
-
-    // Prepare pagination meta if pagination is used
     const meta = {};
     if (pageNum && limitNum) {
       meta.total = totalDocuments;
@@ -619,6 +517,8 @@ exports.getTaskList = async (req, res) => {
       project_id: Joi.array().optional().default([]),
       start_date: Joi.date().optional().default(""),
       end_date: Joi.date().optional().default(""),
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -629,6 +529,10 @@ exports.getTaskList = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const { pageNo, limit } = value;
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
 
     const isAdmin = await checkUserIsAdmin(req.user._id);
     const viewAll = value.view_all && isAdmin;
@@ -712,7 +616,8 @@ exports.getTaskList = async (req, res) => {
       ? new mongoose.Types.ObjectId(req.user.companyId)
       : null;
 
-    const mainQuery = [
+    // Build the stages that are common to both count and data fetch
+    const preMatchStages = [
       {
         $lookup: {
           from: "projects",
@@ -751,6 +656,20 @@ exports.getTaskList = async (req, res) => {
       },
       { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
       { $match: matchQuery },
+    ];
+
+    // Get Total Count
+    const countResult = await ProjectTasks.aggregate([
+      ...preMatchStages,
+      ...(value.search && value.search.trim()
+        ? [{ $match: { title: { $regex: value.search.trim(), $options: "i" } } }]
+        : []),
+      { $count: "total" },
+    ]);
+    const totalDocuments = countResult[0]?.total || 0;
+
+    const mainQuery = [
+      ...preMatchStages,
       {
         $lookup: {
           from: "projectmaintasks",
@@ -853,8 +772,20 @@ exports.getTaskList = async (req, res) => {
       { $sort: { _id: -1 } },
     ];
 
+    if (pageNum && limitNum) {
+      const skip = (pageNum - 1) * limitNum;
+      mainQuery.push({ $skip: skip }, { $limit: limitNum });
+    }
+
     const data = await ProjectTasks.aggregate(mainQuery);
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+    }
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (err) {
     return catchBlockErrorResponse(res, err.message);
   }
