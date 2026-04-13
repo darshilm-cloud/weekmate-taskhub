@@ -23,7 +23,7 @@ import {
   NAV_STYLE_NO_HEADER_MINI_SIDEBAR,
 } from "../../constants/ThemeSetting";
 import NoHeaderNotification from "../Topbar/NoHeaderNotification/index";
-import { useRouteMatch } from "react-router-dom";
+import { useLocation, useRouteMatch } from "react-router-dom";
 import Customizer from "../Customizer";
 import "../../assets/css/modal.css"
 import "../../assets/css/theme-variables.css"
@@ -44,14 +44,54 @@ const HORIZONTAL_STYLES = new Set([
   NAV_STYLE_ABOVE_HEADER,
 ]);
 
+const sanitizeClassSegment = (segment = "") =>
+  segment
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const buildPageClassName = (pathname = "") => {
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .map(sanitizeClassSegment)
+    .filter(Boolean);
+
+  if (segments.length === 0) {
+    return "page-home";
+  }
+
+  const routeSegments = segments.length > 1 ? segments.slice(1) : segments;
+  const stableSegments = routeSegments.filter(
+    (segment) => !/^\d+$/.test(segment) && !/^[a-f0-9]{8,}$/i.test(segment)
+  );
+
+  if (stableSegments.length === 0) {
+    return "page-home";
+  }
+
+  return Array.from(
+    new Set([
+      `page-${stableSegments[0]}`,
+      `page-${stableSegments.join("--")}`,
+    ])
+  ).join(" ");
+};
+
 function MainApp() {
   const { userPermission } = useSelector(({ auth }) => auth);
   const { navStyle } = useSelector(({ settings }) => settings);
   const match = useRouteMatch();
+  const location = useLocation();
 
   const containerClass = useMemo(
     () => HORIZONTAL_STYLES.has(navStyle) ? "gx-container-wrap" : "",
     [navStyle]
+  );
+
+  const pageClassName = useMemo(
+    () => buildPageClassName(location.pathname),
+    [location.pathname]
   );
 
   const navComponent = useMemo(() => {
@@ -83,7 +123,9 @@ function MainApp() {
       <Sidebar />
       <Layout>
         {navComponent}
-        <Content className={`gx-layout-content ${containerClass} page-layout`}>
+        <Content
+          className={`gx-layout-content ${containerClass} page-layout ${pageClassName}`.trim()}
+        >
           <App match={match} userPermission={userPermission} />
         </Content>
         <Customizer />
