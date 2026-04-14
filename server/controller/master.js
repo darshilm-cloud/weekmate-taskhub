@@ -188,18 +188,18 @@ exports.getProjects = async (req, res) => {
           from: "projectstatuses",
           localField: "project_status",
           foreignField: "_id",
-          as: "project_status"
+          as: "statusInfo"
         }
       },
       {
-        $unwind: "$project_status"
+        $unwind: "$statusInfo"
       },
       {
         $match: {
           ...(!includeClosed && {
-            "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+            "statusInfo.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
           }),
-          ...searchMatch // Add search conditions after lookup
+          ...searchMatch
         }
       },
       {
@@ -208,12 +208,12 @@ exports.getProjects = async (req, res) => {
           title: 1,
           projectId: 1,
           descriptions: 1,
-          project_status: 1
+          status: "$statusInfo.title"
         }
       },
       {
         $sort: {
-          title: 1 // Changed from resource_name to title
+          title: 1
         }
       }
     ];

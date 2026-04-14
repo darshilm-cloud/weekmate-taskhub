@@ -150,6 +150,7 @@ function ReportsHub() {
     },
   });
   const previousFiltersRef = useRef(defaultFilters);
+  const fetchingRef = useRef(false);
 
   const currentPage = pageMeta[reportKey];
 
@@ -162,31 +163,62 @@ function ReportsHub() {
     [users]
   );
 
-  const fetchAllProjects = useCallback(async ({ includeClosed = true, search = "" } = {}) => {
+  const fetchAllProjects = useCallback(async ({ includeClosed = true, search = "", signal } = {}) => {
     const pageSize = 200;
-    let page = 1;
-    let hasMore = true;
     const allProjects = [];
 
-    while (hasMore) {
-      const response = await Service.makeAPICall({
+    try {
+      // Step 1: Fetch the first page to get metadata
+      const firstResponse = await Service.makeAPICall({
         methodName: Service.getMethod,
         api_url: Service.getProjectList,
-        params: `page=${page}&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+        params: `page=1&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+        options: { signal }
       });
 
-      const rows = Array.isArray(response?.data?.data) ? response.data.data : [];
-      const meta = response?.data?.meta || {};
+      if (signal?.aborted) return [];
 
-      allProjects.push(...rows);
+      const firstRows = Array.isArray(firstResponse?.data?.data) ? firstResponse.data.data : [];
+      const meta = firstResponse?.data?.meta || {};
+      allProjects.push(...firstRows);
 
-      if (meta?.totalPages) {
-        hasMore = page < meta.totalPages;
-      } else {
-        hasMore = rows.length === pageSize;
+      // Notify caller immediately of first page if needed
+      setProjects(allProjects.map(p => ({ value: p._id, label: p.title })));
+
+      if (!meta.totalPages || meta.totalPages <= 1) {
+        return allProjects;
       }
 
-      page += 1;
+      // Step 2: Parallel fetch remaining pages in chunks of 5
+      const totalPages = meta.totalPages;
+      const CHUNK_SIZE = 5;
+      const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+
+      for (let i = 0; i < pages.length; i += CHUNK_SIZE) {
+        if (signal?.aborted) break;
+
+        const chunk = pages.slice(i, i + CHUNK_SIZE);
+        const results = await Promise.allSettled(chunk.map(page => 
+          Service.makeAPICall({
+            methodName: Service.getMethod,
+            api_url: Service.getProjectList,
+            params: `page=${page}&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+            options: { signal }
+          })
+        ));
+
+        results.forEach(result => {
+          if (result.status === "fulfilled") {
+            const rows = Array.isArray(result.value?.data?.data) ? result.value.data.data : [];
+            allProjects.push(...rows);
+          }
+        });
+
+        // Update projects incrementally
+        setProjects(allProjects.map(p => ({ value: p._id, label: p.title })));
+      }
+    } catch (error) {
+      console.error("Error in parallel fetchAllProjects:", error);
     }
 
     return allProjects;
@@ -231,28 +263,29 @@ function ReportsHub() {
     return allRows;
   }, []);
 
-  const loadDropdowns = useCallback(async () => {
+  const loadDropdowns = useCallback(async (signal) => {
+    if (fetchingRef.current) {
+      console.log('Dropdown loading already in progress, skipping...');
+      return;
+    }
     try {
+      console.log('Starting parallel dropdown loading for report:', reportKey);
+      fetchingRef.current = true;
       setOptionsLoading(true);
-      const [projectList, employeeResponse] = await Promise.all([
-        fetchAllProjects({ includeClosed: true }),
-        Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: "/master/get/employees",
-          params: "limit=200",
-        }),
-      ]);
+
+      // Fetch employees first as they are vital and usually fast
+      const employeeResponse = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: "/master/get/employees",
+        params: "limit=200",
+        options: { signal }
+      });
+
+      if (signal?.aborted) return;
 
       const employeeList = Array.isArray(employeeResponse?.data?.data)
         ? employeeResponse.data.data
         : [];
-
-      setProjects(
-        projectList.map((project) => ({
-          value: project._id,
-          label: project.title,
-        }))
-      );
 
       setUsers(
         [
@@ -264,10 +297,20 @@ function ReportsHub() {
           })),
         ]
       );
+
+      // CLEAR LOADING state here so the page renders while projects continue in background
+      setOptionsLoading(false);
+
+      // Now start the massive project fetch in background
+      await fetchAllProjects({ includeClosed: true, signal });
+
+    } catch (error) {
+      console.error("loadDropdowns failed:", error);
     } finally {
+      fetchingRef.current = false;
       setOptionsLoading(false);
     }
-  }, [fetchAllProjects]);
+  }, [fetchAllProjects, reportKey]);
 
   const loadReportData = useCallback(async ({ silent = false } = {}) => {
     if (!reportKey) {
@@ -742,8 +785,13 @@ function ReportsHub() {
   }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
 
   useEffect(() => {
-    loadDropdowns();
-  }, [loadDropdowns]);
+    // Only fetch dropdown options if we are in a specific report page
+    if (reportKey) {
+      const controller = new AbortController();
+      loadDropdowns(controller.signal);
+      return () => controller.abort();
+    }
+  }, [loadDropdowns, reportKey]);
 
   useEffect(() => {
     setFilters(defaultFilters);
