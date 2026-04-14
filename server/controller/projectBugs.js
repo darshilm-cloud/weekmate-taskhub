@@ -1154,10 +1154,13 @@ exports.projectBugsDetailedData = async (req, res) => {
       bug_work_flow_status: Joi.array().optional().default(["all"]),
       status: Joi.string().optional().allow("").default(null),
       bug_status: Joi.string().optional().allow("").default(null),
+      status_id: Joi.string().optional().allow("").default(null),
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       bug_labels: Joi.array().optional().default(["all"]),
-      assignees: Joi.array().optional().default(["all"])
+      assignees: Joi.array().optional().default(["all"]),
+      limit: Joi.number().integer().min(1).default(25),
+      pageNo: Joi.number().integer().min(1).default(1)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1191,7 +1194,10 @@ exports.projectBugsDetailedData = async (req, res) => {
               $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
+              $in: [
+                new mongoose.Types.ObjectId(req.user._id),
+                { $ifNull: ["$assignees", []] }
+              ]
             },
             {
               $eq: [
@@ -1317,7 +1323,12 @@ exports.projectBugsDetailedData = async (req, res) => {
           {
             $in: [
               "$bug_labels",
-              value.bug_labels.map((l) => new mongoose.Types.ObjectId(l))
+              {
+                $ifNull: [
+                  value.bug_labels.map((l) => new mongoose.Types.ObjectId(l)),
+                  []
+                ]
+              }
             ]
           }
         ];
@@ -1327,7 +1338,8 @@ exports.projectBugsDetailedData = async (req, res) => {
     const mainQuery = [
       {
         $match: {
-          isDeleted: false
+          isDeleted: false,
+          ...(value.status_id ? { _id: new mongoose.Types.ObjectId(value.status_id) } : {})
         }
       },
       {
@@ -1393,234 +1405,208 @@ exports.projectBugsDetailedData = async (req, res) => {
               }
             },
             {
-              $lookup: {
-                from: "employees",
-                let: { reporterId: "$createdBy" },
-                pipeline: [
+              $facet: {
+                metadata: [{ $count: "total" }],
+                data: [
+                  { $sort: { createdAt: -1 } },
+                  { $skip: (value.pageNo - 1) * value.limit },
+                  { $limit: value.limit },
                   {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$reporterId"] },
-                          { $eq: ["$isDeleted", false] },
-                          { $eq: ["$isSoftDeleted", false] },
-                          { $eq: ["$isActivate", true] }
-                        ]
+                    $lookup: {
+                      from: "employees",
+                      let: { reporterId: "$createdBy" },
+                      pipeline: [
+                        {
+                          $match: {
+                            $expr: {
+                              $and: [
+                                { $eq: ["$_id", "$$reporterId"] },
+                                { $eq: ["$isDeleted", false] },
+                                { $eq: ["$isSoftDeleted", false] },
+                                { $eq: ["$isActivate", true] }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          $project: {
+                            _id: 1,
+                            full_name: 1,
+                            emp_img: 1
+                          }
+                        }
+                      ],
+                      as: "createdBy"
+                    }
+                  },
+                  {
+                    $unwind: {
+                      path: "$createdBy",
+                      preserveNullAndEmptyArrays: true
+                    }
+                  },
+                  {
+                    $lookup: {
+                      from: "employees",
+                      let: { assigneeIds: { $ifNull: ["$assignees", []] } },
+                      pipeline: [
+                        {
+                          $match: {
+                            $expr: {
+                              $and: [
+                                { $in: ["$_id", "$$assigneeIds"] },
+                                { $eq: ["$isDeleted", false] },
+                                { $eq: ["$isSoftDeleted", false] },
+                                { $eq: ["$isActivate", true] }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          $project: {
+                            _id: 1,
+                            full_name: 1,
+                            emp_img: 1
+                          }
+                        }
+                      ],
+                      as: "assignees"
+                    }
+                  },
+                  {
+                    $lookup: {
+                      from: "tasklabels",
+                      let: { labelId: { $ifNull: ["$bug_labels", []] } },
+                      pipeline: [
+                        {
+                          $match: {
+                            $expr: {
+                              $and: [
+                                { $in: ["$_id", "$$labelId"] },
+                                { $eq: ["$isDeleted", false] }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          $project: {
+                            _id: 1,
+                            title: 1,
+                            color: 1
+                          }
+                        }
+                      ],
+                      as: "bug_labels"
+                    }
+                  },
+                  {
+                    $lookup: {
+                      from: "projecttaskhourlogs",
+                      let: { bug_id: "$_id" },
+                      pipeline: [
+                        {
+                          $match: {
+                            $expr: {
+                              $and: [
+                                { $eq: ["$bug_id", "$$bug_id"] },
+                                {
+                                  $eq: [
+                                    "$project_id",
+                                    new mongoose.Types.ObjectId(value.project_id)
+                                  ]
+                                },
+                                { $eq: ["$isDeleted", false] }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      as: "bug_hours"
+                    }
+                  },
+                  {
+                    $addFields: {
+                      totalLoggedTime: {
+                        $reduce: {
+                          input: "$bug_hours",
+                          initialValue: 0,
+                          in: {
+                            $add: [
+                              "$$value",
+                              {
+                                $add: [
+                                  {
+                                    $multiply: [
+                                      { $toDouble: "$$this.logged_hours" },
+                                      60
+                                    ]
+                                  },
+                                  { $toDouble: "$$this.logged_minutes" }
+                                ]
+                              }
+                            ]
+                          }
+                        }
                       }
                     }
                   },
                   {
-                    $project: {
-                      _id: 1,
-                      full_name: 1,
-                      emp_img: 1
-                    }
-                  }
-                ],
-                as: "createdBy"
-              }
-            },
-            {
-              $unwind: {
-                path: "$createdBy",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $lookup: {
-                from: "employees",
-                let: { assigneeIds: "$assignees" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $in: ["$_id", "$$assigneeIds"] },
-                          { $eq: ["$isDeleted", false] },
-                          { $eq: ["$isSoftDeleted", false] },
-                          { $eq: ["$isActivate", true] }
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    $project: {
-                      _id: 1,
-                      full_name: 1,
-                      emp_img: 1
-                    }
-                  }
-                ],
-                as: "assignees"
-              }
-            },
-
-            {
-              $lookup: {
-                from: "tasklabels",
-                let: { labelId: "$bug_labels" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $in: ["$_id", "$$labelId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
+                    $lookup: {
+                      from: "bugscomments",
+                      let: { bugId: "$_id" },
+                      pipeline: [
+                        {
+                          $match: {
+                            $expr: {
+                              $and: [
+                                { $eq: ["$bug_id", "$$bugId"] },
+                                { $eq: ["$isDeleted", false] }
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      as: "comments"
                     }
                   },
                   {
                     $project: {
                       _id: 1,
                       title: 1,
-                      color: 1
-                    }
-                  }
-                ],
-                as: "bug_labels"
-              }
-            },
-
-            {
-              $lookup: {
-                from: "projecttaskhourlogs",
-                let: { bug_id: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$bug_id", "$$bug_id"] },
-                          {
-                            $eq: [
-                              "$project_id",
-                              new mongoose.Types.ObjectId(value.project_id)
-                            ]
-                          },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "bug_hours"
-              }
-            },
-            {
-              $addFields: {
-                totalLoggedTime: {
-                  $reduce: {
-                    input: "$bug_hours",
-                    initialValue: 0,
-                    in: {
-                      $add: [
-                        "$$value",
-                        {
-                          $add: [
-                            {
-                              $multiply: [
-                                {
-                                  $toDouble: "$$this.logged_hours" // Convert string to double
-                                },
-                                60
-                              ] // Convert hours to minutes
-                            },
-                            {
-                              $toDouble: "$$this.logged_minutes" // Convert string to double
-                            }
-                          ]
+                      bugId: 1,
+                      status: 1,
+                      bug_status: 1,
+                      createdBy: 1,
+                      assignees: 1,
+                      pms_clients: 1,
+                      estimated_hours: 1,
+                      estimated_minutes: 1,
+                      start_date: 1,
+                      due_date: 1,
+                      descriptions: 1,
+                      bug_labels: 1,
+                      comments: { $size: "$comments" },
+                      isRepeated: 1,
+                      task: {
+                        _id: 1,
+                        title: 1,
+                        taskId: 1
+                      },
+                      total_logged_hours: {
+                        $floor: {
+                          $divide: ["$totalLoggedTime", 60]
                         }
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            {
-              $lookup: {
-                from: "bugscomments",
-                let: { bugId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$bug_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
+                      },
+                      total_logged_minutes: {
+                        $mod: ["$totalLoggedTime", 60]
                       }
                     }
                   }
-                ],
-                as: "comments"
+                ]
               }
-            },
-            {
-              $lookup: {
-                from: "bugsworkflowstatuses",
-                let: { bugId: "$bug_status" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "bug_status_details"
-              }
-            },
-            {
-              $project: {
-                _id: 1,
-                title: 1,
-                bugId: 1,
-                status: 1,
-                bug_status: 1,
-                createdBy: 1,
-                assignees: 1,
-                pms_clients: 1,
-                estimated_hours: 1,
-                estimated_minutes: 1,
-                start_date: 1,
-                due_date: 1,
-                estimated_hours: 1,
-                estimated_minutes: 1,
-                descriptions: 1,
-                bug_status_details: {
-                  _id: 1,
-                  title: 1,
-                  color: 1
-                },
-                bug_labels: 1,
-                comments: { $size: "$comments" },
-                isRepeated: 1,
-                task: {
-                  _id: 1,
-                  title: 1,
-                  taskId: 1
-                },
-                total_logged_hours: {
-                  // only hours
-                  $floor: {
-                    $divide: ["$totalLoggedTime", 60]
-                  }
-                },
-                total_logged_minutes: {
-                  $mod: ["$totalLoggedTime", 60]
-                }
-              }
-            },
-            {
-              $sort: { _id: -1 }
             }
           ],
-          as: "bugs"
+          as: "bugs_package"
         }
       },
       {
@@ -1628,9 +1614,11 @@ exports.projectBugsDetailedData = async (req, res) => {
           _id: 1,
           title: 1,
           color: 1,
-          bugs: 1,
+          bugs: {
+            $ifNull: [{ $arrayElemAt: ["$bugs_package.data", 0] }, []]
+          },
           total_bugs: {
-            $size: "$bugs"
+            $ifNull: [{ $arrayElemAt: ["$bugs_package.metadata.total", 0] }, 0]
           }
         }
       },
@@ -2830,7 +2818,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "bugsworkflowstatuses",
-          let: { bug_status_history: "$bug_status_history" },
+          let: { bug_status_history: { $ifNull: ["$bug_status_history", []] } },
           pipeline: [
             {
               $match: {
@@ -2870,7 +2858,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "tasklabels",
-          let: { bug_labels: "$bug_labels" },
+          let: { bug_labels: { $ifNull: ["$bug_labels", []] } },
           pipeline: [
             {
               $match: {
@@ -2890,7 +2878,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          let: { assigneesIds: "$assignees" },
+          let: { assigneesIds: { $ifNull: ["$assignees", []] } },
           pipeline: [
             {
               $match: {

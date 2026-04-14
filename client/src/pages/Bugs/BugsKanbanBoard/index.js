@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
 import React, { useEffect, useState } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import PropTypes from "prop-types";
 import BugDetailModal from "../BugDetailModal";
 import moment from "moment";
@@ -61,6 +62,8 @@ const BugList = ({
   selectedTask,
   deleteTasks,
   projectId,
+  loadMoreBugs,
+  loadingMore,
 }) => {
 
   const {
@@ -252,13 +255,12 @@ const BugList = ({
                         border: `1.5px solid ${colColor}`,
                       }}
                     >
-                      {boardData.bugs.length}
+                      {boardData.total_bugs}
                     </span>
                   </h4>
-                  
 
                   <div className="drag_row">
-                    {showTextArea && index == 0 && (
+                    {showTextArea && index === 0 && (
                       <div className="project-add-task">
                         <Input.TextArea
                           autoFocus
@@ -277,7 +279,7 @@ const BugList = ({
                       </div>
                     )}
 
-                    <div className="kanbanView-bugs-data">
+                    <div className="kanbanView-bugs-data" id={`scrollableDiv-${boardData._id}`}>
                       {boardData.bugs.length === 0 && (
                         <div style={{
                           display: "flex",
@@ -291,136 +293,148 @@ const BugList = ({
                           <span style={{ fontSize: "13px" }}>No bugs here</span>
                         </div>
                       )}
-                      {boardData.bugs.map((task) => (
-                        <div
-                          className={`wm-task-card ${dragged ? "dragged" : ""}${boardData?.title === "Closed" ? " wm-task-card-done" : ""}`}
-                          key={task._id}
-                          id={task._id}
-                          draggable
-                          onDragStart={(e) => onDragStart(e)}
-                          onDragEnd={(e) => onDragEnd(e)}
-                          style={{ position: "relative" }}
-                        >
-                          <div
-                            className={`wm-task-box ${boardData?.title === "Closed" ? "wm-task-box-done" : ""}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              getTaskByIdDetails(task._id);
-                              getComment(task._id);
-                              setTempBoard(boardData);
-                              setSelectedBugId(task._id);
-                            }}
-                          >
-                            {/* Labels */}
-                            {task.bug_labels?.length > 0 && (
-                              <div className="wm-card-labels">
-                                {task.bug_labels.map((item) => (
-                                  <span
-                                    key={item._id}
-                                    className="wm-card-label"
-                                    style={{
-                                      background: item.color || "#e5e7eb",
-                                      color: item.color ? "#fff" : "#374151",
-                                    }}
-                                  >
-                                    {item.title}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Title */}
-                            <div
-                              className="wm-card-title"
-                              id={`bug-${task._id}`}
-                              style={{
-                                textDecoration: boardData?.title === "Closed" ? "line-through" : "none",
-                              }}
-                            >
-                              {task.title}
-                            </div>
-
-                            {/* Project name */}
-                            {selectedTask?.title && (
-                              <div className="wm-card-list">{selectedTask.title}</div>
-                            )}
-
-                            {/* Due date */}
-                            <div
-                              className="wm-card-due"
-                              style={{
-                                color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
-                              }}
-                            >
-                              {task.due_date ? (
-                                <>
-                                  <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
-                                  {moment(task.due_date).format("MMM D, YYYY")}
-                                </>
-                              ) : "—"}
-                            </div>
-
-                            {/* Footer: assignees + progress */}
-                            <div className="wm-card-footer">
-                              <span className="wm-card-assignees">
-                                {task.assignees?.length > 0
-                                  ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ")
-                                  : "Unassigned"}
-                              </span>
-                            </div>
-
+                      <InfiniteScroll
+                        dataLength={boardData.bugs.length}
+                        next={() => loadMoreBugs(boardData._id)}
+                        hasMore={boardData.bugs.length < boardData.total_bugs}
+                        loader={
+                          <div style={{ textAlign: "center", padding: "10px" }}>
+                            <Badge status="processing" text="Loading more..." />
                           </div>
-                          {/* 3-dot menu */}
-                          <div>
-                            <Dropdown
-                              overlay={
-                                <Menu>
-                                  {hasPermission(["bug_edit"]) && (
-                                    <Menu.Item
-                                      onClick={(e) => {
-                                        e.domEvent.stopPropagation();
-                                        getTaskByIdDetails(task._id, {
-                                          editFlag: true,
-                                          boardID: boardData?._id,
-                                        });
+                        }
+                        scrollableTarget={`scrollableDiv-${boardData._id}`}
+                      >
+                        {boardData.bugs.map((task) => (
+                          <div
+                            className={`wm-task-card ${dragged ? "dragged" : ""}${boardData?.title === "Closed" ? " wm-task-card-done" : ""}`}
+                            key={task._id}
+                            id={task._id}
+                            draggable
+                            onDragStart={(e) => onDragStart(e)}
+                            onDragEnd={(e) => onDragEnd(e)}
+                            style={{ position: "relative" }}
+                          >
+                            <div
+                              className={`wm-task-box ${boardData?.title === "Closed" ? "wm-task-box-done" : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                getTaskByIdDetails(task._id);
+                                getComment(task._id);
+                                setTempBoard(boardData);
+                                setSelectedBugId(task._id);
+                              }}
+                            >
+                              {/* Labels */}
+                              {task.bug_labels?.length > 0 && (
+                                <div className="wm-card-labels">
+                                  {task.bug_labels.map((item) => (
+                                    <span
+                                      key={item._id}
+                                      className="wm-card-label"
+                                      style={{
+                                        background: item.color || "#e5e7eb",
+                                        color: item.color ? "#fff" : "#374151",
                                       }}
                                     >
-                                      <EditOutlined style={{ color: "green" }} /> Edit
-                                    </Menu.Item>
-                                  )}
-                                  {hasPermission(["bug_delete"]) && (
-                                    <Popconfirm
-                                      title="Are you sure you want to delete this bug?"
-                                      onConfirm={() => handleTaskDelete(task._id)}
-                                      okText="Yes"
-                                      cancelText="No"
-                                    >
-                                      <Menu.Item className="ant-delete" onClick={(e) => e.domEvent.stopPropagation()}>
-                                        <DeleteOutlined style={{ color: "red" }} /> Delete
-                                      </Menu.Item>
-                                    </Popconfirm>
-                                  )}
-                                </Menu>
-                              }
-                              trigger={["click"]}
-                            >
-                              <a
+                                      {item.title}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Title */}
+                              <div
+                                className="wm-card-title"
+                                id={`bug-${task._id}`}
                                 style={{
-                                  position: "absolute",
-                                  top: "14px",
-                                  right: "10px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  color: "#94a3b8",
+                                  textDecoration: boardData?.title === "Closed" ? "line-through" : "none",
                                 }}
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                               >
-                                <MoreOutlined style={{ fontSize: "16px" }} />
-                              </a>
-                            </Dropdown>
+                                {task.title}
+                              </div>
+
+                              {/* Project name */}
+                              {selectedTask?.title && (
+                                <div className="wm-card-list">{selectedTask.title}</div>
+                              )}
+
+                              {/* Due date */}
+                              <div
+                                className="wm-card-due"
+                                style={{
+                                  color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
+                                }}
+                              >
+                                {task.due_date ? (
+                                  <>
+                                    <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                    {moment(task.due_date).format("MMM D, YYYY")}
+                                  </>
+                                ) : "—"}
+                              </div>
+
+                              {/* Footer: assignees + progress */}
+                              <div className="wm-card-footer">
+                                <span className="wm-card-assignees">
+                                  {task.assignees?.length > 0
+                                    ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ")
+                                    : "Unassigned"}
+                                </span>
+                              </div>
+
+                            </div>
+                            {/* 3-dot menu */}
+                            <div>
+                              <Dropdown
+                                overlay={
+                                  <Menu>
+                                    {hasPermission(["bug_edit"]) && (
+                                      <Menu.Item
+                                        onClick={(e) => {
+                                          e.domEvent.stopPropagation();
+                                          getTaskByIdDetails(task._id, {
+                                            editFlag: true,
+                                            boardID: boardData?._id,
+                                          });
+                                        }}
+                                      >
+                                        <EditOutlined style={{ color: "green" }} /> Edit
+                                      </Menu.Item>
+                                    )}
+                                    {hasPermission(["bug_delete"]) && (
+                                      <Popconfirm
+                                        title="Are you sure you want to delete this bug?"
+                                        onConfirm={() => handleTaskDelete(task._id)}
+                                        okText="Yes"
+                                        cancelText="No"
+                                      >
+                                        <Menu.Item className="ant-delete" onClick={(e) => e.domEvent.stopPropagation()}>
+                                          <DeleteOutlined style={{ color: "red" }} /> Delete
+                                        </Menu.Item>
+                                      </Popconfirm>
+                                    )}
+                                  </Menu>
+                                }
+                                trigger={["click"]}
+                              >
+                                <a
+                                  style={{
+                                    position: "absolute",
+                                    top: "14px",
+                                    right: "10px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    color: "#94a3b8",
+                                  }}
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                >
+                                  <MoreOutlined style={{ fontSize: "16px" }} />
+                                </a>
+                              </Dropdown>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </InfiniteScroll>
                     </div>
                   </div>
                 </div>
