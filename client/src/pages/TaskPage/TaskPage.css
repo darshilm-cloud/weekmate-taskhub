@@ -37,7 +37,7 @@
   flex-wrap: wrap;
 }
 
-.task-page-controls .ap-search-input{
+.task-page-controls .ap-search-input {
   width: 220px;
 }
 
@@ -354,7 +354,7 @@
 /* Task row — 8-col grid matching column header */
 .task-row {
   display: grid;
-  grid-template-columns: 18px 18px 18px 28px 1fr 140px 80px 150px;
+  grid-template-columns: 25px 100px 220px 100px 1fr 140px 80px 150px;
   align-items: center;
   gap: 12px;
   padding: 10px 24px;
@@ -504,22 +504,22 @@
   overflow-x: auto;
   padding: 24px;
   min-height: 400px;
-      max-height: calc(100dvh - 285px);
+  max-height: calc(100dvh - 285px);
   align-items: flex-start;
   overflow-y: hidden;
 }
 
 .kanban-column {
-flex: 0 0 280px;
-    background: #f5f5f5;
-    border-radius: 8px;
-    border-top: 4px solid #038fde;
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(180deg, #93989a0d, #93989a00);
-    border-radius: 3px;
-    height: 100%;
-    padding: 0;
+  flex: 0 0 280px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-top: 4px solid #038fde;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #93989a0d, #93989a00);
+  border-radius: 3px;
+  height: 100%;
+  padding: 0;
 
 }
 
@@ -553,14 +553,14 @@ flex: 0 0 280px;
 }
 
 .task-card {
-background: linear-gradient(285deg, #187cb70f 25.9%, #36a0df24 94.4%);
-    border-bottom-right-radius: 5px;
-    border-left: 3px solid #187cb7;
-    border-top-right-radius: 5px;
-    box-shadow: -1px 3px 2px 0 #36a0df66;
-    cursor: pointer;
-    margin-bottom: 16px;
-    padding: 16px;
+  background: linear-gradient(285deg, #187cb70f 25.9%, #36a0df24 94.4%);
+  border-bottom-right-radius: 5px;
+  border-left: 3px solid #187cb7;
+  border-top-right-radius: 5px;
+  box-shadow: -1px 3px 2px 0 #36a0df66;
+  cursor: pointer;
+  margin-bottom: 16px;
+  padding: 16px;
 }
 
 .task-card:hover {

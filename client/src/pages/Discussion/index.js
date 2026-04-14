@@ -374,7 +374,7 @@ export default function DiscussionPage() {
             <PlusOutlined /> Group Chat
           </Button>
           <Button className="add-btn"  type="primary" onClick={() => openAdd("Member")}>
-            <PlusOutlined /> Member chat
+            <PlusOutlined />Member chat
           </Button>
         </div>
 

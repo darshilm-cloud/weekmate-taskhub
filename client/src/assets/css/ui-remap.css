@@ -910,7 +910,9 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   background: var(--app-bg);
   padding: 20px;
 }
-
+button{
+  cursor: pointer;
+}
 /* ─────────────────────────────────────────────────────────────
    GLOBAL TABLE REMAP — Ant Design Table (light, smooth, UX)
    Matches sidebar/topbar/dashboard color theme
@@ -922,6 +924,7 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   border-radius: 12px;
   overflow: hidden;
   background: var(--app-surface);
+  padding: 20px;
 }
 
 /* Container and content */

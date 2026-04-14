@@ -863,7 +863,7 @@ const ComplaintFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
+        <Button type="primary" icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
           <Badge
             count={activeFiltersCount}

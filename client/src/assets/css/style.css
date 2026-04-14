@@ -18117,7 +18117,7 @@ textarea.ant-input-number {
 
 .ant-layout.ant-layout-has-sider {
   flex-direction: row;
-  height: 100%;
+  height:100dvh;
 }
 
 /* .ant-layout.ant-layout-has-sider>.ant-layout,
