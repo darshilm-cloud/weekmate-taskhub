@@ -542,6 +542,7 @@
 
 .ap-browser-sidebar {
   padding: 12px 12px 14px;
+      height: calc(100dvh - 200px);
 }
 
 .ap-browser-sidebar-toolbar {
@@ -588,7 +589,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: #ffffff;
-  height: 600px;
   flex-shrink: 0;
 }
 
@@ -604,7 +604,7 @@
 }
 
 .infinite-scroll-component {
-  max-height: calc(100dvh - 295px);
+  max-height: calc(100dvh - 265px);
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;

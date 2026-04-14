@@ -848,7 +848,7 @@ function FileModule() {
           <div className="profileleftbar">
             <div className="add-project-wrapper">
               <Dropdown trigger={ ["click"] } overlay={ yourMenu }>
-                <Button className="add-btn ant-btn-primary">
+                <Button type="primary" className="add-btn">
                   <i className="fi fi-br-plus"></i> Add
                   <i className="fi fi-ss-angle-small-down"></i>
                 </Button>
@@ -1090,7 +1090,7 @@ function FileModule() {
                     folders and proof files for review and feedback.{" "}
                     <a href="#"> Learn how it works</a>{" "}
                   </p>
-                  <Button className="add-btn" type="primary" onClick={() => setIsOpenModelUpload(true)}>
+                  <Button onClick={() => setIsOpenModelUpload(true)}>
                     {" "}
                     <PlusOutlined />
                     <span>Upload Files</span>
@@ -1135,7 +1135,7 @@ function FileModule() {
                         <Button
                           type="primary"
                           htmlType="submit"
-                          className="add-btn"
+                          className="square-primary-btn"
                         >
                           Update
                         </Button>
@@ -1424,7 +1424,7 @@ function FileModule() {
               )}
               {managePeopleVisible && (
                 <div className="manage-btn">
-                  <Button type="primary" className="add-btn" onClick={handleUpdateSubscribers}>
+                  <Button type="primary" onClick={handleUpdateSubscribers}>
                     Update
                   </Button>
                   <Button
@@ -1553,18 +1553,16 @@ function FileModule() {
           <Button
             key="cancel"
             onClick={handleCancelUpload}
-        
-
+            size="large"
+            style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', boxShadow: 'none' }}
           >
             Cancel
           </Button>,
           <Button
             key="submit"
-            type="primary"
-            className="add-btn"
-      
+            size="large"
             onClick={() => fileForm.submit()}
-         
+            style={{ background: '#3b82f6', border: '1px solid #3b82f6', color: '#fff', borderRadius: '8px', boxShadow: 'none' }}
           >
             Ok
           </Button>,
