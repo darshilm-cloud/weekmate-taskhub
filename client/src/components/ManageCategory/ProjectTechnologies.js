@@ -318,7 +318,7 @@ const ProjectTechnologies = () => {
             Departments
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
               Add Department
             </Button>
           </div>
@@ -359,7 +359,7 @@ const ProjectTechnologies = () => {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => form.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()}>Save</Button>,
         ]}
       >
         <Form form={form} layout="vertical" onFinish={addProjectTechnology}>

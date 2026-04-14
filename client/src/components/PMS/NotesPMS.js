@@ -1060,6 +1060,7 @@ function NotesPMS() {
           </Button>,
           <Button
             key="submit"
+            className="add-btn"
             type="primary"
             size="large"
             onClick={() => formNotes.submit()}
@@ -1184,6 +1185,7 @@ function NotesPMS() {
               />
               <Button
                 type="primary"
+                className="add-btn"
                 icon={<PlusOutlined />}
                 onClick={openModelNotes}
               >

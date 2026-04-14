@@ -313,57 +313,33 @@ const ActivityLogs = () => {
 
   /* ── Render ──────────────────────────────────────────────── */
   return (
-    <div className="cad-page">
-
-      {/* Header */}
-      <div className="cad-info-card">
-        <div className="cad-info-icon">
-          <ClockCircleOutlined />
-        </div>
-        <div className="cad-info-body">
-          <h1 className="cad-info-title" style={{ marginBottom: 0 }}>
+    <div className="ps-page">
+      <div className="ps-card">
+        {/* Header */}
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><ClockCircleOutlined /></span>
             Activity Logs
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
-            Track all system activity and user operations
-          </p>
-        </div>
-        <div style={{ marginLeft: "auto", alignSelf: "center" }}>
-          <ActivityLogFilter onFilterChange={handleFilterChange} />
-        </div>
-      </div>
-
-      {/* Table Card */}
-      <div className="cad-section">
-        <div className="cad-section-header">
-          <div className="cad-section-title">
-            <span className="cad-section-icon"><ClockCircleOutlined /></span>
-            Activity Records
+          </h2>
+          <div className="ps-header-right">
+            <ActivityLogFilter onFilterChange={handleFilterChange} />
           </div>
-          {pagination.total > 0 && (
-            <span style={{ fontSize: 13, color: "#94a3b8" }}>
-              {pagination.total} records
-            </span>
-          )}
         </div>
 
-        <div style={{ padding: 0 }}>
+        <div className="ps-table-wrap">
           <Table
             rowKey="_id"
             columns={columns}
             dataSource={activityLogs}
             loading={loading}
-            pagination={{
-              current:          pagination.current,
-              pageSize:         pagination.pageSize,
-              total:            pagination.total,
-              showSizeChanger:  true,
-              showTotal:        (total) => `Total ${total} records`,
-              pageSizeOptions:  ["10", "20", "50", "100"],
-              style:            { padding: "12px 20px" },
-            }}
+            footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
             onChange={handleTableChange}
-            className="al-table"
+            pagination={{
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "30"],
+              showTotal: (total) => `Total ${total} records`,
+              ...pagination,
+            }}
           />
         </div>
       </div>

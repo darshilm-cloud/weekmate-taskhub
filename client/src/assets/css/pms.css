@@ -308,7 +308,7 @@ a,
     border-left: 2px solid transparent;
     border-right: 2px solid transparent;
 }
-
+.ant-menu-vertical .ant-menu-submenu-selected,
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
 .sidebar-menu .ant-menu-submenu.ant-menu-submenu-selected {
     background: #fdfdfd17;
@@ -356,7 +356,7 @@ a,
 }
 
 .sidebar-menu .ant-menu-submenu {
-    padding: 10px 0 !important;
+    padding:  0 !important;
 }
 
 .ant-tooltip.ant-menu-inline-collapsed-tooltip {
@@ -488,7 +488,12 @@ i.width-18 {
 .main-heading {
     width: 100%;
 }
-
+.block-table-content.new-block-table{
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px #0000000d;
+}
 .head-title {
     float: left;
 }
@@ -1243,6 +1248,7 @@ ul.tab_menu li.active-tab {
 
 .ant-input-search button.ant-input-search-button {
     height: auto;
+    padding: 0;
 }
 
 .overview-modal-content ul li.inline {
@@ -1254,6 +1260,7 @@ ul.tab_menu li.active-tab {
     right: 15px;
     width: 22px;
     height: 21px;
+    background-color: #fff;
     border-radius: 100%;
 }
 
@@ -1274,7 +1281,7 @@ ul.tab_menu li.active-tab {
 }
 
 .ant-modal-content button.ant-modal-close span.ant-modal-close-x {
-    /* display: inline-block; */
+    display: inline-block;
     height: auto;
     width: auto;
 }
@@ -4727,7 +4734,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-modal-wrap .ant-modal-content .ant-btn-primary {
-    background-image: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
+
     border-color: #185d87;
     color: #fff;
     color: var(--white-color);
@@ -4757,7 +4764,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-modal-wrap .ant-modal-content .ant-btn-primary:hover {
-    background-image: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
     color: #fff;
     transition: all 0.2s ease-out;
 }
@@ -4886,7 +4892,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     transition: none 0s ease 0s;
     transition: initial;
 }
-
+.sidebar-menu .ant-menu-submenu{
+    margin: 0 !important;
+    margin-bottom: 2px !important;
+}
 .sidebar-menu .ant-menu-submenu,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
     align-items: center;
@@ -4918,7 +4927,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     margin: 0;
     white-space: break-spaces;
 }
+.sidebar-menu  .ant-menu-vertical .ant-menu-submenu-selected{
+    background: #fdfdfd17 !important;
 
+}
 .sidebar-menu .ant-menu-submenu:hover,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
     background: #ffffff17;
@@ -4991,31 +5003,12 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     border-radius: 0;
 }
 
-.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th {
-    background: linear-gradient(1turn, #054068, #386e97 55%, #054068);
-    border: 1px solid #c2c3c5;
-    border-radius: 0;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 16px;
-    text-align: left;
-    white-space: nowrap;
-}
+
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th:before {
     width: 0;
 }
 
-.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-tbody tr td {
-    background-color: #fff;
-    border: 1px solid #c2c3c5;
-    color: #3f4350;
-    font-size: 13px;
-    min-width: 150px;
-    padding: 5px 16px;
-    text-align: left;
-}
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-table-footer {
     background-color: #f5f8fa;
@@ -5034,10 +5027,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: #3f4350;
 }
 
-.admin-user .ant-layout.admin .ant-layout-content .ant-pagination .ant-pagination-item-active {
-    background: #fff;
-    border-color: #c2c3c5 !important;
-}
+
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-pagination .ant-pagination-item-active:focus,
 .admin-user .ant-layout.admin .ant-layout-content .ant-pagination .ant-pagination-item-active:focus-within,
@@ -5192,20 +5182,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     color: hsla(0, 0%, 42%, 0.878);
 }
 
-.admin-user .ant-pagination .ant-pagination-item {
-    background-color: #fff;
-    color: #ccc;
-}
 
-.admin-user .ant-pagination .ant-pagination-item a {
-    color: hsla(0, 0%, 42%, 0.878);
-}
 
-.admin-user .ant-pagination .ant-pagination-item.ant-pagination-item-active {
-    background: #fff;
-    border: 1px solid #c2c3c5;
-    color: #3f4350;
-}
+
 
 [data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-sider-trigger .anticon {
     background: #35373d;
@@ -5649,7 +5628,11 @@ overflow: unset;
     margin-top: 0;
     padding: 0 16px 16px;
 }
-
+.ant-modal .ant-modal-content .ant-modal-footer {
+    display: flex;
+    justify-content: end;
+    gap: 10px;
+}
 .project-running-reports-fillter {
     width: 100%;
     max-width: fit-content;

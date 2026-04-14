@@ -312,7 +312,7 @@ function AddComment({
         <div className="main-wrapper-btn">
           <Button
             type="primary"
-            className="add-comment-btn"
+            className="add-btn"
             disabled={
               (setTextAreaValue ? textAreaValue.trim() : OwnTextAreaValue.trim() )|| fileAttachment.length > 0 ? false : true
             }

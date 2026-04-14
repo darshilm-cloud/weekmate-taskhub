@@ -34,7 +34,7 @@ import moment from "moment";
 import ReactApexChart from "react-apexcharts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
-import NoDataFoundSvg from "../../assets/images/no-data-found.svg";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
 import "./reports-hub.css";
 
@@ -1519,7 +1519,7 @@ function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPag
               setPageSize(size);
             },
             showSizeChanger: true,
-            pageSizeOptions: ["10", "25", "50", "100"],
+            pageSizeOptions: ["10", "20", "30"],
           }}
           rowClassName={() => "project-report-row"}
           locale={{ emptyText: <Empty description="No project data found" /> }}
@@ -1622,7 +1622,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
             setPageSize(size);
           },
           showSizeChanger: true,
-          pageSizeOptions: ["10", "25", "50", "100"],
+          pageSizeOptions: ["10", "20", "30"],
         }}
         rowKey="key"
         locale={{ emptyText: <Empty description="No report data found" /> }}
@@ -1907,7 +1907,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
                   setPageSize(size);
                 },
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "25", "50", "100"],
+                pageSizeOptions: ["10", "20", "30"],
               }}
               columns={[
                 { title: "User", dataIndex: "user", key: "user" },
@@ -2105,7 +2105,7 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
 function EmptyReportState() {
   return (
     <div className="reports-empty-state">
-      <img src={NoDataFoundSvg} alt="No report found" />
+      <NoDataFoundIcon  />
       <h3>No Report Found</h3>
       <p>Apply Filter To Generate Reports</p>
     </div>
@@ -2959,13 +2959,18 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "25", "50", "100"],
+              pageSizeOptions: ["10", "20", "30"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"
           />
         ) : (
-          <Empty description={searchText ? "No projects found matching your search" : "No project data found"} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+            <NoDataFoundIcon  />
+            <span style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>
+              {searchText ? "No projects found matching your search" : "No project data found"}
+            </span>
+          </div>
         )}
       </div>
     </div>
@@ -3203,7 +3208,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "25", "50", "100"],
+              pageSizeOptions: ["10", "20", "30"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"

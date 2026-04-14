@@ -37,6 +37,7 @@ import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { isCreatedBy } from "../../util/isCreatedBy";
 import { fileImageSelect } from "../../util/FIleSelection";
 import MyAvatar from "../../components/Avatar/MyAvatar";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskDetailModal.css";
 
 const { TextArea } = Input;
@@ -1161,7 +1162,10 @@ const TaskDetailModal = ({
           </table>
         </div>
       ) : (
-        <div className="task-detail-empty-state">No issues tracked yet.</div>
+        <div className="task-detail-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+          <NoDataFoundIcon  />
+          <span style={{ marginTop: 8, color: '#7b8898', fontSize: 14 }}>No issues tracked yet.</span>
+        </div>
       )}
     </div>
   );
@@ -1227,7 +1231,7 @@ const TaskDetailModal = ({
                   icon={<HistoryOutlined />}
                 />
 
-                {/* Edit icon button */}
+           
                 <Button
                   className={`task-detail-icon-btn ${isEditing ? 'task-detail-icon-btn-active' : ''}`}
                   type="text"
@@ -1472,7 +1476,10 @@ const TaskDetailModal = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="task-detail-empty-state">No attachments added yet.</div>
+                  <div className="task-detail-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                    <NoDataFoundIcon  />
+                    <span style={{ marginTop: 8, color: '#7b8898', fontSize: 14 }}>No attachments added yet.</span>
+                  </div>
                 )
               )}
             </div>
@@ -1483,13 +1490,16 @@ const TaskDetailModal = ({
             {/* Footer Actions */}
             <div className="task-detail-modal-footer-actions">
               <Button
-                className="task-detail-primary-btn"
+                className="add-btn"
                 type="primary"
                 onClick={handleSaveEdit}
                 loading={saving}
                 icon={<SaveOutlined />}
               >
+                <span>
+
                 Save
+                </span>
               </Button>
               <Button className="task-detail-secondary-btn" onClick={onClose}>Close</Button>
             </div>

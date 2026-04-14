@@ -15,7 +15,7 @@ import "./Notes.css";
 const { TextArea } = Input;
 
 const CARD_COLORS_LIGHT = ["#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec", "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd"];
-const CARD_COLORS_DARK  = [
+const CARD_COLORS_DARK = [
   "#0d2137",  // deep ocean blue
   "#1e1040",  // deep indigo
   "#2d0f1a",  // dark rose wine
@@ -53,12 +53,8 @@ const checkIsDark = () =>
   document.body.getAttribute("data-theme") === "dark";
 
 const MODAL_OK_BUTTON_PROPS = {
-  className: "notes-modal-save-btn",
-  style: {
-    background: "linear-gradient(135deg, #0a2e49, #123f63)",
-    borderColor: "#0a2e49",
-    boxShadow: "0 14px 26px rgba(10, 46, 73, 0.28)",
-  },
+  className: "add-btn",
+  type: "primary",
 };
 
 export default function NotesPage() {
@@ -394,7 +390,7 @@ export default function NotesPage() {
       {/* Header */}
       <div className="notes-page-header">
         <h2 className="notes-page-title">Notes</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote}>Add Note</Button>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
       </div>
 
       {/* Tabs */}
@@ -455,7 +451,7 @@ export default function NotesPage() {
           </svg>
           <p className="notes-empty-title">Add your first notes</p>
           <p className="notes-empty-sub">Relax write something beautiful</p>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote}>Add Note</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
         </div>
       ) : (
         <Spin spinning={loading && notes.length > 0} tip="Loading...">
@@ -525,7 +521,7 @@ export default function NotesPage() {
               total={totalNotes}
               onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
               showSizeChanger
-              pageSizeOptions={["10", "25", "50", "100"]}
+              pageSizeOptions={["10", "20", "30"]}
             />
           </div>
         </Spin>

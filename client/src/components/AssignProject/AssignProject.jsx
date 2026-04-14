@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
+import InfiniteScroll from "react-infinite-scroll-component";
 import {
   Input,
   Table,
@@ -32,6 +33,9 @@ import {
   CalendarOutlined,
   LeftOutlined,
   RightOutlined,
+  InboxOutlined,
+  LoadingOutlined,
+  FileExcelOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { Link, useParams, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -41,6 +45,7 @@ import Service from "../../service";
 import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -403,6 +408,7 @@ const AssignProject = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isloadingProject, setIsloadingProject] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE });
+  const [listViewInfiniteScroll, setListViewInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
@@ -516,6 +522,10 @@ const AssignProject = () => {
   }, [searchText]);
 
   useEffect(() => {
+    // Reset infinite scroll when filters/sort change
+    if (viewMode === "list") {
+      setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+    }
     getProjectListing(currentSkipFilters, currentFilters);
   }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects, debouncedSearchText]);
 
@@ -533,7 +543,7 @@ const AssignProject = () => {
     }
   };
 
-  const buildReqBody = (filterBy, skipFilters = currentSkipFilters, filterStats = currentFilters) => {
+  const buildReqBody = (filterBy, skipFilters = currentSkipFilters, filterStats = currentFilters, skipForInfiniteScroll = null) => {
     const normalizedSkipFilters = Array.isArray(skipFilters) ? skipFilters : [skipFilters].filter(Boolean);
     const normalizedFilters = normalizeProjectFilters(filterStats);
     let actualSort = sortOption;
@@ -551,12 +561,18 @@ const AssignProject = () => {
     }
 
     const reqBody = {
-      pageNo: pagination.current,
-      limit: pagination.pageSize,
+      pageNo: skipForInfiniteScroll !== null ? 1 : pagination.current,
+      limit: skipForInfiniteScroll !== null ? DEFAULT_PAGE_SIZE : pagination.pageSize,
       sortBy: actualSortBy,
       filterBy,
       sort: actualSort,
     };
+
+    // For infinite scroll, use skip instead of pageNo
+    if (skipForInfiniteScroll !== null) {
+      delete reqBody.pageNo;
+      reqBody.skip = skipForInfiniteScroll;
+    }
 
     const shouldSkip = (filterKey) =>
       normalizedSkipFilters.includes("skipAll") || normalizedSkipFilters.includes(filterKey);
@@ -654,6 +670,60 @@ const AssignProject = () => {
     }
   }, [taskStats]);
 
+
+  const onLoadMore = async () => {
+    if (listViewInfiniteScroll.isLoadingMore || !listViewInfiniteScroll.hasMore || viewMode !== "list") return;
+
+    try {
+      setListViewInfiniteScroll((prev) => ({ ...prev, isLoadingMore: true }));
+
+      const reqBody = buildReqBody(
+        TAB_FILTER_MAP[activeTab] || "all",
+        currentSkipFilters,
+        currentFilters,
+        listViewInfiniteScroll.skip
+      );
+
+      // Archived status requires isArchived: true on the request body.
+      const statusFilterId = currentFilters?.status?.[0];
+      const selectedStatusForFetch = statusFilterId
+        ? projectStatusList.find((status) => status._id === statusFilterId)
+        : null;
+      const selectedStatusTitleForFetch = selectedStatusForFetch?.title?.toLowerCase?.() || "";
+      if (selectedStatusTitleForFetch === "archived") {
+        reqBody.isArchived = true;
+        reqBody.filterBy = "all";
+      }
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectdetails,
+        body: reqBody,
+      });
+
+      const newProjects = response?.data?.data || [];
+      const metaTotal = response?.data?.metadata?.total ?? columnDetails.length + newProjects.length;
+
+      // Append new projects to existing list
+      setColumnDetails((prev) => [...prev, ...newProjects]);
+
+      // Update infinite scroll state
+      const newLoadedCount = listViewInfiniteScroll.loadedCount + newProjects.length;
+      const hasMoreData = newLoadedCount < metaTotal && newProjects.length > 0;
+
+      setListViewInfiniteScroll((prev) => ({
+        ...prev,
+        skip: prev.skip + DEFAULT_PAGE_SIZE,
+        loadedCount: newLoadedCount,
+        hasMore: hasMoreData,
+        isLoadingMore: false,
+      }));
+    } catch (error) {
+      console.error("Error loading more projects:", error);
+      setListViewInfiniteScroll((prev) => ({ ...prev, isLoadingMore: false }));
+    }
+  };
+
   const getProjectListing = async (skipFilters = currentSkipFilters, filterStats = currentFilters, forceRefresh = false) => {
     const requestId = ++latestRequestIdRef.current;
     let requestKey = null;
@@ -691,12 +761,27 @@ const AssignProject = () => {
       if (cached && cached.projects.length > 0) {
         setColumnDetails(cached.projects);
         setPagination((prev) => ({ ...prev, total: cached.total }));
+        
+        // Update infinite scroll state for list view
+        if (viewMode === "list") {
+          const hasMoreData = cached.projects.length >= DEFAULT_PAGE_SIZE && cached.projects.length < cached.total;
+          setListViewInfiniteScroll((prev) => ({
+            ...prev,
+            skip: DEFAULT_PAGE_SIZE,
+            loadedCount: cached.projects.length,
+            hasMore: hasMoreData,
+          }));
+        }
+        
         setIsloadingProject(false);
         return;
       }
       if (cached && cached.projects.length === 0) {
         setColumnDetails([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
+        if (viewMode === "list") {
+          setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: false, isLoadingMore: false });
+        }
       }
       setIsloadingProject(true);
 
@@ -717,6 +802,18 @@ const AssignProject = () => {
 
       setColumnDetails(projects);
       setPagination((prev) => ({ ...prev, total: metaTotal }));
+      
+      // Update infinite scroll state for list view
+      if (viewMode === "list") {
+        const hasMoreData = projects.length >= DEFAULT_PAGE_SIZE && projects.length < metaTotal;
+        setListViewInfiniteScroll((prev) => ({
+          ...prev,
+          skip: DEFAULT_PAGE_SIZE,
+          loadedCount: projects.length,
+          hasMore: hasMoreData,
+        }));
+      }
+      
       setIsloadingProject(false);
 
       if (!isViewAllProjects && reqBody.limit <= PROJECT_CACHE_MAX_PAGE_SIZE) {
@@ -1722,7 +1819,8 @@ const AssignProject = () => {
               </div>
             ) : visibleProjects.length === 0 ? (
               <div className="ap-empty-state">
-                <Empty description={emptyProjectsMessage} />
+                <NoDataFoundIcon />
+                <p>{emptyProjectsMessage}</p>
               </div>
             ) : (
               <Spin spinning={isloadingProject} tip="Loading projects...">
@@ -1766,7 +1864,7 @@ const AssignProject = () => {
           <div className="ap-browser-layout">
             <aside className="ap-browser-sidebar">
 
-              <div className="ap-browser-project-list">
+              <div id="ap-browser-project-list" className="ap-browser-project-list">
                 <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
                 {showInitialProjectSkeleton ? (
                   <div className="ap-browser-project-list-skeleton">
@@ -1777,53 +1875,59 @@ const AssignProject = () => {
                     ))}
                   </div>
                 ) : (
-                  visibleProjects.map((project) => (
-                    <button
-                      key={project._id}
-                      type="button"
-                      className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
-                      onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
+                  <div className="ap-browser-project-list-content ap-list-view">
+                    <InfiniteScroll
+                      dataLength={visibleProjects.length}
+                      next={onLoadMore}
+                      hasMore={listViewInfiniteScroll.hasMore && !isViewAllProjects}
+                      loader={
+                        listViewInfiniteScroll.isLoadingMore ? (
+                          <div style={{ padding: "12px", textAlign: "center" }}>
+                            <Spin size="small" />
+                          </div>
+                        ) : null
+                      }
+                      scrollableTarget="ap-browser-project-list"
+                      style={{ paddingRight: "4px" }}
+                      scrollThreshold={0.9}
                     >
-                      <span className="ap-browser-project-name">
-                        {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
-                      </span>
-                      <span
-                        className="ap-browser-project-more-btn"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        role="presentation"
-                      >
-                        <Dropdown
-                          menu={{ items: getSidebarProjectMenuItems(project) }}
-                          trigger={["click"]}
-                          placement="bottomRight"
+                      {visibleProjects.length === 0 ? (
+                        <div style={{ padding: "12px", textAlign: "center", color: "#999" }}>
+                          <NoDataFoundIcon  />
+                       
+                        </div>
+                      ) : (
+                        visibleProjects.map((project) => (
+                          <button
+                            key={project._id}
+                          type="button"
+                          className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
+                          onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
                         >
-                          <MoreOutlined className="ap-browser-project-more" title="More actions" />
-                        </Dropdown>
-                      </span>
-                    </button>
-                  ))
+                          <span className="ap-browser-project-name">
+                            {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
+                          </span>
+                          <span
+                            className="ap-browser-project-more-btn"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            role="presentation"
+                          >
+                            <Dropdown
+                              menu={{ items: getSidebarProjectMenuItems(project) }}
+                              trigger={["click"]}
+                              placement="bottomRight"
+                            >
+                              <MoreOutlined className="ap-browser-project-more" title="More actions" />
+                            </Dropdown>
+                          </span>
+                        </button>
+                      ))
+                    )}
+                    </InfiniteScroll>
+                  </div>
                 )}
               </div>
-              {!isViewAllProjects && !isloadingProject && visibleProjects.length > 0 && (
-                <div className="ap-browser-pagination">
-                  <Pagination
-                    size="small"
-                    current={pagination.current}
-                    pageSize={pagination.pageSize}
-                    total={totalCount}
-                    showSizeChanger
-                    showLessItems
-                    pageSizeOptions={["25", "50", "100"]}
-                    showTotal={showTotal}
-                    onChange={(page, size) => {
-                      setPagination({ current: page, pageSize: size });
-                      document.querySelector(".ap-browser-project-list")?.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                  />
-                </div>
-
-              )}
             </aside>
 
 
@@ -2086,7 +2190,10 @@ const AssignProject = () => {
                       </div>
 
                       {isLoadingTasks ? (
-                        <div className="ap-browser-list-empty">Loading tasks...</div>
+                        <div className="ap-browser-list-empty">
+                          <LoadingOutlined style={{ fontSize: "20px", marginRight: "8px" }} />
+                          Loading tasks...
+                        </div>
                       ) : (
                         [
                           { key: "today", label: "Today", items: todayTasks },
@@ -2099,7 +2206,10 @@ const AssignProject = () => {
                               <span className="ap-browser-list-count">{section.items.length}</span>
                             </div>
                             {section.items.length === 0 ? (
-                              <div className="ap-browser-list-empty">No tasks</div>
+                              <div className="ap-browser-list-empty">
+                                <InboxOutlined style={{ fontSize: "16px", marginRight: "6px" }} />
+                                No tasks
+                              </div>
                             ) : (
                               section.items.map((task) => (
                                 <div
@@ -2180,8 +2290,8 @@ const AssignProject = () => {
                   )}
                 </>
               ) : (
-                <div className="ap-empty-state">
-                  <Empty description="No projects found" />
+                <div className="ap-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+                  <NoDataFoundIcon  />
                 </div>
               )}
             </section>

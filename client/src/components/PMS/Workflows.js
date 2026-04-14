@@ -79,7 +79,7 @@ function Workflows() {
         <div className="edit-delete">
           { flag == true && editid == record?._id ? (
             <>
-              <Button type="link edit">
+              <Button type="link edit pe-action-btn">
                 <SaveTwoTone
                   twoToneColor="green"
                   onClick={ () => {
@@ -90,7 +90,7 @@ function Workflows() {
                 />
               </Button>
               <Button
-                type="link delete"
+                type="link delete pe-action-btn"
                 title="View"
                 onClick={ () => setEditid("") }
               >
@@ -102,7 +102,7 @@ function Workflows() {
               { (!Object.keys(record).includes("isDefault") ||
                 record?.isDefault == false) && (
                   <>
-                    <Button type="link edit">
+                    <Button type="link edit pe-action-btn">
                       <EditOutlined
                         twoToneColor="green"
                         onClick={ () => {
@@ -117,7 +117,7 @@ function Workflows() {
                       cancelText="No"
                       onConfirm={ () => handleDeleteWorkflow(record._id) }
                     >
-                      <Button type="link delete">
+                      <Button type="link delete pe-action-btn">
                         <AiOutlineDelete />
                       </Button>
                     </Popconfirm>
@@ -320,7 +320,7 @@ function Workflows() {
             WorkFlows
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={showModal}>
+            <Button className="add-btn"   type="primary" icon={<PlusOutlined />} onClick={showModal}>
               Add Workflow
             </Button>
           </div>
@@ -361,7 +361,7 @@ function Workflows() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => addform.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" onClick={() => addform.submit()}>Save</Button>,
         ]}
       >
         <Form form={addform} layout="vertical" onFinish={addWorkflowDetails}>

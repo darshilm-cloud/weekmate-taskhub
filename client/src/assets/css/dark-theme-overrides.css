@@ -83,39 +83,6 @@
   color: #475569 !important;
 }
 
-/* ── Save / primary buttons inside modals → vibrant blue ── */
-.admin-user .add-task-modal .ant-btn.ant-btn-primary,
-.admin-user .add-task-modal .ant-btn.square-primary-btn,
-.admin-user .add-list-modal .ant-btn.ant-btn-primary,
-.admin-user .add-list-modal .ant-btn.square-primary-btn,
-.admin-user .copy-task-modal .ant-btn.square-primary-btn,
-.admin-user .notes-project-modal .ant-btn.square-primary-btn,
-.admin-user .log-time-modal .ant-btn.square-primary-btn,
-.admin-user .time-for-pms-modal .ant-btn.square-primary-btn,
-.admin-user .disscusion-pop-wrapper .ant-btn.square-primary-btn,
-.admin-user .upload-modal .ant-btn.ant-btn-primary,
-.admin-user .edit-details-task-model .ant-btn.square-primary-btn,
-.admin-user .edit-details-task-model .ant-btn.ant-btn-primary {
-  background: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
-}
-
-.admin-user .add-task-modal .ant-btn.ant-btn-primary:hover,
-.admin-user .add-task-modal .ant-btn.square-primary-btn:hover,
-.admin-user .add-list-modal .ant-btn.ant-btn-primary:hover,
-.admin-user .add-list-modal .ant-btn.square-primary-btn:hover,
-.admin-user .edit-details-task-model .ant-btn.square-primary-btn:hover,
-.admin-user .edit-details-task-model .ant-btn.ant-btn-primary:hover,
-.admin-user .disscusion-pop-wrapper .ant-btn.square-primary-btn:hover,
-.admin-user .upload-modal .ant-btn.ant-btn-primary:hover {
-  background: #2563eb !important;
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-}
 
 /* ── Modal footer border & padding ── */
 .admin-user .add-task-modal .ant-modal-footer,
@@ -435,12 +402,7 @@ body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-ta
   background: #1a202c !important;
 }
 
-body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th,
-body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-thead th {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
+
 
 body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-tbody tr td,
 body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-table-container table .ant-table-tbody tr td {
@@ -1657,19 +1619,6 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 }
 
 /* ── OK / Save / Create button → blue ── */
-.admin-user .global-app-modal .ant-modal-footer .ant-btn-primary {
-  background: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
-  color: #fff !important;
-}
-.admin-user .global-app-modal .ant-modal-footer .ant-btn-primary:hover {
-  background: #2563eb !important;
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-}
 
 /* ── Form inputs inside ── */
 .admin-user .global-app-modal .ant-input,

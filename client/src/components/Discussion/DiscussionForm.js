@@ -1301,7 +1301,7 @@ function DiscussionForm() {
           <Button
             key="submit"
             type="primary"
-            className="square-primary-btn"
+            className="add-btn"
             size="large"
             onClick={ () => discussionForm.submit() }
           >

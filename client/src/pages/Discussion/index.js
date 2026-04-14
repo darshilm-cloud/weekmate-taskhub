@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination
 } from "antd";
+import InfiniteScroll from "react-infinite-scroll-component";
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
   TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined
@@ -46,7 +47,9 @@ export default function DiscussionPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [topicsError, setTopicsError] = useState("");
   const [totalTopics, setTotalTopics] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(25); // Fixed at 25 for infinite scroll
+  const [hasMore, setHasMore] = useState(true);
+  const [allTopics, setAllTopics] = useState([]); // For infinite scroll accumulation
   const bottomRef = useRef(null);
 
   // Add Topic modal
@@ -61,9 +64,15 @@ export default function DiscussionPage() {
 
   const initialLoadDone = React.useRef(false);
 
-  const fetchTopics = useCallback(async (searchVal = "") => {
-    if (initialLoadDone.current) {
-      // Don't show skeleton on search/filter — only on initial load
+  const fetchTopics = useCallback(async (searchVal = "", reset = false) => {
+    if (reset) {
+      setCurrentPage(1);
+      setAllTopics([]);
+      setHasMore(true);
+    }
+    
+    if (initialLoadDone.current && !reset) {
+      // Don't show skeleton on scroll load - only on initial load or search
     } else {
       setLoadingTopics(true);
     }
@@ -73,7 +82,7 @@ export default function DiscussionPage() {
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
         body: {
-          pageNo: currentPage,
+          pageNo: reset ? 1 : currentPage,
           limit: pageSize,
           sortBy: "desc",
           type: activeTab,
@@ -82,16 +91,34 @@ export default function DiscussionPage() {
       });
       const data = res?.data?.data;
       const meta = res?.data?.metadata;
-      setTopics(Array.isArray(data) ? data : []);
+      const newTopics = Array.isArray(data) ? data : [];
+      
+      setAllTopics(prev => {
+        const updatedTopics = reset ? newTopics : [...prev, ...newTopics];
+        
+        // Check if there are more items to load
+        const hasMoreItems = newTopics.length === pageSize && updatedTopics.length < (meta?.total || 0);
+        setHasMore(hasMoreItems);
+        
+        return updatedTopics;
+      });
+      
+      setTopics(newTopics); // For backward compatibility with existing logic
       setTotalTopics(meta?.total || 0);
+      
+      if (!reset) {
+        setCurrentPage(prev => prev + 1);
+      }
     } catch (e) {
       console.error(e);
       setTopics([]);
+      setAllTopics([]);
       const msg =
         e?.response?.data?.message ||
         e?.message ||
         "Failed to load discussions";
       setTopicsError(msg);
+      setHasMore(false);
     } finally {
       setLoadingTopics(false);
       initialLoadDone.current = true;
@@ -107,12 +134,8 @@ export default function DiscussionPage() {
   }, [search]);
 
   useEffect(() => {
-    fetchTopics(debouncedSearch);
-  }, [fetchTopics, currentPage, pageSize, activeTab, debouncedSearch]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, debouncedSearch]);
+    fetchTopics(debouncedSearch, true); // Reset on search, tab change, or initial load
+  }, [fetchTopics, activeTab, debouncedSearch]);
 
 
   const fetchComments = async (topicId, projectId, showLoader = true) => {
@@ -145,6 +168,12 @@ export default function DiscussionPage() {
         setFolderId(list[0]._id);
       }
     } catch (e) { console.error(e); }
+  };
+
+  const loadMoreTopics = () => {
+    if (hasMore && !loadingTopics) {
+      fetchTopics(debouncedSearch, false); // Don't reset, just load more
+    }
   };
 
   const selectTopic = (topic) => {
@@ -341,12 +370,12 @@ export default function DiscussionPage() {
 
         {/* Add buttons */}
         <div className="disc-add-btns">
-          <button className="disc-add-btn" onClick={() => openAdd("General")}>
+          <Button className="add-btn" type="primary" onClick={() => openAdd("General")}>
             <PlusOutlined /> Group Chat
-          </button>
-          <button className="disc-add-btn" onClick={() => openAdd("Member")}>
+          </Button>
+          <Button className="add-btn"  type="primary" onClick={() => openAdd("Member")}>
             <PlusOutlined /> Member chat
-          </button>
+          </Button>
         </div>
 
         {/* Tabs */}
@@ -360,55 +389,76 @@ export default function DiscussionPage() {
           <Input.Search placeholder="Search discussions..." value={search} onChange={(e) => setSearch(e.target.value)} allowClear className="ap-search-input" />
         </div>
 
-        {/* Topic List */}
-        <div className="disc-topic-list">
-          {topicsError ? (
-            <div className="disc-error">{topicsError}</div>
-          ) : null}
-          {filteredTopics.length === 0 ? (
-            <div className="disc-empty-topics">No {activeTab} Discussion found</div>
-          ) : (
-            filteredTopics.map((t) => {
-              const name = t.createdBy?.full_name || t.createdBy?.name || "User";
-              const initials = getInitials(name);
-              const color = getAvatarColor(name);
-              return (
-                <div
-                  key={t._id}
-                  className={`disc-topic-item${selectedTopic?._id === t._id ? " selected" : ""}`}
-                  onClick={() => selectTopic(t)}
-                >
-                  <div className="disc-topic-avatar" style={{ background: color }}>{initials}</div>
-                  <div className="disc-topic-info">
-                    <p className="disc-topic-name">{t.title}</p>
-                    <span className="disc-topic-sub">{t.project?.title || ""}</span>
-                  </div>
-                  <Popconfirm title="Delete?" onConfirm={(e) => { e.stopPropagation(); handleDeleteTopic(t._id); }} okText="Yes" cancelText="No">
-                    <button className="disc-topic-del" onClick={(e) => e.stopPropagation()}><DeleteOutlined /></button>
-                  </Popconfirm>
+        {/* Topics List with Infinite Scroll */}
+        <div className="disc-topics" id="disc-topics-container">
+          <InfiniteScroll
+            dataLength={allTopics.length}
+            next={loadMoreTopics}
+            hasMore={hasMore}
+            loader={
+              <div className="disc-loading-more">
+                <Spin size="small" />
+                <span>Loading more...</span>
+              </div>
+            }
+            scrollableTarget="disc-topics-container"
+            endMessage={
+              allTopics.length > 0 && (
+                <div className="disc-end-message">
+                  <span>No more discussions</span>
                 </div>
-              );
-            })
-          )}
+              )
+            }
+          >
+            {loadingTopics && allTopics.length === 0 ? (
+              <div className="disc-loading">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="disc-topic-skeleton">
+                    <Skeleton.Avatar active size={32} />
+                    <div className="disc-topic-skeleton-content">
+                      <Skeleton.Input active size="small" style={{ width: 120 + (i * 20), borderRadius: 4 }} />
+                      <Skeleton.Input active size="small" style={{ width: 80 + (i * 10), borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : allTopics.length === 0 && !debouncedSearch ? (
+              <div className="disc-empty">
+                <div className="disc-empty-icon">No discussions yet</div>
+                <p className="disc-empty-title">Start a conversation!</p>
+                <p className="disc-empty-sub">Create your first discussion topic.</p>
+              </div>
+            ) : allTopics.length === 0 && debouncedSearch ? (
+              <div className="disc-empty">
+                <div className="disc-empty-icon">No results</div>
+                <p className="disc-empty-title">No discussions found</p>
+                <p className="disc-empty-sub">Try adjusting your search terms.</p>
+              </div>
+            ) : (
+              allTopics.map((t, i) => {
+                const senderName = t.createdBy?.full_name || t.createdBy?.name || "Unknown";
+                const initials = getInitials(senderName);
+                const color = getAvatarColor(senderName);
+                return (
+                  <div
+                    key={t._id}
+                    className={`disc-topic${selectedTopic?._id === t._id ? " disc-topic-active" : ""}`}
+                    onClick={() => selectTopic(t)}
+                  >
+                    <div className="disc-topic-avatar" style={{ background: color }}>{initials}</div>
+                    <div className="disc-topic-info">
+                      <p className="disc-topic-name">{t.title}</p>
+                      <span className="disc-topic-sub">{t.project?.title || ""}</span>
+                    </div>
+                    <Popconfirm title="Delete?" onConfirm={(e) => { e.stopPropagation(); handleDeleteTopic(t._id); }} okText="Yes" cancelText="No">
+                      <button className="disc-topic-del" onClick={(e) => e.stopPropagation()}><DeleteOutlined /></button>
+                    </Popconfirm>
+                  </div>
+                );
+              })
+            )}
+          </InfiniteScroll>
         </div>
-
-        {/* Pagination */}
-        {totalTopics > 0 && (
-          <div className="disc-pagination">
-            <Pagination
-              size="small"
-              current={currentPage}
-              total={totalTopics}
-              pageSize={pageSize}
-              onChange={(p, s) => {
-                setCurrentPage(p);
-                setPageSize(s);
-              }}
-              showSizeChanger
-              pageSizeOptions={["10", "25", "50", "100"]}
-            />
-          </div>
-        )}
       </div>
 
       {/* Right Panel */}

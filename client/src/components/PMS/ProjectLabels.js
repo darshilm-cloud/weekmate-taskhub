@@ -270,12 +270,12 @@ function ProjectLabels() {
           { editingId === record._id ? (
             <>
               <Button
-                type="link"
+                type="link pe-action-btn"
                 onClick={ () => handleEditLabel(record._id) }
                 icon={ <SaveTwoTone style={ { fontSize: "18px" } } /> }
               />
               <Button
-                type="link"
+                type="link pe-action-btn"
                 onClick={ cancelEdit }
                 icon={ <CloseCircleTwoTone style={ { fontSize: "18px" } } /> }
               />
@@ -283,7 +283,7 @@ function ProjectLabels() {
           ) : (
             <>
               <Button
-                type="link"
+                type="link pe-action-btn"
                 onClick={ () => startEdit(record) }
                 icon={
                   <EditOutlined style={ { color: "green", fontSize: "18px" } } />
@@ -296,7 +296,7 @@ function ProjectLabels() {
                 onConfirm={ () => handleDeleteLabel(record._id) }
               >
                 <Button
-                  type="link"
+                  type="link pe-action-btn"
                   icon={
                     <AiOutlineDelete
                       style={ { color: "red", fontSize: "18px" } }
@@ -459,7 +459,7 @@ function ProjectLabels() {
             Project Labels
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={showModal}>
+            <Button className="add-btn"  type="primary"  icon={<PlusOutlined />} onClick={showModal}>
               Add Label
             </Button>
           </div>
@@ -503,7 +503,7 @@ function ProjectLabels() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => form.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()}>Save</Button>,
         ]}
       >
         <Form form={form} layout="vertical" onFinish={handleAddLabel}>

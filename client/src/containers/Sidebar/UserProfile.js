@@ -1383,7 +1383,7 @@ function UserProfile() {
                     >
                       Cancel
                     </Button>
-                    <Button type="primary" htmlType="submit" className="wm-settings__btnSave">
+                    <Button type="primary" htmlType="submit" className="add-btn">
                       Save changes
                     </Button>
                   </div>

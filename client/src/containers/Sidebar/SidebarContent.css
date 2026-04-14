@@ -794,3 +794,8 @@ body[data-theme="dark"].admin-user .ant-layout.admin .weekmate-sidebar {
 .ant-menu-submenu-popup .ant-menu-item.ant-menu-item-selected:hover {
     background: var(--wm-sidebar-active) !important;
 }
+
+/* Hide submenu arrow for Feedback menu (shows submenu on hover but no arrow icon) */
+.weekmate-sidebar .ant-menu-submenu-title .ant-menu-submenu-arrow {
+    display: none !important;
+}

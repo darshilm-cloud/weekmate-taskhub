@@ -95,20 +95,20 @@ function ManageProjectType() {
         <div style={{ display: "flex", gap: 4 }}>
           {flag && editid === record?._id ? (
             <>
-              <Button type="link" >
+              <Button type="link pe-action-btn">
                 <SaveTwoTone style={{ fontSize: 18 }} onClick={() => { handleEditProjectName(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button type="link"  onClick={() => setEditid("")}>
+              <Button type="link pe-action-btn" onClick={() => setEditid("")}>
                 <CloseCircleTwoTone style={{ fontSize: 18 }} />
               </Button>
             </>
           ) : (
             <>
-              <Button type="link" >
+              <Button type="link pe-action-btn">
                 <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this project type?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
-                <Button type="link" >
+                <Button type="link pe-action-btn">
                   <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
                 </Button>
               </Popconfirm>
@@ -226,7 +226,7 @@ function ManageProjectType() {
             Project Types
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            <Button className="add-btn"  type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
               Add Type
             </Button>
           </div>
@@ -268,7 +268,7 @@ function ManageProjectType() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => addprojectform.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => addprojectform.submit()}>Save</Button>,
         ]}
       >
         <Form form={addprojectform} layout="vertical" onFinish={handleOk}>

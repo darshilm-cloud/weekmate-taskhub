@@ -47,6 +47,7 @@
     margin-bottom: 0;
     color: var(--add-button-color, #ffffff);
 }
+.admin-user  .ant-modal-footer .ant-btn-primary:hover,
 .ant-layout .ant-layout-content .ant-btn-primary:hover,
 .btn-primary:hover,
 .ant-btn-primary:hover,
@@ -95,11 +96,15 @@
     font-weight: 500;
     display: flex;
     align-items: center;
-    height: auto;
+    height: 36px;
     background: #e0f2fe !important;
     color: #0369a1 !important;
     border: 1px solid #bae6fd !important;
     border-radius: 6px;
+    padding: 8px 16px;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
 }
 
 
@@ -204,6 +209,7 @@
     gap: 6px;
     font-weight: 500;
     font-size: 14px;
+    border-width: 1px;
 }
 
 .add-btn:hover {

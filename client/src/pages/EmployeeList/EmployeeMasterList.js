@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { Avatar, Tooltip, Select, Pagination, Button, Spin, Skeleton, Input } from "antd";
 import {
   TeamOutlined,
@@ -97,7 +98,8 @@ const EmployeeMasterList = () => {
   const [clientListPage, setClientListPage] = useState(1);
   const [sidebarSearch, setSidebarSearch] = useState("");
   const [localSearch, setLocalSearch] = useState("");
-  const sidebarPageSize = 10;
+  const sidebarPageSize = 25;
+  const [employeeInfiniteScroll, setEmployeeInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
 
 
 
@@ -107,6 +109,7 @@ const EmployeeMasterList = () => {
     setSelectedUserId(null);
     setEmployeeListPage(1);
     setEmployeeStatusFilter(segment);
+    setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
   }, []);
 
   /* ── employee favorites ── */
@@ -155,11 +158,13 @@ const EmployeeMasterList = () => {
     }
   }, [favorites]);
 
-  const fetchSidebarUsers = useCallback(async () => {
-    setSidebarLoading(true);
+  const fetchSidebarUsers = useCallback(async (skipParam = null) => {
+    const isInfiniteScroll = skipParam !== null;
+    if (!isInfiniteScroll) setSidebarLoading(true);
+    
     try {
       const body = {
-        pageNo: employeeListPage,
+        skip: isInfiniteScroll ? skipParam : 0,
         limit: sidebarPageSize,
         includeDeactivated: true,
         excludeIds: favorites,
@@ -178,9 +183,32 @@ const EmployeeMasterList = () => {
       const users = response?.data?.data || [];
       const meta = response?.data?.metadata || {};
 
-      setSidebarUsers(users);
-      setTotalEmployees(meta.total || 0);
+      if (isInfiniteScroll) {
+        // Append new users for infinite scroll
+        setSidebarUsers(prev => [...prev, ...users]);
+        const newLoadedCount = employeeInfiniteScroll.loadedCount + users.length;
+        const hasMoreData = newLoadedCount < meta.total && users.length > 0;
+        setEmployeeInfiniteScroll(prev => ({
+          ...prev,
+          skip: prev.skip + sidebarPageSize,
+          loadedCount: newLoadedCount,
+          hasMore: hasMoreData,
+          isLoadingMore: false,
+        }));
+      } else {
+        // Initial load or filter change
+        setSidebarUsers(users);
+        const hasMoreData = users.length >= sidebarPageSize && users.length < meta.total;
+        setEmployeeInfiniteScroll(prev => ({
+          ...prev,
+          skip: sidebarPageSize,
+          loadedCount: users.length,
+          hasMore: hasMoreData,
+          isLoadingMore: false,
+        }));
+      }
 
+      setTotalEmployees(meta.total || 0);
       setAnalytics(prev => ({
         ...prev,
         total: (meta.total || 0) + favorites.length,
@@ -191,11 +219,22 @@ const EmployeeMasterList = () => {
 
     } catch (e) {
       console.error("fetchSidebarUsers", e);
+      if (isInfiniteScroll) {
+        setEmployeeInfiniteScroll(prev => ({ ...prev, isLoadingMore: false }));
+      }
     } finally {
-      setSidebarLoading(false);
-      setPageLoading(false);
+      if (!isInfiniteScroll) {
+        setSidebarLoading(false);
+        setPageLoading(false);
+      }
     }
-  }, [employeeListPage, sidebarPageSize, employeeStatusFilter, favorites, sidebarSearch]);
+  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeInfiniteScroll.loadedCount]);
+
+  const onLoadMoreEmployees = useCallback(async () => {
+    if (employeeInfiniteScroll.isLoadingMore || !employeeInfiniteScroll.hasMore) return;
+    setEmployeeInfiniteScroll(prev => ({ ...prev, isLoadingMore: true }));
+    await fetchSidebarUsers(employeeInfiniteScroll.skip);
+  }, [employeeInfiniteScroll, fetchSidebarUsers]);
 
 
   /* ── fetch clients ─────────────────────────────────────────────── */
@@ -283,6 +322,7 @@ const EmployeeMasterList = () => {
         setSidebarSearch(localSearch);
         setEmployeeListPage(1);
         setClientListPage(1);
+        setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -569,7 +609,10 @@ const EmployeeMasterList = () => {
             <Select
               className="sidebar-status-filter"
               value={employeeStatusFilter}
-              onChange={setEmployeeStatusFilter}
+              onChange={(value) => {
+                setEmployeeStatusFilter(value);
+                setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+              }}
               options={[
                 { label: "All Status", value: "all" },
                 { label: "Active", value: "active" },
@@ -580,7 +623,7 @@ const EmployeeMasterList = () => {
           )}
         </div>
 
-        <div className="sidebar-user-list">
+        <div id="sidebar-user-list" className="sidebar-user-list">
           <Spin spinning={sidebarLoading || clientsLoading} tip="Loading...">
             <div style={{ minHeight: "200px" }}>
               {sidebarMode === "employees" ? (
@@ -610,29 +653,29 @@ const EmployeeMasterList = () => {
                       {favoriteUsers.length > 0 && (
                         <div className="sidebar-section-label">All Members</div>
                       )}
-                      {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      <InfiniteScroll
+                        dataLength={paginatedRegularUsers.length}
+                        next={onLoadMoreEmployees}
+                        hasMore={employeeInfiniteScroll.hasMore}
+                        loader={
+                          employeeInfiniteScroll.isLoadingMore ? (
+                            <div style={{ padding: "12px", textAlign: "center" }}>
+                              <Spin size="small" />
+                            </div>
+                          ) : null
+                        }
+                        scrollableTarget="sidebar-user-list"
+                        style={{ paddingRight: "4px" }}
+                        scrollThreshold={0.9}
+                      >
+                        {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      </InfiniteScroll>
                     </>
                   )}
 
                   {!sidebarLoading && filteredUsers.length === 0 && (
                     <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                         No employees found
-                      </div>
-                    )}
-
-                    {totalEmployees > sidebarPageSize && (
-                      <div className="sidebar-pagination">
-                        <Pagination
-                          size="small"
-                          current={employeeListPage}
-                          pageSize={sidebarPageSize}
-                          total={totalEmployees}
-                          showLessItems
-                          onChange={(page) => {
-                            setEmployeeListPage(page);
-                            document.querySelector(".sidebar-user-list")?.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                        />
                       </div>
                     )}
                   </>

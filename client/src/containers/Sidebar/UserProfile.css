@@ -516,14 +516,16 @@
 
   .setting-main-wrapper.wm-settings-modal .wm-settings__rightTop {
     display: flex;
-    align-items: center;
     gap: 10px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    flex-direction: column;
     margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid #dcecf6;
   }
-
+.setting-main-wrapper.wm-settings-modal .wm-settings__right  .wm-settings__rightTop .ant-input{
+  min-height: 18px;
+}
   .setting-main-wrapper.wm-settings-modal .wm-settings__search {
     flex: 1;
     min-width: 0;

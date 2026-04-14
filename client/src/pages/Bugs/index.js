@@ -432,7 +432,7 @@ const BugsPMS = () => {
           <Dragger { ...props }>
             <p className="ant-upload-drag-icon"></p>
             <p className="ant-upload-text">
-              <Button className="list-add-btn" icon={ <PlusOutlined /> }></Button>
+              <Button className="add-btn" icon={ <PlusOutlined /> }></Button>
               <p>Select a CSV file to import</p>
               <small>Drag a file here</small>
             </p>

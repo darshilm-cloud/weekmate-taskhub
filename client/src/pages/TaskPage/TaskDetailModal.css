@@ -452,52 +452,11 @@
   border-top: 1px solid #e8edf3;
 }
 
-.task-detail-primary-btn {
-  height: 40px;
-  border-radius: 8px;
-  padding: 0 20px;
-  font-weight: 600;
-  font-size: 13px;
-  border: none !important;
-  background: #0b3a5b !important;
-  color: #ffffff !important;
-  box-shadow: 0 3px 10px rgba(11, 58, 91, 0.3);
-  transition: all 0.2s;
-}
 
-.task-detail-primary-btn:hover,
-.task-detail-primary-btn:focus {
-  background: #082f4a !important;
-  color: #ffffff !important;
-  box-shadow: 0 5px 14px rgba(11, 58, 91, 0.4);
-}
 
-.task-detail-comment-submit {
-  /* Match primary Save button sizing */
-  height: 40px;
-  border-radius: 8px;
-  padding: 0 20px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: visible;
-  border: none !important;
-  background: #0b3a5b !important;
-  color: #ffffff !important;
-  box-shadow: 0 3px 10px rgba(11, 58, 91, 0.3);
-  transition: all 0.2s;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center;
-}
 
-.task-detail-comment-submit:hover,
-.task-detail-comment-submit:focus {
-  background: #082f4a !important;
-  color: #ffffff !important;
-  box-shadow: 0 5px 14px rgba(11, 58, 91, 0.4);
-}
+
+
 
 .task-detail-secondary-btn {
   height: 40px;

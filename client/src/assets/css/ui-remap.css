@@ -921,8 +921,6 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
 .gx-layout-content .ant-table-wrapper {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--app-border);
   background: var(--app-surface);
 }
 
@@ -1042,9 +1040,7 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   font-size: 13px !important;
 }
 
-.ant-table-wrapper .ant-pagination .ant-pagination-item a {
-  color: var(--app-text-muted) !important;
-}
+
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item:hover,
 .ant-table-wrapper .ant-pagination .ant-pagination-item:hover a {
@@ -1052,12 +1048,7 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   color: var(--app-primary) !important;
 }
 
-.ant-table-wrapper .ant-pagination .ant-pagination-item-active,
-.ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
-  background: var(--app-primary) !important;
-  border-color: var(--app-primary) !important;
-  color: #fff !important;
-}
+
 
 .ant-table-wrapper .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
 .ant-table-wrapper .ant-pagination .ant-pagination-next .ant-pagination-item-link {

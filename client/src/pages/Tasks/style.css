@@ -2347,8 +2347,7 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task {
     fill: var(--wm-task-text) !important;
 }
 
-.task-wrapper .task-sub-header .dropdown-trigger,
-.task-wrapper .filter-container .filter-btn {
+.task-wrapper .task-sub-header .dropdown-trigger {
     background: var(--wm-task-surface-2) !important;
     border: 1px solid var(--wm-task-border) !important;
     color: var(--wm-task-text) !important;
@@ -3094,8 +3093,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .ant-select-selecto
     color: #374151 !important;
 }
 
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .dropdown-trigger,
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .ant-btn:not(.ant-btn-primary):not(.ant-delete) {
+body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .dropdown-trigger {
     background: #ffffff !important;
     border-color: #d1d5db !important;
     color: #374151 !important;

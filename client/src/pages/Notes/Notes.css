@@ -3,7 +3,12 @@
   background: #f6faff;
   min-height: 100%;
 }
-
+.notes-page .ant-spin-nested-loading{
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
 .notes-page-header {
   display: flex;
   align-items: center;
@@ -239,48 +244,15 @@
   background: #fff;
 }
 
-.notes-modal-shell .ant-btn-primary,
-.notes-modal-shell .ant-modal-footer .ant-btn-primary {
-  border: none;
-  background: linear-gradient(135deg, #0a2e49, #123f63) !important;
-  box-shadow: 0 14px 26px rgba(10, 46, 73, 0.28) !important;
-}
 
-.notes-modal-shell .ant-btn-primary:hover,
-.notes-modal-shell .ant-btn-primary:focus,
-.notes-modal-shell .ant-modal-footer .ant-btn-primary:hover,
-.notes-modal-shell .ant-modal-footer .ant-btn-primary:focus {
-  background: linear-gradient(135deg, #08263d, #103654) !important;
-}
 
 .notes-modal-shell .ant-btn-primary::before,
 .notes-modal-shell .ant-modal-footer .ant-btn-primary::before {
   display: none !important;
 }
 
-.notes-modal-shell .ant-modal-footer .notes-modal-save-btn.ant-btn-primary,
-.notes-modal-shell .ant-modal-footer button.notes-modal-save-btn.ant-btn-primary {
-  background: #0a2e49 !important;
-  background-image: none !important;
-  border-color: #0a2e49 !important;
-  color: #fff !important;
-  box-shadow: 0 14px 26px rgba(10, 46, 73, 0.28) !important;
-}
 
-.notes-modal-shell .ant-modal-footer .notes-modal-save-btn.ant-btn-primary:hover,
-.notes-modal-shell .ant-modal-footer .notes-modal-save-btn.ant-btn-primary:focus,
-.notes-modal-shell .ant-modal-footer button.notes-modal-save-btn.ant-btn-primary:hover,
-.notes-modal-shell .ant-modal-footer button.notes-modal-save-btn.ant-btn-primary:focus {
-  background: #08263d !important;
-  background-image: none !important;
-  border-color: #08263d !important;
-  color: #fff !important;
-}
 
-.notes-modal-shell .ant-modal-footer .notes-modal-save-btn.ant-btn-primary::before,
-.notes-modal-shell .ant-modal-footer button.notes-modal-save-btn.ant-btn-primary::before {
-  display: none !important;
-}
 
 body.dark-theme .notes-modal-shell .ant-modal-content,
 body[data-theme="dark"] .notes-modal-shell .ant-modal-content {

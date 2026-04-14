@@ -1314,7 +1314,7 @@ function TimeForPMS() {
         <Button
           onClick={() => getTimesheetById()}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1360,7 +1360,7 @@ function TimeForPMS() {
             setPopoverVisible(false);
           }}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1399,7 +1399,7 @@ function TimeForPMS() {
         <Button
           onClick={() => getTimesheetById()}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1605,7 +1605,7 @@ function TimeForPMS() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="add-btn"
                   >
                     Add
                   </Button>
@@ -1613,7 +1613,7 @@ function TimeForPMS() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="add-btn"
                   >
                     Update
                   </Button>
@@ -2255,7 +2255,7 @@ function TimeForPMS() {
                       style={{ width: 250 }}
                       htmlType="submit"
                       type="primary"
-                      className="square-primary-btn"
+                      className="add-btn"
                     >
                       Update Logged Time Details
                     </Button>

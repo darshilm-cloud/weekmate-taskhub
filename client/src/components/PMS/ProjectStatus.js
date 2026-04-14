@@ -173,20 +173,20 @@ function ProjectStatus() {
         <div style={{ display: "flex", gap: 4 }}>
           {flag && editid === record?._id ? (
             <>
-              <Button type="link" className="btn-secondary">
+              <Button type="link" className="btn-secondary pe-action-btn">
                 <SaveTwoTone onClick={() => { handleEdit(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button type="link" className="btn-secondary" onClick={() => setEditid("")}>
+              <Button type="link" className="btn-secondary pe-action-btn" onClick={() => setEditid("")}>
                 <CloseCircleTwoTone />
               </Button>
             </>
           ) : (
             <>
-              <Button disabled={record.isDefault} type="link" className="btn-secondary">
+              <Button disabled={record.isDefault} type="link" className="btn-secondary pe-action-btn">
                 <EditOutlined onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
-                <Button disabled={record.isDefault} type="link" className="ant-delete">
+                <Button disabled={record.isDefault} type="link" className="pe-action-btn">
                   <AiOutlineDelete />
                 </Button>
               </Popconfirm>
@@ -207,7 +207,7 @@ function ProjectStatus() {
             Project Status
           </h2>
           <div className="ps-header-right">
-            <Button className="btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
               Add Status
             </Button>
           </div>
@@ -252,7 +252,7 @@ function ProjectStatus() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => addProjectStatus.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => addProjectStatus.submit()}>Save</Button>,
         ]}
       >
         <Form form={addProjectStatus} layout="vertical" onFinish={handleOk}>

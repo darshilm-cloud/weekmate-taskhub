@@ -14,7 +14,6 @@
 .ps-card {
   background: #fff;
   border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(11, 58, 91, 0.08);
   border: 1px solid #e8edf3;
   overflow: hidden;
 }
@@ -58,29 +57,6 @@
   gap: 10px;
 }
 
-/* ── Primary button (sidebar colour) ── */
-.ps-btn-primary {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px !important;
-  background: #0b3a5b !important;
-  border-color: #0b3a5b !important;
-  border-radius: 8px !important;
-  color: #fff !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
-  transition: background 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.ps-btn-primary:hover,
-.ps-btn-primary:focus {
-  background: #0e4a73 !important;
-  border-color: #0e4a73 !important;
-  box-shadow: 0 3px 10px rgba(11, 58, 91, 0.35) !important;
-}
 
 /* ── Search input ── */
 .ps-search {
@@ -122,15 +98,6 @@
   box-shadow: none !important;
 }
 
-.ps-search .ant-btn-icon-only.ant-input-search-button {
-  border: none !important;
-  border-left: 1px solid #d8e3ee !important;
-  border-radius: 0 !important;
-  background: #0b3a5b !important;
-  color: #fff !important;
-  height: 36px;
-  width: 36px;
-}
 
 /* ── Table body ── */
 .ps-table-wrap {
@@ -174,28 +141,15 @@
 .ps-table-wrap .ant-table-wrapper .ant-pagination {
   padding: 8px 16px;
 }
-
-.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active {
-  background: #0a2e49 !important;
-  border-color: #0a2e49 !important;
+.block-table-content.new-block-table .ant-table-pagination.ant-pagination,
+.ps-table-wrap .ant-table-wrapper .ant-table-pagination.ant-pagination, .ps-table-wrap .ant-table-wrapper .ant-pagination{
+border: none !important; 
+margin-bottom: 0 !important;
 }
 
-.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
-  color: #ffffff !important;
-}
 
-.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active:hover,
-.ps-table-wrap .ant-table-wrapper .ant-pagination .ant-pagination-item-active:focus {
-  background: #08263d !important;
-  border-color: #08263d !important;
-}
 
-.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active,
-.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:hover,
-.workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:focus {
-  background: #0a2e49 !important;
-  border-color: #0a2e49 !important;
-}
+
 
 .workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active a,
 .workflow-container .ant-pagination .ant-pagination-item.ant-pagination-item-active:hover a,
@@ -298,8 +252,6 @@ body[data-theme="dark"] .ps-skeleton-row {
 }
 
 .ps-modal .ant-modal-header {
-  padding: 18px 24px 14px !important;
-  border-bottom: 1px solid #edf0f4 !important;
   background: linear-gradient(135deg, #f8fafc 0%, #eef3f9 100%) !important;
 }
 
@@ -365,23 +317,9 @@ body[data-theme="dark"] .ps-skeleton-row {
   color: #0b3a5b !important;
 }
 
-/* Modal save button */
-.ps-modal .ps-modal-save {
-  height: 36px;
-  padding: 0 20px;
-  border-radius: 8px !important;
-  background: #0b3a5b !important;
-  border-color: #0b3a5b !important;
-  color: #fff !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
-}
 
-.ps-modal .ps-modal-save:hover {
-  background: #0e4a73 !important;
-  border-color: #0e4a73 !important;
-}
+
+
 
 /* ══════════════════════════════════════════
    Legacy class passthrough (keeps older

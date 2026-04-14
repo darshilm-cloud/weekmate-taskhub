@@ -306,53 +306,36 @@ const ProjectExpensesForm = () => {
 
   /* ── Render ──────────────────────────────────────────────── */
   return (
-    <div className="cad-page">
-
-      {/* Header */}
-      <div className="cad-info-card">
-        <div className="cad-info-icon">
-          <DollarCircleOutlined />
-        </div>
-        <div className="cad-info-body">
-          <h1 className="cad-info-title" style={{ marginBottom: 0 }}>
+    <div className="ps-page">
+      <div className="ps-card">
+        {/* Header */}
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon"><DollarCircleOutlined /></span>
             {isEdit ? "Edit Project Expense" : "Add Project Expense"}
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
-            {isEdit
-              ? "Update the expense details below"
-              : "Fill in the details to add a new expense"}
-          </p>
-        </div>
-        <button
-          className="cad-btn"
-          onClick={() => history.push(`/${companySlug}/projectexpense`)}
-          style={{ marginLeft: "auto" }}
-        >
-          <ArrowLeftOutlined /> Back to Expenses
-        </button>
-      </div>
-
-      {/* Form Card */}
-      <div className="cad-section">
-        <div className="cad-section-header">
-          <div className="cad-section-title">
-            <span className="cad-section-icon"><DollarCircleOutlined /></span>
-            Expense Information
+          </h2>
+          <div className="ps-header-right">
+            <button
+              className="add-btn"
+              onClick={() => history.push(`/${companySlug}/projectexpense`)}
+            >
+              <ArrowLeftOutlined /> Back to Expenses
+            </button>
           </div>
         </div>
 
-        <div className="cad-section-body">
+        <div className="ps-form-wrap">
           <Form
             form={form}
             layout="vertical"
-            className="cad-status-form"
+            className="ps-form"
             onFinish={handleSubmit}
             onValuesChange={(changed) => {
               if (changed.status    !== undefined) updateState({ isPaid:      changed.status === "Paid" });
               if (changed.is_recuring !== undefined) updateState({ isRecurring: changed.is_recuring });
             }}
           >
-            <div className="cad-form-grid">
+            <div className="ps-form-grid">
 
               {/* Project */}
               <Form.Item
@@ -479,7 +462,7 @@ const ProjectExpensesForm = () => {
               <>
                 <div style={{ borderTop: "1px solid #f1f5f9", margin: "8px 0 20px" }} />
 
-                <div className="cad-form-grid">
+                <div className="ps-form-grid">
                   {canEditStatus && (
                     <Form.Item label="Status" name="status">
                       <Select
@@ -579,14 +562,14 @@ const ProjectExpensesForm = () => {
             )}
 
             {/* Actions */}
-            <div className="cad-form-actions">
-              <button type="submit" className="cad-btn primary">
+            <div className="ps-form-actions">
+              <button type="submit" className="add-btn">
                 <CheckCircleOutlined />
                 {isEdit ? "Update" : "Submit"}
               </button>
               <button
                 type="button"
-                className="cad-btn"
+                className="ps-btn-secondary"
                 onClick={() => history.push(`/${companySlug}/projectexpense`)}
               >
                 Cancel
@@ -595,7 +578,6 @@ const ProjectExpensesForm = () => {
           </Form>
         </div>
       </div>
-
     </div>
   );
 };

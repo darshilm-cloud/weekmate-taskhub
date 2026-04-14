@@ -585,8 +585,29 @@
 .ap-browser-project-list {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #ffffff;
+  height: 600px;
+  flex-shrink: 0;
+}
+
+.ap-browser-project-list-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ap-list-view {
+  list-style: none;
+}
+
+.infinite-scroll-component {
+  max-height: calc(100dvh - 295px);
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ap-browser-project-list-head {
@@ -1083,6 +1104,10 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
   padding: 12px;
   color: #94a3b8;
   border-top: 1px solid #eef2f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }
 
 .ap-browser-task-name {
@@ -1368,7 +1393,12 @@ body[data-theme="dark"] .ap-browser-status-label {
 .ap-grid-section {
   width: 100%;
 }
-
+.ap-grid-section {
+    width: 100%;
+    height: calc(100dvh - 195px);
+    display: flex;
+    flex-direction: column;
+}
 .ap-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1380,7 +1410,7 @@ overflow: auto;
   overflow: auto;
 }
 .page-project-list  .ap-grid-pagination{
-  margin-top: 0;
+  margin-top:  auto;
 }
 .page-project-list  .ap-grid-pagination .ant-pagination{
   width: 100%;
@@ -1634,12 +1664,19 @@ fill: rgb(46, 125, 50);
 
 .ap-empty-state {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 300px;
   background: #fff;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
+}
+
+.ap-empty-icon {
+  font-size: 48px;
+  color: #cbd5e1;
+  margin-bottom: 16px;
 }
 
 /* ── Pagination ───────────────────────────────────────────── */

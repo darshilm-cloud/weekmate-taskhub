@@ -992,7 +992,7 @@ export default function AddTaskModal({
             <div className="task-detail-topbar-left">
               <div className="task-detail-status-text">NEW TASK</div>
             </div>
-            <div className="task-detail-topbar-actions">
+            {/* <div className="task-detail-topbar-actions">
               <Button
                 className="task-detail-icon-btn"
                 type="text"
@@ -1027,7 +1027,7 @@ export default function AddTaskModal({
                 onClick={onCancel}
                 title="Close"
               />
-            </div>
+            </div> */}
           </div>
 
           <Form.Item
@@ -1473,7 +1473,7 @@ export default function AddTaskModal({
           {/* Footer Actions */}
           <div className="task-detail-modal-footer-actions">
             <Button
-              className="task-detail-primary-btn"
+              className="add-btn"
               type="primary"
               onClick={handleSubmit}
               loading={loading}

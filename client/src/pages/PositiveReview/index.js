@@ -26,16 +26,16 @@ import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 
 /* ── constants ─────────────────────────────────────────────── */
-const companySlug  = localStorage.getItem("companyDomain");
+const companySlug = localStorage.getItem("companyDomain");
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
-const ADMIN_ROLES  = ["Admin", "PC", "Admin", "AM"];
+const ADMIN_ROLES = ["Admin", "PC", "Admin", "AM"];
 
 const FEEDBACK_TYPES = [
   { value: "", label: "All Types" },
-  { value: "Clutch Review",        label: "Clutch Review" },
-  { value: "Video Testimonial",    label: "Video Testimonial" },
-  { value: "Text Testimonial",     label: "Text Testimonial" },
-  { value: "Feedback",             label: "Feedback" },
+  { value: "Clutch Review", label: "Clutch Review" },
+  { value: "Video Testimonial", label: "Video Testimonial" },
+  { value: "Text Testimonial", label: "Text Testimonial" },
+  { value: "Feedback", label: "Feedback" },
   { value: "Zoho Partner Profile", label: "Zoho Partner Profile" },
 ];
 
@@ -43,11 +43,11 @@ const FEEDBACK_TYPES = [
 const typeBadgeClass = (type = "") => {
   if (!type) return "default";
   const t = type.toLowerCase();
-  if (t.includes("clutch"))   return "clutch";
-  if (t.includes("video"))    return "video";
-  if (t.includes("text"))     return "text";
+  if (t.includes("clutch")) return "clutch";
+  if (t.includes("video")) return "video";
+  if (t.includes("text")) return "text";
   if (t.includes("feedback")) return "feedback";
-  if (t.includes("zoho"))     return "zoho";
+  if (t.includes("zoho")) return "zoho";
   return "default";
 };
 
@@ -72,26 +72,26 @@ const PositiveReview = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20 });
   const [allReviews, setAllReviews] = useState([]);
 
-  const [selectedProject,    setSelectedProject]    = useState([]);
-  const [technology,         setTechnology]         = useState([]);
-  const [manager,            setManager]            = useState([]);
-  const [accontManager,      setAccountManager]     = useState([]);
+  const [selectedProject, setSelectedProject] = useState([]);
+  const [technology, setTechnology] = useState([]);
+  const [manager, setManager] = useState([]);
+  const [accontManager, setAccountManager] = useState([]);
   const [feedBackTypeFilter, setFeedBackTypeFilter] = useState("");
 
-  const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerRecord, setDrawerRecord] = useState(null);
   const [tableLoading, setTableLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
-  const canAddReview  = useMemo(() => getRoles(ADMIN_ROLES),  []);
+  const canAddReview = useMemo(() => getRoles(ADMIN_ROLES), []);
 
   /* ── fetch all for analytics ── */
   const fetchAllForAnalytics = useCallback(async () => {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.getReviewList,
+        api_url: Service.getReviewList,
         body: { pageNo: 1, limit: 1000 },
       });
       if (response?.data?.data) setAllReviews(response.data.data);
@@ -105,15 +105,15 @@ const PositiveReview = () => {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.getReviewList,
+        api_url: Service.getReviewList,
         body: {
-          pageNo:         pagination.current,
-          limit:          pagination.pageSize,
-          project_id:     selectedProject,
+          pageNo: pagination.current,
+          limit: pagination.pageSize,
+          project_id: selectedProject,
           technology,
-          manager_id:     manager,
+          manager_id: manager,
           acc_manager_id: accontManager,
-          feedback_type:  feedBackTypeFilter,
+          feedback_type: feedBackTypeFilter,
         },
       });
       dispatch(hideAuthLoader());
@@ -135,7 +135,7 @@ const PositiveReview = () => {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.deleteMethod,
-        api_url:    Service.deleteReview + `/${id}`,
+        api_url: Service.deleteReview + `/${id}`,
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
@@ -150,11 +150,11 @@ const PositiveReview = () => {
   }, [dispatch, getReviewList, fetchAllForAnalytics]);
 
   useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
-  useEffect(() => { getReviewList(); },       [getReviewList]);
+  useEffect(() => { getReviewList(); }, [getReviewList]);
 
   /* ── analytics ── */
   const analytics = useMemo(() => {
-    const total     = allReviews.length;
+    const total = allReviews.length;
     const ndaSigned = allReviews.filter((r) => r.client_nda_sign).length;
     const thisMonth = allReviews.filter((r) =>
       moment(r.createdAt).isSame(moment(), "month")
@@ -179,33 +179,33 @@ const PositiveReview = () => {
   }, [allReviews]);
 
   const isDark = document.body.classList.contains("dark-theme") ||
-                 document.body.getAttribute("data-theme") === "dark";
-  const chartTextColor  = isDark ? "#ffffff" : "#64748b";
-  const chartGridColor  = isDark ? "#1e3352" : "#f1f5f9";
+    document.body.getAttribute("data-theme") === "dark";
+  const chartTextColor = isDark ? "#ffffff" : "#64748b";
+  const chartGridColor = isDark ? "#1e3352" : "#f1f5f9";
 
-  const donutSeries  = Object.values(analytics.typeMap);
-  const donutLabels  = Object.keys(analytics.typeMap);
+  const donutSeries = Object.values(analytics.typeMap);
+  const donutLabels = Object.keys(analytics.typeMap);
   const donutOptions = useMemo(() => ({
-    chart:       { type: "donut", fontFamily: "inherit" },
-    labels:      donutLabels.length ? donutLabels : ["No Data"],
-    colors:      ["#2563eb", "#7c3aed", "#16a34a", "#ea580c", "#dc2626", "#0891b2"],
-    legend:      { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
+    chart: { type: "donut", fontFamily: "inherit" },
+    labels: donutLabels.length ? donutLabels : ["No Data"],
+    colors: ["#2563eb", "#7c3aed", "#16a34a", "#ea580c", "#dc2626", "#0891b2"],
+    legend: { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
     plotOptions: { pie: { donut: { size: "65%" } } },
-    dataLabels:  { enabled: false },
-    stroke:      { width: 0 },
-    tooltip:     { y: { formatter: (v) => `${v} reviews` } },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    tooltip: { y: { formatter: (v) => `${v} reviews` } },
   }), [donutLabels, chartTextColor]);
 
-  const barSeries  = [{ name: "Reviews", data: Object.values(analytics.monthlyMap) }];
+  const barSeries = [{ name: "Reviews", data: Object.values(analytics.monthlyMap) }];
   const barOptions = useMemo(() => ({
-    chart:       { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
-    colors:      ["#2563eb"],
-    xaxis:       { categories: Object.keys(analytics.monthlyMap), labels: { style: { colors: chartTextColor, fontSize: "11px" } } },
-    yaxis:       { labels: { style: { colors: chartTextColor, fontSize: "11px" } }, tickAmount: 3 },
-    dataLabels:  { enabled: false },
-    grid:        { borderColor: chartGridColor },
-    tooltip:     { y: { formatter: (v) => `${v} reviews` } },
+    colors: ["#2563eb"],
+    xaxis: { categories: Object.keys(analytics.monthlyMap), labels: { style: { colors: chartTextColor, fontSize: "11px" } } },
+    yaxis: { labels: { style: { colors: chartTextColor, fontSize: "11px" } }, tickAmount: 3 },
+    dataLabels: { enabled: false },
+    grid: { borderColor: chartGridColor },
+    tooltip: { y: { formatter: (v) => `${v} reviews` } },
   }), [analytics.monthlyMap, chartTextColor, chartGridColor]);
 
   /* ── filter handler ── */
@@ -216,16 +216,16 @@ const PositiveReview = () => {
       setPagination((p) => ({ ...p, current: 1 }));
       return;
     }
-    if (skipParams.includes("skipProject"))        setSelectedProject([]);
-    if (skipParams.includes("skipDepartment"))     setTechnology([]);
-    if (skipParams.includes("skipManager"))        setManager([]);
+    if (skipParams.includes("skipProject")) setSelectedProject([]);
+    if (skipParams.includes("skipDepartment")) setTechnology([]);
+    if (skipParams.includes("skipManager")) setManager([]);
     if (skipParams.includes("skipAccountManager")) setAccountManager([]);
-    if (skipParams.includes("skipFeedbackType"))   setFeedBackTypeFilter("");
+    if (skipParams.includes("skipFeedbackType")) setFeedBackTypeFilter("");
     if (selectedFilters) {
-      setSelectedProject(selectedFilters.project        || []);
-      setTechnology(selectedFilters.technology           || []);
-      setManager(selectedFilters.manager                 || []);
-      setAccountManager(selectedFilters.accountManager   || []);
+      setSelectedProject(selectedFilters.project || []);
+      setTechnology(selectedFilters.technology || []);
+      setManager(selectedFilters.manager || []);
+      setAccountManager(selectedFilters.accountManager || []);
       setFeedBackTypeFilter(selectedFilters.feedbackType || "");
       setPagination((p) => ({ ...p, current: 1 }));
     }
@@ -342,9 +342,9 @@ const PositiveReview = () => {
         {canAddReview && (
           <div className="pr-header-actions">
             <Link to={`/${companySlug}/add/positiveReviewForm`}  >
-            <Button type="primary">
-              <PlusOutlined /> Add Review
-            </Button>
+              <Button type="primary">
+                <PlusOutlined /> Add Review
+              </Button>
             </Link>
           </div>
         )}
@@ -352,10 +352,10 @@ const PositiveReview = () => {
 
       {/* Stats */}
       <div className="pr-stats-grid">
-        <StatCard icon={<StarOutlined />}        label="Total Reviews"  value={analytics.total}                         color="blue"   />
-        <StatCard icon={<LikeOutlined />}        label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="green"  />
-        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed"     value={analytics.ndaSigned}                     color="orange" />
-        <StatCard icon={<CalendarOutlined />}    label="This Month"     value={analytics.thisMonth}                     color="purple" />
+        <StatCard icon={<StarOutlined />} label="Total Reviews" value={analytics.total} color="blue" />
+        <StatCard icon={<LikeOutlined />} label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="green" />
+        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed" value={analytics.ndaSigned} color="orange" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
       </div>
 
       {/* Charts */}
@@ -398,24 +398,26 @@ const PositiveReview = () => {
               onFilterChange={onFilterChange}
               containerClassName="pr-filter-container"
               triggerButtonClassName="pr-filter-trigger"
+              className="filter-btn"
             />
           </div>
         </div>
-
-        <Table
-          loading={tableLoading}
-          columns={columns}
-          dataSource={reviewList}
-          rowKey="_id"
-          pagination={{
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "30"],
-            showTotal: (total) => `Total ${total} reviews`,
-            ...pagination,
-          }}
-          onChange={(page) => setPagination((p) => ({ ...p, ...page }))}
-          scroll={{ x: 900 }}
-        />
+        <div className="main-table-wrapper">
+          <Table
+            loading={tableLoading}
+            columns={columns}
+            dataSource={reviewList}
+            rowKey="_id"
+            pagination={{
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "30"],
+              showTotal: (total) => `Total ${total} reviews`,
+              ...pagination,
+            }}
+            onChange={(page) => setPagination((p) => ({ ...p, ...page }))}
+            scroll={{ x: 900 }}
+          />
+        </div>
       </div>
 
       {/* Detail Drawer */}

@@ -134,7 +134,8 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
         </Button>,
         <Button
           key="save"
-          className="upm-save-btn"
+          className="add-btn"
+          type="primary"
           loading={saving || uploading}
           onClick={() => form.submit()}
         >

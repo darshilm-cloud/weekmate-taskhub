@@ -579,7 +579,7 @@ export default function CompanyManagement() {
           <Button key="cancel" className="cm-modal-cancel" onClick={handleModalClose} disabled={modalLoading}>
             Cancel
           </Button>,
-          <Button key="save" className="cm-modal-save" loading={modalLoading} onClick={handleSave}>
+          <Button key="save" className="add-btn" type="primary" loading={modalLoading} onClick={handleSave}>
             Save Changes
           </Button>,
         ]}

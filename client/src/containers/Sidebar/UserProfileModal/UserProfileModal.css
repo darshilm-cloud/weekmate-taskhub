@@ -178,21 +178,6 @@
   color: #0b3a5b !important;
 }
 
-.upm-save-btn.ant-btn {
-  height: 36px;
-  padding: 0 22px;
-  border-radius: 8px !important;
-  background: #0b3a5b !important;
-  border-color: #0b3a5b !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
-}
-
-.upm-save-btn.ant-btn:hover {
-  background: #0e4a73 !important;
-  border-color: #0e4a73 !important;
-}
 
 /* Dark theme */
 body.dark-theme .upm-modal .ant-modal-content,

@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars, eqeqeq, no-useless-escape */
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import NoDataFoundIcon from '../../components/common/NoDataFoundIcon';
 import './MiraAI.css';
 
 
@@ -862,7 +863,12 @@ const MiraAI = () => {
         if (!response) return null;
 
         if (response.type === 'empty') {
-            return <p className="no-data-message">No data found</p>;
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                    <NoDataFoundIcon  />
+                    <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                </div>
+            );
         }
 
         // In renderResponse function, add this condition after the documents check:
@@ -870,7 +876,12 @@ const MiraAI = () => {
         if (response.type === 'policies') {
             const data = response.content;
             if (!data || data?.length === 0) {
-                return <p className="no-data-message">No data found</p>;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                        <NoDataFoundIcon  />
+                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                    </div>
+                );
             }
             return (
                 <div className="documents-grid">
@@ -919,7 +930,12 @@ const MiraAI = () => {
         if (response.type === 'documents') {
             const data = response.content;
             if (!data || data?.length === 0) {
-                return <p className="no-data-message">No data found</p>;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                        <NoDataFoundIcon  />
+                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                    </div>
+                );
             }
             return (
                 <div className="documents-grid">
@@ -1092,12 +1108,20 @@ const MiraAI = () => {
                                         <p>{chat.question}</p>
                                     </div>
                                     <div className="chat-answer">
-                                        {chat.response.type === 'empty' && <p className="no-data-message">No data found</p>}
+                                        {chat.response.type === 'empty' && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                <NoDataFoundIcon  />
+                                                <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                            </div>
+                                        )}
 
                                         {chat.response.type === 'policies' && (
                                             <>
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="documents-grid">
                                                         {chat.response.content.map((policy, idx) => (
@@ -1134,7 +1158,10 @@ const MiraAI = () => {
                                         {chat.response.type === 'apihits' && (
                                             <>
                                                 {!chat.response.content ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="apihit-message">
                                                         <p>{chat.response.content.message}</p>
@@ -1146,7 +1173,10 @@ const MiraAI = () => {
                                         {chat.response.type === 'documents' && (
                                             <>
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="documents-grid">
                                                         {chat.response.content.map((doc, idx) => (

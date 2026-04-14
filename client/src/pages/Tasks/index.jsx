@@ -34,6 +34,7 @@ import { useParams, useLocation, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import dayjs from "dayjs";
 import moment from "moment";
 import queryString from "query-string";
@@ -2688,7 +2689,7 @@ const TasksPMS = ({ flag }) => {
             <div className="add-project-wrapper">
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button className="add-btn ant-btn-primary">
+                  <Button className="add-btn ant-btn-primary"  type="primary">
                     <PlusOutlined className="add-btn-leading-icon" />
                     <span>Add</span>
                     <DownOutlined className="add-btn-trailing-icon" />
@@ -3084,12 +3085,14 @@ const TasksPMS = ({ flag }) => {
                 </div>
               </div>
             ) : projectMianTask.length === 0 ? (
-              <div className="error-message">
-                <p>No Data</p>
+              <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+                <NoDataFoundIcon  />
+                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No Data</p>
               </div>
             ) : !hasVisibleTasks ? (
-              <div className="error-message">
-                <p>No task found</p>
+              <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+                <NoDataFoundIcon  />
+                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No task found</p>
               </div>
             ) : null}
             {isLoadingTasksPage || isTasksLoading || projectMianTask.length === 0 ? null : selectedView === "board" ? (

@@ -27,6 +27,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import AddTaskModal from "../Tasks/AddTaskModal";
 
 const Dashboard = () => {
@@ -1420,7 +1421,10 @@ const Dashboard = () => {
               })}
             </div>
           ) : (
-            <div className="db-empty-state">No projects found</div>
+            <div className="db-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+              <NoDataFoundIcon width={120} height={96} />
+             
+            </div>
           )}
         </div>
 

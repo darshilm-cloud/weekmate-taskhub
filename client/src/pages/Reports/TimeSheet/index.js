@@ -30,7 +30,7 @@ import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
 import { TimesheetSkeleton } from "../../../components/common/SkeletonLoader";
-import NoDataFoundSvg from "../../../assets/images/no-data-found.svg";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 
 dayjs.extend(quarterOfYear);
 const { RangePicker } = DatePicker;
@@ -720,7 +720,7 @@ const TimeSheet = () => {
 
   const NoDataFound = React.memo(() => (
     <div className="timesheet-no-data">
-      <img src={NoDataFoundSvg} alt="" className="timesheet-no-data-img" />
+      <NoDataFoundIcon width={125} height={100} />
       <p className="timesheet-no-data-title">No data found</p>
       <p className="timesheet-no-data-hint">
         Try adjusting your date range or filters to see timesheet entries.
@@ -837,7 +837,7 @@ const TimeSheet = () => {
                 }
                 pagination={{
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "30", "50"],
+                  pageSizeOptions: ["10", "20", "30"],
                   showTotal: showTotal,
                   showQuickJumper: true,
                   ...pagination,

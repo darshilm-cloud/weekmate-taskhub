@@ -17,6 +17,7 @@ import {
 } from "@ant-design/icons";
 import PermissionModuleController from "./PermissionModuleController";
 import { PermissionPageSkeleton } from "../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./PermissionModule.css";
 
 /* ─── Role avatar colours (deterministic from name) ────────────── */
@@ -363,8 +364,11 @@ const PermissionModule = () => {
                 <tbody>
                   {matrixRows.length === 0 ? (
                     <tr>
-                      <td colSpan={ACTION_COLUMNS.length + 1} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                        No permissions found for this role
+                      <td colSpan={ACTION_COLUMNS.length + 1} style={{ textAlign: "center", padding: "40px" }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <NoDataFoundIcon  />
+                          <span style={{ marginTop: 12, color: "#94a3b8", fontSize: 14 }}>No permissions found for this role</span>
+                        </div>
                       </td>
                     </tr>
                   ) : (

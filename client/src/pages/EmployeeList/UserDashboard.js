@@ -532,7 +532,7 @@ const UserDashboard = ({ user }) => {
       {/* ── Action Bar ── */}
       <div className="ud-header">
         <div className="ud-header-spacer" />
-        <Button className="ud-add-task-btn"    type="primary" onClick={() => setAddModalOpen(true)}>
+        <Button className="add-btn" type="primary" onClick={() => setAddModalOpen(true)}>
           <PlusOutlined />
           Add Task
         </Button>

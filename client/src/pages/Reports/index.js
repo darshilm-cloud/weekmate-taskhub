@@ -790,7 +790,7 @@ const renderChart = useCallback(
               pagination={{
                 position: ["bottomCenter"],
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30", "50"],
+                pageSizeOptions: ["10", "20", "30"],
                 showTotal: showTotal,
                 showQuickJumper: true,
                 responsive: true,
@@ -1502,7 +1502,7 @@ export default React.memo(ProjectsRunning);
 //               rowKey="_id"
 //               pagination={{
 //                 showSizeChanger: true,
-//                 pageSizeOptions: ["10", "20", "30", "50"],
+//                 pageSizeOptions: ["10", "20", "30"],
 //                 showTotal: showTotal,
 //                 showQuickJumper: true,
 //                 ...pagination,
@@ -2336,7 +2336,7 @@ export default React.memo(ProjectsRunning);
 //               rowKey="_id"
 //               pagination={{
 //                 showSizeChanger: true,
-//                 pageSizeOptions: ["10", "20", "30", "50"],
+//                 pageSizeOptions: ["10", "20", "30"],
 //                 showTotal: showTotal,
 //                 showQuickJumper: true,
 //                 ...pagination,

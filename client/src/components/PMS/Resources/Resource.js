@@ -122,7 +122,7 @@ function Resource() {
             Resources
           </h2>
           <div className="ps-header-right">
-            <Button className="ps-btn-primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            <Button className="add-btn"  type="primary"  typeof="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
               Add Resource
             </Button>
           </div>
@@ -164,7 +164,7 @@ function Resource() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="ps-modal-save" onClick={() => addprojectTech.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" onClick={() => addprojectTech.submit()}>Save</Button>,
         ]}
       >
         <Form form={addprojectTech} layout="vertical" onFinish={handleOk}>

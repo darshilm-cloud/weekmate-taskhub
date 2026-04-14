@@ -2,6 +2,7 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import moment from "moment";
 import { Button, Tooltip } from "antd";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import "./gantt.css";
 
 const BASE_DAY_PX = 18;
@@ -219,7 +220,9 @@ export default function TasksGanttView({
 
   if (sections.length === 0) return (
     <div className="gt-empty">
-      <span className="gt-empty-ico"><i className="fa-regular fa-calendar-xmark" /></span>
+      <div style={{ marginBottom: 16 }}>
+        <NoDataFoundIcon  />
+      </div>
       <strong>{activeFilterCount > 0 ? "No tasks match current filters" : "No tasks to display"}</strong>
       <p>
         {activeFilterCount > 0

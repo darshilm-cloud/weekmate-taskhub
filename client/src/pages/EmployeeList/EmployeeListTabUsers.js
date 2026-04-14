@@ -648,7 +648,7 @@ const CombinedEmployeeList = ({
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: ["10", "20", "30"],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}

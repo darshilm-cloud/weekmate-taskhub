@@ -412,7 +412,7 @@ function CalendarPMS() {
               <Form.Item label="Attendees" className="subscriber-btn">
                 {!showSelectEvent && (
                   <Button
-                    className="list-add-btn"
+                    className="add-btn"
                     icon={<PlusOutlined />}
                     onClick={handleButtonEvent}
                   ></Button>
@@ -581,7 +581,7 @@ function CalendarPMS() {
               <Form.Item label="Attendees" className="subscriber-btn">
                 {!showSelectMilestone && (
                   <Button
-                    className="list-add-btn"
+                    className="add-btn"
                     icon={<PlusOutlined />}
                     onClick={handleButtonMilestone}
                   ></Button>
@@ -802,7 +802,7 @@ function CalendarPMS() {
                         <div className="flex-table">
                           {!showSelectTask && (
                             <Button
-                              className="list-add-btn"
+                              className="add-btn"
                               icon={<PlusOutlined />}
                               onClick={handleButtonTask}
                             ></Button>

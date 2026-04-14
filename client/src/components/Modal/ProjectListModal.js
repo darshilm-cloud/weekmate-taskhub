@@ -8,6 +8,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { Link, useHistory } from "react-router-dom";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import "./ProjectListModal.css";
 
 const ProjectListModal = ({
@@ -262,8 +263,7 @@ const ProjectListModal = ({
             </div>
           ) : (
             <div className="plm-empty">
-              <FolderOutlined className="plm-empty-icon" />
-              <p>No projects found</p>
+              <NoDataFoundIcon />
             </div>
           )}
         </div>

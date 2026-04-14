@@ -44,7 +44,10 @@ body .ant-pagination {
 body .ant-table-wrapper .ant-table-pagination.ant-pagination {
   margin-top: 16px !important;
 }
-
+body .ant-table-wrapper .ant-table + .ant-table-pagination.ant-pagination{
+  border: none !important;
+  padding: 0 20px !important;
+}
 body .ant-table-wrapper .ant-table-pagination-left {
   margin-right: auto !important;
 }
@@ -111,6 +114,7 @@ body .ant-pagination .ant-pagination-item-active:focus-within {
   background: var(--wm-pagination-active-bg) !important;
   border-color: var(--wm-pagination-active-bg) !important;
   transform: none !important;
+  color: #fff;
 }
 
 body .ant-pagination .ant-pagination-item-active a,
