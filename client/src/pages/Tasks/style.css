@@ -3095,7 +3095,6 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .ant-select-selecto
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .dropdown-trigger,
-body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .filter-btn,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .ant-btn:not(.ant-btn-primary):not(.ant-delete) {
     background: #ffffff !important;
     border-color: #d1d5db !important;

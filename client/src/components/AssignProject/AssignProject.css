@@ -189,7 +189,7 @@
 .ap-search-input .ant-input-affix-wrapper
 .ap-search-input .ant-input-affix-wrapper:hover,
 .ap-search-input .ant-input-affix-wrapper:focus-within {
-  border-color: #2563eb;
+  border-color: #038fde;
   background: #fff;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
@@ -211,7 +211,7 @@
 
 .ap-status-select.ant-select-open .ant-select-selector,
 .ap-status-select .ant-select-selector:hover {
-  border-color: #2563eb !important;
+  border-color: #038fde !important;
   background: #fff !important;
 }
 
@@ -267,21 +267,21 @@
 }
 
 .ap-date-trigger:hover {
-  color: #2563eb;
+  color: #038fde;
   background: #eff6ff;
-  border-color: #2563eb;
+  border-color: #038fde;
 }
 
 .ap-date-trigger.active {
-  background: #2563eb;
+  background: #038fde;
   color: #ffffff;
-  border-color: #2563eb;
+  border-color: #038fde;
 }
 
 /* Add project button */
 .ap-add-btn {
-  background: #2563eb ;
-  border: 1px solid #2563eb ;
+  background: #038fde ;
+  border: 1px solid #038fde ;
   border-radius: 8px ;
   font-weight: 500 ;
   height: 34px ;
@@ -340,12 +340,12 @@
 }
 
 .ap-tab-btn:hover {
-  color: #2563eb;
+  color: #038fde;
 }
 
 .ap-tab-btn.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #038fde;
+  border-bottom-color: #038fde;
   font-weight: 600;
 }
 
@@ -364,7 +364,7 @@
 .ap-view-all-link {
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
+  color: #038fde;
   cursor: pointer;
   transition: opacity 0.15s;
   white-space: nowrap;
@@ -423,7 +423,7 @@
 
 .ap-date-nav-btn:hover {
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .ap-date-dropdown .ant-picker-calendar {
@@ -1076,7 +1076,7 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 
 .ap-browser-list-row--active {
   background: #f8fafc;
-  box-shadow: inset 3px 0 0 #2563eb;
+  box-shadow: inset 3px 0 0 #038fde;
 }
 
 .ap-browser-list-empty {
@@ -1373,8 +1373,21 @@ body[data-theme="dark"] .ap-browser-status-label {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+overflow: auto;
 }
-
+.page-project-list  .ap-cards-grid {
+  max-height: calc(100dvh - 275px);
+  overflow: auto;
+}
+.page-project-list  .ap-grid-pagination{
+  margin-top: 0;
+}
+.page-project-list  .ap-grid-pagination .ant-pagination{
+  width: 100%;
+}
+.page-project-list  .ant-dropdown-trigger.ap-status-pill--clickable>span.anticon.anticon-down svg{
+fill: rgb(46, 125, 50);
+}
 @media (max-width: 1200px) {
   .ap-cards-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1470,7 +1483,7 @@ body[data-theme="dark"] .ap-browser-status-label {
 
 .ap-last-updated {
   font-size: 11.5px;
-  color: #2563eb;
+  color: #038fde;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1521,7 +1534,7 @@ body[data-theme="dark"] .ap-browser-status-label {
 }
 
 .ap-card-title:hover {
-  color: #2563eb;
+  color: #038fde;
 }
 
 .ap-card-manager {
@@ -1642,12 +1655,9 @@ body[data-theme="dark"] .ap-browser-status-label {
 .ap-grid-pagination .ant-pagination {
   display: inline-flex;
   align-items: center;
+  justify-content:end ;
   gap: 8px;
   padding: 10px 14px;
-  border: 1px solid #dbe5f0;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .ap-grid-pagination .ant-pagination-total-text {
@@ -1678,7 +1688,7 @@ body[data-theme="dark"] .ap-browser-status-label {
 .ap-grid-pagination .ant-pagination-item:hover,
 .ap-grid-pagination .ant-pagination-prev:hover,
 .ap-grid-pagination .ant-pagination-next:hover {
-  border-color: #2563eb;
+  border-color: #038fde;
 }
 
 .ap-grid-pagination .ant-pagination-item-active {
@@ -1945,14 +1955,14 @@ body[data-theme="dark"] .ap-status-select.ant-select-open .ant-select-selector,
 body[data-theme="dark"] .ap-status-select .ant-select-selector:hover,
 body[data-theme="dark"] .ap-date-trigger:hover {
   background: #162841 !important;
-  border-color: #2563eb !important;
+  border-color: #038fde !important;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
 }
 
 body.dark-theme .ap-date-trigger.active,
 body[data-theme="dark"] .ap-date-trigger.active {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
   color: #ffffff !important;
 }
 
@@ -2243,7 +2253,7 @@ body.dark-theme .ap-date-dropdown .ant-picker-cell-selected .ant-picker-cell-inn
 body.dark-theme .ap-date-dropdown .ant-picker-cell .ant-picker-cell-inner:hover,
 body[data-theme="dark"] .ap-date-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
 body[data-theme="dark"] .ap-date-dropdown .ant-picker-cell .ant-picker-cell-inner:hover {
-  background: #2563eb;
+  background: #038fde;
   color: #ffffff;
 }
 

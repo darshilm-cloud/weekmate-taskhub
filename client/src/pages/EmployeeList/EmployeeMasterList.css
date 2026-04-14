@@ -98,16 +98,125 @@
 }
 
 .sidebar-pagination {
-  padding: 10px 6px 6px;
-  margin-top: 10px;
+  padding: 14px 12px 12px;
+  margin-top: 12px;
   border-top: 1px solid var(--app-border);
-  background: var(--app-surface);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.65) 0%, var(--app-surface) 100%);
   display: flex;
   justify-content: center;
 }
 
 .sidebar-pagination .ant-pagination {
   margin: 0;
+  width: auto !important;
+  max-width: 100%;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 10px 12px !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item,
+.sidebar-pagination .ant-pagination .ant-pagination-prev,
+.sidebar-pagination .ant-pagination .ant-pagination-next,
+.sidebar-pagination .ant-pagination .ant-pagination-jump-prev,
+.sidebar-pagination .ant-pagination .ant-pagination-jump-next {
+  min-width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item {
+  border-radius: 10px !important;
+  border: 1px solid #d7e2ee !important;
+  background: #ffffff !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item a {
+  color: #52637a !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item:hover,
+.sidebar-pagination .ant-pagination .ant-pagination-item:focus-within {
+  border-color: #0b3a5b !important;
+  transform: translateY(-1px);
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item:hover a,
+.sidebar-pagination .ant-pagination .ant-pagination-item:focus-within a {
+  color: #0b3a5b !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item-active,
+.sidebar-pagination .ant-pagination .ant-pagination-item-active:hover,
+.sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within {
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  box-shadow: 0 8px 16px rgba(11, 58, 91, 0.2) !important;
+  transform: none !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-item-active a,
+.sidebar-pagination .ant-pagination .ant-pagination-item-active:hover a,
+.sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within a {
+  color: #ffffff !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.sidebar-pagination .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important;
+  border: 1px solid #d7e2ee !important;
+  background: #ffffff !important;
+  color: #7b8aa0 !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+.sidebar-pagination .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link,
+.sidebar-pagination .ant-pagination .ant-pagination-prev:focus-within .ant-pagination-item-link,
+.sidebar-pagination .ant-pagination .ant-pagination-next:focus-within .ant-pagination-item-link {
+  border-color: #0b3a5b !important;
+  color: #0b3a5b !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-disabled .ant-pagination-item-link,
+.sidebar-pagination .ant-pagination .ant-pagination-disabled:hover .ant-pagination-item-link {
+  opacity: 0.45 !important;
+  border-color: #d7e2ee !important;
+  color: #9aa7b8 !important;
+  background: #ffffff !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-jump-prev .ant-pagination-item-container,
+.sidebar-pagination .ant-pagination .ant-pagination-jump-next .ant-pagination-item-container {
+  color: #9aa7b8 !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-options {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-inline-start: 0 !important;
+  margin-top: 2px;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selector {
+  min-height: 34px !important;
+  padding-inline: 12px !important;
+  border-radius: 12px !important;
+  border-color: #d7e2ee !important;
+  background: #ffffff !important;
+}
+
+.sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selection-item,
+.sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-arrow {
+  color: #52637a !important;
 }
 
 .sidebar-user-list::-webkit-scrollbar {
@@ -1034,59 +1143,102 @@ body[data-theme="dark"] .client-field-icon {
 /* Sidebar pagination dark mode */
 body.dark-theme .sidebar-pagination,
 body[data-theme="dark"] .sidebar-pagination {
-  background: #0a1324 !important;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(17, 26, 42, 0.98) 100%) !important;
   border-top-color: rgba(71, 85, 105, 0.3);
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-item,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-item {
+body.dark-theme .sidebar-pagination .ant-pagination,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination {
+  background: rgba(15, 23, 42, 0.96) !important;
+  border-color: rgba(71, 85, 105, 0.42) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item {
   background: #0f172a !important;
-  border-color: rgba(71, 85, 105, 0.4) !important;
+  border-color: rgba(71, 85, 105, 0.42) !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-item a,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-item a {
-  color: #94a3b8 !important;
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item a {
+  color: #c0cad8 !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-item-active,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-item-active {
-  background: #1e3a5f !important;
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item:hover,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item:focus-within,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item:hover,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item:focus-within {
   border-color: #3b82f6 !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-item-active a,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-item-active a {
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item:hover a,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item:focus-within a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item:hover a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item:focus-within a {
   color: #60a5fa !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-prev button,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-prev button,
-body.dark-theme .sidebar-pagination .ant-pagination-next button,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-next button {
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active:hover,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active:hover,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28) !important;
+}
+
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active a,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active:hover a,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active:hover a,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-item-active:focus-within a {
+  color: #ffffff !important;
+}
+
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-next .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-next .ant-pagination-item-link {
   background: #0f172a !important;
-  border-color: rgba(71, 85, 105, 0.4) !important;
+  border-color: rgba(71, 85, 105, 0.42) !important;
   color: #94a3b8 !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-jump-prev button,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-jump-prev button,
-body.dark-theme .sidebar-pagination .ant-pagination-jump-next button,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-jump-next button {
-  background: transparent !important;
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-prev:focus-within .ant-pagination-item-link,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-next:focus-within .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-prev:focus-within .ant-pagination-item-link,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-next:focus-within .ant-pagination-item-link {
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-jump-prev .ant-pagination-item-container,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-jump-next .ant-pagination-item-container,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-jump-prev .ant-pagination-item-container,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-jump-next .ant-pagination-item-container {
   color: #94a3b8 !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-options .ant-select-selector,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-options .ant-select-selector {
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selector,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selector {
   background: #0f172a !important;
-  border-color: rgba(71, 85, 105, 0.4) !important;
-  color: #94a3b8 !important;
+  border-color: rgba(71, 85, 105, 0.42) !important;
+  color: #c0cad8 !important;
 }
 
-body.dark-theme .sidebar-pagination .ant-pagination-options .ant-select-arrow,
-body[data-theme="dark"] .sidebar-pagination .ant-pagination-options .ant-select-arrow {
-  color: #64748b !important;
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selection-item,
+body.dark-theme .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-arrow,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-selection-item,
+body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-options .ant-select-arrow {
+  color: #c0cad8 !important;
 }
 
 
