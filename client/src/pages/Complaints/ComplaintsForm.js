@@ -198,53 +198,39 @@ const ComplaintsForm = () => {
 
   /* ── Render ───────────────────────────────────────────────── */
   return (
-    <div className="cad-page">
+    <div className="ps-page">
 
       {/* Header */}
-      <div className="cad-info-card">
-        <div className="cad-info-icon">
-          {isEdit ? <ExclamationCircleOutlined /> : <AlertOutlined />}
-        </div>
-        <div className="cad-info-body">
-          <h1 className="cad-info-title" style={{ marginBottom: 0 }}>
+      <div className="ps-card">
+        <div className="ps-header">
+          <h2 className="ps-title">
+            <span className="ps-title-icon">
+              {isEdit ? <ExclamationCircleOutlined /> : <AlertOutlined />}
+            </span>
             {isEdit ? "Edit Complaint" : "Add Complaint"}
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
-            {isEdit
-              ? "Update the complaint details below"
-              : "Fill in the details to raise a new complaint"}
-          </p>
-        </div>
-        <button
-          className="cad-btn"
-          onClick={() => history.push(`/${companySlug}/complaints`)}
-          style={{ marginLeft: "auto" }}
-        >
-          <ArrowLeftOutlined /> Back to Complaints
-        </button>
-      </div>
-
-      {/* Form Card */}
-      <div className="cad-section">
-        <div className="cad-section-header">
-          <div className="cad-section-title">
-            <span className="cad-section-icon"><AlertOutlined /></span>
-            Complaint Information
+          </h2>
+          <div className="ps-header-right">
+            <button
+              className="add-btn"
+              onClick={() => history.push(`/${companySlug}/complaints`)}
+            >
+              <ArrowLeftOutlined /> Back to Complaints
+            </button>
           </div>
         </div>
 
-        <div className="cad-section-body">
+        <div className="ps-form-wrap">
           <Form
             form={form}
             layout="vertical"
-            className="cad-status-form"
+            className="ps-form"
             onFinish={handleSubmit}
             onValuesChange={(changed) => {
               if (changed.status) setSelectedStatus(changed.status);
             }}
           >
             {/* Row 1: Project + Project Manager */}
-            <div className="cad-form-grid">
+            <div className="ps-form-grid">
               <Form.Item
                 name="project"
                 label="Project"
@@ -264,11 +250,9 @@ const ComplaintsForm = () => {
               <Form.Item
                 name="project_manager"
                 label="Project Manager"
-                className="cad-field-block cad-field-block--manager"
                 rules={[{ required: true, message: "Project manager is required" }]}
               >
                 <Input
-                  className="cad-input cad-input--manager"
                   placeholder="Auto-filled from project"
                   disabled
                   prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
@@ -278,11 +262,9 @@ const ComplaintsForm = () => {
               <Form.Item
                 name="account_manager"
                 label="Account Manager"
-                className="cad-field-block cad-field-block--manager"
                 rules={[{ required: true, message: "Account manager is required" }]}
               >
                 <Input
-                  className="cad-input cad-input--manager"
                   placeholder="Auto-filled from project"
                   disabled
                   prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
@@ -292,11 +274,9 @@ const ComplaintsForm = () => {
               <Form.Item
                 name="client_name"
                 label="Client Name"
-                className="cad-field-block cad-field-block--client"
                 rules={[{ required: true, message: "Please enter client name" }]}
               >
                 <Input
-                  className="cad-input cad-input--client"
                   placeholder="Enter client name"
                   prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
                 />
@@ -305,14 +285,12 @@ const ComplaintsForm = () => {
               <Form.Item
                 name="client_email"
                 label="Client Email"
-                className="cad-field-block cad-field-block--client"
                 rules={[
                   { required: true, message: "Please enter client email" },
                   { type: "email", message: "Please enter a valid email" },
                 ]}
               >
                 <Input
-                  className="cad-input cad-input--client"
                   placeholder="Enter client email"
                   prefix={<MailOutlined style={{ color: "#7aa3bf" }} />}
                 />
@@ -382,7 +360,7 @@ const ComplaintsForm = () => {
             </Form.Item>
 
             {/* Actions */}
-            <div className="cad-form-actions">
+            <div className="ps-form-actions">
               {selectedStatus === "resolved" ? (
                 <Popconfirm
                   icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
@@ -391,20 +369,20 @@ const ComplaintsForm = () => {
                   okText="Yes, resolve"
                   cancelText="No"
                 >
-                  <button type="button" className="cad-btn primary" disabled={isSubmitting}>
+                  <button type="button" className="add-btn" disabled={isSubmitting}>
                     <CheckCircleOutlined />
                     {isEdit ? "Update" : "Submit"}
                   </button>
                 </Popconfirm>
               ) : (
-                <button type="submit" className="cad-btn primary" disabled={isSubmitting}>
+                <button type="submit" className="add-btn" disabled={isSubmitting}>
                   <CheckCircleOutlined />
-                  {isSubmitting ? "Saving…" : isEdit ? "Update" : "Submit"}
+                  {isSubmitting ? "Saving..." : isEdit ? "Update" : "Submit"}
                 </button>
               )}
               <button
                 type="button"
-                className="cad-btn"
+                className="ps-btn-secondary"
                 onClick={() => history.push(`/${companySlug}/complaints`)}
               >
                 Cancel
