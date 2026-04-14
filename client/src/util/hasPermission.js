@@ -11,13 +11,12 @@ export const hasPermission = (
 };
 
 export const getRoles = (roleName, useroleID = getCookie("pms_role_id") || "6620c5d13cb3ee347303b35e") => {
-  let flag;
-  console.log(useroleID,'useroleID');
-  
+  if (!roleName) return false;
+  let flag = false;
   for (const role in roleMap) {
     if (roleMap.hasOwnProperty(role)) {
       if (roleMap[role] === useroleID) {
-       flag =roleName.includes(role)
+        flag = roleName.includes(role);
       }
     }
   }

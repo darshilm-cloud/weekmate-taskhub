@@ -21,7 +21,6 @@ const {
 const { addProjectRandomId } = require("./projects");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
 const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
-const { newObjectId } = require("../helpers/common");
 
 // Global Team Report (Summary for the whole company)
 exports.getGlobalTeamReport = async (req, res) => {
@@ -128,6 +127,9 @@ exports.getGlobalTeamReport = async (req, res) => {
 
 //Get Project :
 exports.getMyProjects = async (req, res) => {
+  const _start = Date.now();
+  const _elapsed = () => `${Date.now() - _start}ms`;
+
   try {
     // Decode user from token
     const {
@@ -157,10 +159,11 @@ exports.getMyProjects = async (req, res) => {
     const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
     const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
 
-    // Tab-setting sync removed from the listing path — see projects.js getProjects for explanation.
+    console.log(`[getMyProjects] START | companyId=${decodedCompanyId} userId=${decodedUserId} page=${pageNum} limit=${limitNum} isComplaints=${isComplaints} search="${search || ''}"`);
 
     // Admin check must complete before building the match query
     const isAdmin = await checkUserIsAdmin(req?.user?._id);
+    console.log(`[getMyProjects] [${_elapsed()}] checkUserIsAdmin done | isAdmin=${isAdmin}`);
 
     const userId = new mongoose.Types.ObjectId(req?.user?._id);
 
@@ -169,7 +172,7 @@ exports.getMyProjects = async (req, res) => {
     // { companyId: 1, isDeleted: 1 } and eliminates the bulk of 10 k docs before any $lookup.
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(decodedCompanyId),
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
       ...(project_status.length > 0
         ? { project_status: { $in: project_status.map((s) => new mongoose.Types.ObjectId(s)) } }
@@ -208,13 +211,38 @@ exports.getMyProjects = async (req, res) => {
     const COMPLAINT_SLUGS = ["DY", "AMC", "FC", "TM", "DD"];
 
     // Fetch tab-setting pipeline stages and projection object in one round-trip
-    // (previously called 3 separate times — once per countQuery/mainQuery/$project)
     const [tabSettingStages, tabSettingProjection] = await Promise.all([
       getProjectDefaultSettingQuery("_id"),
       getProjectDefaultSettingQuery("_id", true),
     ]);
 
-    // projecttypes lookup — reused by both count (isComplaints) and main pipeline
+    // Lightweight star lookup — runs before sort so starred projects bubble up.
+    // Kept separate so it can be placed before $skip/$limit while heavier lookups run after.
+    const starLookupStages = [
+      {
+        $lookup: {
+          from: "star_projects",
+          let: { project: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$project_id", "$$project"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$createdBy", userId] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "starProects",
+        },
+      },
+      { $unwind: { path: "$starProects", preserveNullAndEmptyArrays: true } },
+    ];
+
+    // projecttypes lookup — reused by count (isComplaints) and main pipeline
     const typesLookupStages = [
       {
         $lookup: {
@@ -238,13 +266,46 @@ exports.getMyProjects = async (req, res) => {
       { $unwind: { path: "$project_types", preserveNullAndEmptyArrays: true } },
     ];
 
+    const projectionStage = {
+      $project: {
+        _id: 1,
+        title: 1,
+        isBillable: 1,
+        projectId: 1,
+        isStarred: "$starProects.isStarred",
+        ...tabSettingProjection,
+        end_date: 1,
+        start_date: 1,
+        descriptions: 1,
+        estimatedHours: 1,
+        project_status: 1,
+        technology: 1,
+        project_type: 1,
+        project_types: {
+          _id: 1,
+          project_type: 1,
+          isDeleted: 1,
+          slug: 1,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    };
+
+    const paginationStages =
+      pageNum && limitNum
+        ? [{ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum }]
+        : [];
+
     // ── Count — fast path ────────────────────────────────────────────────────
-    // matchQuery references only raw fields → countDocuments uses the index directly
-    // (no joins, no full collection scan).  Only isComplaints needs a $lookup.
+    // matchQuery references only raw fields → countDocuments uses the index directly.
+    // Only isComplaints requires a $lookup to filter by type slug.
     let totalDocuments;
     if (!isComplaints) {
       totalDocuments = await Project.countDocuments(matchQuery);
+      console.log(`[getMyProjects] [${_elapsed()}] countDocuments done | total=${totalDocuments}`);
     } else {
+      console.log(`[getMyProjects] [${_elapsed()}] starting complaints count aggregate`);
       const countResult = await Project.aggregate([
         { $match: matchQuery },
         ...typesLookupStages,
@@ -252,74 +313,46 @@ exports.getMyProjects = async (req, res) => {
         { $count: "total" },
       ]);
       totalDocuments = countResult[0]?.total || 0;
+      console.log(`[getMyProjects] [${_elapsed()}] complaints count aggregate done | total=${totalDocuments}`);
     }
 
     // ── Main pipeline ────────────────────────────────────────────────────────
-    const mainQuery = [
-      // $match FIRST — eliminates most documents before any $lookup
-      { $match: matchQuery },
-      // Star lookup — needed for sort order (isStarred desc)
-      {
-        $lookup: {
-          from: "star_projects",
-          let: { project: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$project_id", "$$project"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$createdBy", userId] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "starProects",
-        },
-      },
-      { $unwind: { path: "$starProects", preserveNullAndEmptyArrays: true } },
-      // projecttypes lookup — needed for isComplaints filter and projection
-      ...typesLookupStages,
-      // Apply complaints slug filter inside the pipeline (replaces JS post-filter + second full aggregate)
-      ...(isComplaints ? [{ $match: { "project_types.slug": { $in: COMPLAINT_SLUGS } } }] : []),
-      // Tab-setting nested lookup (project_tabs_settings → project_tabs)
-      ...tabSettingStages,
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          isBillable: 1,
-          projectId: 1,
-          isStarred: "$starProects.isStarred",
-          ...tabSettingProjection,
-          end_date: 1,
-          start_date: 1,
-          descriptions: 1,
-          estimatedHours: 1,
-          project_status: 1,
-          technology: 1,
-          project_type: 1,
-          project_types: {
-            _id: 1,
-            project_type: 1,
-            isDeleted: 1,
-            slug: 1,
-          },
-          createdAt: 1,
-          updatedAt: 1,
-        },
-      },
-      { $sort: { isStarred: -1, _id: -1 } },
-    ];
-
-    if (pageNum && limitNum) {
-      const skip = (pageNum - 1) * limitNum;
-      mainQuery.push({ $skip: skip }, { $limit: limitNum });
+    // KEY OPTIMISATION: $skip/$limit is placed immediately after the sort so that
+    // the heavy lookups (projecttypes + nested tab-settings) only execute on the
+    // N documents of the current page instead of the entire result set.
+    //
+    // Non-complaints path:
+    //   $match → star lookup → sort → paginate → types lookup → tab lookup → $project
+    //
+    // Complaints path (type slug filter must precede pagination):
+    //   $match → star lookup → types lookup → complaints filter → sort → paginate → tab lookup → $project
+    let mainQuery;
+    if (!isComplaints) {
+      mainQuery = [
+        { $match: matchQuery },
+        ...starLookupStages,
+        { $sort: { "starProects.isStarred": -1, _id: -1 } },
+        ...paginationStages,
+        ...typesLookupStages,
+        ...tabSettingStages,
+        projectionStage,
+      ];
+    } else {
+      mainQuery = [
+        { $match: matchQuery },
+        ...starLookupStages,
+        ...typesLookupStages,
+        { $match: { "project_types.slug": { $in: COMPLAINT_SLUGS } } },
+        { $sort: { "starProects.isStarred": -1, _id: -1 } },
+        ...paginationStages,
+        ...tabSettingStages,
+        projectionStage,
+      ];
     }
 
+    console.log(`[getMyProjects] [${_elapsed()}] starting main aggregate | path=${isComplaints ? 'complaints' : 'standard'} stages=${mainQuery.length}`);
     const data = await Project.aggregate(mainQuery);
+    console.log(`[getMyProjects] [${_elapsed()}] main aggregate done | returned=${data.length} docs`);
 
     // Backfill missing projectIds in background — do not block the response
     setImmediate(() => addProjectRandomId(data).catch(() => {}));
@@ -332,8 +365,10 @@ exports.getMyProjects = async (req, res) => {
       meta.totalPages = Math.ceil(totalDocuments / limitNum);
     }
 
+    console.log(`[getMyProjects] [${_elapsed()}] DONE | companyId=${decodedCompanyId}`);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
+    console.error(`[getMyProjects] [${_elapsed()}] ERROR | companyId=${decodedCompanyId} error="${error.message}"`);
     return catchBlockErrorResponse(res, error.message);
   }
 };
