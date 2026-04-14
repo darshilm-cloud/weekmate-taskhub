@@ -478,7 +478,7 @@ function TaskCombinedFacetFilter({
       placement="bottomLeft"
       overlayClassName="task-shared-filter-overlay"
     >
-      <Button icon={<FilterOutlined />} className="task-combined-filter-btn">
+      <Button icon={<FilterOutlined />} className="task-combined-filter-btn filter-btn">
         Filter
         {activeCount > 0 ? (
           <Badge count={activeCount} size="small" offset={[6, 0]} color="#1890ff" />

@@ -1356,7 +1356,7 @@ function CommonFilters({ fields, filters, setFilters }) {
         </div>
 
         <div className="reports-facet-actions">
-          <Button type="primary" className="reports-facet-apply-btn" onClick={applySelection}>
+          <Button type="primary" className="reports-facet-apply-btn filter-btn" onClick={applySelection}>
             Apply Filter
           </Button>
           <button type="button" className="reports-facet-reset-btn" onClick={resetSelection}>
@@ -1446,7 +1446,7 @@ function CommonFilters({ fields, filters, setFilters }) {
         >
           <Button
             type="button"
-            className={`reports-single-filter-btn ${isFacetOpen ? "active" : ""}`}
+            className={`reports-single-filter-btn filter-btn ${isFacetOpen ? "active" : ""}`}
             onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
             icon={<FilterOutlined />}
           >

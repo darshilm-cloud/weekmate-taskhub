@@ -1351,6 +1351,7 @@ const Dashboard = () => {
         <p className="standalone-add-task-sub">Welcome Let's get started.</p>
         <Button
            type="primary"
+           className="add-btn"
            icon={<PlusOutlined />}
           onClick={() => setAddTaskOpen(true)}
         >

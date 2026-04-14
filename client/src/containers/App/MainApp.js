@@ -31,6 +31,7 @@ import "../../assets/css/ui-remap.css"
 import "../../assets/css/theme-utilities.css"
 import "../../assets/css/skeleton.css"
 import "../../assets/css/dark-theme-overrides.css"
+import "../../assets/css/pagination-overrides.css"
 const { Content } = Layout;
 
 // Configure message once outside component

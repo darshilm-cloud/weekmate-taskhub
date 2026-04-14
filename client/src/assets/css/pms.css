@@ -4936,7 +4936,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-layout.admin .ant-layout-content {
     background-color: #f5f8fa;
 }
+.ant-layout>.gx-layout-content.page-project-list {
+    height: 100%;
 
+}
 .admin-user .ant-layout.admin .ant-layout-content .ant-card {
     background-color: #0000;
     padding: 0;
