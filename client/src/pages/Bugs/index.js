@@ -170,6 +170,8 @@ const BugsPMS = () => {
     selectedView,
     setFilterSchema,
     pageLoading,
+    loadMoreBugs,
+    loadingMore,
   } = BugsController();
 
   const csvRef = document.getElementById("test-table-xls-button");
@@ -386,6 +388,8 @@ const BugsPMS = () => {
                 selectedTask={ selectedTask }
                 boardTasksBugs={ boardTasksBugs }
                 deleteTasks={ deleteTasks }
+                loadMoreBugs={ loadMoreBugs }
+                loadingMore={ loadingMore }
               />
 	            ) : selectedView === "table" ? (
 	              <BugsTable

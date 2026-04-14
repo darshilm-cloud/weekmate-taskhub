@@ -29,13 +29,13 @@ const Administrator = () => {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
   const [searchText, setSearchText] = useState("");
 
   // 🔍 Fetch Admin List
-  const getAdminList = async ({ page = 1, limit = 20, search = "" } = {}) => {
+  const getAdminList = async ({ page = 1, limit = 25, search = "" } = {}) => {
     try {
       setLoading(true);
 
@@ -339,7 +339,7 @@ const Administrator = () => {
             // showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
           }}
           onChange={handleTableChange}
         />

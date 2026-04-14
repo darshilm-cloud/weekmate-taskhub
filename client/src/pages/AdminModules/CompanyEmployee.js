@@ -36,9 +36,9 @@ const CompanyEmployee = () => {
   const [editData, setEditData] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [modalMode, setModalMode] = useState("add");
-  const [pagination, setPagination] = useState({
+   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
 
@@ -47,7 +47,7 @@ const CompanyEmployee = () => {
   const companyId = userData?.companyId;
   const inputRef = useRef(null);
 
-  const fetchEmployees = async (page = 1, limit = 20, search = "") => {
+  const fetchEmployees = async (page = 1, limit = 25, search = "") => {
     setLoading(true);
     try {
       const res = await Service.makeAPICall({
@@ -393,7 +393,7 @@ const CompanyEmployee = () => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
             showSizeChanger: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,

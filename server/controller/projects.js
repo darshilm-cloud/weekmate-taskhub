@@ -20,7 +20,8 @@ const {
   getPagination,
   getTotalCountQuery,
   searchDataArr,
-  getAggregationPagination
+  getAggregationPagination,
+  removeSpecialCharFromSearch
 } = require("../helpers/queryHelper");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -618,7 +619,7 @@ exports.getProjects = async (req, res) => {
 
     // Search evaluated first so we can apply pagination BEFORE lookups
     if (value?.search) {
-      const searchRegexStr = this.removeSpecialCharFromSearch(value.search);
+      const searchRegexStr = removeSpecialCharFromSearch(value.search);
       const searchRegexObj = { $regex: searchRegexStr, $options: "i" };
       
       let additionalSearchMatch = [
@@ -749,14 +750,23 @@ exports.getProjects = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
-          start_date: 1,
-          end_date: 1,
-          updatedAt: 1,
-          estimatedHours: 1,
+          projectId: 1,
+          color: 1,
+          descriptions: 1,
           technology: 1,
+          project_type: 1,
           project_status: { _id: 1, title: 1 },
           manager: { _id: 1, full_name: 1, emp_img: 1 },
-          assignees: { _id: 1, name: 1, emp_img: 1 }
+          assignees: { _id: 1, name: 1, emp_img: 1 },
+          pms_clients: 1,
+          workFlow: 1,
+          estimatedHours: 1,
+          start_date: 1,
+          end_date: 1,
+          isBillable: 1,
+          acc_manager: 1,
+          recurringType: 1,
+          updatedAt: 1
         }
       }
     );
@@ -2732,10 +2742,14 @@ exports.getProjectOverviewData = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
+          projectId: 1,
           color: 1,
           isBillable: 1,
           descriptions: 1,
           recurringType: 1,
+          technology: 1,
+          workFlow: 1,
+          pms_clients: 1,
           project_type: {
             _id: 1,
             title: "$project_type.project_type"

@@ -41,7 +41,8 @@ const EmployeeListTabClient = ({
   const [sortBy, setSortBy] = useState({sortBy:"desc"});
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
+    total: 0,
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -476,14 +477,12 @@ const EmployeeListTabClient = ({
   };
 
   // Pagination
-  const handleTableChange = (page, filters, sorter) => {
-    setPagination({ ...pagination, ...page });
-    const { field, order } = sorter;
-    setPagination({ ...pagination, ...page });
-    setSortBy({
-      sortBy: order === "ascend" ? "asc" : "desc",
-      sort: field,
-    });
+  const handleTableChange = (page) => {
+    setPagination(prev => ({
+      ...prev,
+      current: page.current,
+      pageSize: page.pageSize,
+    }));
   };
 
   // ✅ Updated: Client listing with new filter format
@@ -672,8 +671,13 @@ const EmployeeListTabClient = ({
           loading={isListLoading}
           pagination={{
             showSizeChanger: true,
-            ...pagination,
-          } }
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            pageSizeOptions: [10, 25, 50, 100],
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} of ${total} records`,
+          }}
           footer={ getFooterDetails }
           onChange={ handleTableChange }
           dataSource={ clientList }

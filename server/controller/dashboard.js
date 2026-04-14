@@ -10,6 +10,8 @@ const ProjectTasks = mongoose.model("projecttasks");
 const ProjectTimeLogged = mongoose.model("projecttaskhourlogs");
 const TotalTaskhoursLogged = mongoose.model("projecttotaltaskhourlogs");
 const ProjectBugs = mongoose.model("projecttaskbugs");
+const StarProject = mongoose.model("star_project");
+
 // const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -156,8 +158,9 @@ exports.getMyProjects = async (req, res) => {
 
     const { manager_id, project_status, category, project_type, isComplaints, pageNo, limit, search } = value;
 
-    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
-    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : 1;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : 25;
+
 
     console.log(`[getMyProjects] START | companyId=${decodedCompanyId} userId=${decodedUserId} page=${pageNum} limit=${limitNum} isComplaints=${isComplaints} search="${search || ''}"`);
 
@@ -210,37 +213,26 @@ exports.getMyProjects = async (req, res) => {
 
     const COMPLAINT_SLUGS = ["DY", "AMC", "FC", "TM", "DD"];
 
-    // Fetch tab-setting pipeline stages and projection object in one round-trip
-    const [tabSettingStages, tabSettingProjection] = await Promise.all([
+    // Fetch tab-setting pipeline stages and starred projects in one round-trip
+    const [starredProjectIds, tabSettingStages, tabSettingProjection] = await Promise.all([
+      StarProject.find({ createdBy: userId, isDeleted: false }).distinct('project_id'),
       getProjectDefaultSettingQuery("_id"),
       getProjectDefaultSettingQuery("_id", true),
     ]);
 
-    // Lightweight star lookup — runs before sort so starred projects bubble up.
-    // Kept separate so it can be placed before $skip/$limit while heavier lookups run after.
+
+    const starIds = (starredProjectIds || []).map(id => new mongoose.Types.ObjectId(id));
+
+
+    // bubbled up starred projects using pre-fetched IDs instead of per-document lookup
     const starLookupStages = [
-      {
-        $lookup: {
-          from: "star_projects",
-          let: { project: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$project_id", "$$project"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$createdBy", userId] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "starProects",
-        },
-      },
-      { $unwind: { path: "$starProects", preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            isStarred: { $in: ["$_id", starIds] }
+          }
+        }
     ];
+
 
     // projecttypes lookup — reused by count (isComplaints) and main pipeline
     const typesLookupStages = [
@@ -272,7 +264,8 @@ exports.getMyProjects = async (req, res) => {
         title: 1,
         isBillable: 1,
         projectId: 1,
-        isStarred: "$starProects.isStarred",
+        isStarred: 1,
+
         ...tabSettingProjection,
         end_date: 1,
         start_date: 1,
@@ -281,6 +274,7 @@ exports.getMyProjects = async (req, res) => {
         project_status: 1,
         technology: 1,
         project_type: 1,
+        workFlow: 1,
         project_types: {
           _id: 1,
           project_type: 1,
@@ -291,6 +285,7 @@ exports.getMyProjects = async (req, res) => {
         updatedAt: 1,
       },
     };
+
 
     const paginationStages =
       pageNum && limitNum
@@ -331,8 +326,9 @@ exports.getMyProjects = async (req, res) => {
       mainQuery = [
         { $match: matchQuery },
         ...starLookupStages,
-        { $sort: { "starProects.isStarred": -1, _id: -1 } },
+        { $sort: { "isStarred": -1, _id: -1 } },
         ...paginationStages,
+
         ...typesLookupStages,
         ...tabSettingStages,
         projectionStage,
@@ -343,8 +339,9 @@ exports.getMyProjects = async (req, res) => {
         ...starLookupStages,
         ...typesLookupStages,
         { $match: { "project_types.slug": { $in: COMPLAINT_SLUGS } } },
-        { $sort: { "starProects.isStarred": -1, _id: -1 } },
+        { $sort: { "isStarred": -1, _id: -1 } },
         ...paginationStages,
+
         ...tabSettingStages,
         projectionStage,
       ];
@@ -368,7 +365,7 @@ exports.getMyProjects = async (req, res) => {
     console.log(`[getMyProjects] [${_elapsed()}] DONE | companyId=${decodedCompanyId}`);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
-    console.error(`[getMyProjects] [${_elapsed()}] ERROR | companyId=${decodedCompanyId} error="${error.message}"`);
+    console.error(`[getMyProjects] [${_elapsed()}] ERROR | error="${error.message}"`);
     return catchBlockErrorResponse(res, error.message);
   }
 };

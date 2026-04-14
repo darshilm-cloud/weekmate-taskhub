@@ -112,6 +112,14 @@ export default function AddTaskModal({
   const [labelOptions, setLabelOptions] = useState([]);
   const [localFileAttachment, setLocalFileAttachment] = useState([]);
   const [localFoldersList, setLocalFoldersList] = useState([]);
+  
+  // Project infinite loading state
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectPagination, setProjectPagination] = useState({ pageNo: 1, limit: 25 });
+  const [hasMoreProjects, setHasMoreProjects] = useState(true);
+  const isFetchingProjectsRef = useRef(false);
+  const [isFetchingProjects, setIsFetchingProjects] = useState(false);
+
   const mainTaskCacheRef = React.useRef({});
   const mainTaskInFlightRef = React.useRef(new Set());
   const localAttachmentfileRef = useRef(null);
@@ -199,20 +207,50 @@ export default function AddTaskModal({
     setLocalFileAttachment((prev) => prev.filter((_, fileIndex) => fileIndex !== index));
   }, [removeAttachmentFile]);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (page = 1, searchStr = "", append = false) => {
+    if (isFetchingProjectsRef.current) return;
+    
+    isFetchingProjectsRef.current = true;
+    setIsFetchingProjects(true);
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.myProjects,
-        body: {},
+        body: {
+          pageNo: page,
+          limit: 25,
+          search: searchStr,
+        },
       });
       if (res?.status === 200 && Array.isArray(res?.data?.data)) {
-        setProjects(res.data.data);
+        const newProjects = res.data.data;
+        setProjects(prev => append ? [...prev, ...newProjects] : newProjects);
+        setHasMoreProjects(newProjects.length === 25);
+        setProjectPagination({ pageNo: page, limit: 25 });
+      } else {
+        if (!append) setProjects([]);
+        setHasMoreProjects(false);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      isFetchingProjectsRef.current = false;
+      setIsFetchingProjects(false);
     }
   }, []);
+
+  const onProjectSearch = useCallback((val) => {
+    setProjectSearch(val);
+    fetchProjects(1, val, false);
+  }, [fetchProjects]);
+
+  const onProjectScroll = useCallback((e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop - offsetHeight < 10 && hasMoreProjects && !isFetchingProjectsRef.current) {
+      fetchProjects(projectPagination.pageNo + 1, projectSearch, true);
+    }
+  }, [fetchProjects, hasMoreProjects, projectPagination.pageNo, projectSearch]);
+
 
   const fetchMainTasks = useCallback(async (pid) => {
     if (!pid) return;
@@ -748,8 +786,11 @@ export default function AddTaskModal({
     const mid = watchedMainTaskId;
     if (!pid || !mid) return;
     const key = `${pid}:${mid}`;
-    const cached = workflowCache[key] || firstWorkflowStatusId;
-    if (cached) return;
+    const cached = workflowCache[key];
+    if (cached) {
+      setFirstWorkflowStatusId(cached);
+      return;
+    }
     fetchBoardTasksForWorkflow(pid, mid).then((wf) => {
       if (wf) {
         setFirstWorkflowStatusId(wf);
@@ -762,13 +803,16 @@ export default function AddTaskModal({
         }
       }
     });
+
   }, [open, isStandalone, watchedMainTaskId, projectId, workflowCache, firstWorkflowStatusId, workflowStatusList, fetchBoardTasksForWorkflow]);
 
   useEffect(() => {
-    if (open && projectWorkflowId) {
-      fetchWorkflowStatusList(projectWorkflowId);
+    const wfId = projectWorkflowId || projects.find(p => p._id === effectiveProjectId)?.workFlow;
+    if (open && wfId) {
+      fetchWorkflowStatusList(wfId);
     }
-  }, [open, projectWorkflowId, fetchWorkflowStatusList]);
+  }, [open, projectWorkflowId, effectiveProjectId, projects, fetchWorkflowStatusList]);
+
 
   useEffect(() => {
     if (open && projectId && !isStandalone) {
@@ -1051,6 +1095,21 @@ export default function AddTaskModal({
                     allowClear
                     size="small"
                     style={{ minWidth: 160 }}
+                    showSearch
+                    onSearch={onProjectSearch}
+                    onPopupScroll={onProjectScroll}
+                    loading={isFetchingProjects}
+                    filterOption={false}
+                    dropdownRender={(menu) => (
+                      <>
+                        {menu}
+                        {isFetchingProjects && (
+                          <div style={{ padding: "8px", textAlign: "center" }}>
+                            <span style={{ fontSize: "12px", color: "#8c8c8c" }}>Loading...</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     onChange={(id) => {
                       form.setFieldValue("main_task_id", undefined);
                       form.setFieldValue("task_labels", []);
@@ -1066,13 +1125,20 @@ export default function AddTaskModal({
                       if (isStandalone) void fetchProjectFolders(id);
                       if (id) {
                         fetchMainTasks(id);
+                        // Also load workflow statuses for this project
+                        const selectedProject = projects.find(p => p._id === id);
+                        if (selectedProject?.workFlow) {
+                          fetchWorkflowStatusList(selectedProject.workFlow);
+                        }
                       }
                     }}
+
                   >
                     {projects.map((p) => (
                       <Option key={p._id} value={p._id}>{p.title}</Option>
                     ))}
                   </Select>
+
                 </Form.Item>
                 <span className="task-detail-breadcrumb-sep">/</span>
                 <Form.Item name="main_task_id" noStyle>

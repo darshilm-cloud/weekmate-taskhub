@@ -68,7 +68,7 @@ const CombinedEmployeeList = ({
   const [rolesLoading, setRolesLoading] = useState(false); // Add loading state for roles
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
 
@@ -395,13 +395,12 @@ const CombinedEmployeeList = ({
     }
   };
 
-  const handleTableChange = (page, filters, sorter) => {
-    setPagination({ ...pagination, ...page });
-    const { field, order } = sorter;
-    setSortBy({
-      sortBy: order === "ascend" ? "asc" : "desc",
-      sort: field,
-    });
+  const handleTableChange = (page) => {
+    setPagination(prev => ({
+      ...prev,
+      current: page.current,
+      pageSize: page.pageSize,
+    }));
   };
 
   const resetSearchFilter = (e) => {
@@ -648,7 +647,7 @@ const CombinedEmployeeList = ({
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}

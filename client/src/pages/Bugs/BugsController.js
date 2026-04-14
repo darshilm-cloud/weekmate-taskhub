@@ -117,6 +117,8 @@ const BugsController = () => {
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [columnPages, setColumnPages] = useState({});
+  const [loadingMore, setLoadingMore] = useState({});
 
   const handleChangeTableView = (view) => {
     setSelectedView(view);
@@ -206,15 +208,31 @@ const BugsController = () => {
     try {
       const reqBody = {
         project_id: projectId,
+        limit: 25,
+        pageNo: 1,
+        ...filterSchema?.bugs,
       };
+      if (searchText) reqBody.title = searchText;
+      if (filterStatus) reqBody.status = filterStatus;
+      if (filterAssigned?.length > 0) reqBody.assignees = filterAssigned;
+      if (filterOnLabels?.length > 0) reqBody.bug_labels = filterOnLabels;
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getBug,
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setBoardTasksBugs([]);
         setBoardTasksBugs(response.data.data);
+        
+        // Initialize column pages
+        const newPages = {};
+        response.data.data.forEach(col => {
+          newPages[col._id] = 1;
+        });
+        setColumnPages(newPages);
+        setLoadingMore({});
+        
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
@@ -227,6 +245,57 @@ const BugsController = () => {
       console.log(error);
     } finally {
       setPageLoading(false);
+    }
+  };
+
+  const loadMoreBugs = async (statusId) => {
+    if (loadingMore[statusId]) return;
+    
+    const currentCol = boardTasksBugs.find(c => c._id === statusId);
+    if (!currentCol || currentCol.bugs.length >= currentCol.total_bugs) return;
+
+    setLoadingMore(prev => ({ ...prev, [statusId]: true }));
+    const nextPage = (columnPages[statusId] || 1) + 1;
+
+    try {
+      const reqBody = {
+        project_id: projectId,
+        status_id: statusId,
+        limit: 25,
+        pageNo: nextPage,
+        ...filterSchema?.bugs,
+      };
+      if (searchText) reqBody.title = searchText;
+      if (filterStatus) reqBody.status = filterStatus;
+      if (filterAssigned?.length > 0) reqBody.assignees = filterAssigned;
+      if (filterOnLabels?.length > 0) reqBody.bug_labels = filterOnLabels;
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getBug,
+        body: reqBody,
+      });
+
+      if (response?.data && response?.data?.status && response.data.data) {
+        // The API returns an array of columns (even if status_id is passed, it returns [column])
+        const newColData = response.data.data.find(c => c._id === statusId);
+        if (newColData && newColData.bugs.length > 0) {
+          setBoardTasksBugs(prev => prev.map(col => {
+            if (col._id === statusId) {
+              return {
+                ...col,
+                bugs: [...col.bugs, ...newColData.bugs]
+              };
+            }
+            return col;
+          }));
+          setColumnPages(prev => ({ ...prev, [statusId]: nextPage }));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more bugs:", error);
+    } finally {
+      setLoadingMore(prev => ({ ...prev, [statusId]: false }));
     }
   };
 
@@ -1396,6 +1465,8 @@ const BugsController = () => {
     selectedView,setSelectedView,
     setFilterSchema,
     pageLoading,
+    loadMoreBugs,
+    loadingMore,
   };
 };
 

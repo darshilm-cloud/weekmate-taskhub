@@ -1341,8 +1341,6 @@ function TaskRow({ task, onOpen, isSelected, onSelect }) {
       <div className="task-row-checkbox-wrap" onClick={onSelect}>
         <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} onChange={onSelect} />
       </div>
-      <span className="task-row-pin" title="Pin"><i className="fi fi-rr-thumbtack" style={{ fontSize: 12, color: "#bbb" }} /></span>
-      <span className="task-row-flag"><FlagOutlined style={{ color: "#52c41a", fontSize: 12 }} /></span>
       <div className="task-row-avatar-wrap">
         <Avatar size={24} className="task-row-avatar">{initials}</Avatar>
       </div>

@@ -24,8 +24,6 @@ exports.getEmployees = async (req, res) => {
   try {
     // Decode user from token
     const {
-      _id: decodedUserId,
-      pms_role_id: { _id: roleId, role_name: roleName } = {},
       companyId: decodedCompanyId
     } = req.user || {};
 
@@ -55,178 +53,146 @@ exports.getEmployees = async (req, res) => {
 
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    const pagination = getPagination({
-      pageLimit: value.limit,
-      pageNum: value.pageNo,
-      sort: value.sort,
-      sortBy: value.sortBy
-    });
+    const company_id = newObjectId(decodedCompanyId);
 
+    // 1. Pre-fetch Role IDs to avoid joined matches (massive speedup)
+    const adminRoles = await PMSRoles.find({
+      role_name: { $regex: "admin", $options: "i" },
+      isDeleted: false
+    }).select("_id");
+    const adminRoleIds = adminRoles.map(r => r._id);
+
+    // 2. Global analytics counts (High performance counts)
+    const [activeCount, inactiveCount, adminCount] = await Promise.all([
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: true }),
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: false }),
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, pms_role_id: { $in: adminRoleIds } })
+    ]);
+
+    // 3. Prepare match query for Employees ONLY (pre-lookup)
     let matchQuery = {
       isDeleted: false,
       isSoftDeleted: false,
-      companyId: newObjectId(decodedCompanyId),
-      // Apply filters..
+      companyId: company_id,
       ...(value.first_name && { first_name: value.first_name }),
       ...(value.last_name && { last_name: value.last_name }),
       ...(value.full_name && { full_name: value.full_name }),
       ...(value.isActivate !== undefined && { isActivate: value.isActivate }),
-      ...(value.pms_role_id && value.pms_role_id !== "admins" && {
-        "pms_role._id": new mongoose.Types.ObjectId(value.pms_role_id)
-      }),
-      ...(value.pms_role_id === "admins" && {
-        "pms_role.role_name": { $regex: "admin", $options: "i" }
-      }),
-      ...(value.excludeIds && value.excludeIds.length > 0 && {
+      ...(value.excludeIds?.length > 0 && {
         _id: { $nin: value.excludeIds.map(id => new mongoose.Types.ObjectId(id)) }
       }),
-      ...(value.ids && value.ids.length > 0 && {
+      ...(value.ids?.length > 0 && {
         _id: { $in: value.ids.map(id => new mongoose.Types.ObjectId(id)) }
       })
     };
 
-    // Add isActivate condition based on includeDeactivated parameter
     if (!value.includeDeactivated) {
       matchQuery.isActivate = true;
     }
 
-    if (value.search) {
-      matchQuery = {
-        ...matchQuery,
-        ...searchDataArr(
-          ["first_name", "last_name", "full_name", "pms_role.role_name"],
-          value.search
-        )
-      };
+    // Role filtering (pre-lookup)
+    if (value.pms_role_id && value.pms_role_id !== "admins") {
+      matchQuery.pms_role_id = new mongoose.Types.ObjectId(value.pms_role_id);
+    } else if (value.pms_role_id === "admins") {
+      matchQuery.pms_role_id = { $in: adminRoleIds };
     }
 
-    const mainQuery = [
+    if (value.search) {
+      const searchRoleList = await PMSRoles.find({
+        role_name: { $regex: value.search, $options: "i" },
+        isDeleted: false
+      }).select("_id");
+      const searchRoleIds = searchRoleList.map(r => r._id);
+
+      const searchRegex = { $regex: value.search, $options: "i" };
+      matchQuery.$or = [
+        { first_name: searchRegex },
+        { last_name: searchRegex },
+        { full_name: searchRegex },
+        { email: searchRegex },
+        { pms_role_id: { $in: searchRoleIds } }
+      ];
+    }
+
+    // 4. Listing and Filtered Total using Facets
+    const sortField = value.sort || "_id";
+    const sortOrder = value.sortBy === "desc" ? -1 : 1;
+    const skip = (value.pageNo - 1) * value.limit;
+
+    const pipeline = [
+      { $match: matchQuery },
       {
-        $lookup: {
-          from: "pms_roles",
-          let: { pms_role_id: "$pms_role_id" },
-          pipeline: [
+        $facet: {
+          dataList: [
+            { $sort: { [sortField]: sortOrder } },
+            { $skip: skip },
+            { $limit: value.limit },
             {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$pms_role_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
+              $lookup: {
+                from: "pms_roles",
+                localField: "pms_role_id",
+                foreignField: "_id",
+                as: "pms_role"
+              }
+            },
+            { $unwind: { path: "$pms_role", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                _id: 1,
+                first_name: { $ifNull: ["$first_name", ""] },
+                isActivate: { $ifNull: ["$isActivate", false] },
+                last_name: { $ifNull: ["$last_name", ""] },
+                full_name: { $ifNull: ["$full_name", ""] },
+                phone_number: { $ifNull: ["$phone_number", ""] },
+                email: { $ifNull: ["$email", ""] },
+                emp_img: { $ifNull: ["$emp_img", ""] },
+                pms_role: { $ifNull: ["$pms_role", null] }
               }
             }
           ],
-          as: "pms_role"
-        }
-      },
-      {
-        $unwind: {
-          path: "$pms_role",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      { $match: matchQuery },
-      {
-        $project: {
-          _id: "$_id",
-          first_name: { $ifNull: ["$first_name", ""] },
-          isActivate:  { $ifNull: ["$isActivate", ""] },
-          last_name: { $ifNull: ["$last_name", ""] },
-          full_name: { $ifNull: ["$full_name", ""] },
-          phone_number: { $ifNull: ["$phone_number", ""] },
-          email: { $ifNull: ["$email", ""] },
-          emp_img: { $ifNull: ["$emp_img", ""] },
-          pms_role: { $ifNull: ["$pms_role", null] }
+          totalCount: [{ $count: "count" }]
         }
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Employees.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // Get analytics counts
-    const analyticsQuery = [
-      {
-        $lookup: {
-          from: "pms_roles",
-          localField: "pms_role_id",
-          foreignField: "_id",
-          as: "role"
-        }
-      },
-      {
-        $unwind: { path: "$role", preserveNullAndEmptyArrays: true }
-      },
-      {
-        $facet: {
-          active: [
-            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: true } },
-            { $count: "count" }
-          ],
-          inactive: [
-            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: false } },
-            { $count: "count" }
-          ],
-          admins: [
-            {
-              $match: {
-                companyId: newObjectId(decodedCompanyId),
-                isDeleted: false,
-                isSoftDeleted: false,
-                "role.role_name": { $regex: "admin", $options: "i" }
-              }
-            },
-            { $count: "count" }
-          ]
-        }
-      }
-    ];
-    const analyticsResult = await Employees.aggregate(analyticsQuery);
-    const activeCount = analyticsResult[0]?.active[0]?.count || 0;
-    const inactiveCount = analyticsResult[0]?.inactive[0]?.count || 0;
-    const adminCount = analyticsResult[0]?.admins[0]?.count || 0;
-
-    const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Employees.aggregate(listQuery);
+    const [result] = await Employees.aggregate(pipeline);
+    let data = result?.dataList || [];
+    const totalCount = result?.totalCount[0]?.count || 0;
 
     let metaData = {};
 
     if (value?.isExport) {
-      data = await this.exportEmpData(mainQuery, value.exportFileType);
+      // For export, we need the full results based on the same query
+      const exportPipeline = [
+        { $match: matchQuery },
+        { $lookup: { from: "pms_roles", localField: "pms_role_id", foreignField: "_id", as: "pms_role" } },
+        { $unwind: { path: "$pms_role", preserveNullAndEmptyArrays: true } }
+      ];
+      data = await this.exportEmpData(exportPipeline, value.exportFileType);
     } else {
       metaData = {
         total: totalCount,
         active: activeCount,
         inactive: inactiveCount,
         admins: adminCount,
-        limit: pagination.limit,
-        pageNo: pagination.page,
-        totalPages:
-          pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-        currentPage: pagination.page
+        limit: value.limit,
+        pageNo: value.pageNo,
+        totalPages: value.limit > 0 ? Math.ceil(totalCount / value.limit) : 1,
+        currentPage: value.pageNo
       };
     }
 
-    // add pms role in emp model...
-    await this.addEmpPMSRole(data);
+    // Ensure users have roles (Optimized bulk update)
+    if (data.length > 0 && !value.isExport) {
+      await this.addEmpPMSRole(data);
+    }
 
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      data,
-      metaData
-    );
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, metaData);
   } catch (error) {
+    console.error("Error in getEmployees:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
@@ -579,28 +545,29 @@ exports.getEmployeesForDropdownDeptwise = async (req, res) => {
 
 exports.addEmpPMSRole = async (emps) => {
   try {
-    if (emps && emps.length > 0) {
-      // get user role...
-      const role = await PMSRoles.findOne({
-        role_name: config.PMS_ROLES.USER,
-        isDeleted: false
-      });
-      if (role) {
-        for (let i = 0; i < emps.length; i++) {
-          const ele = emps[i];
+    if (!emps || emps.length === 0) return;
 
-          if (!ele?.pms_role?._id) {
-            await Employees.findByIdAndUpdate(ele._id, {
-              $set: {
-                pms_role_id: new mongoose.Types.ObjectId(role._id)
-              }
-            });
-          }
+    // Get default role once
+    const defaultRole = await PMSRoles.findOne({
+      role_name: config.PMS_ROLES.USER,
+      isDeleted: false
+    });
+    if (!defaultRole) return;
+
+    const updateOps = emps
+      .filter(ele => !ele?.pms_role?._id)
+      .map(ele => ({
+        updateOne: {
+          filter: { _id: ele._id },
+          update: { $set: { pms_role_id: new mongoose.Types.ObjectId(defaultRole._id) } }
         }
-      }
+      }));
+
+    if (updateOps.length > 0) {
+      await Employees.bulkWrite(updateOps);
     }
   } catch (error) {
-    console.log("🚀 ~ exports.addEmpPermissions= ~ error:", error);
+    console.error("🚀 ~ exports.addEmpPMSRole= ~ error:", error);
   }
 };
 

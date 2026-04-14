@@ -221,10 +221,10 @@ exports.getProjectsMainTask = async (req, res) => {
               {
                 $or: [
                   {
-                    "subscribers._id": new mongoose.Types.ObjectId(req.user._id)
+                    "subscribers": new mongoose.Types.ObjectId(req.user._id)
                   },
                   {
-                    "pms_clients._id": new mongoose.Types.ObjectId(req.user._id)
+                    "pms_clients": new mongoose.Types.ObjectId(req.user._id)
                   },
                   { createdBy: new mongoose.Types.ObjectId(req.user._id) }
                 ]
@@ -233,6 +233,7 @@ exports.getProjectsMainTask = async (req, res) => {
           }
         : {})
     };
+
 
     let task_query = [
       { $eq: ["$main_task_id", "$$mainTaskId"] },
@@ -270,7 +271,8 @@ exports.getProjectsMainTask = async (req, res) => {
     }).exec();
 
     const mainQuery = [
-      { $match: { isDeleted: false } },
+      { $match: matchQuery },
+
       {
         $unwind: {
           path: "$subscriber_stages",
@@ -542,7 +544,7 @@ exports.getProjectsMainTask = async (req, res) => {
         }
       },
       ...(await getClientQuery()),
-      { $match: matchQuery },
+
       {
         $project: {
           _id: 1,
@@ -1148,20 +1150,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         )
       ]);
 
-    let matchQuery = {
+    let initialMatch = {
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value.project_id),
       _id: new mongoose.Types.ObjectId(value.main_task_id),
-      ...(value.work_flow_status && value.work_flow_status.length > 0
-        ? {
-            "workflowStatus._id": {
-              $in: value.work_flow_status.map(
-                (i) => new mongoose.Types.ObjectId(i)
-              )
-            }
-          }
-        : {}),
-      // For details
       ...(!isManager && !isAdmin && !isAccManager
         ? {
             $or: [
@@ -1181,6 +1172,14 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           }
         : {})
     };
+
+
+    let postLookupMatch = {};
+    if (value.work_flow_status && value.work_flow_status.length > 0) {
+      postLookupMatch["workflowStatus._id"] = {
+        $in: value.work_flow_status.map((i) => new mongoose.Types.ObjectId(i))
+      };
+    }
 
     let taskQuery = [
       { $eq: ["$task_status", "$$statusId"] },
@@ -1273,17 +1272,22 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       ];
     }
 
+
+
     const mainQuery = [
+      {
+        $match: initialMatch
+      },
       {
         $lookup: {
           from: "projects",
-          let: { project_id: "$project_id" },
+          let: { pid: "$project_id" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$_id", { $toObjectId: "$$pid" }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1301,14 +1305,41 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       },
       {
         $lookup: {
-          from: "workflowstatuses",
-          let: { workflow_id: "$project.workFlow" },
+          from: "projectworkflows",
+          let: { compId: "$project.companyId" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$workflow_id", "$$workflow_id"] },
+                    { $eq: ["$companyId", "$$compId"] },
+                    { $eq: ["$isDefault", true] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "defaultWF"
+        }
+      },
+      {
+        $addFields: {
+          effectiveWorkflowId: {
+            $ifNull: ["$project.workFlow", { $arrayElemAt: ["$defaultWF._id", 0] }]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          let: { wpid: "$effectiveWorkflowId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$workflow_id", { $toObjectId: "$$wpid" }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1325,8 +1356,12 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         }
       },
       {
-        $match: matchQuery
+        $match: postLookupMatch
       },
+
+
+
+
       {
         $lookup: {
           from: "projecttasks",
