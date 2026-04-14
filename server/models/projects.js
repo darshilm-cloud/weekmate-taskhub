@@ -80,4 +80,13 @@ const ProjectSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+ProjectSchema.index({ companyId: 1, isDeleted: 1, _id: -1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, manager: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, acc_manager: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, project_status: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, technology: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, project_type: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, assignees: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, pms_clients: 1 });
+
 module.exports = mongoose.model("projects", ProjectSchema);
