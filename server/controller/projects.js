@@ -479,8 +479,6 @@ exports.getProjects = async (req, res) => {
         countMatchQuery.$and.push({
           $or: [
             { title: { $regex: value.search, $options: "i" } },
-            { projectId: { $regex: value.search, $options: "i" } },
-            { descriptions: { $regex: value.search, $options: "i" } }
           ]
         });
       }
@@ -620,13 +618,16 @@ exports.getProjects = async (req, res) => {
 
     // Search evaluated first so we can apply pagination BEFORE lookups
     if (value?.search) {
-      let additionalSearchMatch = [];
-      const searchRegexStr = searchDataArr(["title"], value.search)["$or"][0]["title"]["$regex"];
+      const searchRegexStr = this.removeSpecialCharFromSearch(value.search);
       const searchRegexObj = { $regex: searchRegexStr, $options: "i" };
-      additionalSearchMatch.push({ title: searchRegexObj });
-      additionalSearchMatch.push({ projectId: searchRegexObj });
-      additionalSearchMatch.push({ descriptions: searchRegexObj });
+      
+      let additionalSearchMatch = [
+        { title: searchRegexObj },
+        { projectId: searchRegexObj },
+        { descriptions: searchRegexObj }
+      ];
 
+      // If it's a general list search (sidebar/grid), also search by personnel names
       if (!value.isSearch) {
         const Employee = mongoose.model("employees");
         const matchedEmployees = await Employee.find({
@@ -637,6 +638,8 @@ exports.getProjects = async (req, res) => {
         if (matchedEmployees.length > 0) {
           const matchedEmpIds = matchedEmployees.map(e => e._id);
           additionalSearchMatch.push({ manager: { $in: matchedEmpIds } });
+          additionalSearchMatch.push({ assignees: { $in: matchedEmpIds } });
+          additionalSearchMatch.push({ pms_clients: { $in: matchedEmpIds } });
         }
       }
 
@@ -888,6 +891,537 @@ exports.getProjects = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
+//old api
+// exports.getProjects = async (req, res) => {
+//   try {
+//     // Decode user from token
+//     const {
+//       _id: decodedUserId,
+//       pms_role_id: { _id: roleId, role_name: roleName } = {},
+//       companyId: decodedCompanyId
+//     } = req.user || {};
+
+//     /*
+//      * Recommended indexes (run once in MongoDB shell / migration):
+//      *   db.projects.createIndex({ companyId: 1, isDeleted: 1 })
+//      *   db.projects.createIndex({ companyId: 1, isDeleted: 1, project_status: 1 })
+//      *   db.projects.createIndex({ companyId: 1, isDeleted: 1, manager: 1 })
+//      *   db.projects.createIndex({ companyId: 1, isDeleted: 1, assignees: 1 })
+//      *   db.projecttasks.createIndex({ project_id: 1, isDeleted: 1 })
+//      *   db.projecttaskhourlogs.createIndex({ project_id: 1, isDeleted: 1 })
+//      */
+//     const validationSchema = Joi.object({
+//       limit: Joi.number().integer().min(0).default(25),
+//       pageNo: Joi.number().integer().min(1).default(1),
+//       search: Joi.string().allow("").optional(),
+//       sort: Joi.string().default("_id"), //
+//       sortBy: Joi.string().default("desc"),
+//       _id: Joi.string().optional(),
+//       filterBy: Joi.string().default("all"),
+//       color: Joi.string().allow(""),
+//       project_status: Joi.array().optional().default([]),
+//       manager_id: Joi.array().optional().default([]),
+//       acc_manager_id: Joi.array().optional().default([]),
+//       assignee_id: Joi.array().optional().default([]),
+//       category: Joi.array().optional().default([]),
+//       technology: Joi.array().optional().default([]),
+//       project_type: Joi.array().optional().default([]),
+//       isArchived: Joi.boolean().optional().default(false),
+//       isSearch: Joi.boolean().default(false),
+//       isBillable: Joi.boolean().optional(),
+//       includeMetrics: Joi.boolean().optional().default(true),
+//       countOnly: Joi.boolean().optional().default(false)
+//     });
+
+//     const { error, value } = validationSchema.validate(req.body);
+
+//     if (error) {
+//       return errorResponse(
+//         res,
+//         statusCode.BAD_REQUEST,
+//         error.details[0].message
+//       );
+//     }
+
+//     const cacheTtlSeconds = 60;
+//     // Cache all standard listing requests (single-doc and search bypassed intentionally)
+//     const cacheKey =
+//       !value?._id && !value?.isSearch && !value?.countOnly
+//         ? `projects:get:${generateCacheKey({
+//             companyId: String(decodedCompanyId || ""),
+//             userId: String(decodedUserId || ""),
+//             value
+//           })}`
+//         : null;
+
+//     if (cacheKey) {
+//       const cached = getCache(cacheKey);
+//       if (cached) {
+//         return successResponse(
+//           res,
+//           statusCode.SUCCESS,
+//           messages.LISTING,
+//           cached.data,
+//           cached.metadata
+//         );
+//       }
+//     }
+
+//     const pagination = getPagination({
+//       pageLimit: value?.limit,
+//       pageNum: value?.pageNo,
+//       sort: value?.sort,
+//       sortBy: value?.sortBy
+//     });
+
+//     if (value?.countOnly) {
+//       const loginUserId = new mongoose.Types.ObjectId(req.user._id);
+//       const companyId = newObjectId(decodedCompanyId);
+//       const isAdminUser = await checkUserIsAdmin(req?.user?._id);
+//       const archivedStatuses = await ProjectStatus.find({
+//         isDeleted: false,
+//         companyId,
+//         title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+//       })
+//         .select("_id")
+//         .lean();
+
+//       const archivedStatusIds = archivedStatuses.map((item) => item._id);
+
+//       let countMatchQuery = {
+//         isDeleted: false,
+//         companyId,
+//         ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+//         ...(value?.color ? { color: value?.color } : {}),
+//         ...(value?.technology?.length > 0
+//           ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...(value?.project_type?.length > 0
+//           ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...(value?.category?.length > 0
+//           ? { technology: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...(value?.manager_id?.length > 0
+//           ? { manager: { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...(value?.acc_manager_id?.length > 0
+//           ? { acc_manager: { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...(value?.assignee_id?.length > 0
+//           ? { assignees: { $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//           : {}),
+//         ...("isBillable" in value && typeof value?.isBillable === "boolean"
+//           ? { isBillable: value.isBillable }
+//           : {})
+//       };
+
+//       if (!value?._id) {
+//         if (value?.project_status?.length > 0) {
+//           countMatchQuery.project_status = {
+//             $in: value.project_status.map((s) => new mongoose.Types.ObjectId(s))
+//           };
+//         } else if (archivedStatusIds.length > 0) {
+//           countMatchQuery.project_status = value?.isArchived
+//             ? { $in: archivedStatusIds }
+//             : { $nin: archivedStatusIds };
+//         }
+//       }
+
+//       if (value?.filterBy !== "all") {
+//         countMatchQuery = {
+//           ...countMatchQuery,
+//           ...(value?.filterBy === "assigned"
+//             ? {
+//                 $or: [
+//                   { assignees: loginUserId },
+//                   { pms_clients: loginUserId }
+//                 ]
+//               }
+//             : value?.filterBy === "created"
+//             ? { createdBy: loginUserId }
+//             : { manager: loginUserId })
+//         };
+//       } else if (!isAdminUser) {
+//         countMatchQuery = {
+//           ...countMatchQuery,
+//           $or: [
+//             { assignees: loginUserId },
+//             { pms_clients: loginUserId },
+//             { manager: loginUserId },
+//             { createdBy: loginUserId },
+//             { acc_manager: loginUserId }
+//           ]
+//         };
+//       }
+
+//       if (value?.search) {
+//         countMatchQuery.$and = countMatchQuery.$and || [];
+//         countMatchQuery.$and.push({
+//           $or: [
+//             { title: { $regex: value.search, $options: "i" } },
+//             { projectId: { $regex: value.search, $options: "i" } },
+//             { descriptions: { $regex: value.search, $options: "i" } }
+//           ]
+//         });
+//       }
+
+//       const totalCount = await Project.countDocuments(countMatchQuery);
+//       const metaData = {
+//         total: totalCount,
+//         limit: value?.limit,
+//         pageNo: value?.pageNo,
+//         totalPages: value?.limit > 0 ? Math.ceil(totalCount / value.limit) : 1,
+//         currentPage: value?.pageNo
+//       };
+
+//       return successResponse(
+//         res,
+//         statusCode.SUCCESS,
+//         messages.LISTING,
+//         [],
+//         metaData
+//       );
+//     }
+
+//     // Tab-setting sync intentionally removed from the listing path.
+//     // manageAllProjectTabSetting does Projects.find({}) (no filter) + N sequential
+//     // writes for every project, which saturates the connection pool and adds 10-20s
+//     // of contention on every request.  Tab settings are seeded correctly in
+//     // getProjectTabsSetting when a user opens a specific project's tabs.
+
+//     // Fetch admin status and archived project-status IDs concurrently.
+//     // Archived IDs let us filter by project_status directly in preMatch so
+//     // countDocuments(preMatch) works without any $lookup round-trip.
+//     const [isAdmin, archivedStatuses] = await Promise.all([
+//       checkUserIsAdmin(req?.user?._id),
+//       (!value?._id && !value?.project_status?.length)
+//         ? ProjectStatus.find({
+//             isDeleted: false,
+//             companyId: newObjectId(decodedCompanyId),
+//             title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+//           }).select("_id").lean()
+//         : Promise.resolve([])
+//     ]);
+//     // Default-status seed runs in background — not needed for the listing response
+//     this.checkDefaultProjectAndBugStatus(req.user._id).catch(() => {});
+//     const archivedStatusIds = archivedStatuses.map((s) => s._id);
+
+//     // ── Build filters ────────────────────────────────────────────────────────
+//     // All filter conditions reference raw document fields (ObjectIds) so they
+//     // can be evaluated in a single $match BEFORE any $lookup stages.
+//     // This dramatically reduces the number of documents that flow through joins.
+//     const userId = new mongoose.Types.ObjectId(req.user._id);
+
+//     const rawOrFilter = value?.filterBy !== "all"
+//       ? value?.filterBy === "assigned"
+//         ? { $or: [{ assignees: userId }, { pms_clients: userId }] }
+//         : value?.filterBy === "created"
+//         ? { createdBy: userId }
+//         : { manager: userId }
+//       : !isAdmin
+//       ? {
+//           $or: [
+//             { assignees:   userId },
+//             { pms_clients: userId },
+//             { manager:     userId },
+//             { createdBy:   userId },
+//             { acc_manager: userId }
+//           ]
+//         }
+//       : null;
+
+//     // Pre-lookup match — only raw document fields, maximises early elimination
+//     const preMatch = {
+//       isDeleted: false,
+//       companyId: newObjectId(decodedCompanyId),
+//       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+//       ...(value?.color ? { color: value.color } : {}),
+//       ...("isBillable" in value ? { isBillable: value.isBillable } : {}),
+//       // Formerly "technology._id" / "project_type._id" etc — now raw ObjectId fields
+//       ...(value?.technology?.length > 0
+//         ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(value?.category?.length > 0
+//         ? { technology: { $in: value.category.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(value?.project_type?.length > 0
+//         ? { project_type: { $in: value.project_type.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(value?.manager_id?.length > 0
+//         ? { manager: { $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(value?.acc_manager_id?.length > 0
+//         ? { acc_manager: { $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(value?.assignee_id?.length > 0
+//         ? { assignees: { $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)) } }
+//         : {}),
+//       ...(rawOrFilter ? { $and: [rawOrFilter] } : {})
+//     };
+
+//     // Inject archived-status filter by ID directly into preMatch so
+//     // countDocuments(preMatch) needs no $lookup.  Only applied when the caller
+//     // has not already supplied explicit project_status IDs.
+//     if (!value?._id && !value?.project_status?.length && archivedStatusIds.length > 0) {
+//       preMatch.project_status = value?.isArchived
+//         ? { $in: archivedStatusIds }
+//         : { $nin: archivedStatusIds };
+//     }
+
+//     // Search evaluated last — may reference manager.full_name (post-join field)
+//     const searchMatch = value?.search
+//       ? searchDataArr(
+//           ["title", ...(!value.isSearch ? ["manager.full_name"] : [])],
+//           value.search
+//         )
+//       : null;
+
+//     // ── Pipeline — only 2 lookups remain ──────────────────────────────────────
+//     // Removed: projecttechs, projecttypes, acc_manager employees,
+//     //          getCreatedUpdatedDeletedByQuery, assignees employees,
+//     //          getClientQuery, projectworkflows, getProjectDefaultSettingQuery
+//     const mainQuery = [
+//       { $match: preMatch },
+//       {
+//         $lookup: {
+//           from: "projectstatuses",
+//           let: { project_status: "$project_status" },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$_id", "$$project_status"] },
+//                     { $eq: ["$isDeleted", false] }
+//                   ]
+//                 }
+//               }
+//             },
+//             { $project: { _id: 1, title: 1 } }
+//           ],
+//           as: "project_status"
+//         }
+//       },
+//       { $unwind: { path: "$project_status", preserveNullAndEmptyArrays: true } },
+//       {
+//         $lookup: {
+//           from: "employees",
+//           let: { manager: "$manager" },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$_id", "$$manager"] },
+//                     { $eq: ["$isDeleted", false] },
+//                     { $eq: ["$isSoftDeleted", false] },
+//                     { $eq: ["$isActivate", true] }
+//                   ]
+//                 }
+//               }
+//             },
+//             { $project: { _id: 1, full_name: 1 } }
+//           ],
+//           as: "manager"
+//         }
+//       },
+//       { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+//       ...(searchMatch ? [{ $match: searchMatch }] : []),
+//       {
+//         $lookup: {
+//           from: "employees",
+//           let: { assignees: "$assignees" },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $in: ["$_id", "$$assignees"] },
+//                     { $eq: ["$isDeleted", false] },
+//                     { $eq: ["$isSoftDeleted", false] },
+//                     { $eq: ["$isActivate", true] }
+//                   ]
+//                 }
+//               }
+//             },
+//             {
+//               $project: {
+//                 _id: 1,
+//                 emp_img: 1,
+//                 name: {
+//                   $ifNull: [
+//                     "$full_name",
+//                     { $trim: { input: { $concat: [
+//                       { $ifNull: ["$first_name", ""] },
+//                       " ",
+//                       { $ifNull: ["$last_name", ""] }
+//                     ]}}}
+//                   ]
+//                 }
+//               }
+//             }
+//           ],
+//           as: "assignees"
+//         }
+//       },
+//       {
+//         // Strict projection — only fields needed by the project card UI.
+//         // estimatedHours is included only as input for projectHoursExceeded
+//         // calculation in JS; it is stripped from the final API response.
+//         $project: {
+//           _id: 1,
+//           title: 1,
+//           start_date: 1,
+//           end_date: 1,
+//           updatedAt: 1,
+//           estimatedHours: 1,
+//           technology: 1,
+//           project_status: { _id: 1, title: 1 },
+//           manager: { _id: 1, full_name: 1, emp_img: 1 },
+//           assignees: { _id: 1, name: 1, emp_img: 1 }
+//         }
+//       }
+//     ];
+
+//     let listQuery = [];
+//     if (!value?.isSearch) {
+//       listQuery = await getAggregationPagination(mainQuery, pagination);
+//     } else {
+//       listQuery = [...mainQuery, { $sort: pagination.sort }];
+//     }
+
+//     // countDocuments(preMatch) uses the compound index directly — no joins, no full scan.
+//     // isSearch mode skips the count (no pagination needed).
+//     const [totalCount, data] = await Promise.all([
+//       value?.isSearch ? Promise.resolve(0) : Project.countDocuments(preMatch),
+//       Project.aggregate(listQuery)
+//     ]);
+
+//     let metaData = {};
+//     if (!value?.isSearch) {
+//       metaData = {
+//         total: totalCount,
+//         limit: pagination.limit,
+//         pageNo: pagination.page,
+//         totalPages:
+//           pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
+//         currentPage: pagination.page
+//       };
+//     }
+
+//     // Need to check project status..(we need Active and Archived status default)
+//     // await this.checkDefaultProjectAndBugStatus(req.user._id);
+
+//     // Backfill missing projectId in background (do not block the listing response).
+//     // This used to run sequential DB writes on every listing, which slows down the UI a lot.
+//     setImmediate(() => {
+//       this.addProjectRandomId(data).catch(() => {});
+//     });
+
+//     if (value?.includeMetrics === false) {
+//       // Strip the internal estimatedHours field — not part of the card contract
+//       const stripInternal = (p) => {
+//         const { estimatedHours: _eh, ...rest } = p;
+//         return rest;
+//       };
+//       const slimData = Array.isArray(data) ? data.map(stripInternal) : data;
+//       if (cacheKey) {
+//         storeCache(
+//           cacheKey,
+//           value?._id ? slimData[0] : slimData,
+//           !value?._id && metaData,
+//           cacheTtlSeconds
+//         );
+//       }
+//       return successResponse(
+//         res,
+//         statusCode.SUCCESS,
+//         messages.LISTING,
+//         value?._id ? slimData[0] : slimData,
+//         !value?._id && metaData
+//       );
+//     }
+
+//     // Bulk-fetch tasks and logged hours for all projects in two queries
+//     // instead of 2N sequential queries (N+1 problem).
+//     const allProjectIds = data.map((p) => p._id);
+//     const [allTasks, allLoggedHours] = await Promise.all([
+//       ProjectTasks.find({ project_id: { $in: allProjectIds }, isDeleted: false })
+//         .populate("task_status", "title")
+//         .lean(),
+//       LoggedHours.find({ project_id: { $in: allProjectIds }, isDeleted: false })
+//         .select("project_id logged_hours logged_minutes")
+//         .lean(),
+//     ]);
+
+//     // Group by project_id for O(1) lookup
+//     const tasksByProject = {};
+//     for (const task of allTasks) {
+//       const key = task.project_id?.toString();
+//       if (!tasksByProject[key]) tasksByProject[key] = [];
+//       tasksByProject[key].push(task);
+//     }
+//     const minutesByProject = {};
+//     for (const entry of allLoggedHours) {
+//       const key = entry.project_id?.toString();
+//       const mins =
+//         parseInt(entry.logged_hours || "0", 10) * 60 +
+//         parseInt(entry.logged_minutes || "0", 10);
+//       minutesByProject[key] = (minutesByProject[key] || 0) + mins;
+//     }
+
+//     const updatedData = data.map((project) => {
+//       const key = project._id?.toString();
+//       const tasks = tasksByProject[key] || [];
+//       const doneTasks = tasks.filter((t) => t.task_status?.title === "Done");
+//       const completionPercentage =
+//         tasks.length > 0
+//           ? Math.round((doneTasks.length / tasks.length) * 100)
+//           : 0;
+//       const finalHours = (minutesByProject[key] || 0) / 60;
+//       // estimatedHours is from the $project stage (internal only — not exposed)
+//       const estimated = parseFloat(project.estimatedHours || "0");
+//       // Explicit pick — no spread, no accidental field leakage
+//       return {
+//         _id:                  project._id,
+//         title:                project.title,
+//         start_date:           project.start_date,
+//         end_date:             project.end_date,
+//         updatedAt:            project.updatedAt,
+//         technology:           project.technology,
+//         project_status:       project.project_status,
+//         manager:              project.manager,
+//         assignees:            project.assignees,
+//         totalTasks:           tasks.length,
+//         doneTasks:            doneTasks.length,
+//         completionPercentage,
+//         projectHoursExceeded: finalHours > estimated,
+//       };
+//     });
+
+//     if (cacheKey) {
+//       storeCache(
+//         cacheKey,
+//         value?._id ? updatedData[0] : updatedData,
+//         !value?._id && metaData,
+//         cacheTtlSeconds
+//       );
+//     }
+
+//     return successResponse(
+//       res,
+//       statusCode.SUCCESS,
+//       messages.LISTING,
+//       value?._id ? updatedData[0] : updatedData,
+//       !value?._id && metaData
+//     );
+//   } catch (error) {
+//     console.log("🚀 ~ exports.getProjects= ~ error:", error);
+//     return catchBlockErrorResponse(res, error.message);
+//   }
+// };
 
 //Update Project :
 exports.updateProjects = async (req, res) => {

@@ -309,18 +309,20 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   );
 };
 
-/* ─── Tabs config ─────────────────────────────────────────── */
-const TABS = [
+const TABS_CONFIG = [
+  { key: "all_projects", label: "All Projects", icon: <TeamOutlined />, adminOnly: true },
   { key: "created_by_me", label: "Created By Me", icon: <CheckCircleOutlined /> },
   { key: "assignee_to_me", label: "Assignee To Me", icon: <UserOutlined /> },
   { key: "my_team", label: "My Team Project", icon: <TeamOutlined /> },
 ];
 
 const TAB_FILTER_MAP = {
-  created_by_me: "all",
+  all_projects: "all",
+  created_by_me: "created",
   assignee_to_me: "assigned",
   my_team: "manager",
 };
+
 
 const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 // Avoid blocking the UI thread with huge sessionStorage JSON.parse/stringify.
@@ -328,7 +330,8 @@ const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROJECT_CACHE_MAX_CHARS = 250_000;
 const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
 const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
-const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 25;
+
 
 const normalizeProjectFilters = (filters = {}) => ({
   account_manager: Array.isArray(filters.account_manager) ? [...filters.account_manager] : [],
@@ -402,13 +405,19 @@ const AssignProject = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE });
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
+
   const [sortOption, setSortOption] = useState("updatedAt_desc");
   const [columnDetails, setColumnDetails] = useState([]);
   const [currentFilters, setCurrentFilters] = useState({});
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
-  const [activeTab, setActiveTab] = useState("created_by_me");
+  const isAdmin = getRoles(["Admin"]);
+  const [activeTab, setActiveTab] = useState(isAdmin ? "all_projects" : "created_by_me");
+  const availableTabs = TABS_CONFIG.filter(t => !t.adminOnly || isAdmin);
+
+
   const [memberBrowserTab, setMemberBrowserTab] = useState("Staff member");
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
@@ -448,6 +457,14 @@ const AssignProject = () => {
   const latestRequestIdRef = useRef(0);
   const inflightProjectsReqRef = useRef({ key: null, pending: false });
   const prefetchTimeoutRef = useRef(null);
+  useEffect(() => {
+
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   const idleFetchRef = useRef(null);
   const cacheWriteTimerRef = useRef(null);
   const ENABLE_TAB_PREFETCH = false;
@@ -500,7 +517,8 @@ const AssignProject = () => {
 
   useEffect(() => {
     getProjectListing(currentSkipFilters, currentFilters);
-  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects]);
+  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects, debouncedSearchText]);
+
 
   const fetchStatusList = async () => {
     try {
@@ -560,15 +578,15 @@ const AssignProject = () => {
       reqBody.project_status_id = normalizedFilters.status;
     }
     reqBody.includeMetrics = false;
-    if (searchText?.trim()) {
-      reqBody.search = searchText;
+    if (debouncedSearchText?.trim()) {
+      reqBody.search = debouncedSearchText;
       setSearchEnabled(true);
     }
     return reqBody;
   };
 
   const prefetchOtherTabs = async (skipFilters = currentSkipFilters, filterStats = currentFilters) => {
-    const otherTabs = TABS.map((t) => t.key).filter((k) => k !== activeTab);
+    const otherTabs = TABS_CONFIG.map((t) => t.key).filter((k) => k !== activeTab);
     await Promise.all(
       otherTabs.map(async (tabKey) => {
         const filterBy = TAB_FILTER_MAP[tabKey] || "all";
@@ -680,7 +698,8 @@ const AssignProject = () => {
         setColumnDetails([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
       }
-      setIsloadingProject(columnDetails.length === 0);
+      setIsloadingProject(true);
+
 
       inflightProjectsReqRef.current = { key: requestKey, pending: true };
 
@@ -791,7 +810,9 @@ const AssignProject = () => {
   };
 
   const onSearch = (value) => {
-    setSearchText(value?.trimStart?.() ?? "");
+    const val = value?.trimStart?.() ?? "";
+    setSearchText(val);
+    setDebouncedSearchText(val);
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -804,7 +825,8 @@ const AssignProject = () => {
     }
   };
 
-  const showTotal = (total) => `Total Records Count is ${total}`;
+  const showTotal = (total) => `Total ${total} projects`;
+
   const handleSortFilter = (val) => setSortOption(val);
   const handleTableChange = (page) => setPagination({ ...pagination, ...page });
 
@@ -1647,7 +1669,7 @@ const AssignProject = () => {
         {/* ── Tabs + count ── */}
         <div className="ap-tabs-toolbar">
           <div className="ap-tabs-row">
-            {TABS.map((tab) => (
+            {availableTabs.map((tab) => (
               <button
                 key={tab.key}
                 className={`ap-tab-btn ${activeTab === tab.key ? "active" : ""}`}
@@ -1663,8 +1685,9 @@ const AssignProject = () => {
                 {tab.label}
               </button>
             ))}
+
           </div>
-          <div className="ap-tabs-toolbar-right">
+          {/* <div className="ap-tabs-toolbar-right">
             <span className="ap-project-count">All Projects ({totalCount})</span>
             <span
               className="ap-view-all-link"
@@ -1682,7 +1705,7 @@ const AssignProject = () => {
             >
               {isViewAllProjects ? "View Paged" : "View All"}
             </span>
-          </div>
+          </div> */}
         </div>
 
       </div>{/* /ap-topbar */}
@@ -1702,21 +1725,23 @@ const AssignProject = () => {
                 <Empty description={emptyProjectsMessage} />
               </div>
             ) : (
-              <div className="ap-cards-grid">
-                {visibleProjects.map((record) => (
-                  <ProjectCard
-                    key={record._id}
-                    record={record}
-                    companySlug={companySlug}
-                    onEdit={showModal}
-                    onDelete={deleteProject}
-                    stats={taskStats[record._id]}
-                    projectStatusList={projectStatusList}
-                    onStatusChange={handleStatusChange}
-                    onCloseProject={handleCloseProject}
-                  />
-                ))}
-              </div>
+              <Spin spinning={isloadingProject} tip="Loading projects...">
+                <div className="ap-cards-grid">
+                  {visibleProjects.map((record) => (
+                    <ProjectCard
+                      key={record._id}
+                      record={record}
+                      companySlug={companySlug}
+                      onEdit={showModal}
+                      onDelete={deleteProject}
+                      stats={taskStats[record._id]}
+                      projectStatusList={projectStatusList}
+                      onStatusChange={handleStatusChange}
+                      onCloseProject={handleCloseProject}
+                    />
+                  ))}
+                </div>
+              </Spin>
             )}
             {!isViewAllProjects && !isloadingProject && visibleProjects.length > 0 && (
               <div className="ap-grid-pagination">
@@ -1729,7 +1754,10 @@ const AssignProject = () => {
                   showLessItems
                   pageSizeOptions={["25", "50", "100"]}
                   showTotal={showTotal}
-                  onChange={(page, size) => setPagination({ current: page, pageSize: size })}
+                  onChange={(page, size) => {
+                    setPagination({ current: page, pageSize: size });
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                 />
               </div>
             )}
@@ -1777,7 +1805,27 @@ const AssignProject = () => {
                   ))
                 )}
               </div>
+              {!isViewAllProjects && !isloadingProject && visibleProjects.length > 0 && (
+                <div className="ap-browser-pagination">
+                  <Pagination
+                    size="small"
+                    current={pagination.current}
+                    pageSize={pagination.pageSize}
+                    total={totalCount}
+                    showSizeChanger
+                    showLessItems
+                    pageSizeOptions={["25", "50", "100"]}
+                    showTotal={showTotal}
+                    onChange={(page, size) => {
+                      setPagination({ current: page, pageSize: size });
+                      document.querySelector(".ap-browser-project-list")?.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </div>
+
+              )}
             </aside>
+
 
             <section className="ap-browser-workspace">
               {showInitialProjectSkeleton ? (

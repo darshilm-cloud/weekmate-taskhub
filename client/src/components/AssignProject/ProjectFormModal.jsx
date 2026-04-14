@@ -416,8 +416,10 @@ const ProjectFormModal = ({
 
   const generatePattern = () => /^[A-Z]{2}\d{3}\/[A-Z]{2}\/[A-Za-z0-9_-]+$/;
 
-  const hydrateProjectForm = (projectData = {}, lookupOverrides = {}) => {
+  const hydrateProjectForm = (projectDataRaw = {}, lookupOverrides = {}) => {
+    const projectData = Array.isArray(projectDataRaw) ? projectDataRaw[0] : projectDataRaw;
     if (!projectData || typeof projectData !== "object") return;
+
 
     const {
       technologyList: availableTechnologyList,
@@ -636,33 +638,9 @@ const ProjectFormModal = ({
         window.location.href = `${process.env.REACT_APP_URL}unauthorised`;
       }
       if (response.data && response.data.data) {
-        const p = response.data.data;
-        setSelectedItems(p?.assignees || []);
-        setSelectedClient(p?.pms_clients || []);
-        setNewFilteredAssignees(p?.assignees || []);
-        setNewFilteredClients(p?.pms_clients || []);
-        setEditorData(p?.descriptions || "");
-        setIsBillable(p?.isBillable || false);
-        const technologyIds = p?.technology?.map((item) => item?._id) || [];
-        setProjectTech(technologyIds);
-        setProjectTypeselect(p?.project_type?._id || "");
-        if (!p?.end_date) setNoEndDate(true);
-        form.setFieldsValue({
-          title: p?.title?.trim(),
-          technology: technologyIds,
-          project_type: p?.project_type?._id,
-          descriptions: removeHTMLTags(p?.descriptions || ""),
-          workFlow: p?.workFlow?._id,
-          manager: p?.manager?._id,
-          acc_manager: p?.acc_manager?._id,
-          estimatedHours: p?.estimatedHours,
-          project_status: p?.project_status?._id,
-          start_date: p?.start_date ? dayjs(p.start_date) : null,
-          end_date: p?.end_date ? dayjs(p.end_date) : null,
-          isBillable: p?.isBillable,
-          recurringType: p?.recurringType,
-        });
+        hydrateProjectForm(response.data.data, lookupOverrides);
       }
+
     } catch (error) {
       console.error(error);
     }

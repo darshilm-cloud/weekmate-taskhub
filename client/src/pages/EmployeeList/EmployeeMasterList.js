@@ -628,7 +628,10 @@ const EmployeeMasterList = () => {
                           pageSize={sidebarPageSize}
                           total={totalEmployees}
                           showLessItems
-                          onChange={(page) => setEmployeeListPage(page)}
+                          onChange={(page) => {
+                            setEmployeeListPage(page);
+                            document.querySelector(".sidebar-user-list")?.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         />
                       </div>
                     )}
@@ -666,7 +669,10 @@ const EmployeeMasterList = () => {
                           pageSize={sidebarPageSize}
                           total={totalClients}
                           showLessItems
-                          onChange={(page) => setClientListPage(page)}
+                          onChange={(page) => {
+                            setClientListPage(page);
+                            document.querySelector(".sidebar-user-list")?.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         />
                       </div>
                     )}
