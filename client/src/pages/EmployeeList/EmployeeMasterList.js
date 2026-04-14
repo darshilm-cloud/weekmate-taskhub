@@ -164,7 +164,7 @@ const EmployeeMasterList = () => {
     
     try {
       const body = {
-        skip: isInfiniteScroll ? skipParam : 0,
+        pageNo: isInfiniteScroll ? (skipParam / sidebarPageSize) + 1 : employeeListPage,
         limit: sidebarPageSize,
         includeDeactivated: true,
         excludeIds: favorites,
@@ -228,7 +228,7 @@ const EmployeeMasterList = () => {
         setPageLoading(false);
       }
     }
-  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeInfiniteScroll.loadedCount]);
+  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeInfiniteScroll.loadedCount, employeeListPage]);
 
   const onLoadMoreEmployees = useCallback(async () => {
     if (employeeInfiniteScroll.isLoadingMore || !employeeInfiniteScroll.hasMore) return;
@@ -712,6 +712,8 @@ const EmployeeMasterList = () => {
                           pageSize={sidebarPageSize}
                           total={totalClients}
                           showLessItems
+                          showSizeChanger
+                          pageSizeOptions={["10", "25", "50", "100"]}
                           onChange={(page) => {
                             setClientListPage(page);
                             document.querySelector(".sidebar-user-list")?.scrollTo({ top: 0, behavior: "smooth" });
