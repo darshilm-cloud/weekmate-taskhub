@@ -290,22 +290,26 @@ function TaskCombinedFacetFilter({
   setSortMode,
   datePreset,
   applyDatePreset,
+  onProjectSearch,
+  onProjectScroll,
+  isFetchingProjects,
 }) {
+
   const FILTER_SECTIONS = [
     { key: "status", label: "Status", defaultValue: "all", options: TASK_STATUS_OPTIONS },
     { key: "project", label: "Project", defaultValue: [], options: projects || [], mode: "multiple" },
     ...(isAdmin
       ? [
-          {
-            key: "scope",
-            label: "Task Scope",
-            defaultValue: true,
-            options: [
-              { value: true, label: "All Tasks" },
-              { value: false, label: "My Tasks" },
-            ],
-          },
-        ]
+        {
+          key: "scope",
+          label: "Task Scope",
+          defaultValue: true,
+          options: [
+            { value: true, label: "All Tasks" },
+            { value: false, label: "My Tasks" },
+          ],
+        },
+      ]
       : []),
     { key: "sort", label: "Default", defaultValue: "default", options: TASK_SORT_OPTIONS },
     { key: "date", label: "Date Type", defaultValue: "any", options: TASK_DATE_OPTIONS },
@@ -407,6 +411,20 @@ function TaskCombinedFacetFilter({
                 showSearch
                 optionFilterProp="children"
                 maxTagCount={2}
+                onSearch={onProjectSearch}
+                onPopupScroll={onProjectScroll}
+                loading={isFetchingProjects}
+                filterOption={false}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    {isFetchingProjects && (
+                      <div style={{ padding: '8px', textAlign: 'center' }}>
+                        <Badge status="processing" text="Loading more..." />
+                      </div>
+                    )}
+                  </>
+                )}
               >
                 {(projects || []).map((project) => (
                   <Option key={project._id} value={project._id}>
@@ -414,6 +432,7 @@ function TaskCombinedFacetFilter({
                   </Option>
                 ))}
               </Select>
+
             </div>
           ) : (
             <Radio.Group
@@ -533,6 +552,15 @@ const TaskPage = () => {
   const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
   const [totalTasks, setTotalTasks] = useState(0);
 
+  // Project select infinite loading state
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectPagination, setProjectPagination] = useState({ pageNo: 1, limit: 25 });
+  const [hasMoreProjects, setHasMoreProjects] = useState(true);
+  const [isFetchingProjects, setIsFetchingProjects] = useState(false);
+  const isFetchingRef = React.useRef(false);
+
+
+
   const calendarYearOptions = useMemo(() => {
     const currentYear = dayjs().year();
     return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
@@ -562,20 +590,55 @@ const TaskPage = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (page = 1, searchStr = "", append = false) => {
+    if (isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
+    setIsFetchingProjects(true);
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.myProjects,
-        body: {},
+        body: {
+          pageNo: page,
+          limit: 25,
+          search: searchStr,
+        },
       });
+      
       if (res?.status === 200 && Array.isArray(res?.data?.data)) {
-        setProjects(res.data.data);
+        const newProjects = res.data.data;
+        setProjects(prev => append ? [...prev, ...newProjects] : newProjects);
+        setHasMoreProjects(newProjects.length === 25);
+        setProjectPagination(prev => ({ ...prev, pageNo: page }));
+      } else {
+        if (!append) setProjects([]);
+        setHasMoreProjects(false);
       }
     } catch (e) {
       console.error("fetchProjects", e);
+    } finally {
+      isFetchingRef.current = false;
+      setIsFetchingProjects(false);
     }
   }, []);
+
+
+  // Handle project search
+  const onProjectSearch = useCallback((val) => {
+    setProjectSearch(val);
+    setProjectPagination({ pageNo: 1, limit: 25 });
+    fetchProjects(1, val, false);
+  }, [fetchProjects]);
+
+  // Handle project dropdown scroll
+  const onProjectScroll = useCallback((e) => {
+    const { scrollTop, offsetHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop - offsetHeight < 10 && hasMoreProjects && !isFetchingProjects) {
+      fetchProjects(projectPagination.pageNo + 1, projectSearch, true);
+    }
+  }, [fetchProjects, hasMoreProjects, isFetchingProjects, projectPagination.pageNo, projectSearch]);
+
 
   const fetchTaskList = useCallback(async () => {
     setLoading(true);
@@ -804,21 +867,21 @@ const TaskPage = () => {
       prev.map((task) =>
         task._id === taskId
           ? {
-              ...task,
-              _stId: targetColumn.statusId || task?._stId || task?.task_status?._id || null,
-              task_status: {
-                ...(typeof task?.task_status === "object" && task?.task_status !== null ? task.task_status : {}),
-                ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
-                _id:
-                  targetColumn.statusId ||
-                  targetColumn?.statusMeta?._id ||
-                  task?._stId ||
-                  task?.task_status?._id ||
-                  null,
-                title: targetColumn?.statusMeta?.title || targetColumn.title,
-                color: targetColumn?.statusMeta?.color || targetColumn.color,
-              },
-            }
+            ...task,
+            _stId: targetColumn.statusId || task?._stId || task?.task_status?._id || null,
+            task_status: {
+              ...(typeof task?.task_status === "object" && task?.task_status !== null ? task.task_status : {}),
+              ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
+              _id:
+                targetColumn.statusId ||
+                targetColumn?.statusMeta?._id ||
+                task?._stId ||
+                task?.task_status?._id ||
+                null,
+              title: targetColumn?.statusMeta?.title || targetColumn.title,
+              color: targetColumn?.statusMeta?.color || targetColumn.color,
+            },
+          }
           : task
       )
     );
@@ -848,37 +911,37 @@ const TaskPage = () => {
       const normalizedStatusMeta =
         typeof updatedTask?.task_status === "object" && updatedTask?.task_status !== null
           ? {
-              ...updatedTask.task_status,
-              _id:
-                updatedTask?.task_status?._id ||
-                targetColumn?.statusId ||
-                targetColumn?.statusMeta?._id ||
-                null,
-              title: updatedTask?.task_status?.title || targetColumn?.statusMeta?.title || targetColumn?.title,
-              color: updatedTask?.task_status?.color || targetColumn?.statusMeta?.color || targetColumn?.color,
-            }
+            ...updatedTask.task_status,
+            _id:
+              updatedTask?.task_status?._id ||
+              targetColumn?.statusId ||
+              targetColumn?.statusMeta?._id ||
+              null,
+            title: updatedTask?.task_status?.title || targetColumn?.statusMeta?.title || targetColumn?.title,
+            color: updatedTask?.task_status?.color || targetColumn?.statusMeta?.color || targetColumn?.color,
+          }
           : {
-              ...(typeof targetColumn?.statusMeta === "object" && targetColumn.statusMeta !== null
-                ? targetColumn.statusMeta
-                : {}),
-              _id: targetColumn?.statusId || targetColumn?.statusMeta?._id || updatedTask?.task_status || null,
-              title: targetColumn?.statusMeta?.title || targetColumn?.title || "No status",
-              color: targetColumn?.statusMeta?.color || targetColumn?.color || "#d9d9d9",
-            };
+            ...(typeof targetColumn?.statusMeta === "object" && targetColumn.statusMeta !== null
+              ? targetColumn.statusMeta
+              : {}),
+            _id: targetColumn?.statusId || targetColumn?.statusMeta?._id || updatedTask?.task_status || null,
+            title: targetColumn?.statusMeta?.title || targetColumn?.title || "No status",
+            color: targetColumn?.statusMeta?.color || targetColumn?.color || "#d9d9d9",
+          };
 
       setTasks((prev) =>
         prev.map((task) =>
           task._id === taskId
             ? {
-                ...task,
-                ...updatedTask,
-                _stId:
-                  updatedTask?._stId ||
-                  updatedTask?.task_status?._id ||
-                  targetColumn?.statusId ||
-                  task?._stId,
-                task_status: normalizedStatusMeta,
-              }
+              ...task,
+              ...updatedTask,
+              _stId:
+                updatedTask?._stId ||
+                updatedTask?.task_status?._id ||
+                targetColumn?.statusId ||
+                task?._stId,
+              task_status: normalizedStatusMeta,
+            }
             : task
         )
       );
@@ -996,7 +1059,11 @@ const TaskPage = () => {
             setSortMode={setSortMode}
             datePreset={datePreset}
             applyDatePreset={applyDatePreset}
+            onProjectSearch={onProjectSearch}
+            onProjectScroll={onProjectScroll}
+            isFetchingProjects={isFetchingProjects}
           />
+
           {selectedTaskIds.length > 0 && (
             <button
               type="button"
@@ -1008,7 +1075,7 @@ const TaskPage = () => {
             </button>
           )}
           <Button
-             type="primary"
+            type="primary"
             onClick={() => setAddTaskModalOpen(true)}
           >
             <PlusOutlined /> Add Task
@@ -1231,7 +1298,7 @@ function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onS
         <div className="task-list-body">
           {tasks.length === 0 ? (
             <div className="task-list-empty">
-              <NoDataFoundIcon/>
+              <NoDataFoundIcon />
               <p>No tasks found</p>
             </div>
           ) : (
