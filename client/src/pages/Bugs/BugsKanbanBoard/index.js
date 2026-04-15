@@ -171,6 +171,8 @@ const BugList = ({
     deleteFileData,
     setDeleteFileData,
     updateviewBug,
+    isUpdatingBug,
+    isAddingLoggedHours,
   } = BugsKanbanController({
     tasks,
     showModalTaskModal,
@@ -514,6 +516,7 @@ const BugList = ({
         formComment={formComment}
         bugId={bugId}
         updateviewBug={updateviewBug}
+        loading={isUpdatingBug}
       />
 
       <AddTimeModal
@@ -533,6 +536,7 @@ const BugList = ({
         editorData={editorData}
         handlePaste={handlePaste}
         type="bug"
+        loading={isAddingLoggedHours}
       />
 
       <EditCommentModal

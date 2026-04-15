@@ -45,6 +45,7 @@ function Workflows() {
   const [sortColumn, setSortColumn] = useState("project_workflow");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const columns = [
     {
@@ -206,6 +207,7 @@ function Workflows() {
   // add workflow
   const addWorkflowDetails = async (values) => {
     try {
+      setIsSubmitting(true);
       let token = localStorage.getItem("accessToken");
       const reqBody = {
         project_workflow: values.project_workflow?.trim(),
@@ -230,8 +232,10 @@ function Workflows() {
       } else {
         message.error(response.data.message);
       }
+      setIsSubmitting(false);
     } catch (error) {
       console.log(error);
+      setIsSubmitting(false);
     }
   };
   const handleCancel = () => {
@@ -361,7 +365,7 @@ function Workflows() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" onClick={() => addform.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" onClick={() => addform.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >
         <Form form={addform} layout="vertical" onFinish={addWorkflowDetails}>

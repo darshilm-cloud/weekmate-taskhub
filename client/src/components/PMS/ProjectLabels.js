@@ -42,6 +42,7 @@ function ProjectLabels() {
   const [editingId, setEditingId] = useState(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [isTableLoading, setIsTableLoading] = useState(false); // Add loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cancel editing
   const cancelEdit = useCallback(() => {
@@ -357,6 +358,7 @@ function ProjectLabels() {
         message.warning("Please enter a valid label name");
         return;
       }
+      setIsSubmitting(true);
 
       // Generate temporary ID for optimistic update
       const tempId = `temp_${Date.now()}`;
@@ -399,12 +401,14 @@ function ProjectLabels() {
           );
           // Optionally fetch fresh data to ensure consistency
           // fetchLabels();
+          setIsSubmitting(false);
         },
         () => {
           // Error - rollback optimistic update
           setLabelListing(originalListing);
           setPagination(originalPagination);
           setIsModalOpen(true); // Reopen modal on error
+          setIsSubmitting(false);
         }
       );
     },
@@ -503,7 +507,7 @@ function ProjectLabels() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >
         <Form form={form} layout="vertical" onFinish={handleAddLabel}>

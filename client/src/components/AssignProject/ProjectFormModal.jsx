@@ -414,10 +414,6 @@ const ProjectFormModal = ({
     };
   };
 
-  const getTitleFormatExample = () => "AB123/MH/project-name";
-
-  const generatePattern = () => /^[A-Z]{2}\d{3}\/[A-Z]{2}\/[A-Za-z0-9_-]+$/;
-
   const hydrateProjectForm = (projectDataRaw = {}, lookupOverrides = {}) => {
     const projectData = Array.isArray(projectDataRaw) ? projectDataRaw[0] : projectDataRaw;
     if (!projectData || (Object.keys(projectData).length === 0)) return;

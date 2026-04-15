@@ -1022,6 +1022,9 @@ const TasksPMS = ({ flag }) => {
   const updateBoardTaskLocally = useCallback((updatedTask) => {
     if (!updatedTask?._id) return;
 
+    const isPopulatedArray = (arr) =>
+      Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && "_id" in arr[0];
+
     setBoardTasks((prevBoards) =>
       prevBoards.map((column) => ({
         ...column,
@@ -1031,15 +1034,15 @@ const TasksPMS = ({ flag }) => {
                 ...task,
                 ...updatedTask,
                 task_labels:
-                  Array.isArray(updatedTask.task_labels) && updatedTask.task_labels.length > 0
+                  isPopulatedArray(updatedTask.task_labels)
                     ? updatedTask.task_labels
                     : task.task_labels,
                 assignees:
-                  Array.isArray(updatedTask.assignees) && updatedTask.assignees.length > 0
+                  isPopulatedArray(updatedTask.assignees)
                     ? updatedTask.assignees
                     : task.assignees,
                 subscribers:
-                  Array.isArray(updatedTask.subscribers) && updatedTask.subscribers.length > 0
+                  isPopulatedArray(updatedTask.subscribers)
                     ? updatedTask.subscribers
                     : task.subscribers,
                 attachments:
@@ -1056,6 +1059,7 @@ const TasksPMS = ({ flag }) => {
       }))
     );
   }, []);
+
 
   const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
     if (!taskId || !nextStatusId) return;

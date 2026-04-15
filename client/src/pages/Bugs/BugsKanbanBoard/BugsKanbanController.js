@@ -100,6 +100,8 @@ const BugsKanbanController = ({
     assignees: false,
     estimated_time: false
   })
+  const [isUpdatingBug, setIsUpdatingBug] = useState(false);
+  const [isAddingLoggedHours, setIsAddingLoggedHours] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("")  
 
   useEffect(() => {
@@ -214,6 +216,7 @@ const BugsKanbanController = ({
   };
 
   const updateviewBug = async (_viewBug = viewBug, uploadedFiles) => {    
+    setIsUpdatingBug(true);
     dispatch(showAuthLoader());
     try {
       let reqBody = {
@@ -300,8 +303,10 @@ const BugsKanbanController = ({
         message.error(response.data.message);
       }
       dispatch(hideAuthLoader());
+      setIsUpdatingBug(false);
     } catch (error) {
       dispatch(hideAuthLoader());
+      setIsUpdatingBug(false);
       console.log(error);
     }
   }
@@ -356,6 +361,7 @@ const BugsKanbanController = ({
         // user_id: authUser?._id,
       };
 
+      setIsAddingLoggedHours(true);
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -378,8 +384,11 @@ const BugsKanbanController = ({
         message.error(response.data.message);
       }
       dispatch(hideAuthLoader());
+      setIsAddingLoggedHours(false);
     } catch (error) {
       console.log(error);
+      dispatch(hideAuthLoader());
+      setIsAddingLoggedHours(false);
     }
   };
 
@@ -1130,7 +1139,9 @@ const BugsKanbanController = ({
     setIsEditable,
     setPopulatedFiles,
     deleteFileData,
-    setDeleteFileData
+    setDeleteFileData,
+    isUpdatingBug,
+    isAddingLoggedHours
   };
 };
 

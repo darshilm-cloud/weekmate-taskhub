@@ -106,13 +106,14 @@ function ReportsHub() {
   const companySlug = localStorage.getItem("companyDomain");
   const [filters, setFilters] = useState(defaultFilters);
   const [dailyTab, setDailyTab] = useState("pending");
-  const [loading, setLoading] = useState(false);
-  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(reportKey));
+  const [optionsLoading, setOptionsLoading] = useState(Boolean(reportKey));
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [pageNo, setPageNo] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [reportData, setReportData] = useState({
     project: {
       summary: {
@@ -298,9 +299,6 @@ function ReportsHub() {
         ]
       );
 
-      // CLEAR LOADING state here so the page renders while projects continue in background
-      setOptionsLoading(false);
-
       // Now start the massive project fetch in background
       await fetchAllProjects({ includeClosed: true, signal });
 
@@ -312,7 +310,7 @@ function ReportsHub() {
     }
   }, [fetchAllProjects, reportKey]);
 
-  const loadReportData = useCallback(async ({ silent = false } = {}) => {
+  const loadReportData = useCallback(async ({ silent = false, signal } = {}) => {
     if (!reportKey) {
       return;
     }
@@ -321,7 +319,7 @@ function ReportsHub() {
       if (!silent) {
         setLoading(true);
       }
-      console.log('Loading report data for:', reportKey, 'with filters:', filters);
+      if (signal?.aborted) return;
       
       const selectedDate = filters.date ? moment(filters.date) : null;
       const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
@@ -341,10 +339,9 @@ function ReportsHub() {
       });
 
       if (reportKey === "project-report") {
-        // Only fetch all projects for summary if we don't have them or filters changed
         const isPageChangeOnly = previousFiltersRef.current === filters;
         
-        const [projectsResponse, projectListResponse] = await Promise.all([
+        const [projectsResponse, projectListResponse, absoluteProjectsResponse] = await Promise.all([
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.getProjectRunningReportsDetails,
@@ -352,6 +349,7 @@ function ReportsHub() {
               technologies: [],
               types: [],
               managers: [],
+              search: filters.search?.trim() || "",
               pageNo: pageNo,
               limit: pageSize,
               sort: "title",
@@ -362,74 +360,103 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.getMethod,
             api_url: Service.getProjectList,
-            params: `page=${pageNo}&limit=${pageSize}&includeClosed=true`,
+            params: `page=${pageNo}&limit=${pageSize}&includeClosed=true${filters.search ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
+          }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectRunningReportsDetails,
+            body: {
+              technologies: [],
+              types: [],
+              managers: [],
+              search: "", // Fixed total ignores search
+              pageNo: 1,
+              limit: 1,
+              isExport: false,
+            },
           }),
         ]);
-
 
         const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
         const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
         const projectRows = mergeProjectRows(reportProjects, masterProjects);
+        
+        // Robust parsing for total project counts
+        const getMetaTotal = (resp) => {
+          return resp?.data?.meta?.total ?? 
+                 resp?.data?.meta?.totalCount ?? 
+                 resp?.data?.data?.pagination?.totalCount ?? 
+                 resp?.data?.data?.totalCount ??
+                 resp?.data?.total ?? 
+                 0;
+        };
 
-        const paginationInfo = projectsResponse?.data?.data?.pagination || projectsResponse?.data?.meta || {};
-        const totalProjectsCount = paginationInfo.totalCount || paginationInfo.total || projectRows.length;
+        const totalProjectsCount = getMetaTotal(projectsResponse) || projectRows.length;
+        const absoluteTotalProjects = getMetaTotal(absoluteProjectsResponse) || totalProjectsCount;
 
-        // Step 2: Collect all project IDs and fetch tasks scoped to those projects
-        const allProjectIds = projectRows
-          .map((p) => getProjectRecordId(p))
-          .filter(Boolean);
+        // Fetch Metrics (Global or Project-specific)
+        const metricsProjectId = selectedProjectId || null;
+        
+        // If we have a selection, use it. 
+        // If we have a search active but no selection, use the projects from the current result.
+        // If neither, it's global.
+        const effectiveProjectIds = metricsProjectId 
+          ? [metricsProjectId] 
+          : (filters.search?.trim() ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []);
 
-        const tasksResponse = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.taskList,
-          body: {
-            ...commonTaskPayload,
-            project_id: allProjectIds,
-          },
-        });
+        const metricsPayload = {
+          view_all: true,
+          pageNo: 1,
+          limit: 1,
+          project_id: effectiveProjectIds,
+          // Robust check: if search is active but returned 0 projects, force 0 tasks
+          ...(filters.search?.trim() && effectiveProjectIds.length === 0 && { project_id: ["000000000000000000000000"] }),
+          search: "", 
+          // Include extra fields often used by the backend as security/sanity checks
+          is_active: [],
+          is_priority: [],
+          employee_id: [],
+          task_type: "All"
+        };
 
-        const taskRows = Array.isArray(tasksResponse?.data?.data) ? tasksResponse.data.data : [];
 
-        const groupedTasks = taskRows.reduce((acc, task) => {
-          const key = getTaskProjectId(task);
-          if (!key) {
-            return acc;
-          }
-          if (!acc[key]) {
-            acc[key] = { total: 0, completed: 0 };
-          }
-          acc[key].total += 1;
-          if (isCompletedTask(task)) {
-            acc[key].completed += 1;
-          }
-          return acc;
-        }, {});
+        const [tasksTotalResponse, tasksCompletedResponse] = await Promise.all([
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: { ...metricsPayload, status: "all" },
+          }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: { ...metricsPayload, status: "completed" },
+          }),
+        ]);
+
+        const totalTasks = getMetaTotal(tasksTotalResponse);
+        const completedTasks = getMetaTotal(tasksCompletedResponse);
 
         const rows = projectRows.map((project) => {
           const projectId = getProjectRecordId(project);
-          const stats = groupedTasks[projectId] || { total: 0, completed: 0 };
           return {
             key: projectId,
             taskName: getProjectRecordTitle(project),
-            progress: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+            progress: 0, // removed row-specific progress from table as it's slow to fetch per-row
             startDate: formatDate(getProjectRecordStartDate(project)),
             endDate: formatDate(getProjectRecordEndDate(project)),
             status: getProjectRecordStatus(project),
           };
         });
-        
-        const completedTasks = taskRows.filter(isCompletedTask).length;
-
 
         setTotal(totalProjectsCount);
         setReportData((prev) => ({
           ...prev,
           project: {
             summary: {
-              totalProjects: totalProjectsCount,
-              totalTasks: taskRows.length, // approximation based on current page if not full list
+              totalProjects: absoluteTotalProjects,
+              totalTasks,
               completedTasks,
-              incompleteTasks: Math.max(taskRows.length - completedTasks, 0),
+              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
             },
             rows,
           },
@@ -782,7 +809,7 @@ function ReportsHub() {
         setLoading(false);
       }
     }
-  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
+  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab, selectedProjectId]);
 
   useEffect(() => {
     // Only fetch dropdown options if we are in a specific report page
@@ -794,14 +821,18 @@ function ReportsHub() {
   }, [loadDropdowns, reportKey]);
 
   useEffect(() => {
-    setFilters(defaultFilters);
-    setDailyTab("pending");
-    setPageNo(1);
-    previousFiltersRef.current = defaultFilters;
+    if (reportKey) {
+      setFilters(defaultFilters);
+      setDailyTab("pending");
+      setPageNo(1);
+      previousFiltersRef.current = defaultFilters;
+      setLoading(true); // Ensure loading is true when switching reports
+    }
   }, [reportKey]);
 
   useEffect(() => {
     if (reportKey) {
+      const controller = new AbortController();
       const previousFilters = previousFiltersRef.current || defaultFilters;
       const previousWithoutSearch = { ...previousFilters, search: "" };
       const currentWithoutSearch = { ...filters, search: "" };
@@ -813,18 +844,24 @@ function ReportsHub() {
 
       // If filters changed significantly (not just search), reset to page 1
       if (filtersChanged && !isSearchOnly) {
-        setPageNo(prev => prev === 1 ? 1 : 1); 
-        // Note: setPageNo(1) might not trigger the effect if it's already 1, 
-        // but loadReportData will still catch it because of the combined effect.
+        setPageNo(1); 
       }
 
+      // Detect report switch to avoid silent load on initial switch
+      const isReportSwitch = previousFiltersRef.current === defaultFilters && filters === defaultFilters;
+      
       // If pageNo or pageSize changed but NOT filters, load silently
       const isPageChange = previousFiltersRef.current === filters;
       
-      loadReportData({ silent: isSearchOnly || isPageChange });
+      loadReportData({ 
+        silent: (isSearchOnly || isPageChange) && !isReportSwitch,
+        signal: controller.signal 
+      });
       previousFiltersRef.current = filters;
+      
+      return () => controller.abort();
     }
-  }, [filters, reportKey, pageNo, pageSize, loadReportData]);
+  }, [filters, reportKey, pageNo, pageSize, selectedProjectId, loadReportData]);
 
   const handleDownload = (key) => {
     let items = [];
@@ -1012,13 +1049,19 @@ function ReportsHub() {
       </div>
 
       <div className="reports-hub-main">
-        {loading || optionsLoading ? (
+        {(loading || optionsLoading) && reportKey !== "project-report" ? (
           <ReportsDetailSkeleton />
         ) : (
           <>
             {reportKey === "project-report" ? (
               <ProjectReportContent
                 data={reportData.project}
+                filters={filters}
+                setFilters={setFilters}
+                loading={loading}
+                optionsLoading={optionsLoading}
+                selectedProjectId={selectedProjectId}
+                setSelectedProjectId={setSelectedProjectId}
                 pageNo={pageNo}
                 pageSize={pageSize}
                 total={total}
@@ -1509,7 +1552,27 @@ function CommonFilters({ fields, filters, setFilters }) {
   );
 }
 
-function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPageSize }) {
+function ProjectReportContent({ 
+  data, 
+  filters, 
+  setFilters, 
+  loading, 
+  optionsLoading, 
+  selectedProjectId, 
+  setSelectedProjectId, 
+  pageNo, 
+  pageSize, 
+  total, 
+  setPageNo, 
+  setPageSize 
+}) {
+  const [localSearchText, setLocalSearchText] = useState(filters?.search || "");
+  const isDataLoading = loading || optionsLoading;
+
+  useEffect(() => {
+    setLocalSearchText(filters?.search || "");
+  }, [filters?.search]);
+
   const columns = [
     { title: "Task Name", dataIndex: "taskName", key: "taskName" },
     {
@@ -1535,15 +1598,42 @@ function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPag
 
   return (
     <>
+      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <span className="stats-info-text">
+          {selectedProjectId ? "Showing metrics for selected project" : "Showing global totals"}
+        </span>
+        {selectedProjectId && (
+          <Button size="small" type="link" onClick={() => setSelectedProjectId(null)}>
+            Clear Selection
+          </Button>
+        )}
+      </div>
+
       <div className="project-report-stats">
-        <MetricCard color="#22b3c3" value={String(data.summary.totalProjects)} label="Total Projects" solid />
-        <MetricCard color="#ea3030" value={`${data.summary.incompleteTasks}/${data.summary.totalTasks || 0}`} label="Task In-completed" />
-        <MetricCard
-          color="#dedede"
-          value={`${data.summary.completedTasks}/${data.summary.totalTasks || 0}`}
-          label="Task Completed"
-          secondaryValueColor="#22c55e"
-        />
+        {isDataLoading && !data.summary.totalProjects ? (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="project-report-stat-card skeleton">
+                <div className="sk-block" style={{ width: 44, height: 44, borderRadius: 12 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, alignItems: "center", width: "100%" }}>
+                  <div className="sk-block" style={{ width: "60%", height: 12 }} />
+                  <div className="sk-block" style={{ width: "40%", height: 30 }} />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <MetricCard color="#22b3c3" value={String(data.summary.totalProjects)} label="Total Projects" solid />
+            <MetricCard color="#ea3030" value={`${data.summary.incompleteTasks}/${data.summary.totalTasks || 0}`} label="Task In-completed" />
+            <MetricCard
+              color="#dedede"
+              value={`${data.summary.completedTasks}/${data.summary.totalTasks || 0}`}
+              label="Task Completed"
+              secondaryValueColor="#22c55e"
+            />
+          </>
+        )}
       </div>
 
       <div className="project-report-table-card">
@@ -1552,12 +1642,37 @@ function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPag
           <Input.Search
             placeholder="Search..."
             className="project-report-search"
+            value={localSearchText}
+            onChange={(event) => {
+              const nextValue = event.target.value || "";
+              setLocalSearchText(nextValue);
+              setFilters((prev) => ({
+                ...prev,
+                search: nextValue,
+              }));
+            }}
+            onSearch={(value) => {
+              setFilters((prev) => ({
+                ...prev,
+                search: value ?? localSearchText ?? "",
+              }));
+            }}
             allowClear
           />
         </div>
         <Table
           columns={columns}
           dataSource={data.rows}
+          loading={isDataLoading}
+          rowClassName={(record) => {
+            const isSelected = record.key === selectedProjectId;
+            return `project-report-row ${isSelected ? "selected-report-row" : ""}`;
+          }}
+          onRow={(record) => ({
+            onClick: () => {
+              setSelectedProjectId(record.key);
+            },
+          })}
           pagination={{
             current: pageNo,
             pageSize: pageSize,
@@ -1569,7 +1684,6 @@ function ProjectReportContent({ data, pageNo, pageSize, total, setPageNo, setPag
             showSizeChanger: true,
             pageSizeOptions: ["10", "20", "30"],
           }}
-          rowClassName={() => "project-report-row"}
           locale={{ emptyText: <Empty description="No project data found" /> }}
         />
       </div>

@@ -134,6 +134,8 @@ export default function BugsGanttView({
     onFileViewChange,
     attachmentViewfileRef,
     updateviewBug,
+    isUpdatingBug,
+    isAddingLoggedHours,
   } = BugsKanbanController({
     tasks,
     showModalTaskModal,
@@ -459,6 +461,7 @@ export default function BugsGanttView({
         formComment={formComment}
         bugId={bugId}
         updateviewBug={updateviewBug}
+        loading={isUpdatingBug}
       />
 
       <AddTimeModal
@@ -478,6 +481,7 @@ export default function BugsGanttView({
         editorData={editorData}
         handlePaste={handlePaste}
         type="bug"
+        loading={isAddingLoggedHours}
       />
 
       <EditCommentModal

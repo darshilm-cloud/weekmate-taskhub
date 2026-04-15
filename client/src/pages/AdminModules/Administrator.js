@@ -27,6 +27,7 @@ const Administrator = () => {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 25,
@@ -70,6 +71,7 @@ const Administrator = () => {
   // ➕ Add New Admin
   const addAdmin = async (values) => {
     try {
+      setIsSubmitting(true);
       const { email, first_name, last_name, password } = values;
 
       await Service.makeAPICall({
@@ -84,12 +86,14 @@ const Administrator = () => {
       });
 
       message.success("Admin added successfully");
+      setIsSubmitting(false);
       handleModalClose();
       // Reset to first page after adding new admin
       getAdminList({ page: 1, limit: pagination.pageSize, search: searchText });
     } catch (error) {
       console.error("Add admin failed:", error.response.data?.message);
 
+      setIsSubmitting(false);
       message.error(error.response.data?.message || "Failed to add admin");
     }
   };
@@ -97,6 +101,7 @@ const Administrator = () => {
   // ✏️ Update Existing Admin
   const updateAdmin = async (values) => {
     try {
+      setIsSubmitting(true);
       const { email, first_name, last_name, password } = values;
       await Service.makeAPICall({
         methodName: Service.putMethod,
@@ -110,6 +115,7 @@ const Administrator = () => {
       });
 
       message.success("Admin updated successfully");
+      setIsSubmitting(false);
       handleModalClose();
       // Stay on current page after update
       getAdminList({
@@ -119,6 +125,7 @@ const Administrator = () => {
       });
     } catch (error) {
       console.error("Update failed:", error);
+      setIsSubmitting(false);
       message.error("Failed to update admin");
     }
   };
@@ -412,7 +419,7 @@ const Administrator = () => {
 
             {modalMode !== "view" && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" loading={isSubmitting}>
                   {modalMode === "edit" ? "Update" : "Add"}
                 </Button>
               </div>

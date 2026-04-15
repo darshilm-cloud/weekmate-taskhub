@@ -37,6 +37,7 @@ function ProjectStatus() {
   const [editid, setEditid] = useState();
   const [flag, setFlag] = useState(false);
   const [edtitext, setEdittext] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlechange = e => {
     setEdittext({ ...edtitext, status: e.target.value });
@@ -86,6 +87,7 @@ function ProjectStatus() {
 
   const handleOk = async () => {
     try {
+      setIsSubmitting(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addProjectStatus,
@@ -99,8 +101,10 @@ function ProjectStatus() {
       } else {
         message.error(response.data.message);
       }
+      setIsSubmitting(false);
     } catch (error) {
       console.log(error);
+      setIsSubmitting(false);
     }
   };
 
@@ -252,7 +256,7 @@ function ProjectStatus() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => addProjectStatus.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => addProjectStatus.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >
         <Form form={addProjectStatus} layout="vertical" onFinish={handleOk}>

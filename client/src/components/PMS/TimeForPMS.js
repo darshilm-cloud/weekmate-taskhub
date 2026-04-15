@@ -658,9 +658,8 @@ function TimeForPMS() {
   const getTaskdropdown = async () => {
     try {
       const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getProjectMianTask,
-        body: { project_id: projectId },
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
       });
       if (response?.data?.data?.length > 0) {
         setTaskdropdown(response.data.data);

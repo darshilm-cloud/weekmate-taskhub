@@ -99,6 +99,8 @@ const BugsTable = ({
     editorData,
     handlePaste,
     updateviewBug,
+    isUpdatingBug,
+    isAddingLoggedHours,
   } = BugsKanbanController({
     tasks,
     showModalTaskModal,
@@ -300,6 +302,7 @@ const BugsTable = ({
         formComment={formComment}
         bugId={bugId}
         updateviewBug={updateviewBug}
+        loading={isUpdatingBug}
       />
 
       <AddTimeModal
@@ -319,6 +322,7 @@ const BugsTable = ({
         editorData={editorData}
         handlePaste={handlePaste}
         type="bug"
+        loading={isAddingLoggedHours}
       />
 
       <EditCommentModal
