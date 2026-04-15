@@ -199,9 +199,11 @@ exports.addProjectsTask = async (req, res) => {
       main_task_id: Joi.string().required(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
+      priority: Joi.string().valid("Low", "Medium", "High").optional().default("Low"),
       task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
       start_date: Joi.date().optional(),
       due_date: Joi.date().optional(),
+      end_date: Joi.date().optional().allow(null),
       assignees: Joi.array().optional(),
       pms_clients: Joi.array().optional().default([]),
       estimated_hours: Joi.string().optional().default("00"),
@@ -210,8 +212,9 @@ exports.addProjectsTask = async (req, res) => {
       folder_id: Joi.any().optional(),
       task_progress: Joi.string().optional().default("0"),
       task_status: Joi.string().optional(),
-      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default("")
-    });
+      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default(""),
+      custom_fields: Joi.object().optional().default({})
+    }).unknown(true);
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(
@@ -261,12 +264,14 @@ exports.addProjectsTask = async (req, res) => {
       descriptions: value.descriptions || "",
       task_labels: value.task_labels || [],
       start_date: value.start_date || null,
+      end_date: value.end_date || null,
       due_date: value.due_date || null,
       estimated_hours: value.estimated_hours,
       estimated_minutes: value.estimated_minutes,
       // attachments: value.attachments || [],
       task_progress: value.task_progress,
       recurringType: value.recurringType || "",
+      custom_fields: value.custom_fields || {},
       ...(value?.task_status && {
         task_status_history: [
           {
@@ -1087,8 +1092,10 @@ exports.updateProjectsTask = async (req, res) => {
         assignees: value.assignees || [],
         status: value.status,
         descriptions: value.descriptions || "",
+      priority: value.priority || "Low",
         task_labels: value.task_labels || [],
         start_date: value.start_date || null,
+      end_date: value.end_date || null,
         due_date: value.due_date || null,
         start_date: value.start_date || null,
         estimated_hours: value.estimated_hours,
@@ -1819,9 +1826,11 @@ exports.updateProjectsTaskProps = async (req, res) => {
       title: Joi.string().optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
+      priority: Joi.string().valid("Low", "Medium", "High").optional(),
       task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
       start_date: Joi.date().optional().allow(null),
       due_date: Joi.date().optional().allow(null),
+      end_date: Joi.date().optional().allow(null),
       assignees: Joi.array().optional(),
       pms_clients: Joi.array().default([]),
       estimated_hours: Joi.string().optional().default("00"),
@@ -1830,8 +1839,9 @@ exports.updateProjectsTaskProps = async (req, res) => {
       task_progress: Joi.string().optional().default("0"),
       task_status: Joi.string().optional(),
       folder_id: Joi.string().optional(),
-      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default("")
-    });
+      recurringType: Joi.string().valid("", "monthly", "yearly").optional().default(""),
+      custom_fields: Joi.object().optional().default({})
+    }).unknown(true);
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
       return errorResponse(
@@ -2270,6 +2280,21 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
             }
             break;
 
+          case "priority":
+            if (reqBody?.priority) {
+              updateObj.priority = reqBody?.priority;
+              if (perviousData?.priority !== reqBody?.priority) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.priority,
+                  new_value: reqBody?.priority
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+            break;
+
           case "task_labels":
             if (reqBody?.task_labels) {
               updateObj.task_labels = reqBody?.task_labels;
@@ -2370,6 +2395,28 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   };
                   historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
                 }
+              }
+            }
+            break;
+
+          case "end_date":
+            if (reqBody?.end_date || reqBody.end_date == null) {
+              updateObj.end_date = reqBody?.end_date;
+              if (perviousData?.end_date == null && reqBody?.end_date == null) {
+                console.log("No updates to task history end dt");
+              } else if (
+                !moment(perviousData?.end_date).isSame(
+                  moment(reqBody?.end_date),
+                  "day"
+                )
+              ) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.end_date,
+                  new_value: reqBody?.end_date
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }
             }
             break;
@@ -2702,6 +2749,24 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   updated_key: element,
                   pervious_value: perviousData?.recurringType,
                   new_value: reqBody?.recurringType
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+            break;
+
+          case "custom_fields":
+            if (reqBody?.custom_fields && typeof reqBody.custom_fields === "object") {
+              updateObj.custom_fields = reqBody.custom_fields;
+              if (
+                JSON.stringify(perviousData?.custom_fields || {}) !==
+                JSON.stringify(reqBody.custom_fields || {})
+              ) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: JSON.stringify(perviousData?.custom_fields || {}),
+                  new_value: JSON.stringify(reqBody.custom_fields || {})
                 };
                 historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
               }

@@ -398,6 +398,10 @@ export default class Service {
   static getGeneralSetting = "/app/setting/get"
   static addGeneralSetting = "/app/setting/add-edit"
 
+  // task form builder
+  static getTaskFormConfig = "/task-form-builder/get"
+  static addEditTaskFormConfig = "/task-form-builder/add-edit"
+
 
   // billable hours api
   static getBillableHoursForPC = "/projects/task-logged-hours/getEmployeesHours"

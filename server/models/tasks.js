@@ -26,6 +26,11 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  priority: {
+    type: String,
+    enum: ["Low", "Medium", "High"],
+    default: "Low",
+  },
   taskId: {
     type: String,
     required: true,
@@ -40,6 +45,7 @@ const TaskSchema = new mongoose.Schema({
     default: [],
   },
   start_date: { type: Date, default: null },
+  end_date: { type: Date, default: null },
   due_date: { type: Date, default: null },
   assignees: {
     type: [{ type: Schema.Types.ObjectId, ref: "employees" }],
@@ -88,6 +94,10 @@ const TaskSchema = new mongoose.Schema({
   recurringType: { 
     type: String, 
     default: ""
+  },
+  custom_fields: {
+    type: Schema.Types.Mixed,
+    default: {},
   },
   // comments: {
   //   type: [

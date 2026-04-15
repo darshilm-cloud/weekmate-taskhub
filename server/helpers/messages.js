@@ -126,6 +126,7 @@ module.exports = {
   // general settings updates
   APP_SETTING_UPDATED: "App settings updated successfully.",
   TAB_SETTING_UPDATED: "Project tab settings updated successfully.",
+  TASK_FORM_SETTING_UPDATED: "Task form settings updated successfully.",
 
   // billable hours approval.
   MANAGER_EMPS: "No Employees Found Under Your Management",

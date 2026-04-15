@@ -374,6 +374,7 @@ const TaskDetailModal = ({
       "start_date",
       "due_date",
       "assignees",
+      "custom_fields",
       ...(hasAttachmentsPayload ? ["attachments"] : []),
       ...(taskStatusId ? ["task_status"] : []),
     ];
@@ -388,6 +389,7 @@ const TaskDetailModal = ({
       due_date: editData.due_date || null,
       assignees: Array.isArray(editData.assignees) ? editData.assignees : [],
       task_labels: Array.isArray(editData.taskLabels) ? editData.taskLabels.filter(Boolean) : [],
+      custom_fields: editData.custom_fields || {},
       ...(taskStatusId ? { task_status: taskStatusId } : {}),
       ...(hasAttachmentsPayload ? { attachments: [...normalizedExisting, ...normalizedUploaded] } : {}),
     };
@@ -613,6 +615,7 @@ const TaskDetailModal = ({
       start_date: src?.start_date || null,
       assignees: assigneeIds,
       taskLabels: labelIds,
+      custom_fields: src?.custom_fields || {},
       bugs: bugsForEdit,
     });
     setIsEditing(true);
@@ -657,6 +660,7 @@ const TaskDetailModal = ({
         descriptions: editData.descriptions,
         due_date: editData.due_date,
         start_date: editData.start_date,
+        custom_fields: editData.custom_fields || {},
         // Keep assignees as IDs array for the API
         assignees: editData.assignees || [],
         // Keep labels as IDs array for the API
@@ -1235,9 +1239,9 @@ const TaskDetailModal = ({
                 <Button
                   className={`task-detail-icon-btn ${isEditing ? 'task-detail-icon-btn-active' : ''}`}
                   type="text"
-                  onClick={isEditing ? handleCancelEdit : handleEditClick}
-                  icon={isEditing ? <CloseOutlined /> : <EditOutlined />}
-                  title={isEditing ? "Cancel Editing" : "Edit Task"}
+                  onClick={handleEditClick}
+                  icon={<EditOutlined />}
+                  title="Edit Task"
                 />
               </div>
             </div>
@@ -1416,6 +1420,49 @@ const TaskDetailModal = ({
                   )}
                 </div>
               </div>
+
+              {Object.keys(isEditing ? (editData.custom_fields || {}) : (displayTask?.custom_fields || {})).map((fieldKey) => {
+                const currentValue = isEditing
+                  ? editData?.custom_fields?.[fieldKey]
+                  : displayTask?.custom_fields?.[fieldKey];
+                return (
+                  <div className="task-detail-section" key={`custom-${fieldKey}`}>
+                    <div className="task-detail-label">
+                      {String(fieldKey || "")
+                        .split("_")
+                        .filter(Boolean)
+                        .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+                        .join(" ")}
+                    </div>
+                    <div className="task-detail-value">
+                      {isEditing ? (
+                        <Input
+                          size="small"
+                          value={Array.isArray(currentValue) ? currentValue.join(", ") : (currentValue || "")}
+                          onChange={(event) =>
+                            setEditData((prev) => ({
+                              ...prev,
+                              custom_fields: {
+                                ...(prev.custom_fields || {}),
+                                [fieldKey]: event.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="Enter value"
+                        />
+                      ) : (
+                        String(
+                          Array.isArray(currentValue)
+                            ? currentValue.join(", ")
+                            : currentValue === null || currentValue === undefined
+                            ? "—"
+                            : currentValue
+                        )
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Attachments */}
@@ -1506,7 +1553,7 @@ const TaskDetailModal = ({
           </div>
         </div>
 
-        <div className="task-detail-modal-right">
+        {!isEditing && <div className="task-detail-modal-right">
           <div className="task-detail-sidebar-head">
             <div className="task-detail-sidebar-kicker">Workspace</div>
             <div className="task-detail-sidebar-title">Discussion and activity</div>
@@ -1577,7 +1624,7 @@ const TaskDetailModal = ({
               },
             ]}
           />
-        </div>
+        </div>}
       </div>
     </Modal>
   );

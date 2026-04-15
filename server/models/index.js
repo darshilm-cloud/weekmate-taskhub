@@ -41,6 +41,7 @@ let x_api_keys = require("./XAPIkey");
 let appSetting = require("./appSetting");
 let projectTabs = require("./projectTabs");
 let projectTabsSetting = require("./projectTabsSettings");
+let taskFormConfig = require("./taskFormConfig");
 let loggedhoursComents = require("./hoursLoggedComments");
 let hoursApprove = require("./hoursApprove");
 let totaltaskhourslogged = require("./totaltaskhourslogged");
@@ -98,6 +99,7 @@ module.exports = {
   appSetting,
   projectTabs,
   projectTabsSetting,
+  taskFormConfig,
   loggedhoursComents,
   hoursApprove,
   empInOut,

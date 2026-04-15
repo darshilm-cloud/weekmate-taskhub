@@ -26,6 +26,7 @@ import {
 import AdminDashboard from "../pages/AdminDashboard";
 import CompanyManagement from "../pages/AdminModules/CompanyManagement";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+import TaskFormBuilder from "../pages/AdminModules/TaskFormBuilder";
 import Administrator from "../pages/AdminModules/Administrator";
  
 
@@ -112,7 +113,7 @@ const RouteSkeletonFallback = () => {
   const location = useLocation();
   const path = (location?.pathname || "").toLowerCase();
 
-  if (path.includes("/admin/settings")) return <SettingsSkeleton />;
+  if (path.includes("/admin/settings") || path.includes("/admin/task-form-builder")) return <SettingsSkeleton />;
   if (path.includes("/project-users")) return <UsersPageSkeleton />;
   if (path.includes("/project-list")) return <ProjectListSkeleton />;
   if (path.includes("/timesheet-reports")) return <TimesheetSkeleton />;
@@ -481,6 +482,11 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
       ],
+    },
+    {
+      path: ":companySlug/admin/task-form-builder",
+      component: TaskFormBuilder,
+      roleName: [config.PMS_ROLES.ADMIN],
     },
     // {
     //   path: ":companySlug/admin/company-employee",

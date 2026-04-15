@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Pagination } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -1124,7 +1124,7 @@ const TaskPage = () => {
             isFetchingProjects={isFetchingProjects}
             projectSearch={projectSearch}
           />
-          <Select
+          {/* <Select
             value={pagination.limit}
             onChange={(nextLimit) => {
               taskPageRef.current = 1;
@@ -1137,7 +1137,7 @@ const TaskPage = () => {
                 {size} / Page
               </Option>
             ))}
-          </Select>
+          </Select> */}
 
           {selectedTaskIds.length > 0 && (
             <button

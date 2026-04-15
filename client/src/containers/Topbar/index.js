@@ -16,6 +16,7 @@ import {
   NodeIndexOutlined,
   TagsOutlined,
   TeamOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import UserProfile from "../Sidebar/UserProfile";
@@ -38,6 +39,7 @@ function Topbar() {
       items: [
         { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
         { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
+        { label: "Task Form Builder",     icon: <FormOutlined />,    path: `/${companySlug}/admin/task-form-builder` },
         { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
         { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
       ],

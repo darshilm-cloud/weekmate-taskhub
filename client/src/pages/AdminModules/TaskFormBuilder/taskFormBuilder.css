@@ -1,0 +1,76 @@
+.task-form-builder-page {
+  padding: 20px 24px;
+}
+
+.task-form-builder-card {
+  border-radius: 10px;
+}
+
+.task-form-builder-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.task-form-builder-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-form-builder-section {
+  margin-bottom: 20px;
+}
+
+.task-form-builder-list {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.task-form-preview {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.task-form-builder-field-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.task-form-builder-field-card:hover {
+  background: #fafafa;
+}
+
+.task-form-builder-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-form-builder-field-input {
+  margin-bottom: 4px;
+}
+
+.task-form-drag-icon {
+  color: #8c8c8c;
+  cursor: grab;
+  font-size: 16px;
+}
+
+.task-form-builder-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
