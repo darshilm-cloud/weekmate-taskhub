@@ -249,6 +249,13 @@
 .task-list-view {
   background: var(--app-surface);
   flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.task-list-view::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .task-list-column-header {
@@ -342,6 +349,13 @@
 
 .task-list-body {
   padding: 4px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.task-list-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .task-list-empty {

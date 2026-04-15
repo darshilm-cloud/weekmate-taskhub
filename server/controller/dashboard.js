@@ -765,6 +765,38 @@ exports.getTaskList = async (req, res) => {
     const totalDocuments = await ProjectTasks.countDocuments(matchQuery);
     console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
 
+    const statusCountAgg = await ProjectTasks.aggregate([
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          localField: "task_status",
+          foreignField: "_id",
+          as: "task_status",
+        },
+      },
+      { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: {
+            id: "$task_status._id",
+            title: "$task_status.title",
+            color: "$task_status.color",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          statusId: "$_id.id",
+          title: { $ifNull: ["$_id.title", "No status"] },
+          color: { $ifNull: ["$_id.color", "#d9d9d9"] },
+          count: 1,
+        },
+      },
+    ]);
+
     // 4. MAIN DATA PIPELINE
     const mainQuery = [
       { $match: matchQuery },
@@ -893,6 +925,7 @@ exports.getTaskList = async (req, res) => {
       meta.page = pageNum;
       meta.limit = limitNum;
       meta.totalPages = Math.ceil(totalDocuments / limitNum);
+      meta.statusCounts = statusCountAgg;
     }
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (err) {

@@ -588,14 +588,17 @@ const TaskPage = () => {
   const [pagination, setPagination] = useState({ pageNo: 1, limit: 25 });
   const [totalTasks, setTotalTasks] = useState(0);
   const [allTasks, setAllTasks] = useState([]);
+  const [statusTotals, setStatusTotals] = useState({});
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [loadingSectionId, setLoadingSectionId] = useState(null);
   const tasksContainerRef = React.useRef(null);
   const isTasksScrollLoadingRef = React.useRef(false);
   const taskPageRef = React.useRef(1);
-  const triggerLoadMoreTasks = useCallback(() => {
+  const triggerLoadMoreTasks = useCallback((sectionId = null) => {
     if (!hasMoreTasks || isTasksScrollLoadingRef.current) return;
     isTasksScrollLoadingRef.current = true;
+    setLoadingSectionId(sectionId);
     taskPageRef.current += 1;
     setPagination((prev) => ({ ...prev, pageNo: taskPageRef.current }));
   }, [hasMoreTasks]);
@@ -715,16 +718,24 @@ const TaskPage = () => {
         const raw = res?.data?.data;
         const meta = res?.data?.metadata || {};
         const fetchedTasks = Array.isArray(raw) ? raw : [];
+        const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
+        const nextStatusTotals = statusCounts.reduce((acc, item) => {
+          const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+          acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
+          return acc;
+        }, {});
         const shouldAppend = pagination.pageNo > 1;
         setTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
         setAllTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
         setTotalTasks(meta.total || 0);
+        setStatusTotals(nextStatusTotals);
         setHasMoreTasks(meta.total > pagination.pageNo * pagination.limit);
       } else {
         if (pagination.pageNo === 1) {
           setTasks([]);
           setAllTasks([]);
           setTotalTasks(0);
+          setStatusTotals({});
         }
         setHasMoreTasks(false);
       }
@@ -733,11 +744,13 @@ const TaskPage = () => {
       if (pagination.pageNo === 1) {
         setTasks([]);
         setAllTasks([]);
+        setStatusTotals({});
       }
       setHasMoreTasks(false);
     } finally {
       setLoading(false);
       setIsTasksLoading(false);
+      setLoadingSectionId(null);
       isTasksScrollLoadingRef.current = false;
     }
   }, [dispatch, debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate, pagination.pageNo, pagination.limit]);
@@ -756,37 +769,21 @@ const TaskPage = () => {
     taskPageRef.current = 1;
   }, [debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate]);
 
-  // Infinite scroll listener for list
-  useEffect(() => {
-    const container = tasksContainerRef.current;
-    if (!container || view !== "list") return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      if (scrollHeight - scrollTop - clientHeight < 50 && hasMoreTasks && !isTasksScrollLoadingRef.current) {
-        triggerLoadMoreTasks();
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [hasMoreTasks, triggerLoadMoreTasks, view]);
-
   const handleKanbanColumnScroll = useCallback(
     (e) => {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
       if (scrollHeight - scrollTop - clientHeight < 50) {
-        triggerLoadMoreTasks();
+        triggerLoadMoreTasks(null);
       }
     },
     [triggerLoadMoreTasks]
   );
 
   const handleListSectionScroll = useCallback(
-    (e) => {
+    (e, sectionId) => {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
       if (scrollHeight - scrollTop - clientHeight < 50) {
-        triggerLoadMoreTasks();
+        triggerLoadMoreTasks(sectionId);
       }
     },
     [triggerLoadMoreTasks]
@@ -1225,22 +1222,17 @@ const TaskPage = () => {
           {kanbanColumns.map((s) => (
               <TaskListSection
                 key={s.id}
+                sectionId={s.id}
                 title={s.title}
-                count={s.tasks.length}
+                count={statusTotals[s.id] ?? s.tasks.length}
                 tasks={s.tasks}
                 onOpenTask={handleOpenTask}
                 selectedTaskIds={selectedTaskIds}
                 onSelectTask={handleSelectTask}
                 onSectionScroll={handleListSectionScroll}
-                isSectionLoading={isTasksLoading}
+                isSectionLoading={isTasksLoading && loadingSectionId === s.id}
               />
             ))}
-          {isTasksLoading && (
-            <div style={{ textAlign: "center", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-              <Spin size="medium" />
-              <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more tasks...</span>
-            </div>
-          )}
         </div>
       ) : view === "kanban" ? (
         <div className="task-kanban-view">
@@ -1252,7 +1244,7 @@ const TaskPage = () => {
             <div key={col.id} className="kanban-column" style={{ borderTopColor: col.color }}>
               <div className="kanban-column-header">
                 <span className="kanban-column-title">{col.title}</span>
-                <span className="kanban-column-count">({col.tasks.length})</span>
+                <span className="kanban-column-count">({statusTotals[col.id] ?? col.tasks.length})</span>
               </div>
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
@@ -1356,6 +1348,7 @@ const TaskPage = () => {
 };
 
 function TaskListSection({
+  sectionId,
   title,
   count,
   tasks,
@@ -1377,7 +1370,7 @@ function TaskListSection({
         <div
           className="task-list-body"
           style={{ maxHeight: 320, overflowY: "auto" }}
-          onScroll={onSectionScroll}
+          onScroll={(event) => onSectionScroll(event, sectionId)}
         >
           {tasks.length === 0 ? (
             <div className="task-list-empty">

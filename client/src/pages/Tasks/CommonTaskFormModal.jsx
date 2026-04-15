@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Col, DatePicker, Form, Input, Modal, Row, Select, Upload, message } from "antd";
+import { Button, Checkbox, Col, DatePicker, Form, Input, Modal, Row, Select, Tabs, Upload, message } from "antd";
 import { CloseOutlined, CommentOutlined, HistoryOutlined, PaperClipOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import "../TaskPage/TaskDetailModal.css";
@@ -92,6 +92,7 @@ export default function CommonTaskFormModal({
   const [loadingAssignees, setLoadingAssignees] = useState(false);
   const [linkedOptionsByField, setLinkedOptionsByField] = useState({});
   const [linkedLoadingByField, setLinkedLoadingByField] = useState({});
+  const [activeRightTab, setActiveRightTab] = useState("comments");
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
 
@@ -854,9 +855,61 @@ export default function CommonTaskFormModal({
             <div className="task-detail-sidebar-kicker">Workspace</div>
             <div className="task-detail-sidebar-title">Discussion and activity</div>
           </div>
-          <div className="task-detail-tab-content">
-            <p className="task-detail-tab-hint">Comments are available in view mode only.</p>
-          </div>
+          <Tabs
+            activeKey={activeRightTab}
+            onChange={setActiveRightTab}
+            className="task-detail-tabs"
+            destroyInactiveTabPane
+            items={[
+              {
+                key: "comments",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <CommentOutlined /> Comments
+                    <span className="comment-badge">0</span>
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content task-detail-comments">
+                    <div className="comment-list-box">
+                      <div className="comment-list-wrapper">
+                        <div className="task-no-comments">No comments</div>
+                      </div>
+                    </div>
+                    <div className="task-detail-add-comment">
+                      <div className="task-detail-composer-title">Comments are available in view mode.</div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "attachment",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <PaperClipOutlined /> Files
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content">
+                    <p className="task-detail-tab-hint">No attachments yet.</p>
+                  </div>
+                ),
+              },
+              {
+                key: "activity",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <HistoryOutlined /> Activity
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content">
+                    <p className="task-detail-tab-hint">No activity yet.</p>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
       </div>
     </Modal>
