@@ -36,6 +36,7 @@ const CompanyEmployee = () => {
   const [editData, setEditData] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [modalMode, setModalMode] = useState("add");
+  const [isSubmitting, setIsSubmitting] = useState(false);
    const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 25,
@@ -187,6 +188,7 @@ const CompanyEmployee = () => {
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       const values = await form.validateFields();
       const payload = {
         firstName: values.first_name,
@@ -212,10 +214,11 @@ const CompanyEmployee = () => {
         });
         message.success("Employee added successfully");
       }
-
+      setIsSubmitting(false);
       setModalVisible(false);
       fetchEmployees(pagination.current, pagination.pageSize, searchText);
     } catch (err) {
+      setIsSubmitting(false);
       message.error(err?.response?.data?.message || "Something went wrong");
     }
   };
@@ -425,7 +428,7 @@ const CompanyEmployee = () => {
               >
                 Cancel
               </Button>,
-              <Button key="submit" type="primary" onClick={ handleSubmit }>
+              <Button key="submit" type="primary" onClick={ handleSubmit } loading={isSubmitting}>
                 { editData ? "Update" : "Add" }
               </Button>,
             ]

@@ -55,6 +55,7 @@ function ManageProjectType() {
   const [searchText, setSearchText] = useState("");
   const [projectList, setProjectList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   const onSearch = (value) => {
@@ -196,6 +197,7 @@ function ManageProjectType() {
 
   const handleOk = async () => {
     try {
+      setIsSubmitting(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addProjectType,
@@ -209,7 +211,11 @@ function ManageProjectType() {
       } else {
         message.error(response.data.message);
       }
-    } catch (error) { console.log(error); }
+      setIsSubmitting(false);
+    } catch (error) {
+      console.log(error);
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -268,7 +274,7 @@ function ManageProjectType() {
         width={480}
         footer={[
           <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => addprojectform.submit()}>Save</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => addprojectform.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >
         <Form form={addprojectform} layout="vertical" onFinish={handleOk}>

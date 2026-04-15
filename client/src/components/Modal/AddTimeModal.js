@@ -70,7 +70,8 @@ const AddTimeModal = memo(({
   handlePaste,
   type,
   handleBuglist,
-  buglistdropdown = []
+  buglistdropdown = [],
+  loading = false
 }) => {
   // Memoized values
   const initialWorkflowId = useMemo(() => 
@@ -214,6 +215,7 @@ const AddTimeModal = memo(({
           size="large"
           className="square-primary-btn"
           onClick={ () => formName.submit() }
+          loading={ loading }
         >
           Save
         </Button>,

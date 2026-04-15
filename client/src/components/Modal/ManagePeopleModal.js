@@ -17,6 +17,7 @@ const ManagePeopleModal = ({
   onChange,
   assignees,
   clients,
+  loading,
   ...otherProps
 }) => {
   const { managerList, manager, acc_manager, accManagerList } = otherProps;
@@ -158,6 +159,7 @@ const ManagePeopleModal = ({
                 type="primary"
                 className="square-primary-btn"
                 htmlType="submit"
+                loading={loading}
               >
                 Save
               </Button>

@@ -100,6 +100,7 @@ const BugDetailModal = ({
   formComment,
   bugId,
   updateviewBug,
+  loading,
 }) => {
   const [editorInstance, setEditorInstance] = useState(null);
   const [postingComment, setPostingComment] = useState(false);
@@ -677,6 +678,7 @@ const BugDetailModal = ({
 		              icon={<SaveOutlined />}
 		              onClick={() => updateviewBug(viewBug)}
 		              title="Save changes"
+		              loading={loading}
 		            >
 		              Save
 		            </Button>
