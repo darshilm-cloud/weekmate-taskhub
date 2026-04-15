@@ -414,10 +414,6 @@ const ProjectFormModal = ({
     };
   };
 
-  const getTitleFormatExample = () => "AB123/MH/project-name";
-
-  const generatePattern = () => /^[A-Z]{2}\d{3}\/[A-Z]{2}\/[A-Za-z0-9_-]+$/;
-
   const hydrateProjectForm = (projectDataRaw = {}, lookupOverrides = {}) => {
     const projectData = Array.isArray(projectDataRaw) ? projectDataRaw[0] : projectDataRaw;
     if (!projectData || (Object.keys(projectData).length === 0)) return;
@@ -1215,22 +1211,10 @@ const ProjectFormModal = ({
               className="pfm-form-item"
               rules={[
                 { required: true, whitespace: true, message: "Please enter a valid title" },
-                () => ({
-                  validator(_, value) {
-                    const trimmedValue = (value || "").trim();
-                    if (!trimmedValue) return Promise.resolve();
-                    if (generatePattern().test(trimmedValue)) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error(`Title must be in the format ${getTitleFormatExample()}`)
-                    );
-                  },
-                }),
               ]}
             >
               <Input
-                placeholder={getTitleFormatExample()}
+                placeholder="Enter project title"
                 className="pfm-input"
                 bordered={false}
               />

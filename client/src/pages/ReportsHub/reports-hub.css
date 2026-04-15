@@ -2845,3 +2845,18 @@ body[data-theme="dark"] .user-report-member-search .ant-input-affix-wrapper:focu
     justify-content: stretch;
   }
 }
+.project-report-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.selected-report-row td {
+  background-color: #e6f7ff !important;
+  font-weight: 600;
+}
+
+.stats-info-text {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
