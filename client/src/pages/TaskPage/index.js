@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Pagination, Spin } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Pagination } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -576,7 +576,6 @@ const TaskPage = () => {
   const [datePreset, setDatePreset] = useState(
     getDatePresetFromState(filterState.taskStartDate, filterState.taskEndDate)
   );
-  const [listSection, setListSection] = useState(filterState.section);
   const [kanbanStatusFilter, setKanbanStatusFilter] = useState(filterState.kanbanStatus);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
@@ -586,7 +585,7 @@ const TaskPage = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
-  const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
+  const [pagination, setPagination] = useState({ pageNo: 1, limit: 25 });
   const [totalTasks, setTotalTasks] = useState(0);
   const [allTasks, setAllTasks] = useState([]);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
@@ -594,6 +593,13 @@ const TaskPage = () => {
   const tasksContainerRef = React.useRef(null);
   const isTasksScrollLoadingRef = React.useRef(false);
   const taskPageRef = React.useRef(1);
+  const triggerLoadMoreTasks = useCallback(() => {
+    if (!hasMoreTasks || isTasksScrollLoadingRef.current) return;
+    isTasksScrollLoadingRef.current = true;
+    taskPageRef.current += 1;
+    setPagination((prev) => ({ ...prev, pageNo: taskPageRef.current }));
+  }, [hasMoreTasks]);
+
 
   // Project select infinite loading state
   const [projectSearch, setProjectSearch] = useState("");
@@ -618,7 +624,6 @@ const TaskPage = () => {
     setTaskEndDate(next.taskEndDate);
     setDatePreset(getDatePresetFromState(next.taskStartDate, next.taskEndDate));
     setProjectFilter(next.projectIds || []);
-    setListSection(next.section);
     setKanbanStatusFilter(next.kanbanStatus);
     setGanttAppliedDefaultRange(false);
     if (next.view) setView(next.view);
@@ -684,7 +689,9 @@ const TaskPage = () => {
 
 
   const fetchTaskList = useCallback(async () => {
-    setLoading(true);
+    const isInitialPage = pagination.pageNo === 1;
+    setLoading(isInitialPage);
+    setIsTasksLoading(!isInitialPage);
     dispatch(showAuthLoader());
     try {
       const body = {
@@ -707,23 +714,30 @@ const TaskPage = () => {
       if (res?.status === 200) {
         const raw = res?.data?.data;
         const meta = res?.data?.metadata || {};
-        setTasks(Array.isArray(raw) ? raw : []);
-        setAllTasks(Array.isArray(raw) ? raw : []);
+        const fetchedTasks = Array.isArray(raw) ? raw : [];
+        const shouldAppend = pagination.pageNo > 1;
+        setTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
+        setAllTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
         setTotalTasks(meta.total || 0);
         setHasMoreTasks(meta.total > pagination.pageNo * pagination.limit);
       } else {
-        setTasks([]);
-        setAllTasks([]);
-        setTotalTasks(0);
+        if (pagination.pageNo === 1) {
+          setTasks([]);
+          setAllTasks([]);
+          setTotalTasks(0);
+        }
         setHasMoreTasks(false);
       }
     } catch (e) {
       dispatch(hideAuthLoader());
-      setTasks([]);
-      setAllTasks([]);
+      if (pagination.pageNo === 1) {
+        setTasks([]);
+        setAllTasks([]);
+      }
       setHasMoreTasks(false);
     } finally {
       setLoading(false);
+      setIsTasksLoading(false);
       isTasksScrollLoadingRef.current = false;
     }
   }, [dispatch, debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate, pagination.pageNo, pagination.limit]);
@@ -742,24 +756,41 @@ const TaskPage = () => {
     taskPageRef.current = 1;
   }, [debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate]);
 
-  // Infinite scroll listener for tasks
+  // Infinite scroll listener for list
   useEffect(() => {
     const container = tasksContainerRef.current;
     if (!container || view !== "list") return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      // Trigger when user scrolls near the bottom
       if (scrollHeight - scrollTop - clientHeight < 50 && hasMoreTasks && !isTasksScrollLoadingRef.current) {
-        isTasksScrollLoadingRef.current = true;
-        taskPageRef.current += 1;
-        setPagination(prev => ({ ...prev, pageNo: taskPageRef.current }));
+        triggerLoadMoreTasks();
       }
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [hasMoreTasks, view]);
+  }, [hasMoreTasks, triggerLoadMoreTasks, view]);
+
+  const handleKanbanColumnScroll = useCallback(
+    (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      if (scrollHeight - scrollTop - clientHeight < 50) {
+        triggerLoadMoreTasks();
+      }
+    },
+    [triggerLoadMoreTasks]
+  );
+
+  const handleListSectionScroll = useCallback(
+    (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      if (scrollHeight - scrollTop - clientHeight < 50) {
+        triggerLoadMoreTasks();
+      }
+    },
+    [triggerLoadMoreTasks]
+  );
 
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
@@ -812,48 +843,6 @@ const TaskPage = () => {
   }, [tasks]);
 
   const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
-
-  const { todayTasks, overdueTasks, upcomingTasks } = useMemo(() => {
-    const now = dayjs();
-    const todayStr = now.format("YYYY-MM-DD");
-    const today = [];
-    const overdue = [];
-    const upcoming = [];
-
-    sortedTasks.forEach((t) => {
-      const due = t.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
-      const start = t.start_date ? dayjs(t.start_date).format("YYYY-MM-DD") : null;
-
-      if (!due && !start) {
-        upcoming.push(t);
-        return;
-      }
-
-      const isDueToday = due === todayStr;
-      const isStartingToday = start === todayStr;
-      const isPastDue = due && dayjs(due).isBefore(now, "day");
-
-      if (isDueToday || isStartingToday) {
-        today.push(t);
-      } else if (isPastDue) {
-        overdue.push(t);
-      } else {
-        upcoming.push(t);
-      }
-    });
-
-    return {
-      todayTasks: today,
-      overdueTasks:
-        sortMode === "default"
-          ? overdue.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
-          : overdue,
-      upcomingTasks:
-        sortMode === "default"
-          ? upcoming.sort((a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf())
-          : upcoming,
-    };
-  }, [sortedTasks, sortMode]);
 
   const kanbanColumns = useMemo(() => {
     const byStatus = {};
@@ -1135,6 +1124,20 @@ const TaskPage = () => {
             isFetchingProjects={isFetchingProjects}
             projectSearch={projectSearch}
           />
+          <Select
+            value={pagination.limit}
+            onChange={(nextLimit) => {
+              taskPageRef.current = 1;
+              setPagination({ pageNo: 1, limit: nextLimit });
+            }}
+            style={{ minWidth: 110 }}
+          >
+            {[25, 50, 100].map((size) => (
+              <Option key={size} value={size}>
+                {size} / Page
+              </Option>
+            ))}
+          </Select>
 
           {selectedTaskIds.length > 0 && (
             <button
@@ -1212,33 +1215,29 @@ const TaskPage = () => {
       {loading ? (
         <TaskPageSkeleton view={view} />
       ) : view === "list" ? (
-        <div className="task-list-view" ref={tasksContainerRef} style={{ overflowY: "auto", maxHeight: "calc(100vh - 300px)" }}>
+        <div className="task-list-view" ref={tasksContainerRef} style={{ overflowY: "auto", height: "calc(100vh - 300px)" }}>
           <div className="task-list-column-header">
             <span className="col-task-name">Task Name</span>
             <span className="col-due-date">Due Date</span>
             <span className="col-assignees">Assignee(s)</span>
             <span className="col-status">Status</span>
           </div>
-          {[
-            { key: "today", title: "Today", tasks: todayTasks },
-            { key: "overdue", title: "Overdue", tasks: overdueTasks },
-            { key: "upcoming", title: "Upcoming", tasks: upcomingTasks },
-          ]
-            .filter((s) => (listSection ? s.key === listSection : true))
-            .map((s) => (
+          {kanbanColumns.map((s) => (
               <TaskListSection
-                key={s.key}
+                key={s.id}
                 title={s.title}
                 count={s.tasks.length}
                 tasks={s.tasks}
                 onOpenTask={handleOpenTask}
                 selectedTaskIds={selectedTaskIds}
                 onSelectTask={handleSelectTask}
+                onSectionScroll={handleListSectionScroll}
+                isSectionLoading={isTasksLoading}
               />
             ))}
-          {isTasksScrollLoadingRef.current && (
+          {isTasksLoading && (
             <div style={{ textAlign: "center", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-              <Spin size="large" />
+              <Spin size="medium" />
               <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more tasks...</span>
             </div>
           )}
@@ -1257,6 +1256,8 @@ const TaskPage = () => {
               </div>
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
+                style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+                onScroll={handleKanbanColumnScroll}
                 onDragOver={(e) => {
                   e.preventDefault();
                   if (dragOverColumnId !== col.id) setDragOverColumnId(col.id);
@@ -1289,6 +1290,12 @@ const TaskPage = () => {
               </div>
             </div>
           ))}
+          {isTasksLoading && (
+            <div style={{ textAlign: "center", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", width: "100%" }}>
+              <Spin size="medium" />
+              <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more tasks...</span>
+            </div>
+          )}
         </div>
       ) : view === "calendar" ? (
         <div className="task-calendar-view">
@@ -1344,26 +1351,20 @@ const TaskPage = () => {
           />
         </div>
       ) : null}
-      {/* ── Pagination (Hidden for list view with infinite scroll) ── */}
-      {!loading && totalTasks > 0 && view !== "list" && (
-        <div className="task-pagination-wrap" style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
-          <Pagination
-            current={pagination.pageNo}
-            pageSize={pagination.limit}
-            total={totalTasks}
-            showSizeChanger
-            hideOnSinglePage={false}
-            pageSizeOptions={["10", "20", "30"]}
-            onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
-            onShowSizeChange={(page, pageSize) => setPagination({ pageNo: 1, limit: pageSize })}
-          />
-        </div>
-      )}
     </div>
   );
 };
 
-function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onSelectTask }) {
+function TaskListSection({
+  title,
+  count,
+  tasks,
+  onOpenTask,
+  selectedTaskIds,
+  onSelectTask,
+  onSectionScroll,
+  isSectionLoading,
+}) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="task-list-section">
@@ -1373,7 +1374,11 @@ function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onS
         <span className="section-count">{count}</span>
       </button>
       {!collapsed && (
-        <div className="task-list-body">
+        <div
+          className="task-list-body"
+          style={{ maxHeight: 320, overflowY: "auto" }}
+          onScroll={onSectionScroll}
+        >
           {tasks.length === 0 ? (
             <div className="task-list-empty">
               <NoDataFoundIcon />
@@ -1389,6 +1394,12 @@ function TaskListSection({ title, count, tasks, onOpenTask, selectedTaskIds, onS
                 onSelect={(e) => onSelectTask(t._id, e)}
               />
             ))
+          )}
+          {isSectionLoading && (
+            <div style={{ textAlign: "center", padding: "12px 8px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Spin size="medium" />
+              <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more...</span>
+            </div>
           )}
         </div>
       )}

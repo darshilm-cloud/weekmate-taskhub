@@ -1215,22 +1215,10 @@ const ProjectFormModal = ({
               className="pfm-form-item"
               rules={[
                 { required: true, whitespace: true, message: "Please enter a valid title" },
-                () => ({
-                  validator(_, value) {
-                    const trimmedValue = (value || "").trim();
-                    if (!trimmedValue) return Promise.resolve();
-                    if (generatePattern().test(trimmedValue)) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error(`Title must be in the format ${getTitleFormatExample()}`)
-                    );
-                  },
-                }),
               ]}
             >
               <Input
-                placeholder={getTitleFormatExample()}
+                placeholder="Please enter project title"
                 className="pfm-input"
                 bordered={false}
               />

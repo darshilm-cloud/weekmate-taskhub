@@ -46,6 +46,7 @@ export default function DiscussionPage() {
   const [folderId, setFolderId] = useState(null);
   const [allTopics, setAllTopics] = useState([]);
   const [hasMore, setHasMore] = useState(true);
+  const [isTopicScrollLoading, setIsTopicScrollLoading] = useState(false);
   const [pageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalTopics, setTotalTopics] = useState(0);
@@ -78,6 +79,7 @@ export default function DiscussionPage() {
     
     if (reset) {
       setLoadingTopics(true);
+      setIsTopicScrollLoading(false);
       setAllTopics([]);
       setHasMore(true);
       currentPageRef.current = 1;
@@ -126,6 +128,7 @@ export default function DiscussionPage() {
       setHasMore(false);
     } finally {
       setLoadingTopics(false);
+      setIsTopicScrollLoading(false);
       isTopicScrollLoadingRef.current = false;
     }
   }, [activeTab, pageSize]);
@@ -133,8 +136,16 @@ export default function DiscussionPage() {
   const onLoadMoreTopics = useCallback(() => {
     if (isTopicScrollLoadingRef.current || !hasMore) return;
     isTopicScrollLoadingRef.current = true;
+    setIsTopicScrollLoading(true);
     fetchTopics(debouncedSearch, false);
   }, [hasMore, debouncedSearch, fetchTopics]);
+
+  const handleTabChange = (tabName) => {
+    // Prevent rapid tab switching while API is in-flight.
+    if (loadingTopics || isTopicScrollLoading) return;
+    if (activeTab === tabName) return;
+    setActiveTab(tabName);
+  };
 
   /* ── Native Scroll Listener (Reliable Pattern) ── */
   useEffect(() => {
@@ -350,8 +361,20 @@ export default function DiscussionPage() {
 
         {/* Tabs */}
         <div className="disc-tabs">
-          <button className={`disc-tab${activeTab === "General" ? " active" : ""}`} onClick={() => setActiveTab("General")}>General</button>
-          <button className={`disc-tab${activeTab === "Task" ? " active" : ""}`} onClick={() => setActiveTab("Task")}>Task</button>
+          <button
+            className={`disc-tab${activeTab === "General" ? " active" : ""}`}
+            onClick={() => handleTabChange("General")}
+            disabled={loadingTopics || isTopicScrollLoading}
+          >
+            General
+          </button>
+          <button
+            className={`disc-tab${activeTab === "Task" ? " active" : ""}`}
+            onClick={() => handleTabChange("Task")}
+            disabled={loadingTopics || isTopicScrollLoading}
+          >
+            Task
+          </button>
         </div>
 
         {/* Search */}
@@ -360,7 +383,7 @@ export default function DiscussionPage() {
         </div>
 
         <div className="disc-topics" id="disc-topics-container" ref={topicsContainerRef}>
-          {loadingTopics && allTopics.length === 0 && !isTopicScrollLoadingRef.current ? (
+          {loadingTopics && allTopics.length === 0 && !isTopicScrollLoading ? (
             <div className="disc-loading">
               {[...Array(10)].map((_, i) => (
                 <div key={i} className="disc-topic-skeleton" style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
@@ -408,9 +431,9 @@ export default function DiscussionPage() {
                 );
               })}
               
-              {isTopicScrollLoadingRef.current && (
+              {isTopicScrollLoading && (
                 <div className="disc-loading-more" style={{ textAlign: "center", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                  <Spin size="large" />
+                  <Spin size="medium" />
                   <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more discussions...</span>
                 </div>
               )}
