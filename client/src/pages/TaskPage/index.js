@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Pagination } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Pagination, Spin } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -293,6 +293,7 @@ function TaskCombinedFacetFilter({
   onProjectSearch,
   onProjectScroll,
   isFetchingProjects,
+  projectSearch
 }) {
 
   const FILTER_SECTIONS = [
@@ -376,7 +377,9 @@ function TaskCombinedFacetFilter({
         <Divider style={{ margin: "8px 0" }} />
         {FILTER_SECTIONS.map((section) => {
           const currentValue = draftFilters[section.key];
-          const isSelected = currentValue && currentValue !== section.defaultValue;
+          const isSelected = Array.isArray(currentValue)
+            ? currentValue.length > 0
+            : currentValue !== section.defaultValue;
 
           return (
             <div
@@ -396,43 +399,77 @@ function TaskCombinedFacetFilter({
           <h4 className="filter-title">{activeConfig.label}</h4>
           {activeSection === "project" ? (
             <div className="task-filter-panel-select-wrap">
-              <Select
-                mode="multiple"
-                placeholder="Search project"
-                value={Array.isArray(draftFilters.project) ? draftFilters.project : []}
-                onChange={(value) =>
-                  setDraftFilters((prev) => ({
-                    ...prev,
-                    project: value,
-                  }))
-                }
-                className="task-filter-panel-select"
+              <Input
                 allowClear
-                showSearch
-                optionFilterProp="children"
-                maxTagCount={2}
-                onSearch={onProjectSearch}
-                onPopupScroll={onProjectScroll}
-                loading={isFetchingProjects}
-                filterOption={false}
-                dropdownRender={(menu) => (
-                  <>
-                    {menu}
-                    {isFetchingProjects && (
-                      <div style={{ padding: '8px', textAlign: 'center' }}>
-                        <Badge status="processing" text="Loading more..." />
-                      </div>
-                    )}
-                  </>
-                )}
+                placeholder="Search project"
+                value={projectSearch}
+                onChange={(e) => onProjectSearch(e.target.value)}
+                style={{ marginBottom: 10 }}
+              />
+              <div
+                className="task-filter-project-list"
+                style={{
+                  maxHeight: 280,
+                  overflowY: "auto",
+                  border: "1px solid #e8e8e8",
+                  borderRadius: 6,
+                  padding: 8,
+                  background: "#fff",
+                }}
+                onScroll={onProjectScroll}
               >
-                {(projects || []).map((project) => (
-                  <Option key={project._id} value={project._id}>
-                    {project.title}
-                  </Option>
-                ))}
-              </Select>
+                {(projects || []).length > 0 ? (
+                  projects.map((project) => {
+                    const projectId = String(project._id || project.id || project.projectId || "");
+                    const selected = Array.isArray(draftFilters.project)
+                      ? draftFilters.project.some((id) => String(id) === projectId)
+                      : false;
 
+                    return (
+                      <div
+                        key={projectId}
+                        className={`task-project-list-item${selected ? " selected" : ""}`}
+                        onClick={() => {
+                          setDraftFilters((prev) => {
+                            const current = Array.isArray(prev.project) ? prev.project : [];
+                            const next = selected
+                              ? current.filter((id) => String(id) !== projectId)
+                              : [...current, projectId];
+                            return {
+                              ...prev,
+                              project: next,
+                            };
+                          });
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 10px",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          background: selected ? "#f0f7ff" : "transparent",
+                          marginBottom: 4,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <Checkbox checked={selected} />
+                          <span style={{ marginLeft: 8, color: "#262626" }}>{project.title || project.projectId || "Untitled project"}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ padding: 18, textAlign: "center", color: "#8c8c8c" }}>
+                    {isFetchingProjects ? "Loading projects..." : "No projects found."}
+                  </div>
+                )}
+                {isFetchingProjects && (projects || []).length > 0 && (
+                  <div style={{ padding: 10, textAlign: "center" }}>
+                    <Badge status="processing" text="Loading more..." />
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <Radio.Group
@@ -551,6 +588,12 @@ const TaskPage = () => {
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
   const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
   const [totalTasks, setTotalTasks] = useState(0);
+  const [allTasks, setAllTasks] = useState([]);
+  const [hasMoreTasks, setHasMoreTasks] = useState(true);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const tasksContainerRef = React.useRef(null);
+  const isTasksScrollLoadingRef = React.useRef(false);
+  const taskPageRef = React.useRef(1);
 
   // Project select infinite loading state
   const [projectSearch, setProjectSearch] = useState("");
@@ -665,16 +708,23 @@ const TaskPage = () => {
         const raw = res?.data?.data;
         const meta = res?.data?.metadata || {};
         setTasks(Array.isArray(raw) ? raw : []);
+        setAllTasks(Array.isArray(raw) ? raw : []);
         setTotalTasks(meta.total || 0);
+        setHasMoreTasks(meta.total > pagination.pageNo * pagination.limit);
       } else {
         setTasks([]);
+        setAllTasks([]);
         setTotalTasks(0);
+        setHasMoreTasks(false);
       }
     } catch (e) {
       dispatch(hideAuthLoader());
       setTasks([]);
+      setAllTasks([]);
+      setHasMoreTasks(false);
     } finally {
       setLoading(false);
+      isTasksScrollLoadingRef.current = false;
     }
   }, [dispatch, debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate, pagination.pageNo, pagination.limit]);
 
@@ -689,7 +739,27 @@ const TaskPage = () => {
   // Reset page when filters change
   useEffect(() => {
     setPagination(prev => ({ ...prev, pageNo: 1 }));
+    taskPageRef.current = 1;
   }, [debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate]);
+
+  // Infinite scroll listener for tasks
+  useEffect(() => {
+    const container = tasksContainerRef.current;
+    if (!container || view !== "list") return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Trigger when user scrolls near the bottom
+      if (scrollHeight - scrollTop - clientHeight < 50 && hasMoreTasks && !isTasksScrollLoadingRef.current) {
+        isTasksScrollLoadingRef.current = true;
+        taskPageRef.current += 1;
+        setPagination(prev => ({ ...prev, pageNo: taskPageRef.current }));
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [hasMoreTasks, view]);
 
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
@@ -1063,6 +1133,7 @@ const TaskPage = () => {
             onProjectSearch={onProjectSearch}
             onProjectScroll={onProjectScroll}
             isFetchingProjects={isFetchingProjects}
+            projectSearch={projectSearch}
           />
 
           {selectedTaskIds.length > 0 && (
@@ -1141,7 +1212,7 @@ const TaskPage = () => {
       {loading ? (
         <TaskPageSkeleton view={view} />
       ) : view === "list" ? (
-        <div className="task-list-view">
+        <div className="task-list-view" ref={tasksContainerRef} style={{ overflowY: "auto", maxHeight: "calc(100vh - 300px)" }}>
           <div className="task-list-column-header">
             <span className="col-task-name">Task Name</span>
             <span className="col-due-date">Due Date</span>
@@ -1165,6 +1236,12 @@ const TaskPage = () => {
                 onSelectTask={handleSelectTask}
               />
             ))}
+          {isTasksScrollLoadingRef.current && (
+            <div style={{ textAlign: "center", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+              <Spin size="large" />
+              <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more tasks...</span>
+            </div>
+          )}
         </div>
       ) : view === "kanban" ? (
         <div className="task-kanban-view">
@@ -1267,8 +1344,8 @@ const TaskPage = () => {
           />
         </div>
       ) : null}
-      {/* ── Pagination ── */}
-      {!loading && totalTasks > 0 && (
+      {/* ── Pagination (Hidden for list view with infinite scroll) ── */}
+      {!loading && totalTasks > 0 && view !== "list" && (
         <div className="task-pagination-wrap" style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
           <Pagination
             current={pagination.pageNo}

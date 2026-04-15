@@ -593,7 +593,7 @@ const AssignProject = () => {
       reqBody.project_status = normalizedFilters.status;
       reqBody.project_status_id = normalizedFilters.status;
     }
-    reqBody.includeMetrics = false;
+    reqBody.includeMetrics = true;
     if (debouncedSearchText?.trim()) {
       reqBody.search = debouncedSearchText;
       setSearchEnabled(true);
@@ -630,45 +630,7 @@ const AssignProject = () => {
     );
   };
 
-  const fetchTaskStatsForIds = useCallback(async (projectIds) => {
-    if (!Array.isArray(projectIds) || projectIds.length === 0) return;
-
-    const uniqueIds = Array.from(new Set(projectIds.filter(Boolean)));
-    const idsToFetch = uniqueIds.filter((id) => !taskStats[id]);
-    if (idsToFetch.length === 0) return;
-
-    const results = {};
-    const queue = [...idsToFetch];
-    const limit = 2;
-
-    const fetchOne = async (projectId) => {
-      try {
-        const response = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getTaskList,
-          body: { project_id: projectId, countFor: "All" },
-        });
-        if (response?.data?.statusCode === 200) {
-          results[projectId] = response.data.data;
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
-      while (queue.length) {
-        const nextId = queue.shift();
-        await fetchOne(nextId);
-      }
-    });
-
-    await Promise.all(workers);
-
-    if (Object.keys(results).length > 0) {
-      setTaskStats((prev) => ({ ...prev, ...results }));
-    }
-  }, [taskStats]);
+  // fetchTaskStatsForIds removed — stats now come directly from project listing response.
 
 
   const onLoadMore = async () => {
@@ -703,6 +665,15 @@ const AssignProject = () => {
 
       const newProjects = response?.data?.data || [];
       const metaTotal = response?.data?.metadata?.total ?? columnDetails.length + newProjects.length;
+
+      // Extract stats from projects
+      const statsFromProjects = {};
+      newProjects.forEach(p => {
+        if (p.stats) statsFromProjects[p._id] = p.stats;
+      });
+      if (Object.keys(statsFromProjects).length > 0) {
+        setTaskStats(prev => ({ ...prev, ...statsFromProjects }));
+      }
 
       // Append new projects to existing list
       setColumnDetails((prev) => [...prev, ...newProjects]);
@@ -799,6 +770,15 @@ const AssignProject = () => {
 
       const projects = response?.data?.data || [];
       const metaTotal = response?.data?.metadata?.total ?? projects.length;
+
+      // Extract stats from projects
+      const statsFromProjects = {};
+      projects.forEach(p => {
+        if (p.stats) statsFromProjects[p._id] = p.stats;
+      });
+      if (Object.keys(statsFromProjects).length > 0) {
+        setTaskStats(prev => ({ ...prev, ...statsFromProjects }));
+      }
 
       setColumnDetails(projects);
       setPagination((prev) => ({ ...prev, total: metaTotal }));
@@ -1178,64 +1158,8 @@ const AssignProject = () => {
   const emptyProjectsMessage = hasActiveProjectFilters ? "No matches found" : "No projects found";
 
   useEffect(() => {
-    // Note: Automatic fetching of task stats for projects in the grid/list has been heartially disabled 
-    // because it causes excessive API calls when many projects are present.
-    // The user prefers these stats to be loaded only when explicitly needed or clicked.
-    if (!visibleProjects.length) return;
-
-    /*
-    const isGrid = viewMode === "grid";
-    const primaryIds = isGrid
-      ? []
-      : selectedWorkspaceProjectId
-        ? [selectedWorkspaceProjectId]
-        : [];
-
-    const timer = setTimeout(() => {
-      if (primaryIds.length) fetchTaskStatsForIds(primaryIds);
-    }, 350);
-
-    if (idleFetchRef.current) {
-      if (typeof idleFetchRef.current === "number") {
-        clearTimeout(idleFetchRef.current);
-      } else if (typeof window !== "undefined" && window.cancelIdleCallback) {
-        window.cancelIdleCallback(idleFetchRef.current);
-      }
-    }
-
-    const gridIds = isGrid ? visibleProjects.slice(0, 6).map((project) => project._id) : [];
-    const remainingIds = isGrid ? visibleProjects.slice(6).map((project) => project._id) : [];
-
-    if (isGrid && (gridIds.length || remainingIds.length)) {
-      if (typeof window !== "undefined" && window.requestIdleCallback) {
-        idleFetchRef.current = window.requestIdleCallback(() => {
-          if (gridIds.length) fetchTaskStatsForIds(gridIds.slice(0, 3));
-          if (remainingIds.length) {
-            setTimeout(() => fetchTaskStatsForIds([...gridIds.slice(3), ...remainingIds]), 600);
-          }
-        }, { timeout: 2000 });
-      } else {
-        idleFetchRef.current = setTimeout(() => {
-          if (gridIds.length) fetchTaskStatsForIds(gridIds.slice(0, 3));
-          if (remainingIds.length) {
-            setTimeout(() => fetchTaskStatsForIds([...gridIds.slice(3), ...remainingIds]), 600);
-          }
-        }, 900);
-      }
-    }
-
-    return () => {
-      clearTimeout(timer);
-      if (idleFetchRef.current) {
-        if (typeof idleFetchRef.current === "number") {
-          clearTimeout(idleFetchRef.current);
-        } else if (typeof window !== "undefined" && window.cancelIdleCallback) {
-          window.cancelIdleCallback(idleFetchRef.current);
-        }
-      }
-    };
-    */
-  }, [visibleProjects, viewMode, selectedWorkspaceProjectId, fetchTaskStatsForIds]);
+    // Background stats fetcher removed as project listing now includes stats by default.
+  }, [visibleProjects, viewMode, selectedWorkspaceProjectId]);
 
   useEffect(() => {
     if (!visibleProjects.length) {

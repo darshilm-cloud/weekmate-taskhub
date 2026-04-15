@@ -115,6 +115,7 @@ const ProjectFormModal = ({
     _dropdownCache.projectTypeSlug !== null
   );
   const [isLoading, setIsLoading] = useState(!cacheReady || Boolean(selectedProject));
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [noEndDate, setNoEndDate] = useState(false);
   const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
@@ -140,11 +141,12 @@ const ProjectFormModal = ({
 
   useEffect(() => {
     const fetchAllData = async () => {
+      // Don't reset if we are already showing some data from selectedProject hydration
+      // unless we are switching projects.
       setIsLoading(true);
       try {
         dispatch(showAuthLoader());
-        resetModalState();
-
+        console.log("🚀 ~ fetchAllData ~ selectedProject:", selectedProject)
         if (selectedProject) {
           hydrateProjectForm(selectedProject);
         }
@@ -418,7 +420,7 @@ const ProjectFormModal = ({
 
   const hydrateProjectForm = (projectDataRaw = {}, lookupOverrides = {}) => {
     const projectData = Array.isArray(projectDataRaw) ? projectDataRaw[0] : projectDataRaw;
-    if (!projectData || typeof projectData !== "object") return;
+    if (!projectData || (Object.keys(projectData).length === 0)) return;
 
 
     const {
@@ -1053,6 +1055,7 @@ const ProjectFormModal = ({
 
   const addProjectDetails = async (values) => {
     try {
+      setIsSubmitting(true);
       dispatch(showAuthLoader());
       const assignees = selectedItems?.map((item) => item._id) || [];
       const clients = selectedClient?.map((item) => item._id) || [];
@@ -1098,12 +1101,14 @@ const ProjectFormModal = ({
     } catch (error) {
       console.error(error);
     } finally {
+      setIsSubmitting(false);
       triggerRefreshList();
     }
   };
 
   const editProjectdetails = async (id, values) => {
     try {
+      setIsSubmitting(true);
       dispatch(showAuthLoader());
       const assignees = selectedItems.map((item) => item._id);
       const clients = selectedClient.map((item) => item._id);
@@ -1163,6 +1168,7 @@ const ProjectFormModal = ({
     } catch (error) {
       console.error(error);
     } finally {
+      setIsSubmitting(false);
       triggerRefreshList();
     }
   };
@@ -1189,6 +1195,7 @@ const ProjectFormModal = ({
           </button>
         </div>
 
+        <Spin spinning={isLoading}>
       <Form
         form={form}
         layout="vertical"
@@ -1658,11 +1665,12 @@ const ProjectFormModal = ({
           <Button className="pfm-cancel-btn" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit" className="pfm-submit-btn">
+          <Button type="primary" htmlType="submit" className="pfm-submit-btn" loading={isSubmitting}>
             {isEdit ? "Update" : "Save"}
           </Button>
         </div>
       </Form>
+      </Spin>
     </Modal>
     <Modal
       title="Add Department"

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination
 } from "antd";
-import InfiniteScroll from "react-infinite-scroll-component";
+// InfiniteScroll removed for a more reliable native implementation
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
   TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined
@@ -44,13 +44,23 @@ export default function DiscussionPage() {
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [folderId, setFolderId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [topicsError, setTopicsError] = useState("");
-  const [totalTopics, setTotalTopics] = useState(0);
-  const [pageSize] = useState(25); // Fixed at 25 for infinite scroll
+  const [allTopics, setAllTopics] = useState([]);
   const [hasMore, setHasMore] = useState(true);
-  const [allTopics, setAllTopics] = useState([]); // For infinite scroll accumulation
+  const [pageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTopics, setTotalTopics] = useState(0);
+  const [topicsError, setTopicsError] = useState("");
+
+  const isTopicScrollLoadingRef = useRef(false);
+  const topicsContainerRef = useRef(null);
   const bottomRef = useRef(null);
+  const currentPageRef = useRef(1);
+  // Persistent refs for the scroll listener
+  const activeTabRef = useRef(activeTab);
+  const debouncedSearchRef = useRef(debouncedSearch);
+
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  useEffect(() => { debouncedSearchRef.current = debouncedSearch; }, [debouncedSearch]);
 
   // Add Topic modal
   const [addOpen, setAddOpen] = useState(false);
@@ -65,65 +75,83 @@ export default function DiscussionPage() {
   const initialLoadDone = React.useRef(false);
 
   const fetchTopics = useCallback(async (searchVal = "", reset = false) => {
+    
     if (reset) {
-      setCurrentPage(1);
+      setLoadingTopics(true);
       setAllTopics([]);
       setHasMore(true);
+      currentPageRef.current = 1;
     }
-    
-    if (initialLoadDone.current && !reset) {
-      // Don't show skeleton on scroll load - only on initial load or search
-    } else {
-      setLoadingTopics(true);
-    }
+
     setTopicsError("");
     try {
+      // Use ref to get the current page without stale closure
+      const pageToFetch = currentPageRef.current;
+
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
         body: {
-          pageNo: reset ? 1 : currentPage,
+          pageNo: pageToFetch,
           limit: pageSize,
           sortBy: "desc",
           type: activeTab,
           ...(searchVal ? { search: searchVal } : {}),
         },
       });
-      const data = res?.data?.data;
-      const meta = res?.data?.metadata;
-      const newTopics = Array.isArray(data) ? data : [];
-      
-      setAllTopics(prev => {
-        const updatedTopics = reset ? newTopics : [...prev, ...newTopics];
-        
-        // Check if there are more items to load
-        const hasMoreItems = newTopics.length === pageSize && updatedTopics.length < (meta?.total || 0);
-        setHasMore(hasMoreItems);
-        
-        return updatedTopics;
-      });
-      
-      setTopics(newTopics); // For backward compatibility with existing logic
-      setTotalTopics(meta?.total || 0);
-      
-      if (!reset) {
-        setCurrentPage(prev => prev + 1);
+
+      const data = res?.data?.data || [];
+      const meta = res?.data?.metadata || {};
+      const total = meta.total || 0;
+
+      if (reset) {
+        setAllTopics(data);
+        currentPageRef.current = 2;
+        setHasMore(data.length < total && data.length > 0);
+      } else {
+        setAllTopics(prev => {
+          const updated = [...prev, ...data];
+          // Check if we have loaded all items
+          setHasMore(updated.length < total && data.length > 0);
+          return updated;
+        });
+        currentPageRef.current += 1;
       }
+
+      setTotalTopics(total);
     } catch (e) {
-      console.error(e);
-      setTopics([]);
-      setAllTopics([]);
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Failed to load discussions";
-      setTopicsError(msg);
+      console.error("fetchTopics error", e);
+      if (reset) setAllTopics([]);
+      setTopicsError(e?.response?.data?.message || e?.message || "Failed to load discussions");
       setHasMore(false);
     } finally {
       setLoadingTopics(false);
-      initialLoadDone.current = true;
+      isTopicScrollLoadingRef.current = false;
     }
-  }, [activeTab, currentPage, pageSize]);
+  }, [activeTab, pageSize]);
+
+  const onLoadMoreTopics = useCallback(() => {
+    if (isTopicScrollLoadingRef.current || !hasMore) return;
+    isTopicScrollLoadingRef.current = true;
+    fetchTopics(debouncedSearch, false);
+  }, [hasMore, debouncedSearch, fetchTopics]);
+
+  /* ── Native Scroll Listener (Reliable Pattern) ── */
+  useEffect(() => {
+    const container = topicsContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Trigger when user scrolls to the bottom (with small buffer)
+      if (scrollHeight - scrollTop - clientHeight < 50) {
+        onLoadMoreTopics();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [onLoadMoreTopics]);
 
   // Debounce search
   useEffect(() => {
@@ -299,65 +327,7 @@ export default function DiscussionPage() {
     return d.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" });
   };
 
-  if (loadingTopics) {
-    return (
-      <div className={`disc-page${isDark ? " disc-dark" : ""}`}>
-        {/* Left Skeleton */}
-        <div className="disc-left">
-          <div className="disc-left-header">
-            <Skeleton.Input active size="small" style={{ width: 100, borderRadius: 6 }} />
-          </div>
-          <div className="disc-add-btns">
-            <Skeleton.Button active style={{ flex: 1, borderRadius: 8 }} />
-            <Skeleton.Button active style={{ flex: 1, borderRadius: 8 }} />
-          </div>
-          <div className="disc-tabs" style={{ padding: "8px 12px" }}>
-            <Skeleton.Input active size="small" style={{ width: 60, borderRadius: 6 }} />
-            <Skeleton.Input active size="small" style={{ width: 50, borderRadius: 6, marginLeft: 8 }} />
-          </div>
-          <div className="disc-search">
-            <Skeleton.Input active block style={{ borderRadius: 8 }} />
-          </div>
-          <div className="disc-topic-skeleton">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="disc-skeleton-topic-item">
-                <Skeleton.Avatar active size={38} />
-                <div className="disc-skeleton-topic-info">
-                  <Skeleton.Input active size="small" style={{ width: 100 + (i % 3) * 25, height: 13, borderRadius: 6 }} />
-                  <Skeleton.Input active size="small" style={{ width: 65 + (i % 2) * 20, height: 10, borderRadius: 6, marginTop: 5 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Skeleton */}
-        <div className="disc-right">
-          <div className="disc-chat-header" style={{ gap: 12 }}>
-            <Skeleton.Avatar active size={40} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Skeleton.Input active size="small" style={{ width: 140, borderRadius: 6 }} />
-              <Skeleton.Input active size="small" style={{ width: 90, height: 10, borderRadius: 6 }} />
-            </div>
-          </div>
-          <div className="disc-messages">
-            <div className="disc-msg-skeleton">
-              {[120, 180, 100, 200, 140, 160, 110].map((w, i) => (
-                <div key={i} className={`disc-skeleton-row${i % 3 === 1 ? " me" : ""}`}>
-                  {i % 3 !== 1 && <Skeleton.Avatar active size={32} />}
-                  <Skeleton.Input active size="small" style={{ width: w, borderRadius: 12, height: 36 }} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="disc-input-bar">
-            <Skeleton.Input active block style={{ borderRadius: 20 }} />
-            <Skeleton.Avatar active size={38} shape="circle" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Removed flickering early return. Skeleton is now handled inside the topic list area.
 
   return (
     <div className={`disc-page${isDark ? " disc-dark" : ""}`}>
@@ -389,54 +359,26 @@ export default function DiscussionPage() {
           <Input.Search placeholder="Search discussions..." value={search} onChange={(e) => setSearch(e.target.value)} allowClear className="ap-search-input" />
         </div>
 
-        {/* Topics List with Infinite Scroll */}
-        <div className="disc-topics" id="disc-topics-container">
-          <InfiniteScroll
-            dataLength={allTopics.length}
-            next={loadMoreTopics}
-            hasMore={hasMore}
-            loader={
-              <div className="disc-loading-more">
-                <Spin size="small" />
-                <span>Loading more...</span>
-              </div>
-            }
-            scrollableTarget="disc-topics-container"
-            endMessage={
-              allTopics.length > 0 && (
-                <div className="disc-end-message">
-                  <span>No more discussions</span>
-                </div>
-              )
-            }
-          >
-            {loadingTopics && allTopics.length === 0 ? (
-              <div className="disc-loading">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="disc-topic-skeleton">
-                    <Skeleton.Avatar active size={32} />
-                    <div className="disc-topic-skeleton-content">
-                      <Skeleton.Input active size="small" style={{ width: 120 + (i * 20), borderRadius: 4 }} />
-                      <Skeleton.Input active size="small" style={{ width: 80 + (i * 10), borderRadius: 4 }} />
-                    </div>
+        <div className="disc-topics" id="disc-topics-container" ref={topicsContainerRef}>
+          {loadingTopics && allTopics.length === 0 && !isTopicScrollLoadingRef.current ? (
+            <div className="disc-loading">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="disc-topic-skeleton" style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                  <Skeleton.Avatar active size={38} />
+                  <div className="disc-topic-skeleton-content" style={{ flex: 1 }}>
+                    <Skeleton.Input active size="small" style={{ width: "60%", height: 14, borderRadius: 4 }} />
+                    <Skeleton.Input active size="small" style={{ width: "40%", height: 10, borderRadius: 4, marginTop: 6 }} />
                   </div>
-                ))}
-              </div>
-            ) : allTopics.length === 0 && !debouncedSearch ? (
-              <div className="disc-empty">
-                <div className="disc-empty-icon">No discussions yet</div>
-                <p className="disc-empty-title">Start a conversation!</p>
-                <p className="disc-empty-sub">Create your first discussion topic.</p>
-              </div>
-            ) : allTopics.length === 0 && debouncedSearch ? (
-              <div className="disc-empty">
-                <div className="disc-empty-icon">No results</div>
-                <p className="disc-empty-title">No discussions found</p>
-                <p className="disc-empty-sub">Try adjusting your search terms.</p>
-              </div>
-            ) : (
-              allTopics.map((t, i) => {
-                const senderName = t.createdBy?.full_name || t.createdBy?.name || "Unknown";
+                </div>
+              ))}
+            </div>
+          ) : allTopics.length === 0 ? (
+            <div className="disc-empty">
+            </div>
+          ) : (
+            <>
+              {allTopics.map((t) => {
+                const senderName = t.createdBy?.full_name || t.createdBy?.name || t.createdBy?.first_name || "Unknown";
                 const initials = getInitials(senderName);
                 const color = getAvatarColor(senderName);
                 return (
@@ -450,14 +392,36 @@ export default function DiscussionPage() {
                       <p className="disc-topic-name">{t.title}</p>
                       <span className="disc-topic-sub">{t.project?.title || ""}</span>
                     </div>
-                    <Popconfirm title="Delete?" onConfirm={(e) => { e.stopPropagation(); handleDeleteTopic(t._id); }} okText="Yes" cancelText="No">
-                      <button className="disc-topic-del" onClick={(e) => e.stopPropagation()}><DeleteOutlined /></button>
-                    </Popconfirm>
+                    {(t.isDeletable || t.createdBy?._id === userData?._id) && (
+                      <Popconfirm 
+                        title="Delete this discussion?" 
+                        onConfirm={(e) => { e.stopPropagation(); handleDeleteTopic(t._id); }} 
+                        okText="Yes" 
+                        cancelText="No"
+                      >
+                        <button className="disc-topic-del" onClick={(e) => e.stopPropagation()}>
+                          <DeleteOutlined />
+                        </button>
+                      </Popconfirm>
+                    )}
                   </div>
                 );
-              })
-            )}
-          </InfiniteScroll>
+              })}
+              
+              {isTopicScrollLoadingRef.current && (
+                <div className="disc-loading-more" style={{ textAlign: "center", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                  <Spin size="large" />
+                  <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more discussions...</span>
+                </div>
+              )}
+
+              {!hasMore && allTopics.length > pageSize && (
+                <div className="disc-end-message" style={{ textAlign: "center", padding: "16px", opacity: 0.6, fontSize: 12 }}>
+                  No more discussions
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 

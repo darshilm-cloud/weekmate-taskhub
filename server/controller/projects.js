@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const moment = require("moment");
 const {
   errorResponse,
   successResponse,
@@ -49,7 +50,7 @@ const { sheet } = require("../template/projectsReportsCSV");
 const { checkUserIsAdmin } = require("./authentication");
 const { projectWorkFlowExists } = require("./projectWorkFlow");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
-const { getCache, storeCache } = require("../middleware/cacheStore");
+const { getCache, storeCache, removeCache } = require("../middleware/cacheStore");
 const { generateCacheKey } = require("../middleware/CryptoKey");
 
 // Check is exists..
@@ -295,6 +296,8 @@ exports.addProjects = async (req, res) => {
       ) {
         await newProjectAssigneesMail(addedData, decodedCompanyId);
       }
+
+      removeCache(`projects:get:`, true);
 
       return successResponse(
         res,
@@ -862,7 +865,29 @@ exports.getProjects = async (req, res) => {
       const finalHours = (minutesByProject[key] || 0) / 60;
       // estimatedHours is from the $project stage (internal only — not exposed)
       const estimated = parseFloat(project.estimatedHours || "0");
-      // Explicit pick — ensures all fields needed for ProjectFormModal pre-fill are present
+      const todayStr = moment().format("YYYY-MM-DD");
+      const stats = {
+        closed: doneTasks.length,
+        today: 0,
+        overDue: 0,
+        upComing: 0
+      };
+
+      tasks.forEach(t => {
+        if (t.task_status?.title === "Done") return;
+        const dueStr = t.due_date ? moment(t.due_date).format("YYYY-MM-DD") : null;
+        const startStr = t.start_date ? moment(t.start_date).format("YYYY-MM-DD") : null;
+
+        if (dueStr === todayStr || startStr === todayStr) {
+          stats.today++;
+        } else if (dueStr && dueStr < todayStr) {
+          stats.overDue++;
+        } else if (dueStr && dueStr > todayStr) {
+          stats.upComing++;
+        }
+      });
+
+      // Explicit pick — no spread, no accidental field leakage
       return {
         _id:                  project._id,
         title:                project.title,
@@ -887,6 +912,7 @@ exports.getProjects = async (req, res) => {
         doneTasks:            doneTasks.length,
         completionPercentage,
         projectHoursExceeded: finalHours > estimated,
+        stats, // Unified overview stats
       };
     });
 
@@ -1736,6 +1762,8 @@ exports.updateProjects = async (req, res) => {
         console.error("Error logging project update activity:", logError);
       }
 
+      removeCache(`projects:get:`, true);
+
       return successResponse(
         res,
         statusCode.SUCCESS,
@@ -1781,6 +1809,9 @@ exports.archivedToActiveProject = async (req, res) => {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
       }
     }
+
+    removeCache(`projects:get:`, true);
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -2035,6 +2066,8 @@ exports.deleteProjects = async (req, res) => {
         }
       });
     }
+
+    removeCache(`projects:get:`, true);
 
     return successResponse(
       res,
