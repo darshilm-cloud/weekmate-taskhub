@@ -289,7 +289,7 @@ const PositiveReviewForm = () => {
             </div>
             <Row gutter={[24, 0]}>
               <Col xs={24} md={12}>
-                <Form.Item name="feedback_type" label="Feedback Type">
+                <Form.Item name="feedback_type" label="Feedback Type" required>
                   <Select
                     onChange={handleFeedbackTypeChange}
                     placeholder="Select feedback type"

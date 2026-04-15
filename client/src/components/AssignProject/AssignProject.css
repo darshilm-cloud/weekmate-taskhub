@@ -1406,7 +1406,7 @@ body[data-theme="dark"] .ap-browser-status-label {
 overflow: auto;
 }
 .page-project-list  .ap-cards-grid {
-  max-height: calc(100dvh - 275px);
+  /* max-height: calc(100dvh - 275px); */
   overflow: auto;
 }
 .page-project-list  .ap-grid-pagination{

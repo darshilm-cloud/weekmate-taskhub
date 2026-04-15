@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { Avatar, Tooltip, Select, Pagination, Button, Spin, Skeleton, Input } from "antd";
+// InfiniteScroll removed — replaced with a direct scroll listener for reliability
+import { Avatar, Tooltip, Select, Button, Spin, Input } from "antd";
 import {
   TeamOutlined,
   UserOutlined,
@@ -100,8 +100,17 @@ const EmployeeMasterList = () => {
   const [localSearch, setLocalSearch] = useState("");
   const sidebarPageSize = 25;
   const [employeeInfiniteScroll, setEmployeeInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+  // Synchronous guard — prevents concurrent scroll loads before React state can propagate
+  const isScrollLoadingRef = useRef(false);
 
+  const [clientInfiniteScroll, setClientInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+  const isClientScrollLoadingRef = useRef(false);
 
+  // Stable refs so the scroll handler never captures a stale closure
+  const onLoadMoreEmployeesRef = useRef(null);
+  const onLoadMoreClientsRef   = useRef(null);
+  const sidebarModeRef         = useRef(sidebarMode);
+  useEffect(() => { sidebarModeRef.current = sidebarMode; }, [sidebarMode]);
 
   const openEmployeeSegment = useCallback((segment) => {
     setSidebarMode("employees");
@@ -134,6 +143,11 @@ const EmployeeMasterList = () => {
     total: 0, active: 0, inactive: 0, admins: 0,
     roleBreakdown: {}, statusBreakdown: { active: 0, inactive: 0 },
   });
+  // Permanent analytics — only updated on unfiltered fetches (no search query).
+  // Cards always show the true totals from the API, regardless of what the user types.
+  const [permanentAnalytics, setPermanentAnalytics] = useState({
+    total: 0, active: 0, inactive: 0, admins: 0,
+  });
 
   /* ── client data ── */
   const [sidebarClients,  setSidebarClients]  = useState([]);
@@ -161,17 +175,18 @@ const EmployeeMasterList = () => {
   const fetchSidebarUsers = useCallback(async (skipParam = null) => {
     const isInfiniteScroll = skipParam !== null;
     if (!isInfiniteScroll) setSidebarLoading(true);
-    
+
     try {
       const body = {
-        pageNo: isInfiniteScroll ? (skipParam / sidebarPageSize) + 1 : employeeListPage,
+        // pageNo is 1-based; for scroll we derive it from skipParam
+        pageNo: isInfiniteScroll ? Math.floor(skipParam / sidebarPageSize) + 1 : employeeListPage,
         limit: sidebarPageSize,
         includeDeactivated: true,
         excludeIds: favorites,
         search: sidebarSearch,
-        ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
-        ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
-        ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
+        ...(employeeStatusFilter === "active"   ? { isActivate: true }            : {}),
+        ...(employeeStatusFilter === "inactive" ? { isActivate: false }           : {}),
+        ...(employeeStatusFilter === "admins"   ? { pms_role_id: "admins" }      : {}),
       };
 
       const response = await Service.makeAPICall({
@@ -181,41 +196,50 @@ const EmployeeMasterList = () => {
       });
 
       const users = response?.data?.data || [];
-      const meta = response?.data?.metadata || {};
+      const meta  = response?.data?.metadata || {};
+      const total = meta.total || 0;
 
       if (isInfiniteScroll) {
-        // Append new users for infinite scroll
+        // Append new users — use functional updater so we never need loadedCount in deps
         setSidebarUsers(prev => [...prev, ...users]);
-        const newLoadedCount = employeeInfiniteScroll.loadedCount + users.length;
-        const hasMoreData = newLoadedCount < meta.total && users.length > 0;
-        setEmployeeInfiniteScroll(prev => ({
-          ...prev,
-          skip: prev.skip + sidebarPageSize,
-          loadedCount: newLoadedCount,
-          hasMore: hasMoreData,
-          isLoadingMore: false,
-        }));
+        setEmployeeInfiniteScroll(prev => {
+          const newLoadedCount = prev.loadedCount + users.length;
+          return {
+            skip: prev.skip + sidebarPageSize,
+            loadedCount: newLoadedCount,
+            hasMore: newLoadedCount < total && users.length > 0,
+            isLoadingMore: false,
+          };
+        });
       } else {
-        // Initial load or filter change
+        // Fresh / filter-change load — replace the list
         setSidebarUsers(users);
-        const hasMoreData = users.length >= sidebarPageSize && users.length < meta.total;
-        setEmployeeInfiniteScroll(prev => ({
-          ...prev,
+        setEmployeeInfiniteScroll({
           skip: sidebarPageSize,
           loadedCount: users.length,
-          hasMore: hasMoreData,
+          hasMore: users.length >= sidebarPageSize && users.length < total,
           isLoadingMore: false,
-        }));
+        });
       }
 
-      setTotalEmployees(meta.total || 0);
+      setTotalEmployees(total);
       setAnalytics(prev => ({
         ...prev,
-        total: (meta.total || 0) + favorites.length,
-        active: meta.active || 0,
+        total:    total + favorites.length,
+        active:   meta.active   || 0,
         inactive: meta.inactive || 0,
-        admins: meta.admins || 0,
+        admins:   meta.admins   || 0,
       }));
+      // Only lock in the card numbers when we’re NOT searching —
+      // cards should always reflect the true full dataset, not a filtered view.
+      if (!sidebarSearch) {
+        setPermanentAnalytics({
+          total:    total + favorites.length,
+          active:   meta.active   || 0,
+          inactive: meta.inactive || 0,
+          admins:   meta.admins   || 0,
+        });
+      }
 
     } catch (e) {
       console.error("fetchSidebarUsers", e);
@@ -223,47 +247,125 @@ const EmployeeMasterList = () => {
         setEmployeeInfiniteScroll(prev => ({ ...prev, isLoadingMore: false }));
       }
     } finally {
+      // Always release the synchronous guard so the next scroll can trigger a load
+      isScrollLoadingRef.current = false;
       if (!isInfiniteScroll) {
         setSidebarLoading(false);
         setPageLoading(false);
       }
     }
-  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeInfiniteScroll.loadedCount, employeeListPage]);
+  // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here — it would cause a
+  //     recursive re-fetch loop: loadedCount changes → new fn → useEffect fires → fresh reload.
+  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeListPage]);
 
-  const onLoadMoreEmployees = useCallback(async () => {
-    if (employeeInfiniteScroll.isLoadingMore || !employeeInfiniteScroll.hasMore) return;
+  const onLoadMoreEmployees = useCallback(() => {
+    // isScrollLoadingRef is a synchronous guard — blocks concurrent calls even before
+    // React's async state update for isLoadingMore can propagate to the next render.
+    if (isScrollLoadingRef.current || !employeeInfiniteScroll.hasMore) return;
+    isScrollLoadingRef.current = true;
     setEmployeeInfiniteScroll(prev => ({ ...prev, isLoadingMore: true }));
-    await fetchSidebarUsers(employeeInfiniteScroll.skip);
-  }, [employeeInfiniteScroll, fetchSidebarUsers]);
+    fetchSidebarUsers(employeeInfiniteScroll.skip);
+  }, [employeeInfiniteScroll.hasMore, employeeInfiniteScroll.skip, fetchSidebarUsers]);
+
+  // Keep the ref in sync so the scroll handler always calls the latest version
+  useEffect(() => { onLoadMoreEmployeesRef.current = onLoadMoreEmployees; }, [onLoadMoreEmployees]);
 
 
   /* ── fetch clients ─────────────────────────────────────────────── */
-  const fetchSidebarClients = useCallback(async () => {
-    setClientsLoading(true);
+  const fetchSidebarClients = useCallback(async (skipParam = null) => {
+    const isInfiniteScroll = skipParam !== null;
+    if (!isInfiniteScroll) setClientsLoading(true);
+
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
-        body: { 
-          pageNo: clientListPage, 
+        body: {
+          pageNo: isInfiniteScroll ? Math.floor(skipParam / sidebarPageSize) + 1 : 1,
           limit: sidebarPageSize,
-          search: sidebarSearch
+          search: sidebarSearch,
         },
       });
+
       const clients = response?.data?.data || [];
-      const meta = response?.data?.metadata || {};
+      const meta    = response?.data?.metadata || {};
+      const total   = meta.total || 0;
 
-      setSidebarClients(clients);
-      setTotalClients(meta.total || 0);
+      if (isInfiniteScroll) {
+        setSidebarClients(prev => [...prev, ...clients]);
+        setClientInfiniteScroll(prev => {
+          const newLoadedCount = prev.loadedCount + clients.length;
+          return {
+            skip: prev.skip + sidebarPageSize,
+            loadedCount: newLoadedCount,
+            hasMore: newLoadedCount < total && clients.length > 0,
+            isLoadingMore: false,
+          };
+        });
+      } else {
+        setSidebarClients(clients);
+        setClientInfiniteScroll({
+          skip: sidebarPageSize,
+          loadedCount: clients.length,
+          hasMore: clients.length >= sidebarPageSize && clients.length < total,
+          isLoadingMore: false,
+        });
+      }
 
+      setTotalClients(total);
       setClientAnalytics({
-        total: meta.total || 0,
-        active: meta.active || 0,
-        inactive: meta.inactive || 0
+        total,
+        active:   meta.active   || 0,
+        inactive: meta.inactive || 0,
       });
     } catch { /* silent */ }
-    finally { setClientsLoading(false); }
-  }, [clientListPage, sidebarPageSize, sidebarSearch]);
+    finally {
+      isClientScrollLoadingRef.current = false;
+      if (!isInfiniteScroll) setClientsLoading(false);
+    }
+  // No clientInfiniteScroll in deps — same reason as employees: it would cause re-fetch loops
+  }, [sidebarPageSize, sidebarSearch]);
+
+  const onLoadMoreClients = useCallback(() => {
+    if (isClientScrollLoadingRef.current || !clientInfiniteScroll.hasMore) return;
+    isClientScrollLoadingRef.current = true;
+    setClientInfiniteScroll(prev => ({ ...prev, isLoadingMore: true }));
+    fetchSidebarClients(clientInfiniteScroll.skip);
+  }, [clientInfiniteScroll.hasMore, clientInfiniteScroll.skip, fetchSidebarClients]);
+
+  // Keep the ref in sync with the latest version of the callback
+  useEffect(() => { onLoadMoreClientsRef.current = onLoadMoreClients; }, [onLoadMoreClients]);
+
+  /* ── Scroll detection — single listener on the sidebar container —──
+     With deps=[], the effect fires on the very first render while pageLoading=true.
+     At that point the component returns <UsersPageSkeleton> so the real
+     sidebar-user-list div is NOT in the DOM and getElementById returns null.
+     Depending on [pageLoading] causes the effect to re-run exactly once when the
+     skeleton transitions to the real sidebar.                                    */
+  useEffect(() => {
+    if (pageLoading) return; // sidebar not in DOM yet
+
+    const container = document.getElementById("sidebar-user-list");
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      if (scrollTop + clientHeight >= scrollHeight * 0.85) {
+        if (sidebarModeRef.current === "employees") {
+          onLoadMoreEmployeesRef.current?.();
+        } else {
+          onLoadMoreClientsRef.current?.();
+        }
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageLoading]); // re-runs once: pageLoading true→false
+
+
+
 
   useEffect(() => { fetchSidebarUsers();   }, [fetchSidebarUsers]);
   useEffect(() => { fetchSidebarClients(); }, [fetchSidebarClients]);
@@ -321,8 +423,11 @@ const EmployeeMasterList = () => {
       if (localSearch !== sidebarSearch) {
         setSidebarSearch(localSearch);
         setEmployeeListPage(1);
-        setClientListPage(1);
         setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+        isScrollLoadingRef.current = false;
+        // Also reset client scroll so a fresh load fires
+        setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+        isClientScrollLoadingRef.current = false;
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -385,6 +490,18 @@ const EmployeeMasterList = () => {
   const paginatedRegularUsers = sidebarUsers;
   const paginatedClients = sidebarClients;
 
+  // When searching, filter favourites client-side so the list stays consistent.
+  // Favourites are fetched without a search term, so without this the section
+  // stays visible even when no results match — giving the impression of stale data.
+  const displayFavoriteUsers = sidebarSearch.trim()
+    ? favoriteUsers.filter(u => {
+        const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const q = sidebarSearch.trim().toLowerCase();
+        return name.includes(q) || email.includes(q);
+      })
+    : favoriteUsers;
+
   const filteredAnalytics = (() => {
     const roleBreakdown = {};
     let active = 0, inactive = 0, admins = 0;
@@ -436,7 +553,9 @@ const EmployeeMasterList = () => {
 
   useEffect(() => {
     setEmployeeListPage(1);
-    setClientListPage(1);
+    // Reset client infinite scroll when switching sidebar tabs
+    setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+    isClientScrollLoadingRef.current = false;
   }, [sidebarMode]);
 
   // Page validation effects can be removed if handled by API safely or reset logic above
@@ -641,43 +760,33 @@ const EmployeeMasterList = () => {
                     />
                   </div>
 
-                  {favoriteUsers.length > 0 && (
+                  {displayFavoriteUsers.length > 0 && (
                     <>
                       <div className="sidebar-section-label">Favourites</div>
-                      {favoriteUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      {displayFavoriteUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
                     </>
                   )}
 
                   {regularUsers.length > 0 && (
                     <>
-                      {favoriteUsers.length > 0 && (
+                      {displayFavoriteUsers.length > 0 && (
                         <div className="sidebar-section-label">All Members</div>
                       )}
-                      <InfiniteScroll
-                        dataLength={paginatedRegularUsers.length}
-                        next={onLoadMoreEmployees}
-                        hasMore={employeeInfiniteScroll.hasMore}
-                        loader={
-                          employeeInfiniteScroll.isLoadingMore ? (
-                            <div style={{ padding: "12px", textAlign: "center" }}>
-                              <Spin size="small" />
-                            </div>
-                          ) : null
-                        }
-                        scrollableTarget="sidebar-user-list"
-                        style={{ paddingRight: "4px" }}
-                        scrollThreshold={0.9}
-                      >
-                        {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
-                      </InfiniteScroll>
+                      {/* Plain list — scroll is detected by the useEffect listener above */}
+                      {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      {employeeInfiniteScroll.isLoadingMore && (
+                        <div style={{ padding: "12px", textAlign: "center" }}>
+                          <Spin size="small" />
+                        </div>
+                      )}
                     </>
                   )}
 
-                  {!sidebarLoading && filteredUsers.length === 0 && (
+                  {!sidebarLoading && filteredUsers.length === 0 && displayFavoriteUsers.length === 0 && (
                     <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                        No employees found
-                      </div>
-                    )}
+                      No employees found
+                    </div>
+                  )}
                   </>
                 ) : (
                   <>
@@ -694,31 +803,19 @@ const EmployeeMasterList = () => {
                     />
                   </div>
 
+                    {/* Plain list — same scroll listener handles clients */}
                     {paginatedClients.map((c) => (
                       <SidebarClientItem key={c._id} client={c} />
                     ))}
+                    {clientInfiniteScroll.isLoadingMore && (
+                      <div style={{ padding: "12px", textAlign: "center" }}>
+                        <Spin size="small" />
+                      </div>
+                    )}
 
                   {!clientsLoading && filteredClients.length === 0 && (
                     <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                         No clients found
-                      </div>
-                    )}
-
-                    {totalClients > sidebarPageSize && (
-                      <div className="sidebar-pagination">
-                        <Pagination
-                          size="small"
-                          current={clientListPage}
-                          pageSize={sidebarPageSize}
-                          total={totalClients}
-                          showLessItems
-                          showSizeChanger
-                          pageSizeOptions={["10", "25", "50", "100"]}
-                          onChange={(page) => {
-                            setClientListPage(page);
-                            document.querySelector(".sidebar-user-list")?.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                        />
                       </div>
                     )}
                   </>
@@ -877,28 +974,28 @@ const EmployeeMasterList = () => {
                 <div className="analytics-cards-grid">
                   <AnalyticsCard
                     icon={<TeamOutlined />}
-                    value={globalStats?.employees?.total ?? analytics.total}
+                    value={globalStats?.employees?.total ?? permanentAnalytics.total}
                     label="Total Employees"
                     colorClass="blue"
                     active={employeeStatusFilter === "all"}
                   />
                   <AnalyticsCard
                     icon={<CheckCircleOutlined />}
-                    value={globalStats?.employees?.active ?? analytics.active}
+                    value={globalStats?.employees?.active ?? permanentAnalytics.active}
                     label="Active"
                     colorClass="green"
                     active={employeeStatusFilter === "active"}
                   />
                   <AnalyticsCard
                     icon={<CloseCircleOutlined />}
-                    value={globalStats?.employees?.inactive ?? analytics.inactive}
+                    value={globalStats?.employees?.inactive ?? permanentAnalytics.inactive}
                     label="Inactive"
                     colorClass="red"
                     active={employeeStatusFilter === "inactive"}
                   />
                   <AnalyticsCard
                     icon={<CrownOutlined />}
-                    value={globalStats?.employees?.admins ?? analytics.admins}
+                    value={globalStats?.employees?.admins ?? permanentAnalytics.admins}
                     label="Admins"
                     colorClass="purple"
                     active={employeeStatusFilter === "admins"}

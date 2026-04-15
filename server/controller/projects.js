@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const moment = require("moment");
 const {
   errorResponse,
   successResponse,
@@ -862,6 +863,28 @@ exports.getProjects = async (req, res) => {
       const finalHours = (minutesByProject[key] || 0) / 60;
       // estimatedHours is from the $project stage (internal only — not exposed)
       const estimated = parseFloat(project.estimatedHours || "0");
+      const todayStr = moment().format("YYYY-MM-DD");
+      const stats = {
+        closed: doneTasks.length,
+        today: 0,
+        overDue: 0,
+        upComing: 0
+      };
+
+      tasks.forEach(t => {
+        if (t.task_status?.title === "Done") return;
+        const dueStr = t.due_date ? moment(t.due_date).format("YYYY-MM-DD") : null;
+        const startStr = t.start_date ? moment(t.start_date).format("YYYY-MM-DD") : null;
+
+        if (dueStr === todayStr || startStr === todayStr) {
+          stats.today++;
+        } else if (dueStr && dueStr < todayStr) {
+          stats.overDue++;
+        } else if (dueStr && dueStr > todayStr) {
+          stats.upComing++;
+        }
+      });
+
       // Explicit pick — no spread, no accidental field leakage
       return {
         _id:                  project._id,
@@ -877,6 +900,7 @@ exports.getProjects = async (req, res) => {
         doneTasks:            doneTasks.length,
         completionPercentage,
         projectHoursExceeded: finalHours > estimated,
+        stats, // Unified overview stats
       };
     });
 

@@ -140,11 +140,12 @@ const ProjectFormModal = ({
 
   useEffect(() => {
     const fetchAllData = async () => {
+      // Don't reset if we are already showing some data from selectedProject hydration
+      // unless we are switching projects.
       setIsLoading(true);
       try {
         dispatch(showAuthLoader());
-        resetModalState();
-
+        console.log("🚀 ~ fetchAllData ~ selectedProject:", selectedProject)
         if (selectedProject) {
           hydrateProjectForm(selectedProject);
         }
@@ -418,7 +419,7 @@ const ProjectFormModal = ({
 
   const hydrateProjectForm = (projectDataRaw = {}, lookupOverrides = {}) => {
     const projectData = Array.isArray(projectDataRaw) ? projectDataRaw[0] : projectDataRaw;
-    if (!projectData || typeof projectData !== "object") return;
+    if (!projectData || (Object.keys(projectData).length === 0)) return;
 
 
     const {
@@ -1181,6 +1182,7 @@ const ProjectFormModal = ({
           </button>
         </div>
 
+        <Spin spinning={isLoading}>
       <Form
         form={form}
         layout="vertical"
@@ -1233,7 +1235,7 @@ const ProjectFormModal = ({
             <div className="pfm-input-group">
               <div className="pfm-field-label">Description</div>
               {/* Description is NOT form-controlled — CKEditor manages its own state */}
-              <div className="pfm-editor-wrapper">
+              <div className="pfm-editor-wrapper" key={editorRefreshKey}>
               <CKEditor
                 editor={Custombuild}
                 data={editorData}
@@ -1656,6 +1658,7 @@ const ProjectFormModal = ({
           </Button>
         </div>
       </Form>
+      </Spin>
     </Modal>
     <Modal
       title="Add Department"
