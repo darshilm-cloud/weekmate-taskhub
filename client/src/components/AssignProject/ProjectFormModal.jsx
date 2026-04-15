@@ -1214,7 +1214,7 @@ const ProjectFormModal = ({
               ]}
             >
               <Input
-                placeholder="Enter project title"
+                placeholder="Please enter project title"
                 className="pfm-input"
                 bordered={false}
               />
