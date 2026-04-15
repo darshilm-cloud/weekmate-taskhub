@@ -13,7 +13,12 @@ import {
   DatePicker,
   Select,
   Upload,
+  Row,
+  Col,
+  Form,
 } from "antd";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import Custombuild from 'ckeditor5-custom-build/build/ckeditor';
 import {
   CloseOutlined,
   CalendarOutlined,
@@ -28,6 +33,7 @@ import {
   CheckOutlined,
   SaveOutlined,
   PlusOutlined,
+  FieldTimeOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import moment from "moment";
@@ -39,6 +45,20 @@ import { fileImageSelect } from "../../util/FIleSelection";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskDetailModal.css";
+
+const CKEDITOR_CONFIG = {
+  toolbar: [
+    "heading", "|", "bold", "italic", "underline", "|",
+    "fontColor", "fontBackgroundColor", "|",
+    "link", "|", "numberedList", "bulletedList", "|",
+    "alignment:left", "alignment:center", "alignment:right", "|",
+    "fontSize", "|", "print",
+  ],
+  fontSize: {
+    options: ["default", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
+  },
+  print: {},
+};
 
 const { TextArea } = Input;
 
@@ -186,6 +206,19 @@ const TaskDetailModal = ({
   const [internalBugStatuses, setInternalBugStatuses] = useState([]);
   const [internalIssueTitle, setInternalIssueTitle] = useState("");
   const [internalBugsLoading, setInternalBugsLoading] = useState(false);
+
+  // Log Hours state
+  const [logHours, setLogHours] = useState("");
+  const [logMins, setLogMins] = useState("");
+  const [logDate, setLogDate] = useState(null);
+  const [logDesc, setLogDesc] = useState(""); // used for manual input before CKEditor or as fallback
+  const [logBugId, setLogBugId] = useState(null);
+  const [editorData, setEditorData] = useState("");
+  const [submittingLog, setSubmittingLog] = useState(false);
+  const [showLogForm, setShowLogForm] = useState(false);
+  const [loggedHoursList, setLoggedHoursList] = useState([]);
+  const [timesheetList, setTimesheetList] = useState([]);
+  const [selectedTimesheetId, setSelectedTimesheetId] = useState(null);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -556,10 +589,91 @@ const TaskDetailModal = ({
     }
   }, []);
 
+  const fetchLoggedHours = useCallback(async (tid) => {
+    if (!tid) return;
+    try {
+      const base = details || task;
+      const { projectId } = getTaskContext(base);
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskLoggedHours,
+        body: { task_id: tid, project_id: projectId },
+      });
+      if (res?.data?.data) setLoggedHoursList(res.data.data);
+      else setLoggedHoursList([]);
+    } catch { setLoggedHoursList([]); }
+  }, [details, task]);
+
+  const fetchTimesheets = useCallback(async (pid) => {
+    if (!pid) return;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTimesheet,
+        body: { project_id: pid },
+      });
+      if (res?.data?.data && res?.data?.status) {
+        setTimesheetList(res.data.data);
+        if (res.data.data.length > 0) {
+          setSelectedTimesheetId(res.data.data[0]._id);
+        }
+      } else {
+        setTimesheetList([]);
+        setSelectedTimesheetId(null);
+      }
+    } catch {
+      setTimesheetList([]);
+      setSelectedTimesheetId(null);
+    }
+  }, []);
+
+  const handleLogHoursSubmit = useCallback(async () => {
+    const base = details || task;
+    const { projectId, taskId } = getTaskContext(base);
+    if (!projectId || !taskId) return message.error("Missing task context");
+    if (!selectedTimesheetId) return message.error("No active timesheet found for this project");
+    if (!logHours && !logMins) return message.error("Enter hours or minutes");
+    if ((parseInt(logHours || 0) === 0) && (parseInt(logMins || 0) === 0))
+      return message.error("Hours and minutes cannot both be 0");
+    setSubmittingLog(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: "/projects/task-logged-hours/add",
+        body: {
+          project_id: projectId,
+          task_id: taskId,
+          timesheet_id: selectedTimesheetId,
+          logged_hours: logHours ? String(logHours) : "00",
+          logged_minutes: logMins ? String(logMins) : "00",
+          logged_date: logDate ? logDate.format("DD-MM-YYYY") : dayjs().format("DD-MM-YYYY"),
+          descriptions: editorData || logDesc || "",
+          bugs_id: logBugId || null,
+        },
+      });
+      if (res?.data?.status) {
+        message.success(res.data.message || "Hours logged successfully");
+        setLogHours("");
+        setLogMins("");
+        setLogDate(null);
+        setLogDesc("");
+        setEditorData("");
+        setLogBugId(null);
+        setShowLogForm(false);
+        fetchLoggedHours(taskId);
+      } else {
+        message.error(res?.data?.message || "Failed to log hours");
+      }
+    } catch { message.error("Failed to log hours"); }
+    finally { setSubmittingLog(false); }
+  }, [details, task, logHours, logMins, logDate, logDesc, editorData, logBugId, selectedTimesheetId, fetchLoggedHours]);
+
   useEffect(() => {
     if (open && task) {
       fetchTaskDetails();
       fetchDropdownOptions();
+      const { projectId } = getTaskContext(task);
+      if (projectId) fetchTimesheets(projectId);
     } else if (!open) {
       setDetails(null);
       setComments([]);
@@ -571,8 +685,17 @@ const TaskDetailModal = ({
       setEditData({});
       setInternalBugs([]);
       setInternalIssueTitle("");
+      setLogHours("");
+      setLogMins("");
+      setLogDate(null);
+      setLogDesc("");
+      setEditorData("");
+      setLogBugId(null);
+      setLoggedHoursList([]);
+      setTimesheetList([]);
+      setSelectedTimesheetId(null);
     }
-  }, [open, task, fetchTaskDetails, fetchDropdownOptions]);
+  }, [open, task, fetchTaskDetails, fetchDropdownOptions, fetchTimesheets]);
 
   useEffect(() => {
     if (!open) return;
@@ -587,7 +710,10 @@ const TaskDetailModal = ({
     if (open && taskId && activeTab === "comments") {
       getComment(taskId);
     }
-  }, [open, activeTab, details?._id, task?._id, getComment]);
+    if (open && taskId && activeTab === "log-hours") {
+      fetchLoggedHours(taskId);
+    }
+  }, [open, activeTab, details?._id, task?._id, getComment, fetchLoggedHours]);
 
   useEffect(() => {
     const taskId = details?._id || task?._id;
@@ -1221,21 +1347,29 @@ const TaskDetailModal = ({
                   type="text"
                   onClick={() => setActiveTab("comments")}
                   icon={<CommentOutlined />}
+                  title="Comments"
                 />
                 <Button
                   className="task-detail-icon-btn"
                   type="text"
                   onClick={() => setActiveTab("attachment")}
                   icon={<PaperClipOutlined />}
+                  title="Attachments"
                 />
                 <Button
                   className="task-detail-icon-btn"
                   type="text"
                   onClick={() => setActiveTab("activity")}
                   icon={<HistoryOutlined />}
+                  title="Activity"
                 />
-
-           
+                <Button
+                  className={`task-detail-icon-btn ${activeTab === 'log-hours' ? 'task-detail-icon-btn-active' : ''}`}
+                  type="text"
+                  onClick={() => setActiveTab("log-hours")}
+                  icon={<FieldTimeOutlined />}
+                  title="Log Hours"
+                />
                 <Button
                   className={`task-detail-icon-btn ${isEditing ? 'task-detail-icon-btn-active' : ''}`}
                   type="text"
@@ -1621,6 +1755,199 @@ const TaskDetailModal = ({
                   </span>
                 ),
                 children: renderHistoryTab(),
+              },
+              {
+                key: "log-hours",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <FieldTimeOutlined /> Log Hours
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content">
+                    <div className="task-detail-log-tab-wrapper">
+                      <div className="task-detail-log-tab-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <h4 style={{ margin: 0, fontSize: 16, color: "#1a1a2e" }}>Logged History</h4>
+                        <Button 
+                          type="primary" 
+                          icon={showLogForm ? <CloseOutlined /> : <PlusOutlined />}
+                          onClick={() => setShowLogForm(!showLogForm)}
+                          style={{ borderRadius: 6 }}
+                        >
+                          {showLogForm ? "Cancel Logging" : "Log Hours"}
+                        </Button>
+                      </div>
+
+                      {showLogForm && (
+                        <div className="task-detail-log-form-container" style={{ padding: "16px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0", marginBottom: 24 }}>
+                          <Form layout="vertical">
+                            <Row gutter={[16, 0]}>
+                              <Col span={24}>
+                                <Form.Item label="Timesheet" required>
+                                  <Select
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    placeholder="Select timesheet"
+                                    value={selectedTimesheetId}
+                                    onChange={(val) => setSelectedTimesheetId(val)}
+                                    options={timesheetList.map((ts) => ({
+                                      value: ts._id,
+                                      label: ts.title,
+                                    }))}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={24}>
+                                <Form.Item label="Task" required>
+                                  <Select
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    disabled
+                                    value={details?._id || task?._id}
+                                    options={[{ value: details?._id || task?._id, label: details?.title || task?.title }]}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={24}>
+                                <Form.Item label="Bugs">
+                                  <Select
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    placeholder="None"
+                                    value={logBugId}
+                                    onChange={(val) => setLogBugId(val)}
+                                    allowClear
+                                    options={internalBugs.map((b) => ({
+                                      value: b._id,
+                                      label: b.title,
+                                    }))}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={8}>
+                                <Form.Item label="Date" required>
+                                  <DatePicker
+                                    style={{ width: "100%" }}
+                                    size="large"
+                                    placeholder="When"
+                                    value={logDate}
+                                    onChange={(val) => setLogDate(val)}
+                                    format="DD-MM-YYYY"
+                                    disabledDate={(current) => current && current > dayjs().endOf("day")}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={8}>
+                                <Form.Item label="Hours">
+                                  <Input
+                                    size="large"
+                                    placeholder="Hours"
+                                    value={logHours}
+                                    onChange={(e) => {
+                                      if (e.target.value === "" || /^(2[0-4]|1[0-9]|[1-9]|0)$/.test(e.target.value)) {
+                                        setLogHours(e.target.value);
+                                      }
+                                    }}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={8}>
+                                <Form.Item label="Minute">
+                                  <Input
+                                    size="large"
+                                    placeholder="Minutes"
+                                    value={logMins}
+                                    onChange={(e) => {
+                                      if (e.target.value === "" || /^[0-5]?[0-9]$/.test(e.target.value)) {
+                                        setLogMins(e.target.value);
+                                      }
+                                    }}
+                                  />
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={24}>
+                                <Form.Item label="Description">
+                                  <div className="log-hours-editor-wrapper">
+                                    <CKEditor
+                                      editor={Custombuild}
+                                      data={editorData}
+                                      onChange={(event, editor) => setEditorData(editor.getData())}
+                                      config={CKEDITOR_CONFIG}
+                                    />
+                                  </div>
+                                </Form.Item>
+                              </Col>
+
+                              <Col span={24} style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                                <Button
+                                  onClick={() => {
+                                    setLogHours("");
+                                    setLogMins("");
+                                    setLogDate(null);
+                                    setEditorData("");
+                                    setLogBugId(null);
+                                    setShowLogForm(false);
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="primary"
+                                  loading={submittingLog}
+                                  onClick={handleLogHoursSubmit}
+                                >
+                                  Save
+                                </Button>
+                              </Col>
+                            </Row>
+                          </Form>
+                        </div>
+                      )}
+
+                      {/* Logged History */}
+                      {loggedHoursList.length > 0 ? (
+                        <div className="task-detail-log-history-container">
+                        <div className="task-detail-log-list">
+                          {loggedHoursList.map((log, i) => (
+                            <div key={log._id || i} className="task-detail-log-item">
+                              <div className="task-detail-log-item-head">
+                                <div className="task-detail-log-item-user">
+                                  <div className="log-user-info">
+                                    <span className="log-user-name">{log.loggedBy || "User"}</span>
+                                    <span className="log-date">{log.logged_date || "—"}</span>
+                                  </div>
+                                </div>
+                                <div className="log-time-badge">
+                                  {log.logged_hours || "0"}h {log.logged_minutes || "00"}m
+                                </div>
+                              </div>
+                              {log.descriptions && (
+                                <div 
+                                  className="log-description-preview"
+                                  dangerouslySetInnerHTML={{ __html: log.descriptions }}
+                                />
+                              )}
+                              {log.bug && (
+                                <div className="log-bug-ref">
+                                  <Badge status="error" text={`Related Bug: ${log.bug}`} />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      ) : (
+                        <p className="task-detail-tab-hint">No hours logged yet.</p>
+                      )}
+                    </div>
+                  </div>
+                ),
               },
             ]}
           />

@@ -86,9 +86,9 @@ exports.addTaskHoursLogs = async (req, res) => {
 
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
-      task_id: Joi.string().optional().default(null),
-      subtask_id: Joi.string().optional().default(null),
-      bugs_id: Joi.string().optional().default(null),
+      task_id: Joi.string().optional().allow(null, "").default(null),
+      subtask_id: Joi.string().optional().allow(null, "").default(null),
+      bugs_id: Joi.string().optional().allow(null, "").default(null),
       timesheet_id: Joi.string().required(),
       descriptions: Joi.string().optional().allow(""),
       logged_hours: Joi.string().required(),
@@ -109,7 +109,7 @@ exports.addTaskHoursLogs = async (req, res) => {
     // if (await this.taskHoursExists(value?.task_id, value?.project_id)) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.HOURS_ALREADY_EXISTS);
     // } else {
-    let loggedDate = moment.utc(value.logged_date).format();
+    let loggedDate = moment.utc(value.logged_date, "DD-MM-YYYY").format();
 
     let data = new TaskHoursLogs({
       employee_id: req.user._id,
