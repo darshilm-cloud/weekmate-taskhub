@@ -75,7 +75,7 @@ export default function NotesPage() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("created");
+  const [activeTab, setActiveTab] = useState("all");
   const [totalNotes, setTotalNotes] = useState(0);
   const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
 
@@ -114,6 +114,7 @@ export default function NotesPage() {
           limit: pagination.limit,
           sort: "_id",
           sortBy: "desc",
+          tab: activeTab,
           ...(searchVal ? { search: searchVal } : {})
         },
       });
@@ -132,7 +133,7 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageNo, pagination.limit]);
+  }, [pagination.pageNo, pagination.limit, activeTab]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchNotes(search), 400);
@@ -336,23 +337,7 @@ export default function NotesPage() {
 
   const normalizedSearch = search.trim().toLowerCase();
 
-  const filteredNotes = notes.filter((note) => {
-    const isCreator = note.createdBy === currentUserId || note.createdBy?._id === currentUserId || note.createdBy?.toString() === currentUserId;
-    const isSubscriber = (note.subscribers || []).some(s => (s?._id || s?.toString()) === currentUserId);
-    const isClientRecipient = (note.pms_clients || []).some(c => (c?._id || c?.toString()) === currentUserId);
-    const isSharedNote = (note.subscribers || []).length > 0 || (note.pms_clients || []).length > 0;
-    const noteTitle = (note.title || "").toLowerCase();
-    const noteContent = (note.notesInfo || "").replace(/<[^>]*>/g, "").toLowerCase();
-    const matchesSearch =
-      !normalizedSearch ||
-      noteTitle.includes(normalizedSearch) ||
-      noteContent.includes(normalizedSearch);
-
-    if (!matchesSearch) return false;
-
-    if (activeTab === "created") return isCreator;
-    return (isSubscriber || isClientRecipient) && !isCreator;
-  });
+  const displayedNotes = notes;
 
   // Since we already filtered on the backend for tab logic might be tricky if we don't pass tab state to backend.
   // The current backend doesn't know about 'created' vs 'shared' logic exactly as specified in frontend.
@@ -395,6 +380,9 @@ export default function NotesPage() {
 
       {/* Tabs */}
       <div className="notes-page-tabs">
+        <button className={`notes-tab-btn${activeTab === "all" ? " active" : ""}`} onClick={() => { setActiveTab("all"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
+          All
+        </button>
         <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} onClick={() => { setActiveTab("created"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
           <PushpinOutlined style={{ marginRight: 6 }} />Created
         </button>
@@ -437,7 +425,7 @@ export default function NotesPage() {
             </div>
           ))}
         </div>
-      ) : filteredNotes.length === 0 ? (
+      ) : displayedNotes.length === 0 ? (
         <div className="notes-page-empty">
           <svg width="120" height="120" viewBox="0 0 200 200" fill="none">
             <circle cx="100" cy="100" r="100" fill="#EFF6FF" />
@@ -457,7 +445,7 @@ export default function NotesPage() {
         <Spin spinning={loading && notes.length > 0} tip="Loading...">
           <p className="notes-count-label">All</p>
           <div className="notes-cards-grid">
-            {filteredNotes.map((note, idx) => {
+            {displayedNotes.map((note, idx) => {
               const bgColor = isDark
                 ? CARD_COLORS[idx % CARD_COLORS.length]
                 : (isLightColor(note.color) ? note.color : CARD_COLORS[idx % CARD_COLORS.length]);

@@ -159,7 +159,8 @@ exports.getNotes = async (req, res) => {
       project_id: Joi.string().optional().allow(""),
       notebook_id: Joi.string().optional().default(null),
       subscribers: Joi.array().optional(),
-      isBookmark: Joi.boolean().optional()
+      isBookmark: Joi.boolean().optional(),
+      tab: Joi.string().valid("all", "created", "shared").default("all")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -184,7 +185,8 @@ exports.getNotes = async (req, res) => {
       value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
     ]);
 
-    const { companyId: decodedCompanyId } = req.user;
+    const { companyId: decodedCompanyId, _id: currentUserId } = req.user;
+    const currentUserIdObj = new mongoose.Types.ObjectId(currentUserId);
 
     let matchQuery = {
       $or: [
@@ -192,64 +194,54 @@ exports.getNotes = async (req, res) => {
         { companyId: { $exists: false } }
       ],
       isDeleted: false,
-      ...(!isManager && !isAdmin && !isAccManager
-        ? {
-            $expr: {
-              $and: [
-                {
-                  $or: [
-                    {
-                      $eq: [{ $size: ["$subscribers"] }, 0]
-                    },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req.user._id)
-                      ]
-                    },
-                    {
-                      $in: [
-                        new mongoose.Types.ObjectId(req.user._id),
-                        "$subscribers"
-                      ]
-                    },
-                    {
-                      $in: [
-                        new mongoose.Types.ObjectId(req.user._id),
-                        "$pms_clients"
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        : {}),
-      ...(value.notebook_id
-        ? { noteBook_id: new mongoose.Types.ObjectId(value.notebook_id) }
-        : {}),
-
-      ...(value.project_id
-        ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
-        : {}),
-
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      ...(value.isBookmark !== undefined ? { isBookmark: value.isBookmark } : {}),
-      // ...(value.subscribers ? { subscribers: { $in: value.subscribers } } : {}),
-      ...(value.subscribers && value.subscribers.length > 0
-        ? value.subscribers.includes("all")
-          ? {}
-          : value.subscribers.includes("unassigned")
-          ? { subscribers: { $eq: [] } }
-          : {
-              subscribers: {
-                $in: value.subscribers.map(
-                  (s) => new mongoose.Types.ObjectId(s)
-                )
-              }
-            }
-        : {})
     };
+
+    // Permission Match: Regular users only see notes they have access to
+    if (!isAdmin && !isManager && !isAccManager) {
+      matchQuery = {
+        ...matchQuery,
+        $or: [
+          { createdBy: currentUserIdObj },
+          { subscribers: currentUserIdObj },
+          { pms_clients: currentUserIdObj },
+          { subscribers: { $size: 0 } } // Public/unassigned notes (if applicable)
+        ]
+      };
+    }
+
+    // Tab Filtering
+    if (value.tab === "created") {
+      matchQuery.createdBy = currentUserIdObj;
+    } else if (value.tab === "shared") {
+      matchQuery = {
+        ...matchQuery,
+        $and: [
+          {
+            $or: [
+              { subscribers: currentUserIdObj },
+              { pms_clients: currentUserIdObj }
+            ]
+          },
+          { createdBy: { $ne: currentUserIdObj } }
+        ]
+      };
+    }
+
+    // Other filters
+    if (value.notebook_id) matchQuery.noteBook_id = new mongoose.Types.ObjectId(value.notebook_id);
+    if (value.project_id) matchQuery.project_id = new mongoose.Types.ObjectId(value.project_id);
+    if (value._id) matchQuery._id = new mongoose.Types.ObjectId(value._id);
+    if (value.isBookmark !== undefined) matchQuery.isBookmark = value.isBookmark;
+
+    if (value.subscribers && value.subscribers.length > 0) {
+      if (value.subscribers.includes("unassigned")) {
+        matchQuery.subscribers = { $eq: [] };
+      } else if (!value.subscribers.includes("all")) {
+        matchQuery.subscribers = {
+          $in: value.subscribers.map((s) => new mongoose.Types.ObjectId(s))
+        };
+      }
+    }
 
     if (value.search) {
       matchQuery = {

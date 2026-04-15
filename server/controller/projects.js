@@ -862,17 +862,27 @@ exports.getProjects = async (req, res) => {
       const finalHours = (minutesByProject[key] || 0) / 60;
       // estimatedHours is from the $project stage (internal only — not exposed)
       const estimated = parseFloat(project.estimatedHours || "0");
-      // Explicit pick — no spread, no accidental field leakage
+      // Explicit pick — ensures all fields needed for ProjectFormModal pre-fill are present
       return {
         _id:                  project._id,
         title:                project.title,
-        start_date:           project.start_date,
-        end_date:             project.end_date,
-        updatedAt:            project.updatedAt,
+        projectId:            project.projectId,
+        color:                project.color,
+        descriptions:         project.descriptions,
         technology:           project.technology,
+        project_type:         project.project_type,
         project_status:       project.project_status,
         manager:              project.manager,
+        acc_manager:          project.acc_manager,
         assignees:            project.assignees,
+        pms_clients:          project.pms_clients,
+        workFlow:             project.workFlow,
+        estimatedHours:       project.estimatedHours,
+        isBillable:           project.isBillable,
+        start_date:           project.start_date,
+        end_date:             project.end_date,
+        recurringType:        project.recurringType,
+        updatedAt:            project.updatedAt,
         totalTasks:           tasks.length,
         doneTasks:            doneTasks.length,
         completionPercentage,

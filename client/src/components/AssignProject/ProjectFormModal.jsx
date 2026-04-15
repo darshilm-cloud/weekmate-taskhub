@@ -577,37 +577,44 @@ const ProjectFormModal = ({
 
     setSelectedItems(assignees);
     setSelectedClient(clients);
-    setNewFilteredAssignees(assignees);
-    setNewFilteredClients(clients);
-    setEditorData(rawDescription || "");
-    setEditorRefreshKey((prev) => prev + 1);
-    setIsBillable(Boolean(rawBillable));
-    setProjectTech(technologyIds);
-    setProjectTypeselect(projectTypeId || "");
-    setNoEndDate(hasNoEndDate);
+    if (assignees?.length > 0) setNewFilteredAssignees(assignees);
+    if (clients?.length > 0) setNewFilteredClients(clients);
+    if (rawDescription) {
+      setEditorData(rawDescription);
+      setEditorRefreshKey((prev) => prev + 1);
+    }
+    if (rawBillable !== undefined) setIsBillable(Boolean(rawBillable));
+    if (technologyIds?.length > 0) setProjectTech(technologyIds);
+    if (projectTypeId) setProjectTypeselect(projectTypeId);
+    if (hasNoEndDate !== undefined) setNoEndDate(hasNoEndDate);
 
-    form.setFieldsValue({
-      title: projectData?.title?.trim?.() || "",
-      technology: technologyIds,
-      project_type: projectTypeId,
-      descriptions: removeHTMLTags(rawDescription || ""),
-      workFlow: workflowId,
-      manager: managerId,
-      acc_manager: accountManagerId,
-      estimatedHours: estimatedHours,
-      project_status: projectStatusId,
-      start_date: projectData?.start_date ? dayjs(projectData.start_date) : null,
-      end_date: hasNoEndDate ? null : dayjs(projectData.end_date),
-      isBillable: Boolean(rawBillable),
+    const currentValues = form.getFieldsValue();
+    const newValues = {
+      title: projectData?.title?.trim?.() || currentValues.title || "",
+      technology: technologyIds?.length > 0 ? technologyIds : currentValues.technology,
+      project_type: projectTypeId || currentValues.project_type,
+      descriptions: rawDescription ? removeHTMLTags(rawDescription) : (currentValues.descriptions || ""),
+      workFlow: workflowId || currentValues.workFlow,
+      manager: managerId || currentValues.manager,
+      acc_manager: accountManagerId || currentValues.acc_manager,
+      estimatedHours: estimatedHours || currentValues.estimatedHours,
+      project_status: projectStatusId || currentValues.project_status,
+      start_date: projectData?.start_date ? dayjs(projectData.start_date) : currentValues.start_date,
+      end_date: hasNoEndDate ? null : (projectData?.end_date ? dayjs(projectData.end_date) : currentValues.end_date),
+      isBillable: rawBillable !== undefined ? Boolean(rawBillable) : currentValues.isBillable,
       recurringType:
-        typeof rawRecurringType === "boolean"
-          ? rawRecurringType
-            ? "monthly"
-            : null
-          : rawRecurringType,
-      assignees: assignees.map((item) => item?._id).filter(Boolean),
-      client: clients.map((item) => item?._id).filter(Boolean),
-    });
+        rawRecurringType !== undefined
+          ? typeof rawRecurringType === "boolean"
+            ? rawRecurringType
+              ? "monthly"
+              : null
+            : rawRecurringType
+          : currentValues.recurringType,
+      assignees: assignees?.length > 0 ? assignees.map((item) => item?._id).filter(Boolean) : currentValues.assignees,
+      client: clients?.length > 0 ? clients.map((item) => item?._id).filter(Boolean) : currentValues.client,
+    };
+
+    form.setFieldsValue(newValues);
   };
 
   const fetchProjectDetails = async (id, lookupOverrides = {}) => {
@@ -1119,6 +1126,7 @@ const ProjectFormModal = ({
         recurringType: values?.recurringType,
         end_date: noEndDate ? null : values.end_date,
       };
+      delete reqBody.client;
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: Service.updateProjectdetails + `/${id}`,
@@ -1193,81 +1201,81 @@ const ProjectFormModal = ({
         {/* Project Title */}
         <div className="pfm-field-row">
           <FolderOutlined className="pfm-icon" />
-          <Form.Item
-            name="title"
-            className="pfm-form-item"
-            rules={[
-              { required: true, whitespace: true, message: "Please enter a valid title" },
-              () => ({
-                validator(_, value) {
-                  const trimmedValue = (value || "").trim();
-                  if (!trimmedValue) return Promise.resolve();
-
-                  if (generatePattern().test(trimmedValue)) {
-                    return Promise.resolve();
-                  }
-
-                  return Promise.reject(
-                    new Error(`Title must be in the format ${getTitleFormatExample()}`)
-                  );
-                },
-              }),
-            ]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label pfm-field-label--required">Project Title</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label pfm-field-label--required">Project Title</div>
+            <Form.Item
+              name="title"
+              className="pfm-form-item"
+              rules={[
+                { required: true, whitespace: true, message: "Please enter a valid title" },
+                () => ({
+                  validator(_, value) {
+                    const trimmedValue = (value || "").trim();
+                    if (!trimmedValue) return Promise.resolve();
+                    if (generatePattern().test(trimmedValue)) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error(`Title must be in the format ${getTitleFormatExample()}`)
+                    );
+                  },
+                }),
+              ]}
+            >
               <Input
                 placeholder={getTitleFormatExample()}
                 className="pfm-input"
                 bordered={false}
               />
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Description */}
         <div className="pfm-field-row pfm-field-row--top">
           <MessageOutlined className="pfm-icon" />
-          <Form.Item name="descriptions" className="pfm-form-item">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Description</div>
-              {/* Description is NOT form-controlled — CKEditor manages its own state */}
+          <div className="pfm-input-group pfm-input-group--align-top">
+            <div className="pfm-field-label">Description</div>
+            <Form.Item
+              name="descriptions"
+              className="pfm-form-item"
+            >
               <div className="pfm-editor-wrapper">
-              <CKEditor
-                editor={Custombuild}
-                data={editorData}
-                onChange={handleChange}
-                onPaste={handlePaste}
-                config={{
-                  toolbar: [
-                    "bold", "italic", "underline", "|",
-                    "fontColor", "fontBackgroundColor", "|", "link", "|",
-                    "numberedList", "bulletedList", "|",
-                    "alignment:left", "alignment:center", "alignment:right", "|",
-                    "fontSize", "|", "print",
-                  ],
-                  fontSize: { options: ["default", ...Array.from({ length: 32 }, (_, i) => i + 1)] },
-                  print: {},
-                }}
-              />
+                <CKEditor
+                  editor={Custombuild}
+                  data={editorData}
+                  onChange={handleChange}
+                  onPaste={handlePaste}
+                  config={{
+                    toolbar: [
+                      "bold", "italic", "underline", "|",
+                      "fontColor", "fontBackgroundColor", "|", "link", "|",
+                      "numberedList", "bulletedList", "|",
+                      "alignment:left", "alignment:center", "alignment:right", "|",
+                      "fontSize", "|", "print",
+                    ],
+                    fontSize: { options: ["default", ...Array.from({ length: 32 }, (_, i) => i + 1)] },
+                    print: {},
+                  }}
+                />
               </div>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
-          <div className="pfm-divider" />
+        <div className="pfm-divider" />
 
         {/* Dates */}
         <div className="pfm-dates-row">
           <div className="pfm-date-col">
             <CalendarOutlined className="pfm-icon" />
-            <Form.Item
-              name="start_date"
-              className="pfm-form-item"
-              rules={[{ required: true, message: "Please select a start date" }]}
-            >
-              <div className="pfm-input-group">
-                <div className="pfm-field-label">Start Date</div>
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">Start Date</div>
+              <Form.Item
+                name="start_date"
+                className="pfm-form-item"
+                rules={[{ required: true, message: "Please select a start date" }]}
+              >
                 <DatePicker
                   placeholder="Select start date"
                   className="pfm-datepicker"
@@ -1275,32 +1283,32 @@ const ProjectFormModal = ({
                   format="DD/MM/YYYY"
                   onChange={() => form.setFieldValue("end_date", "")}
                 />
-              </div>
-            </Form.Item>
+              </Form.Item>
+            </div>
           </div>
           <div className="pfm-date-divider" />
           <div className="pfm-date-col">
             <CalendarOutlined className="pfm-icon" />
-            <Form.Item
-              name="end_date"
-              className="pfm-form-item"
-              rules={
-                noEndDate
-                  ? []
-                  : [
-                      { required: true, message: "Please select an end date" },
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          if (!value || getFieldValue("start_date") < value)
-                            return Promise.resolve();
-                          return Promise.reject(new Error("End date must be later than start date"));
-                        },
-                      }),
-                    ]
-              }
-            >
-              <div className="pfm-input-group">
-                <div className="pfm-field-label">End Date</div>
+            <div className="pfm-input-group">
+              <div className="pfm-field-label">End Date</div>
+              <Form.Item
+                name="end_date"
+                className="pfm-form-item"
+                rules={
+                  noEndDate
+                    ? []
+                    : [
+                        { required: true, message: "Please select an end date" },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            if (!value || getFieldValue("start_date") < value)
+                              return Promise.resolve();
+                            return Promise.reject(new Error("End date must be later than start date"));
+                          },
+                        }),
+                      ]
+                }
+              >
                 <DatePicker
                   placeholder="Select end date"
                   className="pfm-datepicker"
@@ -1309,8 +1317,8 @@ const ProjectFormModal = ({
                   disabled={noEndDate}
                   disabledDate={(v) => v < form.getFieldValue("start_date")}
                 />
-              </div>
-            </Form.Item>
+              </Form.Item>
+            </div>
           </div>
         </div>
         <div className="pfm-no-end-date-row">
@@ -1332,18 +1340,18 @@ const ProjectFormModal = ({
         {/* Department (Technology) */}
         <div className="pfm-field-row">
           <AppstoreOutlined className="pfm-icon" />
-          <Form.Item
-            name="technology"
-            className="pfm-form-item"
-            rules={[{ required: true, message: "Please select a department" }]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label-row">
-                <div className="pfm-field-label">Department</div>
-                <button type="button" className="pfm-add-new-btn" onClick={openAddDepartmentModal}>
-                  <PlusOutlined /> Add New
-                </button>
-              </div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label-row">
+              <div className="pfm-field-label">Department</div>
+              <button type="button" className="pfm-add-new-btn" onClick={openAddDepartmentModal}>
+                <PlusOutlined /> Add New
+              </button>
+            </div>
+            <Form.Item
+              name="technology"
+              className="pfm-form-item"
+              rules={[{ required: true, message: "Please select a department" }]}
+            >
               <Select
                 mode="multiple"
                 placeholder="Select department"
@@ -1354,7 +1362,6 @@ const ProjectFormModal = ({
                   option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
                 }
                 onChange={handleProjectTech}
-                value={projectTech}
               >
                 {technologyList.map((item) => (
                   <Select.Option key={item._id} value={item._id}>
@@ -1362,21 +1369,21 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Project Type */}
         <div className="pfm-field-row">
           <TagOutlined className="pfm-icon" />
-          <Form.Item
-            name="project_type"
-            className="pfm-form-item"
-            rules={[{ required: true, message: "Please select a project type" }]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Project Type</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Project Type</div>
+            <Form.Item
+              name="project_type"
+              className="pfm-form-item"
+              rules={[{ required: true, message: "Please select a project type" }]}
+            >
               <Select
                 placeholder="Select project type"
                 bordered={false}
@@ -1393,22 +1400,22 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Client */}
         <div className="pfm-field-row">
           <UserOutlined className="pfm-icon" />
-          <Form.Item name="client" className="pfm-form-item">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label-row">
-                <div className="pfm-field-label">Client Name</div>
-                <button type="button" className="pfm-add-new-btn" onClick={openAddClientModal}>
-                  <PlusOutlined /> Add New
-                </button>
-              </div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label-row">
+              <div className="pfm-field-label">Client Name</div>
+              <button type="button" className="pfm-add-new-btn" onClick={openAddClientModal}>
+                <PlusOutlined /> Add New
+              </button>
+            </div>
+            <Form.Item name="client" className="pfm-form-item">
               <div className="pfm-multiselect-wrapper">
                 <MultiSelect
                   onSearch={handleSearch}
@@ -1419,26 +1426,26 @@ const ProjectFormModal = ({
                   placeholder="Select client"
                 />
               </div>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Assignees */}
         <div className="pfm-field-row">
           <UsergroupAddOutlined className="pfm-icon" />
-          <Form.Item name="assignees" className="pfm-form-item">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label-row">
-                <div className="pfm-field-label">Assignee / Team Group</div>
-                <button
-                  type="button"
-                  className="pfm-add-new-btn"
-                  onClick={() => openAddEmployeeModal("assignee")}
-                >
-                  <PlusOutlined /> Add New
-                </button>
-              </div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label-row">
+              <div className="pfm-field-label">Assignee / Team Group</div>
+              <button
+                type="button"
+                className="pfm-add-new-btn"
+                onClick={() => openAddEmployeeModal("assignee")}
+              >
+                <PlusOutlined /> Add New
+              </button>
+            </div>
+            <Form.Item name="assignees" className="pfm-form-item">
               <div className="pfm-multiselect-wrapper">
                 <MultiSelect
                   onSearch={handleSearch}
@@ -1449,30 +1456,30 @@ const ProjectFormModal = ({
                   placeholder="Select assignees"
                 />
               </div>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Project Manager */}
         <div className="pfm-field-row">
           <UserOutlined className="pfm-icon" />
-          <Form.Item
-            name="manager"
-            className="pfm-form-item"
-            rules={[{ required: true, message: "Please select a project manager" }]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label-row">
-                <div className="pfm-field-label">Project Manager</div>
-                <button
-                  type="button"
-                  className="pfm-add-new-btn"
-                  onClick={() => openAddEmployeeModal("project_manager")}
-                >
-                  <PlusOutlined /> Add New
-                </button>
-              </div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label-row">
+              <div className="pfm-field-label">Project Manager</div>
+              <button
+                type="button"
+                className="pfm-add-new-btn"
+                onClick={() => openAddEmployeeModal("project_manager")}
+              >
+                <PlusOutlined /> Add New
+              </button>
+            </div>
+            <Form.Item
+              name="manager"
+              className="pfm-form-item"
+              rules={[{ required: true, message: "Please select a project manager" }]}
+            >
               <Select
                 placeholder="Select project manager"
                 bordered={false}
@@ -1488,34 +1495,34 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Account Manager */}
         <div className="pfm-field-row">
           <UserOutlined className="pfm-icon" />
-          <Form.Item
-            name="acc_manager"
-            className="pfm-form-item"
-            rules={
-              projectTypeselect === "65b9e9e70f085dbd9bb12797"
-                ? []
-                : [{ required: true, message: "This field is required!" }]
-            }
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label-row">
-                <div className="pfm-field-label">Account Manager</div>
-                <button
-                  type="button"
-                  className="pfm-add-new-btn"
-                  onClick={() => openAddEmployeeModal("account_manager")}
-                >
-                  <PlusOutlined /> Add New
-                </button>
-              </div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label-row">
+              <div className="pfm-field-label">Account Manager</div>
+              <button
+                type="button"
+                className="pfm-add-new-btn"
+                onClick={() => openAddEmployeeModal("account_manager")}
+              >
+                <PlusOutlined /> Add New
+              </button>
+            </div>
+            <Form.Item
+              name="acc_manager"
+              className="pfm-form-item"
+              rules={
+                projectTypeselect === "65b9e9e70f085dbd9bb12797"
+                  ? []
+                  : [{ required: true, message: "This field is required!" }]
+              }
+            >
               <Select
                 placeholder="Select account manager"
                 bordered={false}
@@ -1531,22 +1538,22 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Workflow */}
         <div className="pfm-field-row">
           <ApartmentOutlined className="pfm-icon" />
-          <Form.Item
-            name="workFlow"
-            className="pfm-form-item"
-            initialValue={workflow.find((w) => w.isDefault)?._id}
-            rules={[{ required: true, message: "Please select a workflow" }]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Associate Workflow</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Associate Workflow</div>
+            <Form.Item
+              name="workFlow"
+              className="pfm-form-item"
+              initialValue={workflow.find((w) => w.isDefault)?._id}
+              rules={[{ required: true, message: "Please select a workflow" }]}
+            >
               <Select
                 placeholder="Select workflow"
                 bordered={false}
@@ -1560,17 +1567,17 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Status */}
         <div className="pfm-field-row">
           <CheckCircleOutlined className="pfm-icon" />
-          <Form.Item name="project_status" className="pfm-form-item">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Status</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Status</div>
+            <Form.Item name="project_status" className="pfm-form-item">
               <Select
                 placeholder="Select status"
                 bordered={false}
@@ -1583,21 +1590,21 @@ const ProjectFormModal = ({
                   </Select.Option>
                 ))}
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Estimated Hours */}
         <div className="pfm-field-row">
           <ClockCircleOutlined className="pfm-icon" />
-          <Form.Item
-            name="estimatedHours"
-            className="pfm-form-item"
-            rules={[{ required: true, message: "Please provide estimated hours" }]}
-          >
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Estimated Hours</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Estimated Hours</div>
+            <Form.Item
+              name="estimatedHours"
+              className="pfm-form-item"
+              rules={[{ required: true, message: "Please provide estimated hours" }]}
+            >
               <Input
                 placeholder="Enter estimated hours"
                 className="pfm-input"
@@ -1606,17 +1613,17 @@ const ProjectFormModal = ({
                 type="number"
                 min={0}
               />
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Recurring */}
         <div className="pfm-field-row">
           <SyncOutlined className="pfm-icon" />
-          <Form.Item name="recurringType" className="pfm-form-item">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Recurring</div>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Recurring</div>
+            <Form.Item name="recurringType" className="pfm-form-item">
               <Select
                 placeholder="Select recurring type"
                 bordered={false}
@@ -1626,22 +1633,22 @@ const ProjectFormModal = ({
                 <Select.Option value="monthly">Monthly</Select.Option>
                 <Select.Option value="yearly">Yearly</Select.Option>
               </Select>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
         <div className="pfm-divider" />
 
         {/* Billable */}
         <div className="pfm-field-row pfm-field-row--checkbox">
           <DollarOutlined className="pfm-icon" />
-          <Form.Item name="isBillable" className="pfm-form-item" valuePropName="checked">
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">Billable Project</div>
-              <Checkbox checked={isBillable} onChange={handleBillable}>
+          <div className="pfm-input-group">
+            <div className="pfm-field-label">Billable Project</div>
+            <Form.Item name="isBillable" className="pfm-form-item" valuePropName="checked">
+              <Checkbox onChange={handleBillable}>
                 Yes
               </Checkbox>
-            </div>
-          </Form.Item>
+            </Form.Item>
+          </div>
         </div>
 
           </div>{/* end pfm-fields-grid */}

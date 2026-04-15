@@ -268,7 +268,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
         </div>
 
         <div className="ap-card-top-right" onClick={(e) => e.stopPropagation()}>
-          <span className="ap-last-updated">Last updated {lastUpdated}</span>
+          {/* <span className="ap-last-updated">Last updated {lastUpdated}</span> */}
           {menuItems.length > 0 && (
             <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
               <Button type="text" size="small" icon={<MoreOutlined />} className="ap-card-menu-btn" />
@@ -2055,7 +2055,7 @@ const AssignProject = () => {
                               {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD/MM/YYYY") : "N/A"}
                             </div>
                             <div className="ap-browser-updated">
-                              Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"}
+                              {/* Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"} */}
                             </div>
                           </div>
                         </div>
