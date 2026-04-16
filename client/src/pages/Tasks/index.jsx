@@ -109,6 +109,7 @@ const TasksPMS = ({ flag }) => {
 
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
+  const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [projectMianTask, setProjectMianTask] = useState([]);
   const [boardTasks, setBoardTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
@@ -1288,10 +1289,11 @@ const TasksPMS = ({ flag }) => {
     listForm.resetFields();
   };
 
-  const showModalTaskModal = () => {
+  const showModalTaskModal = (statusId = null) => {
     if (projectMianTask.length === 0) {
       return message.error("Please add Tasklist first");
     }
+    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
     setIsModalOpenTaskModal(true);
   };
 
@@ -3625,7 +3627,11 @@ const TasksPMS = ({ flag }) => {
 
       <AddTaskModal
         open={isModalOpenTaskModal}
-        onCancel={handleCancelTaskModal}
+        initialStatusId={modalInitialStatusId}
+        onCancel={() => {
+          setModalInitialStatusId(null);
+          handleCancelTaskModal();
+        }}
         onSuccess={async (newTask) => {
           if (newTask) {
             await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, newTask);
