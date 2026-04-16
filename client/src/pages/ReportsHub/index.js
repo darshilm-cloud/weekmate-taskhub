@@ -63,7 +63,7 @@ const pageMeta = {
   "status-report": { title: "Status Report", emptyTitle: "No Report Found" },
   "activity-report": { title: "Activity Report", emptyTitle: "No Report Found" },
   "user-performance-report": { title: "User Performance Report", emptyTitle: "No Report Found" },
-  "project-report": { title: "Project Report" },
+  "project-report": { title: "Project Wise Report", emptyTitle: "No Report Found" },
   "daily-report": { title: "Daily Report" },
   "project-running": { title: "Project Running Report", emptyTitle: "No Report Found" },
   "timesheet": { title: "Timesheet Report", emptyTitle: "No Report Found" },
@@ -74,6 +74,15 @@ const statusOptions = [
   { value: "completed", label: "Completed" },
   { value: "pending", label: "Pending" },
   { value: "overdue", label: "Overdue" },
+];
+
+const projectStatusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "Active", label: "Active" },
+  { value: "Completed", label: "Completed" },
+  { value: "On Hold", label: "On Hold" },
+  { value: "Archived", label: "Archived" },
+  { value: "Closed", label: "Closed" },
 ];
 
 const activityOptions = [
@@ -95,7 +104,8 @@ const defaultFilters = {
   projectIds: [],
   userId: "all",
   status: "all",
-  date: null,
+  startDate: null,
+  endDate: null,
   activity: "",
   search: "",
 };
@@ -113,7 +123,8 @@ function ReportsHub() {
   const [pageNo, setPageNo] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [focusedProjectIds, setFocusedProjectIds] = useState([]);
+  const [metricsLoading, setMetricsLoading] = useState(false);
   const [reportData, setReportData] = useState({
     project: {
       summary: {
@@ -152,6 +163,9 @@ function ReportsHub() {
   });
   const previousFiltersRef = useRef(defaultFilters);
   const fetchingRef = useRef(false);
+  // Cache for the computed project progress map — avoids re-fetching 5000 tasks on search
+  // Stores: { projectProgressMap, totalTasks, completedTasks, absoluteTotal }
+  const taskProgressCacheRef = useRef(null);
 
   const currentPage = pageMeta[reportKey];
 
@@ -199,7 +213,7 @@ function ReportsHub() {
         if (signal?.aborted) break;
 
         const chunk = pages.slice(i, i + CHUNK_SIZE);
-        const results = await Promise.allSettled(chunk.map(page => 
+        const results = await Promise.allSettled(chunk.map(page =>
           Service.makeAPICall({
             methodName: Service.getMethod,
             api_url: Service.getProjectList,
@@ -319,11 +333,14 @@ function ReportsHub() {
       if (!silent) {
         setLoading(true);
       }
-      if (signal?.aborted) return;
-      
+
       const selectedDate = filters.date ? moment(filters.date) : null;
-      const startDate = selectedDate ? selectedDate.clone().startOf("day") : moment().startOf("month");
-      const endDate = selectedDate ? selectedDate.clone().endOf("day") : moment().endOf("day");
+      const dailyStartDate = filters.date ? moment(filters.date).startOf("day") : null;
+      const dailyEndDate = filters.date ? moment(filters.date).endOf("day") : null;
+      if (signal?.aborted) return;
+
+      const startDate = filters.startDate ? moment(filters.startDate).startOf("day") : moment().startOf("month");
+      const endDate = filters.endDate ? moment(filters.endDate).endOf("day") : moment().endOf("day");
       const selectedProjectIds = Array.isArray(filters.projectIds)
         ? filters.projectIds.filter(Boolean)
         : [];
@@ -333,15 +350,125 @@ function ReportsHub() {
       const commonTaskPayload = buildTaskPayload({
         viewAll: true,
         status: "all",
-        startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
-        endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+        startDate: filters.date ? dailyStartDate.format("YYYY-MM-DD") : (filters.startDate || null),
+        endDate: filters.date ? dailyEndDate.format("YYYY-MM-DD") : (filters.endDate || null),
         projectIds: selectedProjectIds,
       });
 
       if (reportKey === "project-report") {
         const isPageChangeOnly = previousFiltersRef.current === filters;
-        
-        const [projectsResponse, projectListResponse, absoluteProjectsResponse] = await Promise.all([
+
+        // Detect if ONLY the search text changed (not dates/projects/page)
+        const previousFilters = previousFiltersRef.current || defaultFilters;
+        const isSearchOnlyChange =
+          previousFilters.search !== filters.search &&
+          previousFilters.startDate === filters.startDate &&
+          previousFilters.endDate === filters.endDate &&
+          JSON.stringify(previousFilters.projectIds) === JSON.stringify(filters.projectIds);
+
+        // ─── FAST PATH: search-only with warm cache ───────────────────────
+        // Skip ALL task API calls; just filter the project list and reuse cached progress
+        if (isSearchOnlyChange && taskProgressCacheRef.current) {
+          console.log('⚡ Search-only fast path — reusing cached progress map');
+
+          const [projectsResponse, projectListResponse] = await Promise.all([
+            Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.getProjectRunningReportsDetails,
+              body: {
+                technologies: [],
+                types: [],
+                managers: [],
+                search: filters.search?.trim() || "",
+                pageNo: pageNo,
+                limit: pageSize,
+                sort: "title",
+                sortBy: "asc",
+                isExport: false,
+              },
+            }),
+            Service.makeAPICall({
+              methodName: Service.getMethod,
+              api_url: Service.getProjectList,
+              params: `page=${pageNo}&limit=${pageSize}&includeClosed=true${filters.search ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
+            }),
+          ]);
+
+          const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
+          const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
+          const projectRows = mergeProjectRows(reportProjects, masterProjects);
+
+          const { projectProgressMap } = taskProgressCacheRef.current;
+
+          // Aggregate task counts for ONLY the filtered/searched projects
+          let filteredTotalTasks = 0;
+          let filteredCompletedTasks = 0;
+
+          const rows = projectRows.map((project) => {
+            const projectId = getProjectRecordId(project);
+            const projectMetrics = projectProgressMap[projectId] || { total: 0, completed: 0 };
+            filteredTotalTasks += projectMetrics.total;
+            filteredCompletedTasks += projectMetrics.completed;
+            const projectProgress = projectMetrics.total > 0 ? Math.round((projectMetrics.completed / projectMetrics.total) * 100) : 0;
+            return {
+              key: projectId,
+              taskName: getProjectRecordTitle(project),
+              progress: projectProgress,
+              startDate: formatDate(getProjectRecordStartDate(project)),
+              endDate: formatDate(getProjectRecordEndDate(project)),
+              status: getProjectRecordStatus(project),
+            };
+          });
+
+          const getMetaTotalFast = (resp) => {
+            if (!resp || !resp.data) return 0;
+            if (resp.data.metadata?.total != null) return Number(resp.data.metadata.total);
+            if (resp.data.data?.pagination?.totalCount) return Number(resp.data.data.pagination.totalCount);
+            if (resp.data.meta?.total) return Number(resp.data.meta.total);
+            if (resp.data.totalCount) return Number(resp.data.totalCount);
+            if (resp.data.total) return Number(resp.data.total);
+            return 0;
+          };
+          const filteredTotal = getMetaTotalFast(projectsResponse) || projectRows.length;
+
+          // Determine if we are actively filtering or if search was just cleared
+          const isActiveSearch = Boolean(filters.search?.trim());
+          const isActiveFilter = Array.isArray(filters.projectIds) && filters.projectIds.length > 0;
+          const hasActiveFiltering = isActiveSearch || isActiveFilter;
+
+          let displayTotalProjects, displayTotalTasks, displayCompletedTasks;
+
+          if (hasActiveFiltering) {
+            // Active search/filter → use row-level aggregated counts
+            displayTotalProjects = projectRows.length;
+            displayTotalTasks = filteredTotalTasks;
+            displayCompletedTasks = filteredCompletedTasks;
+          } else {
+            // Search cleared, no filters → restore global cached totals
+            displayTotalProjects = taskProgressCacheRef.current.absoluteTotal || filteredTotal;
+            displayTotalTasks = taskProgressCacheRef.current.totalTasks || filteredTotalTasks;
+            displayCompletedTasks = taskProgressCacheRef.current.completedTasks || filteredCompletedTasks;
+          }
+
+          setTotal(hasActiveFiltering ? filteredTotal : (taskProgressCacheRef.current.absoluteTotal || filteredTotal));
+          setReportData((prev) => ({
+            ...prev,
+            project: {
+              summary: {
+                totalProjects: displayTotalProjects,
+                totalTasks: displayTotalTasks,
+                completedTasks: displayCompletedTasks,
+                incompleteTasks: Math.max(displayTotalTasks - displayCompletedTasks, 0),
+              },
+              rows,
+            },
+          }));
+          return;
+        }
+        // ─── END FAST PATH ────────────────────────────────────────────────
+
+        // Full fetch: dates changed, first load, or no cache yet
+        const [projectsResponse, projectListResponse] = await Promise.all([
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.getProjectRunningReportsDetails,
@@ -362,101 +489,258 @@ function ReportsHub() {
             api_url: Service.getProjectList,
             params: `page=${pageNo}&limit=${pageSize}&includeClosed=true${filters.search ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
           }),
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectRunningReportsDetails,
-            body: {
-              technologies: [],
-              types: [],
-              managers: [],
-              search: "", // Fixed total ignores search
-              pageNo: 1,
-              limit: 1,
-              isExport: false,
-            },
-          }),
         ]);
+
+        let absoluteProjectsResponse = null;
+        absoluteProjectsResponse = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectRunningReportsDetails,
+          body: {
+            technologies: [],
+            types: [],
+            managers: [],
+            search: "",
+            pageNo: 1,
+            limit: 10000,
+            isExport: false,
+          },
+        });
 
         const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
         const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
         const projectRows = mergeProjectRows(reportProjects, masterProjects);
-        
-        // Robust parsing for total project counts
+
+        // Robust parsing for total counts from various API response shapes
+        // Comprehensive parsing for total counts from all possible backend response shapes
         const getMetaTotal = (resp) => {
-          return resp?.data?.meta?.total ?? 
-                 resp?.data?.meta?.totalCount ?? 
-                 resp?.data?.data?.pagination?.totalCount ?? 
-                 resp?.data?.data?.totalCount ??
-                 resp?.data?.total ?? 
-                 0;
+          if (!resp || !resp.data) return 0;
+
+          // Most common: resp.data.metadata.total (Success Response)
+          if (resp.data.metadata && typeof resp.data.metadata.total !== 'undefined' && resp.data.metadata.total !== null) {
+            return Number(resp.data.metadata.total);
+          }
+          if (resp.data.metadata && typeof resp.data.metadata.totalCount !== 'undefined') {
+            return Number(resp.data.metadata.totalCount);
+          }
+
+          // Pattern 2: resp.data.data.pagination.totalCount
+          if (resp.data.data?.pagination?.totalCount) return Number(resp.data.data.pagination.totalCount);
+          if (resp.data.data?.pagination?.total) return Number(resp.data.data.pagination.total);
+
+          // Pattern 3: resp.data.meta.total
+          if (resp.data.meta?.total) return Number(resp.data.meta.total);
+          if (resp.data.meta?.totalCount) return Number(resp.data.meta.totalCount);
+
+          // Pattern 4: Direct total on data or root
+          if (resp.data.totalCount) return Number(resp.data.totalCount);
+          if (resp.data.total) return Number(resp.data.total);
+          if (resp.data.data?.totalCount) return Number(resp.data.data.totalCount);
+          if (resp.data.data?.total) return Number(resp.data.data.total);
+
+          return 0;
         };
 
         const totalProjectsCount = getMetaTotal(projectsResponse) || projectRows.length;
-        const absoluteTotalProjects = getMetaTotal(absoluteProjectsResponse) || totalProjectsCount;
 
-        // Fetch Metrics (Global or Project-specific)
-        const metricsProjectId = selectedProjectId || null;
-        
-        // If we have a selection, use it. 
-        // If we have a search active but no selection, use the projects from the current result.
-        // If neither, it's global.
-        const effectiveProjectIds = metricsProjectId 
-          ? [metricsProjectId] 
-          : (filters.search?.trim() ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []);
+        // Get absolute total including archived and closed projects
+        const masterProjectsTotal = getMetaTotal(projectListResponse);
+        const absoluteTotalProjects = masterProjectsTotal || getMetaTotal(absoluteProjectsResponse) || totalProjectsCount;
 
-        const metricsPayload = {
-          view_all: true,
-          pageNo: 1,
-          limit: 1,
-          project_id: effectiveProjectIds,
-          // Robust check: if search is active but returned 0 projects, force 0 tasks
-          ...(filters.search?.trim() && effectiveProjectIds.length === 0 && { project_id: ["000000000000000000000000"] }),
-          search: "", 
-          // Include extra fields often used by the backend as security/sanity checks
-          is_active: [],
-          is_priority: [],
-          employee_id: [],
-          task_type: "All"
-        };
+        console.log('📊 Project counts:', {
+          totalProjectsCount,
+          masterProjectsTotal,
+          absoluteTotalProjects,
+          projectListResponseMeta: projectListResponse?.data?.meta || projectListResponse?.data?.metadata
+        });
+
+        // Determine effective project IDs for metrics (only from top-level dropdown filter)
+        // focusedProjectIds (row click) is handled separately by updateProjectMetrics
+        const isSearchActive = Boolean(filters.search?.trim());
+        let effectiveProjectIds = (Array.isArray(filters.projectIds) && filters.projectIds.length > 0
+            ? filters.projectIds
+            : (isSearchActive ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []));
+
+        let tasksTotalResponse, tasksCompletedResponse;
+        let tasksTotalResponseAll, tasksCompletedResponseAll;
+
+        console.log('📋 Full fetch: fetching task counts from task-list API...');
 
 
-        const [tasksTotalResponse, tasksCompletedResponse] = await Promise.all([
+        // Fetch ALL tasks (unfiltered) for project list progress bars
+        [tasksTotalResponseAll, tasksCompletedResponseAll] = await Promise.all([
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
-            body: { ...metricsPayload, status: "all" },
+            body: {
+              view_all: true,
+              pageNo: 1,
+              limit: 5000,
+              status: "all",
+              start_date: filters.startDate || undefined,
+              end_date: filters.endDate || undefined
+            },
           }),
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
-            body: { ...metricsPayload, status: "completed" },
+            body: {
+              view_all: true,
+              pageNo: 1,
+              limit: 5000,
+              status: "completed",
+              start_date: filters.startDate || undefined,
+              end_date: filters.endDate || undefined
+            },
           }),
         ]);
 
-        const totalTasks = getMetaTotal(tasksTotalResponse);
-        const completedTasks = getMetaTotal(tasksCompletedResponse);
+        // If projects are selected, fetch filtered data for top metrics
+        if (effectiveProjectIds.length > 0) {
+          [tasksTotalResponse, tasksCompletedResponse] = await Promise.all([
+            Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.taskList,
+              body: {
+                view_all: true,
+                pageNo: 1,
+                limit: 5000,
+                status: "all",
+                project_id: effectiveProjectIds,
+                start_date: filters.startDate || undefined,
+                end_date: filters.endDate || undefined
+              },
+            }),
+            Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.taskList,
+              body: {
+                view_all: true,
+                pageNo: 1,
+                limit: 5000,
+                status: "completed",
+                project_id: effectiveProjectIds,
+                start_date: filters.startDate || undefined,
+                end_date: filters.endDate || undefined
+              },
+            }),
+          ]);
+        } else {
+          tasksTotalResponse = tasksTotalResponseAll;
+          tasksCompletedResponse = tasksCompletedResponseAll;
+        }
+
+        console.log('📋 Task total count response:', tasksTotalResponse?.data);
+        console.log('📋 Task completed count response:', tasksCompletedResponse?.data);
+
+        let totalTasks = 0;
+        let completedTasks = 0;
+
+        totalTasks = getMetaTotal(tasksTotalResponse);
+        completedTasks = getMetaTotal(tasksCompletedResponse);
+
+        console.log('📊 Extracted totals:', { totalTasks, completedTasks });
+
+        // Fallback: if metadata total is 0 but we actually got tasks in the data array
+        if (totalTasks === 0 && Array.isArray(tasksTotalResponse?.data?.data) && tasksTotalResponse.data.data.length > 0) {
+          console.log('⚠️  Fallback: Using array length as total');
+          totalTasks = tasksTotalResponse.data.data.length;
+          completedTasks = Array.isArray(tasksCompletedResponse?.data?.data) ? tasksCompletedResponse.data.data.length : 0;
+          console.log('⚠️  Fallback result:', { totalTasks, completedTasks });
+        }
+
+        // Calculate per-project progress using ALL tasks (unfiltered for project list)
+        const projectProgressMap = {};
+
+        // Count total tasks per project (from ALL tasks unfiltered)
+        if (Array.isArray(tasksTotalResponseAll?.data?.data)) {
+          tasksTotalResponseAll.data.data.forEach((task) => {
+            // Try multiple project ID fields
+            const projId = task.project_id?._id ||
+              task.project_id ||
+              task.projectId ||
+              task.project?._id ||
+              task.project ||
+              "unknown";
+
+            if (!projectProgressMap[projId]) {
+              projectProgressMap[projId] = { total: 0, completed: 0 };
+            }
+            projectProgressMap[projId].total += 1;
+          });
+        }
+
+        // Count completed tasks per project (from ALL tasks unfiltered)
+        if (Array.isArray(tasksCompletedResponseAll?.data?.data)) {
+          tasksCompletedResponseAll.data.data.forEach((task) => {
+            const projId = task.project_id?._id ||
+              task.project_id ||
+              task.projectId ||
+              task.project?._id ||
+              task.project ||
+              "unknown";
+
+            if (projectProgressMap[projId]) {
+              projectProgressMap[projId].completed += 1;
+            }
+          });
+        }
+
+        // Store computed map in cache for future search-only fast-path
+        taskProgressCacheRef.current = {
+          projectProgressMap,
+          totalTasks,
+          completedTasks,
+          absoluteTotal: absoluteTotalProjects,
+        };
 
         const rows = projectRows.map((project) => {
           const projectId = getProjectRecordId(project);
+          const projectMetrics = projectProgressMap[projectId] || { total: 0, completed: 0 };
+          const projectProgress = projectMetrics.total > 0 ? Math.round((projectMetrics.completed / projectMetrics.total) * 100) : 0;
+
+          console.log(`📈 Project ${projectId}: ${projectMetrics.completed}/${projectMetrics.total} = ${projectProgress}%`);
+
           return {
             key: projectId,
             taskName: getProjectRecordTitle(project),
-            progress: 0, // removed row-specific progress from table as it's slow to fetch per-row
+            progress: projectProgress,
             startDate: formatDate(getProjectRecordStartDate(project)),
             endDate: formatDate(getProjectRecordEndDate(project)),
             status: getProjectRecordStatus(project),
           };
         });
 
-        setTotal(totalProjectsCount);
+        // Aggregated metrics for display
+        // totalTasks/completedTasks are already filtered by effectiveProjectIds from the API
+        let displayTotalProjects = absoluteTotalProjects;
+        let displayTotalTasks = totalTasks;
+        let displayCompletedTasks = completedTasks;
+
+        // If filtering is active (project filter, search, or date), update "Total Projects"
+        // to reflect the actual filtered count, not the global total.
+        const isFilteringActive = Boolean(
+          filters.startDate || filters.endDate || filters.search ||
+          (Array.isArray(filters.projectIds) && filters.projectIds.length > 0)
+        );
+        if (isFilteringActive) {
+          if (Array.isArray(filters.projectIds) && filters.projectIds.length > 0) {
+            // Project dropdown filter → exact count of selected projects
+            displayTotalProjects = filters.projectIds.length;
+          } else {
+            // Search/date filter → count of merged visible rows
+            displayTotalProjects = projectRows.length;
+          }
+        }
+
+        setTotal(absoluteTotalProjects);
         setReportData((prev) => ({
           ...prev,
           project: {
             summary: {
-              totalProjects: absoluteTotalProjects,
-              totalTasks,
-              completedTasks,
-              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+              totalProjects: displayTotalProjects,
+              totalTasks: displayTotalTasks,
+              completedTasks: displayCompletedTasks,
+              incompleteTasks: Math.max(displayTotalTasks - displayCompletedTasks, 0),
             },
             rows,
           },
@@ -472,8 +756,8 @@ function ReportsHub() {
             page: pageNo,
             limit: pageSize,
             operationName: filters.activity || "",
-            fromDate: filters.date ? startDate.toISOString() : undefined,
-            toDate: filters.date ? endDate.toISOString() : undefined,
+            fromDate: filters.date ? dailyStartDate.toISOString() : (filters.startDate ? moment(filters.startDate).toISOString() : undefined),
+            toDate: filters.date ? dailyEndDate.toISOString() : (filters.endDate ? moment(filters.endDate).toISOString() : undefined),
             sortBy: "createdAt",
             sortOrder: "desc",
           },
@@ -482,9 +766,9 @@ function ReportsHub() {
         const logs = Array.isArray(response?.data?.data?.activityLogs)
           ? response.data.data.activityLogs
           : Array.isArray(response?.data?.data)
-          ? response.data.data
-          : [];
-        
+            ? response.data.data
+            : [];
+
         const paginationInfo = response?.data?.data?.pagination || response?.data?.meta || {};
         setTotal(paginationInfo.totalCount || paginationInfo.total || logs.length);
 
@@ -537,9 +821,9 @@ function ReportsHub() {
         const entries = Array.isArray(rawTimesheetData?.data)
           ? rawTimesheetData.data
           : Array.isArray(rawTimesheetData)
-          ? rawTimesheetData
-          : [];
-        
+            ? rawTimesheetData
+            : [];
+
         const meta = response?.data?.meta || {};
         setTotal(meta.total || entries.length);
         const aggregatedUsers = Array.isArray(rawTimesheetData?.user) ? rawTimesheetData.user : [];
@@ -682,8 +966,8 @@ function ReportsHub() {
             body: buildTaskPayload({
               viewAll: true,
               status: "all",
-              startDate: filters.date ? startDate.format("YYYY-MM-DD") : null,
-              endDate: filters.date ? endDate.format("YYYY-MM-DD") : null,
+              startDate: filters.date ? dailyStartDate.format("YYYY-MM-DD") : (filters.startDate || null),
+              endDate: filters.date ? dailyEndDate.format("YYYY-MM-DD") : (filters.endDate || null),
             }),
           }),
         ]);
@@ -788,8 +1072,8 @@ function ReportsHub() {
             data: Array.isArray(response.data.data.data)
               ? response.data.data.data
               : Array.isArray(response.data.data)
-              ? response.data.data
-              : [],
+                ? response.data.data
+                : [],
             summary: response.data.data.summary || {},
             metadata: response.data.metadata || {},
             totalHours: response.data.data.totalHours || "0",
@@ -809,7 +1093,7 @@ function ReportsHub() {
         setLoading(false);
       }
     }
-  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab, selectedProjectId]);
+  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
 
   useEffect(() => {
     // Only fetch dropdown options if we are in a specific report page
@@ -820,15 +1104,121 @@ function ReportsHub() {
     }
   }, [loadDropdowns, reportKey]);
 
+  // ─── Lightweight metric update on project row click ─────────────────────
+  // When a project row is clicked, only update the summary cards.
+  // Does NOT reload the full page — only fetches task counts for the selected project.
+  const updateProjectMetrics = useCallback(async (projectIds) => {
+    if (!reportKey || reportKey !== "project-report") return;
+
+    // No project selected — restore full totals from cache
+    if (!projectIds || projectIds.length === 0) {
+      if (taskProgressCacheRef.current) {
+        const { projectProgressMap, totalTasks, completedTasks } = taskProgressCacheRef.current;
+        setReportData((prev) => ({
+          ...prev,
+          project: {
+            ...prev.project,
+            summary: {
+              ...prev.project.summary,
+              totalTasks,
+              completedTasks,
+              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+            },
+          },
+        }));
+      }
+      return;
+    }
+
+    try {
+      setMetricsLoading(true);
+      // Fetch task counts for only the selected project with limit:1 (use metadata total)
+      const [totalResp, completedResp] = await Promise.all([
+        Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: {
+            view_all: true,
+            pageNo: 1,
+            limit: 1,
+            status: "all",
+            project_id: projectIds,
+            start_date: filters.startDate || undefined,
+            end_date: filters.endDate || undefined,
+          },
+        }),
+        Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: {
+            view_all: true,
+            pageNo: 1,
+            limit: 1,
+            status: "completed",
+            project_id: projectIds,
+            start_date: filters.startDate || undefined,
+            end_date: filters.endDate || undefined,
+          },
+        }),
+      ]);
+
+      const getTotal = (resp) => {
+        if (!resp?.data) return 0;
+        if (resp.data.metadata?.total != null) return Number(resp.data.metadata.total);
+        if (resp.data.metadata?.totalCount != null) return Number(resp.data.metadata.totalCount);
+        if (resp.data.data?.pagination?.totalCount) return Number(resp.data.data.pagination.totalCount);
+        if (resp.data.meta?.total) return Number(resp.data.meta.total);
+        if (resp.data.totalCount) return Number(resp.data.totalCount);
+        if (resp.data.total) return Number(resp.data.total);
+        return 0;
+      };
+
+      const newTotal = getTotal(totalResp);
+      const newCompleted = getTotal(completedResp);
+
+      setReportData((prev) => ({
+        ...prev,
+        project: {
+          ...prev.project,
+          summary: {
+            ...prev.project.summary,
+            totalTasks: newTotal,
+            completedTasks: newCompleted,
+            incompleteTasks: Math.max(newTotal - newCompleted, 0),
+          },
+        },
+      }));
+    } catch (err) {
+      console.error("updateProjectMetrics failed:", err);
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, [reportKey, filters.startDate, filters.endDate]);
+
+  // Trigger metric update on project row click (does NOT reload full page)
+  useEffect(() => {
+    updateProjectMetrics(focusedProjectIds);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusedProjectIds]);
+  // ─────────────────────────────────────────────────────────────────────────
+
+
   useEffect(() => {
     if (reportKey) {
       setFilters(defaultFilters);
+      setFocusedProjectIds([]);
       setDailyTab("pending");
       setPageNo(1);
       previousFiltersRef.current = defaultFilters;
+      taskProgressCacheRef.current = null; // Invalidate cache on report switch
       setLoading(true); // Ensure loading is true when switching reports
     }
   }, [reportKey]);
+
+  useEffect(() => {
+    // Reset focus when filters change (from the top dropdown)
+    setFocusedProjectIds([]);
+  }, [filters]);
 
   useEffect(() => {
     if (reportKey) {
@@ -836,7 +1226,7 @@ function ReportsHub() {
       const previousFilters = previousFiltersRef.current || defaultFilters;
       const previousWithoutSearch = { ...previousFilters, search: "" };
       const currentWithoutSearch = { ...filters, search: "" };
-      
+
       const filtersChanged = JSON.stringify(previousFilters) !== JSON.stringify(filters);
       const isSearchOnly =
         previousFilters.search !== filters.search &&
@@ -844,24 +1234,25 @@ function ReportsHub() {
 
       // If filters changed significantly (not just search), reset to page 1
       if (filtersChanged && !isSearchOnly) {
-        setPageNo(1); 
+        setPageNo(1);
       }
 
       // Detect report switch to avoid silent load on initial switch
       const isReportSwitch = previousFiltersRef.current === defaultFilters && filters === defaultFilters;
-      
+
       // If pageNo or pageSize changed but NOT filters, load silently
       const isPageChange = previousFiltersRef.current === filters;
-      
-      loadReportData({ 
-        silent: (isSearchOnly || isPageChange) && !isReportSwitch,
-        signal: controller.signal 
+
+      loadReportData({
+        // Search-only always uses silent mode (fast-path skips heavy APIs, no skeleton needed)
+        silent: isSearchOnly || (isPageChange && !isReportSwitch),
+        signal: controller.signal
       });
       previousFiltersRef.current = filters;
-      
+
       return () => controller.abort();
     }
-  }, [filters, reportKey, pageNo, pageSize, selectedProjectId, loadReportData]);
+  }, [filters, reportKey, pageNo, pageSize, loadReportData]);
 
   const handleDownload = (key) => {
     let items = [];
@@ -957,9 +1348,9 @@ function ReportsHub() {
 
     // Ensure headers are properly quoted and escaped
     const quotedHeaders = headers.map(header => `"${header}"`);
-    
+
     // Ensure row data is properly quoted and escaped
-    const quotedRows = rows.map(row => 
+    const quotedRows = rows.map(row =>
       row.map(cell => {
         // Convert to string and escape quotes, then wrap in quotes
         const cellStr = String(cell || '').replace(/"/g, '""');
@@ -982,7 +1373,7 @@ function ReportsHub() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     message.success("Download started successfully");
   };
 
@@ -1027,6 +1418,45 @@ function ReportsHub() {
     return null;
   }
 
+  const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
+  const projectOptions = Array.isArray(projects) ? projects : [];
+
+  const fieldsByReportConfig = {
+    "user-report": [
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
+    ],
+    "status-report": [
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
+    ],
+    "activity-report": [
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "activity", label: "Activity", placeholder: "All Activity", options: activityOptions, defaultValue: "" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
+    ],
+    "user-performance-report": [
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
+    ],
+    "project-running": [
+      { key: "search", placeholder: "Search projects...", type: "search" },
+    ],
+    "project-report": [
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "status", label: "Status", placeholder: "All Status", options: projectStatusOptions, defaultValue: "all" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] }
+    ],
+    "timesheet": [
+      { key: "search", placeholder: "Search timesheets...", type: "search" },
+    ],
+  };
+
   return (
     <div className="reports-detail-page">
       <div className="reports-detail-topbar">
@@ -1049,24 +1479,33 @@ function ReportsHub() {
       </div>
 
       <div className="reports-hub-main">
-        {(loading || optionsLoading) && reportKey !== "project-report" ? (
+        <CommonFilters
+          fields={fieldsByReportConfig[reportKey] || []}
+          filters={filters}
+          setFilters={setFilters}
+          setLoading={setLoading}
+        />
+        {(loading || optionsLoading) && reportKey !== "project-report" && reportKey !== "project-running" && reportKey !== "timesheet" ? (
           <ReportsDetailSkeleton />
         ) : (
           <>
             {reportKey === "project-report" ? (
               <ProjectReportContent
                 data={reportData.project}
-                filters={filters}
-                setFilters={setFilters}
                 loading={loading}
                 optionsLoading={optionsLoading}
-                selectedProjectId={selectedProjectId}
-                setSelectedProjectId={setSelectedProjectId}
                 pageNo={pageNo}
                 pageSize={pageSize}
                 total={total}
                 setPageNo={setPageNo}
                 setPageSize={setPageSize}
+                filters={filters}
+                setFilters={setFilters}
+                focusedProjectIds={focusedProjectIds}
+                setFocusedProjectIds={setFocusedProjectIds}
+                metricsLoading={metricsLoading}
+                taskProgressCache={taskProgressCacheRef.current}
+                projects={projects}
               />
             ) : reportKey === "daily-report" ? (
               <DailyReportContent
@@ -1105,37 +1544,6 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
   const projectOptions = Array.isArray(projects) ? projects : [];
 
-  const fieldsByReport = {
-    "user-report": [
-      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
-      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
-      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
-      { key: "date", placeholder: "Select Date", type: "date" },
-    ],
-    "status-report": [
-      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
-      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
-      { key: "status", label: "Status", placeholder: "All Status", options: statusOptions, defaultValue: "all" },
-      { key: "date", placeholder: "Select Date", type: "date" },
-    ],
-    "activity-report": [
-      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
-      { key: "activity", label: "Activity", placeholder: "All Activity", options: activityOptions, defaultValue: "" },
-      { key: "date", placeholder: "Select Date", type: "date" },
-    ],
-    "user-performance-report": [
-      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
-      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
-      { key: "date", placeholder: "Select Date", type: "date" },
-    ],
-    "project-running": [
-      { key: "search", placeholder: "Search projects...", type: "search" },
-    ],
-    "timesheet": [
-      { key: "search", placeholder: "Search timesheets...", type: "search" },
-    ],
-  };
-
   const rowsByReport = {
     "user-report": data.user,
     "status-report": data.status,
@@ -1149,7 +1557,6 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
 
   return (
     <>
-      <CommonFilters fields={fieldsByReport[reportKey] || []} filters={filters} setFilters={setFilters} />
       {reportKey === "user-report" && rowData.length > 0 ? (
         <UserReportResults
           rows={rowData}
@@ -1211,9 +1618,10 @@ function cloneFacetValue(value, mode = "single", defaultValue) {
   return value;
 }
 
-function CommonFilters({ fields, filters, setFilters }) {
-  const facetFields = fields.filter((field) => field.type !== "date" && field.type !== "search");
+function CommonFilters({ fields, filters, setFilters, setLoading }) {
+  const facetFields = fields.filter((field) => field.type !== "date" && field.type !== "dateRange" && field.type !== "search");
   const dateField = fields.find((field) => field.type === "date");
+  const rangeField = fields.find((field) => field.type === "dateRange");
   const searchField = fields.find((field) => field.type === "search");
   const [isFacetOpen, setIsFacetOpen] = useState(false);
   const [anchorFieldKey, setAnchorFieldKey] = useState(facetFields[0]?.key || "");
@@ -1225,6 +1633,24 @@ function CommonFilters({ fields, filters, setFilters }) {
   useEffect(() => {
     setReportSearchText(filters?.search || "");
   }, [filters?.search]);
+
+  // Debounced search effect — does NOT show full skeleton (silent update)
+  useEffect(() => {
+    const isSearching = reportSearchText !== (filters?.search || "");
+    // Do NOT call setLoading(true) here — search uses silent/fast-path update
+    // so the user sees results update without skeleton flash
+
+    const timer = setTimeout(() => {
+      if (isSearching) {
+        setFilters((prev) => ({
+          ...prev,
+          search: reportSearchText,
+        }));
+      }
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timer);
+  }, [reportSearchText, setFilters, filters?.search]);
 
   useEffect(() => {
     if (!facetFields.length) {
@@ -1254,9 +1680,9 @@ function CommonFilters({ fields, filters, setFilters }) {
           field.mode === "multiple"
             ? Array.isArray(fieldValue) && fieldValue.length > 0
             : fieldValue !== undefined &&
-              fieldValue !== null &&
-              fieldValue !== "" &&
-              fieldValue !== field.defaultValue;
+            fieldValue !== null &&
+            fieldValue !== "" &&
+            fieldValue !== field.defaultValue;
 
         return count + (isSelected ? 1 : 0);
       }, 0),
@@ -1415,6 +1841,18 @@ function CommonFilters({ fields, filters, setFilters }) {
         ) : null}
 
         <div className="reports-facet-options">
+          {activeField.key === "projectIds" && (
+            <button
+              type="button"
+              className={`reports-facet-option ${(!draftFilters[activeField.key] || draftFilters[activeField.key].length === 0) ? "active" : ""}`}
+              onClick={() => {
+                setDraftFilters(prev => ({ ...prev, [activeField.key]: [] }));
+              }}
+            >
+              <span className={`reports-facet-option-indicator multiple ${(!draftFilters[activeField.key] || draftFilters[activeField.key].length === 0) ? "active" : ""}`} />
+              <span className="reports-facet-option-label">All Projects</span>
+            </button>
+          )}
           {filteredOptions.length ? (
             filteredOptions.map((option) => {
               const draftValue = cloneFacetValue(
@@ -1459,7 +1897,7 @@ function CommonFilters({ fields, filters, setFilters }) {
   ) : null;
 
   return (
-    <div className="reports-filter-bar">
+    <div className="reports-filter-bar" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, width: "100%", marginBottom: 16 }}>
       {searchField ? (
         <Input.Search
           key={searchField.key}
@@ -1469,10 +1907,6 @@ function CommonFilters({ fields, filters, setFilters }) {
           onChange={(event) => {
             const nextValue = event.target.value || "";
             setReportSearchText(nextValue);
-            setFilters((prev) => ({
-              ...prev,
-              search: nextValue,
-            }));
           }}
           onSearch={(value) => {
             setFilters((prev) => ({
@@ -1481,6 +1915,7 @@ function CommonFilters({ fields, filters, setFilters }) {
             }));
           }}
           allowClear
+          style={{ height: 40 }}
         />
       ) : (
         <Input.Search
@@ -1490,10 +1925,6 @@ function CommonFilters({ fields, filters, setFilters }) {
           onChange={(event) => {
             const nextValue = event.target.value || "";
             setReportSearchText(nextValue);
-            setFilters((prev) => ({
-              ...prev,
-              search: nextValue,
-            }));
           }}
           onSearch={(value) => {
             setFilters((prev) => ({
@@ -1502,10 +1933,30 @@ function CommonFilters({ fields, filters, setFilters }) {
             }));
           }}
           allowClear
+          style={{ height: 40 }}
         />
       )}
+      {rangeField ? (
+        <DatePicker.RangePicker
+          size="small"
+          className="reports-filter-control"
+          value={filters.startDate && filters.endDate ? [dayjs(filters.startDate), dayjs(filters.endDate)] : null}
+          onChange={(values) => {
+            setFilters(prev => ({
+              ...prev,
+              startDate: values ? values[0].format("YYYY-MM-DD") : null,
+              endDate: values ? values[1].format("YYYY-MM-DD") : null,
+            }));
+          }}
+          placeholder={rangeField.placeholder || ["From", "To"]}
+          allowClear
+          format="MMM DD, YYYY"
+          style={{ minWidth: 260 }}
+        />
+      ) : null}
       {dateField ? (
         <DatePicker
+          size="small"
           key={dateField.key}
           placeholder={dateField.placeholder}
           className="reports-filter-control"
@@ -1552,29 +2003,89 @@ function CommonFilters({ fields, filters, setFilters }) {
   );
 }
 
-function ProjectReportContent({ 
-  data, 
-  filters, 
-  setFilters, 
-  loading, 
-  optionsLoading, 
-  selectedProjectId, 
-  setSelectedProjectId, 
-  pageNo, 
-  pageSize, 
-  total, 
-  setPageNo, 
-  setPageSize 
+function ProjectReportMetricCardSkeleton() {
+  return (
+    <div className="project-report-stat-card skeleton">
+      <div className="sk-block" style={{ width: 56, height: 56, borderRadius: "12px", flexShrink: 0 }} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+        <div className="sk-block" style={{ width: "60%", height: 11, borderRadius: 4 }} />
+        <div className="sk-block" style={{ width: "42%", height: 22, borderRadius: 4 }} />
+      </div>
+    </div>
+  );
+}
+
+function ProjectReportSkeleton() {
+  return (
+    <div className="project-report-skeleton">
+      {/* Top info bar shimmer */}
+      <div className="sk-block" style={{ width: 180, height: 16, borderRadius: 4, marginBottom: 20 }} />
+
+      {/* Stat cards skeleton */}
+      <div className="project-report-stats">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <ProjectReportMetricCardSkeleton key={i} />
+        ))}
+      </div>
+
+      {/* Table card skeleton */}
+      <div className="project-report-table-card" style={{ marginTop: 24 }}>
+        {/* Table header row */}
+        <div className="project-report-table-header">
+          <div className="sk-block" style={{ width: 140, height: 16, borderRadius: 4 }} />
+          <div className="sk-block" style={{ width: 180, height: 32, borderRadius: 8 }} />
+        </div>
+        {/* Column headers */}
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1fr 0.8fr", gap: 16, padding: "14px 16px", borderBottom: "1px solid var(--app-border, #e8ecf0)" }}>
+          {["50%", "42%", "38%", "40%", "35%"].map((w, i) => (
+            <div key={i} className="sk-block" style={{ width: w, height: 11, borderRadius: 4 }} />
+          ))}
+        </div>
+        {/* Data rows */}
+        {Array.from({ length: 8 }).map((_, r) => (
+          <div key={r} style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr 1fr 0.8fr", gap: 16, padding: "14px 16px", borderBottom: "1px solid var(--app-border, #f5f5f5)" }}>
+            <div className="sk-block" style={{ width: `${65 + (r % 3) * 10}%`, height: 12, borderRadius: 4 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="sk-block" style={{ flex: 1, height: 7, borderRadius: 3 }} />
+              <div className="sk-block" style={{ width: 32, height: 10, borderRadius: 3 }} />
+            </div>
+            <div className="sk-block" style={{ width: "62%", height: 11, borderRadius: 4 }} />
+            <div className="sk-block" style={{ width: "58%", height: 11, borderRadius: 4 }} />
+            <div className="sk-block" style={{ width: 52, height: 20, borderRadius: 8 }} />
+          </div>
+        ))}
+        {/* Pagination shimmer */}
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "14px 16px" }}>
+          {[30, 30, 30, 75, 30, 30].map((w, i) => (
+            <div key={i} className="sk-block" style={{ width: w, height: 28, borderRadius: 6 }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectReportContent({
+  data,
+  loading,
+  optionsLoading,
+  metricsLoading,
+  taskProgressCache,
+  pageNo,
+  pageSize,
+  total,
+  setPageNo,
+  setPageSize,
+  filters,
+  setFilters,
+  focusedProjectIds,
+  setFocusedProjectIds,
+  projects
 }) {
-  const [localSearchText, setLocalSearchText] = useState(filters?.search || "");
   const isDataLoading = loading || optionsLoading;
 
-  useEffect(() => {
-    setLocalSearchText(filters?.search || "");
-  }, [filters?.search]);
-
   const columns = [
-    { title: "Task Name", dataIndex: "taskName", key: "taskName" },
+    { title: "Project List", dataIndex: "taskName", key: "taskName" },
     {
       title: "Progress",
       dataIndex: "progress",
@@ -1596,81 +2107,148 @@ function ProjectReportContent({
     },
   ];
 
+  // Only filter the table by projects if the selection comes from the TOP filter dropdown
+  const filteredRows = (data.rows || []).filter((row) => {
+    // Top-level Project Filter
+    if (Array.isArray(filters?.projectIds) && filters.projectIds.length > 0) {
+      if (!filters.projectIds.includes(row.key) && !filters.projectIds.includes(row.projectId)) {
+        return false;
+      }
+    }
+
+    // Top-level Status Filter
+    if (filters?.status && filters.status !== "all") {
+      const rowStatus = (row.status || "").toLowerCase().trim();
+      const filterStatus = filters.status.toLowerCase().trim();
+      if (rowStatus !== filterStatus) return false;
+    }
+
+    // Top-level Date Range Filter (Filter projects by their activity window)
+    if (filters?.startDate || filters?.endDate) {
+      const start = filters.startDate ? dayjs(filters.startDate) : null;
+      const end = filters.endDate ? dayjs(filters.endDate) : null;
+
+      const projectStart = row.startDate ? dayjs(row.startDate) : null;
+      const projectEnd = row.endDate ? dayjs(row.endDate) : null;
+
+      // Logic: Show project if it overlaps with the filter range OR if it has no dates defined (optional)
+      if (start && projectEnd && projectEnd.isBefore(start, 'day')) return false;
+      if (end && projectStart && projectStart.isAfter(end, 'day')) return false;
+    }
+
+    return true;
+  });
+  // Dynamically compute metrics based on filteredRows (respects status/date/project filters)
+  // If filteredRows count differs from data.rows OR any filter is active, use dynamic metrics
+  const hasActiveClientFilter = Boolean(
+    (filters?.status && filters.status !== "all") ||
+    (Array.isArray(filters?.projectIds) && filters.projectIds.length > 0) ||
+    filters?.startDate || filters?.endDate
+  );
+  const rowsAreFiltered = filteredRows.length !== (data.rows || []).length;
+  const useDynamic = hasActiveClientFilter || rowsAreFiltered;
+
+  const dynamicMetrics = (() => {
+    if (!useDynamic) {
+      return data.summary;
+    }
+    // Aggregate task counts from filteredRows using the cached progress map
+    const progressMap = taskProgressCache?.projectProgressMap || {};
+    let totalTasks = 0;
+    let completedTasks = 0;
+    filteredRows.forEach((row) => {
+      const m = progressMap[row.key] || { total: 0, completed: 0 };
+      totalTasks += m.total;
+      completedTasks += m.completed;
+    });
+    return {
+      totalProjects: filteredRows.length,
+      totalTasks,
+      completedTasks,
+      incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+    };
+  })();
+
+  const displayMetrics = useDynamic ? dynamicMetrics : data.summary;
+
+  // Show skeleton whenever we are fetching fresh data from the backend
+  if (isDataLoading) {
+    return <ProjectReportSkeleton />;
+  }
+
   return (
     <>
-      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <span className="stats-info-text">
-          {selectedProjectId ? "Showing metrics for selected project" : "Showing global totals"}
-        </span>
-        {selectedProjectId && (
-          <Button size="small" type="link" onClick={() => setSelectedProjectId(null)}>
-            Clear Selection
-          </Button>
-        )}
+      <div style={{ marginBottom: 12 }}>
+        <div />
       </div>
 
+      {focusedProjectIds.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+          <button
+            onClick={() => setFocusedProjectIds([])}
+            style={{
+              padding: "5px 16px",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#fff",
+              background: "#0b3a5b",
+              border: "none",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => e.target.style.background = "#082f4a"}
+            onMouseLeave={(e) => e.target.style.background = "#0b3a5b"}
+          >
+            ✕ Reset
+          </button>
+        </div>
+      )}
+
       <div className="project-report-stats">
-        {isDataLoading && !data.summary.totalProjects ? (
+        {isDataLoading && (!data.summary.totalProjects || data.rows.length === 0) ? (
           <>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="project-report-stat-card skeleton">
-                <div className="sk-block" style={{ width: 44, height: 44, borderRadius: 12 }} />
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, alignItems: "center", width: "100%" }}>
-                  <div className="sk-block" style={{ width: "60%", height: 12 }} />
-                  <div className="sk-block" style={{ width: "40%", height: 30 }} />
-                </div>
-              </div>
-            ))}
+            <ProjectReportMetricCardSkeleton />
+            <ProjectReportMetricCardSkeleton />
+            <ProjectReportMetricCardSkeleton />
           </>
         ) : (
           <>
-            <MetricCard color="#22b3c3" value={String(data.summary.totalProjects)} label="Total Projects" solid />
-            <MetricCard color="#ea3030" value={`${data.summary.incompleteTasks}/${data.summary.totalTasks || 0}`} label="Task In-completed" />
-            <MetricCard
-              color="#dedede"
-              value={`${data.summary.completedTasks}/${data.summary.totalTasks || 0}`}
-              label="Task Completed"
-              secondaryValueColor="#22c55e"
-            />
+            <MetricCard color="#22b3c3" value={String(displayMetrics.totalProjects)} label="Total Projects" solid />
+            {metricsLoading ? (
+              <>
+                <ProjectReportMetricCardSkeleton />
+                <ProjectReportMetricCardSkeleton />
+              </>
+            ) : (
+              <>
+                <MetricCard color="#ea3030" value={`${displayMetrics.incompleteTasks}/${displayMetrics.totalTasks || 0}`} label="Task In-completed" />
+                <MetricCard
+                  color="#22c55e"
+                  value={`${displayMetrics.completedTasks}/${displayMetrics.totalTasks || 0}`}
+                  label="Task Completed"
+                  secondaryValueColor="#22c55e"
+                />
+              </>
+            )}
           </>
         )}
       </div>
 
       <div className="project-report-table-card">
         <div className="project-report-table-header">
-          <h2>Project List</h2>
-          <Input.Search
-            placeholder="Search..."
-            className="project-report-search"
-            value={localSearchText}
-            onChange={(event) => {
-              const nextValue = event.target.value || "";
-              setLocalSearchText(nextValue);
-              setFilters((prev) => ({
-                ...prev,
-                search: nextValue,
-              }));
-            }}
-            onSearch={(value) => {
-              setFilters((prev) => ({
-                ...prev,
-                search: value ?? localSearchText ?? "",
-              }));
-            }}
-            allowClear
-          />
+          <h2 style={{ margin: 0 }}>Project List</h2>
         </div>
         <Table
           columns={columns}
-          dataSource={data.rows}
-          loading={isDataLoading}
+          dataSource={filteredRows}
           rowClassName={(record) => {
-            const isSelected = record.key === selectedProjectId;
-            return `project-report-row ${isSelected ? "selected-report-row" : ""}`;
+            const isFocused = Array.isArray(focusedProjectIds) && focusedProjectIds.includes(record.key);
+            const isSelected = Array.isArray(filters?.projectIds) && filters.projectIds.includes(record.key);
+            return `project-report-row ${isFocused ? "focused-report-row" : isSelected ? "selected-report-row" : ""}`;
           }}
           onRow={(record) => ({
             onClick: () => {
-              setSelectedProjectId(record.key);
+              setFocusedProjectIds(prev => prev.includes(record.key) ? [] : [record.key]);
             },
           })}
           pagination={{
@@ -1834,8 +2412,8 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
 
   const selectedRow = selectedMember
     ? (filteredMembers.find((row) => row.key === selectedMember) ||
-       rows.find((row) => row.key === selectedMember) ||
-       null)
+      rows.find((row) => row.key === selectedMember) ||
+      null)
     : null;
 
   const sortedMembers = useMemo(() => {
@@ -1959,23 +2537,23 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
 
   const memberTableRows = selectedRow
     ? [
-        { label: "Project", value: selectedRow.project || "-" },
-        { label: "Total Task", value: selectedRow.total || 0 },
-        { label: "Pending Task", value: selectedRow.pending || 0 },
-        { label: "Due Today", value: selectedRow.dueToday || 0 },
-        { label: "Past Due Tasks", value: selectedRow.overdue || 0 },
-        { label: "Completed", value: selectedRow.completed || 0 },
-        { label: "Incomplete", value: selectedRow.incomplete || 0 },
-      ]
+      { label: "Project", value: selectedRow.project || "-" },
+      { label: "Total Task", value: selectedRow.total || 0 },
+      { label: "Pending Task", value: selectedRow.pending || 0 },
+      { label: "Due Today", value: selectedRow.dueToday || 0 },
+      { label: "Past Due Tasks", value: selectedRow.overdue || 0 },
+      { label: "Completed", value: selectedRow.completed || 0 },
+      { label: "Incomplete", value: selectedRow.incomplete || 0 },
+    ]
     : [
-        { label: "Total Members", value: filteredMembers.length },
-        { label: "Total Tasks", value: filteredMembers.reduce((s, r) => s + (r.total || 0), 0) },
-        { label: "Pending Tasks", value: filteredMembers.reduce((s, r) => s + (r.pending || 0), 0) },
-        { label: "Due Today", value: filteredMembers.reduce((s, r) => s + (r.dueToday || 0), 0) },
-        { label: "Past Due Tasks", value: filteredMembers.reduce((s, r) => s + (r.overdue || 0), 0) },
-        { label: "Completed", value: filteredMembers.reduce((s, r) => s + (r.completed || 0), 0) },
-        { label: "Incomplete", value: filteredMembers.reduce((s, r) => s + (r.incomplete || 0), 0) },
-      ];
+      { label: "Total Members", value: filteredMembers.length },
+      { label: "Total Tasks", value: filteredMembers.reduce((s, r) => s + (r.total || 0), 0) },
+      { label: "Pending Tasks", value: filteredMembers.reduce((s, r) => s + (r.pending || 0), 0) },
+      { label: "Due Today", value: filteredMembers.reduce((s, r) => s + (r.dueToday || 0), 0) },
+      { label: "Past Due Tasks", value: filteredMembers.reduce((s, r) => s + (r.overdue || 0), 0) },
+      { label: "Completed", value: filteredMembers.reduce((s, r) => s + (r.completed || 0), 0) },
+      { label: "Incomplete", value: filteredMembers.reduce((s, r) => s + (r.incomplete || 0), 0) },
+    ];
 
   return (
     <div className="user-report-layout">
@@ -2134,9 +2712,8 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
             >
               <button
                 type="button"
-                className={`user-report-member-tab more-tab ${
-                  overflowMembers.some((m) => m.key === selectedMember) ? "active" : ""
-                }`}
+                className={`user-report-member-tab more-tab ${overflowMembers.some((m) => m.key === selectedMember) ? "active" : ""
+                  }`}
               >
                 <span className="user-report-member-tab-name">
                   {overflowMembers.some((m) => m.key === selectedMember)
@@ -2267,7 +2844,7 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
 function EmptyReportState() {
   return (
     <div className="reports-empty-state">
-      <NoDataFoundIcon  />
+      <NoDataFoundIcon />
       <h3>No Report Found</h3>
       <p>Apply Filter To Generate Reports</p>
     </div>
@@ -3104,11 +3681,11 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
             rowKey={(record) =>
               String(
                 record?._id ||
-                  record?.id ||
-                  record?.project_id ||
-                  record?.title ||
-                  record?.managerName ||
-                  "project-row"
+                record?.id ||
+                record?.project_id ||
+                record?.title ||
+                record?.managerName ||
+                "project-row"
               )
             }
             pagination={{
@@ -3128,7 +3705,7 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-            <NoDataFoundIcon  />
+            <NoDataFoundIcon />
             <span style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>
               {searchText ? "No projects found matching your search" : "No project data found"}
             </span>
@@ -3282,7 +3859,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
               </div>
             </div>
           )}
-          
+
           {managerChartData.length > 0 && (
             <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
               <h3>Hours by Manager</h3>
@@ -3314,7 +3891,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
               />
             </div>
           )}
-          
+
           {typeChartData.length > 0 && (
             <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
               <h3>Hours by Project Type</h3>
@@ -3354,7 +3931,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
           <h3>Timesheet Entries</h3>
           <span className="total-count">Total: {total}</span>
         </div>
-        
+
         {timesheets.length > 0 ? (
           <Table
             columns={columns}

@@ -8,7 +8,7 @@ export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
   // static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
-  static API_URL = 
+  static API_URL =
     process.env.NODE_ENV === "production"
       ? process.env.REACT_APP_API_URL + "/v1"
       : `${this.Server_Base_URL}/v1`;
@@ -441,7 +441,7 @@ export default class Service {
   static deleteprojectexpanses = "/taskhub/projectexpanses/delete"
   static exportProjectExpenses = "/taskhub/projectexpanses/exportProjectExpenses"
 
-  
+
   // static updateReview = "/taskhub/reviews/update"
   // static deleteReview = "/taskhub/reviews/delete"
 
@@ -454,7 +454,7 @@ export default class Service {
   //Saas flow API's
   static registerAdminAndCompany = "/CompanyReg/registerAdminAndCompany"
   static verifyRegistration = '/CompanyReg/verify-registration'
-  
+
   static getDashboardData = "/superAdmin/getDashboardData"
   static addAdmin = '/superAdmin/addAdmin'
   static getAdminList = '/superAdmin/getAdminList'
@@ -628,10 +628,10 @@ export default class Service {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('title')
       localStorage.removeItem('headerLogo')
-      localStorage.removeItem('loginLogo')  
+      localStorage.removeItem('loginLogo')
       localStorage.removeItem('logoMode')
       localStorage.removeItem('favIcon')
-    
+
       removeCookie("user_permission")
       removeCookie("pms_role_id")
       window.location = "/signin";

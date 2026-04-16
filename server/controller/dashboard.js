@@ -645,28 +645,34 @@ exports.getTaskList = async (req, res) => {
     let accessibleMainTaskIds = [];
     let statusIds = [];
 
-    const promises = [];
-
-    // All projects in the company
+    const promises = [];    // All projects in the company
     promises.push(
       Project.find({
         isDeleted: false,
         ...(userCompanyId ? { companyId: userCompanyId } : {}),
-      }).distinct("_id").then(ids => { companyProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
+      }).distinct("_id").then(ids => { 
+        companyProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
+      })
     );
 
-    // Projects managed by the user
-    if (!viewAll && value.project_id.length === 0) {
-      promises.push(
-        Project.find({
-          $or: [{ manager: userId }, { acc_manager: userId }],
-          isDeleted: false,
-          ...(userCompanyId ? { companyId: userCompanyId } : {}),
-        }).distinct("_id").then(ids => { managedProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
-      );
-    }
+    // Projects managed by the user (Managers should see all tasks in their projects)
+    promises.push(
+      Project.find({
+        $or: [{ manager: userId }, { acc_manager: userId }, { createdBy: userId }],
+        isDeleted: false,
+      }).distinct("_id").then(ids => { 
+        managedProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
+        // Sync companyProjectIds to include managed projects just in case of company mismatch
+        ids.forEach(id => {
+          const oid = new mongoose.Types.ObjectId(id);
+          if (!companyProjectIds.some(cid => cid.equals(oid))) {
+            companyProjectIds.push(oid);
+          }
+        });
+      })
+    );
 
-    // Accessible Main Tasks (Public OR User is Creator/Subscriber/Client)
+    // Accessible Main Tasks (Public OR User is Creator/Subscriber/Client OR Manager of the project)
     promises.push(
       ProjectMainTasks.find({
         isDeleted: false,
@@ -674,16 +680,17 @@ exports.getTaskList = async (req, res) => {
           { isPrivateList: false },
           { createdBy: userId },
           { subscribers: userId },
-          { pms_clients: userId }
+          { pms_clients: userId },
+          { project_id: { $in: managedProjectIds } } // Allow managers to see private tasks in their own projects
         ]
       }).distinct("_id").then(ids => { accessibleMainTaskIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
     );
 
     // Fetch status IDs if status filter is applied
-    if (value.status !== "all") {
+    if (value.status !== "all" || true) { // Always fetch for stats if needed
       promises.push(
         WorkflowStatus.find({
-          title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
+          title: { $in: [DEFAULT_DATA.WORKFLOW_STATUS.DONE, "Done", "Completed", "Closed", "Finish"] },
           isDeleted: false,
         }).distinct("_id").then(ids => { statusIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
       );
@@ -695,12 +702,12 @@ exports.getTaskList = async (req, res) => {
     // 2. BUILD THE FAST MATCH QUERY
     let matchQuery = {
       isDeleted: false,
-      status: "active",
-      project_id: { $in: companyProjectIds }, // Ensure only company tasks are shown
-      main_task_id: { $in: accessibleMainTaskIds }, // Respect private list visibility
+      // Removed hardcoded status: "active" to include all tasks in metrics
+      project_id: { $in: companyProjectIds }, 
+      main_task_id: { $in: accessibleMainTaskIds },
     };
 
-    // Explicit project filter overrides default company filter
+    // Explicit project filter
     if (value.project_id.length > 0) {
       matchQuery.project_id = { $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)) };
     }
@@ -726,6 +733,7 @@ exports.getTaskList = async (req, res) => {
         });
     }
 
+    // 3. GET TOTAL COUNT (ensure all matchQuery filters are included)
     // Search filter
     if (value.search && value.search.trim()) {
         matchQuery.title = { $regex: value.search.trim(), $options: "i" };
@@ -760,7 +768,7 @@ exports.getTaskList = async (req, res) => {
       }
     }
 
-    // 3. GET TOTAL COUNT (Direct call, no aggregation!)
+    // FINAL TOTAL COUNT for metrics
     console.log(`[getTaskList] count query:`, JSON.stringify(matchQuery));
     const totalDocuments = await ProjectTasks.countDocuments(matchQuery);
     console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
