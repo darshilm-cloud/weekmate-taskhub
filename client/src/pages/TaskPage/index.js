@@ -630,12 +630,15 @@ const TaskPage = () => {
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
+  const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
+  const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
   const [statusTotals, setStatusTotals] = useState({});
+  const [statusMetaBySection, setStatusMetaBySection] = useState({});
   const [sectionBuckets, setSectionBuckets] = useState({});
   const [listSectionIds, setListSectionIds] = useState(["todo", "inprogress", "onhold", "done"]);
   const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
@@ -775,8 +778,19 @@ const TaskPage = () => {
         acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
         return acc;
       }, {});
+      const nextStatusMetaBySection = statusCounts.reduce((acc, item) => {
+        const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+        if (!key) return acc;
+        acc[key] = {
+          statusId: item?.statusId || null,
+          title: item?.title || getKanbanStatusMeta({ title: key, name: key }).title,
+          color: item?.color || getKanbanStatusMeta({ title: key, name: key }).color,
+        };
+        return acc;
+      }, {});
       const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals);
       setStatusTotals(nextStatusTotals);
+      setStatusMetaBySection(nextStatusMetaBySection);
       setListSectionIds(sectionOrder);
 
       const bucketResults = await Promise.all(
@@ -811,6 +825,7 @@ const TaskPage = () => {
       setSectionBuckets(nextBuckets);
     } catch (e) {
       setStatusTotals({});
+      setStatusMetaBySection({});
       setSectionBuckets({});
     } finally {
       setLoading(false);
@@ -956,18 +971,34 @@ const TaskPage = () => {
 
   const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
 
+  const openAddTaskModalForStatus = useCallback((statusId = null) => {
+    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
+    setAddTaskModalSessionKey((prev) => prev + 1);
+    setAddTaskModalOpen(true);
+  }, []);
+
+  const handleAddTaskClick = useCallback(() => {
+    openAddTaskModalForStatus();
+  }, [openAddTaskModalForStatus]);
+
   const kanbanColumns = useMemo(() => {
     const statusOrder = ["todo", "inprogress", "onhold", "done"];
     const all = listSectionIds.map((bucketId) => {
       const meta = getKanbanStatusMeta({ title: bucketId, name: bucketId });
       const colTasks = sectionBuckets[bucketId]?.tasks || [];
       const first = colTasks[0];
+        const sectionMeta = statusMetaBySection[bucketId] || {};
       return {
         id: bucketId,
-        title: meta.title,
-        color: meta.color,
-        statusId: first?._stId || first?.task_status?._id || null,
-        statusMeta: first?.task_status || { title: meta.title, color: meta.color },
+          title: sectionMeta.title || meta.title,
+          color: sectionMeta.color || meta.color,
+          statusId: sectionMeta.statusId || first?._stId || first?.task_status?._id || null,
+          statusMeta:
+            first?.task_status || {
+              _id: sectionMeta.statusId || null,
+              title: sectionMeta.title || meta.title,
+              color: sectionMeta.color || meta.color,
+            },
         tasks: sortTaskList(colTasks, sortMode),
       };
     }).sort((a, b) => {
@@ -988,7 +1019,7 @@ const TaskPage = () => {
         normalizeKanbanStatusKey(col.title) === needle
     );
     return filtered.length ? filtered : all;
-  }, [listSectionIds, sectionBuckets, sortMode, kanbanStatusFilter]);
+  }, [listSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
 
   // Convert kanbanColumns → format expected by TasksGanttView
   const ganttBoards = useMemo(() =>
@@ -1440,7 +1471,7 @@ const TaskPage = () => {
           )}
           <Button
             type="primary"
-            onClick={() => setAddTaskModalOpen(true)}
+            onClick={handleAddTaskClick}
           >
             <PlusOutlined /> Add Task
           </Button>
@@ -1478,10 +1509,16 @@ const TaskPage = () => {
       </div>
 
       <AddTaskModal
+        key={`taskpage-add-modal-${addTaskModalSessionKey}`}
         open={addTaskModalOpen}
-        onCancel={() => setAddTaskModalOpen(false)}
+        initialStatusId={modalInitialStatusId}
+        onCancel={() => {
+          setAddTaskModalOpen(false);
+          setModalInitialStatusId(null);
+        }}
         onSuccess={() => {
           setAddTaskModalOpen(false);
+          setModalInitialStatusId(null);
           initializeBoardData();
         }}
         standalone
@@ -1556,8 +1593,10 @@ const TaskPage = () => {
                 key={s.id}
                 sectionId={s.id}
                 title={s.title}
+                statusId={s.statusId}
                 count={statusTotals[s.id] ?? s.tasks.length}
                 tasks={s.tasks}
+                onAddTask={openAddTaskModalForStatus}
                 onOpenTask={handleOpenTask}
                 onEditTask={handleOpenEditTask}
                 onDeleteTask={handleDeleteOneTask}
@@ -1578,11 +1617,13 @@ const TaskPage = () => {
             <div key={col.id} className="kanban-column" style={{ borderTopColor: col.color }}>
               <div className="kanban-column-header">
                 <span className="kanban-column-title">{col.title}</span>
-                <span className="kanban-column-count">({statusTotals[col.id] ?? col.tasks.length})</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="kanban-column-count">({statusTotals[col.id] ?? col.tasks.length})</span>
+                </div>
               </div>
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
-                style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+                style={{ overflowY: "auto" }}
                 onScroll={(e) => handleKanbanColumnScroll(e, col.id)}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -1619,6 +1660,17 @@ const TaskPage = () => {
                     <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more...</span>
                   </div>
                 )}
+              </div>
+              <div className="kanban-column-footer">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  className="kanban-column-add-btn"
+                  onClick={() => openAddTaskModalForStatus(col.statusId)}
+                >
+                  Add Task
+                </Button>
               </div>
             </div>
           ))}
@@ -1684,8 +1736,10 @@ const TaskPage = () => {
 function TaskListSection({
   sectionId,
   title,
+  statusId,
   count,
   tasks,
+  onAddTask,
   onOpenTask,
   onEditTask,
   onDeleteTask,
@@ -1697,11 +1751,21 @@ function TaskListSection({
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className="task-list-section">
-      <button type="button" className="task-list-section-header" onClick={() => setCollapsed((c) => !c)}>
-        <span className={`section-chevron ${collapsed ? "collapsed" : ""}`} />
-        <span className="section-title">{title}</span>
-        <span className="section-count">{count}</span>
-      </button>
+      <div className="task-list-section-header">
+        <button type="button" className="task-list-section-toggle" onClick={() => setCollapsed((c) => !c)}>
+          <span className={`section-chevron ${collapsed ? "collapsed" : ""}`} />
+          <span className="section-title">{title}</span>
+          <span className="section-count">{count}</span>
+        </button>
+        <Button
+          type="text"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={() => onAddTask?.(statusId)}
+        >
+          Add Task
+        </Button>
+      </div>
       {!collapsed && (
         <div
           className="task-list-body"

@@ -145,10 +145,25 @@ const BugsController = () => {
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
-    // This ensures that we keep track of selected items by their full details, not just ID
-    setSelectedItems(
-      subscribersList.filter((item) => selectedItemIds.includes(item._id))
+    const nextIds = Array.isArray(selectedItemIds) ? selectedItemIds : [];
+    const currentById = new Map(
+      (Array.isArray(selectedItems) ? selectedItems : [])
+        .filter((item) => item?._id)
+        .map((item) => [item._id, item])
     );
+    const subscribersById = new Map(
+      (Array.isArray(subscribersList) ? subscribersList : [])
+        .filter((item) => item?._id)
+        .map((item) => [item._id, item])
+    );
+
+    setSelectedItems(
+      nextIds
+        .map((id) => subscribersById.get(id) || currentById.get(id) || { _id: id })
+        .filter(Boolean)
+    );
+    addform.setFieldsValue({ selectedItems: nextIds });
+    editform.setFieldsValue({ selectedItems: nextIds });
     setSearchKeyword("");
   };
 
@@ -490,6 +505,16 @@ const BugsController = () => {
 
     dispatch(showAuthLoader());
     try {
+      const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
+        ? values.selectedItems
+        : selectedItems.map((item) => item?._id).filter(Boolean);
+      const fallbackBugStatusId =
+        modalInitialStatusId ||
+        boardTasksBugs.find(
+          (item) => String(item?.title || "").trim().toLowerCase() === "to do"
+        )?._id ||
+        boardTasksBugs[0]?._id ||
+        null;
       let reqBody = {
         project_id: projectId,
         task_id: values?.task_id,
@@ -499,8 +524,8 @@ const BugsController = () => {
         bug_labels: addInputTaskData.labels,
         start_date: addInputTaskData.start_date,
         due_date: addInputTaskData.end_date,
-        assignees: selectedItems.map((item) => item._id),
-        bug_status: modalInitialStatusId || val,
+        assignees: resolvedAssigneeIds,
+        bug_status: fallbackBugStatusId,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
         progress: "0",
@@ -539,6 +564,9 @@ const BugsController = () => {
   const updateTasks = async (values, uploadedFiles) => {
     dispatch(showAuthLoader());
     try {
+      const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
+        ? values.selectedItems
+        : selectedItems.map((item) => item?._id).filter(Boolean);
       let reqBody = {
         updated_key: [
           "title",
@@ -563,7 +591,7 @@ const BugsController = () => {
         status: "active",
         descriptions: editModalDescription,
         bug_labels: addInputTaskData.labels,
-        assignees: selectedItems.map((item) => item._id),
+        assignees: resolvedAssigneeIds,
         bug_status: editTaskData.workflow_id,
         estimated_hours: estHrs,
         estimated_minutes: estMins,
@@ -591,8 +619,7 @@ const BugsController = () => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         getBoardTasks(selectedTask._id);
 
-        let filterAssignees = selectedItems
-          .map((item) => item._id)
+        let filterAssignees = resolvedAssigneeIds
           .filter((id) => !newFilteredAssignees.some((user) => user === id));        
 
         await emitEvent(socketEvents.EDIT_BUG_ASSIGNEE, {
@@ -626,7 +653,13 @@ const BugsController = () => {
   };
 
   const showModalTaskModal = (statusId = null) => {
-    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
+    const normalizedStatusId =
+      typeof statusId === "string"
+        ? statusId
+        : typeof statusId === "object" && statusId?._id
+        ? statusId._id
+        : null;
+    setModalInitialStatusId(normalizedStatusId);
     setIsModalOpenTaskModal(true);
     dispatch(getFolderList(projectId));
     dispatch(getLables());
@@ -1054,6 +1087,10 @@ const BugsController = () => {
 
   const showEditTaskModal = (data, workflowID) => {
     try {
+      const normalizedAssignees = Array.isArray(data?.assignees)
+        ? data.assignees.filter((value) => value?._id)
+        : [];
+      const normalizedAssigneeIds = normalizedAssignees.map((value) => value._id);
       setIsEditTaskModalOpen(true);
       setEditTaskData({ id: data._id, workflow_id: workflowID });      
       seteditModalDescription(data.descriptions);
@@ -1064,16 +1101,17 @@ const BugsController = () => {
         ),
         task_id: data?.task?._id,
         isrepeated: data?.isRepeated,
+        selectedItems: normalizedAssigneeIds,
       });
       setAddInputTaskData({
         start_date: data.start_date,
         end_date: data.due_date,
         labels: data.bug_labels.map((value) => value._id).join(","),
-        assignees: data.assignees.map((value) => value._id),
+        assignees: normalizedAssigneeIds,
         title: data.title,
         descriptions: data.descriptions,
       });
-      setSelectedItems(data.assignees);
+      setSelectedItems(normalizedAssignees);
       setEstHrs(data.estimated_hours);
       setEstMins(data.estimated_minutes);
       setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
@@ -1223,16 +1261,6 @@ const BugsController = () => {
   useEffectAfterMount(() => {
     exportCsv();
   }, []);
-
-  let val = "";
-
-  const giveworkflowId = () => {
-    boardTasksBugs.map((item) => {
-      val = item.title === "To Do" ? item._id : boardTasksBugs[0]._id;
-    });
-  };
-
-  giveworkflowId();
 
   useEffect(() => {
     getBoardTasks();

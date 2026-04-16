@@ -1142,7 +1142,14 @@ const TasksPMS = ({ flag }) => {
         }
         setProjectMianTask(response.data.data);
         if (selectionFalse) {
-          getBoardTasks(selectedTask._id, { silent });
+          const preservedListId =
+            taskID ||
+            listID ||
+            selectedTask?._id ||
+            response?.data?.data?.[0]?._id;
+          if (preservedListId) {
+            getBoardTasks(preservedListId, { silent });
+          }
           return;
         }
         if (!listID) {
@@ -2316,6 +2323,28 @@ const TasksPMS = ({ flag }) => {
     return () => clearTimeout(deferTimer);
   }, [projectId]);
 
+  useEffect(() => {
+    const handleExternalTaskCreated = async (event) => {
+      const createdTask = event?.detail?.task || {};
+      const createdProjectId =
+        createdTask?.project?._id ||
+        createdTask?.project_id?._id ||
+        createdTask?.project_id ||
+        null;
+
+      if (createdProjectId && String(createdProjectId) !== String(projectId)) {
+        return;
+      }
+
+      await getProjectMianTask("", true, { silent: true });
+    };
+
+    window.addEventListener("weekmate:task-created", handleExternalTaskCreated);
+    return () => {
+      window.removeEventListener("weekmate:task-created", handleExternalTaskCreated);
+    };
+  }, [getProjectMianTask, projectId, listID, selectedTask?._id]);
+
   useEffectAfterMount(() => {
     getProjectMianTask();
   }, [searchText]);
@@ -2369,6 +2398,7 @@ const TasksPMS = ({ flag }) => {
 
     const list = fromBoard.length ? fromBoard : fromWorkflow;
     const byKey = new Map(list.filter((x) => x.key).map((x) => [x.key, x]));
+    const extras = list.filter((item) => item?.id && !item?.key);
 
     // Fixed 4 columns: To-Do / In progress / On Hold / Done
     const wanted = [
@@ -2382,7 +2412,14 @@ const TasksPMS = ({ flag }) => {
       const hit = byKey.get(w.key);
       if (hit) return { ...hit, title: w.label };
       return { id: w.key, key: w.key, title: w.label, badgeColor: stageBadgeColor(w.label), count: 0 };
-    });
+    }).concat(
+      extras.map((item) => ({
+        ...item,
+        key: item?.id,
+        title: item?.title || "Untitled",
+        badgeColor: item?.badgeColor || stageBadgeColor(item?.title, item?.color),
+      }))
+    );
   }, [boardTasks, workflowStatusList]);
 
   const listStageOptions = useMemo(() => {
@@ -2410,6 +2447,10 @@ const TasksPMS = ({ flag }) => {
           })
           .filter(Boolean)
       );
+      const extras = fromApi.filter((ws) => {
+        const title = ws?.title || ws?.name || "";
+        return !normalizeStageKey(title);
+      });
 
       return wanted.map((wantedStage) => {
         const matched = byKey.get(wantedStage._id);
@@ -2421,7 +2462,13 @@ const TasksPMS = ({ flag }) => {
           };
         }
         return wantedStage;
-      });
+      }).concat(
+        extras.map((stage) => ({
+          ...stage,
+          _id: stage?._id || stage?.id,
+          title: stage?.title || stage?.name || "Untitled",
+        }))
+      );
     }
 
     const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
@@ -2474,7 +2521,21 @@ const TasksPMS = ({ flag }) => {
       const workflowStatus = column?.workflowStatus || column?.workflow_status || column?.status || {};
       const title = workflowStatus?.title || workflowStatus?.name || column?.title || "";
       const key = normalizeStageKey(title);
-      if (!key) return;
+      if (!key) {
+        const fallbackId = workflowStatus?._id || workflowStatus?.id || column?._id || title;
+        if (!fallbackId) return;
+        byKey.set(String(fallbackId), {
+          ...column,
+          workflowStatus: {
+            ...workflowStatus,
+            _id: fallbackId,
+            title: title || "Untitled",
+            color: workflowStatus?.color || column?.color || "#64748b",
+          },
+          tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
+        });
+        return;
+      }
 
       const existing = byKey.get(key);
       if (!existing) {
@@ -2492,7 +2553,7 @@ const TasksPMS = ({ flag }) => {
       ];
     });
 
-    return wanted.map((wantedColumn) => {
+    const normalizedColumns = wanted.map((wantedColumn) => {
       const existing = byKey.get(wantedColumn.key);
       const matchedRealStage = realStageByKey.get(wantedColumn.key);
       if (existing) {
@@ -2528,6 +2589,12 @@ const TasksPMS = ({ flag }) => {
         tasks: [],
       };
     });
+    const normalizedKeys = new Set(wanted.map((column) => column.key));
+    const extraColumns = Array.from(byKey.entries())
+      .filter(([key]) => !normalizedKeys.has(key))
+      .map(([, column]) => column);
+
+    return normalizedColumns.concat(extraColumns);
   }, [boardTasks, projectWorkflowStage, workflowStatusList]);
 
   const filteredBoardTasks = filterTasks(fixedBoardTasks, filterSchema);

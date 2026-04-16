@@ -124,6 +124,7 @@ export default function CommonTaskFormModal({
   const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
+  const previousSelectedProjectIdRef = useRef(null);
   const effectiveTaskId = taskId || initialValues?._id || null;
   const loggedInUserId = useMemo(() => {
     try {
@@ -429,6 +430,7 @@ export default function CommonTaskFormModal({
   useEffect(() => {
     if (!open) {
       hasHydratedForOpenRef.current = false;
+      previousSelectedProjectIdRef.current = null;
       return;
     }
     if (hasHydratedForOpenRef.current) return;
@@ -453,6 +455,22 @@ export default function CommonTaskFormModal({
   useEffect(() => {
     if (!open) return;
     const pid = lockedProjectId || selectedProjectId;
+
+    if (!lockedProjectId) {
+      const previousProjectId = previousSelectedProjectIdRef.current;
+      if (
+        previousProjectId &&
+        pid &&
+        String(previousProjectId) !== String(pid)
+      ) {
+        form.setFieldsValue({
+          main_task_id: undefined,
+          assignees: [],
+        });
+      }
+      previousSelectedProjectIdRef.current = pid || null;
+    }
+
     if (pid) {
       fetchMainTasks(pid);
       fetchAssignees(pid);
@@ -1013,12 +1031,21 @@ export default function CommonTaskFormModal({
         : [];
       const projectId = lockedProjectId || values.project_id;
       const mainTaskId = lockedMainTaskId || values.main_task_id;
+      const mainTaskBelongsToSelectedProject =
+        !showListSelector ||
+        Boolean(lockedMainTaskId) ||
+        (Array.isArray(mainTasks) &&
+          mainTasks.some((task) => String(task?._id) === String(mainTaskId)));
       if (!projectId) {
         message.error("Project is required.");
         return;
       }
       if (showListSelector && !mainTaskId) {
         message.error("List is required.");
+        return;
+      }
+      if (!mainTaskBelongsToSelectedProject) {
+        message.error("Please select a valid list for the selected project.");
         return;
       }
       onSubmit?.({

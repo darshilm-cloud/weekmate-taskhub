@@ -709,20 +709,6 @@ const BugsPMS = () => {
                 <div className="bug-header-statusblock">
                   <div className="bug-header-status-text">OPEN</div>
                 </div>
-                <div className="header-actions">
-                  <div className="action-icon-wrapper" title="Comments">
-                    <CommentOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Files">
-                    <PaperClipOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Activity">
-                    <HistoryOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Edit">
-                    <EditOutlined />
-                  </div>
-                </div>
               </div>
 
               <div className="bug-display-title">
@@ -1108,20 +1094,6 @@ const BugsPMS = () => {
               <div className="bug-header-top-row">
                 <div className="bug-header-statusblock">
                   <div className="bug-header-status-text">OPEN</div>
-                </div>
-                <div className="header-actions">
-                  <div className="action-icon-wrapper" title="Comments">
-                    <CommentOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Files">
-                    <PaperClipOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Activity">
-                    <HistoryOutlined />
-                  </div>
-                  <div className="action-icon-wrapper" title="Edit">
-                    <EditOutlined />
-                  </div>
                 </div>
               </div>
 

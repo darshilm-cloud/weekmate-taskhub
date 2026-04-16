@@ -388,32 +388,6 @@ const BugDetailModal = ({
                     "OPEN"}
                 </div>
               </div>
-              <div className="header-actions">
-                <div
-                  className={`action-icon-wrapper ${activeTab === "comments" ? "active" : ""}`}
-                  onClick={() => onTabChange?.("comments")}
-                  title="Comments"
-                >
-                  <CommentOutlined />
-                </div>
-                <div
-                  className={`action-icon-wrapper ${activeTab === "files" ? "active" : ""}`}
-                  onClick={() => onTabChange?.("files")}
-                  title="Files"
-                >
-                  <PaperClipOutlined />
-                </div>
-                <div
-                  className={`action-icon-wrapper ${(activeTab === "history" || activeTab === "task") ? "active" : ""}`}
-                  onClick={() => onTabChange?.("history")}
-                  title="Activity"
-                >
-                  <HistoryOutlined />
-                </div>
-                <div className={`action-icon-wrapper ${isGlobalEditActive ? "active" : ""}`} onClick={handleGlobalEditToggle}>
-                  <EditOutlined />
-                </div>
-              </div>
             </div>
 
             <div className="bug-display-title">

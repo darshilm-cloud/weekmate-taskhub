@@ -125,7 +125,15 @@ export default function AddTaskModal({
 
       if (response?.data?.status || response?.data?.success) {
         message.success(response?.data?.message || "Task added");
-        onSuccess?.(response?.data?.data || {});
+        const createdTask = response?.data?.data || {};
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("weekmate:task-created", {
+              detail: { task: createdTask },
+            })
+          );
+        }
+        onSuccess?.(createdTask);
       } else {
         message.error(response?.data?.message || "Failed to add task");
       }
