@@ -260,7 +260,7 @@
 
 .task-list-column-header {
   display: grid;
-  grid-template-columns: 18px 18px 18px 28px 1fr 140px 80px 150px;
+  grid-template-columns: 32px 36px minmax(100px, 0.82fr) 118px 130px minmax(88px, 150px) 72px;
   align-items: center;
   gap: 12px;
   padding: 10px 24px;
@@ -271,22 +271,28 @@
   border-bottom: 1px solid #d0e8ff;
 }
 
+.task-list-header-spacer {
+  display: block;
+}
+
 .col-task-name {
-  grid-column: 5;
+  text-align: left;
 }
 
 .col-due-date {
-  grid-column: 6;
   text-align: left;
 }
 
 .col-assignees {
-  grid-column: 7;
   text-align: center;
 }
 
-.col-status {
-  grid-column: 8;
+.col-project {
+  text-align: left;
+}
+
+.col-actions {
+  text-align: right;
 }
 
 .task-list-section {
@@ -365,10 +371,10 @@
   text-align: center;
 }
 
-/* Task row — 8-col grid matching column header */
+/* Task row — same grid as .task-list-column-header */
 .task-row {
   display: grid;
-  grid-template-columns: 25px 100px 220px 100px 1fr 140px 80px 150px;
+  grid-template-columns: 32px 36px minmax(100px, 0.82fr) 118px 130px minmax(88px, 150px) 72px;
   align-items: center;
   gap: 12px;
   padding: 10px 24px;
@@ -476,12 +482,32 @@
 }
 
 .task-row-assignees-names {
-  max-width: 160px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
   color: #374151;
+}
+
+.task-row-project {
+  font-size: 13px;
+  color: #374151;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.task-row-action-btn.ant-btn {
+  padding: 0 6px;
 }
 
 /* Status pill — outlined, dot-style like TaskOPad */

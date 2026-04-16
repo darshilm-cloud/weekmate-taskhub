@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Menu,
   Popover,
@@ -9,10 +9,11 @@ import {
   Table,
   Switch,
   Radio,
+  Select,
+  Spin,
 } from "antd";
 import { useParams, useLocation, useHistory } from "react-router-dom";
 
-import CalendarPMS from "./CalendarPMS";
 import DiscussionForm from "../Discussion/DiscussionForm";
 import TimeForPMS from "./TimeForPMS";
 import TasksPMS from "../../pages/Tasks/index";
@@ -37,9 +38,53 @@ import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { hasPermission } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
+import dayjs from "dayjs";
+import TasksGanttView from "../../pages/Tasks/TasksGanttView";
 import "./ProgressBoard.css";
+import "../../pages/TaskPage/TaskPage.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
+
+const { Option } = Select;
+
+const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
+  value,
+  label,
+}));
+
+function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
+  const targetYear = Number.isInteger(nextYear) ? nextYear : currentDate.year();
+  const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
+  const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
+  return currentDate.year(targetYear).month(targetMonth).date(safeDay);
+}
+
+function normalizeKanbanStatusKey(status) {
+  const title = String(status?.title || status?.name || status || "").toLowerCase();
+  const compact = title.replace(/[\s_-]+/g, "");
+
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
+
+  return title.trim() || "_none_";
+}
+
+function getKanbanStatusMeta(status) {
+  const key = normalizeKanbanStatusKey(status);
+
+  if (key === "todo") return { key, title: "To-Do", color: "#64748b" };
+  if (key === "inprogress") return { key, title: "In Progress", color: "#ef4444" };
+  if (key === "onhold") return { key, title: "On Hold", color: "#f59e0b" };
+  if (key === "done") return { key, title: "Done", color: "#22c55e" };
+
+  return {
+    key,
+    title: status?.title || status?.name || "No status",
+    color: status?.color || "#d9d9d9",
+  };
+}
 
 function ProgressBoardofProject() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -75,6 +120,10 @@ function ProgressBoardofProject() {
     manager: [],
     acc_manager: []
   });
+  const [projectTasks, setProjectTasks] = useState([]);
+  const [projectTasksLoading, setProjectTasksLoading] = useState(false);
+  const [calendarMode, setCalendarMode] = useState("month");
+  const [calendarDate, setCalendarDate] = useState(dayjs());
 
   const handleChange = (name, value) => {
     setPeopleValues({ ...peopleValues, [name]: value });
@@ -422,11 +471,96 @@ function ProgressBoardofProject() {
       case "Notes":
         setSelectedTab("Notes");
         break;
+      case "Calendar":
+        setSelectedTab("Calendar");
+        break;
+      case "Gantt":
+        setSelectedTab("Gantt");
+        break;
       default:
         setSelectedTab("Overview");
         break;
     }
   }, [tab]);
+
+  const fetchProjectTasksForTimeline = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setProjectTasksLoading(true);
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: {
+          project_id: [projectId],
+          pageNo: 1,
+          limit: 5000,
+          status: "all",
+        },
+      });
+      if (res?.status === 200) {
+        setProjectTasks(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } else {
+        setProjectTasks([]);
+      }
+    } catch (error) {
+      setProjectTasks([]);
+      console.log(error, "fetchProjectTasksForTimeline");
+    } finally {
+      setProjectTasksLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (selectedTab === "Calendar" || selectedTab === "Gantt") {
+      fetchProjectTasksForTimeline();
+    }
+  }, [selectedTab, fetchProjectTasksForTimeline]);
+
+  const calendarYearOptions = useMemo(() => {
+    const currentYear = dayjs().year();
+    return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
+  }, []);
+
+  const calendarTasksByDate = useMemo(() => {
+    const map = {};
+    projectTasks.forEach((task) => {
+      if (!task?.due_date) return;
+      const dateKey = dayjs(task.due_date).format("YYYY-MM-DD");
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push(task);
+    });
+    return map;
+  }, [projectTasks]);
+
+  const ganttBoards = useMemo(() => {
+    const grouped = {};
+    projectTasks.forEach((task) => {
+      const meta = getKanbanStatusMeta(task?.task_status);
+      if (!grouped[meta.key]) {
+        grouped[meta.key] = {
+          workflowStatus: {
+            _id: task?._stId || task?.task_status?._id || meta.key,
+            title: meta.title,
+            color: meta.color,
+          },
+          tasks: [],
+        };
+      }
+      grouped[meta.key].tasks.push(task);
+    });
+
+    const statusOrder = ["todo", "inprogress", "onhold", "done"];
+    return Object.values(grouped).sort((a, b) => {
+      const aKey = normalizeKanbanStatusKey(a?.workflowStatus);
+      const bKey = normalizeKanbanStatusKey(b?.workflowStatus);
+      const aIndex = statusOrder.indexOf(aKey);
+      const bIndex = statusOrder.indexOf(bKey);
+      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+      if (normalizedA !== normalizedB) return normalizedA - normalizedB;
+      return String(a?.workflowStatus?.title || "").localeCompare(String(b?.workflowStatus?.title || ""));
+    });
+  }, [projectTasks]);
 
   const tabsAfterSettings = columnDetails.filter(
     (item) => item.isEnable === true
@@ -483,9 +617,18 @@ function ProgressBoardofProject() {
         </Menu.Item>
       ),
     },
+    {
+      key: "Gantt",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Gantt")}>
+          Gantt
+        </Menu.Item>
+      ),
+    },
   ];
 
   const filteredTabOptions = tabOptions.filter((tab) => {
+    if (tab.key === "Calendar" || tab.key === "Gantt") return true;
     return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
   });
 
@@ -714,7 +857,68 @@ function ProgressBoardofProject() {
       {selectedTab === "Notes" && <NotesPMS />}
       {selectedTab === "Files" && <FileModule />}
       {selectedTab === "Time" && <TimeForPMS />}
-      {selectedTab === "Calendar" && <CalendarPMS />}
+      {selectedTab === "Calendar" && (
+        <div className="task-calendar-view" style={{ margin: "16px" }}>
+          <div className="calendar-toolbar">
+            <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
+            <div className="calendar-title-group">
+              <span className="calendar-title">
+                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "YYYY-MM-DD")}
+              </span>
+              <div className="calendar-month-year-controls">
+                <Select
+                  value={calendarDate.month()}
+                  onChange={(month) => setCalendarDate((current) => updateCalendarMonthYear(current, month))}
+                  className="calendar-toolbar-select"
+                  size="middle"
+                >
+                  {CALENDAR_MONTH_OPTIONS.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+                <Select
+                  value={calendarDate.year()}
+                  onChange={(year) => setCalendarDate((current) => updateCalendarMonthYear(current, undefined, year))}
+                  className="calendar-toolbar-select calendar-toolbar-select-year"
+                  size="middle"
+                >
+                  {calendarYearOptions.map((year) => (
+                    <Option key={year} value={year}>
+                      {year}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <button type="button" onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</button>
+            <div className="calendar-mode">
+              <button className={calendarMode === "month" ? "active" : ""} onClick={() => setCalendarMode("month")}>Month</button>
+              <button className={calendarMode === "week" ? "active" : ""} onClick={() => setCalendarMode("week")}>Week</button>
+              <button className={calendarMode === "day" ? "active" : ""} onClick={() => setCalendarMode("day")}>Day</button>
+            </div>
+          </div>
+          {projectTasksLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
+              <Spin />
+            </div>
+          ) : (
+            <CalendarGridForProject mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} />
+          )}
+        </div>
+      )}
+      {selectedTab === "Gantt" && (
+        <div className="task-gantt-wrapper" style={{ margin: "16px" }}>
+          {projectTasksLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
+              <Spin />
+            </div>
+          ) : (
+            <TasksGanttView tasks={ganttBoards} onTaskClick={() => { }} />
+          )}
+        </div>
+      )}
 
       <Modal
         title={null}
@@ -761,6 +965,56 @@ function ProgressBoardofProject() {
         accManagerList={accountManagerList}
       />
     </>
+  );
+}
+
+function CalendarGridForProject({ mode, current, tasksByDate }) {
+  const days = useMemo(() => {
+    if (mode === "month") {
+      let dayPointer = current.startOf("month").startOf("week");
+      const end = current.endOf("month").endOf("week");
+      const arr = [];
+      while (dayPointer.isBefore(end) || dayPointer.isSame(end, "day")) {
+        arr.push(dayPointer.format("YYYY-MM-DD"));
+        dayPointer = dayPointer.add(1, "day");
+      }
+      return arr;
+    }
+    if (mode === "week") {
+      const start = current.startOf("week");
+      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("YYYY-MM-DD"));
+    }
+    return [current.format("YYYY-MM-DD")];
+  }, [mode, current]);
+
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <div className="calendar-grid">
+      {mode === "month" && (
+        <div className="calendar-weekdays">
+          {weekDays.map((d) => <div key={d} className="calendar-weekday">{d}</div>)}
+        </div>
+      )}
+      <div className="calendar-days" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : mode === "week" ? 7 : 1}, 1fr)` }}>
+        {days.map((dateStr) => {
+          const list = tasksByDate[dateStr] || [];
+          return (
+            <div key={dateStr} className="calendar-day-cell">
+              <div className="calendar-day-num">{dayjs(dateStr).format("D")}</div>
+              <div className="calendar-day-tasks">
+                {list.slice(0, 3).map((task) => (
+                  <div key={task?._id} className="calendar-task-bar" title={task?.title || "Untitled task"}>
+                    {task?.title || "Untitled task"}
+                  </div>
+                ))}
+                {list.length > 3 && <span className="calendar-more">+{list.length - 3}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

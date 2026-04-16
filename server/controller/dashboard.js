@@ -603,6 +603,61 @@ exports.getMyTasks = async (req, res) => {
   }
 };
 
+function normalizeKanbanBucketKeyFromStatusDoc(status) {
+  const title = String(status?.title || status?.name || "").toLowerCase();
+  const compact = title.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
+  return title.trim() || "_none_";
+}
+
+async function buildWorkflowBucketToStatusIdsMap() {
+  const rows = await WorkflowStatus.find({ isDeleted: false }).select("_id title name").lean();
+  const bucketToStatusIds = {};
+  (rows || []).forEach((doc) => {
+    const key = normalizeKanbanBucketKeyFromStatusDoc(doc);
+    if (!bucketToStatusIds[key]) bucketToStatusIds[key] = [];
+    bucketToStatusIds[key].push(doc._id);
+  });
+  return bucketToStatusIds;
+}
+
+async function aggregateTaskListStatusCounts(matchQueryInput) {
+  return ProjectTasks.aggregate([
+    { $match: matchQueryInput },
+    {
+      $lookup: {
+        from: "workflowstatuses",
+        localField: "task_status",
+        foreignField: "_id",
+        as: "task_status",
+      },
+    },
+    { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: {
+          id: "$task_status._id",
+          title: "$task_status.title",
+          color: "$task_status.color",
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        statusId: "$_id.id",
+        title: { $ifNull: ["$_id.title", "No status"] },
+        color: { $ifNull: ["$_id.color", "#d9d9d9"] },
+        count: 1,
+      },
+    },
+  ]);
+}
+
 // Get task list for Task page (List/Kanban/Calendar). Admin can pass view_all to see all tasks.
 exports.getTaskList = async (req, res) => {
   try {
@@ -615,6 +670,8 @@ exports.getTaskList = async (req, res) => {
       end_date: Joi.date().optional().default(""),
       pageNo: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
+      kanban_bucket: Joi.string().trim().allow("").optional(),
+      metadata_only: Joi.boolean().optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -760,46 +817,49 @@ exports.getTaskList = async (req, res) => {
       }
     }
 
-    // 3. GET TOTAL COUNT (Direct call, no aggregation!)
-    console.log(`[getTaskList] count query:`, JSON.stringify(matchQuery));
-    const totalDocuments = await ProjectTasks.countDocuments(matchQuery);
-    console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
+    const baseMatchQuery = { ...matchQuery };
+    const statusCountAgg = await aggregateTaskListStatusCounts(baseMatchQuery);
 
-    const statusCountAgg = await ProjectTasks.aggregate([
-      { $match: matchQuery },
-      {
-        $lookup: {
-          from: "workflowstatuses",
-          localField: "task_status",
-          foreignField: "_id",
-          as: "task_status",
-        },
-      },
-      { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
-      {
-        $group: {
-          _id: {
-            id: "$task_status._id",
-            title: "$task_status.title",
-            color: "$task_status.color",
-          },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          statusId: "$_id.id",
-          title: { $ifNull: ["$_id.title", "No status"] },
-          color: { $ifNull: ["$_id.color", "#d9d9d9"] },
-          count: 1,
-        },
-      },
-    ]);
+    if (value.metadata_only) {
+      const totalAll = await ProjectTasks.countDocuments(baseMatchQuery);
+      return successResponse(res, statusCode.SUCCESS, messages.LISTING, [], {
+        total: totalAll,
+        statusCounts: statusCountAgg,
+        page: 1,
+        limit: 0,
+        totalPages: 0,
+      });
+    }
+
+    const bucketKey = String(value.kanban_bucket || "").trim();
+    const bucketToStatusIds = await buildWorkflowBucketToStatusIdsMap();
+    let matchForRows = { ...baseMatchQuery };
+    if (bucketKey) {
+      const ids = bucketToStatusIds[bucketKey] || [];
+      const bucketIn = ids.length ? { $in: ids } : { $in: [] };
+      if (baseMatchQuery.task_status) {
+        matchForRows = {
+          ...baseMatchQuery,
+          $and: [
+            ...(Array.isArray(baseMatchQuery.$and) ? [...baseMatchQuery.$and] : []),
+            { task_status: baseMatchQuery.task_status },
+            { task_status: bucketIn },
+          ],
+        };
+        delete matchForRows.task_status;
+      } else {
+        matchForRows = { ...baseMatchQuery, task_status: bucketIn };
+      }
+    }
+
+    // 3. GET TOTAL COUNT for the current row query (per bucket when kanban_bucket is set)
+    console.log(`[getTaskList] count query:`, JSON.stringify(matchForRows));
+    const totalDocuments = await ProjectTasks.countDocuments(matchForRows);
+    console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
 
     // 4. MAIN DATA PIPELINE
     const mainQuery = [
-      { $match: matchQuery },
+      { $match: matchForRows },
       { $sort: { _id: -1 } },
       ...(pageNum && limitNum ? [{ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum }] : []),
 
@@ -899,9 +959,13 @@ exports.getTaskList = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
+          descriptions: 1,
           taskId: 1,
           start_date: 1,
           due_date: 1,
+          end_date: 1,
+          priority: 1,
+          custom_fields: 1,
           createdAt: 1,
           createdBy: 1,
           assignees: 1,

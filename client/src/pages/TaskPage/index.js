@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, Suspense, lazy } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef, Suspense, lazy } from "react";
 import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin } from "antd";
 import {
   SearchOutlined,
@@ -6,11 +6,12 @@ import {
   UnorderedListOutlined,
   AppstoreOutlined,
   CalendarOutlined,
-  DownOutlined,
   FilterOutlined,
   FlagOutlined,
   MessageOutlined,
   BarChartOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -19,6 +20,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { getRoles } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
+import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import TasksGanttView from "../Tasks/TasksGanttView";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
@@ -28,6 +30,7 @@ const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
 
 const { Option } = Select;
 
+const SECTION_PAGE_LIMIT = 25;
 
 const DATE_PRESET_LABELS = {
   any: "Date Type",
@@ -82,6 +85,56 @@ function getTaskProjectId(task) {
     task?.project_id ||
     ""
   );
+}
+
+function getTaskProjectTitle(task) {
+  const p = task?.project;
+  const pid = task?.project_id;
+  if (typeof p === "object" && p?.title) return p.title;
+  if (typeof p === "object" && p?.name) return p.name;
+  if (typeof pid === "object" && pid?.title) return pid.title;
+  if (typeof pid === "object" && pid?.name) return pid.name;
+  return "—";
+}
+
+function mergeSectionKeysFromTotals(statusTotals) {
+  const order = ["todo", "inprogress", "onhold", "done"];
+  const keys = new Set(order);
+  Object.keys(statusTotals || {}).forEach((k) => {
+    if (k && k !== "_none_") keys.add(k);
+  });
+  const rest = [...keys].filter((k) => !order.includes(k)).sort();
+  return [...order.filter((k) => keys.has(k)), ...rest];
+}
+
+function mapTaskToEditFormInitial(task) {
+  if (!task) return {};
+  const projectId = getTaskProjectId(task);
+  const mainTaskId =
+    (typeof task?.mainTask === "object" && task.mainTask?._id) ||
+    (typeof task?.main_task_id === "object" && task.main_task_id?._id) ||
+    task?.main_task_id ||
+    undefined;
+  const assigneeIds = (Array.isArray(task.assignees) ? task.assignees : [])
+    .map((a) => (typeof a === "object" ? a._id || a.id : a))
+    .filter(Boolean);
+  const rawLabels = task.taskLabels || task.task_labels || [];
+  const labelIds = (Array.isArray(rawLabels) ? rawLabels : [])
+    .map((l) => (typeof l === "object" ? l._id || l.id : l))
+    .filter(Boolean);
+  const due = task.due_date || task.end_date;
+  return {
+    title: task.title || "",
+    description: task.descriptions || "",
+    project_id: projectId || undefined,
+    main_task_id: mainTaskId,
+    assignees: assigneeIds,
+    task_labels: labelIds,
+    start_date: task.start_date ? dayjs(task.start_date) : undefined,
+    end_date: due ? dayjs(due) : undefined,
+    priority: task.priority || "Low",
+    custom_fields: task.custom_fields && typeof task.custom_fields === "object" ? { ...task.custom_fields } : {},
+  };
 }
 
 function isCompletedTask(task) {
@@ -561,7 +614,6 @@ const TaskPage = () => {
   const filterState = getTaskPageStateFromSearch(location.search, isAdmin);
 
   const [view, setView] = useState(filterState.view || "list"); // list | kanban | calendar | gantt
-  const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -585,23 +637,19 @@ const TaskPage = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
-  const [pagination, setPagination] = useState({ pageNo: 1, limit: 25 });
-  const [totalTasks, setTotalTasks] = useState(0);
-  const [allTasks, setAllTasks] = useState([]);
   const [statusTotals, setStatusTotals] = useState({});
-  const [hasMoreTasks, setHasMoreTasks] = useState(true);
-  const [isTasksLoading, setIsTasksLoading] = useState(false);
-  const [loadingSectionId, setLoadingSectionId] = useState(null);
+  const [sectionBuckets, setSectionBuckets] = useState({});
+  const [listSectionIds, setListSectionIds] = useState(["todo", "inprogress", "onhold", "done"]);
+  const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
   const tasksContainerRef = React.useRef(null);
-  const isTasksScrollLoadingRef = React.useRef(false);
-  const taskPageRef = React.useRef(1);
-  const triggerLoadMoreTasks = useCallback((sectionId = null) => {
-    if (!hasMoreTasks || isTasksScrollLoadingRef.current) return;
-    isTasksScrollLoadingRef.current = true;
-    setLoadingSectionId(sectionId);
-    taskPageRef.current += 1;
-    setPagination((prev) => ({ ...prev, pageNo: taskPageRef.current }));
-  }, [hasMoreTasks]);
+  const sectionBucketsRef = useRef({});
+  const listSectionLoadGuardRef = useRef(new Set());
+
+  useEffect(() => {
+    sectionBucketsRef.current = sectionBuckets;
+  }, [sectionBuckets]);
 
 
   // Project select infinite loading state
@@ -691,102 +739,165 @@ const TaskPage = () => {
   }, [fetchProjects, hasMoreProjects, isFetchingProjects, projectPagination.pageNo, projectSearch]);
 
 
-  const fetchTaskList = useCallback(async () => {
-    const isInitialPage = pagination.pageNo === 1;
-    setLoading(isInitialPage);
-    setIsTasksLoading(!isInitialPage);
-    dispatch(showAuthLoader());
-    try {
-      const body = {
-        search: debouncedSearch.trim() || undefined,
-        status: statusFilter,
-        project_id: projectFilter?.length ? projectFilter : undefined,
-        view_all: isAdmin ? viewAll : false,
-        ...(taskStartDate ? { start_date: taskStartDate } : {}),
-        ...(taskEndDate ? { end_date: taskEndDate } : {}),
-        pageNo: pagination.pageNo,
-        limit: pagination.limit,
-      };
+  const buildTaskListFilterBody = useCallback(
+    () => ({
+      search: debouncedSearch.trim() || undefined,
+      status: statusFilter,
+      project_id: projectFilter?.length ? projectFilter : undefined,
+      view_all: isAdmin ? viewAll : false,
+      ...(taskStartDate ? { start_date: taskStartDate } : {}),
+      ...(taskEndDate ? { end_date: taskEndDate } : {}),
+    }),
+    [debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate]
+  );
 
-      const res = await Service.makeAPICall({
+  const initializeBoardData = useCallback(async () => {
+    setLoading(true);
+    dispatch(showAuthLoader());
+    listSectionLoadGuardRef.current = new Set();
+    try {
+      const metaRes = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.taskList,
-        body,
+        body: {
+          ...buildTaskListFilterBody(),
+          metadata_only: true,
+        },
       });
-      dispatch(hideAuthLoader());
-      if (res?.status === 200) {
-        const raw = res?.data?.data;
-        const meta = res?.data?.metadata || {};
-        const fetchedTasks = Array.isArray(raw) ? raw : [];
-        const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
-        const nextStatusTotals = statusCounts.reduce((acc, item) => {
-          const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
-          acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
-          return acc;
-        }, {});
-        const shouldAppend = pagination.pageNo > 1;
-        setTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
-        setAllTasks((prev) => (shouldAppend ? [...prev, ...fetchedTasks] : fetchedTasks));
-        setTotalTasks(meta.total || 0);
-        setStatusTotals(nextStatusTotals);
-        setHasMoreTasks(meta.total > pagination.pageNo * pagination.limit);
-      } else {
-        if (pagination.pageNo === 1) {
-          setTasks([]);
-          setAllTasks([]);
-          setTotalTasks(0);
-          setStatusTotals({});
-        }
-        setHasMoreTasks(false);
-      }
-    } catch (e) {
-      dispatch(hideAuthLoader());
-      if (pagination.pageNo === 1) {
-        setTasks([]);
-        setAllTasks([]);
+      if (metaRes?.status !== 200) {
         setStatusTotals({});
+        setListSectionIds(["todo", "inprogress", "onhold", "done"]);
+        setSectionBuckets({});
+        return;
       }
-      setHasMoreTasks(false);
+      const meta = metaRes?.data?.metadata || {};
+      const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
+      const nextStatusTotals = statusCounts.reduce((acc, item) => {
+        const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+        acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
+        return acc;
+      }, {});
+      const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals);
+      setStatusTotals(nextStatusTotals);
+      setListSectionIds(sectionOrder);
+
+      const bucketResults = await Promise.all(
+        sectionOrder.map((bucketId) =>
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: {
+              ...buildTaskListFilterBody(),
+              kanban_bucket: bucketId,
+              pageNo: 1,
+              limit: SECTION_PAGE_LIMIT,
+            },
+          }).then((r) => ({ bucketId, r }))
+        )
+      );
+
+      const nextBuckets = {};
+      bucketResults.forEach(({ bucketId, r }) => {
+        const raw = r?.status === 200 ? r?.data?.data : [];
+        const m = r?.data?.metadata || {};
+        const fetchedTasks = Array.isArray(raw) ? raw : [];
+        const total = Number(m.total || 0);
+        nextBuckets[bucketId] = {
+          tasks: fetchedTasks,
+          pageNo: 1,
+          hasMore: total > fetchedTasks.length,
+          loading: false,
+          total,
+        };
+      });
+      setSectionBuckets(nextBuckets);
+    } catch (e) {
+      setStatusTotals({});
+      setSectionBuckets({});
     } finally {
       setLoading(false);
-      setIsTasksLoading(false);
-      setLoadingSectionId(null);
-      isTasksScrollLoadingRef.current = false;
+      dispatch(hideAuthLoader());
     }
-  }, [dispatch, debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate, pagination.pageNo, pagination.limit]);
+  }, [buildTaskListFilterBody, dispatch]);
+
+  const loadMoreSection = useCallback(
+    async (sectionId) => {
+      if (!sectionId || listSectionLoadGuardRef.current.has(sectionId)) return;
+      const snap = sectionBucketsRef.current[sectionId];
+      if (!snap || snap.loading || !snap.hasMore) return;
+      listSectionLoadGuardRef.current.add(sectionId);
+      setSectionBuckets((prev) => ({
+        ...prev,
+        [sectionId]: { ...prev[sectionId], loading: true },
+      }));
+      try {
+        const nextPage = (snap.pageNo || 1) + 1;
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: {
+            ...buildTaskListFilterBody(),
+            kanban_bucket: sectionId,
+            pageNo: nextPage,
+            limit: SECTION_PAGE_LIMIT,
+          },
+        });
+        const raw = res?.status === 200 ? res?.data?.data : [];
+        const m = res?.data?.metadata || {};
+        const fetchedTasks = Array.isArray(raw) ? raw : [];
+        const total = Number(m.total || 0);
+        setSectionBuckets((prev) => {
+          const cur = prev[sectionId] || { tasks: [], pageNo: 1, hasMore: false, total: 0, loading: false };
+          const merged = [...(cur.tasks || []), ...fetchedTasks];
+          return {
+            ...prev,
+            [sectionId]: {
+              tasks: merged,
+              pageNo: nextPage,
+              hasMore: total > merged.length,
+              loading: false,
+              total,
+            },
+          };
+        });
+      } catch (e) {
+        setSectionBuckets((prev) => ({
+          ...prev,
+          [sectionId]: { ...prev[sectionId], loading: false },
+        }));
+      } finally {
+        listSectionLoadGuardRef.current.delete(sectionId);
+      }
+    },
+    [buildTaskListFilterBody]
+  );
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
   useEffect(() => {
-    fetchTaskList();
-  }, [fetchTaskList, pagination.pageNo, pagination.limit]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPagination(prev => ({ ...prev, pageNo: 1 }));
-    taskPageRef.current = 1;
-  }, [debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate]);
+    initializeBoardData();
+  }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate, isAdmin]);
 
   const handleKanbanColumnScroll = useCallback(
-    (e) => {
+    (e, columnId) => {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
       if (scrollHeight - scrollTop - clientHeight < 50) {
-        triggerLoadMoreTasks(null);
+        loadMoreSection(columnId);
       }
     },
-    [triggerLoadMoreTasks]
+    [loadMoreSection]
   );
 
   const handleListSectionScroll = useCallback(
     (e, sectionId) => {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
       if (scrollHeight - scrollTop - clientHeight < 50) {
-        triggerLoadMoreTasks(sectionId);
+        loadMoreSection(sectionId);
       }
     },
-    [triggerLoadMoreTasks]
+    [loadMoreSection]
   );
 
   const applyDatePreset = useCallback((presetKey) => {
@@ -833,46 +944,40 @@ const TaskPage = () => {
     setView(nextView);
   }, [ganttAppliedDefaultRange, taskEndDate, taskStartDate, view]);
 
-  const filteredTasks = useMemo(() => {
-    // Backend now handles all filtering (status, project, search, dates).
-    // The frontend filteredTasks is kept as a simple pass-through to avoid breaking down-stream dependencies.
-    return tasks;
-  }, [tasks]);
+  const mergedTasksFromBuckets = useMemo(() => {
+    const map = new Map();
+    listSectionIds.forEach((bucketId) => {
+      (sectionBuckets[bucketId]?.tasks || []).forEach((t) => {
+        if (t?._id) map.set(t._id, t);
+      });
+    });
+    return Array.from(map.values());
+  }, [listSectionIds, sectionBuckets]);
+
+  const filteredTasks = useMemo(() => mergedTasksFromBuckets, [mergedTasksFromBuckets]);
 
   const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
 
   const kanbanColumns = useMemo(() => {
-    const byStatus = {};
-
-    sortedTasks.forEach((t) => {
-      const meta = getKanbanStatusMeta(t.task_status);
-      const key = meta.key;
-
-      if (!byStatus[key]) {
-        byStatus[key] = {
-          id: key,
-          title: meta.title,
-          color: meta.color,
-          statusId: t?._stId || t?.task_status?._id || null,
-          statusMeta: t?.task_status || { title: meta.title, color: meta.color },
-          tasks: [],
-        };
-      }
-
-      byStatus[key].tasks.push(t);
-    });
-
     const statusOrder = ["todo", "inprogress", "onhold", "done"];
-    const all = Object.values(byStatus).sort((a, b) => {
+    const all = listSectionIds.map((bucketId) => {
+      const meta = getKanbanStatusMeta({ title: bucketId, name: bucketId });
+      const colTasks = sectionBuckets[bucketId]?.tasks || [];
+      const first = colTasks[0];
+      return {
+        id: bucketId,
+        title: meta.title,
+        color: meta.color,
+        statusId: first?._stId || first?.task_status?._id || null,
+        statusMeta: first?.task_status || { title: meta.title, color: meta.color },
+        tasks: sortTaskList(colTasks, sortMode),
+      };
+    }).sort((a, b) => {
       const aIndex = statusOrder.indexOf(a.id);
       const bIndex = statusOrder.indexOf(b.id);
       const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
       const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-
-      if (normalizedA !== normalizedB) {
-        return normalizedA - normalizedB;
-      }
-
+      if (normalizedA !== normalizedB) return normalizedA - normalizedB;
       return a.title.localeCompare(b.title);
     });
 
@@ -885,7 +990,7 @@ const TaskPage = () => {
         normalizeKanbanStatusKey(col.title) === needle
     );
     return filtered.length ? filtered : all;
-  }, [sortedTasks, kanbanStatusFilter]);
+  }, [listSectionIds, sectionBuckets, sortMode, kanbanStatusFilter]);
 
   // Convert kanbanColumns → format expected by TasksGanttView
   const ganttBoards = useMemo(() =>
@@ -906,6 +1011,123 @@ const TaskPage = () => {
     return map;
   }, [sortedTasks]);
 
+  const handleOpenEditTask = useCallback((task) => {
+    if (!task?._id) return;
+    setTaskToEdit(task);
+    setEditTaskModalOpen(true);
+  }, []);
+
+  const normalizeDateForApi = useCallback((value, withTime = false) => {
+    if (!value) return null;
+    if (typeof value === "string") return value;
+    if (value?.format) return value.format(withTime ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD");
+    return null;
+  }, []);
+
+  const uploadTaskFilesForPage = useCallback(async (files = []) => {
+    try {
+      const validFiles = Array.isArray(files)
+        ? files.filter((file) => file instanceof File || file?.originFileObj instanceof File)
+        : [];
+      if (!validFiles.length) return [];
+      const formData = new FormData();
+      validFiles.forEach((file) => formData.append("document", file?.originFileObj || file));
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: `${Service.fileUpload}?file_for=task`,
+        body: formData,
+        options: { "content-type": "multipart/form-data" },
+      });
+      return Array.isArray(res?.data?.data) ? res.data.data : [];
+    } catch (e) {
+      return [];
+    }
+  }, []);
+
+  const handleEditTaskSubmit = useCallback(
+    async (values) => {
+      const task = taskToEdit;
+      if (!task?._id) return;
+      setEditSubmitting(true);
+      try {
+        const projectId = getTaskProjectId(task);
+        const mainTaskId =
+          (typeof task?.mainTask === "object" && task.mainTask?._id) ||
+          (typeof task?.main_task_id === "object" && task.main_task_id?._id) ||
+          task?.main_task_id;
+        const dynamicCustomFields = { ...(values.custom_fields || {}) };
+        for (const field of values.taskFormFields || []) {
+          const key = String(field?.key || "");
+          if (!key) continue;
+          if (["title", "description", "status", "priority", "assignee_id", "labels", "start_date", "end_date", "project_id"].includes(key)) {
+            continue;
+          }
+          if (field?.type === "date" || field?.type === "datetime") {
+            dynamicCustomFields[key] = normalizeDateForApi(dynamicCustomFields[key], field?.type === "datetime");
+          }
+          if (field?.type === "file") {
+            const current = dynamicCustomFields[key];
+            const maybeFile = Array.isArray(current) ? current[0]?.originFileObj || current[0] : current;
+            if (maybeFile instanceof File) {
+              const uploaded = await uploadTaskFilesForPage([maybeFile]);
+              dynamicCustomFields[key] = uploaded[0] || null;
+            } else {
+              dynamicCustomFields[key] = null;
+            }
+          }
+        }
+
+        const taskStatusId =
+          typeof task?.task_status === "object" ? task.task_status?._id : task?.task_status;
+
+        const reqBody = {
+          updated_key: [
+            "title",
+            "descriptions",
+            "task_labels",
+            "start_date",
+            "due_date",
+            "assignees",
+            "custom_fields",
+            "priority",
+            ...(taskStatusId ? ["task_status"] : []),
+          ],
+          project_id: projectId,
+          main_task_id: mainTaskId,
+          title: String(values.title || "").trim(),
+          descriptions: values.description || "",
+          start_date: normalizeDateForApi(values.start_date),
+          due_date: normalizeDateForApi(values.end_date),
+          assignees: Array.isArray(values.assignees) ? values.assignees : [],
+          task_labels: Array.isArray(values.task_labels) ? values.task_labels : [],
+          custom_fields: dynamicCustomFields,
+          priority: values.priority || "Low",
+          ...(taskStatusId ? { task_status: taskStatusId } : {}),
+        };
+
+        const res = await Service.makeAPICall({
+          methodName: Service.putMethod,
+          api_url: `${Service.taskPropUpdation}/${task._id}`,
+          body: reqBody,
+        });
+
+        if (res?.data?.status) {
+          message.success(res?.data?.message || "Task updated");
+          setEditTaskModalOpen(false);
+          setTaskToEdit(null);
+          await initializeBoardData();
+        } else {
+          message.error(res?.data?.message || "Failed to update task");
+        }
+      } catch (e) {
+        message.error(e?.response?.data?.message || e?.message || "Failed to update task");
+      } finally {
+        setEditSubmitting(false);
+      }
+    },
+    [initializeBoardData, normalizeDateForApi, taskToEdit, uploadTaskFilesForPage]
+  );
+
   const handleOpenTask = (task) => {
     setSelectedTask(task);
     setTaskDetailModalOpen(true);
@@ -917,31 +1139,50 @@ const TaskPage = () => {
   };
 
   const moveTaskLocally = useCallback((taskId, targetColumn) => {
-    if (!taskId || !targetColumn) return;
-
-    setTasks((prev) =>
-      prev.map((task) =>
-        task._id === taskId
-          ? {
-            ...task,
-            _stId: targetColumn.statusId || task?._stId || task?.task_status?._id || null,
-            task_status: {
-              ...(typeof task?.task_status === "object" && task?.task_status !== null ? task.task_status : {}),
-              ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
-              _id:
-                targetColumn.statusId ||
-                targetColumn?.statusMeta?._id ||
-                task?._stId ||
-                task?.task_status?._id ||
-                null,
-              title: targetColumn?.statusMeta?.title || targetColumn.title,
-              color: targetColumn?.statusMeta?.color || targetColumn.color,
-            },
-          }
-          : task
-      )
-    );
-  }, []);
+    if (!taskId || !targetColumn?.id) return;
+    const targetId = targetColumn.id;
+    setSectionBuckets((prev) => {
+      let found = null;
+      let sourceId = null;
+      listSectionIds.forEach((bid) => {
+        const t = (prev[bid]?.tasks || []).find((x) => x._id === taskId);
+        if (t) {
+          found = t;
+          sourceId = bid;
+        }
+      });
+      if (!found || sourceId === null) return prev;
+      if (String(sourceId) === String(targetId)) return prev;
+      const updatedTask = {
+        ...found,
+        _stId: targetColumn.statusId || found?._stId || found?.task_status?._id || null,
+        task_status: {
+          ...(typeof found?.task_status === "object" && found.task_status !== null ? found.task_status : {}),
+          ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
+          _id:
+            targetColumn.statusId ||
+            targetColumn?.statusMeta?._id ||
+            found?._stId ||
+            found?.task_status?._id ||
+            null,
+          title: targetColumn?.statusMeta?.title || targetColumn.title,
+          color: targetColumn?.statusMeta?.color || targetColumn.color,
+        },
+      };
+      const next = { ...prev };
+      next[sourceId] = {
+        ...next[sourceId],
+        tasks: (next[sourceId].tasks || []).filter((t) => t._id !== taskId),
+      };
+      const targetBucket = next[targetId] || { tasks: [], pageNo: 1, hasMore: false, loading: false, total: 0 };
+      const targetTasks = [...(targetBucket.tasks || []).filter((t) => t._id !== taskId), updatedTask];
+      next[targetId] = {
+        ...targetBucket,
+        tasks: targetTasks,
+      };
+      return next;
+    });
+  }, [listSectionIds]);
 
   const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask) => {
     const statusToSend = targetColumn?.statusId || targetColumn?.statusMeta?._id || targetColumn?.title;
@@ -985,27 +1226,41 @@ const TaskPage = () => {
             color: targetColumn?.statusMeta?.color || targetColumn?.color || "#d9d9d9",
           };
 
-      setTasks((prev) =>
-        prev.map((task) =>
-          task._id === taskId
-            ? {
-              ...task,
-              ...updatedTask,
-              _stId:
-                updatedTask?._stId ||
-                updatedTask?.task_status?._id ||
-                targetColumn?.statusId ||
-                task?._stId,
-              task_status: normalizedStatusMeta,
-            }
-            : task
-        )
-      );
+      setSectionBuckets((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((bid) => {
+          next[bid] = {
+            ...next[bid],
+            tasks: (next[bid].tasks || []).map((task) =>
+              task._id === taskId
+                ? {
+                  ...task,
+                  ...updatedTask,
+                  _stId:
+                    updatedTask?._stId ||
+                    updatedTask?.task_status?._id ||
+                    targetColumn?.statusId ||
+                    task?._stId,
+                  task_status: normalizedStatusMeta,
+                }
+                : task
+            ),
+          };
+        });
+        return next;
+      });
       message.success("Task moved successfully");
     } catch (error) {
-      setTasks((prev) =>
-        prev.map((task) => (task._id === taskId ? previousTask : task))
-      );
+      setSectionBuckets((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((bid) => {
+          next[bid] = {
+            ...next[bid],
+            tasks: (next[bid].tasks || []).map((task) => (task._id === taskId ? previousTask : task)),
+          };
+        });
+        return next;
+      });
       message.error(error?.response?.data?.message || error?.message || "Failed to update task status");
     }
   }, [moveTaskLocally]);
@@ -1025,7 +1280,7 @@ const TaskPage = () => {
       return;
     }
 
-    const draggedTask = tasks.find((task) => task._id === draggingTaskId);
+    const draggedTask = mergedTasksFromBuckets.find((task) => task._id === draggingTaskId);
     if (!draggedTask) {
       setDragOverColumnId(null);
       setDraggingTaskId(null);
@@ -1042,46 +1297,100 @@ const TaskPage = () => {
     setDragOverColumnId(null);
     setDraggingTaskId(null);
     await updateTaskKanbanStatus(draggedTask._id, targetColumn, draggedTask);
-  }, [draggingTaskId, tasks, updateTaskKanbanStatus]);
+  }, [draggingTaskId, mergedTasksFromBuckets, updateTaskKanbanStatus]);
 
-  const handleDeleteSelected = async () => {
+  const deleteTasksByIds = useCallback(
+    async (ids) => {
+      const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+      if (uniqueIds.length === 0) return { deleted: 0, failed: 0 };
+      let deleted = 0;
+      let failed = 0;
+      for (const id of uniqueIds) {
+        try {
+          const res = await Service.makeAPICall({
+            methodName: Service.deleteMethod,
+            api_url: `${Service.deleteTask}/${id}`,
+          });
+          if (res?.status === 200 && res?.data?.status) {
+            deleted += 1;
+          } else {
+            failed += 1;
+          }
+        } catch (e) {
+          failed += 1;
+          console.error("deleteTasksByIds", id, e);
+        }
+      }
+      return { deleted, failed };
+    },
+    []
+  );
+
+  const handleDeleteSelected = useCallback(() => {
+    const count = selectedTaskIds.length;
     Modal.confirm({
-      title: "Delete Task List",
-      content: "Are you sure you want to delete the selected task list(s)? Only lists with 0 related tasks will be deleted.",
-      okText: "Yes",
+      title: "Delete tasks",
+      content: `Are you sure you want to delete ${count} selected task${count === 1 ? "" : "s"}? This cannot be undone.`,
+      okText: "Delete",
       okType: "danger",
-      cancelText: "No",
+      cancelText: "Cancel",
       onOk: async () => {
         try {
           dispatch(showAuthLoader());
-          const tasksToDelete = tasks.filter(t => selectedTaskIds.includes(t._id));
-          const deletableTasks = tasksToDelete.filter(t => (t.tasksCount === 0 || (Array.isArray(t.tasks) && t.tasks.length === 0)));
-
-          if (deletableTasks.length === 0 && selectedTaskIds.length > 0) {
-            message.warning("None of the selected task lists have 0 related tasks.");
-            dispatch(hideAuthLoader());
-            return;
+          const { deleted, failed } = await deleteTasksByIds(selectedTaskIds);
+          if (deleted > 0) {
+            message.success(`${deleted} task${deleted === 1 ? "" : "s"} deleted.`);
           }
-
-          for (const t of deletableTasks) {
-            await Service.makeAPICall({
-              methodName: Service.deleteMethod,
-              api_url: `${Service.deleteTask}/${t._id}`,
-            });
+          if (failed > 0) {
+            message.error(`Could not delete ${failed} task${failed === 1 ? "" : "s"}.`);
           }
-
-          message.success(`${deletableTasks.length} task list(s) deleted.`);
           setSelectedTaskIds([]);
-          fetchTaskList();
+          initializeBoardData();
         } catch (e) {
           console.error("handleDeleteSelected", e);
-          message.error("Failed to delete some items.");
+          message.error("Failed to delete tasks.");
         } finally {
           dispatch(hideAuthLoader());
         }
-      }
+      },
     });
-  };
+  }, [deleteTasksByIds, dispatch, initializeBoardData, selectedTaskIds]);
+
+  const handleDeleteOneTask = useCallback(
+    (task) => {
+      if (!task?._id) return;
+      Modal.confirm({
+        title: "Delete task",
+        content: `Delete "${task.title || "this task"}"? This cannot be undone.`,
+        okText: "Delete",
+        okType: "danger",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            dispatch(showAuthLoader());
+            const { deleted, failed } = await deleteTasksByIds([task._id]);
+            if (deleted > 0) {
+              message.success("Task deleted.");
+              setSelectedTaskIds((prev) => prev.filter((id) => id !== task._id));
+              if (selectedTask?._id === task._id) {
+                setTaskDetailModalOpen(false);
+                setSelectedTask(null);
+              }
+              initializeBoardData();
+            } else if (failed > 0) {
+              message.error("Could not delete this task.");
+            }
+          } catch (e) {
+            console.error("handleDeleteOneTask", e);
+            message.error("Failed to delete task.");
+          } finally {
+            dispatch(hideAuthLoader());
+          }
+        },
+      });
+    },
+    [deleteTasksByIds, dispatch, initializeBoardData, selectedTask]
+  );
 
   const handleOpenInProject = (path) => {
     if (path) history.push(path);
@@ -1099,7 +1408,7 @@ const TaskPage = () => {
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onSearch={fetchTaskList}
+            onSearch={() => initializeBoardData()}
             className="ap-search-input"
             allowClear
           />
@@ -1121,21 +1430,6 @@ const TaskPage = () => {
             isFetchingProjects={isFetchingProjects}
             projectSearch={projectSearch}
           />
-          {/* <Select
-            value={pagination.limit}
-            onChange={(nextLimit) => {
-              taskPageRef.current = 1;
-              setPagination({ pageNo: 1, limit: nextLimit });
-            }}
-            style={{ minWidth: 110 }}
-          >
-            {[25, 50, 100].map((size) => (
-              <Option key={size} value={size}>
-                {size} / Page
-              </Option>
-            ))}
-          </Select> */}
-
           {selectedTaskIds.length > 0 && (
             <button
               type="button"
@@ -1190,9 +1484,34 @@ const TaskPage = () => {
         onCancel={() => setAddTaskModalOpen(false)}
         onSuccess={() => {
           setAddTaskModalOpen(false);
-          fetchTaskList();
+          initializeBoardData();
         }}
         standalone
+      />
+
+      <CommonTaskFormModal
+        key={taskToEdit?._id || "edit-task"}
+        open={editTaskModalOpen}
+        mode="edit"
+        title="Edit Task"
+        submitText="Save Changes"
+        initialValues={mapTaskToEditFormInitial(taskToEdit)}
+        lockedProjectId={taskToEdit ? getTaskProjectId(taskToEdit) || undefined : undefined}
+        lockedMainTaskId={
+          taskToEdit
+            ? (typeof taskToEdit?.mainTask === "object" && taskToEdit?.mainTask?._id) ||
+              (typeof taskToEdit?.main_task_id === "object" && taskToEdit?.main_task_id?._id) ||
+              taskToEdit?.main_task_id ||
+              undefined
+            : undefined
+        }
+        showListSelector={false}
+        onCancel={() => {
+          setEditTaskModalOpen(false);
+          setTaskToEdit(null);
+        }}
+        onSubmit={handleEditTaskSubmit}
+        submitting={editSubmitting}
       />
 
       <Suspense fallback={null}>
@@ -1214,10 +1533,13 @@ const TaskPage = () => {
       ) : view === "list" ? (
         <div className="task-list-view" ref={tasksContainerRef} style={{ overflowY: "auto", height: "calc(100vh - 300px)" }}>
           <div className="task-list-column-header">
+            <span className="task-list-header-spacer" aria-hidden />
+            <span className="task-list-header-spacer" aria-hidden />
             <span className="col-task-name">Task Name</span>
             <span className="col-due-date">Due Date</span>
             <span className="col-assignees">Assignee(s)</span>
-            <span className="col-status">Status</span>
+            <span className="col-project">Project</span>
+            <span className="col-actions">Action</span>
           </div>
           {kanbanColumns.map((s) => (
               <TaskListSection
@@ -1227,10 +1549,12 @@ const TaskPage = () => {
                 count={statusTotals[s.id] ?? s.tasks.length}
                 tasks={s.tasks}
                 onOpenTask={handleOpenTask}
+                onEditTask={handleOpenEditTask}
+                onDeleteTask={handleDeleteOneTask}
                 selectedTaskIds={selectedTaskIds}
                 onSelectTask={handleSelectTask}
                 onSectionScroll={handleListSectionScroll}
-                isSectionLoading={isTasksLoading && loadingSectionId === s.id}
+                isSectionLoading={Boolean(sectionBuckets[s.id]?.loading)}
               />
             ))}
         </div>
@@ -1249,7 +1573,7 @@ const TaskPage = () => {
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
                 style={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
-                onScroll={handleKanbanColumnScroll}
+                onScroll={(e) => handleKanbanColumnScroll(e, col.id)}
                 onDragOver={(e) => {
                   e.preventDefault();
                   if (dragOverColumnId !== col.id) setDragOverColumnId(col.id);
@@ -1279,15 +1603,15 @@ const TaskPage = () => {
                     onDragEnd={handleKanbanDragEnd}
                   />
                 ))}
+                {sectionBuckets[col.id]?.loading && (
+                  <div style={{ textAlign: "center", padding: "10px", display: "flex", justifyContent: "center", gap: 8 }}>
+                    <Spin size="small" />
+                    <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more...</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
-          {isTasksLoading && (
-            <div style={{ textAlign: "center", padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", width: "100%" }}>
-              <Spin size="medium" />
-              <span style={{ fontSize: 12, color: "#8c8c8c" }}>Loading more tasks...</span>
-            </div>
-          )}
         </div>
       ) : view === "calendar" ? (
         <div className="task-calendar-view">
@@ -1353,6 +1677,8 @@ function TaskListSection({
   count,
   tasks,
   onOpenTask,
+  onEditTask,
+  onDeleteTask,
   selectedTaskIds,
   onSelectTask,
   onSectionScroll,
@@ -1383,6 +1709,8 @@ function TaskListSection({
                 key={t._id}
                 task={t}
                 onOpen={() => onOpenTask(t)}
+                onEdit={() => onEditTask(t)}
+                onDelete={() => onDeleteTask(t)}
                 isSelected={selectedTaskIds?.includes(t._id)}
                 onSelect={(e) => onSelectTask(t._id, e)}
               />
@@ -1400,13 +1728,12 @@ function TaskListSection({
   );
 }
 
-function TaskRow({ task, onOpen, isSelected, onSelect }) {
+function TaskRow({ task, onOpen, onEdit, onDelete, isSelected, onSelect }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("YYYY-MM-DD") : null;
   const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
-  const statusTitle = task.task_status?.title || "Pending";
-  const statusColor = task.task_status?.color || "#faad14";
   const assigneeNames = getAssigneesDisplay(task.assignees);
+  const projectTitle = getTaskProjectTitle(task);
   const initials =
     assigneeNames.length > 0
       ? assigneeNames[0].slice(0, 2).toUpperCase()
@@ -1438,12 +1765,33 @@ function TaskRow({ task, onOpen, isSelected, onSelect }) {
           "—"
         )}
       </div>
-      <div className="task-row-status">
-        <span className="task-status-pill" style={{ borderColor: statusColor, color: statusColor }}>
-          <span className="task-status-dot" style={{ background: statusColor }} />
-          {statusTitle}
-          <DownOutlined className="task-status-dropdown" />
-        </span>
+      <div className="task-row-project" title={projectTitle}>
+        {projectTitle}
+      </div>
+      <div className="task-row-actions" onClick={(e) => e.stopPropagation()}>
+        <Button
+          type="text"
+          size="small"
+          className="task-row-action-btn"
+          icon={<EditOutlined />}
+          aria-label="Edit task"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+        />
+        <Button
+          type="text"
+          size="small"
+          danger
+          className="task-row-action-btn"
+          icon={<DeleteOutlined />}
+          aria-label="Delete task"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        />
       </div>
     </div>
   );

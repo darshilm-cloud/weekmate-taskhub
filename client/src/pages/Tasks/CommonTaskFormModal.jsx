@@ -34,6 +34,12 @@ const toLabel = (key = "") =>
     .map((word) => `${word[0]?.toUpperCase() || ""}${word.slice(1)}`)
     .join(" ");
 
+const canonicalFieldKey = (key = "") => {
+  const normalized = String(key || "").trim().toLowerCase();
+  if (normalized === "descriptions") return "description";
+  return normalized;
+};
+
 const normalizeUploadFileEvent = (event) => {
   if (Array.isArray(event)) return event;
   return event?.fileList || [];
@@ -99,9 +105,9 @@ export default function CommonTaskFormModal({
   const visibleFields = useMemo(
     () =>
       (taskFormFields || [])
-        .filter((field) => field?.key && !BACKEND_ONLY_KEYS.has(String(field.key || "").trim().toLowerCase()))
+        .filter((field) => field?.key && !BACKEND_ONLY_KEYS.has(canonicalFieldKey(field.key)))
         .filter((field) => {
-          const key = String(field?.key || "").trim().toLowerCase();
+          const key = canonicalFieldKey(field?.key);
           if (key === "status") return false;
           if (HIDDEN_RUNTIME_KEYS.has(key)) return false;
           if (showListSelector && (key === "project_id" || key === "main_task_id")) return false;
@@ -468,7 +474,7 @@ export default function CommonTaskFormModal({
   );
 
   const renderFieldControl = (field) => {
-    const key = String(field?.key || "").trim();
+    const key = canonicalFieldKey(field?.key);
     const placeholder = field.label || toLabel(key);
     if (key === "title") {
       return <Input placeholder={placeholder} />;
@@ -616,25 +622,17 @@ export default function CommonTaskFormModal({
     }
   };
 
-  const configuredFieldMap = useMemo(() => {
-    const map = new Map();
-    visibleFields.forEach((field) => {
-      const key = String(field?.key || "").trim();
-      if (key) map.set(key, field);
-    });
-    return map;
-  }, [visibleFields]);
-
-  const titleField = configuredFieldMap.get("title");
-  const descriptionField = configuredFieldMap.get("description");
-  const sectionFields = useMemo(
-    () =>
-      visibleFields.filter((field) => {
-        const key = String(field?.key || "").trim();
-        return !["title", "description"].includes(key);
-      }),
-    [visibleFields]
-  );
+  const getFieldFormName = useCallback((field) => {
+    const key = canonicalFieldKey(field?.key);
+    if (key === "title") return "title";
+    if (key === "description") return "description";
+    if (key === "priority") return "priority";
+    if (key === "assignee_id") return "assignees";
+    if (key === "labels") return "task_labels";
+    if (key === "start_date" || key === "end_date") return key;
+    if (key === "project_id" || key === "main_task_id") return key;
+    return ["custom_fields", key];
+  }, []);
   const selectedProjectName = useMemo(
     () => projects.find((project) => project?._id === effectiveProjectId)?.title || "",
     [projects, effectiveProjectId]
@@ -761,54 +759,10 @@ export default function CommonTaskFormModal({
             </div>
           )}
 
-          {titleField && (
-            <div className="task-detail-section">
-              <div className="task-detail-label">{titleField?.label || "Title"}</div>
-              <div className="task-detail-value">
-                <Form.Item
-                  name="title"
-                  noStyle
-                  rules={titleField?.required ? [{ required: true, message: "Title is required" }] : []}
-                >
-                  {renderFieldControl(titleField)}
-                </Form.Item>
-              </div>
-            </div>
-          )}
-
-          {descriptionField && (
-            <div className="task-detail-section task-detail-section-featured">
-              <div className="task-detail-section-head">
-                <div>
-                  <div className="task-detail-label">Task brief</div>
-                  <div className="task-detail-section-title">{descriptionField?.label || "Description"}</div>
-                </div>
-              </div>
-              <div className="task-detail-edit-description-wrapper">
-                <Form.Item
-                  name="description"
-                  noStyle
-                  rules={descriptionField?.required ? [{ required: true, message: "Description is required" }] : []}
-                >
-                  {renderFieldControl(descriptionField)}
-                </Form.Item>
-              </div>
-            </div>
-          )}
-
           <div className="task-detail-section-grid">
-            {sectionFields.map((field) => {
-              const key = String(field?.key || "").trim();
-              const formName =
-                key === "priority"
-                  ? "priority"
-                  : key === "assignee_id"
-                  ? "assignees"
-                  : key === "labels"
-                  ? "task_labels"
-                  : key === "start_date" || key === "end_date"
-                  ? key
-                  : ["custom_fields", key];
+            {visibleFields.map((field) => {
+              const key = canonicalFieldKey(field?.key);
+              const formName = getFieldFormName(field);
               return (
                 <div className="task-detail-section" key={key}>
                   <div className="task-detail-label">{field?.label || toLabel(key)}</div>
