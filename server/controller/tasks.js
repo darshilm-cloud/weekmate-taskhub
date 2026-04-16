@@ -824,8 +824,12 @@ exports.getProjectsTask = async (req, res) => {
           project: 1,
           status: 1,
           descriptions: 1,
+          description: "$descriptions",
           start_date: 1,
           due_date: 1,
+          end_date: 1,
+          priority: 1,
+          custom_fields: 1,
           estimated_hours: 1,
           estimated_minutes: 1,
 

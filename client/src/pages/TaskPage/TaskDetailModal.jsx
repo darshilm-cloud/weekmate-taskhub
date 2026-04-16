@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Modal,
   Spin,
@@ -141,6 +141,38 @@ function htmlToPlainText(html) {
   }
 }
 
+function canonicalFieldKey(key = "") {
+  const normalized = String(key || "").trim().toLowerCase();
+  if (normalized === "descriptions") return "description";
+  return normalized;
+}
+
+function toLabel(key = "") {
+  return String(key || "")
+    .split("_")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+const HIDDEN_TASK_FIELD_KEYS = new Set([
+  "id",
+  "_id",
+  "created_by",
+  "created_at",
+  "updated_by",
+  "updated_at",
+  "task_id",
+  "taskid",
+  "project_id",
+  "main_task_id",
+  "status",
+  "task_status",
+  "attachments",
+  "attachment",
+  "files",
+]);
+
 function getTaskContext(task) {
   const projectId = pickObjectId(
     task?.project?._id,
@@ -229,6 +261,7 @@ const TaskDetailModal = ({
   // Options for assignees and labels dropdowns
   const [assigneeOptions, setAssigneeOptions] = useState([]);
   const [labelOptions, setLabelOptions] = useState([]);
+  const [taskFormFields, setTaskFormFields] = useState([]);
 
   const hasExternalBugControls = Boolean(onBugAdd || onBugDelete || onBugEdit || onBugStatusUpdate);
 
@@ -257,6 +290,22 @@ const TaskDetailModal = ({
       setLoading(false);
     }
   }, [task]);
+
+  const fetchTaskFormConfig = useCallback(async () => {
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getTaskFormConfig,
+      });
+      if (res?.data?.status === 1 && Array.isArray(res?.data?.data?.fields)) {
+        setTaskFormFields(res.data.data.fields);
+      } else {
+        setTaskFormFields([]);
+      }
+    } catch {
+      setTaskFormFields([]);
+    }
+  }, []);
 
   const fetchInternalBugStatuses = useCallback(async () => {
     try {
@@ -672,6 +721,7 @@ const TaskDetailModal = ({
     if (open && task) {
       fetchTaskDetails();
       fetchDropdownOptions();
+      fetchTaskFormConfig();
       const { projectId } = getTaskContext(task);
       if (projectId) fetchTimesheets(projectId);
     } else if (!open) {
@@ -695,7 +745,7 @@ const TaskDetailModal = ({
       setTimesheetList([]);
       setSelectedTimesheetId(null);
     }
-  }, [open, task, fetchTaskDetails, fetchDropdownOptions, fetchTimesheets]);
+  }, [open, task, fetchTaskDetails, fetchDropdownOptions, fetchTaskFormConfig, fetchTimesheets]);
 
   useEffect(() => {
     if (!open) return;
@@ -734,14 +784,28 @@ const TaskDetailModal = ({
 
     const bugsForEdit = hasExternalBugControls ? (bugs || []) : (internalBugs || []);
 
+    const sanitizedCustomFields = Object.entries(src?.custom_fields || {}).reduce((acc, [fieldKey, value]) => {
+      const normalizedKey = canonicalFieldKey(fieldKey);
+      if (!normalizedKey || HIDDEN_TASK_FIELD_KEYS.has(normalizedKey)) return acc;
+      acc[normalizedKey] = value;
+      return acc;
+    }, {});
+
     setEditData({
       title: src?.title || "",
-      descriptions: htmlToPlainText(src?.descriptions || ""),
+      descriptions: htmlToPlainText(
+        src?.descriptions ||
+        src?.description ||
+        src?.custom_fields?.description ||
+        src?.custom_fields?.descriptions ||
+        ""
+      ),
       due_date: src?.due_date || null,
       start_date: src?.start_date || null,
       assignees: assigneeIds,
       taskLabels: labelIds,
-      custom_fields: src?.custom_fields || {},
+      priority: src?.priority || "Low",
+      custom_fields: sanitizedCustomFields,
       bugs: bugsForEdit,
     });
     setIsEditing(true);
@@ -893,7 +957,82 @@ const TaskDetailModal = ({
     .map((l) => (typeof l === "object" ? l.title : String(l || "").trim() || null))
     .filter(Boolean);
   const attachmentCount = details?.attachments?.length || 0;
-  const descriptionHtml = displayTask?.descriptions || "<p>No detailed description has been added yet.</p>";
+  const descriptionHtml =
+    displayTask?.descriptions ||
+    displayTask?.description ||
+    displayTask?.custom_fields?.description ||
+    displayTask?.custom_fields?.descriptions ||
+    "<p>No detailed description has been added yet.</p>";
+  const configuredDisplayFields = useMemo(
+    () =>
+      (taskFormFields || [])
+        .filter((field) => {
+          const key = canonicalFieldKey(field?.key);
+          if (!key) return false;
+          if (HIDDEN_TASK_FIELD_KEYS.has(key)) return false;
+          return !["title", "description", "status", "project_id", "main_task_id"].includes(key);
+        })
+        .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0)),
+    [taskFormFields]
+  );
+
+  const getConfiguredFieldDisplayValue = useCallback(
+    (field) => {
+      const key = canonicalFieldKey(field?.key);
+      const mapWithFieldOptions = (value) => {
+        const options = Array.isArray(field?.options) ? field.options : [];
+        const optionMap = new Map(options.map((opt) => [String(opt), opt]));
+        if (Array.isArray(value)) {
+          return value
+            .map((item) => optionMap.get(String(item)) || String(item))
+            .join(", ");
+        }
+        return optionMap.get(String(value)) || String(value);
+      };
+
+      const mapLabelIdsToNames = (value) => {
+        const labelPool = (displayTask?.taskLabels || displayTask?.task_labels || []).concat(labelOptions || []);
+        const labelMap = new Map(
+          (Array.isArray(labelPool) ? labelPool : []).map((item) => [
+            String(item?._id || item?.id || item?.value || item),
+            item?.title || item?.label || item?.name || String(item),
+          ])
+        );
+        const asArray = Array.isArray(value) ? value : [value];
+        const names = asArray
+          .map((item) => {
+            const normalized = String(item?._id || item?.id || item?.value || item || "");
+            return labelMap.get(normalized) || normalized;
+          })
+          .filter(Boolean);
+        return names.length > 0 ? names.join(", ") : "—";
+      };
+
+      if (key === "priority") return displayTask?.priority || "—";
+      if (key === "assignee_id") return assigneeNames.length > 0 ? assigneeNames.join(", ") : "—";
+      if (key === "labels") return labelNames.length > 0 ? labelNames.join(", ") : "—";
+      if (key === "start_date") return displayTask?.start_date ? dayjs(displayTask.start_date).format("MMM D, YYYY") : "Not set";
+      if (key === "end_date" || key === "due_date") {
+        const endValue = displayTask?.end_date || displayTask?.due_date;
+        return endValue ? dayjs(endValue).format("MMM D, YYYY") : "Not set";
+      }
+      const raw =
+        displayTask?.custom_fields?.[key] ??
+        displayTask?.[key] ??
+        displayTask?.custom_fields?.[field?.key];
+      if (raw === null || raw === undefined || raw === "") return "—";
+      if (field?.linkedModule === "project_labels" || key === "project_label" || key === "project_labels") {
+        return mapLabelIdsToNames(raw);
+      }
+      if (field?.type === "select" || field?.type === "multiselect") {
+        return mapWithFieldOptions(raw);
+      }
+      if (Array.isArray(raw)) return raw.join(", ");
+      if (typeof raw === "object") return raw?.name || raw?.file_name || JSON.stringify(raw);
+      return String(raw);
+    },
+    [assigneeNames, displayTask, labelNames, labelOptions]
+  );
 
   const renderCommentsTab = () => (
     <div className="task-detail-tab-content task-detail-comments">
@@ -1492,111 +1631,89 @@ const TaskDetailModal = ({
 
             {/* Meta grid */}
             <div className="task-detail-section-grid">
-              <div className="task-detail-section">
-                <div className="task-detail-label">Project</div>
-                <div className="task-detail-value">{displayTask?.project?.title || "—"}</div>
-              </div>
-
-              <div className="task-detail-section">
-                <div className="task-detail-label">Assignee(s)</div>
-                <div className="task-detail-value">
-                  {isEditing ? (
-                    <Select
-                      mode="multiple"
-                      size="small"
-                      style={{ width: "100%" }}
-                      placeholder="Select assignees"
-                      value={editData.assignees || []}
-                      onChange={(val) => setEditData((p) => ({ ...p, assignees: val }))}
-                      showSearch
-                      optionFilterProp="label"
-                      options={assigneeOptions.map((emp) => ({
-                        value: emp._id,
-                        label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
-                      }))}
-                      allowClear
-                    />
-                  ) : (
-                    assigneeNames.length > 0 ? assigneeNames.join(", ") : "—"
-                  )}
-                </div>
-              </div>
-
-              <div className="task-detail-section">
-                <div className="task-detail-label">Labels</div>
-                <div className="task-detail-value">
-                  {isEditing ? (
-                    <Select
-                      mode="multiple"
-                      size="small"
-                      style={{ width: "100%" }}
-                      placeholder="Select labels"
-                      value={editData.taskLabels || []}
-                      onChange={(val) => setEditData((p) => ({ ...p, taskLabels: val }))}
-                      showSearch
-                      optionFilterProp="label"
-                      options={labelOptions.map((lbl) => ({
-                        value: lbl._id,
-                        label: lbl.title,
-                      }))}
-                      allowClear
-                    />
-                  ) : (
-                    labelNames.length > 0 ? (
-                      <div className="task-detail-tags">
-                        {labelNames.map((l, i) => (
-                          <span key={i} className="task-detail-tag">{l}</span>
-                        ))}
-                      </div>
-                    ) : (
-                      "—"
-                    )
-                  )}
-                </div>
-              </div>
-
-              {Object.keys(isEditing ? (editData.custom_fields || {}) : (displayTask?.custom_fields || {})).map((fieldKey) => {
-                const currentValue = isEditing
-                  ? editData?.custom_fields?.[fieldKey]
-                  : displayTask?.custom_fields?.[fieldKey];
-                return (
-                  <div className="task-detail-section" key={`custom-${fieldKey}`}>
-                    <div className="task-detail-label">
-                      {String(fieldKey || "")
-                        .split("_")
-                        .filter(Boolean)
-                        .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-                        .join(" ")}
-                    </div>
+              {isEditing ? (
+                <>
+                  <div className="task-detail-section">
+                    <div className="task-detail-label">Assignee(s)</div>
                     <div className="task-detail-value">
-                      {isEditing ? (
-                        <Input
-                          size="small"
-                          value={Array.isArray(currentValue) ? currentValue.join(", ") : (currentValue || "")}
-                          onChange={(event) =>
-                            setEditData((prev) => ({
-                              ...prev,
-                              custom_fields: {
-                                ...(prev.custom_fields || {}),
-                                [fieldKey]: event.target.value,
-                              },
-                            }))
-                          }
-                          placeholder="Enter value"
-                        />
-                      ) : (
-                        String(
-                          Array.isArray(currentValue)
-                            ? currentValue.join(", ")
-                            : currentValue === null || currentValue === undefined
-                            ? "—"
-                            : currentValue
-                        )
-                      )}
+                      <Select
+                        mode="multiple"
+                        size="small"
+                        style={{ width: "100%" }}
+                        placeholder="Select assignees"
+                        value={editData.assignees || []}
+                        onChange={(val) => setEditData((p) => ({ ...p, assignees: val }))}
+                        showSearch
+                        optionFilterProp="label"
+                        options={assigneeOptions.map((emp) => ({
+                          value: emp._id,
+                          label: emp.full_name || emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+                        }))}
+                        allowClear
+                      />
                     </div>
                   </div>
-                );
-              })}
+                  <div className="task-detail-section">
+                    <div className="task-detail-label">Labels</div>
+                    <div className="task-detail-value">
+                      <Select
+                        mode="multiple"
+                        size="small"
+                        style={{ width: "100%" }}
+                        placeholder="Select labels"
+                        value={editData.taskLabels || []}
+                        onChange={(val) => setEditData((p) => ({ ...p, taskLabels: val }))}
+                        showSearch
+                        optionFilterProp="label"
+                        options={labelOptions.map((lbl) => ({
+                          value: lbl._id,
+                          label: lbl.title,
+                        }))}
+                        allowClear
+                      />
+                    </div>
+                  </div>
+                  {Object.keys(editData.custom_fields || {})
+                    .filter((fieldKey) => {
+                      const normalizedKey = canonicalFieldKey(fieldKey);
+                      return normalizedKey && !HIDDEN_TASK_FIELD_KEYS.has(normalizedKey);
+                    })
+                    .map((fieldKey) => {
+                    const currentValue = editData?.custom_fields?.[fieldKey];
+                    return (
+                      <div className="task-detail-section" key={`custom-${fieldKey}`}>
+                        <div className="task-detail-label">{toLabel(fieldKey)}</div>
+                        <div className="task-detail-value">
+                          <Input
+                            size="small"
+                            value={Array.isArray(currentValue) ? currentValue.join(", ") : (currentValue || "")}
+                            onChange={(event) =>
+                              setEditData((prev) => ({
+                                ...prev,
+                                custom_fields: {
+                                  ...(prev.custom_fields || {}),
+                                  [fieldKey]: event.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="Enter value"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              ) : (
+                configuredDisplayFields.map((field) => {
+                  const key = canonicalFieldKey(field?.key);
+                  return (
+                    <div className="task-detail-section" key={`cfg-${key}`}>
+                      <div className="task-detail-label">{field?.label || toLabel(key)}</div>
+                      <div className="task-detail-value">{getConfiguredFieldDisplayValue(field)}</div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             {/* Attachments */}
