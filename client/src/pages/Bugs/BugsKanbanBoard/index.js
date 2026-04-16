@@ -438,6 +438,41 @@ const BugList = ({
                         ))}
                       </InfiniteScroll>
                     </div>
+                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px" }}>
+                      <Button 
+                        type="text" 
+                        icon={<PlusOutlined />} 
+                        onClick={() => showModalTaskModal(boardData?._id)}
+                        className="add-task-col-btn"
+                        style={{ 
+                          width: "100%", 
+                          textAlign: "left", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "flex-start", 
+                          marginTop: 8, 
+                          color: "#64748b",
+                          background: "rgba(241, 245, 249, 0.6)",
+                          borderRadius: "8px",
+                          padding: "8px 12px",
+                          fontWeight: 500,
+                          border: "1px dashed #cbd5e1",
+                          transition: "all 0.2s ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#e2e8f0";
+                          e.currentTarget.style.color = "#334155";
+                          e.currentTarget.style.borderColor = "#94a3b8";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(241, 245, 249, 0.6)";
+                          e.currentTarget.style.color = "#64748b";
+                          e.currentTarget.style.borderColor = "#cbd5e1";
+                        }}
+                      >
+                        Add Bug
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -67,6 +67,7 @@ const BugsController = () => {
   const [tableTrue, setTableTrue] = useState(false);
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
+  const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [isModalOpenImport, setIsModalOpenImport] = useState(false);
   const [boardTasksBugs, setBoardTasksBugs] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
@@ -451,6 +452,7 @@ const BugsController = () => {
   };
 
   const handleCancelTaskModal = () => {
+    setModalInitialStatusId(null);
     setIsModalOpenTaskModal(false);
     setShowSelectTask(false);
     setSelectedsassignees([]);
@@ -498,7 +500,7 @@ const BugsController = () => {
         start_date: addInputTaskData.start_date,
         due_date: addInputTaskData.end_date,
         assignees: selectedItems.map((item) => item._id),
-        bug_status: val,
+        bug_status: modalInitialStatusId || val,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
         progress: "0",
@@ -623,7 +625,8 @@ const BugsController = () => {
     setIsModalOpenImport(false);
   };
 
-  const showModalTaskModal = () => {
+  const showModalTaskModal = (statusId = null) => {
+    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
     setIsModalOpenTaskModal(true);
     dispatch(getFolderList(projectId));
     dispatch(getLables());

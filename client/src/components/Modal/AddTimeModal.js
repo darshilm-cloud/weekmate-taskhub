@@ -202,9 +202,10 @@ const AddTimeModal = memo(({
      <Modal
       open={ openModal }
       onCancel={ cancelModal }
-      title="Add Time"
+      title={type === "bug" ? "Add Bug" : type === "task" ? "Add Task" : "Add Time"}
       className="add-task-modal task-aad-time-pop"
       width={ 800 }
+      destroyOnClose
       footer={ [
         <Button key="cancel" onClick={ cancelModal } size="large" className="square-outline-btn ant-delete">
           Cancel
