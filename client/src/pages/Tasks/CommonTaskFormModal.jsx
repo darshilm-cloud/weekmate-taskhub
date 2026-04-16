@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Col, DatePicker, Form, Input, Modal, Row, Select, Tabs, Upload, message } from "antd";
+import { Button, Checkbox, Col, DatePicker, Form, Input, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
 import { CloseOutlined, CommentOutlined, HistoryOutlined, PaperClipOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import "../TaskPage/TaskDetailModal.css";
@@ -85,6 +85,8 @@ export default function CommonTaskFormModal({
   onCancel,
   onSubmit,
   submitting = false,
+  viewOnly = false,
+  taskId,
 }) {
   const [form] = Form.useForm();
   const [taskFormFields, setTaskFormFields] = useState([]);
@@ -99,23 +101,46 @@ export default function CommonTaskFormModal({
   const [linkedOptionsByField, setLinkedOptionsByField] = useState({});
   const [linkedLoadingByField, setLinkedLoadingByField] = useState({});
   const [activeRightTab, setActiveRightTab] = useState("comments");
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
+  const effectiveTaskId = taskId || initialValues?._id || null;
 
-  const visibleFields = useMemo(
-    () =>
-      (taskFormFields || [])
-        .filter((field) => field?.key && !BACKEND_ONLY_KEYS.has(canonicalFieldKey(field.key)))
-        .filter((field) => {
-          const key = canonicalFieldKey(field?.key);
-          if (key === "status") return false;
-          if (HIDDEN_RUNTIME_KEYS.has(key)) return false;
-          if (showListSelector && (key === "project_id" || key === "main_task_id")) return false;
-          return true;
-        })
-        .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0)),
-    [taskFormFields, showListSelector]
-  );
+  const visibleFields = useMemo(() => {
+    const normalized = (taskFormFields || [])
+      .map((field) => {
+        const normalizedKey = canonicalFieldKey(field?.key);
+        return {
+          ...field,
+          key: normalizedKey,
+        };
+      })
+      .filter((field) => field?.key && !BACKEND_ONLY_KEYS.has(field.key))
+      .filter((field) => {
+        const key = field.key;
+        if (key === "status") return false;
+        if (HIDDEN_RUNTIME_KEYS.has(key)) return false;
+        if (showListSelector && (key === "project_id" || key === "main_task_id")) return false;
+        return true;
+      });
+
+    const hasDescription = normalized.some((field) => field.key === "description");
+    if (!hasDescription) {
+      normalized.push({
+        key: "description",
+        label: "Description",
+        type: "textarea",
+        required: false,
+        isDefault: true,
+        order: 2,
+      });
+    }
+
+    return normalized.sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0));
+  }, [taskFormFields, showListSelector]);
 
   const selectedProjectId = Form.useWatch("project_id", form);
   const effectiveProjectId = lockedProjectId || selectedProjectId;
@@ -412,6 +437,54 @@ export default function CommonTaskFormModal({
     fetchLabels(null);
   }, [selectedProjectId, open, lockedProjectId]);
 
+  const fetchComments = useCallback(async () => {
+    if (!effectiveTaskId) return;
+    setCommentsLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.listTaskComments,
+        body: { task_id: effectiveTaskId },
+      });
+      if (res?.data?.status) {
+        setComments(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } else {
+        setComments([]);
+      }
+    } catch {
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [effectiveTaskId]);
+
+  useEffect(() => {
+    if (!open || mode !== "view" || !effectiveTaskId) return;
+    fetchComments();
+  }, [open, mode, effectiveTaskId, fetchComments]);
+
+  const handleAddComment = useCallback(async () => {
+    if (!effectiveTaskId || !commentText.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addTaskComments,
+        body: { task_id: effectiveTaskId, comment: commentText.trim() },
+      });
+      if (res?.data?.status) {
+        setCommentText("");
+        fetchComments();
+      } else {
+        message.error(res?.data?.message || "Failed to add comment");
+      }
+    } catch {
+      message.error("Failed to add comment");
+    } finally {
+      setSubmittingComment(false);
+    }
+  }, [effectiveTaskId, commentText, fetchComments]);
+
   useEffect(() => {
     if (!open) return;
     const linkedFields = (visibleFields || []).filter(
@@ -478,14 +551,15 @@ export default function CommonTaskFormModal({
     const key = canonicalFieldKey(field?.key);
     const placeholder = field.label || toLabel(key);
     if (key === "title") {
-      return <Input placeholder={placeholder} />;
+      return <Input placeholder={placeholder} readOnly={viewOnly} />;
     }
     if (key === "description") {
-      return <Input.TextArea rows={3} placeholder={placeholder} />;
+      return <Input.TextArea rows={3} placeholder={placeholder} readOnly={viewOnly} />;
     }
     if (key === "priority") {
       return (
         <Select
+          disabled={viewOnly}
           options={[
             { value: "Low", label: "Low" },
             { value: "Medium", label: "Medium" },
@@ -499,7 +573,7 @@ export default function CommonTaskFormModal({
         <Select
           mode="multiple"
           placeholder="Select assignees"
-          disabled={!effectiveProjectId}
+          disabled={viewOnly || !effectiveProjectId}
           loading={loadingAssignees}
           showSearch
           optionFilterProp="label"
@@ -518,6 +592,7 @@ export default function CommonTaskFormModal({
       return (
         <Select
           mode="multiple"
+          disabled={viewOnly}
           placeholder="Select labels"
           showSearch
           optionFilterProp="label"
@@ -527,12 +602,12 @@ export default function CommonTaskFormModal({
       );
     }
     if (key === "start_date" || key === "end_date") {
-      return <DatePicker style={{ width: "100%" }} />;
+      return <DatePicker style={{ width: "100%" }} disabled={viewOnly} />;
     }
     if (key === "project_id") {
       return (
         <Select
-          disabled={Boolean(lockedProjectId)}
+          disabled={viewOnly || Boolean(lockedProjectId)}
           loading={loadingProjects}
           placeholder="Select project"
           showSearch
@@ -542,13 +617,13 @@ export default function CommonTaskFormModal({
       );
     }
     if (field?.type === "textarea") {
-      return <Input.TextArea rows={3} placeholder={placeholder} />;
+      return <Input.TextArea rows={3} placeholder={placeholder} readOnly={viewOnly} />;
     }
     if (field?.type === "number") {
-      return <Input type="number" placeholder={placeholder} />;
+      return <Input type="number" placeholder={placeholder} readOnly={viewOnly} />;
     }
     if (field?.type === "date" || field?.type === "datetime") {
-      return <DatePicker style={{ width: "100%" }} showTime={field?.type === "datetime"} />;
+      return <DatePicker style={{ width: "100%" }} showTime={field?.type === "datetime"} disabled={viewOnly} />;
     }
     if (field?.type === "select" || field?.type === "multiselect") {
       const isLinked = field?.optionSource === "linked" && field?.linkedModule;
@@ -558,7 +633,7 @@ export default function CommonTaskFormModal({
       return (
         <Select
           mode={field?.type === "multiselect" ? "multiple" : undefined}
-          disabled={linkedDisabled}
+          disabled={viewOnly || linkedDisabled}
           loading={Boolean(linkedLoadingByField[key])}
           options={
             isLinked
@@ -587,19 +662,26 @@ export default function CommonTaskFormModal({
       );
     }
     if (field?.type === "checkbox") {
-      return <Checkbox>{placeholder}</Checkbox>;
+      return <Checkbox disabled={viewOnly}>{placeholder}</Checkbox>;
     }
     if (field?.type === "file") {
+      if (viewOnly) {
+        return <Input placeholder="File attachments are view-only in detail modal." readOnly />;
+      }
       return (
         <Upload.Dragger beforeUpload={() => false} maxCount={1} multiple={false}>
           <p style={{ margin: 0 }}>Click or drag file to upload</p>
         </Upload.Dragger>
       );
     }
-    return <Input placeholder={placeholder} />;
+    return <Input placeholder={placeholder} readOnly={viewOnly} />;
   };
 
   const handleOk = async () => {
+    if (viewOnly) {
+      onCancel?.();
+      return;
+    }
     try {
       const values = await form.validateFields();
       const projectId = lockedProjectId || values.project_id;
@@ -668,7 +750,7 @@ export default function CommonTaskFormModal({
             <div className="task-detail-hero">
               <div className="task-detail-topbar">
                 <div className="task-detail-topbar-left">
-                  <div className="task-detail-status-text">{mode === "edit" ? "EDIT TASK" : "NEW TASK"}</div>
+                  <div className="task-detail-status-text">{mode === "edit" ? "EDIT TASK" : mode === "view" ? "VIEW TASK" : "NEW TASK"}</div>
                 </div>
                 <div className="task-detail-topbar-actions">
                   <Button
@@ -789,14 +871,16 @@ export default function CommonTaskFormModal({
           </div>
 
           <div className="task-detail-modal-footer-actions">
-            <Button
-              className="add-btn"
-              type="primary"
-              onClick={handleOk}
-              loading={submitting}
-            >
-              {submitText || (mode === "edit" ? "Save Changes" : "Save")}
-            </Button>
+            {!viewOnly && (
+              <Button
+                className="add-btn"
+                type="primary"
+                onClick={handleOk}
+                loading={submitting}
+              >
+                {submitText || (mode === "edit" ? "Save Changes" : "Save")}
+              </Button>
+            )}
             <Button className="task-detail-secondary-btn" onClick={onCancel}>
               Close
             </Button>
@@ -821,18 +905,53 @@ export default function CommonTaskFormModal({
                 label: (
                   <span className="task-detail-tab-label">
                     <CommentOutlined /> Comments
-                    <span className="comment-badge">0</span>
+                    <span className="comment-badge">{comments.length || 0}</span>
                   </span>
                 ),
                 children: (
                   <div className="task-detail-tab-content task-detail-comments">
                     <div className="comment-list-box">
                       <div className="comment-list-wrapper">
-                        <div className="task-no-comments">No comments</div>
+                        {commentsLoading ? (
+                          <div className="task-detail-loading-inline"><Spin size="small" /></div>
+                        ) : comments.length > 0 ? (
+                          comments.map((item, index) => (
+                            <div className="main-comment-wrapper task-detail-comment-item" key={item?._id || index}>
+                              <div className="comment-wrapper">
+                                <p dangerouslySetInnerHTML={{ __html: item?.comment || "" }} />
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="task-no-comments">No comments</div>
+                        )}
                       </div>
                     </div>
                     <div className="task-detail-add-comment">
-                      <div className="task-detail-composer-title">Comments are available in view mode.</div>
+                      {mode === "view" ? (
+                        <>
+                          <div className="task-detail-composer-title">Add to the conversation</div>
+                          <Input.TextArea
+                            rows={4}
+                            placeholder="Share an update..."
+                            value={commentText}
+                            onChange={(event) => setCommentText(event.target.value)}
+                          />
+                          <div className="task-detail-composer-actions">
+                            <Button
+                              className="task-detail-comment-submit"
+                              type="primary"
+                              onClick={handleAddComment}
+                              loading={submittingComment}
+                              disabled={!commentText.trim()}
+                            >
+                              Add comment
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="task-detail-composer-title">Comments are available in view mode.</div>
+                      )}
                     </div>
                   </div>
                 ),

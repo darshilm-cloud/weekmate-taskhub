@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef, Suspense, lazy } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin } from "antd";
 import {
   SearchOutlined,
@@ -25,8 +25,6 @@ import TasksGanttView from "../Tasks/TasksGanttView";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskPage.css";
-
-const TaskDetailModal = lazy(() => import("./TaskDetailModal"));
 
 const { Option } = Select;
 
@@ -1514,18 +1512,30 @@ const TaskPage = () => {
         submitting={editSubmitting}
       />
 
-      <Suspense fallback={null}>
-        <TaskDetailModal
-          open={taskDetailModalOpen}
-          onClose={() => {
-            setTaskDetailModalOpen(false);
-            setSelectedTask(null);
-          }}
-          task={selectedTask}
-          companySlug={companySlug}
-          onOpenInProject={handleOpenInProject}
-        />
-      </Suspense>
+      <CommonTaskFormModal
+        key={selectedTask?._id || "view-task"}
+        open={taskDetailModalOpen}
+        mode="view"
+        title="View Task"
+        initialValues={mapTaskToEditFormInitial(selectedTask)}
+        lockedProjectId={selectedTask ? getTaskProjectId(selectedTask) || undefined : undefined}
+        lockedMainTaskId={
+          selectedTask
+            ? (typeof selectedTask?.mainTask === "object" && selectedTask?.mainTask?._id) ||
+              (typeof selectedTask?.main_task_id === "object" && selectedTask?.main_task_id?._id) ||
+              selectedTask?.main_task_id ||
+              undefined
+            : undefined
+        }
+        showListSelector={false}
+        viewOnly
+        taskId={selectedTask?._id}
+        onCancel={() => {
+          setTaskDetailModalOpen(false);
+          setSelectedTask(null);
+        }}
+        onSubmit={() => {}}
+      />
 
       {/* ── Content ── */}
       {loading ? (
