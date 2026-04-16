@@ -124,6 +124,7 @@ export default function CommonTaskFormModal({
   const watchedEndDate = Form.useWatch("end_date", form);
   const watchedAssignees = Form.useWatch("assignees", form);
   const watchedMainTaskId = Form.useWatch("main_task_id", form);
+  const effectiveMainTaskId = lockedMainTaskId || watchedMainTaskId;
 
   const fetchTaskFormConfig = useCallback(async () => {
     if (Array.isArray(modalDataCache.taskFormFields) && modalDataCache.taskFormFields.length > 0) {
@@ -638,8 +639,8 @@ export default function CommonTaskFormModal({
     [projects, effectiveProjectId]
   );
   const selectedListName = useMemo(
-    () => mainTasks.find((item) => item?._id === watchedMainTaskId)?.title || "",
-    [mainTasks, watchedMainTaskId]
+    () => mainTasks.find((item) => item?._id === effectiveMainTaskId)?.title || "",
+    [mainTasks, effectiveMainTaskId]
   );
   const selectedAssigneeCount = Array.isArray(watchedAssignees) ? watchedAssignees.length : 0;
   const formatMetricDate = (value) => {
