@@ -567,7 +567,7 @@ function UserProfile() {
         <Link to={`/${companySlug}/manage-project-type`}>
           <span className="setting-menu">
             <i className="fi fi-rs-workflow-alt"></i>
-            Project Types
+            Categories
           </span>
         </Link>
       ),

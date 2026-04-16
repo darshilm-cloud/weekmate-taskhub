@@ -42,6 +42,7 @@ let appSetting = require("./appSetting");
 let projectTabs = require("./projectTabs");
 let projectTabsSetting = require("./projectTabsSettings");
 let taskFormConfig = require("./taskFormConfig");
+let projectFormConfig = require("./projectFormConfig");
 let loggedhoursComents = require("./hoursLoggedComments");
 let hoursApprove = require("./hoursApprove");
 let totaltaskhourslogged = require("./totaltaskhourslogged");
@@ -100,6 +101,7 @@ module.exports = {
   projectTabs,
   projectTabsSetting,
   taskFormConfig,
+  projectFormConfig,
   loggedhoursComents,
   hoursApprove,
   empInOut,

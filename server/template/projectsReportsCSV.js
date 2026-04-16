@@ -2,7 +2,7 @@ const moment = require("moment");
 
 exports.sheet = (data) => {
     try {
-        let htmlContent = '<table id="table-to-xls"><tr><th>Project Name</th><th>Project Manager</th><th>Technology</th><th>Project Type</th><th>Estimated Hours</th><th>Used Hours</th><th>Start Date</th><<th>End Date</th></tr>';
+        let htmlContent = '<table id="table-to-xls"><tr><th>Project Name</th><th>Project Manager</th><th>Technology</th><th>Category</th><th>Estimated Hours</th><th>Used Hours</th><th>Start Date</th><<th>End Date</th></tr>';
 
        data.forEach(ele =>{ 
         htmlContent += `<tr> <td>${ele.title}</td> <td>${

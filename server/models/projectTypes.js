@@ -27,7 +27,7 @@ projectTypesSchema.pre("save", function (next) {
   next();
 });
 
-// Custom function to generate slug based on project type name
+// Custom function to generate slug based on category name
 function generateSlug(project_type) {
   const slug = project_type.replace(/[^a-zA-Z0-9]/g, " ");
 

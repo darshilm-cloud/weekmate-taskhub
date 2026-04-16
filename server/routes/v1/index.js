@@ -54,6 +54,7 @@ const SuperAdminRoute = require("./SuperAdminRoute")
 const Maintenance = require("./maintenance")
 const ActivityLog = require("./activityLog")
 const taskFormBuilder = require("./taskFormBuilder")
+const projectFormBuilder = require("./projectFormBuilder")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
 
@@ -109,6 +110,7 @@ Router.use('/superAdmin',SuperAdminRoute)
 Router.use('/maintenance', Maintenance)
 Router.use('/activityLog', ActivityLog)
 Router.use('/task-form-builder', taskFormBuilder)
+Router.use('/project-form-builder', projectFormBuilder)
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Select, Space, Switch, Tag, Tooltip, Typography, message } from "antd";
 import { DeleteOutlined, DragOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import Service from "../../../service";
-import "./taskFormBuilder.css";
+import { hasPermission } from "../../../util/hasPermission";
+import "../TaskFormBuilder/taskFormBuilder.css";
 
 const { Title, Text } = Typography;
 
@@ -26,9 +27,13 @@ const FIELD_OPTION_SOURCE_OPTIONS = [
 const LINKED_MODULE_OPTIONS = [
   { value: "employees", label: "Employees" },
   { value: "clients", label: "Clients" },
-  { value: "project_labels", label: "Project Labels" },
   { value: "projects", label: "Projects" },
-  { value: "project_lists", label: "Project Lists" },
+  { value: "project_types", label: "Categories" },
+  { value: "project_statuses", label: "Project Statuses" },
+  { value: "workflows", label: "Workflows" },
+  { value: "departments", label: "Departments" },
+  { value: "managers", label: "Project Managers" },
+  { value: "account_managers", label: "Account Managers" },
 ];
 
 const toLabel = (key = "") =>
@@ -38,13 +43,14 @@ const toLabel = (key = "") =>
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join(" ");
 
-const TaskFormBuilder = () => {
+const ProjectFormBuilder = () => {
   const [saving, setSaving] = useState(false);
   const [fields, setFields] = useState([]);
   const [fieldModalOpen, setFieldModalOpen] = useState(false);
   const [editingFieldKey, setEditingFieldKey] = useState(null);
   const [draggingFieldKey, setDraggingFieldKey] = useState(null);
   const [addFieldForm] = Form.useForm();
+  const canConfigure = hasPermission(["project_add", "project_edit"]);
 
   const addFieldLabel = Form.useWatch("label", addFieldForm);
   const addFieldType = Form.useWatch("type", addFieldForm);
@@ -69,8 +75,8 @@ const TaskFormBuilder = () => {
     [fields]
   );
 
-  const hydrateFields = useCallback((fields = []) => {
-    const sorted = [...fields].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  const hydrateFields = useCallback((nextFields = []) => {
+    const sorted = [...nextFields].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
     setFields(sorted);
   }, []);
 
@@ -78,15 +84,15 @@ const TaskFormBuilder = () => {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.getTaskFormConfig,
+        api_url: Service.getProjectFormConfig,
       });
       if (response?.data?.status === 1) {
         hydrateFields(response?.data?.data?.fields || []);
       } else {
-        message.error(response?.data?.message || "Failed to load task form settings.");
+        message.error(response?.data?.message || "Failed to load project form settings.");
       }
     } catch (error) {
-      message.error("Unable to load task form settings.");
+      message.error("Unable to load project form settings.");
     }
   }, [hydrateFields]);
 
@@ -101,6 +107,7 @@ const TaskFormBuilder = () => {
   };
 
   const openAddFieldModal = () => {
+    if (!canConfigure) return;
     setEditingFieldKey(null);
     addFieldForm.setFieldsValue({
       type: "text",
@@ -113,9 +120,7 @@ const TaskFormBuilder = () => {
   };
 
   const openEditFieldModal = (field) => {
-    if (!field || field.isDefault) {
-      return;
-    }
+    if (!canConfigure || !field || field.isDefault) return;
     setEditingFieldKey(field.key);
     addFieldForm.setFieldsValue({
       label: field.label || "",
@@ -129,6 +134,7 @@ const TaskFormBuilder = () => {
   };
 
   const handleAddOrEditField = async () => {
+    if (!canConfigure) return;
     const values = await addFieldForm.validateFields();
     const label = String(values.label || "").trim();
     const generatedKey = String(addFieldKey || "").trim();
@@ -205,6 +211,7 @@ const TaskFormBuilder = () => {
   };
 
   const removeField = (key) => {
+    if (!canConfigure) return;
     setFields((prev) =>
       prev
         .filter((field) => field.key !== key)
@@ -213,6 +220,7 @@ const TaskFormBuilder = () => {
   };
 
   const handleRequiredToggle = (key, required) => {
+    if (!canConfigure) return;
     setFields((prev) =>
       prev.map((field, index) =>
         field.key === key ? { ...field, required: Boolean(required), order: index } : { ...field, order: index }
@@ -221,15 +229,11 @@ const TaskFormBuilder = () => {
   };
 
   const moveFieldByDrag = (sourceKey, destinationKey) => {
-    if (!sourceKey || !destinationKey || sourceKey === destinationKey) {
-      return;
-    }
+    if (!canConfigure || !sourceKey || !destinationKey || sourceKey === destinationKey) return;
     setFields((prev) => {
       const sourceIndex = prev.findIndex((field) => field.key === sourceKey);
       const destinationIndex = prev.findIndex((field) => field.key === destinationKey);
-      if (sourceIndex < 0 || destinationIndex < 0) {
-        return prev;
-      }
+      if (sourceIndex < 0 || destinationIndex < 0) return prev;
       const next = [...prev];
       [next[sourceIndex], next[destinationIndex]] = [next[destinationIndex], next[sourceIndex]];
       return next.map((field, index) => ({ ...field, order: index }));
@@ -237,35 +241,36 @@ const TaskFormBuilder = () => {
   };
 
   const handleSave = async () => {
+    if (!canConfigure) return;
     setSaving(true);
     try {
       const payloadFields = [...fields]
         .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
         .map((field) => ({
-        key: field.key,
-        label: field.label,
-        type: field.type,
-        required: Boolean(field.required),
-        isDefault: Boolean(field.isDefault),
-        optionSource: field.optionSource || "static",
-        linkedModule: field.linkedModule || null,
-        options: Array.isArray(field.options) ? field.options : [],
-      }));
+          key: field.key,
+          label: field.label,
+          type: field.type,
+          required: Boolean(field.required),
+          isDefault: Boolean(field.isDefault),
+          optionSource: field.optionSource || "static",
+          linkedModule: field.linkedModule || null,
+          options: Array.isArray(field.options) ? field.options : [],
+        }));
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.addEditTaskFormConfig,
+        api_url: Service.addEditProjectFormConfig,
         body: { fields: payloadFields },
       });
 
       if (response?.data?.status === 1) {
         hydrateFields(response?.data?.data?.fields || []);
-        message.success("Task form configuration saved.");
+        message.success("Project form configuration saved.");
       } else {
-        message.error(response?.data?.message || "Unable to save task form configuration.");
+        message.error(response?.data?.message || "Unable to save project form configuration.");
       }
     } catch (error) {
-      message.error("Unable to save task form configuration.");
+      message.error("Unable to save project form configuration.");
     } finally {
       setSaving(false);
     }
@@ -289,19 +294,9 @@ const TaskFormBuilder = () => {
         />
       );
     }
-    if (field.type === "checkbox") {
-      return <Checkbox disabled>{field.label || toLabel(field.key)}</Checkbox>;
-    }
-    if (field.type === "file") {
-      return <Input disabled placeholder="Choose file" />;
-    }
-    return (
-      <Input
-        type={field.type === "number" ? "number" : "text"}
-        disabled
-        placeholder={field.label || toLabel(field.key)}
-      />
-    );
+    if (field.type === "checkbox") return <Checkbox disabled>{field.label || toLabel(field.key)}</Checkbox>;
+    if (field.type === "file") return <Input disabled placeholder="Choose file" />;
+    return <Input type={field.type === "number" ? "number" : "text"} disabled placeholder={field.label || toLabel(field.key)} />;
   };
 
   return (
@@ -309,20 +304,25 @@ const TaskFormBuilder = () => {
       <Card className="task-form-builder-card">
         <div className="task-form-builder-header">
           <div>
-            <Title level={4}>Task Form Builder</Title>
+            <Title level={4}>Project Form Builder</Title>
             <Text type="secondary">
-              Configure one task form per company. Default fields are locked and always included.
+              Configure one project form per company. Default fields are locked and always included.
             </Text>
           </div>
           <div className="task-form-builder-header-actions">
-            <Button icon={<PlusOutlined />} onClick={openAddFieldModal}>
+            <Button icon={<PlusOutlined />} onClick={openAddFieldModal} disabled={!canConfigure}>
               Add Field
             </Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving} disabled={!canConfigure}>
               Save Configuration
             </Button>
           </div>
         </div>
+        {!canConfigure && (
+          <div style={{ marginBottom: 12, color: "#8c8c8c" }}>
+            You have read-only access. Project create/edit permission is required to update this builder.
+          </div>
+        )}
 
         <div className="task-form-builder-section">
           <Title level={5}>Fields Configuration</Title>
@@ -332,7 +332,7 @@ const TaskFormBuilder = () => {
                 <Col xs={24} md={12} key={field.key}>
                   <div
                     className="task-form-builder-field-card"
-                    draggable
+                    draggable={canConfigure}
                     onDragStart={() => setDraggingFieldKey(field.key)}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={() => {
@@ -344,10 +344,7 @@ const TaskFormBuilder = () => {
                     <div className="task-form-builder-field-header">
                       <Space size={8}>
                         <DragOutlined className="task-form-drag-icon" />
-                        <Text strong>
-                          {field.required ? "* " : ""}
-                          {field.label || toLabel(field.key)}
-                        </Text>
+                        <Text strong>{field.required ? "* " : ""}{field.label || toLabel(field.key)}</Text>
                       </Space>
                       <div className="task-form-builder-row-actions">
                         <Switch
@@ -360,7 +357,7 @@ const TaskFormBuilder = () => {
                           <Button
                             size="small"
                             icon={<EditOutlined />}
-                            disabled={Boolean(field.isDefault)}
+                            disabled={Boolean(field.isDefault) || !canConfigure}
                             onClick={() => openEditFieldModal(field)}
                           />
                         </Tooltip>
@@ -369,7 +366,7 @@ const TaskFormBuilder = () => {
                             size="small"
                             danger
                             icon={<DeleteOutlined />}
-                            disabled={Boolean(field.isDefault)}
+                            disabled={Boolean(field.isDefault) || !canConfigure}
                             onClick={() => removeField(field.key)}
                           />
                         </Tooltip>
@@ -399,6 +396,7 @@ const TaskFormBuilder = () => {
         onCancel={closeFieldModal}
         onOk={handleAddOrEditField}
         okText={editingFieldKey ? "Update Field" : "Add Field"}
+        okButtonProps={{ disabled: !canConfigure }}
       >
         <Form form={addFieldForm} layout="vertical" initialValues={{ type: "text", required: false, optionSource: "static" }}>
           <Form.Item
@@ -406,7 +404,7 @@ const TaskFormBuilder = () => {
             name="label"
             rules={[{ required: true, message: "Please enter field name." }]}
           >
-            <Input placeholder="e.g. Client Approval" />
+            <Input placeholder="e.g. Business Unit" />
           </Form.Item>
           <Form.Item label="Key (Auto Generated)">
             <Input value={editingFieldKey || addFieldKey} disabled placeholder="auto_generated_key" />
@@ -455,4 +453,4 @@ const TaskFormBuilder = () => {
   );
 };
 
-export default TaskFormBuilder;
+export default ProjectFormBuilder;

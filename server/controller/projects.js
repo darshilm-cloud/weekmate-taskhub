@@ -224,7 +224,8 @@ exports.addProjects = async (req, res) => {
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional().default(false),
       acc_manager: Joi.string().optional().allow(""),
-      recurringType: Joi.string().optional().allow("").default("")
+      recurringType: Joi.string().optional().allow("").default(""),
+      custom_fields: Joi.object().optional().default({})
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -268,6 +269,7 @@ exports.addProjects = async (req, res) => {
         projectId: generateRandomId(),
         end_date: value?.end_date,
         recurringType: value?.recurringType || "",
+        custom_fields: value?.custom_fields || {},
         createdBy: req.user._id,
         updatedBy: req.user._id,
         ...(await getRefModelFromLoginUser(req?.user)),
@@ -756,6 +758,7 @@ exports.getProjects = async (req, res) => {
           projectId: 1,
           color: 1,
           descriptions: 1,
+          custom_fields: 1,
           technology: 1,
           project_type: 1,
           project_status: { _id: 1, title: 1 },
@@ -894,6 +897,7 @@ exports.getProjects = async (req, res) => {
         projectId:            project.projectId,
         color:                project.color,
         descriptions:         project.descriptions,
+        custom_fields:        project.custom_fields || {},
         technology:           project.technology,
         project_type:         project.project_type,
         project_status:       project.project_status,
@@ -1495,7 +1499,8 @@ exports.updateProjects = async (req, res) => {
       end_date: Joi.date().optional().default(null),
       isBillable: Joi.boolean().optional(),
       acc_manager: Joi.string().optional().default(null),
-      recurringType: Joi.string().optional().allow("").default("")
+      recurringType: Joi.string().optional().allow("").default(""),
+      custom_fields: Joi.object().optional().default({})
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1551,6 +1556,7 @@ exports.updateProjects = async (req, res) => {
           start_date: value?.start_date,
           end_date: value?.end_date,
           recurringType: value?.recurringType || "",
+          custom_fields: value?.custom_fields || {},
           updatedBy: req.user._id,
           ...(await getRefModelFromLoginUser(req?.user, true)),
           acc_manager: value?.acc_manager || null
@@ -1947,6 +1953,7 @@ exports.getProjectDetailsForMail = async (
           start_date: 1,
           isBillable: 1,
           descriptions: 1,
+          custom_fields: 1,
           estimatedHours: 1,
           technology: 1,
           // {
@@ -2789,6 +2796,7 @@ exports.getProjectOverviewData = async (req, res) => {
           color: 1,
           isBillable: 1,
           descriptions: 1,
+          custom_fields: 1,
           recurringType: 1,
           technology: 1,
           workFlow: 1,
@@ -3464,6 +3472,7 @@ exports.getProjectsReports = async (req, res) => {
           title: 1,
           color: 1,
           descriptions: 1,
+          custom_fields: 1,
           recurringType: 1,
           technology: 1,
           technologyName: {

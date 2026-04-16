@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Checkbox,
@@ -62,6 +62,24 @@ const _dropdownCache = {
 };
 // track if an in-flight fetch is happening so parallel opens don't double-fetch
 let _fetchPromise = null;
+const BACKEND_ONLY_PROJECT_KEYS = new Set(["id", "created_by", "created_at", "updated_at"]);
+const PROJECT_BUILTIN_FIELD_KEYS = new Set([
+  "title",
+  "descriptions",
+  "start_date",
+  "end_date",
+  "technology",
+  "project_type",
+  "pms_clients",
+  "assignees",
+  "manager",
+  "acc_manager",
+  "workFlow",
+  "project_status",
+  "estimatedHours",
+  "recurringType",
+  "isBillable",
+]);
 
 
 const ProjectFormModal = ({
@@ -127,6 +145,20 @@ const ProjectFormModal = ({
   const [isSavingEmployee, setIsSavingEmployee] = useState(false);
   const [employeeModalType, setEmployeeModalType] = useState("project_manager");
   const [editorRefreshKey, setEditorRefreshKey] = useState(0);
+  const [projectFormFields, setProjectFormFields] = useState([]);
+  const [linkedOptionsByField, setLinkedOptionsByField] = useState({});
+
+  const visibleCustomFields = useMemo(
+    () =>
+      (projectFormFields || []).filter((field) => {
+        const key = String(field?.key || "").trim();
+        if (!key) return false;
+        if (BACKEND_ONLY_PROJECT_KEYS.has(key)) return false;
+        if (PROJECT_BUILTIN_FIELD_KEYS.has(key)) return false;
+        return true;
+      }),
+    [projectFormFields]
+  );
 
   const getLookupCollections = (overrides = {}) => ({
     technologyList: overrides.technologyList ?? technologyList,
@@ -138,6 +170,23 @@ const ProjectFormModal = ({
     projectClientList: overrides.projectClientList ?? projectClientList,
     accountManagerList: overrides.accountManagerList ?? accountManagerList,
   });
+
+  const fetchProjectFormConfig = async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getProjectFormConfig,
+      });
+      if (response?.data?.status === 1) {
+        const fields = Array.isArray(response?.data?.data?.fields) ? response.data.data.fields : [];
+        setProjectFormFields(fields.sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0)));
+      } else {
+        setProjectFormFields([]);
+      }
+    } catch (error) {
+      setProjectFormFields([]);
+    }
+  };
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -170,6 +219,7 @@ const ProjectFormModal = ({
           getAccountManager(),
           getWorkflow(),
           getProjectTypeSlug(),
+          fetchProjectFormConfig(),
         ]);
 
         const lookupOverrides = getLookupCollections({
@@ -609,7 +659,8 @@ const ProjectFormModal = ({
             : rawRecurringType
           : currentValues.recurringType,
       assignees: assignees?.length > 0 ? assignees.map((item) => item?._id).filter(Boolean) : currentValues.assignees,
-      client: clients?.length > 0 ? clients.map((item) => item?._id).filter(Boolean) : currentValues.client,
+      pms_clients: clients?.length > 0 ? clients.map((item) => item?._id).filter(Boolean) : currentValues.pms_clients,
+      custom_fields: projectData?.custom_fields || currentValues?.custom_fields || {},
     };
 
     form.setFieldsValue(newValues);
@@ -815,6 +866,112 @@ const ProjectFormModal = ({
       }
     } catch (error) { console.error(error); }
     return [];
+  };
+
+  const normalizeDynamicOptions = (module, source = []) => {
+    const arr = Array.isArray(source) ? source : [];
+    return arr
+      .map((item) => {
+        if (!item) return null;
+        const value = item?._id || item?.id || item?.value;
+        if (!value) return null;
+        if (module === "employees" || module === "managers" || module === "account_managers") {
+          return { value, label: removeTitle(item?.full_name || item?.manager_name || item?.name || "") };
+        }
+        if (module === "clients") {
+          return { value, label: item?.company_name || item?.full_name || item?.name || "" };
+        }
+        if (module === "projects") {
+          return { value, label: item?.title || item?.name || "" };
+        }
+        if (module === "project_types") {
+          return { value, label: item?.project_type || item?.title || item?.name || "" };
+        }
+        if (module === "project_statuses") {
+          return { value, label: item?.title || item?.name || "" };
+        }
+        if (module === "workflows") {
+          return { value, label: item?.project_workflow || item?.title || item?.name || "" };
+        }
+        if (module === "departments") {
+          return { value, label: item?.project_tech || item?.department_name || item?.name || "" };
+        }
+        return { value, label: item?.label || item?.title || item?.name || String(value) };
+      })
+      .filter((item) => item?.value && item?.label);
+  };
+
+  const loadLinkedOptionsForField = async (field) => {
+    const key = String(field?.key || "").trim();
+    const module = field?.linkedModule;
+    if (!key || !module) return;
+    if (Array.isArray(linkedOptionsByField[key]) && linkedOptionsByField[key].length > 0) return;
+
+    try {
+      let source = [];
+      if (module === "employees") {
+        source = projectAssigneesList.length > 0 ? projectAssigneesList : await getProjectassignees();
+      } else if (module === "clients") {
+        source = projectClientList.length > 0 ? projectClientList : await getProjectClients();
+      } else if (module === "projects") {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectdetails,
+          body: { isDropdown: true, limit: 5000 },
+        });
+        source = Array.isArray(res?.data?.data) ? res.data.data : [];
+      } else if (module === "project_types") {
+        source = projectTypeList.length > 0 ? projectTypeList : await getProjectType();
+      } else if (module === "project_statuses") {
+        source = projectStatusList.length > 0 ? projectStatusList : await getStatus();
+      } else if (module === "workflows") {
+        source = workflow.length > 0 ? workflow : await getWorkflow();
+      } else if (module === "departments") {
+        source = technologyList.length > 0 ? technologyList : await getTechnologyList();
+      } else if (module === "managers") {
+        source = projectManagerList.length > 0 ? projectManagerList : await getManager();
+      } else if (module === "account_managers") {
+        source = accountManagerList.length > 0 ? accountManagerList : await getAccountManager();
+      }
+
+      setLinkedOptionsByField((prev) => ({
+        ...prev,
+        [key]: normalizeDynamicOptions(module, source),
+      }));
+    } catch (error) {
+      setLinkedOptionsByField((prev) => ({ ...prev, [key]: [] }));
+    }
+  };
+
+  const renderCustomFieldControl = (field) => {
+    const key = String(field?.key || "").trim();
+    const type = field?.type || "text";
+    const isSelectType = type === "select" || type === "multiselect";
+
+    if (type === "textarea") return <Input.TextArea rows={3} placeholder={field?.label || key} />;
+    if (type === "number") return <Input type="number" placeholder={field?.label || key} />;
+    if (type === "date" || type === "datetime") {
+      return <DatePicker className="pfm-datepicker" style={{ width: "100%" }} format={type === "date" ? "DD/MM/YYYY" : "DD/MM/YYYY HH:mm"} showTime={type === "datetime"} />;
+    }
+    if (type === "checkbox") return <Checkbox>{field?.label || key}</Checkbox>;
+    if (type === "file") return <Input placeholder="File upload URL / value" />;
+    if (isSelectType) {
+      const options =
+        field?.optionSource === "linked"
+          ? linkedOptionsByField[key] || []
+          : (field?.options || []).map((option) => ({ value: option, label: option }));
+      return (
+        <Select
+          mode={type === "multiselect" ? "multiple" : undefined}
+          placeholder={field?.label || key}
+          options={options}
+          onDropdownVisibleChange={(open) => {
+            if (open && field?.optionSource === "linked") loadLinkedOptionsForField(field);
+          }}
+        />
+      );
+    }
+    return <Input placeholder={field?.label || key} />;
   };
 
   const handleSearch = (searchValue) => setSearchKeyword(searchValue);
@@ -1053,8 +1210,9 @@ const ProjectFormModal = ({
     try {
       setIsSubmitting(true);
       dispatch(showAuthLoader());
-      const assignees = selectedItems?.map((item) => item._id) || [];
-      const clients = selectedClient?.map((item) => item._id) || [];
+      const assignees = Array.isArray(values?.assignees) ? values.assignees : [];
+      const clients = Array.isArray(values?.pms_clients) ? values.pms_clients : [];
+      const custom_fields = values?.custom_fields || {};
       const reqBody = {
         title: values.title.trim(),
         assignees,
@@ -1069,10 +1227,11 @@ const ProjectFormModal = ({
           projectStatusList.find((item) => item?.title?.toLowerCase() === "active")?._id,
         workFlow: values.workFlow,
         project_type: values.project_type,
-        descriptions: editorData,
+        descriptions: values?.descriptions || "",
         technology: values.technology,
-        isBillable,
+        isBillable: Boolean(values?.isBillable),
         recurringType: values?.recurringType || "",
+        custom_fields,
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1106,28 +1265,24 @@ const ProjectFormModal = ({
     try {
       setIsSubmitting(true);
       dispatch(showAuthLoader());
-      const assignees = selectedItems.map((item) => item._id);
-      const clients = selectedClient.map((item) => item._id);
-      const managerId = getManagerIdByName(values.manager);
-      const acc_managerId = getManagerIdByName(values?.acc_manager);
-      const typeId = getProjectTypeIdByName(values.project_type);
-      const statusId = getProjectStatusIdByName(values.project_status);
-      const workflowID = getWorkflowIdByName(values.workFlow);
+      const assignees = Array.isArray(values?.assignees) ? values.assignees : [];
+      const clients = Array.isArray(values?.pms_clients) ? values.pms_clients : [];
+      const custom_fields = values?.custom_fields || {};
       const reqBody = {
         ...values,
-        descriptions: editorData,
+        descriptions: values?.descriptions || "",
         assignees,
         pms_clients: clients,
         technology: values.technology,
-        project_type: typeId ? typeId._id : values.project_type,
-        project_status: statusId ? statusId._id : values?.project_status,
-        manager: managerId ? managerId._id : values.manager,
-        acc_manager: acc_managerId ? acc_managerId._id : values.acc_manager,
-        workFlow: workflowID ? workflowID._id : values.workFlow,
+        project_type: values.project_type,
+        project_status: values?.project_status,
+        manager: values.manager,
+        acc_manager: values.acc_manager,
+        workFlow: values.workFlow,
         recurringType: values?.recurringType,
-        end_date: noEndDate ? null : values.end_date,
+        end_date: values?.end_date || null,
+        custom_fields,
       };
-      delete reqBody.client;
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: Service.updateProjectdetails + `/${id}`,
@@ -1151,7 +1306,7 @@ const ProjectFormModal = ({
         );
         await emitEvent(socketEvents.EDIT_PROJECT_ASSIGNEE, {
           _id: id,
-          manager: managerId ? managerId._id : values.manager,
+          manager: values.manager,
           assignees: filterAssignees,
           pms_clients: filterClients,
         });
@@ -1169,7 +1324,153 @@ const ProjectFormModal = ({
     }
   };
 
+  const visibleConfiguredFields = useMemo(
+    () =>
+      (projectFormFields || [])
+        .filter((field) => field?.key && !BACKEND_ONLY_PROJECT_KEYS.has(String(field.key).trim()))
+        .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0)),
+    [projectFormFields]
+  );
+
+  const renderConfiguredField = (field) => {
+    const key = String(field?.key || "").trim();
+    const requiredRules = field?.required
+      ? [{ required: true, message: `${field?.label || key} is required` }]
+      : [];
+
+    const departmentOptions = (technologyList || []).map((item) => ({
+      value: item?._id,
+      label: item?.project_tech,
+    }));
+    const projectTypeOptions = (projectTypeList || []).map((item) => ({
+      value: item?._id,
+      label: item?.project_type,
+    }));
+    const clientOptions = (projectClientList || []).map((item) => ({
+      value: item?._id,
+      label: item?.company_name || item?.full_name,
+    }));
+    const assigneeOptions = (projectAssigneesList || []).map((item) => ({
+      value: item?._id,
+      label: removeTitle(item?.full_name || item?.manager_name || ""),
+    }));
+    const managerOptions = (projectManagerList || []).map((item) => ({
+      value: item?._id,
+      label: removeTitle(item?.manager_name || item?.full_name || ""),
+    }));
+    const accountManagerOptions = (accountManagerList || []).map((item) => ({
+      value: item?._id,
+      label: removeTitle(item?.full_name || ""),
+    }));
+    const workflowOptions = (workflow || []).map((item) => ({
+      value: item?._id,
+      label: item?.project_workflow,
+    }));
+    const statusOptions = (projectStatusList || []).map((item) => ({
+      value: item?._id,
+      label: item?.title,
+    }));
+
+    if (key === "title") {
+      return <Form.Item name="title" className="pfm-form-item" rules={requiredRules}><Input placeholder="Please enter project title" className="pfm-input" bordered={false} /></Form.Item>;
+    }
+    if (key === "descriptions") {
+      return <Form.Item name="descriptions" className="pfm-form-item" rules={requiredRules}><Input.TextArea rows={5} placeholder="Enter description" /></Form.Item>;
+    }
+    if (key === "start_date" || key === "end_date") {
+      return <Form.Item name={key} className="pfm-form-item" rules={requiredRules}><DatePicker className="pfm-datepicker" style={{ width: "100%" }} format="DD/MM/YYYY" /></Form.Item>;
+    }
+    if (key === "technology") {
+      return <Form.Item name="technology" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" options={departmentOptions} placeholder="Select department" /></Form.Item>;
+    }
+    if (key === "project_type") {
+      return <Form.Item name="project_type" className="pfm-form-item" rules={requiredRules}><Select options={projectTypeOptions} placeholder="Select category" /></Form.Item>;
+    }
+    if (key === "pms_clients") {
+      return <Form.Item name="pms_clients" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" options={clientOptions} placeholder="Select client" /></Form.Item>;
+    }
+    if (key === "assignees") {
+      return <Form.Item name="assignees" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" options={assigneeOptions} placeholder="Select assignees" /></Form.Item>;
+    }
+    if (key === "manager") {
+      return <Form.Item name="manager" className="pfm-form-item" rules={requiredRules}><Select options={managerOptions} placeholder="Select project manager" /></Form.Item>;
+    }
+    if (key === "acc_manager") {
+      return <Form.Item name="acc_manager" className="pfm-form-item" rules={requiredRules}><Select options={accountManagerOptions} placeholder="Select account manager" /></Form.Item>;
+    }
+    if (key === "workFlow") {
+      return <Form.Item name="workFlow" className="pfm-form-item" rules={requiredRules}><Select options={workflowOptions} placeholder="Select workflow" /></Form.Item>;
+    }
+    if (key === "project_status") {
+      return <Form.Item name="project_status" className="pfm-form-item" rules={requiredRules}><Select options={statusOptions} placeholder="Select status" /></Form.Item>;
+    }
+    if (key === "estimatedHours") {
+      return <Form.Item name="estimatedHours" className="pfm-form-item" rules={requiredRules}><Input type="number" min={0} placeholder="Enter estimated hours" /></Form.Item>;
+    }
+    if (key === "recurringType") {
+      const recurringOptions = (field?.options?.length ? field.options : ["monthly", "yearly"]).map((item) => ({ value: item, label: item[0]?.toUpperCase() + item.slice(1) }));
+      return <Form.Item name="recurringType" className="pfm-form-item" rules={requiredRules}><Select allowClear options={recurringOptions} placeholder="Select recurring type" /></Form.Item>;
+    }
+    if (key === "isBillable") {
+      return <Form.Item name="isBillable" className="pfm-form-item" valuePropName="checked"><Checkbox>Yes</Checkbox></Form.Item>;
+    }
+    return (
+      <Form.Item name={["custom_fields", key]} className="pfm-form-item" rules={requiredRules}>
+        {renderCustomFieldControl(field)}
+      </Form.Item>
+    );
+  };
+
   const isEdit = modalMode !== "add";
+  const useDynamicProjectForm = true;
+
+  if (useDynamicProjectForm) {
+    return (
+      <Modal
+        footer={null}
+        width={960}
+        open={isModalOpen}
+        onCancel={handleCancel}
+        className="pfm-modal"
+        closable={false}
+        destroyOnClose
+      >
+        <div className="pfm-header">
+          <h2 className="pfm-title">{isEdit ? "Update Project Details" : "Add Project Details"}</h2>
+          <button type="button" className="pfm-close-btn" onClick={handleCancel} aria-label="Close">
+            <CloseOutlined />
+          </button>
+        </div>
+        <Spin spinning={isLoading}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={(values) =>
+              isEdit ? editProjectdetails(selectedProject?._id, values) : addProjectDetails(values)
+            }
+          >
+            <div className="pfm-fields-grid">
+              {visibleConfiguredFields.map((field) => (
+                <div className="pfm-field-row" key={field.key}>
+                  <TagOutlined className="pfm-icon" />
+                  <div className="pfm-input-group">
+                    <div className="pfm-field-label">{field?.required ? "* " : ""}{field?.label || field?.key}</div>
+                    {renderConfiguredField(field)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="pfm-footer">
+              <Button className="pfm-cancel-btn" onClick={handleCancel}>Cancel</Button>
+              <Button type="primary" htmlType="submit" className="pfm-submit-btn" loading={isSubmitting}>
+                {isEdit ? "Update" : "Save"}
+              </Button>
+            </div>
+          </Form>
+        </Spin>
+      </Modal>
+    );
+  }
 
   return (
     <>
@@ -1365,18 +1666,18 @@ const ProjectFormModal = ({
         </div>
         <div className="pfm-divider" />
 
-        {/* Project Type */}
+        {/* Category */}
         <div className="pfm-field-row">
           <TagOutlined className="pfm-icon" />
           <div className="pfm-input-group">
-            <div className="pfm-field-label">Project Type</div>
+            <div className="pfm-field-label">Category</div>
             <Form.Item
               name="project_type"
               className="pfm-form-item"
-              rules={[{ required: true, message: "Please select a project type" }]}
+              rules={[{ required: true, message: "Please select a category" }]}
             >
               <Select
-                placeholder="Select project type"
+                placeholder="Select category"
                 bordered={false}
                 className="pfm-select"
                 showSearch
@@ -1643,6 +1944,36 @@ const ProjectFormModal = ({
         </div>
 
           </div>{/* end pfm-fields-grid */}
+
+        {visibleCustomFields.length > 0 ? (
+          <>
+            <div className="pfm-divider" />
+            <div className="pfm-fields-grid">
+              {visibleCustomFields.map((field) => (
+                <div className="pfm-field-row" key={field.key}>
+                  <TagOutlined className="pfm-icon" />
+                  <div className="pfm-input-group">
+                    <div className="pfm-field-label">
+                      {field?.required ? "* " : ""}
+                      {field?.label || field?.key}
+                    </div>
+                    <Form.Item
+                      name={["custom_fields", field.key]}
+                      className="pfm-form-item"
+                      rules={
+                        field?.required
+                          ? [{ required: true, message: `${field?.label || field?.key} is required` }]
+                          : []
+                      }
+                    >
+                      {renderCustomFieldControl(field)}
+                    </Form.Item>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         {/* Footer buttons */}
         <div className="pfm-footer">

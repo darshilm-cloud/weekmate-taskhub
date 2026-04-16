@@ -40,6 +40,7 @@ function Topbar() {
         { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
         { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
         { label: "Task Form Builder",     icon: <FormOutlined />,    path: `/${companySlug}/admin/task-form-builder` },
+        { label: "Project Form Builder",  icon: <FormOutlined />,    path: `/${companySlug}/admin/project-form-builder` },
         { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
         { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
       ],
@@ -49,7 +50,7 @@ function Topbar() {
       items: [
         { label: "WorkFlow",           icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflows` },
         { label: "Departments",        icon: <ApartmentOutlined />,    path: `/${companySlug}/project-technologies` },
-        { label: "Project Types",      icon: <AppstoreOutlined />,     path: `/${companySlug}/manage-project-type` },
+        { label: "Categories",      icon: <AppstoreOutlined />,     path: `/${companySlug}/manage-project-type` },
         { label: "Status",             icon: <ClusterOutlined />,      path: `/${companySlug}/project-status` },
         { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
         { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },

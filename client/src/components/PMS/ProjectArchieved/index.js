@@ -1348,7 +1348,7 @@ export default ProjectArchieved;
 //                         </Form.Item>
 //                       </Col>
 //                       <Col span={12}>
-//                         <Form.Item label="Project Type" name="project_type">
+//                         <Form.Item label="Category" name="project_type">
 //                           <Select
 //                             size="large"
 //                             showSearch
@@ -1571,12 +1571,12 @@ export default ProjectArchieved;
 //                     rules={[
 //                       {
 //                         required: true,
-//                         message: "Please select a project type",
+//                         message: "Please select a category",
 //                       },
 //                     ]}
 //                   >
 //                     <Select
-//                       placeholder="Project Type"
+//                       placeholder="Category"
 //                       size="large"
 //                       showSearch
 //                       filterOption={(input, option) =>

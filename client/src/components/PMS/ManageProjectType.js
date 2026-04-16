@@ -65,7 +65,7 @@ function ManageProjectType() {
 
   const columns = [
     {
-      title: "Project Types",
+      title: "Categories",
       dataIndex: "project_type",
       key: "project_type",
       render: (text, record) => {
@@ -108,7 +108,7 @@ function ManageProjectType() {
               <Button type="link pe-action-btn">
                 <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
-              <Popconfirm title="Delete this project type?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
+              <Popconfirm title="Delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
                 <Button type="link pe-action-btn">
                   <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
                 </Button>
@@ -229,7 +229,7 @@ function ManageProjectType() {
         <div className="ps-header">
           <h2 className="ps-title">
             <span className="ps-title-icon"><AppstoreOutlined /></span>
-            Project Types
+            Categories
           </h2>
           <div className="ps-header-right">
             <Button className="add-btn"  type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
@@ -269,7 +269,7 @@ function ManageProjectType() {
       <Modal
         open={isModalOpen}
         onCancel={handleCancel}
-        title={<><AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Project Type</>}
+        title={<><AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Category</>}
         className="ps-modal"
         width={480}
         footer={[
@@ -280,8 +280,8 @@ function ManageProjectType() {
         <Form form={addprojectform} layout="vertical" onFinish={handleOk}>
           <Form.Item
             name="project_type"
-            label="Project Type Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid project type" }]}
+            label="Category Name"
+            rules={[{ required: true, whitespace: true, message: "Please enter a valid category" }]}
           >
             <Input autoComplete="off" onChange={e => setprojectname(e.target.value)} size="large" placeholder="e.g. Internal, Client Work" />
           </Form.Item>
