@@ -90,7 +90,7 @@ const FILTER_CONFIG = {
     api: Service.getProjectListing,
     method: Service.postMethod,
     limit: 20,
-    label: "Project Type",
+    label: "Category",
     getName: (item) => item?.project_type,
     skipParam: "skipProjectType",
     searchKey: "projectType",

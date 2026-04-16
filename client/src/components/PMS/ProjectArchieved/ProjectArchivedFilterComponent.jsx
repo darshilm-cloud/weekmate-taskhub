@@ -52,7 +52,7 @@ const FILTER_CONFIG = {
     api: Service.getProjectListing,
     method: Service.postMethod,
     limit: 20,
-    label: "Project Type",
+    label: "Category",
     getName: (item) => item.project_type,
     skipParam: "skipProjectType",
     searchKey: "project_type",
@@ -71,7 +71,7 @@ const FILTER_CONFIG = {
     options: [
       { value: "createdAt", label: "Latest Updated" },
       { value: "title", label: "Name" },
-      { value: "project_type", label: "Project Type" },
+      { value: "project_type", label: "Category" },
     ],
   },
 };

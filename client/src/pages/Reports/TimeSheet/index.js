@@ -358,7 +358,7 @@ const TimeSheet = () => {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       // Teal palette — Hours by Manager
       managerColors: ["#36cfc9", "#13c2c2", "#08979c", "#006d75", "#4dd9d0", "#87e8de"],
-      // Orange palette — Hours by Project Type
+      // Orange palette — Hours by Category
       projectTypeColors: ["#ffa940", "#ff7a45", "#fa8c16", "#d46b08", "#ffbb96", "#ffd591"],
       // Purple palette — Hours by User
       userColors: ["#9254de", "#722ed1", "#b37feb", "#531dab", "#d3adf7", "#efdbff"],
@@ -786,7 +786,7 @@ const TimeSheet = () => {
         <div className="timesheet-charts">
           <div className="timesheet-charts-grid">
             {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-            {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
+            {renderChart(horizontalBarChartConfig, "bar", "Hours by Category")}
             {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
           </div>
         </div>

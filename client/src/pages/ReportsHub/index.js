@@ -908,7 +908,7 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "project-running") {
       items = reportData['project-running']?.data || [];
-      headers = ["Project Name", "Manager", "Department", "Project Type", "Est. Hours", "Used Hours", "Start Date", "End Date"];
+      headers = ["Project Name", "Manager", "Department", "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"];
       const rows = items.map((item) => [
         item.title || "",
         item.managerName || "",
@@ -922,7 +922,7 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "timesheet") {
       items = reportData['timesheet']?.data || [];
-      headers = ["User", "Project", "Description", "Logged Time", "Date", "Project Manager", "Technology", "Project Type"];
+      headers = ["User", "Project", "Description", "Logged Time", "Date", "Project Manager", "Technology", "Category"];
       const rows = items.map((item) => [
         item.user || "",
         item.project || "",
@@ -2932,7 +2932,7 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
       ),
     },
     {
-      title: "Project Type",
+      title: "Category",
       dataIndex: "project_typeName",
       key: "project_typeName",
     },
@@ -3229,7 +3229,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
       ),
     },
     {
-      title: "Project Type",
+      title: "Category",
       dataIndex: "projectType",
       key: "projectType",
     },
@@ -3317,7 +3317,7 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
           
           {typeChartData.length > 0 && (
             <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
-              <h3>Hours by Project Type</h3>
+              <h3>Hours by Category</h3>
               <ReactApexChart
                 options={{
                   chart: { type: 'bar', toolbar: { show: false } },

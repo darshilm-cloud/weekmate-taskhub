@@ -77,6 +77,10 @@ const ProjectSchema = new mongoose.Schema({
     type: String, 
     default: ""
   },
+  custom_fields: {
+    type: Schema.Types.Mixed,
+    default: {},
+  },
   ...commonSchema(),
 });
 

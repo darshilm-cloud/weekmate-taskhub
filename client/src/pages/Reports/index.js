@@ -297,7 +297,7 @@ const ProjectsRunning = () => {
         ellipsis: true,
       },
       {
-        title: "Project Type",
+        title: "Category",
         dataIndex: "project_typeName",
         width: 120,
         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -535,7 +535,7 @@ const ProjectsRunning = () => {
       { key: "title", label: "Project Name" },
       { key: "managerName", label: "Project Manager" },
       { key: "technologyName", label: "Department" },
-      { key: "project_typeName", label: "Project Type" },
+      { key: "project_typeName", label: "Category" },
       { key: "estimatedHours", label: "Estimated Hours" },
       { key: "total_logged_time", label: "Used Hours" },
       { key: "start_date", label: "Start Date" },
@@ -1075,7 +1075,7 @@ export default React.memo(ProjectsRunning);
 //         ellipsis: true,
 //       },
 //       {
-//         title: "Project Type",
+//         title: "Category",
 //         dataIndex: "project_typeName",
 //         width: 120,
 //         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -1305,7 +1305,7 @@ export default React.memo(ProjectsRunning);
 //       { key: "title", label: "Project Name" },
 //       { key: "managerName", label: "Project Manager" },
 //       { key: "technologyName", label: "Department" },
-//       { key: "project_typeName", label: "Project Type" },
+//       { key: "project_typeName", label: "Category" },
 //       { key: "estimatedHours", label: "Estimated Hours" },
 //       { key: "total_logged_time", label: "Used Hours" },
 //       { key: "start_date", label: "Start Date" },
@@ -1882,7 +1882,7 @@ export default React.memo(ProjectsRunning);
 //         ellipsis: true,
 //       },
 //       {
-//         title: "Project Type",
+//         title: "Category",
 //         dataIndex: "project_typeName",
 //         width: 120,
 //         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -2102,7 +2102,7 @@ export default React.memo(ProjectsRunning);
 //       { key: "title", label: "Project Name" },
 //       { key: "managerName", label: "Project Manager" },
 //       { key: "technologyName", label: "Department" },
-//       { key: "project_typeName", label: "Project Type" },
+//       { key: "project_typeName", label: "Category" },
 //       { key: "estimatedHours", label: "Estimated Hours" },
 //       { key: "total_logged_time", label: "Used Hours" },
 //       { key: "start_date", label: "Start Date" },
@@ -2281,7 +2281,7 @@ export default React.memo(ProjectsRunning);
 
 //           {renderFilterSelect(
 //             "projectype",
-//             "Select Project Type",
+//             "Select Category",
 //             projectType,
 //             handleTypeChange,
 //             projectTypeList,

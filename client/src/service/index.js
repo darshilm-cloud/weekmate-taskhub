@@ -401,6 +401,8 @@ export default class Service {
   // task form builder
   static getTaskFormConfig = "/task-form-builder/get"
   static addEditTaskFormConfig = "/task-form-builder/add-edit"
+  static getProjectFormConfig = "/project-form-builder/get"
+  static addEditProjectFormConfig = "/project-form-builder/add-edit"
 
 
   // billable hours api

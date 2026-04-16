@@ -1,106 +1,60 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Button, Popover, Checkbox, Input, Badge, Divider, Spin } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import _ from "lodash";
 import "../../assets/css/FilterUI.css";
-import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import Service from "../../service";
 import { isEmpty } from "lodash";
 
 const { Search } = Input;
 
 // Filter types
 const FILTER_TYPES = {
-  DEPARTMENT: "department",
-  PROJECT_MANAGER: "projectManager",
-  PROJECT_TYPE: "projectType",
+  // TECHNOLOGY: "technology",
+  ASSIGNEES: "assignees",
 };
 
-// Filter configuration
+// API and pagination config
 const FILTER_CONFIG = {
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getprojectTech,
-    method: Service.postMethod,
-    limit: 20,
-    label: "Department",
-    getName: (item) => item.project_tech,
-    skipParam: "skipDepartment",
-    searchKey: "project_tech",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.project_tech}</span>
-      </div>
-    ),
-    requestBody: { isDropdown: false },
-  },
-  [FILTER_TYPES.PROJECT_MANAGER]: {
-    api: Service.getProjectManager,
+  // [FILTER_TYPES.TECHNOLOGY]: {
+  //   api: Service.getprojectTech,
+  //   method: Service.postMethod,
+  //   limit: 20,
+  //   body: { sortBy: "desc", isDropdown: false },
+  //   label: "Department",
+  //   getName: (item) => item.project_tech,
+  //   skipParam: "skipTechnology",
+  //   searchKey: "technology",
+  // },
+  [FILTER_TYPES.ASSIGNEES]: {
+    api: Service.getEmployees,
     method: Service.getMethod,
     limit: 20,
-    label: "Project Manager",
-    getName: (item) => removeTitle(item.manager_name),
-    skipParam: "skipProjectManager",
-    searchKey: "manager_name",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{removeTitle(item.manager_name)}</span>
-      </div>
-    ),
-  },
-  [FILTER_TYPES.PROJECT_TYPE]: {
-    api: Service.getProjectListing,
-    method: Service.postMethod,
-    limit: 20,
-    label: "Category",
-    getName: (item) => item.project_type,
-    skipParam: "skipProjectType",
-    searchKey: "project_type",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.project_type}</span>
-      </div>
-    ),
+    label: "Assignees",
+    getName: (item) => removeTitle(item?.full_name),
+    skipParam: "skipAssignees",
+    searchKey: "assignees",
   },
 };
 
-// Create filter menu items
-const createFilterMenuItems = () => {
-  return Object.entries(FILTER_CONFIG).map(([key, config]) => ({
-    key,
-    label: config.label,
-  }));
+// Filter menu items based on roles
+const getMenuItems = (getRoles) => {
+  const items = [
+    // {
+    //   key: FILTER_TYPES.TECHNOLOGY,
+    //   label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label,
+    // },
+    {
+      key: FILTER_TYPES.ASSIGNEES,
+      label: FILTER_CONFIG[FILTER_TYPES.ASSIGNEES].label,
+    },
+  ];
+  return items;
 };
 
-// FilterSection component for API-driven filters
+// FilterSection component
 const FilterSection = ({
   config,
   items,
@@ -150,9 +104,22 @@ const FilterSection = ({
       }
       height={180}
       style={{ paddingRight: "8px" }}
-      scrollThreshold={0.9}
+      scrollThreshold={0.9} // Increased to prevent premature fetches
     >
-      {items.map((item) => config.renderItem(item, onSelect, selectedItems))}
+      {items.map((item) => (
+        <div
+          key={item._id || item.project_tech || item.project_type}
+          className={`assignee-item ${
+            selectedItems.includes(item._id) ? "selected" : ""
+          }`}
+        >
+          <Checkbox
+            checked={selectedItems.includes(item._id)}
+            onChange={() => onSelect(item)}
+          />
+          <span>{config.getName(item)}</span>
+        </div>
+      ))}
       {items.length === 0 && !pagination.loading && (
         <div
           style={{
@@ -177,40 +144,33 @@ const FilterSection = ({
   </div>
 );
 
-const ProjectRunningFilterComponent = ({ onFilterChange }) => {
+const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.DEPARTMENT);
+  const [activeFilter, setActiveFilter] = useState(
+    //  FILTER_TYPES.TECHNOLOGY
+    FILTER_TYPES.ASSIGNEES
+  );
   const [filterData, setFilterData] = useState({
-    [FILTER_TYPES.DEPARTMENT]: [],
-    [FILTER_TYPES.PROJECT_MANAGER]: [],
-    [FILTER_TYPES.PROJECT_TYPE]: [],
+    // [FILTER_TYPES.TECHNOLOGY]: [],
+    [FILTER_TYPES.ASSIGNEES]: [],
   });
   const [selectedFilters, setSelectedFilters] = useState({
-    [FILTER_TYPES.DEPARTMENT]: [],
-    [FILTER_TYPES.PROJECT_MANAGER]: [],
-    [FILTER_TYPES.PROJECT_TYPE]: [],
+    // [FILTER_TYPES.TECHNOLOGY]: [],
+    [FILTER_TYPES.ASSIGNEES]: [],
   });
   const [searchTerms, setSearchTerms] = useState({
-    [FILTER_TYPES.DEPARTMENT]: "",
-    [FILTER_TYPES.PROJECT_MANAGER]: "",
-    [FILTER_TYPES.PROJECT_TYPE]: "",
+    // [FILTER_TYPES.TECHNOLOGY]: "",
+    [FILTER_TYPES.ASSIGNEES]: "",
   });
   const [pagination, setPagination] = useState({
-    [FILTER_TYPES.DEPARTMENT]: {
-      page: 1,
-      limit: 20,
-      hasMore: true,
-      loading: false,
-      total: 0,
-    },
-    [FILTER_TYPES.PROJECT_MANAGER]: {
-      page: 1,
-      limit: 20,
-      hasMore: true,
-      loading: false,
-      total: 0,
-    },
-    [FILTER_TYPES.PROJECT_TYPE]: {
+    // [FILTER_TYPES.TECHNOLOGY]: {
+    //   page: 1,
+    //   limit: 20,
+    //   hasMore: true,
+    //   loading: false,
+    //   total: 0,
+    // },
+    [FILTER_TYPES.ASSIGNEES]: {
       page: 1,
       limit: 20,
       hasMore: true,
@@ -219,15 +179,15 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
     },
   });
   const [initialLoadComplete, setInitialLoadComplete] = useState({
-    [FILTER_TYPES.DEPARTMENT]: false,
-    [FILTER_TYPES.PROJECT_MANAGER]: false,
-    [FILTER_TYPES.PROJECT_TYPE]: false,
+    // [FILTER_TYPES.TECHNOLOGY]: false,
+    [FILTER_TYPES.ASSIGNEES]: false,
   });
 
   const activeFiltersCount = useMemo(() => {
-    return Object.values(selectedFilters).reduce((count, value) => {
-      return count + (Array.isArray(value) && value.length > 0 ? 1 : 0);
-    }, 0);
+    return Object.values(selectedFilters).reduce(
+      (count, filters) => count + (filters.length > 0 ? 1 : 0),
+      0
+    );
   }, [selectedFilters]);
 
   const fetchFilterData = useCallback(
@@ -246,34 +206,20 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
       }));
 
       try {
-        let response;
+        const apiUrl =
+          config.method === Service.getMethod
+            ? `${config.api}?page=${page}&limit=${config.limit}&search=${search}`
+            : config.api;
+        const body =
+          config.method === Service.postMethod
+            ? { ...config.body, pageNo: page, limit: config.limit, search }
+            : {};
 
-        if (config.method === Service.postMethod) {
-          // For POST methods, send pagination and search in the request body
-          const reqBody = {
-            pageNo: page,
-            limit: config.limit,
-            search,
-            ...(config.requestBody || {}),
-            ...(filterType === FILTER_TYPES.DEPARTMENT && {
-              isDropdown: false,
-            }),
-          };
-
-          response = await Service.makeAPICall({
-            methodName: config.method,
-            api_url: config.api,
-            body: reqBody,
-          });
-        } else {
-          // For GET methods, use query parameters
-          const apiUrl = `${config.api}?page=${page}&limit=${config.limit}&search=${search}`;
-          response = await Service.makeAPICall({
-            methodName: config.method,
-            api_url: apiUrl,
-            body: config.requestBody || undefined,
-          });
-        }
+        const response = await Service.makeAPICall({
+          methodName: config.method,
+          api_url: apiUrl,
+          body,
+        });
 
         const newData = Array.isArray(response?.data?.data)
           ? response.data.data
@@ -324,26 +270,22 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
 
   const debouncedSearch = useMemo(() => {
     const functions = {};
-    [
-      FILTER_TYPES.DEPARTMENT,
-      FILTER_TYPES.PROJECT_MANAGER,
-      FILTER_TYPES.PROJECT_TYPE,
-    ].forEach((key) => {
-      functions[key] = _.debounce((value) => {
+    Object.keys(FILTER_TYPES).forEach((key) => {
+      functions[FILTER_TYPES[key]] = _.debounce((value) => {
         setPagination((prev) => ({
           ...prev,
-          [key]: {
-            ...prev[key],
+          [FILTER_TYPES[key]]: {
+            ...prev[FILTER_TYPES[key]],
             page: 1,
             hasMore: true,
           },
         }));
-        setFilterData((prev) => ({ ...prev, [key]: [] }));
+        setFilterData((prev) => ({ ...prev, [FILTER_TYPES[key]]: [] }));
         setInitialLoadComplete((prev) => ({
           ...prev,
-          [key]: false,
+          [FILTER_TYPES[key]]: false,
         }));
-        fetchFilterData(key, 1, value, true);
+        fetchFilterData(FILTER_TYPES[key], 1, value, true);
       }, 300);
     });
     return functions;
@@ -407,40 +349,22 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
     });
   }, []);
 
-  const resetFilter = useCallback(
-    (filterType) => {
-      setSelectedFilters((prev) => ({
-        ...prev,
-        [filterType]: [],
-      }));
-      setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
-      onFilterChange([FILTER_CONFIG[filterType].skipParam]);
-    },
-    [onFilterChange]
-  );
+  const resetFilter = useCallback((filterType) => {
+    setSelectedFilters((prev) => ({ ...prev, [filterType]: [] }));
+    onFilterChange(FILTER_CONFIG[filterType].skipParam);
+  }, []);
 
   const resetAllFilters = useCallback(() => {
     setSelectedFilters({
-      [FILTER_TYPES.DEPARTMENT]: [],
-      [FILTER_TYPES.PROJECT_MANAGER]: [],
-      [FILTER_TYPES.PROJECT_TYPE]: [],
-    });
-    setSearchTerms({
-      [FILTER_TYPES.DEPARTMENT]: "",
-      [FILTER_TYPES.PROJECT_MANAGER]: "",
-      [FILTER_TYPES.PROJECT_TYPE]: "",
+      // [FILTER_TYPES.TECHNOLOGY]: [],
+      [FILTER_TYPES.ASSIGNEES]: [],
     });
     onFilterChange(["skipAll"]);
     setIsPopoverOpen(false);
-  }, [onFilterChange]);
+  }, []);
 
   useEffect(() => {
     if (
-      [
-        FILTER_TYPES.DEPARTMENT,
-        FILTER_TYPES.PROJECT_MANAGER,
-        FILTER_TYPES.PROJECT_TYPE,
-      ].includes(activeFilter) &&
       filterData[activeFilter].length === 0 &&
       !pagination[activeFilter].loading &&
       pagination[activeFilter].hasMore &&
@@ -456,7 +380,7 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
     initialLoadComplete,
   ]);
 
-  // Add this useEffect to move selected items to top when switching filters
+  // Add this useEffect after your existing useEffects, around line 380
   useEffect(() => {
     if (activeFilter && initialLoadComplete[activeFilter]) {
       const selectedIds = selectedFilters[activeFilter];
@@ -490,8 +414,6 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
 
   const renderFilterContent = () => {
     const config = FILTER_CONFIG[activeFilter];
-    if (!config) return null;
-
     return (
       <FilterSection
         config={config}
@@ -512,47 +434,48 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
     );
   };
 
-  const popoverContent = (
-    <div className="filter-popover-content">
-      <div className="filter-sidebar">
-        <div className="filter-header">
-          <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
-            <Button
-              size="small"
-              type="text"
-              onClick={resetAllFilters}
-              className="delete-btn"
-              title="Reset all filters"
-            >
-              Reset All ({activeFiltersCount})
-            </Button>
-          )}
-        </div>
-        <Divider style={{ margin: "8px 0" }} />
-        {createFilterMenuItems().map((item) => (
-          <div
-            key={item.key}
-            onClick={() => setActiveFilter(item.key)}
-            className={`filter-menu-item ${
-              activeFilter === item.key ? "active" : ""
-            }`}
-          >
-            <span>{item.label}</span>
-            {!isEmpty(selectedFilters[item.key]) && (
-              <Badge size="small" color="#1890ff" />
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="filter-content">{renderFilterContent()}</div>
-    </div>
-  );
-
   return (
     <div className="filter-container">
       <Popover
-        content={popoverContent}
+        content={
+          <div className="filter-popover-content">
+            <div className="filter-sidebar">
+              <div className="filter-header">
+                <h4 className="filter-sidebar-title">Filters</h4>
+                {activeFiltersCount > 0 && (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={resetAllFilters}
+                    className="delete-btn"
+                  >
+                    Reset All ({activeFiltersCount})
+                  </Button>
+                )}
+              </div>
+              <Divider style={{ margin: "8px 0" }} />
+              {getMenuItems(getRoles).map((item) => (
+                <div
+                  key={item.key}
+                  onClick={() =>
+                    getRoles(["Admin", "Super Admin"])
+                      ? setActiveFilter(item.key)
+                      : null
+                  }
+                  className={`filter-menu-item ${
+                    activeFilter === item.key ? "active" : ""
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {!isEmpty(selectedFilters[item.key]) && (
+                    <Badge size="small" color="#1890ff" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="filter-content">{renderFilterContent()}</div>
+          </div>
+        }
         trigger="click"
         open={isPopoverOpen}
         onOpenChange={setIsPopoverOpen}
@@ -574,4 +497,4 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
   );
 };
 
-export default React.memo(ProjectRunningFilterComponent);
+export default ResourceMatrixFilter;
