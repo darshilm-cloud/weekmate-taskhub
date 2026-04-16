@@ -1285,6 +1285,17 @@ const TaskList = ({
                           );
                         })}
                     </div>
+                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px" }}>
+                      <Button 
+                        type="text" 
+                        icon={<PlusOutlined />} 
+                        onClick={() => showModalTaskModal(boardData?.workflowStatus?._id)}
+                        className="add-task-col-btn"
+                        style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "flex-start", marginTop: 8, color: "gray" }}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

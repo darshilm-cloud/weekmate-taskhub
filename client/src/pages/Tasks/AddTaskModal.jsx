@@ -40,6 +40,7 @@ export default function AddTaskModal({
   standalone = false,
   projectId: propProjectId,
   mainTaskId: propMainTaskId,
+  initialStatusId = null,
 }) {
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,16 +55,18 @@ export default function AddTaskModal({
         return;
       }
 
-      let workflowId = null;
-      try {
-        const boardRes = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getProjectBoardTasks,
-          body: { project_id: pid, main_task_id: mainId },
-        });
-        workflowId = boardRes?.data?.data?.[0]?.workflowStatus?._id || null;
-      } catch (error) {
-        workflowId = null;
+      let workflowId = initialStatusId || null;
+      if (!workflowId) {
+        try {
+          const boardRes = await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectBoardTasks,
+            body: { project_id: pid, main_task_id: mainId },
+          });
+          workflowId = boardRes?.data?.data?.[0]?.workflowStatus?._id || null;
+        } catch (error) {
+          workflowId = null;
+        }
       }
 
       if (!workflowId) {

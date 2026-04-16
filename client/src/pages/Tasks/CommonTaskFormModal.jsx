@@ -816,7 +816,9 @@ export default function CommonTaskFormModal({
         taskFormFields: visibleFields,
       });
     } catch (e) {
-      // form validation errors handled by antd
+      console.log("Form validation failed:", e);
+      // form validation errors handled by antd, but if a hidden field fails, it might be invisible
+      message.error("Please fill in all required fields.");
     }
   };
 
