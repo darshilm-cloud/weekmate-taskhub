@@ -530,9 +530,6 @@ const FilterUI = ({
         <Button size="small" className="delete-btn" onClick={resetStatusFilter}>
           Reset
         </Button>
-        <Button size="small" className="delete-btn" onClick={resetAllFilters}>
-          Reset All
-        </Button>
       </div>
     </div>
   );
@@ -635,9 +632,6 @@ const FilterUI = ({
             onClick={resetAssigneeFilter}
           >
             Reset
-          </Button>
-          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
-            Reset All
           </Button>
         </div>
       </div>
@@ -743,9 +737,6 @@ const FilterUI = ({
           </Button>
           <Button size="small" className="delete-btn" onClick={resetLabelsFilter}>
             Reset
-          </Button>
-          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
-            Reset All
           </Button>
         </div>
       </div>
@@ -869,9 +860,6 @@ const FilterUI = ({
           >
             Reset
           </Button>
-          <Button size="small" className="delete-btn" onClick={resetAllFilters}>
-            Reset All
-          </Button>
         </div>
       </div>
     );
@@ -898,7 +886,6 @@ const FilterUI = ({
         {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
             <Button
               size="small"
               type="text"
@@ -908,7 +895,6 @@ const FilterUI = ({
             >
               Reset All ({activeFiltersCount})
             </Button>
-          )}
         </div>
 
         <Divider style={{ margin: "8px 0" }} />

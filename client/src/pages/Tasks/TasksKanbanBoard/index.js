@@ -1148,10 +1148,13 @@ const TaskList = ({
                                         {hasPermission(["task_edit"]) ? (
                                           <Menu.Item
                                             onClick={() => {
-                                              getTaskByIdDetails(task?._id);
-                                              getComment(task?._id);
-                                              setTempBoard(boardData);
-                                              setSelectedTaskId(task?._id);
+                                              showEditTaskModal(
+                                                task,
+                                                boardData?.workflowStatus?._id ||
+                                                  task?._stId ||
+                                                  task?.task_status?._id ||
+                                                  task?.task_status
+                                              );
                                             }}
                                           >
                                             <EditOutlined

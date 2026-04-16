@@ -1332,6 +1332,20 @@ const ProjectFormModal = ({
     [projectFormFields]
   );
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const linkedFields = (visibleConfiguredFields || []).filter(
+      (field) =>
+        (field?.type === "select" || field?.type === "multiselect") &&
+        field?.optionSource === "linked" &&
+        field?.linkedModule
+    );
+    if (!linkedFields.length) return;
+    linkedFields.forEach((field) => {
+      loadLinkedOptionsForField(field);
+    });
+  }, [isModalOpen, visibleConfiguredFields]);
+
   const renderConfiguredField = (field) => {
     const key = String(field?.key || "").trim();
     const requiredRules = field?.required
@@ -1375,7 +1389,41 @@ const ProjectFormModal = ({
       return <Form.Item name="title" className="pfm-form-item" rules={requiredRules}><Input placeholder="Please enter project title" className="pfm-input" bordered={false} /></Form.Item>;
     }
     if (key === "descriptions") {
-      return <Form.Item name="descriptions" className="pfm-form-item" rules={requiredRules}><Input.TextArea rows={5} placeholder="Enter description" /></Form.Item>;
+      return (
+        <Form.Item name="descriptions" className="pfm-form-item" rules={requiredRules}>
+          <div className="pfm-editor-wrapper">
+            <CKEditor
+              editor={Custombuild}
+              data={form.getFieldValue("descriptions") || ""}
+              config={{
+                toolbar: [
+                  "bold",
+                  "italic",
+                  "underline",
+                  "|",
+                  "fontColor",
+                  "fontBackgroundColor",
+                  "|",
+                  "link",
+                  "|",
+                  "numberedList",
+                  "bulletedList",
+                  "|",
+                  "alignment:left",
+                  "alignment:center",
+                  "alignment:right",
+                  "|",
+                  "fontSize",
+                ],
+                removePlugins: ["MediaEmbed", "ImageUpload", "EasyImage", "CKFinderUploadAdapter"],
+              }}
+              onChange={(event, editor) => {
+                form.setFieldValue("descriptions", editor.getData());
+              }}
+            />
+          </div>
+        </Form.Item>
+      );
     }
     if (key === "start_date" || key === "end_date") {
       return <Form.Item name={key} className="pfm-form-item" rules={requiredRules}><DatePicker className="pfm-datepicker" style={{ width: "100%" }} format="DD/MM/YYYY" /></Form.Item>;
@@ -1451,7 +1499,11 @@ const ProjectFormModal = ({
           >
             <div className="pfm-fields-grid">
               {visibleConfiguredFields.map((field) => (
-                <div className="pfm-field-row" key={field.key}>
+                <div
+                  className="pfm-field-row"
+                  key={field.key}
+                  style={String(field?.key || "").trim() === "descriptions" ? { gridColumn: "1 / -1" } : undefined}
+                >
                   <TagOutlined className="pfm-icon" />
                   <div className="pfm-input-group">
                     <div className="pfm-field-label">{field?.required ? "* " : ""}{field?.label || field?.key}</div>

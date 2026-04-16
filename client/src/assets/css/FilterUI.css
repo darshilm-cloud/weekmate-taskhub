@@ -416,6 +416,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 0 0 auto;
   }
   
   .filter-header {
@@ -467,6 +468,12 @@
     border-radius: 8px;
     color: #374151;
     box-shadow: none;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .filter-container .ant-btn.filter-btn:hover,

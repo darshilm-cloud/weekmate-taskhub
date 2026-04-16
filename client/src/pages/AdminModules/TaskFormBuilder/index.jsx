@@ -236,6 +236,34 @@ const TaskFormBuilder = () => {
     });
   };
 
+  const moveFieldToEnd = (sourceKey) => {
+    if (!sourceKey) return;
+    setFields((prev) => {
+      const sourceIndex = prev.findIndex((field) => field.key === sourceKey);
+      if (sourceIndex < 0) return prev;
+      const next = [...prev];
+      const [dragged] = next.splice(sourceIndex, 1);
+      if (!dragged) return prev;
+      next.push(dragged);
+      return next.map((field, index) => ({ ...field, order: index }));
+    });
+  };
+
+  const moveFieldToIndex = (sourceKey, targetIndex) => {
+    if (!sourceKey || !Number.isFinite(targetIndex)) return;
+    setFields((prev) => {
+      const ordered = [...prev].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+      const sourceIndex = ordered.findIndex((field) => field.key === sourceKey);
+      if (sourceIndex < 0) return prev;
+      const next = [...ordered];
+      const [dragged] = next.splice(sourceIndex, 1);
+      if (!dragged) return prev;
+      const insertAt = Math.max(0, Math.min(targetIndex, next.length));
+      next.splice(insertAt, 0, dragged);
+      return next.map((field, index) => ({ ...field, order: index }));
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -328,8 +356,44 @@ const TaskFormBuilder = () => {
           <Title level={5}>Fields Configuration</Title>
           <Form layout="vertical" className="task-form-preview">
             <Row gutter={16}>
-              {visibleFormFields.map((field) => (
-                <Col xs={24} md={12} key={field.key}>
+              {(() => {
+                const ordered = [...visibleFormFields];
+                const nodes = [];
+                let rowFill = 0; // md grid out of 24
+
+                ordered.forEach((field, index) => {
+                  const isFullWidth = String(field?.key || "").trim().toLowerCase() === "description";
+                  const span = isFullWidth ? 24 : 12;
+
+                  if (draggingFieldKey && rowFill === 12 && span === 24) {
+                    nodes.push(
+                      <Col xs={24} md={12} key={`drop-gap-before-${field.key}`}>
+                        <div
+                          className="task-form-builder-field-card"
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={() => {
+                            moveFieldToIndex(draggingFieldKey, index);
+                            setDraggingFieldKey(null);
+                          }}
+                          style={{
+                            minHeight: 120,
+                            borderStyle: "dashed",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#8c8c8c",
+                            background: "#fafafa",
+                          }}
+                        >
+                          Drop here
+                        </div>
+                      </Col>
+                    );
+                    rowFill = 0;
+                  }
+
+                  nodes.push(
+                    <Col xs={24} md={span} key={field.key}>
                   <div
                     className="task-form-builder-field-card"
                     draggable
@@ -387,7 +451,39 @@ const TaskFormBuilder = () => {
                     </Space>
                   </div>
                 </Col>
-              ))}
+                  );
+
+                  rowFill = span === 24 ? 0 : rowFill === 12 ? 0 : 12;
+                });
+
+                if (draggingFieldKey && rowFill === 12) {
+                  nodes.push(
+                    <Col xs={24} md={12} key="drop-gap-end-row">
+                      <div
+                        className="task-form-builder-field-card"
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          moveFieldToEnd(draggingFieldKey);
+                          setDraggingFieldKey(null);
+                        }}
+                        style={{
+                          minHeight: 120,
+                          borderStyle: "dashed",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#8c8c8c",
+                          background: "#fafafa",
+                        }}
+                      >
+                        Drop here
+                      </div>
+                    </Col>
+                  );
+                }
+
+                return nodes;
+              })()}
             </Row>
           </Form>
         </div>

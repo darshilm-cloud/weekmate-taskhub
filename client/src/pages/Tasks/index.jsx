@@ -68,9 +68,9 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
-import TaskDetailModal from "../TaskPage/TaskDetailModal";
 import "../TaskPage/TaskDetailModal.css";
 import AddTaskModal from "./AddTaskModal";
+import CommonTaskFormModal from "./CommonTaskFormModal";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -109,6 +109,7 @@ const TasksPMS = ({ flag }) => {
 
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
+  const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
   const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [projectMianTask, setProjectMianTask] = useState([]);
   const [boardTasks, setBoardTasks] = useState([]);
@@ -1199,6 +1200,14 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
+  useEffect(() => {
+    if (!html?.html) return;
+    const exportButton = document.getElementById("test-table-xls-button");
+    if (exportButton && typeof exportButton.click === "function") {
+      exportButton.click();
+    }
+  }, [html]);
+
   const showModalList = async (id) => {
     try {
       dispatch(showAuthLoader());
@@ -1294,6 +1303,7 @@ const TasksPMS = ({ flag }) => {
       return message.error("Please add Tasklist first");
     }
     setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
+    setAddTaskModalSessionKey((prev) => prev + 1);
     setIsModalOpenTaskModal(true);
   };
 
@@ -1644,53 +1654,181 @@ const TasksPMS = ({ flag }) => {
     setFileAttachment(newArr);
   };
 
-  const showEditTaskModal = (data, workflowID) => {
-    setSelectedTaskToView(data);
+  const showEditTaskModal = async (data, workflowID) => {
+    const taskId = data?._id;
+    const fallbackProjectId =
+      projectId ||
+      data?.project?._id ||
+      data?.project_id ||
+      selectedTask?.project?._id ||
+      selectedTask?.project_id;
+    const fallbackMainTaskId =
+      selectedTask?._id ||
+      listID ||
+      data?.mainTask?._id ||
+      data?.main_task_id;
+
+    let taskPayload = data;
+    if (taskId && fallbackProjectId && fallbackMainTaskId) {
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTasks,
+          body: {
+            _id: taskId,
+            project_id: fallbackProjectId,
+            main_task_id: fallbackMainTaskId,
+          },
+        });
+        if (response?.data?.status && response?.data?.data) {
+          taskPayload = response.data.data;
+        }
+      } catch (error) {
+        // Fallback to card payload if details fetch fails.
+      }
+    }
+
+    setSelectedTaskToView(taskPayload);
     setIsEditTaskModalOpen(true);
-    setShowSelectClient(true);
-    setEditTaskData({ id: data?._id, workflow_id: workflowID });
-    setPopulatedFiles(data?.attachments || []);
-    seteditModalDescription(data?.descriptions);
-    editform.setFieldsValue({
-      title: data?.title,
-      descriptions: removeHTMLTags(data?.descriptions ? data.descriptions : ""),
-      labels: (data?.taskLabels || []).map((item) => item?.title).filter(Boolean),
+    setEditTaskData({
+      id: taskPayload?._id || data?._id,
+      workflow_id:
+        workflowID ||
+        taskPayload?._stId ||
+        taskPayload?.task_status?._id ||
+        taskPayload?.task_status,
     });
-
-    setAddInputTaskData({
-      start_date: data?.start_date,
-      end_date: data?.due_date,
-      labels: (data?.taskLabels || []).map((item) => item?._id).filter(Boolean).join(","),
-      assignees: (data?.assignees || []).map((value) => value?._id).filter(Boolean),
-      clients: addInputTaskData?.clients
-        ? addInputTaskData?.clients.map((val) => val?._id)
-        : (data?.pms_clients || []).map((value) => value?._id).filter(Boolean),
-        recurringType: data?.recurringType || null,
-    });
-    setSelectedItems(data?.assignees || []);
-    setSelectedClients(data?.pms_clients || []);
-    setNewFilteredAssignees(
-      (data?.assignees || []).map((value) => value?._id).filter(Boolean)
-    );
-    setNewFilteredClients(
-      (data?.pms_clients || []).map((value) => value?._id).filter(Boolean)
-    );
-
-    setEstHrs(data?.estimated_hours);
-    setEstMins(data?.estimated_minutes);
-    setEstTime(`${data?.estimated_hours || "00"}:${data?.estimated_minutes || "00"}`);
-    setIsAlterEstimatedTime(false);
-    if ((data?.assignees || []).length > 0) {
-      setShowSelectTask(true);
-    } else {
-      setShowSelectTask(false);
-    }
-    if ((data?.pms_clients || []).length > 0) {
-      setShowSelectClient(true);
-    } else {
-      setShowSelectClient(false);
-    }
   };
+
+  const mapTaskToDynamicInitialValues = useCallback((task) => {
+    if (!task) return {};
+    const labelByTitle = new Map(
+      (projectLabels || []).map((item) => [String(item?.title || "").trim().toLowerCase(), item?._id])
+    );
+    const assigneeByName = new Map(
+      (assigneeOptions || []).map((item) => [String(item?.full_name || item?.name || "").trim().toLowerCase(), item?._id])
+    );
+
+    const normalizedLabels = (Array.isArray(task?.taskLabels) ? task.taskLabels : Array.isArray(task?.task_labels) ? task.task_labels : [])
+      .map((item) => {
+        if (typeof item === "object") return item?._id || labelByTitle.get(String(item?.title || "").trim().toLowerCase());
+        const maybeId = String(item || "");
+        return labelByTitle.get(maybeId.trim().toLowerCase()) || maybeId;
+      })
+      .filter(Boolean);
+
+    const normalizedAssignees = (Array.isArray(task?.assignees) ? task.assignees : [])
+      .map((item) => {
+        if (typeof item === "object") return item?._id || assigneeByName.get(String(item?.full_name || item?.name || "").trim().toLowerCase());
+        const maybeName = String(item || "");
+        return assigneeByName.get(maybeName.trim().toLowerCase()) || maybeName;
+      })
+      .filter(Boolean);
+
+    const normalizedDescription =
+      task?.description ??
+      task?.descriptions ??
+      task?.custom_fields?.description ??
+      task?.custom_fields?.descriptions ??
+      "";
+
+    return {
+      _id: task?._id,
+      title: task?.title || "",
+      description: normalizedDescription,
+      task_labels: normalizedLabels,
+      assignees: normalizedAssignees,
+      start_date: task?.start_date ? dayjs(task.start_date) : null,
+      end_date: task?.due_date ? dayjs(task.due_date) : null,
+      priority: task?.priority || "Low",
+      recurringType: task?.recurringType || "",
+      project_id:
+        (typeof task?.project === "object" && task?.project?._id) ||
+        task?.project_id ||
+        projectId,
+      main_task_id:
+        (typeof task?.mainTask === "object" && task?.mainTask?._id) ||
+        (typeof task?.main_task_id === "object" && task?.main_task_id?._id) ||
+        task?.main_task_id ||
+        selectedTask?._id,
+      custom_fields: task?.custom_fields || {},
+    };
+  }, [projectId, selectedTask?._id, projectLabels, assigneeOptions]);
+
+  const handleDynamicTaskUpdate = useCallback(
+    async (values) => {
+      try {
+        const selectedTaskId = selectedTaskToView?._id || editTaskData?.id;
+        if (!selectedTaskId) return;
+
+        const payload = {
+          updated_key: [
+            "title",
+            "descriptions",
+            "task_labels",
+            "start_date",
+            "due_date",
+            "assignees",
+            "task_status",
+            "priority",
+            "custom_fields",
+          ],
+          project_id: projectId,
+          main_task_id:
+            values?.main_task_id ||
+            selectedTask?._id ||
+            (typeof selectedTaskToView?.mainTask === "object" && selectedTaskToView?.mainTask?._id) ||
+            selectedTaskToView?.main_task_id,
+          title: values?.title?.trim?.() || "",
+          status: "active",
+          descriptions: values?.description || "",
+          task_labels: values?.task_labels || [],
+          assignees: values?.assignees || [],
+          task_status:
+            editTaskData?.workflow_id ||
+            selectedTaskToView?._stId ||
+            selectedTaskToView?.task_status?._id ||
+            selectedTaskToView?.task_status,
+          start_date: values?.start_date || null,
+          due_date: values?.end_date || null,
+          priority: values?.priority || "Low",
+          recurringType: values?.recurringType || "",
+          custom_fields: values?.custom_fields || {},
+        };
+
+        const response = await Service.makeAPICall({
+          methodName: Service.putMethod,
+          api_url: `${Service.taskPropUpdation}/${selectedTaskId}`,
+          body: payload,
+        });
+
+        if (response?.data?.status) {
+          message.success(response?.data?.message || "Task updated");
+          setIsEditTaskModalOpen(false);
+          setSelectedTaskToView(null);
+          handleCancelTaskModal();
+          if (selectedTask?._id) {
+            getBoardTasks(selectedTask._id);
+          } else {
+            getProjectMianTask("", true);
+          }
+        } else {
+          message.error(response?.data?.message || "Failed to update task");
+        }
+      } catch (error) {
+        message.error("Failed to update task");
+      }
+    },
+    [
+      selectedTaskToView,
+      editTaskData?.id,
+      editTaskData?.workflow_id,
+      projectId,
+      selectedTask?._id,
+      getBoardTasks,
+      getProjectMianTask,
+    ]
+  );
 
   const matchesLabelFilter = (task, labelFilter) => {
     if (!labelFilter) return true;
@@ -2186,7 +2324,6 @@ const TasksPMS = ({ flag }) => {
     getProjectByID();
   }, [flag]);
 
-  const csvRef = document.getElementById("test-table-xls-button");
 
   const menu = (
     <Menu selectedKeys={[selectedView]}>
@@ -2943,9 +3080,10 @@ const TasksPMS = ({ flag }) => {
                   <div className="block-status-content">
                     <ConfigProvider>
                       <Dropdown overlay={menu} trigger={["click"]}>
-                        <div className="dropdown-trigger">
-                          <i className="fa-solid fa-table"></i>
-                        </div>
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn"
+                          icon={<i className="fa-solid fa-table"></i>}
+                        />
                       </Dropdown>
                     </ConfigProvider>
                     <FilterUI
@@ -2972,10 +3110,7 @@ const TasksPMS = ({ flag }) => {
                         placement="bottomRight"
                         trigger={["click"]}
                         overlayClassName="wm-csv-dropdown"
-                        getPopupContainer={(triggerNode) =>
-                          triggerNode?.closest(".csv-dropdown-anchor") ||
-                          document.body
-                        }
+                        getPopupContainer={() => document.body}
                         // overlay={
                         //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                         overlay={
@@ -3027,7 +3162,6 @@ const TasksPMS = ({ flag }) => {
                             key="export-csv"
                             onClick={() => {
                               exportCsv();
-                              csvRef.click();
                             }}
                             style={{ padding: '8px 12px', borderRadius: '8px' }}
                           >
@@ -3039,9 +3173,10 @@ const TasksPMS = ({ flag }) => {
                         </Menu>
                         }
                       >
-                        <div className="dropdown-trigger ellipsis-clean">
-                          <i className="fa-solid fa-ellipsis-vertical"></i>
-                        </div>
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn toolbar-more-btn"
+                          icon={<MoreOutlined />}
+                        />
                       </Dropdown>
                     </div>
                   </div>
@@ -3626,6 +3761,7 @@ const TasksPMS = ({ flag }) => {
       </Modal>
 
       <AddTaskModal
+        key={`tasks-add-modal-${addTaskModalSessionKey}`}
         open={isModalOpenTaskModal}
         initialStatusId={modalInitialStatusId}
         onCancel={() => {
@@ -3654,116 +3790,24 @@ const TasksPMS = ({ flag }) => {
         foldersList={foldersList}
       />
 
-      <TaskDetailModal
+      <CommonTaskFormModal
+        key={selectedTaskToView?._id || "tasks-page-task-detail"}
         open={isEditTaskModalOpen}
-        onClose={() => {
+        mode="edit"
+        title="Edit Task"
+        submitText="Save Changes"
+        initialValues={mapTaskToDynamicInitialValues(selectedTaskToView)}
+        lockedProjectId={projectId}
+        lockedMainTaskId={selectedTask?._id}
+        showListSelector={false}
+        viewOnly={false}
+        taskId={selectedTaskToView?._id}
+        onCancel={() => {
           setIsEditTaskModalOpen(false);
           setSelectedTaskToView(null);
           handleCancelTaskModal();
         }}
-        task={
-          selectedTaskToView
-            ? {
-                ...selectedTaskToView,
-                project:
-                  selectedTaskToView?.project ||
-                  (projectDetails?._id
-                    ? { _id: projectDetails._id, title: projectDetails.title }
-                    : selectedTaskToView?.project),
-                mainTask:
-                  selectedTaskToView?.mainTask ||
-                  (selectedTask?._id
-                    ? { _id: selectedTask._id, title: selectedTask.title }
-                    : selectedTaskToView?.mainTask),
-              }
-            : selectedTaskToView
-        }
-        companySlug={companySlug}
-        onOpenInProject={(url) => {
-          window.location.href = url;
-        }}
-        onUpdateTask={async (updatedValues, uploadedFiles) => {
-          try {
-            const selectedTaskId = editTaskData?.id || updatedValues?._id;
-            if (!selectedTaskId) throw new Error("missing_task_id");
-
-            const taskLabels = Array.isArray(updatedValues?.taskLabels) ? updatedValues.taskLabels : [];
-            const assignees = Array.isArray(updatedValues?.assignees) ? updatedValues.assignees : [];
-
-            const existingAttachments = Array.isArray(updatedValues?.attachments) ? updatedValues.attachments : [];
-            const normalizedExisting = existingAttachments
-              .map((a) => ({
-                file_name: a?.file_name || a?.name,
-                file_path: a?.file_path || a?.path,
-                _id: a?._id,
-                file_type: a?.file_type,
-              }))
-              .filter((a) => a.file_name && a.file_path);
-
-            const normalizedUploaded = Array.isArray(uploadedFiles)
-              ? uploadedFiles
-                  .map((a) => ({
-                    file_name: a?.file_name || a?.name,
-                    file_path: a?.file_path || a?.path,
-                    _id: a?._id,
-                    file_type: a?.file_type,
-                  }))
-                  .filter((a) => a.file_name && a.file_path)
-              : [];
-
-            const hasAttachmentsPayload = normalizedExisting.length > 0 || normalizedUploaded.length > 0;
-
-            const updatedKeys = [
-              "title",
-              "descriptions",
-              "task_labels",
-              "start_date",
-              "due_date",
-              "assignees",
-              "estimated_hours",
-              "estimated_minutes",
-              ...(hasAttachmentsPayload ? ["attachments"] : []),
-              ...(editTaskData?.workflow_id ? ["task_status"] : []),
-            ];
-
-            const reqBody = {
-              updated_key: updatedKeys,
-              project_id: projectId,
-              main_task_id: selectedTask?._id,
-              title: (updatedValues?.title || "").trim(),
-              descriptions: updatedValues?.descriptions || "",
-              task_labels: taskLabels.filter(Boolean),
-              assignees: assignees.filter(Boolean),
-              ...(editTaskData?.workflow_id ? { task_status: editTaskData.workflow_id } : {}),
-              estimated_hours: estHrs && estHrs !== "" ? String(estHrs) : "00",
-              estimated_minutes: estMins && estMins !== "" ? String(estMins) : "00",
-              start_date: updatedValues?.start_date || null,
-              due_date: updatedValues?.due_date || null,
-              ...(hasAttachmentsPayload ? { attachments: [...normalizedExisting, ...normalizedUploaded] } : {}),
-            };
-
-            dispatch(showAuthLoader());
-            const response = await Service.makeAPICall({
-              methodName: Service.putMethod,
-              api_url: `${Service.taskPropUpdation}/${selectedTaskId}`,
-              body: reqBody,
-            });
-            dispatch(hideAuthLoader());
-
-            if (response?.data?.status) {
-              message.success(response.data.message || "Task updated");
-              await getBoardTasks(selectedTask?._id);
-            } else {
-              message.error(response?.data?.message || "Failed to update task");
-              return false;
-            }
-            return true;
-          } catch (e) {
-            console.error("Update failed", e);
-            dispatch(hideAuthLoader());
-            return false;
-          }
-        }}
+        onSubmit={handleDynamicTaskUpdate}
       />
 
       <Modal

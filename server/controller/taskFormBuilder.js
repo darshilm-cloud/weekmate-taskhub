@@ -17,7 +17,7 @@ const DEFAULT_TASK_FIELDS = [
   { key: "description", label: "Description", type: "textarea", required: false, isDefault: true },
   { key: "priority", label: "Priority", type: "text", required: false, isDefault: true },
   { key: "assignee_id", label: "Assignee", type: "text", required: false, isDefault: true },
-  { key: "labels", label: "Labels", type: "multiselect", required: false, isDefault: true, options: [] },
+  { key: "labels", label: "Labels", type: "select", required: false, isDefault: true, options: [] },
   { key: "created_by", label: "Created By", type: "text", required: true, isDefault: true },
   { key: "start_date", label: "Start Date", type: "date", required: false, isDefault: true },
   { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },

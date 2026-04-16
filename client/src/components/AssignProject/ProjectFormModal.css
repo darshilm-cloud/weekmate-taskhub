@@ -344,7 +344,7 @@
   border-radius: 8px 8px 0 0 !important;
   border-color: #d7e1ef !important;
   background: #ffffff !important;
-  display: none !important;
+  display: flex !important;
 }
 
 .pfm-editor-wrapper .ck.ck-editor__editable {

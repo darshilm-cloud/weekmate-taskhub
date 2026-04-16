@@ -208,6 +208,27 @@
   border-color: rgba(255,255,255,0.5) !important;
 }
 
+.task-detail-log-hours-btn.ant-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-detail-log-hours-btn.ant-btn:hover,
+.task-detail-log-hours-btn.ant-btn:focus {
+  background: rgba(255, 255, 255, 0.26) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+}
+
 .task-detail-breadcrumb {
   margin-bottom: 8px;
 }
@@ -519,21 +540,49 @@
   padding: 8px 12px 0;
   background: #f8fafc;
   border-bottom: 1px solid #e8edf3;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.task-detail-tabs .ant-tabs-nav::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .task-detail-tabs .ant-tabs-nav::before {
   display: none;
 }
 
-.task-detail-tabs .ant-tabs-nav-wrap,
-.task-detail-tabs .ant-tabs-nav-list {
-  width: 100%;
+.task-detail-tabs .ant-tabs-nav-wrap {
+  width: max-content;
 }
 
 .task-detail-tabs .ant-tabs-nav-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  width: max-content;
+  min-width: max-content;
+  padding-right: 10px;
   gap: 6px;
+}
+
+.task-detail-tabs .ant-tabs-nav-wrap {
+  overflow: visible !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: none !important;
+}
+
+.task-detail-tabs .ant-tabs-nav-wrap::-webkit-scrollbar {
+  display: none !important;
+}
+
+.task-detail-tabs .ant-tabs-nav-operations {
+  display: none !important;
 }
 
 .task-detail-tabs .ant-tabs-ink-bar {
@@ -551,7 +600,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: 100%;
+  width: auto;
+  min-width: 96px;
   min-height: 34px;
   padding: 6px 8px;
   border-radius: 10px;
@@ -822,6 +872,262 @@
 .task-detail-tabs .ant-tabs-tab-active .comment-badge {
   background: #bae6fd;
   color: #075985;
+}
+
+/* ── Hours Log ───────────────────────────────── */
+.task-detail-hours-tab {
+  min-height: 0;
+}
+
+.task-hours-log-form-grid-primary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 84px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.task-hours-log-form-grid-secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.task-hours-log-input.ant-input:not(textarea),
+.task-hours-log-input .ant-select-selector,
+.task-hours-log-input.ant-picker {
+  height: 36px;
+  border-radius: 8px !important;
+  border-color: #d6deea !important;
+  background: #ffffff !important;
+}
+
+.task-hours-log-input.ant-input:not(textarea) {
+  padding: 0 10px;
+}
+
+.task-hours-log-input.ant-input {
+  border-radius: 8px !important;
+  border-color: #d6deea !important;
+  background: #ffffff !important;
+}
+
+.task-hours-log-input.ant-input:focus,
+.task-hours-log-input.ant-input-focused {
+  border-color: #0b3a5b !important;
+  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.1) !important;
+}
+
+.task-hours-log-input.ant-picker input {
+  font-size: 12px;
+}
+
+.task-hours-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.task-hours-log-list-wrapper {
+  flex: 1;
+  min-height: 160px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f9 100%);
+}
+
+.task-hours-log-item {
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+}
+
+.task-hours-log-item:last-child {
+  margin-bottom: 0;
+}
+
+.task-hours-log-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.task-hours-log-item-actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-hours-log-menu-btn.ant-btn {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  color: #64748b;
+}
+
+.task-hours-log-menu-btn.ant-btn:hover,
+.task-hours-log-menu-btn.ant-btn:focus {
+  color: #0b3a5b;
+  background: #eef2f7;
+  border-radius: 8px;
+}
+
+.task-hours-log-time {
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.task-hours-log-main-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-hours-log-label {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.task-hours-log-date {
+  color: #64748b;
+  font-size: 11px;
+  margin-top: 14px;
+  white-space: nowrap;
+}
+
+.task-hours-log-description {
+  margin-top: 5px;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-hours-log-description-wrap {
+  margin-top: 8px;
+}
+
+.task-hours-log-description-btn.ant-btn {
+  padding: 0 10px;
+  height: 26px;
+  border-radius: 8px;
+  border-color: #dbe3ef;
+  color: #0b3a5b;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f8fbff;
+}
+
+.task-hours-log-description-btn.ant-btn:hover,
+.task-hours-log-description-btn.ant-btn:focus {
+  border-color: #93c5fd;
+  color: #075985;
+  background: #eff6ff;
+}
+
+.task-hours-log-description-modal-body {
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+/* ── Hours Entry Modal ───────────────────────── */
+.task-hours-entry-modal .ant-modal-body {
+  padding-top: 14px;
+}
+
+.task-hours-entry-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-hours-entry-label {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.task-hours-entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.task-hours-entry-editor .ck.ck-editor__main > .ck-editor__editable {
+  min-height: 220px;
+  max-height: 320px;
+  border-radius: 0 0 8px 8px;
+}
+
+.task-hours-entry-editor .ck.ck-toolbar {
+  border-radius: 8px 8px 0 0;
+}
+
+.task-hours-entry-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.task-hours-entry-description-preview {
+  min-height: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid #d6deea;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.task-hours-entry-description-preview p:first-child,
+.task-hours-entry-description-preview ul:first-child,
+.task-hours-entry-description-preview ol:first-child {
+  margin-top: 0;
+}
+
+.task-hours-entry-description-preview p:last-child,
+.task-hours-entry-description-preview ul:last-child,
+.task-hours-entry-description-preview ol:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .task-hours-log-form-grid-primary {
+    grid-template-columns: 1fr 1fr;
+  }
+  .task-hours-log-form-grid-primary .task-hours-log-input:first-child {
+    grid-column: 1 / -1;
+  }
+  .task-hours-log-form-grid-secondary {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Attachments ─────────────────────────────── */

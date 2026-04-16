@@ -26,6 +26,24 @@
     min-width: 0;
 }
 
+.bugs-task-wrapper .block-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow: visible;
+}
+
+.bugs-task-wrapper .filter-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    overflow: visible;
+}
+
 /* ── Column header ─────────────────────────────────────────── */
 .bugs-task-wrapper .drag_column h4 {
     display: flex !important;

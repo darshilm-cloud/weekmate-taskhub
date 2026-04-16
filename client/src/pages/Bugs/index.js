@@ -33,6 +33,7 @@ import {
   UserOutlined,
   TagsOutlined,
   ClockCircleOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 
 import Service from "../../service";
@@ -281,9 +282,10 @@ const BugsPMS = () => {
                     <div className="status-content">
                       <ConfigProvider>
                         <Dropdown overlay={ menu } trigger={ ["click"] }>
-	                          <div className="dropdown-trigger">
-	                            <i className={viewIcon}></i>
-	                          </div>
+	                          <Button
+                              className="dropdown-trigger toolbar-icon-btn"
+                              icon={<i className={viewIcon}></i>}
+                            />
 	                        </Dropdown>
 	                      </ConfigProvider>
 	                    </div>
@@ -361,11 +363,10 @@ const BugsPMS = () => {
 	                        }
                         trigger="click"
                       >
-                        <div style={ { cursor: "pointer" } }>
-                          <label>
-                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                          </label>
-                        </div>
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn toolbar-more-btn"
+                          icon={<MoreOutlined />}
+                        />
                       </Popover>
                     </div>
                   </div>

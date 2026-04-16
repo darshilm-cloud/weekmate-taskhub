@@ -852,7 +852,11 @@ function ProgressBoardofProject() {
 
       {selectedTab === "Overview" && <Overview />}
       {selectedTab === "Discussion" && <DiscussionForm />}
-      {selectedTab === "Tasks" && <TasksPMS flag={assigneesflag} />}
+      {selectedTab === "Tasks" && (
+        <div className="pb-tasks-pane">
+          <TasksPMS flag={assigneesflag} />
+        </div>
+      )}
       {selectedTab === "Bugs" && <BugsPMS />}
       {selectedTab === "Notes" && <NotesPMS />}
       {selectedTab === "Files" && <FileModule />}

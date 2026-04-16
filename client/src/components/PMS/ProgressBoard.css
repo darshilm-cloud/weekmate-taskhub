@@ -242,6 +242,16 @@
   font-weight: 600;
 }
 
+.pb-tasks-pane {
+  width: 100%;
+  min-width: 0;
+}
+
+.pb-tasks-pane .task-wrapper .profile-sub-head,
+.pb-tasks-pane .task-wrapper .task-sub-header {
+  width: 100%;
+}
+
 /* ── Override legacy styles that conflict ─────────────────── */
 /* Hide old header & tab styles within this component's scope  */
 .pb-topbar header.ant-layout-header,

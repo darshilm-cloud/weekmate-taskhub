@@ -10,6 +10,36 @@
     box-shadow: none !important;
 }
 
+.task-wrapper .task-sub-header .toolbar-icon-btn.ant-btn,
+.bugs-task-wrapper .toolbar-icon-btn.ant-btn {
+    min-width: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    flex: 0 0 34px;
+}
+
+.task-wrapper .task-sub-header .toolbar-more-btn.ant-btn,
+.bugs-task-wrapper .toolbar-more-btn.ant-btn {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    box-shadow: none !important;
+}
+
+.task-wrapper .task-sub-header .toolbar-more-btn.ant-btn:hover,
+.task-wrapper .task-sub-header .toolbar-more-btn.ant-btn:focus,
+.bugs-task-wrapper .toolbar-more-btn.ant-btn:hover,
+.bugs-task-wrapper .toolbar-more-btn.ant-btn:focus {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #374151 !important;
+}
+
 .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean,
 body.dark-theme .wm-force-dark-page .task-sub-header .dropdown-trigger.ellipsis-clean,
@@ -17,12 +47,14 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    min-width: auto !important;
-    min-height: auto !important;
-    padding: 4px !important;
-    border-radius: 999px !important;
-    position: relative;
-    top: -4px;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    position: static;
+    top: auto;
 }
 
 .task-wrapper .csv-dropdown-anchor {
@@ -30,6 +62,7 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     display: flex;
     align-items: center;
     margin-left: 0;
+    flex: 0 0 auto;
 }
 
 .task-wrapper .task-sub-header .dropdown-trigger.ellipsis-clean:hover,
@@ -221,8 +254,12 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     align-items: center;
     justify-content: flex-end;
     gap: 16px;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     margin-left: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    overflow: visible;
 }
 
 /* .project-wrapper .add-task {
@@ -786,8 +823,10 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
 .task-sub-header {
     display: flex;
     width: 100%;
-    max-width: 95%;
-    justify-content: space-between;
+    max-width: none;
+    justify-content: flex-end;
+    align-items: center;
+    overflow: visible;
 }
 
 
@@ -2361,7 +2400,20 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task {
     justify-content: center;
     min-width: 34px;
     min-height: 34px;
-    padding: 0 10px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    line-height: 1;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.task-wrapper .task-sub-header .dropdown-trigger i,
+.task-wrapper .task-sub-header .dropdown-trigger svg,
+.bugs-task-wrapper .dropdown-trigger i,
+.bugs-task-wrapper .dropdown-trigger svg {
+    font-size: 15px;
+    line-height: 1;
 }
 
 .task-wrapper .task-sub-header .dropdown-trigger:hover,

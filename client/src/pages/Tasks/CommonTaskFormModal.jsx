@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
-import { CloseOutlined, CommentOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, MoreOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, MoreOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
+import dayjs from "dayjs";
 import Service from "../../service";
 import "../TaskPage/TaskDetailModal.css";
 
@@ -109,6 +110,18 @@ export default function CommonTaskFormModal({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [timeLogs, setTimeLogs] = useState([]);
+  const [timeLogsLoading, setTimeLogsLoading] = useState(false);
+  const [timesheetOptions, setTimesheetOptions] = useState([]);
+  const [selectedTimesheetId, setSelectedTimesheetId] = useState(null);
+  const [logHours, setLogHours] = useState("");
+  const [logMinutes, setLogMinutes] = useState("");
+  const [logDate, setLogDate] = useState(null);
+  const [logDescription, setLogDescription] = useState("");
+  const [submittingTimeLog, setSubmittingTimeLog] = useState(false);
+  const [editingTimeLogId, setEditingTimeLogId] = useState(null);
+  const [timeLogModalMode, setTimeLogModalMode] = useState("add");
+  const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
   const effectiveTaskId = taskId || initialValues?._id || null;
@@ -160,6 +173,8 @@ export default function CommonTaskFormModal({
   const watchedEndDate = Form.useWatch("end_date", form);
   const watchedAssignees = Form.useWatch("assignees", form);
   const watchedMainTaskId = Form.useWatch("main_task_id", form);
+  const watchedHoursAssigned = Form.useWatch("hours_assigned", form);
+  const watchedCustomHoursAssigned = Form.useWatch(["custom_fields", "hours_assigned"], form);
   const effectiveMainTaskId = lockedMainTaskId || watchedMainTaskId;
 
   const fetchTaskFormConfig = useCallback(async () => {
@@ -420,6 +435,7 @@ export default function CommonTaskFormModal({
 
     const presetProject = lockedProjectId || initialValues?.project_id;
     const presetList = lockedMainTaskId || initialValues?.main_task_id;
+    form.resetFields();
     form.setFieldsValue({
       ...initialValues,
       priority: initialValues?.priority || "Low",
@@ -548,6 +564,198 @@ export default function CommonTaskFormModal({
       message.error("Failed to update comment");
     }
   }, [editingCommentId, editingCommentText, fetchComments]);
+
+  const fetchTaskTimeLogs = useCallback(async () => {
+    if (!effectiveTaskId || !effectiveProjectId) return;
+    setTimeLogsLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskLoggedHours,
+        body: {
+          project_id: effectiveProjectId,
+          task_id: effectiveTaskId,
+        },
+      });
+      if (res?.data?.status) {
+        setTimeLogs(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } else {
+        setTimeLogs([]);
+      }
+    } catch {
+      setTimeLogs([]);
+    } finally {
+      setTimeLogsLoading(false);
+    }
+  }, [effectiveTaskId, effectiveProjectId]);
+
+  const fetchProjectTimesheets = useCallback(async () => {
+    if (!effectiveProjectId) return;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTimesheet,
+        body: { project_id: effectiveProjectId },
+      });
+      const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+      setTimesheetOptions(list);
+      if (list.length > 0) {
+        setSelectedTimesheetId((prev) => prev || list[0]?._id || null);
+      }
+    } catch {
+      setTimesheetOptions([]);
+    }
+  }, [effectiveProjectId]);
+
+  const resetTimeLogForm = useCallback(() => {
+    setEditingTimeLogId(null);
+    setTimeLogModalMode("add");
+    setLogHours("");
+    setLogMinutes("");
+    setLogDate(null);
+    setLogDescription("");
+    setIsTimeLogModalOpen(false);
+  }, []);
+
+  const openAddTimeLogModal = useCallback(() => {
+    setEditingTimeLogId(null);
+    setTimeLogModalMode("add");
+    setLogHours("");
+    setLogMinutes("");
+    setLogDate(null);
+    setLogDescription("");
+    setIsTimeLogModalOpen(true);
+  }, []);
+
+  const handleDeleteTimeLog = useCallback(
+    async (timeLogId) => {
+      if (!timeLogId) return;
+      try {
+        const res = await Service.makeAPICall({
+          methodName: Service.deleteMethod,
+          api_url: `${Service.deleteTime}/${timeLogId}`,
+        });
+        if (res?.data?.status) {
+          message.success(res?.data?.message || "Logged hour deleted");
+          fetchTaskTimeLogs();
+          if (editingTimeLogId === timeLogId) {
+            resetTimeLogForm();
+          }
+        } else {
+          message.error(res?.data?.message || "Failed to delete logged hour");
+        }
+      } catch {
+        message.error("Failed to delete logged hour");
+      }
+    },
+    [fetchTaskTimeLogs, editingTimeLogId, resetTimeLogForm]
+  );
+
+  const handleEditTimeLog = useCallback((entry) => {
+    if (!entry?._id) return;
+    setTimeLogModalMode("edit");
+    setEditingTimeLogId(entry._id);
+    setLogHours(String(entry?.logged_hours || ""));
+    setLogMinutes(String(entry?.logged_minutes || ""));
+    setLogDescription(String(entry?.descriptions || ""));
+    setLogDate(entry?.logged_date ? dayjs(entry.logged_date, "DD-MM-YYYY") : null);
+    const entryTimesheetId =
+      (typeof entry?.timesheet_id === "object" ? entry?.timesheet_id?._id : entry?.timesheet_id) ||
+      entry?.timesheet?._id ||
+      null;
+    if (entryTimesheetId) setSelectedTimesheetId(String(entryTimesheetId));
+    setIsTimeLogModalOpen(true);
+  }, []);
+
+  const openViewTimeLogModal = useCallback((entry) => {
+    if (!entry?._id) return;
+    setTimeLogModalMode("view");
+    setEditingTimeLogId(entry._id);
+    setLogHours(String(entry?.logged_hours || ""));
+    setLogMinutes(String(entry?.logged_minutes || ""));
+    setLogDescription(String(entry?.descriptions || ""));
+    setLogDate(entry?.logged_date ? dayjs(entry.logged_date, "DD-MM-YYYY") : null);
+    const entryTimesheetId =
+      (typeof entry?.timesheet_id === "object" ? entry?.timesheet_id?._id : entry?.timesheet_id) ||
+      entry?.timesheet?._id ||
+      null;
+    if (entryTimesheetId) setSelectedTimesheetId(String(entryTimesheetId));
+    setIsTimeLogModalOpen(true);
+  }, []);
+
+  const handleAddTimeLog = useCallback(async () => {
+    if (!effectiveTaskId || !effectiveProjectId) return;
+    if (!selectedTimesheetId) {
+      message.error("Please select a timesheet.");
+      return;
+    }
+    if (!logDate) {
+      message.error("Please choose a log date.");
+      return;
+    }
+    if (!String(logHours || "").trim() && !String(logMinutes || "").trim()) {
+      message.error("Please enter logged hours or minutes.");
+      return;
+    }
+    setSubmittingTimeLog(true);
+    try {
+      const payload = {
+        descriptions: logDescription || "",
+        logged_hours: String(logHours || "00"),
+        logged_minutes: String(logMinutes || "00"),
+        logged_date: dayjs(logDate).format("DD-MM-YYYY"),
+      };
+      const res = await Service.makeAPICall({
+        methodName: editingTimeLogId ? Service.putMethod : Service.postMethod,
+        api_url: editingTimeLogId
+          ? `${Service.updateTimesheet}/${editingTimeLogId}`
+          : Service.addLoggedHours,
+        body: editingTimeLogId
+          ? payload
+          : {
+              ...payload,
+              project_id: effectiveProjectId,
+              task_id: effectiveTaskId,
+              timesheet_id: selectedTimesheetId,
+              logged_status: "Billable",
+              isManuallyAdded: true,
+            },
+      });
+      if (res?.data?.status) {
+        message.success(
+          res?.data?.message || (editingTimeLogId ? "Logged hour updated" : "Hours logged")
+        );
+        resetTimeLogForm();
+        fetchTaskTimeLogs();
+      } else {
+        message.error(
+          res?.data?.message ||
+            (editingTimeLogId ? "Failed to update logged hour" : "Failed to log hours")
+        );
+      }
+    } catch {
+      message.error(editingTimeLogId ? "Failed to update logged hour" : "Failed to log hours");
+    } finally {
+      setSubmittingTimeLog(false);
+    }
+  }, [
+    effectiveTaskId,
+    effectiveProjectId,
+    selectedTimesheetId,
+    logDate,
+    logHours,
+    logMinutes,
+    logDescription,
+    editingTimeLogId,
+    resetTimeLogForm,
+    fetchTaskTimeLogs,
+  ]);
+
+  useEffect(() => {
+    if (!open || mode !== "view" || !effectiveTaskId || !effectiveProjectId) return;
+    fetchTaskTimeLogs();
+    fetchProjectTimesheets();
+  }, [open, mode, effectiveTaskId, effectiveProjectId, fetchTaskTimeLogs, fetchProjectTimesheets]);
 
   useEffect(() => {
     if (!open) return;
@@ -696,7 +904,6 @@ export default function CommonTaskFormModal({
     if (key === "labels") {
       return (
         <Select
-          mode="multiple"
           disabled={viewOnly}
           placeholder="Select labels"
           showSearch
@@ -799,6 +1006,11 @@ export default function CommonTaskFormModal({
     }
     try {
       const values = await form.validateFields();
+      const normalizedTaskLabels = Array.isArray(values?.task_labels)
+        ? values.task_labels
+        : values?.task_labels
+        ? [values.task_labels]
+        : [];
       const projectId = lockedProjectId || values.project_id;
       const mainTaskId = lockedMainTaskId || values.main_task_id;
       if (!projectId) {
@@ -811,6 +1023,7 @@ export default function CommonTaskFormModal({
       }
       onSubmit?.({
         ...values,
+        task_labels: normalizedTaskLabels,
         project_id: projectId,
         main_task_id: mainTaskId,
         taskFormFields: visibleFields,
@@ -842,6 +1055,23 @@ export default function CommonTaskFormModal({
     [mainTasks, effectiveMainTaskId]
   );
   const selectedAssigneeCount = Array.isArray(watchedAssignees) ? watchedAssignees.length : 0;
+  const totalAssignedHoursDisplay = useMemo(() => {
+    const rawValue =
+      watchedHoursAssigned ??
+      watchedCustomHoursAssigned ??
+      initialValues?.hours_assigned ??
+      initialValues?.custom_fields?.hours_assigned ??
+      initialValues?.estimatedHours ??
+      "";
+    const normalized = String(rawValue || "").trim();
+    return normalized ? `${normalized}h` : "--";
+  }, [
+    watchedHoursAssigned,
+    watchedCustomHoursAssigned,
+    initialValues?.hours_assigned,
+    initialValues?.custom_fields?.hours_assigned,
+    initialValues?.estimatedHours,
+  ]);
   const formatMetricDate = (value) => {
     if (!value) return "Not set";
     if (value?.format) return value.format("MMM D, YYYY");
@@ -869,29 +1099,21 @@ export default function CommonTaskFormModal({
                 <div className="task-detail-topbar-left">
                   <div className="task-detail-status-text">{mode === "edit" ? "EDIT TASK" : mode === "view" ? "VIEW TASK" : "NEW TASK"}</div>
                 </div>
-                <div className="task-detail-topbar-actions">
-                  <Button
-                    className="task-detail-icon-btn"
-                    type="text"
-                    icon={<CommentOutlined />}
-                    disabled
-                    title="Comments available in view mode"
-                  />
-                  <Button
-                    className="task-detail-icon-btn"
-                    type="text"
-                    icon={<PaperClipOutlined />}
-                    disabled
-                    title="Files available in view mode"
-                  />
-                  <Button
-                    className="task-detail-icon-btn"
-                    type="text"
-                    icon={<HistoryOutlined />}
-                    disabled
-                    title="Activity available in view mode"
-                  />
-                </div>
+                {mode === "view" && (
+                  <div className="task-detail-topbar-actions">
+                    <Button
+                      className="task-detail-log-hours-btn"
+                      type="text"
+                      icon={<ClockCircleOutlined />}
+                      onClick={() => {
+                        setActiveRightTab("hours-log");
+                        openAddTimeLogModal();
+                      }}
+                    >
+                      Log hours
+                    </Button>
+                  </div>
+                )}
               </div>
               <h2 className="task-detail-title" style={{ marginBottom: 10 }}>
                 {String(watchedTitle || "").trim() || "Untitled Task"}
@@ -1162,6 +1384,93 @@ export default function CommonTaskFormModal({
                 ),
               },
               {
+                key: "hours-log",
+                label: (
+                  <span className="task-detail-tab-label">
+                    <ClockCircleOutlined /> Hours Log
+                    <span className="comment-badge">{timeLogs.length || 0}</span>
+                  </span>
+                ),
+                children: (
+                  <div className="task-detail-tab-content task-detail-hours-tab">
+                    {mode !== "view" ? (
+                      <p className="task-detail-tab-hint">Hours log is available in view mode.</p>
+                    ) : (
+                      <>
+                        <div className="task-hours-log-actions">
+                          <Button className="task-detail-comment-submit" type="primary" onClick={openAddTimeLogModal}>
+                            Log hours
+                          </Button>
+                        </div>
+                        <div className="task-hours-log-list-wrapper">
+                          {timeLogsLoading ? (
+                            <div className="task-detail-loading-inline"><Spin size="small" /></div>
+                          ) : timeLogs.length > 0 ? (
+                            timeLogs.map((entry, index) => (
+                              <div
+                                key={entry?._id || index}
+                                className="task-hours-log-item"
+                              >
+                                <div className="task-hours-log-item-header">
+                                  <div className="task-hours-log-item-actions">
+                                    <Dropdown
+                                      trigger={["click"]}
+                                      overlay={
+                                        <Menu>
+                                          <Menu.Item
+                                            key={`edit-log-${entry?._id || index}`}
+                                            icon={<EditOutlined />}
+                                            onClick={() => handleEditTimeLog(entry)}
+                                          >
+                                            Edit
+                                          </Menu.Item>
+                                          <Menu.Item
+                                            key={`delete-log-${entry?._id || index}`}
+                                            icon={<DeleteOutlined />}
+                                            danger
+                                            onClick={() => handleDeleteTimeLog(entry?._id)}
+                                          >
+                                            Delete
+                                          </Menu.Item>
+                                        </Menu>
+                                      }
+                                    >
+                                      <Button type="text" size="small" icon={<MoreOutlined />} className="task-hours-log-menu-btn" />
+                                    </Dropdown>
+                                  </div>
+                                </div>
+                                <div className="task-hours-log-main-row">
+                                  <div>
+                                    <div className="task-hours-log-label">Logged hours</div>
+                                    <div className="task-hours-log-time">
+                                      {entry?.logged_hours || "00"}h {entry?.logged_minutes || "00"}m / {totalAssignedHoursDisplay}
+                                    </div>
+                                  </div>
+                                  <div className="task-hours-log-date">{entry?.logged_date || "--"}</div>
+                                </div>
+                                {entry?.descriptions ? (
+                                  <div className="task-hours-log-description-wrap">
+                                    <Button
+                                      size="small"
+                                      className="task-hours-log-description-btn"
+                                      onClick={() => openViewTimeLogModal(entry)}
+                                    >
+                                      View description
+                                    </Button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="task-detail-tab-hint">No hours logged yet.</div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ),
+              },
+              {
                 key: "attachment",
                 label: (
                   <span className="task-detail-tab-label">
@@ -1191,6 +1500,91 @@ export default function CommonTaskFormModal({
           />
         </div>
       </div>
+      <Modal
+        open={isTimeLogModalOpen}
+        onCancel={resetTimeLogForm}
+        footer={null}
+        width={760}
+        title={timeLogModalMode === "view" ? "View Time" : editingTimeLogId ? "Edit Time" : "Add Time"}
+        destroyOnClose
+        className="task-hours-entry-modal"
+      >
+        <div className="task-hours-entry-body">
+          <div className="task-hours-entry-label">Timesheet</div>
+          <Select
+            className="task-hours-log-input"
+            placeholder="Select timesheet"
+            value={selectedTimesheetId}
+            onChange={setSelectedTimesheetId}
+            disabled={timeLogModalMode === "view"}
+            options={timesheetOptions.map((item) => ({
+              value: item?._id,
+              label: item?.title || "Untitled timesheet",
+            }))}
+          />
+          <div className="task-hours-entry-grid">
+            <DatePicker
+              className="task-hours-log-input"
+              value={logDate}
+              onChange={setLogDate}
+              disabled={timeLogModalMode === "view"}
+              format="DD-MM-YYYY"
+              placeholder="When"
+            />
+            <Input
+              className="task-hours-log-input"
+              placeholder="Hours"
+              value={logHours}
+              disabled={timeLogModalMode === "view"}
+              onChange={(event) => setLogHours(event.target.value.replace(/[^\d]/g, ""))}
+            />
+            <Input
+              className="task-hours-log-input"
+              placeholder="Minutes"
+              value={logMinutes}
+              disabled={timeLogModalMode === "view"}
+              onChange={(event) => setLogMinutes(event.target.value.replace(/[^\d]/g, ""))}
+            />
+          </div>
+          <div className="task-hours-entry-label">Description</div>
+          <div className="task-hours-entry-editor">
+            {timeLogModalMode === "view" ? (
+              <div
+                className="task-hours-entry-description-preview"
+                dangerouslySetInnerHTML={{
+                  __html: logDescription || "<p>No description provided.</p>",
+                }}
+              />
+            ) : (
+              <CKEditor
+                editor={Custombuild}
+                data={logDescription || ""}
+                config={{
+                  toolbar: ["heading", "|", "bold", "italic", "link", "|", "numberedList", "bulletedList"],
+                  removePlugins: ["MediaEmbed", "ImageUpload", "EasyImage", "CKFinderUploadAdapter"],
+                }}
+                onChange={(_, editor) => {
+                  const data = editor.getData();
+                  setLogDescription(data);
+                }}
+              />
+            )}
+          </div>
+          <div className="task-hours-entry-actions">
+            <Button onClick={resetTimeLogForm}>{timeLogModalMode === "view" ? "Close" : "Cancel"}</Button>
+            {timeLogModalMode !== "view" ? (
+              <Button
+                className="task-detail-comment-submit"
+                type="primary"
+                onClick={handleAddTimeLog}
+                loading={submittingTimeLog}
+              >
+                {editingTimeLogId ? "Update hours" : "Log hours"}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </Modal>
     </Modal>
   );
 }
