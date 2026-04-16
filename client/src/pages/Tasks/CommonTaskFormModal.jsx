@@ -2,6 +2,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
 import { CloseOutlined, CommentOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, MoreOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import Service from "../../service";
 import "../TaskPage/TaskDetailModal.css";
 
@@ -609,14 +611,55 @@ export default function CommonTaskFormModal({
     [effectiveProjectId, fetchLinkedModuleOptions, linkedOptionsByField]
   );
 
-  const renderFieldControl = (field) => {
+  const renderFieldControl = (field, formName) => {
     const key = canonicalFieldKey(field?.key);
     const placeholder = field.label || toLabel(key);
     if (key === "title") {
       return <Input placeholder={placeholder} readOnly={viewOnly} />;
     }
     if (key === "description") {
-      return <Input.TextArea rows={3} placeholder={placeholder} readOnly={viewOnly} />;
+      const descriptionValue = form.getFieldValue(formName) || "";
+      if (viewOnly) {
+        return (
+          <div
+            className="task-detail-description"
+            dangerouslySetInnerHTML={{ __html: descriptionValue || "<p>-</p>" }}
+          />
+        );
+      }
+      return (
+        <div className="pfm-editor-wrapper">
+          <CKEditor
+            editor={Custombuild}
+            data={descriptionValue}
+            config={{
+              toolbar: [
+                "bold",
+                "italic",
+                "underline",
+                "|",
+                "fontColor",
+                "fontBackgroundColor",
+                "|",
+                "link",
+                "|",
+                "numberedList",
+                "bulletedList",
+                "|",
+                "alignment:left",
+                "alignment:center",
+                "alignment:right",
+                "|",
+                "fontSize",
+              ],
+              removePlugins: ["MediaEmbed", "ImageUpload", "EasyImage", "CKFinderUploadAdapter"],
+            }}
+            onChange={(event, editor) => {
+              form.setFieldValue(formName, editor.getData());
+            }}
+          />
+        </div>
+      );
     }
     if (key === "priority") {
       return (
@@ -692,18 +735,28 @@ export default function CommonTaskFormModal({
       const linkedOptions = linkedOptionsByField[key] || [];
       const requiresProject = PROJECT_DEPENDENT_LINKED_MODULES.has(String(field?.linkedModule || ""));
       const linkedDisabled = Boolean(requiresProject && !effectiveProjectId);
+      const options =
+        isLinked
+          ? (linkedOptions.length > 0
+              ? linkedOptions
+              : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
+          : (field?.options || []).map((opt) => ({ value: opt, label: opt }));
+
+      if (viewOnly) {
+        const currentValue = form.getFieldValue(formName);
+        const optionMap = new Map(options.map((opt) => [String(opt?.value), opt?.label]));
+        const values = Array.isArray(currentValue) ? currentValue : [currentValue];
+        const labels = values
+          .filter((value) => value !== undefined && value !== null && value !== "")
+          .map((value) => optionMap.get(String(value)) || String(value));
+        return <span>{labels.length ? labels.join(", ") : "-"}</span>;
+      }
       return (
         <Select
           mode={field?.type === "multiselect" ? "multiple" : undefined}
           disabled={viewOnly || linkedDisabled}
           loading={Boolean(linkedLoadingByField[key])}
-          options={
-            isLinked
-              ? (linkedOptions.length > 0
-                  ? linkedOptions
-                  : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
-              : (field?.options || []).map((opt) => ({ value: opt, label: opt }))
-          }
+          options={options}
           onDropdownVisibleChange={(visible) => {
             if (visible && isLinked) {
               loadLinkedOptionsForField(field, false);
@@ -909,7 +962,11 @@ export default function CommonTaskFormModal({
               const key = canonicalFieldKey(field?.key);
               const formName = getFieldFormName(field);
               return (
-                <div className="task-detail-section" key={key}>
+                <div
+                  className="task-detail-section"
+                  key={key}
+                  style={key === "description" ? { gridColumn: "1 / -1" } : undefined}
+                >
                   <div className="task-detail-label">{field?.label || toLabel(key)}</div>
                   <div className="task-detail-value">
                     <Form.Item
@@ -924,7 +981,7 @@ export default function CommonTaskFormModal({
                           : []
                       }
                     >
-                      {renderFieldControl(field)}
+                      {renderFieldControl(field, formName)}
                     </Form.Item>
                   </div>
                 </div>
