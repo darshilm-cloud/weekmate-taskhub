@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Col, DatePicker, Form, Input, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
-import { CloseOutlined, CommentOutlined, HistoryOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
+import { CloseOutlined, CommentOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, MoreOutlined, PaperClipOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import "../TaskPage/TaskDetailModal.css";
 
@@ -105,9 +105,18 @@ export default function CommonTaskFormModal({
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
   const effectiveTaskId = taskId || initialValues?._id || null;
+  const loggedInUserId = useMemo(() => {
+    try {
+      return String(JSON.parse(localStorage.getItem("user_data") || "{}")?._id || "");
+    } catch {
+      return "";
+    }
+  }, []);
 
   const visibleFields = useMemo(() => {
     const normalized = (taskFormFields || [])
@@ -484,6 +493,59 @@ export default function CommonTaskFormModal({
       setSubmittingComment(false);
     }
   }, [effectiveTaskId, commentText, fetchComments]);
+
+  const handleDeleteComment = useCallback(async (commentId) => {
+    if (!commentId) return;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteTaskComments}/${commentId}`,
+      });
+      if (res?.data?.status) {
+        message.success("Comment deleted");
+        fetchComments();
+      } else {
+        message.error(res?.data?.message || "Failed to delete comment");
+      }
+    } catch {
+      message.error("Failed to delete comment");
+    }
+  }, [fetchComments]);
+
+  const handleStartEditComment = useCallback((comment) => {
+    setEditingCommentId(comment?._id || null);
+    setEditingCommentText(comment?.comment || "");
+  }, []);
+
+  const handleCancelEditComment = useCallback(() => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  }, []);
+
+  const handleSaveEditComment = useCallback(async () => {
+    if (!editingCommentId) return;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.editTaskComments}/${editingCommentId}`,
+        body: {
+          comment: editingCommentText,
+          taggedUsers: [],
+          attachments: [],
+        },
+      });
+      if (res?.data?.status) {
+        message.success("Comment updated");
+        setEditingCommentId(null);
+        setEditingCommentText("");
+        fetchComments();
+      } else {
+        message.error(res?.data?.message || "Failed to update comment");
+      }
+    } catch {
+      message.error("Failed to update comment");
+    }
+  }, [editingCommentId, editingCommentText, fetchComments]);
 
   useEffect(() => {
     if (!open) return;
@@ -911,17 +973,101 @@ export default function CommonTaskFormModal({
                 children: (
                   <div className="task-detail-tab-content task-detail-comments">
                     <div className="comment-list-box">
-                      <div className="comment-list-wrapper">
+                      <div className="comment-list-wrapper" style={{ background: "linear-gradient(180deg, #f4f7fb 0%, #eef3f9 100%)", padding: 10, borderRadius: 10 }}>
                         {commentsLoading ? (
                           <div className="task-detail-loading-inline"><Spin size="small" /></div>
                         ) : comments.length > 0 ? (
-                          comments.map((item, index) => (
-                            <div className="main-comment-wrapper task-detail-comment-item" key={item?._id || index}>
-                              <div className="comment-wrapper">
-                                <p dangerouslySetInnerHTML={{ __html: item?.comment || "" }} />
+                          comments.map((item, index) => {
+                            const isOwnComment = String(item?.sender_id || "") === loggedInUserId;
+                            return (
+                              <div
+                                className="main-comment-wrapper task-detail-comment-item"
+                                key={item?._id || index}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: isOwnComment ? "flex-end" : "flex-start",
+                                  marginBottom: 8,
+                                  background: "transparent",
+                                  border: "none",
+                                  boxShadow: "none",
+                                  padding: 0,
+                                }}
+                              >
+                                <div
+                                  className="comment-wrapper"
+                                  style={{
+                                    width: "fit-content",
+                                    maxWidth: "88%",
+                                    minWidth: 120,
+                                    borderRadius: 12,
+                                    padding: "10px 12px 8px",
+                                    border: "none",
+                                    boxShadow: "0 1px 4px rgba(15, 23, 42, 0.12)",
+                                    background: isOwnComment ? "#d7f8c9" : "#ffffff",
+                                  }}
+                                >
+                                  {editingCommentId === item?._id ? (
+                                    <>
+                                      <Input.TextArea
+                                        rows={3}
+                                        value={editingCommentText}
+                                        onChange={(event) => setEditingCommentText(event.target.value)}
+                                      />
+                                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                        <Button type="primary" size="small" onClick={handleSaveEditComment} disabled={!editingCommentText.trim()}>
+                                          Save
+                                        </Button>
+                                        <Button size="small" onClick={handleCancelEditComment}>
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                                        <p style={{ marginBottom: 6, marginTop: 0, wordBreak: "break-word", flex: 1 }} dangerouslySetInnerHTML={{ __html: item?.comment || "" }} />
+                                        {isOwnComment && (
+                                          <Dropdown
+                                            trigger={["click"]}
+                                            overlay={
+                                              <Menu>
+                                                <Menu.Item key="edit" icon={<EditOutlined />} onClick={() => handleStartEditComment(item)}>
+                                                  Edit
+                                                </Menu.Item>
+                                                <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => handleDeleteComment(item?._id)}>
+                                                  Delete
+                                                </Menu.Item>
+                                              </Menu>
+                                            }
+                                          >
+                                            <Button
+                                              type="text"
+                                              size="small"
+                                              icon={<MoreOutlined />}
+                                              style={{
+                                                marginTop: -4,
+                                                marginRight: -6,
+                                                background: "transparent",
+                                                border: "none",
+                                                boxShadow: "none",
+                                                padding: 0,
+                                                minWidth: "auto",
+                                                width: 18,
+                                                height: 18,
+                                              }}
+                                            />
+                                          </Dropdown>
+                                        )}
+                                      </div>
+                                      <div style={{ fontSize: 11, color: "#6d7784", textAlign: "right" }}>
+                                        {new Date(item?.createdAt || item?.updatedAt || Date.now()).toLocaleString()}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
                           <div className="task-no-comments">No comments</div>
                         )}
