@@ -154,16 +154,17 @@
 .reports-filter-bar {
   display: flex;
   gap: 14px;
-  padding: 8px 0 10px;
+  padding: 8px 0 16px;
   align-items: center;
-  flex-wrap: wrap;
   justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 .reports-filter-bar .reports-single-filter-btn,
 .reports-filter-bar .reports-search-input,
 .reports-filter-bar .reports-filter-control {
   flex: 0 0 auto;
+  height: 36px; /* Stable small height */
 }
 
 .reports-facet-trigger {
@@ -511,7 +512,7 @@
   border-radius: 8px;
   border-color: #d1d5db;
   background: #f9fafb;
-  height: 34px;
+  height: 40px;
 }
 
 .reports-search-input .ant-input-affix-wrapper:hover,
@@ -525,7 +526,7 @@
 .reports-filter-control.ant-picker {
   flex: 0 0 auto;
   min-width: 0;
-  height: 46px;
+  height: 40px;
   border-radius: 12px;
   background: #fff;
 }
@@ -539,9 +540,23 @@
 }
 
 .reports-filter-bar .reports-filter-control.ant-picker {
-  flex: 0 1 320px;
-  width: 320px;
-  min-width: 240px;
+  flex: 0 0 300px; /* Increased to fix truncation */
+  width: 300px;
+  min-width: 260px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+
+.reports-filter-control.ant-picker .ant-picker-input > input {
+  font-size: 12px; /* Denser text */
+}
+
+.reports-filter-control.ant-picker .ant-picker-input > input {
+  font-size: 13px; /* Smaller text */
+}
+
+.reports-filter-control.ant-picker .ant-picker-range-separator {
+  padding: 0 4px;
 }
 
 /* Fix calendar dropdown styling */
@@ -550,13 +565,27 @@
 }
 
 .ant-picker-panel {
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
-  box-shadow: 0 3px 6px -4px rgba(0,0,0,.12), 0 6px 16px 0 rgba(0,0,0,.08), 0 9px 28px 8px rgba(0,0,0,.05);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(15, 39, 68, 0.15);
 }
 
 .ant-picker-panel-container {
   background: #fff;
+  border-radius: 16px;
+}
+
+.ant-picker-content th,
+.ant-picker-content td {
+  padding: 4px 2px; /* Increased padding to prevent overlap */
+}
+
+.ant-picker-cell-inner {
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  border-radius: 8px !important;
+  font-size: 12px;
 }
 
 /* Dark theme calendar fixes */
@@ -2859,4 +2888,17 @@ body[data-theme="dark"] .user-report-member-search .ant-input-affix-wrapper:focu
   font-size: 13px;
   color: #64748b;
   font-weight: 500;
+}
+
+/* ── Project Report Skeleton ── */
+.project-report-skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-report-stat-card.skeleton {
+  padding: 24px 20px;
+  gap: 20px;
+  min-height: 180px;
 }
