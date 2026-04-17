@@ -9,8 +9,7 @@ const mongoose = require("mongoose");
 const { Parser } = require("json2csv");
 const json2xls = require("json2xls");
 const { utcDefault } = require("../configs");
-const config = require("../settings/config.json");
-console.log("🚀 ~ config:", config)
+const config = require("../../settings/config.json");
 const { errorResponse } = require("./response");
 // const SMTP = mongoose.model("smtp_configs")
 // const { SMTP } = require("../models");
