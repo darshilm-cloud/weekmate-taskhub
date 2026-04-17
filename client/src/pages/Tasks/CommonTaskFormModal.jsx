@@ -1240,6 +1240,7 @@ export default function CommonTaskFormModal({
             })}
           </div>
 
+            </div>
           <div className="task-detail-modal-footer-actions">
             {!viewOnly && (
               <Button
@@ -1255,7 +1256,6 @@ export default function CommonTaskFormModal({
               Close
             </Button>
           </div>
-            </div>
             {loadingConfig && <div style={{ color: "#8c8c8c", padding: "0 20px 18px" }}>Loading form configuration...</div>}
           </Form>
         </div>

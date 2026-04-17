@@ -556,8 +556,8 @@
   overflow-x: auto;
   padding: 24px;
   min-height: 400px;
-  height: calc(100dvh - 220px);
-  max-height: calc(100dvh - 220px);
+  height: calc(100dvh - 175px);
+  max-height: calc(100dvh - 175px);
   align-items: stretch;
   overflow-y: hidden;
 }
@@ -641,13 +641,14 @@
   margin-left: 10px;
 }
 
-.kanban-add-stage-icon-btn.ant-btn {
+.kanban-add-stage-column .kanban-add-stage-icon-btn.ant-btn {
   width: 36px;
   height: 36px;
   border: 1px dashed #9ca3af;
   color: #4b5563;
   background: #ffffff;
   box-shadow: none;
+  border-radius: 10px;
 }
 
 .kanban-add-stage-icon-btn.ant-btn:hover,
