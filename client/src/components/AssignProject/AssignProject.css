@@ -616,7 +616,7 @@ body.no-body-scroll .gx-layout-content {
 }
 
 .infinite-scroll-component {
-  max-height: calc(100dvh - 300px);
+
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -902,9 +902,12 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-overview {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: auto;
+    max-height: calc(100dvh - 345px);
+    padding: 0 10px;
 }
 
 .ap-browser-overview-grid {

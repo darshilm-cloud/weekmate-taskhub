@@ -173,7 +173,7 @@
 }
 
 .task-wrapper .profilerightbar .project-task-section::-webkit-scrollbar {
-    height: 15px;
+    height: 5px;
     overflow-x: auto;
 }
 
