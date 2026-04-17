@@ -55,6 +55,8 @@ function Topbar() {
         { label: "Status",             icon: <ClusterOutlined />,      path: `/${companySlug}/project-status` },
         { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
         { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },
+        { label: "Task Stages",        icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflow-stages` },
+        { label: "Bug Stages",         icon: <NodeIndexOutlined />,    path: `/${companySlug}/bug-workflow-stages` },
         { label: "Archived Project",   icon: <InboxOutlined />,        path: `/${companySlug}/project-archieved` },
         { label: "Trash",              icon: <DeleteOutlined />,       path: `/${companySlug}/trash` },
       ],

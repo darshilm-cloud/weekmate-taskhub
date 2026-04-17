@@ -1061,6 +1061,7 @@ useEffect(() => {
     const element = evt.currentTarget;
     element.classList.add("dragged");
     evt.dataTransfer.setData("text/plain", evt.currentTarget.id);
+    evt.dataTransfer.setData("application/x-item-type", "task-card");
     evt.dataTransfer.setData("application/x-task-id", evt.currentTarget.id);
     evt.dataTransfer.effectAllowed = "move";
     suppressClickUntilRef.current = Date.now() + 400;
@@ -1102,6 +1103,8 @@ useEffect(() => {
 
   const onDrop = (evt, status) => {
     evt.preventDefault();
+    const dragType = evt.dataTransfer.getData("application/x-item-type");
+    if (dragType && dragType !== "task-card") return;
     evt.stopPropagation();
     evt.currentTarget.classList.remove("dragged-over");
     const data =

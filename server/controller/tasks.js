@@ -108,39 +108,11 @@ const normalizeWorkflowStageKey = (value) => {
 const resolveWorkflowStageIdForTask = async ({
   statusValue,
   workflowId,
-  userId,
 }) => {
   if (!statusValue) return "";
 
   const rawValue = String(statusValue).trim();
-  if (mongoose.Types.ObjectId.isValid(rawValue)) return rawValue;
   if (!workflowId || !mongoose.Types.ObjectId.isValid(String(workflowId))) return "";
-
-  const targetKey = normalizeWorkflowStageKey(rawValue);
-  const stagePresets = {
-    todo: {
-      title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
-      color: "#616161",
-      isDefault: true,
-    },
-    inprogress: {
-      title: "In Progress",
-      color: "#FFA500",
-      isDefault: false,
-    },
-    onhold: {
-      title: "On Hold",
-      color: "#3b82f6",
-      isDefault: false,
-    },
-    done: {
-      title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-      color: "#228B22",
-      isDefault: true,
-    },
-  };
-
-  if (!stagePresets[targetKey]) return "";
 
   const existingStages = await ProjectWorkFlowStatus.find({
     workflow_id: new mongoose.Types.ObjectId(workflowId),
@@ -149,31 +121,25 @@ const resolveWorkflowStageIdForTask = async ({
     .sort({ sequence: 1 })
     .lean();
 
+  if (!existingStages.length) return "";
+
+  if (mongoose.Types.ObjectId.isValid(rawValue)) {
+    const matchedById = existingStages.find(
+      (stage) => String(stage?._id || "") === rawValue
+    );
+    return matchedById?._id?.toString() || "";
+  }
+
+  const targetKey = normalizeWorkflowStageKey(rawValue);
+  if (!targetKey) return "";
+
   const matchedStage = existingStages.find((stage) => {
     const stageKey = normalizeWorkflowStageKey(stage?.title || stage?.name || "");
     return stageKey === targetKey;
   });
 
   if (matchedStage?._id) return matchedStage._id.toString();
-
-  const lastSequence = existingStages.length
-    ? Math.max(...existingStages.map((stage) => Number(stage?.sequence) || 0))
-    : 0;
-
-  const preset = stagePresets[targetKey];
-  const createdStage = await ProjectWorkFlowStatus.create({
-    workflow_id: new mongoose.Types.ObjectId(workflowId),
-    title: preset.title,
-    color: preset.color,
-    sequence: lastSequence + 1,
-    isDefault: preset.isDefault,
-    createdBy: userId,
-    updatedBy: userId,
-    createdAt: configs.utcDefault(),
-    updatedAt: configs.utcDefault(),
-  });
-
-  return createdStage?._id?.toString() || "";
+  return "";
 };
 
 const invalidateTaskBoardCaches = (projectId) => {
@@ -273,7 +239,6 @@ exports.addProjectsTask = async (req, res) => {
       (await resolveWorkflowStageIdForTask({
         statusValue: value.task_status,
         workflowId,
-        userId: req.user._id,
       })) || value.task_status;
 
     if (
@@ -1311,11 +1276,14 @@ exports.updateMultipleTaskStatus = async (req, res) => {
       (await resolveWorkflowStageIdForTask({
         statusValue: value.task_status,
         workflowId,
-        userId: req.user._id,
       })) || value.task_status;
 
     if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
-      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid task stage");
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Invalid task stage"
+      );
     }
 
     const data = await ProjectTasks.updateMany(
@@ -1512,11 +1480,14 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       (await resolveWorkflowStageIdForTask({
         statusValue: value?.task_status,
         workflowId,
-        userId: loginUserId,
       })) || value?.task_status;
 
     if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
-      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid task stage");
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Invalid task stage"
+      );
     }
 
     if (value?.task_status) {

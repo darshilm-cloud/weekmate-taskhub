@@ -29,6 +29,8 @@ import "./TaskPage.css";
 const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
+const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
+const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 
 const computeBucketHasMore = (mergedLength, fetchedLength, total, meta = {}) => {
   const tot = Number(total) || 0;
@@ -113,6 +115,7 @@ function getTaskProjectTitle(task) {
   return "—";
 }
 
+
 function mergeSectionKeysFromTotals(statusTotals) {
   const order = ["todo", "inprogress", "onhold", "done"];
   const keys = new Set(order);
@@ -121,6 +124,11 @@ function mergeSectionKeysFromTotals(statusTotals) {
   });
   const rest = [...keys].filter((k) => !order.includes(k)).sort();
   return [...order.filter((k) => keys.has(k)), ...rest];
+}
+
+function getTaskPageSectionKeyFromStatus(item) {
+  const normalized = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+  return normalized;
 }
 
 function mapTaskToEditFormInitial(task) {
@@ -665,6 +673,10 @@ const TaskPage = () => {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [addStageModalOpen, setAddStageModalOpen] = useState(false);
   const [stageSubmitting, setStageSubmitting] = useState(false);
+  const [stageRenameId, setStageRenameId] = useState(null);
+  const [stageRenameValue, setStageRenameValue] = useState("");
+  const [stageRenaming, setStageRenaming] = useState(false);
+  const [draggingStageId, setDraggingStageId] = useState(null);
   const [defaultWorkflowId, setDefaultWorkflowId] = useState("");
   const tasksContainerRef = React.useRef(null);
   const sectionBucketsRef = useRef({});
@@ -768,6 +780,21 @@ const TaskPage = () => {
     }
   }, []);
 
+  const resolveTaskPageWorkflowId = useCallback(
+    async ({ showError = true } = {}) => {
+      let workflowId = defaultWorkflowId;
+      if (!workflowId) {
+        workflowId = await fetchDefaultWorkflowId();
+      }
+      if (!workflowId && showError) {
+        message.error("No workflow found.");
+      }
+      if (workflowId) setDefaultWorkflowId(workflowId);
+      return workflowId || "";
+    },
+    [defaultWorkflowId, fetchDefaultWorkflowId]
+  );
+
 
   // Handle project search
   const onProjectSearch = useCallback((val) => {
@@ -812,24 +839,34 @@ const TaskPage = () => {
       });
       if (metaRes?.status !== 200) {
         setStatusTotals({});
-        setListSectionIds(["todo", "inprogress", "onhold", "done"]);
+        setListSectionIds([]);
         setSectionBuckets({});
         return;
       }
       const meta = metaRes?.data?.metadata || {};
       const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
       const nextStatusTotals = statusCounts.reduce((acc, item) => {
-        const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+        const key = getTaskPageSectionKeyFromStatus(item);
         acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
         return acc;
       }, {});
       const nextStatusMetaBySection = statusCounts.reduce((acc, item) => {
-        const key = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
+        const key = getTaskPageSectionKeyFromStatus(item);
         if (!key) return acc;
+        const prev = acc[key] || {};
+        const incomingStatusId = item?.statusId ? String(item.statusId) : null;
+        const prevStatusIds = Array.isArray(prev.statusIds) ? prev.statusIds : [];
+        const mergedStatusIds = incomingStatusId
+          ? [...prevStatusIds, incomingStatusId].filter((v, i, a) => v && a.indexOf(v) === i)
+          : prevStatusIds;
         acc[key] = {
-          statusId: item?.statusId || null,
-          title: item?.title || getKanbanStatusMeta({ title: key, name: key }).title,
-          color: item?.color || getKanbanStatusMeta({ title: key, name: key }).color,
+          statusId: prev.statusId || incomingStatusId || null,
+          statusIds: mergedStatusIds,
+          title: prev.title || item?.title || getKanbanStatusMeta({ title: key, name: key }).title,
+          color: prev.color || item?.color || getKanbanStatusMeta({ title: key, name: key }).color,
+          isDefault: Boolean(prev.isDefault || item?.isDefault || DEFAULT_STAGE_KEYS.has(key)),
+          workflowId: prev.workflowId || item?.workflowId || null,
+          workflowName: prev.workflowName || item?.workflowName || "",
         };
         return acc;
       }, {});
@@ -1047,21 +1084,18 @@ const TaskPage = () => {
   }, [openAddTaskModalForStatus]);
 
   const handleOpenAddStageModal = useCallback(async () => {
-    let workflowId = defaultWorkflowId;
-    if (!workflowId) {
-      workflowId = await fetchDefaultWorkflowId();
-    }
+    const workflowId = await resolveTaskPageWorkflowId();
     if (!workflowId) {
       message.error("No workflow found to add stage.");
       return;
     }
     setAddStageModalOpen(true);
-  }, [defaultWorkflowId, fetchDefaultWorkflowId]);
+  }, [resolveTaskPageWorkflowId]);
 
   const handleAddStageSubmit = useCallback(async () => {
     try {
       const values = await stageForm.validateFields();
-      const workflowId = defaultWorkflowId || (await fetchDefaultWorkflowId());
+      const workflowId = await resolveTaskPageWorkflowId();
 
       if (!workflowId) {
         message.error("No workflow found to add stage.");
@@ -1081,7 +1115,7 @@ const TaskPage = () => {
 
       if (response?.data?.status) {
         const createdStage = response?.data?.data || {};
-        const stageKey = normalizeKanbanStatusKey(createdStage);
+        const stageKey = String(createdStage?._id || normalizeKanbanStatusKey(createdStage));
         const stageId = createdStage?._id || null;
         const stageTitle = createdStage?.title || createdStage?.name || "New Stage";
         const stageColor = createdStage?.color || "#64748b";
@@ -1096,8 +1130,10 @@ const TaskPage = () => {
             ...prev,
             [stageKey]: {
               statusId: stageId,
+              statusIds: stageId ? [stageId] : [],
               title: stageTitle,
               color: stageColor,
+              isDefault: false,
             },
           }));
 
@@ -1134,35 +1170,144 @@ const TaskPage = () => {
     } finally {
       setStageSubmitting(false);
     }
-  }, [defaultWorkflowId, fetchDefaultWorkflowId, initializeBoardData, stageForm]);
+  }, [initializeBoardData, resolveTaskPageWorkflowId, stageForm]);
+
+  const isCustomStage = useCallback(
+    (column) =>
+      Boolean(column?.statusId) &&
+      !Boolean(column?.statusMeta?.isDefault) &&
+      !DEFAULT_STAGE_KEYS.has(normalizeKanbanStatusKey(column?.title || "")),
+    []
+  );
+
+  const handleStartRenameStage = useCallback((column) => {
+    if (!isCustomStage(column)) return;
+    setStageRenameId(column.id);
+    setStageRenameValue(column.title || "");
+  }, [isCustomStage]);
+
+  const handleRenameStageSubmit = useCallback(async (column) => {
+    if (!column?.statusId || !isCustomStage(column)) {
+      setStageRenameId(null);
+      return;
+    }
+    const nextTitle = String(stageRenameValue || "").trim();
+    if (!nextTitle) {
+      message.error("Stage name is required.");
+      return;
+    }
+    if (nextTitle === String(column.title || "").trim()) {
+      setStageRenameId(null);
+      return;
+    }
+    try {
+      const workflowId = await resolveTaskPageWorkflowId();
+      if (!workflowId) {
+        message.error("No workflow found to update stage.");
+        return;
+      }
+      setStageRenaming(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateworkflowStatus}/${column.statusId}`,
+        body: {
+          workflow_id: workflowId,
+          title: nextTitle,
+          color: column.color || "#64748b",
+        },
+      });
+      if (response?.data?.status) {
+        setStatusMetaBySection((prev) => ({
+          ...prev,
+          [column.id]: {
+            ...(prev?.[column.id] || {}),
+            title: nextTitle,
+          },
+        }));
+        message.success(response?.data?.message || "Stage updated");
+        setStageRenameId(null);
+      } else {
+        message.error(response?.data?.message || "Failed to update stage");
+      }
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to update stage");
+    } finally {
+      setStageRenaming(false);
+    }
+  }, [isCustomStage, resolveTaskPageWorkflowId, stageRenameValue]);
+
+  const persistStageOrder = useCallback(async (orderedSectionIds) => {
+    const visibleOrderedStageIds = orderedSectionIds
+      .flatMap((sectionId) => {
+        const meta = statusMetaBySection?.[sectionId] || {};
+        const ids = Array.isArray(meta.statusIds) ? meta.statusIds : [];
+        if (ids.length > 0) return ids;
+        return meta.statusId ? [meta.statusId] : [];
+      })
+      .filter(Boolean);
+    const allStageIds = Object.values(statusMetaBySection || {})
+      .flatMap((meta) => {
+        const ids = Array.isArray(meta?.statusIds) ? meta.statusIds : [];
+        if (ids.length > 0) return ids;
+        return meta?.statusId ? [meta.statusId] : [];
+      })
+      .filter(Boolean);
+    const orderedStageIds = [
+      ...visibleOrderedStageIds,
+      ...allStageIds.filter((id) => !visibleOrderedStageIds.includes(id)),
+    ]
+      .filter((id) => MONGO_ID_REGEX.test(String(id || "")))
+      .filter((id, index, arr) => arr.indexOf(id) === index);
+    if (!orderedStageIds.length) return;
+    const workflowId = await resolveTaskPageWorkflowId({ showError: false });
+    if (!workflowId) return;
+    await Service.makeAPICall({
+      methodName: Service.putMethod,
+      api_url: Service.reorderWorkflowStatus,
+      body: {
+        workflow_id: workflowId,
+        ordered_stage_ids: orderedStageIds,
+      },
+    });
+  }, [resolveTaskPageWorkflowId, statusMetaBySection]);
+
+  const reorderSections = useCallback((fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    setListSectionIds((prev) => {
+      const current = Array.isArray(prev) ? [...prev] : [];
+      const fromIndex = current.indexOf(fromId);
+      const toIndex = current.indexOf(toId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      current.splice(fromIndex, 1);
+      current.splice(toIndex, 0, fromId);
+      persistStageOrder(current).catch(() => {
+        message.error("Failed to reorder stages");
+      });
+      return current;
+    });
+  }, [persistStageOrder]);
 
   const kanbanColumns = useMemo(() => {
-    const statusOrder = ["todo", "inprogress", "onhold", "done"];
-    const all = listSectionIds.map((bucketId) => {
-      const meta = getKanbanStatusMeta({ title: bucketId, name: bucketId });
+      const all = listSectionIds.map((bucketId) => {
+      const sectionMeta = statusMetaBySection[bucketId] || {};
+      const meta = getKanbanStatusMeta({ title: sectionMeta.title || bucketId, name: sectionMeta.title || bucketId });
       const colTasks = sectionBuckets[bucketId]?.tasks || [];
       const first = colTasks[0];
-        const sectionMeta = statusMetaBySection[bucketId] || {};
       return {
         id: bucketId,
-          title: sectionMeta.title || meta.title,
-          color: sectionMeta.color || meta.color,
-          statusId: sectionMeta.statusId || first?._stId || first?.task_status?._id || null,
-          statusMeta:
-            first?.task_status || {
-              _id: sectionMeta.statusId || null,
-              title: sectionMeta.title || meta.title,
-              color: sectionMeta.color || meta.color,
-            },
+        title: sectionMeta.title || meta.title,
+        color: sectionMeta.color || meta.color,
+        workflowId: sectionMeta.workflowId || null,
+        workflowName: sectionMeta.workflowName || "",
+        statusId: sectionMeta.statusId || first?._stId || first?.task_status?._id || null,
+        statusMeta:
+          first?.task_status || {
+            _id: sectionMeta.statusId || null,
+            title: sectionMeta.title || meta.title,
+            color: sectionMeta.color || meta.color,
+          },
         tasks: sortTaskList(colTasks, sortMode),
       };
-    }).sort((a, b) => {
-      const aIndex = statusOrder.indexOf(a.id);
-      const bIndex = statusOrder.indexOf(b.id);
-      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-      if (normalizedA !== normalizedB) return normalizedA - normalizedB;
-      return a.title.localeCompare(b.title);
     });
 
     if (!kanbanStatusFilter) return all;
@@ -1368,7 +1513,7 @@ const TaskPage = () => {
     });
   }, [listSectionIds]);
 
-  const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask) => {
+  const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null) => {
     const statusToSend = targetColumn?.statusId || targetColumn?.statusMeta?._id || targetColumn?.title;
     if (!taskId || !statusToSend) {
       message.error("Unable to move task to this column");
@@ -1437,17 +1582,43 @@ const TaskPage = () => {
     } catch (error) {
       setSectionBuckets((prev) => {
         const next = { ...prev };
+        const previousStatusId = String(
+          previousTask?.task_status?._id || previousTask?._stId || ""
+        );
+        const derivedBucketFromStatus =
+          Object.keys(statusMetaBySection || {}).find(
+            (sectionId) =>
+              String(statusMetaBySection?.[sectionId]?.statusId || "") === previousStatusId
+          ) || null;
+        const rollbackBucketId =
+          previousBucketId ||
+          derivedBucketFromStatus ||
+          listSectionIds.find((id) => id === previousStatusId) ||
+          listSectionIds.find(
+            (id) =>
+              normalizeKanbanStatusKey(statusMetaBySection?.[id]?.title || id) ===
+              normalizeKanbanStatusKey(previousTask?.task_status)
+          ) ||
+          null;
+
         Object.keys(next).forEach((bid) => {
+          const currentBucket = next[bid] || { tasks: [] };
           next[bid] = {
-            ...next[bid],
-            tasks: (next[bid].tasks || []).map((task) => (task._id === taskId ? previousTask : task)),
+            ...currentBucket,
+            tasks: (currentBucket.tasks || []).filter((task) => task._id !== taskId),
           };
         });
+        if (rollbackBucketId && next[rollbackBucketId]) {
+          next[rollbackBucketId] = {
+            ...next[rollbackBucketId],
+            tasks: [...(next[rollbackBucketId].tasks || []), previousTask],
+          };
+        }
         return next;
       });
       message.error(error?.response?.data?.message || error?.message || "Failed to update task status");
     }
-  }, [moveTaskLocally]);
+  }, [listSectionIds, moveTaskLocally, statusMetaBySection]);
 
   const handleKanbanDragStart = useCallback((task) => {
     setDraggingTaskId(task?._id || null);
@@ -1465,14 +1636,25 @@ const TaskPage = () => {
     }
 
     const draggedTask = mergedTasksFromBuckets.find((task) => task._id === draggingTaskId);
+    const sourceBucketId =
+      listSectionIds.find((bucketId) =>
+        (sectionBuckets?.[bucketId]?.tasks || []).some((task) => task?._id === draggedTask?._id)
+      ) || null;
+
     if (!draggedTask) {
       setDragOverColumnId(null);
       setDraggingTaskId(null);
       return;
     }
 
-    const currentStatusKey = normalizeKanbanStatusKey(draggedTask.task_status);
-    if (currentStatusKey === targetColumn.id) {
+    const currentStatusId =
+      String(
+        draggedTask?.task_status?._id ||
+          draggedTask?._stId ||
+          ""
+      ) || normalizeKanbanStatusKey(draggedTask.task_status);
+    const targetStatusId = String(targetColumn?.statusId || targetColumn?.id || "");
+    if (currentStatusId && targetStatusId && currentStatusId === targetStatusId) {
       setDragOverColumnId(null);
       setDraggingTaskId(null);
       return;
@@ -1480,8 +1662,8 @@ const TaskPage = () => {
 
     setDragOverColumnId(null);
     setDraggingTaskId(null);
-    await updateTaskKanbanStatus(draggedTask._id, targetColumn, draggedTask);
-  }, [draggingTaskId, mergedTasksFromBuckets, updateTaskKanbanStatus]);
+    await updateTaskKanbanStatus(draggedTask._id, targetColumn, draggedTask, sourceBucketId);
+  }, [draggingTaskId, listSectionIds, mergedTasksFromBuckets, sectionBuckets, updateTaskKanbanStatus]);
 
   const deleteTasksByIds = useCallback(
     async (ids) => {
@@ -1809,8 +1991,38 @@ const TaskPage = () => {
             </div>
           ) : kanbanColumns.map((col) => (
             <div key={col.id} className="kanban-column" style={{ borderTopColor: col.color }}>
-              <div className="kanban-column-header">
-                <span className="kanban-column-title">{col.title}</span>
+              <div
+                className="kanban-column-header"
+                draggable
+                onDragStart={() => setDraggingStageId(col.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  reorderSections(draggingStageId, col.id);
+                  setDraggingStageId(null);
+                }}
+                onDragEnd={() => setDraggingStageId(null)}
+              >
+                {stageRenameId === col.id ? (
+                  <Input
+                    size="small"
+                    autoFocus
+                    value={stageRenameValue}
+                    onChange={(e) => setStageRenameValue(e.target.value)}
+                    onPressEnter={() => handleRenameStageSubmit(col)}
+                    onBlur={() => handleRenameStageSubmit(col)}
+                    disabled={stageRenaming}
+                    style={{ maxWidth: 180 }}
+                  />
+                ) : (
+                  <span
+                    className="kanban-column-title"
+                    onDoubleClick={() => handleStartRenameStage(col)}
+                    title={isCustomStage(col) ? "Double click to rename" : undefined}
+                  >
+                    {col.title}
+                  </span>
+                )}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="kanban-column-count">({statusTotals[col.id] ?? col.tasks.length})</span>
                 </div>

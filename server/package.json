@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=development nodemon ./bin/www",
-    "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www"
+    "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www",
+    "migrate:stages:company:dry": "node ./migrations/202604171330__normalize_company_task_stages.js",
+    "migrate:stages:company:apply": "node ./migrations/202604171330__normalize_company_task_stages.js --apply"
   },
   "dependencies": {
     "body-parser": "^1.20.2",

@@ -179,8 +179,23 @@ exports.addProjectsBugs = async (req, res) => {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let statusData = await ProjectBugsWorkFlowStatus.findOne({
-        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO
+        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+        isDeleted: false,
       }).select("_id");
+      if (!statusData?._id) {
+        statusData = await ProjectBugsWorkFlowStatus.findOne({
+          title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+          isDeleted: false,
+          $or: [{ project_id: null }, { project_id: { $exists: false } }],
+        }).select("_id");
+      }
+      if (!statusData?._id) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "No default bug stage found for this project."
+        );
+      }
 
       // data type of bug_labels changed array to string .. need to manage here cause of this use in other module
       let bug_labels = [];
@@ -1046,6 +1061,17 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     };
 
     if (value?.bug_status) {
+      const validBugStage = await ProjectBugsWorkFlowStatus.findOne({
+        _id: value.bug_status,
+        isDeleted: false,
+      }).lean();
+      if (!validBugStage?._id) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "Invalid bug stage."
+        );
+      }
       updateObj.bug_status = value?.bug_status;
 
       // if previous and new both value same no need to update..
@@ -1178,7 +1204,10 @@ exports.projectBugsDetailedData = async (req, res) => {
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
       checkLoginUserIsProjectAccountManager(value.project_id, req.user._id),
       mongoose.model("projects").findOne({ _id: projectObjectId, isDeleted: false }, { pms_clients: 1 }).lean(),
-      ProjectBugsWorkFlowStatus.find({ isDeleted: false, ...(value.status_id ? { _id: new mongoose.Types.ObjectId(value.status_id) } : {}) }).sort({ sequence: 1 }).lean()
+      ProjectBugsWorkFlowStatus.find({
+        isDeleted: false,
+        ...(value.status_id ? { _id: new mongoose.Types.ObjectId(value.status_id) } : {}),
+      }).sort({ sequence: 1 }).lean()
     ]);
 
     const isPrivileged = isAdmin || isManager || isAccManager;
@@ -2746,7 +2775,7 @@ exports.importBugsData = async (req, res) => {
 
       const bugStatus = await ProjectBugsWorkFlowStatus.findOne({
         title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
-        isDeleted: false
+        isDeleted: false,
       });
 
       for (const item of value) {

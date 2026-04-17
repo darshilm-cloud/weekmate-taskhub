@@ -100,6 +100,12 @@ const DiscussionPage = React.lazy(() =>
 const ResourceMatrix = React.lazy(() =>
   import("../pages/ResourceMatrix/ResourceMatrix")
 );
+const WorkflowStages = React.lazy(() =>
+  import("../pages/WorkflowStages")
+);
+const BugWorkflowStages = React.lazy(() =>
+  import("../pages/BugWorkflowStages")
+);
 
 const ProjectsRunning = React.lazy(() => import("../pages/Reports"));
 const TimeSheet = React.lazy(() => import("../pages/Reports/TimeSheet"));
@@ -153,6 +159,16 @@ const index = ({ match, userPermission }) => {
     {
       path: ":companySlug/resources",
       component: Resource,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/workflow-stages",
+      component: WorkflowStages,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/bug-workflow-stages",
+      component: BugWorkflowStages,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {

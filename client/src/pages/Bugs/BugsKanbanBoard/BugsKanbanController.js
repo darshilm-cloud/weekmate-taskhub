@@ -588,6 +588,8 @@ const BugsKanbanController = ({
     const element = evt.currentTarget;
     element.classList.add("dragged");
     evt.dataTransfer.setData("text/plain", evt.currentTarget.id);
+    evt.dataTransfer.setData("application/x-item-type", "bug-card");
+    evt.dataTransfer.setData("application/x-bug-id", evt.currentTarget.id);
     evt.dataTransfer.effectAllowed = "move";
     setDragged(true);
   };
@@ -622,9 +624,13 @@ const BugsKanbanController = ({
   const onDrop = (evt, status) => {
     evt.preventDefault();
     evt?.currentTarget?.classList?.remove("dragged-over");
-    let data = evt.dataTransfer.getData("text/plain");
-    console.log("🚀 ~ onDrop ~ data:", evt, data)
-    data = getIdFromString(data)
+    const dragType = evt.dataTransfer.getData("application/x-item-type");
+    if (dragType && dragType !== "bug-card") return;
+    let data =
+      evt.dataTransfer.getData("application/x-bug-id") ||
+      evt.dataTransfer.getData("text/plain");
+    data = getIdFromString(data);
+    if (!data || !status) return;
     updateTaskWorkflowStats(status, data);
   };
 

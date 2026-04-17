@@ -115,8 +115,10 @@ export default class Service {
   //workflow status
   static addworkflowStatus = "/work-flow/status/add";
   static getworkflowStatus = "/work-flow/status/get";
+  static listWorkflowStages = "/work-flow/status/list";
   static deleteworkflowStatus = "/work-flow/status/delete";
   static updateworkflowStatus = "/work-flow/status/update";
+  static reorderWorkflowStatus = "/work-flow/status/reorder";
 
   //resource
   static getResource = "/resource/getResource";
@@ -302,6 +304,11 @@ export default class Service {
   static deleteBugComment = "/projects/bugcomments/deleteComment";
   static resolveBugComment = "/projects/bugcomments/editCommentsResolve";
   static getBugWorkFlowStatus = "/master/get/bugs-workflow";
+  static addBugWorkflowStatus = "/bugs-work-flow/status/add";
+  static listBugWorkflowStatus = "/bugs-work-flow/status/get";
+  static updateBugWorkflowStatus = "/bugs-work-flow/status/update";
+  static reorderBugWorkflowStatus = "/bugs-work-flow/status/reorder";
+  static deleteBugWorkflowStatus = "/bugs-work-flow/status/delete";
 
   // Add Folder
   static addFolder = "/folders/add";

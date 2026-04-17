@@ -643,6 +643,7 @@ async function aggregateTaskListStatusCounts(matchQueryInput) {
           id: "$task_status._id",
           title: "$task_status.title",
           color: "$task_status.color",
+          isDefault: "$task_status.isDefault",
         },
         count: { $sum: 1 },
       },
@@ -653,32 +654,75 @@ async function aggregateTaskListStatusCounts(matchQueryInput) {
         statusId: "$_id.id",
         title: { $ifNull: ["$_id.title", "No status"] },
         color: { $ifNull: ["$_id.color", "#d9d9d9"] },
+        isDefault: { $ifNull: ["$_id.isDefault", false] },
         count: 1,
       },
     },
   ]);
 }
 
-async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuses = []) {
+async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuses = [], projectIds = []) {
   if (!companyId) return countedStatuses;
 
-  const workflowRows = await ProjectWorkFlow.find({
-    isDeleted: false,
-    companyId: new mongoose.Types.ObjectId(companyId),
-  })
-    .select("_id")
-    .lean();
+  let workflowIds = [];
+  if (Array.isArray(projectIds) && projectIds.length > 0) {
+    const projectObjectIds = projectIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(String(id)))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (projectObjectIds.length > 0) {
+      const projectRows = await Project.find({
+        _id: { $in: projectObjectIds },
+        isDeleted: false,
+        companyId: new mongoose.Types.ObjectId(companyId),
+      })
+        .select("workFlow workflow work_flow workflow_id work_flow_id")
+        .lean();
 
-  const workflowIds = (workflowRows || []).map((row) => row?._id).filter(Boolean);
+      workflowIds = (projectRows || [])
+        .map((row) =>
+          row?.workFlow ||
+          row?.workflow ||
+          row?.work_flow ||
+          row?.workflow_id ||
+          row?.work_flow_id
+        )
+        .filter(Boolean)
+        .map((id) => new mongoose.Types.ObjectId(id));
+    }
+  }
+
+  if (!workflowIds.length) {
+    const workflowRows = await ProjectWorkFlow.find({
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(companyId),
+    })
+      .select("_id")
+      .lean();
+    workflowIds = (workflowRows || []).map((row) => row?._id).filter(Boolean);
+  }
+
   if (!workflowIds.length) return countedStatuses;
 
   const statusRows = await WorkflowStatus.find({
     isDeleted: false,
     workflow_id: { $in: workflowIds },
   })
-    .select("_id title color sequence")
+    .select("_id title color sequence isDefault workflow_id")
     .sort({ sequence: 1, _id: 1 })
     .lean();
+
+  const workflowNameMap = new Map();
+  if (workflowIds.length > 0) {
+    const workflowRows = await ProjectWorkFlow.find({
+      _id: { $in: workflowIds },
+      isDeleted: false,
+    })
+      .select("_id project_workflow")
+      .lean();
+    (workflowRows || []).forEach((row) => {
+      workflowNameMap.set(String(row?._id || ""), row?.project_workflow || "");
+    });
+  }
 
   const countMap = new Map();
   (countedStatuses || []).forEach((item) => {
@@ -694,6 +738,12 @@ async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuse
       statusId: status?._id || null,
       title: status?.title || existing?.title || "No status",
       color: status?.color || existing?.color || "#d9d9d9",
+      isDefault: Boolean(status?.isDefault || existing?.isDefault),
+      workflowId: status?.workflow_id || existing?.workflowId || null,
+      workflowName:
+        workflowNameMap.get(String(status?.workflow_id || "")) ||
+        existing?.workflowName ||
+        "",
       count: Number(existing?.count || 0),
     };
   });
@@ -878,7 +928,8 @@ exports.getTaskList = async (req, res) => {
     const statusCountAggRaw = await aggregateTaskListStatusCounts(baseMatchQuery);
     const statusCountAgg = await getCompanyWorkflowStatusesWithZeroCount(
       req?.user?.companyId,
-      statusCountAggRaw
+      statusCountAggRaw,
+      value.project_id
     );
 
     if (value.metadata_only) {
@@ -896,8 +947,12 @@ exports.getTaskList = async (req, res) => {
     const bucketToStatusIds = await buildWorkflowBucketToStatusIdsMap();
     let matchForRows = { ...baseMatchQuery };
     if (bucketKey) {
-      const ids = bucketToStatusIds[bucketKey] || [];
-      const bucketIn = ids.length ? { $in: ids } : { $in: [] };
+      const bucketIn = mongoose.Types.ObjectId.isValid(bucketKey)
+        ? { $in: [new mongoose.Types.ObjectId(bucketKey)] }
+        : (() => {
+            const ids = bucketToStatusIds[bucketKey] || [];
+            return ids.length ? { $in: ids } : { $in: [] };
+          })();
       if (baseMatchQuery.task_status) {
         matchForRows = {
           ...baseMatchQuery,

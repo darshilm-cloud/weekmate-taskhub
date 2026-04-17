@@ -63,6 +63,10 @@ const BugList = ({
   projectId,
   loadMoreBugs,
   loadingMore,
+  onAddStageClick,
+  onStageRename,
+  onStageReorder,
+  canEditStage,
 }) => {
 
   const {
@@ -187,6 +191,9 @@ const BugList = ({
 
   const [editorInstance, setEditorInstance] = useState(null);
   const [commentDrafts, setCommentDrafts] = useState({});
+  const [editingStageId, setEditingStageId] = useState(null);
+  const [editingStageTitle, setEditingStageTitle] = useState("");
+  const [draggingStageId, setDraggingStageId] = useState(null);
   const boardSectionStyle = {
     height: "calc(100dvh - 220px)",
     maxHeight: "calc(100dvh - 220px)",
@@ -209,13 +216,11 @@ const BugList = ({
     height: "auto",
   };
   const dragRowStyle = {
-    display: "flex",
-    flexDirection: "column",
     flex: "1 1 auto",
     minHeight: 0,
-    overflow: "hidden",
   };
   const boardScrollStyle = {
+    flex: "1 1 auto",
     minHeight: 0,
     overflowY: "auto",
     overflowX: "hidden",
@@ -313,10 +318,58 @@ const BugList = ({
             <section className="drag_container" style={columnInnerStyle}>
               <div className="container project-task-list" style={columnInnerStyle}>
                 <div className="drag_column" style={columnInnerStyle}>
-                  <h4>
-                    <span className="wm-col-title" style={{ color: colColor }}>
+                  <h4
+                    draggable
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      e.dataTransfer.setData("application/x-item-type", "bug-stage");
+                      e.dataTransfer.setData("application/x-stage-id", String(boardData._id));
+                      setDraggingStageId(boardData._id);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onStageReorder?.(draggingStageId, boardData._id);
+                      setDraggingStageId(null);
+                    }}
+                    onDragEnd={(e) => {
+                      e.stopPropagation();
+                      setDraggingStageId(null);
+                    }}
+                  >
+                    {editingStageId === boardData._id ? (
+                      <Input
+                        size="small"
+                        autoFocus
+                        value={editingStageTitle}
+                        onChange={(e) => setEditingStageTitle(e.target.value)}
+                        onPressEnter={async () => {
+                          await onStageRename?.(boardData, editingStageTitle);
+                          setEditingStageId(null);
+                        }}
+                        onBlur={async () => {
+                          await onStageRename?.(boardData, editingStageTitle);
+                          setEditingStageId(null);
+                        }}
+                        style={{ maxWidth: 180 }}
+                      />
+                    ) : (
+                    <span
+                      className="wm-col-title"
+                      style={{ color: colColor }}
+                      onDoubleClick={() => {
+                        if (!canEditStage?.(boardData)) return;
+                        setEditingStageId(boardData._id);
+                        setEditingStageTitle(boardData.title || "");
+                      }}
+                    >
                       {boardData.title}
                     </span>
+                    )}
                     <span
                       className="wm-col-count"
                       style={{
@@ -549,6 +602,39 @@ const BugList = ({
           </div>
           );
         })}
+        {hasPermission(["bug_add"]) && (
+          <div
+            className="kanban-add-stage-column"
+            style={{
+              flex: "0 0 64px",
+              minWidth: 64,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              paddingTop: 8,
+              marginLeft: 10,
+            }}
+          >
+            <Tooltip title="Add a stage" placement="top">
+              <Button
+                type="text"
+                shape="circle"
+                size="large"
+                aria-label="Add a stage"
+                icon={<PlusOutlined />}
+                onClick={onAddStageClick}
+                style={{
+                  width: 36,
+                  height: 36,
+                  border: "1px dashed #9ca3af",
+                  color: "#4b5563",
+                  background: "#ffffff",
+                  boxShadow: "none",
+                }}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>      <BugDetailModal
         open={modalIsOpen && taggedUserList.length > 0}
         onCancel={() => {
@@ -671,5 +757,9 @@ BugList.propTypes = {
   getBoardTasks: PropTypes.func.isRequired,
   selectedTask: PropTypes.object.isRequired,
   deleteTasks: PropTypes.func.isRequired,
+  onAddStageClick: PropTypes.func,
+  onStageRename: PropTypes.func,
+  onStageReorder: PropTypes.func,
+  canEditStage: PropTypes.func,
 };
 export default BugList;

@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Avatar,
@@ -62,6 +62,11 @@ import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/Skelet
 const BugsPMS = () => {
   const { projectId } = useParams();
   const [projectOverview, setProjectOverview] = useState(null);
+  const [isAddStageModalOpen, setIsAddStageModalOpen] = useState(false);
+  const [addStageSubmitting, setAddStageSubmitting] = useState(false);
+  const [addStageForm] = Form.useForm();
+  const [bugStageOrder, setBugStageOrder] = useState([]);
+  const DEFAULT_BUG_STAGE_TITLES = ["open", "in progress", "to be tested", "on hold", "closed"];
   const {
     Search,
     searchRef,
@@ -225,8 +230,6 @@ const BugsPMS = () => {
     };
   }, [projectId]);
 
-  if (pageLoading) return selectedView === "board" ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
-
   const viewIcon =
     selectedView === "table"
       ? "fa-solid fa-list"
@@ -249,6 +252,125 @@ const BugsPMS = () => {
     taskList?.[0]?.project?.name ||
     projectId ||
     "";
+
+  useEffect(() => {
+    const currentIds = (Array.isArray(boardTasksBugs) ? boardTasksBugs : [])
+      .map((stage) => stage?._id)
+      .filter(Boolean);
+    setBugStageOrder((prev) => {
+      const prevList = Array.isArray(prev) ? prev : [];
+      const preserved = prevList.filter((id) => currentIds.includes(id));
+      const extras = currentIds.filter((id) => !preserved.includes(id));
+      return [...preserved, ...extras];
+    });
+  }, [boardTasksBugs]);
+
+  const orderedBoardTasksBugs = useMemo(() => {
+    const source = Array.isArray(boardTasksBugs) ? boardTasksBugs : [];
+    if (!bugStageOrder.length) return source;
+    const orderMap = new Map(bugStageOrder.map((id, index) => [id, index]));
+    return [...source].sort((a, b) => {
+      const aIndex = orderMap.has(a?._id) ? orderMap.get(a._id) : Number.MAX_SAFE_INTEGER;
+      const bIndex = orderMap.has(b?._id) ? orderMap.get(b._id) : Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+  }, [boardTasksBugs, bugStageOrder]);
+
+  const handleOpenAddStageModal = () => {
+    setIsAddStageModalOpen(true);
+  };
+
+  const canEditBugStage = (stage) => {
+    if (stage?.isDefault) return false;
+    const title = String(stage?.title || "").trim().toLowerCase();
+    return !DEFAULT_BUG_STAGE_TITLES.includes(title);
+  };
+
+  const handleRenameBugStage = async (stage, nextTitleRaw) => {
+    if (!stage?._id || !canEditBugStage(stage)) return;
+    const nextTitle = String(nextTitleRaw || "").trim();
+    if (!nextTitle) {
+      message.error("Stage name is required.");
+      return;
+    }
+    if (nextTitle === String(stage?.title || "").trim()) return;
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateBugWorkflowStatus}/${stage._id}`,
+        body: {
+          title: nextTitle,
+          color: stage?.color || "#64748b",
+        },
+      });
+      if (response?.data?.status) {
+        message.success(response?.data?.message || "Stage updated");
+        await getBoardTasks();
+      } else {
+        message.error(response?.data?.message || "Failed to update stage");
+      }
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to update stage");
+    }
+  };
+
+  const handleReorderBugStages = async (dragStageId, dropStageId) => {
+    if (!dragStageId || !dropStageId || dragStageId === dropStageId) return;
+    let nextOrder = [];
+    setBugStageOrder((prev) => {
+      const current = [...(Array.isArray(prev) ? prev : [])];
+      const fromIndex = current.indexOf(dragStageId);
+      const toIndex = current.indexOf(dropStageId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      current.splice(fromIndex, 1);
+      current.splice(toIndex, 0, dragStageId);
+      nextOrder = current;
+      return current;
+    });
+    if (!nextOrder.length) return;
+    try {
+      await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: Service.reorderBugWorkflowStatus,
+        body: {
+          ordered_stage_ids: nextOrder,
+        },
+      });
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to reorder stages");
+      await getBoardTasks();
+    }
+  };
+
+  const handleAddStageSubmit = async () => {
+    try {
+      const values = await addStageForm.validateFields();
+      setAddStageSubmitting(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addBugWorkflowStatus,
+        body: {
+          title: String(values?.title || "").trim(),
+          color: values?.color || "#64748b",
+        },
+      });
+      if (response?.data?.status) {
+        message.success(response?.data?.message || "Bug stage added");
+        setIsAddStageModalOpen(false);
+        addStageForm.resetFields();
+        await getBoardTasks();
+      } else {
+        message.error(response?.data?.message || "Failed to add bug stage");
+      }
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(error?.response?.data?.message || "Failed to add bug stage");
+    } finally {
+      setAddStageSubmitting(false);
+    }
+  };
+
+  if (pageLoading) return selectedView === "board" ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
 
   return (
     <>
@@ -375,47 +497,87 @@ const BugsPMS = () => {
 	              </div>
 	            </div>
 
-            { boardTasksBugs.length === 0 && (
+            { orderedBoardTasksBugs.length === 0 && (
               <div className="error-message">
                 <p>No Data</p>
               </div>
             ) }
 	            {selectedView === "board" ? (
 	              <BugList
-	                tasks={ filterTasks(boardTasksBugs, filterSchema) }
+	                tasks={ filterTasks(orderedBoardTasksBugs, filterSchema) }
 	                showEditTaskModal={ showEditTaskModal }
 	                showModalTaskModal={ showModalTaskModal }
 	                getBoardTasks={ getBoardTasks }
                 selectedTask={ selectedTask }
-                boardTasksBugs={ boardTasksBugs }
+                boardTasksBugs={ orderedBoardTasksBugs }
                 deleteTasks={ deleteTasks }
                 loadMoreBugs={ loadMoreBugs }
                 loadingMore={ loadingMore }
+                onAddStageClick={handleOpenAddStageModal}
+                onStageRename={handleRenameBugStage}
+                onStageReorder={handleReorderBugStages}
+                canEditStage={canEditBugStage}
               />
 	            ) : selectedView === "table" ? (
 	              <BugsTable
-	                tasks={ filterTasks(boardTasksBugs, filterSchema) }
+	                tasks={ filterTasks(orderedBoardTasksBugs, filterSchema) }
 	                showEditTaskModal={ showEditTaskModal }
 	                showModalTaskModal={ showModalTaskModal }
 	                getBoardTasks={ getBoardTasks }
                 selectedTask={ selectedTask }
-                boardTasksBugs={ boardTasksBugs }
+                boardTasksBugs={ orderedBoardTasksBugs }
                 deleteTasks={ deleteTasks }
 	              />
 	            ) : (
 	              <BugsGanttView
-	                tasks={filterTasks(boardTasksBugs, filterSchema)}
+	                tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
 	                showEditTaskModal={showEditTaskModal}
 	                showModalTaskModal={showModalTaskModal}
 	                getBoardTasks={getBoardTasks}
 	                selectedTask={selectedTask}
-	                boardTasksBugs={boardTasksBugs}
+	                boardTasksBugs={orderedBoardTasksBugs}
 	                deleteTasks={deleteTasks}
 	              />
 	            )}
           </div>
         </div>
       </div>
+
+      {/* Modals */ }
+      <Modal
+        open={isAddStageModalOpen}
+        title="Add Bug Stage"
+        okText="Save"
+        onOk={handleAddStageSubmit}
+        onCancel={() => {
+          setIsAddStageModalOpen(false);
+          addStageForm.resetFields();
+        }}
+        confirmLoading={addStageSubmitting}
+      >
+        <Form
+          form={addStageForm}
+          layout="vertical"
+          initialValues={{ title: "", color: "#64748b" }}
+        >
+          <Form.Item
+            name="title"
+            label="Stage Name"
+            rules={[
+              { required: true, whitespace: true, message: "Please enter stage name" },
+            ]}
+          >
+            <Input placeholder="e.g. In Review" maxLength={60} />
+          </Form.Item>
+          <Form.Item
+            name="color"
+            label="Color"
+            rules={[{ required: true, message: "Please choose color" }]}
+          >
+            <Input type="color" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Modals */ }
       <Modal
