@@ -96,6 +96,31 @@ const STATUS_MAP = {
 const getStatusStyle = (title = "") =>
   STATUS_MAP[title.toLowerCase()] || { bg: "#F3F4F6", color: "#374151", dot: "#9CA3AF" };
 
+const getFirstNumericValue = (source = {}, keys = []) => {
+  for (const key of keys) {
+    const raw = source?.[key];
+    if (raw === undefined || raw === null || raw === "") continue;
+    const num = Number(raw);
+    if (Number.isFinite(num)) return num;
+  }
+  return 0;
+};
+
+const normalizeProjectTaskStats = (stats = {}) => ({
+  closed: getFirstNumericValue(stats, ["closed", "closedTasks", "closed_tasks"]),
+  today: getFirstNumericValue(stats, ["today", "todayTasks", "today_tasks"]),
+  overDue: getFirstNumericValue(stats, ["overDue", "overdue", "over_due", "overDueTasks", "overdue_tasks"]),
+  upComing: getFirstNumericValue(stats, ["upComing", "upcoming", "up_coming", "upComingTasks", "upcoming_tasks"]),
+  totalTasks: getFirstNumericValue(stats, [
+    "totalTasks",
+    "total_tasks",
+    "total",
+    "all",
+    "allTasks",
+    "all_tasks",
+  ]),
+});
+
 const getCompletionPercent = (record, stats) => {
   const directPct = record?.completionPercentage;
   if (typeof directPct === "number" && Number.isFinite(directPct)) {
@@ -114,7 +139,11 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   const currentStatusMeta = getProjectStatusMeta(record?.project_status, projectStatusList);
   const statusTitle = currentStatusMeta.title || "Active";
   const sc = getStatusStyle(statusTitle);
-  const pct = getCompletionPercent(record, stats);
+  const normalizedStats = normalizeProjectTaskStats({
+    ...(record?.stats || {}),
+    ...(stats || {}),
+  });
+  const pct = getCompletionPercent(record, normalizedStats);
 
   const formattedTitle = record?.title?.replace(
     /(?:^|\s)([a-z])/g,
@@ -127,10 +156,10 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   const managerName = record?.manager?.full_name?.replace(/^(Mr\.|Mrs\.|Ms\.|Dr\.)\s*/i, "") || "";
 
   const taskStats = [
-    { label: "Closed", value: stats?.closed ?? 0, color: "#43A047" },
-    { label: "Today", value: stats?.today ?? 0, color: "#1E88E5" },
-    { label: "Over Due", value: stats?.overDue ?? 0, color: "#E53935" },
-    { label: "Upcoming", value: stats?.upComing ?? 0, color: "#FFA726" },
+    { label: "Closed", value: normalizedStats.closed, color: "#43A047" },
+    { label: "Today", value: normalizedStats.today, color: "#1E88E5" },
+    { label: "Over Due", value: normalizedStats.overDue, color: "#E53935" },
+    { label: "Upcoming", value: normalizedStats.upComing, color: "#FFA726" },
   ];
 
   /* Navigate to project detail */
@@ -140,32 +169,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 
   const handleStatClick = (e, label) => {
     e.stopPropagation();
-    const params = new URLSearchParams();
-    params.set("project", record._id);
-
-    const normalized = String(label || "").trim().toLowerCase();
-    if (normalized === "today") {
-      params.set("filter", "due_today");
-      params.set("view", "list");
-      params.set("section", "today");
-    } else if (normalized === "over due" || normalized === "overdue") {
-      params.set("filter", "past_due");
-      params.set("view", "list");
-      params.set("section", "overdue");
-    } else if (normalized === "upcoming") {
-      params.set("filter", "all");
-      params.set("view", "list");
-      params.set("section", "upcoming");
-    } else if (normalized === "closed") {
-      params.set("status", "completed");
-      params.set("view", "kanban");
-      params.set("kanbanStatus", "Closed");
-    } else {
-      params.set("filter", "all");
-      params.set("view", "list");
-    }
-
-    history.push(`/${companySlug}/tasks?${params.toString()}`);
   };
 
   /* Circle click → confirm close project */
@@ -288,15 +291,9 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
             {taskStats.map((s) => (
               <div
                 key={s.label}
-                className="ap-stat-item ap-stat-item--clickable"
+                className="ap-stat-item"
                 style={{ borderLeftColor: s.color }}
-                role="button"
-                tabIndex={0}
                 onClick={(e) => handleStatClick(e, s.label)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleStatClick(e, s.label);
-                }}
-                title={`View ${s.label} tasks`}
               >
                 <span className="ap-stat-label" style={{ color: s.color }}>{s.label}</span>
                 <span className="ap-stat-value">{s.value}</span>
