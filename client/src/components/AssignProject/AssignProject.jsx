@@ -408,6 +408,12 @@ const AssignProject = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isloadingProject, setIsloadingProject] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE });
+  useEffect(() => {
+    // Prevent double scrollbars by disabling body scroll while on this page
+    document.body.classList.add("no-body-scroll");
+    return () => document.body.classList.remove("no-body-scroll");
+  }, []);
+
   const [infiniteScroll, setInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -1770,6 +1776,7 @@ const AssignProject = () => {
                     </div>
                   ) : null
                 }
+                height={"calc(100vh - 195px)"}
                 scrollThreshold={0.7}
               >
                 <div className="ap-cards-grid">

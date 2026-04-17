@@ -10,6 +10,18 @@
   flex-direction: column;
 }
 
+/* 💀 UNIFY SCROLLBARS: Hide outer browser scrollbars and layout scrollbars */
+body.no-body-scroll, body.no-body-scroll html {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+body.no-body-scroll .gx-app-layout, 
+body.no-body-scroll .ant-layout, 
+body.no-body-scroll .gx-layout-content {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
 /* ── Top Bar (white sticky header + tabs) ─────────────────── */
 .ap-topbar {
   background: #fff;
