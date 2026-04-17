@@ -416,6 +416,7 @@ const AssignProject = () => {
 
   const [sortOption, setSortOption] = useState("updatedAt_desc");
   const [columnDetails, setColumnDetails] = useState([]);
+  const [listColumnDetails, setListColumnDetails] = useState([]);
   const [currentFilters, setCurrentFilters] = useState({});
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
@@ -527,7 +528,7 @@ const AssignProject = () => {
       setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
     }
     getProjectListing(currentSkipFilters, currentFilters);
-  }, [pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects, debouncedSearchText]);
+  }, [viewMode, pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects, debouncedSearchText]);
 
 
   const fetchStatusList = async () => {
@@ -561,17 +562,16 @@ const AssignProject = () => {
     }
 
     const reqBody = {
-      pageNo: skipForInfiniteScroll !== null ? 1 : pagination.current,
+      pageNo: (skipForInfiniteScroll !== null || viewMode === "list") ? 1 : pagination.current,
       limit: skipForInfiniteScroll !== null ? DEFAULT_PAGE_SIZE : pagination.pageSize,
       sortBy: actualSortBy,
       filterBy,
       sort: actualSort,
     };
 
-    // For infinite scroll, use skip instead of pageNo
+    // For infinite scroll, calculate pageNo from skip
     if (skipForInfiniteScroll !== null) {
-      delete reqBody.pageNo;
-      reqBody.skip = skipForInfiniteScroll;
+      reqBody.pageNo = Math.floor(skipForInfiniteScroll / reqBody.limit) + 1;
     }
 
     const shouldSkip = (filterKey) =>
@@ -664,7 +664,7 @@ const AssignProject = () => {
       });
 
       const newProjects = response?.data?.data || [];
-      const metaTotal = response?.data?.metadata?.total ?? columnDetails.length + newProjects.length;
+      const metaTotal = response?.data?.metadata?.total ?? listColumnDetails.length + newProjects.length;
 
       // Extract stats from projects
       const statsFromProjects = {};
@@ -676,7 +676,7 @@ const AssignProject = () => {
       }
 
       // Append new projects to existing list
-      setColumnDetails((prev) => [...prev, ...newProjects]);
+      setListColumnDetails((prev) => [...prev, ...newProjects]);
 
       // Update infinite scroll state
       const newLoadedCount = listViewInfiniteScroll.loadedCount + newProjects.length;
@@ -730,12 +730,16 @@ const AssignProject = () => {
       const shouldUseCache = !isViewAllProjects && !forceRefresh;
       const cached = shouldUseCache ? projectCache[Key] : null;
       if (cached && cached.projects.length > 0) {
-        setColumnDetails(cached.projects);
+        if (viewMode === "list") {
+          setListColumnDetails(cached.projects);
+        } else {
+          setColumnDetails(cached.projects);
+        }
         setPagination((prev) => ({ ...prev, total: cached.total }));
-        
+
         // Update infinite scroll state for list view
         if (viewMode === "list") {
-          const hasMoreData = cached.projects.length >= DEFAULT_PAGE_SIZE && cached.projects.length < cached.total;
+          const hasMoreData = cached.projects.length < cached.total && cached.projects.length > 0;
           setListViewInfiniteScroll((prev) => ({
             ...prev,
             skip: DEFAULT_PAGE_SIZE,
@@ -743,12 +747,16 @@ const AssignProject = () => {
             hasMore: hasMoreData,
           }));
         }
-        
+
         setIsloadingProject(false);
         return;
       }
       if (cached && cached.projects.length === 0) {
-        setColumnDetails([]);
+        if (viewMode === "list") {
+          setListColumnDetails([]);
+        } else {
+          setColumnDetails([]);
+        }
         setPagination((prev) => ({ ...prev, total: 0 }));
         if (viewMode === "list") {
           setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: false, isLoadingMore: false });
@@ -780,12 +788,16 @@ const AssignProject = () => {
         setTaskStats(prev => ({ ...prev, ...statsFromProjects }));
       }
 
-      setColumnDetails(projects);
+      if (viewMode === "list") {
+        setListColumnDetails(projects);
+      } else {
+        setColumnDetails(projects);
+      }
       setPagination((prev) => ({ ...prev, total: metaTotal }));
-      
+
       // Update infinite scroll state for list view
       if (viewMode === "list") {
-        const hasMoreData = projects.length >= DEFAULT_PAGE_SIZE && projects.length < metaTotal;
+        const hasMoreData = projects.length < metaTotal && projects.length > 0;
         setListViewInfiniteScroll((prev) => ({
           ...prev,
           skip: DEFAULT_PAGE_SIZE,
@@ -793,7 +805,7 @@ const AssignProject = () => {
           hasMore: hasMoreData,
         }));
       }
-      
+
       setIsloadingProject(false);
 
       if (!isViewAllProjects && reqBody.limit <= PROJECT_CACHE_MAX_PAGE_SIZE) {
@@ -870,8 +882,9 @@ const AssignProject = () => {
           detail: { action: "delete", projectId: id },
         }));
         setColumnDetails((prev) => prev.filter((project) => project._id !== id));
+        setListColumnDetails((prev) => prev.filter((project) => project._id !== id));
         setProjectCache({});
-        const isLastItemOnPage = columnDetails.length === 1 && pagination.current > 1;
+        const isLastItemOnPage = (viewMode === "grid" ? columnDetails : listColumnDetails).length === 1 && pagination.current > 1;
         if (isLastItemOnPage) {
           setPagination((prev) => ({ ...prev, current: prev.current - 1 }));
         }
@@ -944,13 +957,13 @@ const AssignProject = () => {
       prev.map((project) =>
         project._id === projectId
           ? {
-              ...project,
-              project_status: {
-                ...(typeof project.project_status === "object" ? project.project_status : {}),
-                _id: statusMeta._id,
-                title: statusMeta.title,
-              },
-            }
+            ...project,
+            project_status: {
+              ...(typeof project.project_status === "object" ? project.project_status : {}),
+              _id: statusMeta._id,
+              title: statusMeta.title,
+            },
+          }
           : project
       )
     );
@@ -958,13 +971,13 @@ const AssignProject = () => {
     setSelectedProject((prev) =>
       prev?._id === projectId
         ? {
-            ...prev,
-            project_status: {
-              ...(typeof prev.project_status === "object" ? prev.project_status : {}),
-              _id: statusMeta._id,
-              title: statusMeta.title,
-            },
-          }
+          ...prev,
+          project_status: {
+            ...(typeof prev.project_status === "object" ? prev.project_status : {}),
+            _id: statusMeta._id,
+            title: statusMeta.title,
+          },
+        }
         : prev
     );
   }, []);
@@ -1146,10 +1159,11 @@ const AssignProject = () => {
 
   // All filtering (status, technology, search, manager, etc.) is handled by the backend.
   // The only local pass is the date-picker filter, which is a UI-only feature not sent to the server.
+  const activeProjects = viewMode === "list" ? listColumnDetails : columnDetails;
   const visibleProjects = selectedDate
-    ? columnDetails.filter((record) => doesProjectMatchDate(record, selectedDate))
-    : columnDetails;
-  const showInitialProjectSkeleton = isloadingProject && columnDetails.length === 0;
+    ? activeProjects.filter((record) => doesProjectMatchDate(record, selectedDate))
+    : activeProjects;
+  const showInitialProjectSkeleton = isloadingProject && activeProjects.length === 0;
   const hasActiveProjectFilters =
     Boolean(searchText?.trim()) ||
     Boolean(currentFilters?.status?.length) ||
@@ -1545,7 +1559,7 @@ const AssignProject = () => {
     });
   }
 
-  const totalCount = pagination.total || columnDetails.length;
+  const totalCount = pagination.total || activeProjects.length;
   const calendarOverlay = (
     <div className="ap-date-dropdown" onClick={(e) => e.stopPropagation()}>
       <div className="ap-date-dropdown-header">
@@ -1699,6 +1713,7 @@ const AssignProject = () => {
                   setSelectedWorkspaceProjectId(null);
                   setPagination((p) => ({ ...p, current: 1 }));
                   setColumnDetails([]);
+                  setListColumnDetails([]);
                   setIsloadingProject(true);
                 }}
               >
@@ -1716,6 +1731,7 @@ const AssignProject = () => {
                 setIsViewAllProjects((prev) => !prev);
                 setSelectedWorkspaceProjectId(null);
                 setColumnDetails([]);
+                setListColumnDetails([]);
                 setIsloadingProject(true);
                 setPagination((p) => ({
                   ...p,
@@ -1789,7 +1805,7 @@ const AssignProject = () => {
             <aside className="ap-browser-sidebar">
 
               <div id="ap-browser-project-list" className="ap-browser-project-list">
-                <div className="ap-browser-project-list-head">All Projects ({visibleProjects.length})</div>
+                <div className="ap-browser-project-list-head">All Projects</div>
                 {showInitialProjectSkeleton ? (
                   <div className="ap-browser-project-list-skeleton">
                     {Array.from({ length: 7 }).map((_, idx) => (
@@ -1811,43 +1827,43 @@ const AssignProject = () => {
                           </div>
                         ) : null
                       }
-                      scrollableTarget="ap-browser-project-list"
+                      height={'calc(100dvh - 300px)'}
                       style={{ paddingRight: "4px" }}
                       scrollThreshold={0.9}
                     >
                       {visibleProjects.length === 0 ? (
                         <div style={{ padding: "12px", textAlign: "center", color: "#999" }}>
-                          <NoDataFoundIcon  />
-                       
+                          <NoDataFoundIcon />
+
                         </div>
                       ) : (
                         visibleProjects.map((project) => (
                           <button
                             key={project._id}
-                          type="button"
-                          className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
-                          onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
-                        >
-                          <span className="ap-browser-project-name">
-                            {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
-                          </span>
-                          <span
-                            className="ap-browser-project-more-btn"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            role="presentation"
+                            type="button"
+                            className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
+                            onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
                           >
-                            <Dropdown
-                              menu={{ items: getSidebarProjectMenuItems(project) }}
-                              trigger={["click"]}
-                              placement="bottomRight"
+                            <span className="ap-browser-project-name">
+                              {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
+                            </span>
+                            <span
+                              className="ap-browser-project-more-btn"
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              role="presentation"
                             >
-                              <MoreOutlined className="ap-browser-project-more" title="More actions" />
-                            </Dropdown>
-                          </span>
-                        </button>
-                      ))
-                    )}
+                              <Dropdown
+                                menu={{ items: getSidebarProjectMenuItems(project) }}
+                                trigger={["click"]}
+                                placement="bottomRight"
+                              >
+                                <MoreOutlined className="ap-browser-project-more" title="More actions" />
+                              </Dropdown>
+                            </span>
+                          </button>
+                        ))
+                      )}
                     </InfiniteScroll>
                   </div>
                 )}
@@ -2215,7 +2231,7 @@ const AssignProject = () => {
                 </>
               ) : (
                 <div className="ap-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-                  <NoDataFoundIcon  />
+                  <NoDataFoundIcon />
                 </div>
               )}
             </section>
