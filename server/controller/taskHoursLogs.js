@@ -2015,12 +2015,7 @@ exports.exportTimesheetCSV = async (req, res) => {
 // Timesheets reports details for graphs
 exports.getTimesheetsReports = async (req, res) => {
   try {
-    // Decode user from token
-    const {
-      _id: decodedUserId,
-      pms_role_id: { _id: roleId, role_name: roleName } = {},
-      companyId: decodedCompanyId
-    } = req.user || {};
+    const { _id: decodedUserId, companyId: decodedCompanyId } = req.user || {};
 
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
@@ -2032,512 +2027,255 @@ exports.getTimesheetsReports = async (req, res) => {
       projects: Joi.array().optional(),
       managers: Joi.array().optional(),
       departments: Joi.array().optional(),
-      users: Joi.array().optional(), // employees or assignes to project
+      users: Joi.array().optional(),
       isExport: Joi.boolean().required(),
       startDate: Joi.date().optional().allow(""),
       endDate: Joi.date().optional().allow(""),
-      search: Joi.string().trim().allow("").optional()
+      search: Joi.string().trim().allow("").optional(),
     });
 
     const { value, error } = validationSchema.validate(req.body);
     if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
-    const cacheKey = generateCacheKey({...value,decodedCompanyId});
 
-    // const cached = getCache(cacheKey);
-    // if (cached) {
-    //   const { data, metadata } = cached;
-    //   return successResponse(
-    //     res,
-    //     statusCode.SUCCESS,
-    //     messages.LISTING,
-    //     data,
-    //     metadata
-    //   );
-    // }
+    const { limit, pageNo, sort, sortBy, startDate, endDate, search, isExport } = value;
+    const skip = (pageNo - 1) * limit;
+    const sortOrder = sortBy === "desc" ? -1 : 1;
 
-    const pagination = getPagination({
-      pageLimit: value.limit,
-      pageNum: value.pageNo,
-      sort: value.sort,
-      sortBy: value.sortBy
-    });
-    let matchQuery = {
-      isDeleted: false
-    };
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+    const isSpecialCase = req.user._id == "660a38c0768eaa003f5727c8";
 
-    if (value.projects && value.projects.length > 0) {
-      matchQuery.project_id = {
-        $in: value?.projects.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
-    if (value.users && value.users.length > 0) {
-      matchQuery.employee_id = {
-        $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
-    // if (value.departments && value.departments.length > 0) {
-    //   matchQuery["dept._id"] = {
-    //     $in: value?.departments.map((ele) => new mongoose.Types.ObjectId(ele))
-    //   };
-    // }
-    if (value.technologies && value.technologies.length > 0) {
-      matchQuery["tech._id"] = {
-        $in: value?.technologies.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
-    if (value.types && value.types.length > 0) {
-      matchQuery["type._id"] = {
-        $in: value?.types.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
-    if (value.managers && value.managers.length > 0) {
-      matchQuery["mgr._id"] = {
-        $in: value?.managers.map((ele) => new mongoose.Types.ObjectId(ele))
-      };
-    }
-    // if (value?.startDate && value?.endDate) {
-    //   matchQuery.logged_date = {
-    //     $gte: moment(value.startDate).startOf("day").toDate(),
-    //     $lte: moment(value.endDate).endOf("day").toDate(),
-    //   };
-    // }
-
-    let orFilter = [
-      !(
-        (await checkUserIsAdmin(req?.user?._id)) ||
-        req?.user?._id == "660a38c0768eaa003f5727c8"
-      )
-        ? {
-            $or: [
-              { "managers._id": new mongoose.Types.ObjectId(req.user._id) },
-              { createdBy: new mongoose.Types.ObjectId(req.user._id) }
-            ]
-          }
-        : {}
-    ];
-    matchQuery = {
-      ...matchQuery,
-      $and: orFilter
-    };
-    console.log(
-      "🚀 ~ exports.getTimesheetsReports= ~ matchQuery:",
-      req?.user?._id,
-      req?.user?._id == "660a38c0768eaa003f5727c8",
-      JSON.stringify(orFilter)
-    );
-
-    let mainQuery = [
-      {
-        $match: {
-          isDeleted: false,
-          logged_date: {
-            $gte: moment(value.startDate).startOf("day").toDate(),
-            $lte: moment(value.endDate).endOf("day").toDate()
-          }
-        }
+    // 1. Initial Match (Fast Index Hits)
+    let matchStage = {
+      isDeleted: false,
+      logged_date: {
+        $gte: moment(startDate).startOf("day").toDate(),
+        $lte: moment(endDate).endOf("day").toDate(),
       },
+    };
+
+    if (value.projects?.length > 0) {
+      matchStage.project_id = { $in: value.projects.map((id) => new mongoose.Types.ObjectId(id)) };
+    }
+    if (value.users?.length > 0) {
+      matchStage.employee_id = { $in: value.users.map((id) => new mongoose.Types.ObjectId(id)) };
+    }
+
+    const pipeline = [
+      { $match: matchStage },
+      // 2. Lookups (Project & its meta)
       {
         $lookup: {
           from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $lookup: {
-                from: "projectstatuses",
-                localField: "project_status",
-                foreignField: "_id",
-                as: "project_status"
-              }
-            },
-            {
-              $unwind: {
-                path: "$project_status",
-                preserveNullAndEmptyArrays: false
-              }
-            },
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: [
-                        "$project_status.title",
-                        DEFAULT_DATA.PROJECT_STATUS.ACTIVE
-                      ]
-                    },
-                    {
-                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project"
-        }
+          localField: "project_id",
+          foreignField: "_id",
+          as: "project",
+        },
       },
+      { $unwind: "$project" },
       {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: false
-        }
+        $match: {
+          "project.isDeleted": false,
+          "project.companyId": newObjectId(decodedCompanyId),
+          "project.project_status": { $exists: true }, // Simple check for active if possible, or join status
+        },
+      },
+      // Lookup Status for project to ensure it's ACTIVE if that's a hard requirement
+      {
+        $lookup: {
+          from: "projectstatuses",
+          localField: "project.project_status",
+          foreignField: "_id",
+          as: "status",
+        },
+      },
+      { $unwind: "$status" },
+      { $match: { "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE } },
+      
+      // Lookups for Type, Manager, Tech (for filtering and grouping)
+      {
+        $lookup: {
+          from: "projecttypes",
+          localField: "project.project_type",
+          foreignField: "_id",
+          as: "type",
+        },
       },
       {
         $lookup: {
           from: "employees",
-          let: { employee_id: "$employee_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$employee_id"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                    {
-                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "employee"
-        }
+          localField: "project.manager",
+          foreignField: "_id",
+          as: "mgr",
+        },
       },
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
-          pipeline: [
+          localField: "project.technology",
+          foreignField: "_id",
+          as: "tech",
+        },
+      },
+      // Visibility Check
+      ...(!isAdmin && !isSpecialCase
+        ? [
             {
               $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$technology"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tech"
-        }
-      },
-      {
-        $lookup: {
-          from: "projecttypes",
-          let: { projecttypes: "$project.project_type" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$projecttypes"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "type"
-        }
-      },
+                $or: [
+                  { "mgr._id": new mongoose.Types.ObjectId(req.user._id) },
+                  { createdBy: new mongoose.Types.ObjectId(req.user._id) },
+                ],
+              },
+            },
+          ]
+        : []),
+      // Secondary Filters (on joined data)
+      ...(value.technologies?.length > 0
+        ? [{ $match: { "tech._id": { $in: value.technologies.map((id) => new mongoose.Types.ObjectId(id)) } } }]
+        : []),
+      ...(value.types?.length > 0
+        ? [{ $match: { "type._id": { $in: value.types.map((id) => new mongoose.Types.ObjectId(id)) } } }]
+        : []),
+      ...(value.managers?.length > 0
+        ? [{ $match: { "mgr._id": { $in: value.managers.map((id) => new mongoose.Types.ObjectId(id)) } } }]
+        : []),
+      // Lookup Row Employee
       {
         $lookup: {
           from: "employees",
-          let: { employee_id: "$project.manager" },
-          pipeline: [
+          localField: "employee_id",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      // Add helper fields
+      {
+        $addFields: {
+          userName: { $ifNull: [{ $first: "$employee.full_name" }, ""] },
+          projectName: "$project.title",
+          managerName: { $ifNull: [{ $first: "$mgr.full_name" }, ""] },
+          typeName: { $ifNull: [{ $first: "$type.project_type" }, ""] },
+          loggedDecimal: {
+            $add: [
+              { $toDouble: "$logged_hours" },
+              { $divide: [{ $toDouble: "$logged_minutes" }, 60] },
+            ],
+          },
+        },
+      },
+      // Search matching
+      ...(search
+        ? [
             {
               $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$employee_id"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                    {
-                      $eq: ["$companyId", newObjectId(decodedCompanyId)]
-                    }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "mgr"
-        }
-      },
-      // {
-      //   $lookup: {
-      //     from: "subdepartments",
-      //     let: { department_id: "$employee.subdepartment_id" },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $and: [
-      //               { $in: ["$_id", "$$department_id"] },
-      //               { $eq: ["$isDeleted", false] }
-      //             ]
-      //           }
-      //         }
-      //       }
-      //     ],
-      //     as: "dept"
-      //   }
-      // },
-      // {
-      //   $unwind: {
-      //     path: "$dept",
-      //     preserveNullAndEmptyArrays: false
-      //   }
-      // },
-      // ...(await getProjectDefaultSettingQuery("project._id")),
-      {
-        $match: matchQuery
-      },
-      {
-        $project: {
-          _id: 1,
-          employee_id: 1,
-          // user_code: {
-          //   $ifNull: [{ $first: "$employee.emp_code" }, ""]
-          // },
-          user: {
-            $ifNull: [{ $first: "$employee.full_name" }, ""]
-          },
-          project_id: 1,
-          project: "$project.title",
-          descriptions: 1,
-          isDeleted: 1,
-          logged_date: 1,
-          logged_hours: 1,
-          logged_minutes: 1,
-          logged_seconds: { $ifNull: ["$logged_seconds", 0] },
-          logged_time: {
-            $concat: [
-              { $toString: "$logged_hours" },
-              ":",
-              {
-                $toString: {
-                  $cond: [
-                    { $lt: ["$logged_minutes", 10] },
-                    { $concat: ["0", { $toString: "$logged_minutes" }] },
-                    { $toString: "$logged_minutes" }
-                  ]
-                }
+                $or: [
+                  { userName: { $regex: search, $options: "i" } },
+                  { projectName: { $regex: search, $options: "i" } },
+                  { descriptions: { $regex: search, $options: "i" } },
+                ],
               },
-              ":",
-              {
-                $toString: {
-                  $cond: [
-                    { $lt: [{ $ifNull: ["$logged_seconds", 0] }, 10] },
-                    { $concat: ["0", { $toString: { $ifNull: ["$logged_seconds", 0] } }] },
-                    { $toString: { $ifNull: ["$logged_seconds", 0] } }
-                  ]
-                }
-              }
-            ]
-          },
-          // employeeDepartment: "$dept.sub_department_name",
-          // ...(await getProjectDefaultSettingQuery("project._id", true)),
-          projectManager: {
-            $ifNull: [{ $first: "$mgr.full_name" }, ""]
-          },
-          projectTechnology: {
-            $map: {
-              input: "$tech",
-              as: "t",
-              in: "$$t.project_tech"
-            }
-          },
-          projectType: {
-            $ifNull: [{ $first: "$type.project_type" }, ""]
-          }
-        }
-      }
-    ];
-    if (value.search && value.search.trim()) {
-      mainQuery.push({
-        $match: {
-          $or: [
-            { user: { $regex: value.search.trim(), $options: "i" } },
-            { project: { $regex: value.search.trim(), $options: "i" } },
-            { descriptions: { $regex: value.search.trim(), $options: "i" } }
+            },
           ]
-        }
-      });
-    }
+        : []),
+      // 3. Facet for Parallel Processing
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          paginatedData: [
+            { $sort: { [sort]: sortOrder, _id: 1 } },
+            ...(!isExport ? [{ $skip: skip }, { $limit: limit }] : []),
+            {
+              $project: {
+                _id: 1,
+                user: "$userName",
+                project: "$projectName",
+                descriptions: 1,
+                logged_date: 1,
+                logged_hours: 1,
+                logged_minutes: 1,
+                logged_time: {
+                  $concat: [
+                    { $toString: { $ifNull: ["$logged_hours", "0"] } },
+                    ":",
+                    {
+                      $cond: [
+                        { $lt: [{ $toInt: { $ifNull: ["$logged_minutes", 0] } }, 10] },
+                        { $concat: ["0", { $toString: { $ifNull: ["$logged_minutes", "0"] } }] },
+                        { $toString: { $ifNull: ["$logged_minutes", "0"] } },
+                      ],
+                    },
+                    ":",
+                    {
+                      $cond: [
+                        { $lt: [{ $toInt: { $ifNull: ["$logged_seconds", 0] } }, 10] },
+                        { $concat: ["0", { $toString: { $ifNull: ["$logged_seconds", "0"] } }] },
+                        { $toString: { $ifNull: ["$logged_seconds", "0"] } },
+                      ],
+                    },
+                  ],
+                },
+                projectManager: "$managerName",
+                projectType: "$typeName",
+                projectTechnology: { $map: { input: "$tech", as: "t", in: "$$t.project_tech" } },
+              },
+            },
+          ],
+          summaryStats: [
+            {
+              $group: {
+                _id: null,
+                totalHours: { $sum: "$loggedDecimal" },
+              },
+            },
+          ],
+          userStats: [
+            { $group: { _id: "$userName", totalLoggedHours: { $sum: "$loggedDecimal" } } },
+            { $sort: { totalLoggedHours: -1 } },
+            { $limit: 10 },
+            { $project: { user: "$_id", totalLoggedHours: { $round: ["$totalLoggedHours", 2] } } },
+          ],
+          mgrStats: [
+            { $group: { _id: "$managerName", totalLoggedHours: { $sum: "$loggedDecimal" } } },
+            { $sort: { totalLoggedHours: -1 } },
+            { $project: { projectManager: "$_id", totalLoggedHours: { $round: ["$totalLoggedHours", 2] } } },
+          ],
+          typeStats: [
+            { $group: { _id: "$typeName", totalLoggedHours: { $sum: "$loggedDecimal" } } },
+            { $sort: { totalLoggedHours: -1 } },
+            { $project: { projectType: "$_id", totalLoggedHours: { $round: ["$totalLoggedHours", 2] } } },
+          ],
+        },
+      },
+    ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    let listQuery = getAggregationPagination(mainQuery, pagination);
-    const [dataTotal, totalCountResult, data] = await Promise.all([
-      TaskHoursLogs.aggregate(mainQuery),
-      TaskHoursLogs.aggregate(countQuery),
-      TaskHoursLogs.aggregate(listQuery)
-    ]);
-    // const dataTotal = await TaskHoursLogs.aggregate(mainQuery);
-    // const totalCountResult = await TaskHoursLogs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-    let metaData = {
-      total: totalCount,
-      limit: pagination.limit,
-      pageNo: pagination.page,
-      totalPages:
-        pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page
-    };
-    // const data = await TaskHoursLogs.aggregate(listQuery);
-    if (value?.isExport) {
-      return dataTotal;
-    }
-    let totalHours = 0;
-    for (let hours of dataTotal)
-      totalHours +=
-        parseFloat(hours.logged_hours) + parseFloat(hours.logged_minutes) / 60;
-    // to get the total hours as per userr
-    const userTotalHours = dataTotal.reduce((acc, curr) => {
-      const { user, logged_hours, logged_minutes } = curr;
-      let totalLoggedHours =
-        parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
-      if (!acc[user]) {
-        acc[user] = {
-          user,
-          user: curr.user,
-          totalLoggedHours: 0
-        };
-      }
-      acc[user].totalLoggedHours += totalLoggedHours;
+    const result = await TaskHoursLogs.aggregate(pipeline);
+    const output = result[0];
+    const totalCount = output.metadata[0]?.total || 0;
+    const totalHours = output.summaryStats[0]?.totalHours || 0;
 
-      return acc;
-    }, {});
-    // to convert users hours floating points to be round upto 2 decimal points
-    for (const user in userTotalHours) {
-      if (Object.hasOwnProperty.call(userTotalHours, user)) {
-        userTotalHours[user].totalLoggedHours = parseFloat(
-          userTotalHours[user].totalLoggedHours.toFixed(2)
-        );
-      }
-    }
-
-    // to get the total hours as per departments
-    // const deptTotalHours = dataTotal.reduce((acc, curr) => {
-    //   const { employeeDepartment, logged_hours, logged_minutes } = curr;
-    //   let totalLoggedHours =
-    //     parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
-    //   if (!acc[employeeDepartment]) {
-    //     acc[employeeDepartment] = {
-    //       employeeDepartment,
-    //       employeeDepartment: curr.employeeDepartment,
-    //       totalLoggedHours: 0
-    //     };
-    //   }
-    //   acc[employeeDepartment].totalLoggedHours += totalLoggedHours;
-
-    //   return acc;
-    // }, {});
-    // to convert departments hours floating points to be round upto 2 decimal points
-    // for (const dept in deptTotalHours) {
-    //   if (Object.hasOwnProperty.call(deptTotalHours, dept)) {
-    //     deptTotalHours[dept].totalLoggedHours = parseFloat(
-    //       deptTotalHours[dept].totalLoggedHours.toFixed(2)
-    //     );
-    //   }
-    // }
-
-    // to get the total hours as per types
-    const typesTotalHours = dataTotal.reduce((acc, curr) => {
-      const { projectType, logged_hours, logged_minutes } = curr;
-      let totalLoggedHours =
-        parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
-      if (!acc[projectType]) {
-        acc[projectType] = {
-          projectType,
-          projectType: curr.projectType,
-          totalLoggedHours: 0
-        };
-      }
-      acc[projectType].totalLoggedHours += totalLoggedHours;
-
-      return acc;
-    }, {});
-    // to convert types hours floating points to be round upto 2 decimal points
-    for (const type in typesTotalHours) {
-      if (Object.hasOwnProperty.call(typesTotalHours, type)) {
-        typesTotalHours[type].totalLoggedHours = parseFloat(
-          typesTotalHours[type].totalLoggedHours.toFixed(2)
-        );
-      }
-    }
-
-    // to get the total hours as per managers
-    const mgrTotalHours = dataTotal.reduce((acc, curr) => {
-      const { projectManager, logged_hours, logged_minutes } = curr;
-      let totalLoggedHours =
-        parseFloat(logged_hours) + parseFloat(logged_minutes) / 60;
-      if (!acc[projectManager]) {
-        acc[projectManager] = {
-          projectManager,
-          projectManager: curr.projectManager,
-          totalLoggedHours: 0
-        };
-      }
-      acc[projectManager].totalLoggedHours += totalLoggedHours;
-
-      return acc;
-    }, {});
-    // to convert managers hours floating points to be round upto 2 decimal points
-    for (const type in mgrTotalHours) {
-      if (Object.hasOwnProperty.call(mgrTotalHours, type)) {
-        mgrTotalHours[type].totalLoggedHours = parseFloat(
-          mgrTotalHours[type].totalLoggedHours.toFixed(2)
-        );
-      }
+    if (isExport) {
+      return output.paginatedData;
     }
 
     const masterData = {
-      data: data,
+      data: output.paginatedData,
       totalHours: totalHours.toFixed(2),
-      manager: Object.values(mgrTotalHours).sort(
-        (a, b) => b.totalLoggedHours - a.totalLoggedHours
-      ),
-      type: Object.values(typesTotalHours).sort(
-        (a, b) => b.totalLoggedHours - a.totalLoggedHours
-      ),
-      // department: Object.values(deptTotalHours).sort(
-      //   (a, b) => b.totalLoggedHours - a.totalLoggedHours
-      // ),
-      user: Object.values(userTotalHours)
-        .sort((a, b) => b.totalLoggedHours - a.totalLoggedHours)
-        .slice(0, 9)
+      manager: output.mgrStats,
+      type: output.typeStats,
+      user: output.userStats,
     };
 
-    // storeCache(cacheKey, masterData, metaData, 24 * 60 * 60);
-
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      masterData,
-      metaData
-    );
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, masterData, {
+      total: totalCount,
+      limit,
+      pageNo,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: pageNo,
+    });
   } catch (error) {
-    console.log("e=>", error);
+    console.log("Optimization Error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };

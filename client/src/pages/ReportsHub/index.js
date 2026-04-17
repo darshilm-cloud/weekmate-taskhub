@@ -35,7 +35,12 @@ import ReactApexChart from "react-apexcharts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import { ReportsDetailSkeleton } from "../../components/common/SkeletonLoader";
+import {
+  ReportsDetailSkeleton,
+  TimesheetChartsSkeleton,
+  TableSk,
+  SkeletonBlock,
+} from "../../components/common/SkeletonLoader";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -1526,6 +1531,7 @@ function ReportsHub() {
                 projects={projects}
                 users={users}
                 data={reportData}
+                loading={loading}
                 pageNo={pageNo}
                 pageSize={pageSize}
                 total={total}
@@ -1540,7 +1546,20 @@ function ReportsHub() {
   );
 }
 
-function DynamicReportContent({ reportKey, filters, setFilters, projects, users, data, pageNo, pageSize, total, setPageNo, setPageSize }) {
+function DynamicReportContent({
+  reportKey,
+  filters,
+  setFilters,
+  projects,
+  users,
+  data,
+  loading,
+  pageNo,
+  pageSize,
+  total,
+  setPageNo,
+  setPageSize,
+}) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
   const projectOptions = Array.isArray(projects) ? projects : [];
 
@@ -1577,10 +1596,11 @@ function DynamicReportContent({ reportKey, filters, setFilters, projects, users,
           setPageNo={setPageNo}
           setPageSize={setPageSize}
         />
-      ) : reportKey === "timesheet" && data['timesheet'] && data['timesheet'].data ? (
+      ) : reportKey === "timesheet" && data["timesheet"] ? (
         <TimesheetReportContent
-          data={data['timesheet']}
+          data={data["timesheet"]}
           filters={filters}
+          loading={loading}
           pageNo={pageNo}
           pageSize={pageSize}
           total={total}
@@ -3716,7 +3736,16 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
   );
 }
 
-function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
+function TimesheetReportContent({
+  data,
+  filters,
+  loading,
+  pageNo,
+  pageSize,
+  total,
+  setPageNo,
+  setPageSize,
+}) {
   const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
   const searchText = filters?.search || "";
   const timesheetUserChartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -3818,19 +3847,48 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
       <div className="report-summary-stats">
         <div className="stat-card">
           <h3>Total Hours</h3>
-          <span className="stat-value">{calculateTimesheetChartData(timesheets).users.reduce((sum, user) => sum + parseFloat(user.totalLoggedHours), 0).toFixed(1)}</span>
+          <span className="stat-value">
+            {loading && timesheets.length === 0 ? (
+              <SkeletonBlock w={60} h={32} />
+            ) : (
+              calculateTimesheetChartData(timesheets)
+                .users.reduce(
+                  (sum, user) => sum + parseFloat(user.totalLoggedHours),
+                  0
+                )
+                .toFixed(1)
+            )}
+          </span>
         </div>
         <div className="stat-card">
           <h3>Total Entries</h3>
-          <span className="stat-value">{total}</span>
+          <span className="stat-value">
+            {loading && timesheets.length === 0 ? (
+              <SkeletonBlock w={60} h={32} />
+            ) : (
+              total
+            )}
+          </span>
         </div>
         <div className="stat-card">
           <h3>Unique Users</h3>
-          <span className="stat-value">{userChartData.length}</span>
+          <span className="stat-value">
+            {loading && timesheets.length === 0 ? (
+              <SkeletonBlock w={60} h={32} />
+            ) : (
+              userChartData.length
+            )}
+          </span>
         </div>
         <div className="stat-card">
           <h3>Unique Projects</h3>
-          <span className="stat-value">{managerChartData.length}</span>
+          <span className="stat-value">
+            {loading && timesheets.length === 0 ? (
+              <SkeletonBlock w={60} h={32} />
+            ) : (
+              managerChartData.length
+            )}
+          </span>
         </div>
       </div>
 
@@ -3842,12 +3900,15 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
       )}
 
       {/* Charts */}
-      <div className="timesheet-charts-section">
-        <div className="timesheet-charts-grid">
-          {userChartData.length > 0 && (
-            <div className="chart-card chart-card--timesheet chart-card--timesheet-user">
-              <h3>Hours by User</h3>
-              <div className="timesheet-user-pie-wrap">
+      {loading && timesheets.length === 0 ? (
+        <TimesheetChartsSkeleton />
+      ) : (
+        <div className="timesheet-charts-section">
+          <div className="timesheet-charts-grid">
+            {userChartData.length > 0 && (
+              <div className="chart-card chart-card--timesheet chart-card--timesheet-user">
+                <h3>Hours by User</h3>
+                <div className="timesheet-user-pie-wrap">
                 <SimplePieChart
                   size={240}
                   colors={timesheetUserChartColors}
@@ -3922,8 +3983,9 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
               />
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Timesheet Table */}
       <div className="timesheet-table-section">
@@ -3932,7 +3994,12 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
           <span className="total-count">Total: {total}</span>
         </div>
 
-        {timesheets.length > 0 ? (
+        {loading && timesheets.length === 0 ? (
+          <TableSk
+            cols={["2fr", "1.5fr", "2fr", "1fr", "1fr", "1.2fr", "1fr"]}
+            rows={8}
+          />
+        ) : timesheets.length > 0 ? (
           <Table
             columns={columns}
             dataSource={timesheets}
@@ -3951,9 +4018,18 @@ function TimesheetReportContent({ data, filters, pageNo, pageSize, total, setPag
             }}
             scroll={{ x: "max-content" }}
             size="middle"
+            loading={loading}
           />
         ) : (
-          <Empty description={searchText ? "No timesheet entries found matching your search" : "No timesheet data found"} />
+          !loading && (
+            <Empty
+              description={
+                searchText
+                  ? "No timesheet entries found matching your search"
+                  : "No timesheet data found"
+              }
+            />
+          )
         )}
       </div>
     </div>
