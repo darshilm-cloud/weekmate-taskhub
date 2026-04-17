@@ -1159,53 +1159,10 @@ const TaskPage = () => {
       });
 
       if (response?.data?.status) {
-        const createdStage = response?.data?.data || {};
-        const stageKey = String(createdStage?._id || normalizeKanbanStatusKey(createdStage));
-        const stageId = createdStage?._id || null;
-        const stageTitle = createdStage?.title || createdStage?.name || "New Stage";
-        const stageColor = createdStage?.color || "#64748b";
-
         message.success(response?.data?.message || "Stage added successfully");
         setAddStageModalOpen(false);
         stageForm.resetFields();
         await initializeBoardData();
-
-        if (stageKey && stageKey !== "_none_") {
-          setStatusMetaBySection((prev) => ({
-            ...prev,
-            [stageKey]: {
-              statusId: stageId,
-              statusIds: stageId ? [stageId] : [],
-              title: stageTitle,
-              color: stageColor,
-              isDefault: false,
-            },
-          }));
-
-          setStatusTotals((prev) => ({
-            ...prev,
-            [stageKey]: Number(prev?.[stageKey] || 0),
-          }));
-
-          setSectionBuckets((prev) => ({
-            ...prev,
-            [stageKey]:
-              prev?.[stageKey] ||
-              {
-                tasks: [],
-                pageNo: 1,
-                hasMore: false,
-                loading: false,
-                total: 0,
-              },
-          }));
-
-          setListSectionIds((prev) => {
-            const current = Array.isArray(prev) ? prev : [];
-            if (current.includes(stageKey)) return current;
-            return [...current, stageKey];
-          });
-        }
       } else {
         message.error(response?.data?.message || "Failed to add stage");
       }
