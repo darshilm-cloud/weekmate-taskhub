@@ -2101,9 +2101,6 @@ const TaskPage = () => {
                     {col.title}
                   </span>
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span className="kanban-column-count">({statusTotals[col.id] ?? col.tasks.length})</span>
-                </div>
               </div>
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
