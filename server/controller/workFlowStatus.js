@@ -11,6 +11,12 @@ const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
 
+const normalizeStageKey = (title = "") =>
+  String(title || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
 const getCompanyObjectId = (req) => {
   const companyId = req?.user?.companyId;
   if (!companyId || !mongoose.Types.ObjectId.isValid(String(companyId))) return null;
@@ -357,6 +363,7 @@ exports.reorderProjectWorkFlowStatus = async (req, res) => {
     const validationSchema = Joi.object({
       workflow_id: Joi.string().required(),
       ordered_stage_ids: Joi.array().items(Joi.string().required()).min(1).required(),
+      apply_all_company_workflows: Joi.boolean().optional().default(false),
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -412,7 +419,95 @@ exports.reorderProjectWorkFlowStatus = async (req, res) => {
       },
     }));
 
-    if (bulkOps.length > 0) {
+    if (value.apply_all_company_workflows) {
+      const sourceStages = await ProjectWorkFlowStatus.find(
+        { workflow_id: workflowObjectId, isDeleted: false },
+        { _id: 1, title: 1, sequence: 1 }
+      )
+        .sort({ sequence: 1, _id: 1 })
+        .lean();
+
+      const sourceStageById = new Map(
+        sourceStages.map((row) => [String(row._id), row])
+      );
+
+      const orderedTitleKeys = value.ordered_stage_ids
+        .map((id) => normalizeStageKey(sourceStageById.get(String(id))?.title || ""))
+        .filter(Boolean);
+
+      const companyWorkflows = await ProjectWorkFlow.find(
+        { companyId: companyObjectId, isDeleted: false },
+        { _id: 1 }
+      ).lean();
+
+      const companyWorkflowIds = companyWorkflows.map((row) => row._id);
+      const companyStages = await ProjectWorkFlowStatus.find(
+        {
+          workflow_id: { $in: companyWorkflowIds },
+          isDeleted: false,
+        },
+        { _id: 1, workflow_id: 1, title: 1, sequence: 1 }
+      )
+        .sort({ sequence: 1, _id: 1 })
+        .lean();
+
+      const stagesByWorkflow = companyStages.reduce((acc, stage) => {
+        const key = String(stage.workflow_id);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(stage);
+        return acc;
+      }, {});
+
+      const companyBulkOps = [];
+      companyWorkflowIds.forEach((workflowId) => {
+        const wfKey = String(workflowId);
+        const stages = Array.isArray(stagesByWorkflow[wfKey]) ? stagesByWorkflow[wfKey] : [];
+        if (!stages.length) return;
+
+        const stagesByKey = stages.reduce((acc, stage) => {
+          const key = normalizeStageKey(stage.title);
+          if (!key) return acc;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(stage);
+          return acc;
+        }, {});
+
+        const usedStageIds = new Set();
+        const orderedForWorkflow = [];
+        orderedTitleKeys.forEach((titleKey) => {
+          const candidates = stagesByKey[titleKey] || [];
+          const nextStage = candidates.find((row) => !usedStageIds.has(String(row._id)));
+          if (!nextStage) return;
+          usedStageIds.add(String(nextStage._id));
+          orderedForWorkflow.push(nextStage);
+        });
+
+        stages.forEach((stage) => {
+          if (usedStageIds.has(String(stage._id))) return;
+          usedStageIds.add(String(stage._id));
+          orderedForWorkflow.push(stage);
+        });
+
+        orderedForWorkflow.forEach((stage, index) => {
+          companyBulkOps.push({
+            updateOne: {
+              filter: { _id: stage._id, workflow_id: workflowId, isDeleted: false },
+              update: {
+                $set: {
+                  sequence: index + 1,
+                  updatedBy: req.user._id,
+                  updatedAt: configs.utcDefault(),
+                },
+              },
+            },
+          });
+        });
+      });
+
+      if (companyBulkOps.length > 0) {
+        await ProjectWorkFlowStatus.bulkWrite(companyBulkOps);
+      }
+    } else if (bulkOps.length > 0) {
       await ProjectWorkFlowStatus.bulkWrite(bulkOps);
     }
 

@@ -332,7 +332,7 @@ const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROJECT_CACHE_MAX_CHARS = 250_000;
 const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
 const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 24;
 
 
 const normalizeProjectFilters = (filters = {}) => ({

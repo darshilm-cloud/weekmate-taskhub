@@ -738,6 +738,7 @@ async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuse
       statusId: status?._id || null,
       title: status?.title || existing?.title || "No status",
       color: status?.color || existing?.color || "#d9d9d9",
+      sequence: Number(status?.sequence ?? existing?.sequence ?? 0),
       isDefault: Boolean(status?.isDefault || existing?.isDefault),
       workflowId: status?.workflow_id || existing?.workflowId || null,
       workflowName:

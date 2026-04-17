@@ -18,7 +18,7 @@ import dayjs from "dayjs";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, hasPermission } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import TasksGanttView from "../Tasks/TasksGanttView";
@@ -116,14 +116,40 @@ function getTaskProjectTitle(task) {
 }
 
 
-function mergeSectionKeysFromTotals(statusTotals) {
+function mergeSectionKeysFromTotals(statusTotals, statusMetaBySection = {}) {
   const order = ["todo", "inprogress", "onhold", "done"];
-  const keys = new Set(order);
+  const keys = new Set();
   Object.keys(statusTotals || {}).forEach((k) => {
     if (k && k !== "_none_") keys.add(k);
   });
-  const rest = [...keys].filter((k) => !order.includes(k)).sort();
-  return [...order.filter((k) => keys.has(k)), ...rest];
+  Object.keys(statusMetaBySection || {}).forEach((k) => {
+    if (k && k !== "_none_") keys.add(k);
+  });
+
+  const allKeys = [...keys];
+  const hasSequence = allKeys.some((key) => Number.isFinite(Number(statusMetaBySection?.[key]?.sequence)));
+  if (hasSequence) {
+    return allKeys.sort((a, b) => {
+      const aSeq = Number(statusMetaBySection?.[a]?.sequence);
+      const bSeq = Number(statusMetaBySection?.[b]?.sequence);
+      const aHas = Number.isFinite(aSeq);
+      const bHas = Number.isFinite(bSeq);
+      if (aHas && bHas && aSeq !== bSeq) return aSeq - bSeq;
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      const aDef = order.indexOf(a);
+      const bDef = order.indexOf(b);
+      if (aDef !== -1 && bDef !== -1) return aDef - bDef;
+      if (aDef !== -1) return -1;
+      if (bDef !== -1) return 1;
+      return String(a).localeCompare(String(b));
+    });
+  }
+
+  const normalized = new Set(order);
+  allKeys.forEach((k) => normalized.add(k));
+  const rest = [...normalized].filter((k) => !order.includes(k)).sort();
+  return [...order.filter((k) => normalized.has(k)), ...rest];
 }
 
 function getTaskPageSectionKeyFromStatus(item) {
@@ -627,6 +653,11 @@ const TaskPage = () => {
   const location = useLocation();
   const companySlug = localStorage.getItem("companyDomain");
   const isAdmin = getRoles(["Admin"]);
+  const canAddTask = hasPermission(["task_add"]);
+  const canEditTask = hasPermission(["task_edit"]);
+  const canDeleteTask = hasPermission(["task_delete"]);
+  const canAddStage = hasPermission(["task_add"]);
+  const canManageStageOrder = hasPermission(["task_edit"]);
   const currentUserId = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user_data") || "{}")?._id || "";
@@ -864,13 +895,19 @@ const TaskPage = () => {
           statusIds: mergedStatusIds,
           title: prev.title || item?.title || getKanbanStatusMeta({ title: key, name: key }).title,
           color: prev.color || item?.color || getKanbanStatusMeta({ title: key, name: key }).color,
+          sequence:
+            Number.isFinite(Number(prev.sequence))
+              ? Number(prev.sequence)
+              : Number.isFinite(Number(item?.sequence))
+                ? Number(item.sequence)
+                : null,
           isDefault: Boolean(prev.isDefault || item?.isDefault || DEFAULT_STAGE_KEYS.has(key)),
           workflowId: prev.workflowId || item?.workflowId || null,
           workflowName: prev.workflowName || item?.workflowName || "",
         };
         return acc;
       }, {});
-      const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals);
+      const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals, nextStatusMetaBySection);
       setStatusTotals(nextStatusTotals);
       setStatusMetaBySection(nextStatusMetaBySection);
       setListSectionIds(sectionOrder);
@@ -1084,15 +1121,23 @@ const TaskPage = () => {
   }, [openAddTaskModalForStatus]);
 
   const handleOpenAddStageModal = useCallback(async () => {
+    if (!canAddStage) {
+      message.error("You do not have permission to add stage.");
+      return;
+    }
     const workflowId = await resolveTaskPageWorkflowId();
     if (!workflowId) {
       message.error("No workflow found to add stage.");
       return;
     }
     setAddStageModalOpen(true);
-  }, [resolveTaskPageWorkflowId]);
+  }, [canAddStage, resolveTaskPageWorkflowId]);
 
   const handleAddStageSubmit = useCallback(async () => {
+    if (!canAddStage) {
+      message.error("You do not have permission to add stage.");
+      return;
+    }
     try {
       const values = await stageForm.validateFields();
       const workflowId = await resolveTaskPageWorkflowId();
@@ -1170,7 +1215,7 @@ const TaskPage = () => {
     } finally {
       setStageSubmitting(false);
     }
-  }, [initializeBoardData, resolveTaskPageWorkflowId, stageForm]);
+  }, [canAddStage, initializeBoardData, resolveTaskPageWorkflowId, stageForm]);
 
   const isCustomStage = useCallback(
     (column) =>
@@ -1181,12 +1226,18 @@ const TaskPage = () => {
   );
 
   const handleStartRenameStage = useCallback((column) => {
+    if (!canManageStageOrder) return;
     if (!isCustomStage(column)) return;
     setStageRenameId(column.id);
     setStageRenameValue(column.title || "");
-  }, [isCustomStage]);
+  }, [canManageStageOrder, isCustomStage]);
 
   const handleRenameStageSubmit = useCallback(async (column) => {
+    if (!canManageStageOrder) {
+      setStageRenameId(null);
+      message.error("You do not have permission to rename stage.");
+      return;
+    }
     if (!column?.statusId || !isCustomStage(column)) {
       setStageRenameId(null);
       return;
@@ -1234,44 +1285,89 @@ const TaskPage = () => {
     } finally {
       setStageRenaming(false);
     }
-  }, [isCustomStage, resolveTaskPageWorkflowId, stageRenameValue]);
+  }, [canManageStageOrder, isCustomStage, resolveTaskPageWorkflowId, stageRenameValue]);
 
   const persistStageOrder = useCallback(async (orderedSectionIds) => {
-    const visibleOrderedStageIds = orderedSectionIds
-      .flatMap((sectionId) => {
-        const meta = statusMetaBySection?.[sectionId] || {};
-        const ids = Array.isArray(meta.statusIds) ? meta.statusIds : [];
-        if (ids.length > 0) return ids;
-        return meta.statusId ? [meta.statusId] : [];
-      })
+    const orderedTitleKeys = orderedSectionIds
+      .map((sectionId) => normalizeKanbanStatusKey(statusMetaBySection?.[sectionId]?.title || sectionId))
       .filter(Boolean);
-    const allStageIds = Object.values(statusMetaBySection || {})
-      .flatMap((meta) => {
-        const ids = Array.isArray(meta?.statusIds) ? meta.statusIds : [];
-        if (ids.length > 0) return ids;
-        return meta?.statusId ? [meta.statusId] : [];
-      })
-      .filter(Boolean);
-    const orderedStageIds = [
-      ...visibleOrderedStageIds,
-      ...allStageIds.filter((id) => !visibleOrderedStageIds.includes(id)),
-    ]
-      .filter((id) => MONGO_ID_REGEX.test(String(id || "")))
-      .filter((id, index, arr) => arr.indexOf(id) === index);
-    if (!orderedStageIds.length) return;
-    const workflowId = await resolveTaskPageWorkflowId({ showError: false });
-    if (!workflowId) return;
-    await Service.makeAPICall({
-      methodName: Service.putMethod,
-      api_url: Service.reorderWorkflowStatus,
+    if (!orderedTitleKeys.length) return;
+
+    const workflowsResponse = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getworkflow,
       body: {
-        workflow_id: workflowId,
-        ordered_stage_ids: orderedStageIds,
+        isDropdown: true,
+        pageNo: 1,
+        limit: 500,
       },
     });
-  }, [resolveTaskPageWorkflowId, statusMetaBySection]);
+    const workflows = Array.isArray(workflowsResponse?.data?.data)
+      ? workflowsResponse.data.data
+      : [];
+    if (!workflows.length) return;
+
+    for (const workflow of workflows) {
+      const workflowId = String(workflow?._id || "");
+      if (!workflowId) continue;
+
+      const stageListResponse = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getworkflowStatus}/${workflowId}`,
+      });
+      const workflowStagesRaw = Array.isArray(stageListResponse?.data?.data)
+        ? stageListResponse.data.data
+        : [];
+      const workflowStages = [...workflowStagesRaw].sort(
+        (a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0)
+      );
+      if (!workflowStages.length) continue;
+
+      const stagesByTitleKey = workflowStages.reduce((acc, stage) => {
+        const key = normalizeKanbanStatusKey(stage?.title || stage?.name || "");
+        if (!key) return acc;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(stage);
+        return acc;
+      }, {});
+
+      const usedIds = new Set();
+      const orderedStageIdsFromColumns = [];
+      orderedTitleKeys.forEach((titleKey) => {
+        const candidates = stagesByTitleKey[titleKey] || [];
+        const nextStage = candidates.find((row) => !usedIds.has(String(row?._id || "")));
+        if (!nextStage?._id) return;
+        usedIds.add(String(nextStage._id));
+        orderedStageIdsFromColumns.push(String(nextStage._id));
+      });
+
+      const orderedStageIds = [
+        ...orderedStageIdsFromColumns,
+        ...workflowStages
+          .map((stage) => String(stage?._id || ""))
+          .filter((id) => id && !usedIds.has(id)),
+      ]
+        .filter((id) => MONGO_ID_REGEX.test(String(id || "")))
+        .filter((id, index, arr) => arr.indexOf(id) === index);
+
+      if (orderedStageIds.length !== workflowStages.length) continue;
+
+      await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: Service.reorderWorkflowStatus,
+        body: {
+          workflow_id: workflowId,
+          ordered_stage_ids: orderedStageIds,
+        },
+      });
+    }
+  }, [statusMetaBySection]);
 
   const reorderSections = useCallback((fromId, toId) => {
+    if (!canManageStageOrder) {
+      message.error("You do not have permission to reorder stage.");
+      return;
+    }
     if (!fromId || !toId || fromId === toId) return;
     setListSectionIds((prev) => {
       const current = Array.isArray(prev) ? [...prev] : [];
@@ -1285,7 +1381,7 @@ const TaskPage = () => {
       });
       return current;
     });
-  }, [persistStageOrder]);
+  }, [canManageStageOrder, persistStageOrder]);
 
   const kanbanColumns = useMemo(() => {
       const all = listSectionIds.map((bucketId) => {
@@ -1341,10 +1437,14 @@ const TaskPage = () => {
   }, [sortedTasks]);
 
   const handleOpenEditTask = useCallback((task) => {
+    if (!canEditTask) {
+      message.error("You do not have permission to edit task.");
+      return;
+    }
     if (!task?._id) return;
     setTaskToEdit(task);
     setEditTaskModalOpen(true);
-  }, []);
+  }, [canEditTask]);
 
   const normalizeDateForApi = useCallback((value, withTime = false) => {
     if (!value) return null;
@@ -1514,6 +1614,10 @@ const TaskPage = () => {
   }, [listSectionIds]);
 
   const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null) => {
+    if (!canEditTask) {
+      message.error("You do not have permission to move task.");
+      return;
+    }
     const statusToSend = targetColumn?.statusId || targetColumn?.statusMeta?._id || targetColumn?.title;
     if (!taskId || !statusToSend) {
       message.error("Unable to move task to this column");
@@ -1618,7 +1722,7 @@ const TaskPage = () => {
       });
       message.error(error?.response?.data?.message || error?.message || "Failed to update task status");
     }
-  }, [listSectionIds, moveTaskLocally, statusMetaBySection]);
+  }, [canEditTask, listSectionIds, moveTaskLocally, statusMetaBySection]);
 
   const handleKanbanDragStart = useCallback((task) => {
     setDraggingTaskId(task?._id || null);
@@ -1630,6 +1734,11 @@ const TaskPage = () => {
   }, []);
 
   const handleKanbanDrop = useCallback(async (targetColumn) => {
+    if (!canEditTask) {
+      setDragOverColumnId(null);
+      setDraggingTaskId(null);
+      return;
+    }
     if (!draggingTaskId || !targetColumn) {
       setDragOverColumnId(null);
       return;
@@ -1663,7 +1772,7 @@ const TaskPage = () => {
     setDragOverColumnId(null);
     setDraggingTaskId(null);
     await updateTaskKanbanStatus(draggedTask._id, targetColumn, draggedTask, sourceBucketId);
-  }, [draggingTaskId, listSectionIds, mergedTasksFromBuckets, sectionBuckets, updateTaskKanbanStatus]);
+  }, [canEditTask, draggingTaskId, listSectionIds, mergedTasksFromBuckets, sectionBuckets, updateTaskKanbanStatus]);
 
   const deleteTasksByIds = useCallback(
     async (ids) => {
@@ -1693,6 +1802,10 @@ const TaskPage = () => {
   );
 
   const handleDeleteSelected = useCallback(() => {
+    if (!canDeleteTask) {
+      message.error("You do not have permission to delete task.");
+      return;
+    }
     const count = selectedTaskIds.length;
     Modal.confirm({
       title: "Delete tasks",
@@ -1720,10 +1833,14 @@ const TaskPage = () => {
         }
       },
     });
-  }, [deleteTasksByIds, dispatch, initializeBoardData, selectedTaskIds]);
+  }, [canDeleteTask, deleteTasksByIds, dispatch, initializeBoardData, selectedTaskIds]);
 
   const handleDeleteOneTask = useCallback(
     (task) => {
+      if (!canDeleteTask) {
+        message.error("You do not have permission to delete task.");
+        return;
+      }
       if (!task?._id) return;
       Modal.confirm({
         title: "Delete task",
@@ -1755,7 +1872,7 @@ const TaskPage = () => {
         },
       });
     },
-    [deleteTasksByIds, dispatch, initializeBoardData, selectedTask]
+    [canDeleteTask, deleteTasksByIds, dispatch, initializeBoardData, selectedTask]
   );
 
   const handleOpenInProject = (path) => {
@@ -1796,7 +1913,7 @@ const TaskPage = () => {
             isFetchingProjects={isFetchingProjects}
             projectSearch={projectSearch}
           />
-          {selectedTaskIds.length > 0 && (
+          {canDeleteTask && selectedTaskIds.length > 0 && (
             <button
               type="button"
               className="task-btn-ghost"
@@ -1806,12 +1923,14 @@ const TaskPage = () => {
               <PlusOutlined rotate={45} /> Delete Selected ({selectedTaskIds.length})
             </button>
           )}
-          <Button
-            type="primary"
-            onClick={handleAddTaskClick}
-          >
-            <PlusOutlined /> Add Task
-          </Button>
+          {canAddTask && (
+            <Button
+              type="primary"
+              onClick={handleAddTaskClick}
+            >
+              <PlusOutlined /> Add Task
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1972,10 +2091,12 @@ const TaskPage = () => {
                 statusMeta={s.statusMeta || { _id: s.statusId, title: s.title, color: s.color }}
                 count={statusTotals[s.id] ?? s.tasks.length}
                 tasks={s.tasks}
-                onAddTask={openAddTaskModalForStatus}
+                onAddTask={canAddTask ? openAddTaskModalForStatus : undefined}
                 onOpenTask={handleOpenTask}
-                onEditTask={handleOpenEditTask}
-                onDeleteTask={handleDeleteOneTask}
+                onEditTask={canEditTask ? handleOpenEditTask : undefined}
+                onDeleteTask={canDeleteTask ? handleDeleteOneTask : undefined}
+                canEditTask={canEditTask}
+                canDeleteTask={canDeleteTask}
                 selectedTaskIds={selectedTaskIds}
                 onSelectTask={handleSelectTask}
                 onSectionScroll={handleListSectionScroll}
@@ -1993,7 +2114,7 @@ const TaskPage = () => {
             <div key={col.id} className="kanban-column" style={{ borderTopColor: col.color }}>
               <div
                 className="kanban-column-header"
-                draggable
+                draggable={canManageStageOrder}
                 onDragStart={() => setDraggingStageId(col.id)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
@@ -2018,7 +2139,7 @@ const TaskPage = () => {
                   <span
                     className="kanban-column-title"
                     onDoubleClick={() => handleStartRenameStage(col)}
-                    title={isCustomStage(col) ? "Double click to rename" : undefined}
+                    title={canManageStageOrder && isCustomStage(col) ? "Double click to rename" : undefined}
                   >
                     {col.title}
                   </span>
@@ -2054,7 +2175,7 @@ const TaskPage = () => {
                     key={t._id}
                     task={t}
                     onClick={() => handleOpenTask(t)}
-                    draggable
+                    draggable={canEditTask}
                     isDragging={draggingTaskId === t._id}
                     onDragStart={() => handleKanbanDragStart(t)}
                     onDragEnd={handleKanbanDragEnd}
@@ -2068,35 +2189,39 @@ const TaskPage = () => {
                 )}
               </div>
               <div className="kanban-column-footer">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  className="kanban-column-add-btn"
-                  onClick={() =>
-                    openAddTaskModalForStatus(
-                      col.statusMeta || { _id: col.statusId, title: col.title, color: col.color }
-                    )
-                  }
-                >
-                  Add Task
-                </Button>
+                {canAddTask && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    className="kanban-column-add-btn"
+                    onClick={() =>
+                      openAddTaskModalForStatus(
+                        col.statusMeta || { _id: col.statusId, title: col.title, color: col.color }
+                      )
+                    }
+                  >
+                    Add Task
+                  </Button>
+                )}
               </div>
             </div>
           ))}
-          <div className="kanban-add-stage-column" aria-label="Add stage column action">
-            <Tooltip title="Add a stage" placement="top">
-              <Button
-                type="text"
-                shape="circle"
-                size="large"
-                className="kanban-add-stage-icon-btn"
-                icon={<PlusOutlined />}
-                onClick={handleOpenAddStageModal}
-                aria-label="Add a stage"
-              />
-            </Tooltip>
-          </div>
+          {canAddStage && (
+            <div className="kanban-add-stage-column" aria-label="Add stage column action">
+              <Tooltip title="Add a stage" placement="top">
+                <Button
+                  type="text"
+                  shape="circle"
+                  size="large"
+                  className="kanban-add-stage-icon-btn"
+                  icon={<PlusOutlined />}
+                  onClick={handleOpenAddStageModal}
+                  aria-label="Add a stage"
+                />
+              </Tooltip>
+            </div>
+          )}
         </div>
       ) : view === "calendar" ? (
         <div className="task-calendar-view">
@@ -2171,6 +2296,8 @@ function TaskListSection({
   onSelectTask,
   onSectionScroll,
   isSectionLoading,
+  canEditTask = false,
+  canDeleteTask = false,
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
@@ -2181,14 +2308,16 @@ function TaskListSection({
           <span className="section-title">{title}</span>
           <span className="section-count">{count}</span>
         </button>
-        <Button
-          type="text"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => onAddTask?.(statusMeta || statusId)}
-        >
-          Add Task
-        </Button>
+        {onAddTask && (
+          <Button
+            type="text"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => onAddTask?.(statusMeta || statusId)}
+          >
+            Add Task
+          </Button>
+        )}
       </div>
       {!collapsed && (
         <div
@@ -2209,6 +2338,8 @@ function TaskListSection({
                 onOpen={() => onOpenTask(t)}
                 onEdit={() => onEditTask(t)}
                 onDelete={() => onDeleteTask(t)}
+                canEditTask={canEditTask}
+                canDeleteTask={canDeleteTask}
                 isSelected={selectedTaskIds?.includes(t._id)}
                 onSelect={(e) => onSelectTask(t._id, e)}
               />
@@ -2226,7 +2357,16 @@ function TaskListSection({
   );
 }
 
-function TaskRow({ task, onOpen, onEdit, onDelete, isSelected, onSelect }) {
+function TaskRow({
+  task,
+  onOpen,
+  onEdit,
+  onDelete,
+  isSelected,
+  onSelect,
+  canEditTask = false,
+  canDeleteTask = false,
+}) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("YYYY-MM-DD") : null;
   const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
@@ -2267,29 +2407,33 @@ function TaskRow({ task, onOpen, onEdit, onDelete, isSelected, onSelect }) {
         {projectTitle}
       </div>
       <div className="task-row-actions" onClick={(e) => e.stopPropagation()}>
-        <Button
-          type="text"
-          size="small"
-          className="task-row-action-btn"
-          icon={<EditOutlined />}
-          aria-label="Edit task"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-        />
-        <Button
-          type="text"
-          size="small"
-          danger
-          className="task-row-action-btn"
-          icon={<DeleteOutlined />}
-          aria-label="Delete task"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        />
+        {canEditTask && (
+          <Button
+            type="text"
+            size="small"
+            className="task-row-action-btn"
+            icon={<EditOutlined />}
+            aria-label="Edit task"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.();
+            }}
+          />
+        )}
+        {canDeleteTask && (
+          <Button
+            type="text"
+            size="small"
+            danger
+            className="task-row-action-btn"
+            icon={<DeleteOutlined />}
+            aria-label="Delete task"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.();
+            }}
+          />
+        )}
       </div>
     </div>
   );

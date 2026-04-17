@@ -249,9 +249,6 @@ useEffect(() => {
 
     const rawValue = String(statusValue).trim();
     const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
-    if (!placeholderIds.has(rawValue)) return rawValue;
-
-    const targetKey = normalizeWorkflowStatusKey(rawValue);
     const realStages = [
       ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
       ...(Array.isArray(tasks)
@@ -260,6 +257,36 @@ useEffect(() => {
             .filter(Boolean)
         : []),
     ];
+
+    const targetStage =
+      realStages.find((stage) => String(stage?._id || stage?.id || "") === rawValue) ||
+      null;
+    const targetKey = normalizeWorkflowStatusKey(
+      placeholderIds.has(rawValue) ? rawValue : (targetStage?.title || targetStage?.name || rawValue)
+    );
+
+    // Always prefer resolving to current project workflow stage id by semantic key.
+    const localStageMatch = (Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []).find((stage) => {
+      const candidateId = stage?._id || stage?.id || "";
+      const isRealId =
+        typeof candidateId === "string" &&
+        candidateId.length > 8 &&
+        !placeholderIds.has(candidateId);
+      if (!isRealId) return false;
+      const titleKey = normalizeWorkflowStatusKey(stage?.title || stage?.name);
+      const idKey = normalizeWorkflowStatusKey(candidateId);
+      return titleKey === targetKey || idKey === targetKey;
+    });
+    if (localStageMatch?._id || localStageMatch?.id) {
+      return localStageMatch?._id || localStageMatch?.id;
+    }
+
+    if (!placeholderIds.has(rawValue)) {
+      const isProjectStageId = (Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []).some(
+        (stage) => String(stage?._id || stage?.id || "") === rawValue
+      );
+      return isProjectStageId ? rawValue : "";
+    }
 
     const matchedStage = realStages.find((stage) => {
       const candidateId = stage?._id || stage?.id || "";
@@ -933,18 +960,22 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
-    const rawStatus = String(workFlowStatusId || "").trim();
-    const looksLikeMongoId = /^[a-f\d]{24}$/i.test(rawStatus);
     const resolvedStatusId = resolveWorkflowStatusId(workFlowStatusId);
-    // Drop targets usually pass a real workflow _id. If resolveWorkflowStatusId
-    // returns empty (e.g. workflow list not loaded yet), still optimistically move
-    // when the value looks like a persisted ObjectId string.
-    const statusToSend = resolvedStatusId || rawStatus;
-    const canMoveOptimistically = Boolean(resolvedStatusId) || looksLikeMongoId;
+    const statusToSend = resolvedStatusId;
+    const canMoveOptimistically = Boolean(resolvedStatusId);
     const targetStatus =
       (projectWorkflowStage || []).find((item) => item?._id === statusToSend) ||
       (tasks || []).find((column) => column?.workflowStatus?._id === statusToSend)?.workflowStatus ||
       null;
+
+    if (!statusToSend) {
+      message.error("This stage is not available for the current project workflow.");
+      const currentListId = selectedTask?._id;
+      if (currentListId) {
+        getBoardTasks(currentListId, { silent: true });
+      }
+      return;
+    }
 
     if (canMoveOptimistically) {
       moveBoardTaskLocally?.(taskId, statusToSend, targetStatus || {});

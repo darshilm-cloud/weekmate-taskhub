@@ -91,8 +91,16 @@ function normalizeStageKey(title) {
   if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
   return "";
 }
+
+function getStageColumnKey(title) {
+  const normalizedDefault = normalizeStageKey(title);
+  if (normalizedDefault) return normalizedDefault;
+  return String(title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "");
+}
 const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
-const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 
 const { Search } = Input;
 
@@ -570,26 +578,47 @@ const TasksPMS = ({ flag }) => {
   }, []);
 
   const fetchWorkflowStagesById = useCallback(
-    async (workflowId) => {
-      if (!workflowId) {
-        setWorkflowStatusList([]);
-        return [];
-      }
-
+    async () => {
       try {
-        const response = await Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: `${Service.getworkflowStatus}/${workflowId}`,
-        });
+        const aggregated = [];
+        let pageNo = 1;
+        const limit = 200;
+        let total = 0;
 
-        const stages = Array.isArray(response?.data?.data) ? response.data.data : [];
+        do {
+          const query = new URLSearchParams({
+            pageNo: String(pageNo),
+            limit: String(limit),
+            search: "",
+          }).toString();
+          const response = await Service.makeAPICall({
+            methodName: Service.getMethod,
+            api_url: `${Service.listWorkflowStages}?${query}`,
+          });
+          const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+          const meta = response?.data?.metaData || response?.data?.metadata || {};
+          total = Number(meta?.total || list.length || 0);
+          aggregated.push(...list);
+          pageNo += 1;
+          if (list.length === 0) break;
+        } while (aggregated.length < total);
+
+        const stages = aggregated
+          .map((stage) => ({
+            ...stage,
+            _id: stage?._id || stage?.id,
+          }))
+          .filter((stage) => Boolean(stage?._id))
+          .filter((stage, index, arr) => {
+            const id = String(stage?._id || "");
+            return arr.findIndex((row) => String(row?._id || "") === id) === index;
+          })
+          .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
+
         setWorkflowStatusList(stages);
-        if (stages.length > 0) {
-          dispatch(setData({ stateName: "projectWorkflowStage", data: stages }));
-        }
         return stages;
       } catch (error) {
-        setWorkflowStatusList([]);
+        setWorkflowStatusList((prev) => (Array.isArray(prev) ? prev : []));
         return [];
       }
     },
@@ -1337,148 +1366,6 @@ const TasksPMS = ({ flag }) => {
     showModalTaskModal();
   };
 
-  const canEditStage = useCallback((stage) => {
-    const key = normalizeStageKey(stage?.title || stage?.name || "");
-    if (stage?.isDefault) return false;
-    return !DEFAULT_STAGE_KEYS.has(key);
-  }, []);
-
-  const handleRenameStage = useCallback(
-    async (stage, nextTitleRaw) => {
-      if (!stage?._id || !canEditStage(stage)) return;
-      const nextTitle = String(nextTitleRaw || "").trim();
-      if (!nextTitle) {
-        message.error("Stage name is required.");
-        return;
-      }
-      if (nextTitle === String(stage?.title || "").trim()) return;
-      const workflowId = currentListWorkflowId || stagesId || resolveWorkflowId(projectDetails);
-      if (!workflowId) {
-        message.error("No workflow found for this list.");
-        return;
-      }
-      try {
-        setStageHeaderSaving(true);
-        const response = await Service.makeAPICall({
-          methodName: Service.putMethod,
-          api_url: `${Service.updateworkflowStatus}/${stage._id}`,
-          body: {
-            workflow_id: workflowId,
-            title: nextTitle,
-            color: stage?.color || "#64748b",
-          },
-        });
-        if (response?.data?.status) {
-          setBoardTasks((prev) =>
-            (Array.isArray(prev) ? prev : []).map((column) => {
-              const ws = column?.workflowStatus || column?.workflow_status || {};
-              if ((ws?._id || ws?.id) !== stage._id) return column;
-              return {
-                ...column,
-                workflowStatus: {
-                  ...ws,
-                  title: nextTitle,
-                },
-              };
-            })
-          );
-          setWorkflowStatusList((prev) =>
-            (Array.isArray(prev) ? prev : []).map((row) =>
-              row?._id === stage._id ? { ...row, title: nextTitle } : row
-            )
-          );
-          dispatch(
-            setData({
-              stateName: "projectWorkflowStage",
-              data: (Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []).map((row) =>
-                row?._id === stage._id ? { ...row, title: nextTitle } : row
-              ),
-            })
-          );
-          message.success(response?.data?.message || "Stage updated");
-        } else {
-          message.error(response?.data?.message || "Failed to update stage");
-        }
-      } catch (error) {
-        message.error(error?.response?.data?.message || "Failed to update stage");
-      } finally {
-        setStageHeaderSaving(false);
-      }
-    },
-    [canEditStage, currentListWorkflowId, stagesId, resolveWorkflowId, projectDetails, dispatch, projectWorkflowStage]
-  );
-
-  const handleReorderStages = useCallback(
-    async (dragStageId, dropStageId) => {
-      if (!dragStageId || !dropStageId || dragStageId === dropStageId) return;
-      const workflowId = currentListWorkflowId || stagesId || resolveWorkflowId(projectDetails);
-      if (!workflowId) return;
-
-      const getStageId = (column) => {
-        const ws = column?.workflowStatus || column?.workflow_status || column?.status || {};
-        return ws?._id || ws?.id || column?._id || null;
-      };
-
-      const current = Array.isArray(boardTasks) ? [...boardTasks] : [];
-      const fromIndex = current.findIndex(
-        (column) => getStageId(column) === dragStageId
-      );
-      const toIndex = current.findIndex(
-        (column) => getStageId(column) === dropStageId
-      );
-      if (fromIndex === -1 || toIndex === -1) return;
-
-      const reordered = [...current];
-      const [moved] = reordered.splice(fromIndex, 1);
-      reordered.splice(toIndex, 0, moved);
-      setBoardTasks(reordered);
-
-      const visibleOrderedStageIds = reordered.map((column) => getStageId(column)).filter(Boolean);
-      const allKnownStageIds = [
-        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
-        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
-      ]
-        .map((stage) => stage?._id || stage?.id)
-        .filter(Boolean);
-      const orderedStageIds = [
-        ...visibleOrderedStageIds,
-        ...allKnownStageIds.filter((id) => !visibleOrderedStageIds.includes(id)),
-      ]
-        .filter((id) => MONGO_ID_REGEX.test(String(id || "")))
-        .filter((id, index, arr) => arr.indexOf(id) === index);
-      if (!orderedStageIds.length) return;
-
-      try {
-        await Service.makeAPICall({
-          methodName: Service.putMethod,
-          api_url: Service.reorderWorkflowStatus,
-          body: {
-            workflow_id: workflowId,
-            ordered_stage_ids: orderedStageIds,
-          },
-        });
-      } catch (error) {
-        message.error(error?.response?.data?.message || "Failed to reorder stages");
-        const currentListId = listID || selectedTask?._id;
-        if (currentListId) {
-          getBoardTasks(currentListId, { silent: true });
-        }
-      }
-    },
-    [
-      boardTasks,
-      currentListWorkflowId,
-      stagesId,
-      resolveWorkflowId,
-      projectDetails,
-      workflowStatusList,
-      projectWorkflowStage,
-      listID,
-      selectedTask,
-      getBoardTasks,
-    ]
-  );
-
   const handleMenuClick = (e) => {
     console.log(e);
   };
@@ -1504,30 +1391,15 @@ const TasksPMS = ({ flag }) => {
   const getListWorkflowStatus = async () => {
     try {
       dispatch(showAuthLoader());
-      const token = localStorage.getItem("accessToken");
-      const workflowId = currentListWorkflowId || stagesId;
-      if (!workflowId) {
-        dispatch(hideAuthLoader());
-        return;
-      }
-
-      const reqBody = {};
-      const headers = {
-        token,
-      };
-
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getworkflowStatus + "/" + workflowId,
-        headers: headers,
-        body: reqBody,
-      });
+      const response = await fetchWorkflowStagesById();
       dispatch(hideAuthLoader());
-      if (response?.data?.data && response?.data?.status) {
-        setWorkflowStatusList(response?.data?.data);
+      if (Array.isArray(response) && response.length > 0) {
+        setWorkflowStatusList(response);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      dispatch(hideAuthLoader());
     }
   };
 
@@ -2245,10 +2117,11 @@ const TasksPMS = ({ flag }) => {
 
   useEffectAfterMount(() => {
     const workflowId = currentListWorkflowId || stagesId;
-    if (!workflowId) return;
-    dispatch(getSpecificProjectWorkflowStage(workflowId));
+    if (workflowId) {
+      dispatch(getSpecificProjectWorkflowStage(workflowId));
+    }
     getListWorkflowStatus();
-    fetchWorkflowStagesById(workflowId);
+    fetchWorkflowStagesById();
   }, [currentListWorkflowId, stagesId, fetchWorkflowStagesById]);
 
   useEffect(() => {
@@ -2265,8 +2138,8 @@ const TasksPMS = ({ flag }) => {
     const workflowId = currentListWorkflowId || stagesId;
     if (workflowId) {
       dispatch(getSpecificProjectWorkflowStage(workflowId));
-      fetchWorkflowStagesById(workflowId);
     }
+    fetchWorkflowStagesById();
 
     // Load full employee master list (for "pure data" in Subscribers dropdown)
     Service.makeAPICall({
@@ -2306,7 +2179,6 @@ const TasksPMS = ({ flag }) => {
     fetchStageOptionsFromBoard(fallbackMainTaskId).then((boardStages) => {
       if (!Array.isArray(boardStages) || boardStages.length === 0) return;
       setWorkflowStatusList(boardStages);
-      dispatch(setData({ stateName: "projectWorkflowStage", data: boardStages }));
     });
   }, [
     dispatch,
@@ -2659,34 +2531,33 @@ const TasksPMS = ({ flag }) => {
 
   const fixedBoardTasks = useMemo(() => {
     const inputColumns = Array.isArray(boardTasks) ? boardTasks : [];
-    const byStageId = new Map();
-    const orderedStageIds = [];
+    const byStageKey = new Map();
 
     inputColumns.forEach((column) => {
       const workflowStatus =
         column?.workflowStatus || column?.workflow_status || column?.status || {};
-      const stageId =
-        workflowStatus?._id || workflowStatus?.id || column?._id || "";
-      if (!stageId) return;
+      const stageTitle = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+      const stageKey = getStageColumnKey(stageTitle);
+      if (!stageKey) return;
+      const stageId = workflowStatus?._id || workflowStatus?.id || column?._id || "";
       const normalized = {
         ...column,
-        _id: column?._id || stageId,
+        _id: column?._id || stageId || stageKey,
         workflowStatus: {
           ...workflowStatus,
-          _id: stageId,
-          title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
+          _id: stageId || stageKey,
+          title: stageTitle || "Untitled",
           color: workflowStatus?.color || column?.color || "#64748b",
         },
         tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
       };
 
-      if (!byStageId.has(String(stageId))) {
-        orderedStageIds.push(String(stageId));
-        byStageId.set(String(stageId), normalized);
+      if (!byStageKey.has(stageKey)) {
+        byStageKey.set(stageKey, normalized);
         return;
       }
 
-      const existing = byStageId.get(String(stageId));
+      const existing = byStageKey.get(stageKey);
       existing.tasks = [
         ...(Array.isArray(existing?.tasks) ? existing.tasks : []),
         ...(Array.isArray(normalized?.tasks) ? normalized.tasks : []),
@@ -2698,27 +2569,86 @@ const TasksPMS = ({ flag }) => {
       ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
     ]
       .filter((stage) => stage?._id || stage?.id)
+      .filter((stage, index, arr) => {
+        const id = String(stage?._id || stage?.id || "");
+        return id && arr.findIndex((row) => String(row?._id || row?.id || "") === id) === index;
+      })
       .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
 
+    const orderedStageKeys = [];
+    const orderedStageMeta = new Map();
     knownStages.forEach((stage) => {
       const stageId = String(stage?._id || stage?.id || "");
-      if (!stageId || byStageId.has(stageId)) return;
-      byStageId.set(stageId, {
-        _id: stageId,
-        workflowStatus: {
-          ...stage,
-          _id: stageId,
-          title: stage?.title || stage?.name || "Untitled",
+      const stageTitle = stage?.title || stage?.name || "Untitled";
+      const stageKey = getStageColumnKey(stageTitle);
+      if (!stageKey) return;
+      if (!byStageKey.has(stageKey)) {
+        byStageKey.set(stageKey, {
+          _id: stageId || stageKey,
+          workflowStatus: {
+            ...stage,
+            _id: stageId || stageKey,
+            title: stageTitle,
+            color: stage?.color || "#64748b",
+          },
+          tasks: [],
+        });
+      }
+      if (!orderedStageMeta.has(stageKey)) {
+        orderedStageMeta.set(stageKey, {
+          _id: stageId || stageKey,
+          title: stageTitle,
           color: stage?.color || "#64748b",
-        },
-        tasks: [],
-      });
-      orderedStageIds.push(stageId);
+          sequence: Number(stage?.sequence || 0),
+        });
+      }
+      if (!orderedStageKeys.includes(stageKey)) {
+        orderedStageKeys.push(stageKey);
+      }
     });
 
-    return orderedStageIds
-      .map((id) => byStageId.get(id))
-      .filter(Boolean);
+    // Preserve any stage columns that are not part of the canonical workflow list.
+    inputColumns.forEach((column) => {
+      const workflowStatus =
+        column?.workflowStatus || column?.workflow_status || column?.status || {};
+      const stageKey = getStageColumnKey(
+        workflowStatus?.title || workflowStatus?.name || column?.title || ""
+      );
+      if (!stageKey || orderedStageKeys.includes(stageKey) || !byStageKey.has(stageKey)) return;
+      orderedStageKeys.push(stageKey);
+      if (!orderedStageMeta.has(stageKey)) {
+        orderedStageMeta.set(stageKey, {
+          _id: workflowStatus?._id || workflowStatus?.id || column?._id || stageKey,
+          title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
+          color: workflowStatus?.color || column?.color || "#64748b",
+          sequence: Number.MAX_SAFE_INTEGER,
+        });
+      }
+    });
+
+    return orderedStageKeys
+      .map((stageKey) => {
+        const col = byStageKey.get(stageKey);
+        const meta = orderedStageMeta.get(stageKey);
+        if (!col || !meta) return null;
+        return {
+          ...col,
+          _id: meta._id || col?._id || stageKey,
+          workflowStatus: {
+            ...(col?.workflowStatus || {}),
+            _id: meta._id || col?.workflowStatus?._id || stageKey,
+            title: meta.title || col?.workflowStatus?.title || "Untitled",
+            color: meta.color || col?.workflowStatus?.color || "#64748b",
+            sequence: Number(meta?.sequence || 0),
+          },
+        };
+      })
+      .filter(Boolean)
+      .sort(
+        (a, b) =>
+          Number(a?.workflowStatus?.sequence || 0) -
+          Number(b?.workflowStatus?.sequence || 0)
+      );
   }, [boardTasks, projectWorkflowStage, workflowStatusList]);
 
   /** Totals for the left sidebar fraction — derived from the Kanban payload, not stale `projectMianTask` aggregates. */
@@ -3467,9 +3397,6 @@ const TasksPMS = ({ flag }) => {
                 projectDetails={projectDetails}
                 isEditTaskSave={isEditTaskSave}
                 setEditTaskSave={setEditTaskSave}
-                onStageRename={handleRenameStage}
-                onStageReorder={handleReorderStages}
-                canEditStage={canEditStage}
               />
             ) : selectedView === "gantt" ? (
               <TasksGanttView

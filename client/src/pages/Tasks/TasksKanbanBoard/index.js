@@ -91,9 +91,6 @@ const TaskList = ({
   projectDetails,
   isEditTaskSave,
   setEditTaskSave,
-  onStageRename,
-  onStageReorder,
-  canEditStage,
 }) => {
   console.log("🚀 ~ TaskList ~ isEditTaskSave:", isEditTaskSave)
   const companySlug = localStorage.getItem("companyDomain");
@@ -280,9 +277,6 @@ const TaskList = ({
   const [editingBugTitle, setEditingBugTitle] = useState("");
   const [editingBugCode, setEditingBugCode] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingStageId, setEditingStageId] = useState(null);
-  const [editingStageTitle, setEditingStageTitle] = useState("");
-  const [draggingStageId, setDraggingStageId] = useState(null);
 
   // Reset edit mode when drawer opens for a new task
   useEffect(() => {
@@ -1032,61 +1026,13 @@ const TaskList = ({
             <section className="drag_container" style={columnInnerStyle}>
               <div className="container project-task-list" style={columnInnerStyle}>
                 <div className="drag_column" style={columnInnerStyle}>
-                  <h4
-                    draggable
-                    onDragStart={(e) => {
-                      e.stopPropagation();
-                      e.dataTransfer.setData("application/x-item-type", "task-stage");
-                      e.dataTransfer.setData(
-                        "application/x-stage-id",
-                        String(stageId || "")
-                      );
-                      setDraggingStageId(stageId);
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onStageReorder?.(draggingStageId, stageId);
-                      setDraggingStageId(null);
-                    }}
-                    onDragEnd={(e) => {
-                      e.stopPropagation();
-                      setDraggingStageId(null);
-                    }}
-                  >
-                    {editingStageId === stageId ? (
-                      <Input
-                        size="small"
-                        autoFocus
-                        value={editingStageTitle}
-                        onChange={(e) => setEditingStageTitle(e.target.value)}
-                        onPressEnter={async () => {
-                          await onStageRename?.({ ...stageData, _id: stageId, title: stageTitle, color: stageColor }, editingStageTitle);
-                          setEditingStageId(null);
-                        }}
-                        onBlur={async () => {
-                          await onStageRename?.({ ...stageData, _id: stageId, title: stageTitle, color: stageColor }, editingStageTitle);
-                          setEditingStageId(null);
-                        }}
-                        style={{ maxWidth: 180 }}
-                      />
-                    ) : (
+                  <h4>
                     <span
                       className="wm-col-title"
                       style={{ color: stageColor }}
-                      onDoubleClick={() => {
-                        if (!canEditStage?.({ ...stageData, _id: stageId, title: stageTitle, color: stageColor })) return;
-                        setEditingStageId(stageId);
-                        setEditingStageTitle(stageTitle);
-                      }}
                     >
                       {stageTitle}
                     </span>
-                    )}
                     <span
                       className="wm-col-badge"
                       style={{
@@ -1736,9 +1682,6 @@ TaskList.propTypes = {
   }),
   deleteTasks: PropTypes.func.isRequired,
   getProjectMianTask: PropTypes.func.isRequired,
-  onStageRename: PropTypes.func,
-  onStageReorder: PropTypes.func,
-  canEditStage: PropTypes.func,
 };
 
 export default React.memo(TaskList, (prevProps, nextProps) => {
