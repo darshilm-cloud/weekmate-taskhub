@@ -24,6 +24,7 @@ import { getRoles } from "../../util/hasPermission";
 import ComplaintFilterComponent from "./ComplaintFilterComponent";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
@@ -438,6 +439,9 @@ const Complaints = () => {
           columns={columns}
           dataSource={complaintList}
           rowKey="_id"
+          locale={{
+            emptyText:<NoDataFoundIcon/>,
+          }}
           pagination={{
             showSizeChanger: true,
             pageSizeOptions: ["10", "20", "30"],

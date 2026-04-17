@@ -33,6 +33,7 @@ import UserDashboard from "./UserDashboard";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 const { Search } = Input;
 
@@ -783,9 +784,12 @@ const EmployeeMasterList = () => {
                   )}
 
                   {!sidebarLoading && filteredUsers.length === 0 && displayFavoriteUsers.length === 0 && (
-                    <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                      No employees found
-                    </div>
+                    <>
+                      <NoDataFoundIcon/>
+                      <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                        No employees found
+                      </div>
+                    </>
                   )}
                   </>
                 ) : (
@@ -814,9 +818,12 @@ const EmployeeMasterList = () => {
                     )}
 
                   {!clientsLoading && filteredClients.length === 0 && (
+                    <>
+                      <NoDataFoundIcon/>
                     <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                         No clients found
                       </div>
+                      </  >
                     )}
                   </>
                 )}

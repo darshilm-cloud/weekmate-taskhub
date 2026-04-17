@@ -24,6 +24,7 @@ import { getRoles } from "../../util/hasPermission";
 import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
@@ -408,6 +409,9 @@ const PositiveReview = () => {
             columns={columns}
             dataSource={reviewList}
             rowKey="_id"
+            locale={{
+              emptyText: <NoDataFoundIcon />,
+            }}
             pagination={{
               showSizeChanger: true,
               pageSizeOptions: ["10", "20", "30"],

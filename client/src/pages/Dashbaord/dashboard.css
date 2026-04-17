@@ -1426,7 +1426,7 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   align-items: center;
   gap: 8px;
   padding: 24px 0;
-  opacity: 0.6;
+
 }
 
 /* ── Activity ─────────────────────────────────────────────── */

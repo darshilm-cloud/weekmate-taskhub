@@ -6,9 +6,10 @@ const NoDataFoundIcon = (props) => (
     width={125}
     height={100}
     fill="none"
+    className='no-data-found'
     {...props}
   >
-    <path fill="#fff" d="M0 0h125v100H0z" />
+    <path fill="" d="M0 0h125v100H0z" />
     <g clipPath="url(#a)">
       <path
         fill="#fff"

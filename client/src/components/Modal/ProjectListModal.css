@@ -17,6 +17,17 @@
   color: #1e293b;
 }
 
+/* ── Dropdown shell ───────────────────────────────────────── */
+.plm-as-dropdown {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  width: 575px;
+  max-width: 95vw;
+}
+
 /* ── Search bar ───────────────────────────────────────────── */
 .plm-search-wrap {
   padding: 4px 16px;
@@ -211,11 +222,12 @@
 .plm-footer {
   display: flex;
   align-items: center;
+justify-content: center;
   gap: 16px;
   padding: 10px 20px;
   border-top: 1px solid #f1f5f9;
   background: #fafbfc;
-  font-size: 11px;
+  font-size: 13px;
   color: #94a3b8;
 }
 
@@ -227,7 +239,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   padding: 1px 5px;
-  font-size: 10px;
+  font-size: 13px;
   font-family: inherit;
   color: #475569;
   font-weight: 600;
@@ -248,6 +260,15 @@ body[data-theme="dark"] .plm-modal .ant-modal-content {
 body.dark-theme .plm-modal .ant-modal-body,
 body[data-theme="dark"] .plm-modal .ant-modal-body {
   color: #d9e7ff;
+}
+
+body.dark-theme .plm-as-dropdown,
+body[data-theme="dark"] .plm-as-dropdown {
+  background:
+    radial-gradient(circle at top, rgba(37, 99, 235, 0.12), transparent 42%),
+    linear-gradient(180deg, #09111f 0%, #050b14 100%);
+  border: 1px solid rgba(58, 91, 151, 0.45);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
 }
 
 body.dark-theme .plm-search-wrap,
