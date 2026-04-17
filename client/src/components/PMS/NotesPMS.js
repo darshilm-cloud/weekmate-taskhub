@@ -63,6 +63,7 @@ import {
 import moment from "moment";
 import NotesFilter from "./NotesFilter";
 import { NotesSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -1335,6 +1336,7 @@ function NotesPMS() {
           <div className="notes">
             {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
+              <NoDataFoundIcon/>
                 <p>No notes yet</p>
               </div>
             )}

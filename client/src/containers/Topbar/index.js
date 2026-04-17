@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Layout, Form, Popover } from "antd";
+import { Layout, Form, Popover, Input, Dropdown } from "antd";
 import { useDispatch } from "react-redux";
 import {
   SearchOutlined,
@@ -101,6 +101,8 @@ function Topbar() {
   const [recentList, setRecentList] = useState([]);
   const [isProjectListLoading, setIsProjectListLoading] = useState(false);
   const [isRecentListLoading, setIsRecentListLoading] = useState(false);
+  const [topbarSearchValue, setTopbarSearchValue] = useState("");
+  const searchModalRef = useRef(null);
   const projectRequestRef = useRef(null);
   const recentRequestRef = useRef(null);
 
@@ -223,6 +225,20 @@ function Topbar() {
   const handleCancel = () => {
     setIsModalOpen(false);
     form.resetFields();
+    setTopbarSearchValue("");
+  };
+
+  const handleSearchChange = (e) => {
+    setTopbarSearchValue(e.target.value);
+    if (!isModalOpen) {
+      showModal();
+    }
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (searchModalRef.current) {
+      searchModalRef.current.handleKeyDown(e);
+    }
   };
 
   useEffect(() => {
@@ -239,11 +255,49 @@ function Topbar() {
             {companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech"}
           </div>
         </div>
+          <div className="weekmate-header-center">
+            <Dropdown
+              overlay={
+                <ProjectListModal
+                  ref={searchModalRef}
+                  projectList={projectList}
+                  recentList={recentList}
+                  isProjectListLoading={isProjectListLoading}
+                  isRecentListLoading={isRecentListLoading}
+                  isModalOpen={isModalOpen}
+                  handleCancel={handleCancel}
+                  addVisitedData={addVisitedData}
+                  removeVisitedData={removeVisitedData}
+                  setIsModalOpen={setIsModalOpen}
+                  form={form}
+                  asDropdown={true}
+                  searchValue={topbarSearchValue}
+                />
+              }
+              trigger={['click']}
+              open={isModalOpen}
+              onOpenChange={(flag) => {
+                if (flag) {
+                   showModal();
+                } else {
+                   handleCancel();
+                }
+              }}
+              overlayClassName="wm-search-dropdown-overlay"
+              placement="bottomLeft"
+            >
+              <Input
+                className="weekmate-navbar-search-input"
+                placeholder="Search"
+                prefix={<SearchOutlined />}
+                value={topbarSearchValue}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
+                onClick={showModal}
+              />
+            </Dropdown>
+          </div>
           <div className="weekmate-header-right">
-            <button type="button" className="weekmate-navbar-search-btn" onClick={showModal}>
-              <SearchOutlined />
-              <span>Search</span>
-            </button>
             <Popover
               content={settingsContent}
               trigger="click"
@@ -265,18 +319,6 @@ function Topbar() {
         </div>
       </Header>
 
-      <ProjectListModal
-        projectList={projectList}
-        recentList={recentList}
-        isProjectListLoading={isProjectListLoading}
-        isRecentListLoading={isRecentListLoading}
-        isModalOpen={isModalOpen}
-        handleCancel={handleCancel}
-        addVisitedData={addVisitedData}
-        removeVisitedData={removeVisitedData}
-        setIsModalOpen={setIsModalOpen}
-        form={form}
-      />
     </>
   );
 }

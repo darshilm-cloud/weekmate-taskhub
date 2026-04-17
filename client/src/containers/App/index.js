@@ -47,7 +47,7 @@ import Unauthorised from "../../components/Unauthorised/Unauthorised";
 import Service from "../../service";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
-import {isEmpty} from "lodash"
+import { isEmpty } from "lodash"
 
 
 function RestrictedRoute({
@@ -189,7 +189,7 @@ function App() {
     document.body.appendChild(link);
 
     let slug = extractSlug(location.pathname)
-    if(slug){
+    if (slug) {
       setCompanySlug(slug)
     }
   }, []);
@@ -214,7 +214,7 @@ function App() {
   });
 
   const setLayoutType = (layoutType) => {
-    if (layoutType === LAYOUT_TYPE_FULL) { 
+    if (layoutType === LAYOUT_TYPE_FULL) {
       document.body.classList.remove("boxed-layout");
       document.body.classList.remove("framed-layout");
       document.body.classList.add("full-layout");
@@ -278,7 +278,7 @@ function App() {
   }, [themeType]);
 
   useEffect(() => {
-    if(companySlug){
+    if (companySlug) {
       generalSettingApp();
     }
   }, [companySlug]);
@@ -295,8 +295,8 @@ function App() {
         setSiteTitle(response?.data?.data?.companyName)
         localStorage.setItem("title", response?.data?.data?.companyName);
         localStorage.setItem(`title-${companySlug}`, response?.data?.data?.companyName);
-        localStorage.setItem(`companyFavIcoUrl-${companySlug}`,  response?.data?.data?.companyFavIcoUrl);
-        localStorage.setItem(`companyLogoUrl-${companySlug}`,  response?.data?.data?.companyLogoUrl);
+        localStorage.setItem(`companyFavIcoUrl-${companySlug}`, response?.data?.data?.companyFavIcoUrl);
+        localStorage.setItem(`companyLogoUrl-${companySlug}`, response?.data?.data?.companyLogoUrl);
       }
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -312,56 +312,56 @@ function App() {
         <title>{siteTitle}</title>
         <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
       </Helmet>
-    <SocketProvider user={authUser}>
-      <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)}>
-        <IntlProvider
-          locale={currentAppLocale.locale}
-          messages={currentAppLocale.messages}
-        >
-          {showMessage ? message.error(alertMessage.toString()) : null}
-          <Switch>
-          <AuthRoute
-              path={`${match.url}:companySlug/signin/:verificationToken`}
-              component={SignIn}
-            />
+      <SocketProvider user={authUser}>
+        <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)}>
+          <IntlProvider
+            locale={currentAppLocale.locale}
+            messages={currentAppLocale.messages}
+          >
+            {showMessage ? message.error(alertMessage.toString()) : null}
+            <Switch>
+              <AuthRoute
+                path={`${match.url}:companySlug/signin/:verificationToken`}
+                component={SignIn}
+              />
               {/* <AuthRoute
               path={`${match.url}:companySlug/signin`}
               authUser={authUser}
               location={location}
               component={SignIn}
             /> */}
-            <AuthRoute
-              path={`${match.url}signin`}
-              authUser={authUser}
-              location={location}
-              component={SignIn}
-            />
-            <AuthRoute
-              path={`${match.url}forgot-password`}
-              component={ForgotPassword}
-            />
-            <AuthRoute
-              path={`${match.url}feedback/:complaintId`}
-              component={EmployeeFeedback}
-            />
-            <AuthRoute
-              path={`${match.url}reset-password/:token`}
-              component={ResetPassword}
-            />
-            <AuthRoute
-              path={`${match.url}unauthorised`}
-              component={Unauthorised}
-            />
-            <RestrictedRoute
-              path={`${match.url}`}
-              authUser={authUser}
-              location={location}
-              component={MainApp}
-            />
-          </Switch>
-        </IntlProvider>
-      </ConfigProvider>
-    </SocketProvider>
+              <AuthRoute
+                path={`${match.url}signin`}
+                authUser={authUser}
+                location={location}
+                component={SignIn}
+              />
+              <AuthRoute
+                path={`${match.url}forgot-password`}
+                component={ForgotPassword}
+              />
+              <AuthRoute
+                path={`${match.url}feedback/:complaintId`}
+                component={EmployeeFeedback}
+              />
+              <AuthRoute
+                path={`${match.url}reset-password/:token`}
+                component={ResetPassword}
+              />
+              <AuthRoute
+                path={`${match.url}unauthorised`}
+                component={Unauthorised}
+              />
+              <RestrictedRoute
+                path={`${match.url}`}
+                authUser={authUser}
+                location={location}
+                component={MainApp}
+              />
+            </Switch>
+          </IntlProvider>
+        </ConfigProvider>
+      </SocketProvider>
     </>
   );
 }

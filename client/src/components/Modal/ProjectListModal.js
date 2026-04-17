@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useImperativeHandle } from "react";
 import { Modal, Form, Input, Spin } from "antd";
 import {
   ClockCircleOutlined,
@@ -11,7 +11,7 @@ import { Link, useHistory } from "react-router-dom";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import "./ProjectListModal.css";
 
-const ProjectListModal = ({
+const ProjectListModal = React.forwardRef(({
   projectList,
   recentList,
   isProjectListLoading,
@@ -22,18 +22,22 @@ const ProjectListModal = ({
   removeVisitedData,
   setIsModalOpen,
   form,
-}) => {
+  asDropdown = false,
+  searchValue: externalSearchValue,
+}, ref) => {
   const companySlug  = localStorage.getItem("companyDomain");
-  const [isSearching, setIsSearching] = useState(true);
-  const [searchValue, setSearchValue] = useState("");
+  const [isSearchingInternal, setIsSearchingInternal] = useState(true);
+  const [internalSearchValue, setInternalSearchValue] = useState("");
+  const searchValue = asDropdown && externalSearchValue !== undefined ? externalSearchValue : internalSearchValue;
+  const isSearching = asDropdown ? searchValue.trim() === "" : isSearchingInternal;
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const history = useHistory();
   const itemRefs = useRef([]);
 
   const handleInputChange = (e) => {
     const { value } = e.target;
-    setSearchValue(value);
-    setIsSearching(value.trim() === "");
+    setInternalSearchValue(value);
+    setIsSearchingInternal(value.trim() === "");
   };
 
   const formattedTitle = (title) =>
@@ -98,12 +102,14 @@ const ProjectListModal = ({
   // Reset modal state on open
   useEffect(() => {
     if (isModalOpen) {
-      setIsSearching(true);
-      setSearchValue("");
+      if (!asDropdown) {
+        setIsSearchingInternal(true);
+        setInternalSearchValue("");
+      }
       setSelectedIndex(-1);
       form.resetFields();
     }
-  }, [form, isModalOpen]);
+  }, [form, isModalOpen, asDropdown]);
 
   // Scroll highlighted item into view
   useEffect(() => {
@@ -124,7 +130,7 @@ const ProjectListModal = ({
       if (selectedIndex >= 0 && selectedIndex < allItems.length) {
         const item = allItems[selectedIndex];
         addVisitedData(item.projectId);
-        setIsSearching(true);
+        if (!asDropdown) setIsSearchingInternal(true);
         setIsModalOpen(false);
         form.resetFields();
         history.push(item.path);
@@ -132,9 +138,13 @@ const ProjectListModal = ({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    handleKeyDown
+  }));
+
   const openItem = (projectId) => {
     addVisitedData(projectId);
-    setIsSearching(true);
+    if (!asDropdown) setIsSearchingInternal(true);
     setIsModalOpen(false);
     form.resetFields();
   };
@@ -142,31 +152,25 @@ const ProjectListModal = ({
   // Index offset for projects section
   const projectOffset = isSearching ? sortedRecentList.length : 0;
 
-  return (
-    <Modal
-      footer={false}
-      open={isModalOpen}
-      width={640}
-      closable={false}
-      onCancel={handleCancel}
-      className="plm-modal"
-      styles={{ body: { padding: 0 } }}
-    >
+  const content = (
+    <div className={`plm-content-wrap ${asDropdown ? "plm-as-dropdown" : ""}`}>
       {/* ── Search bar ───────────────────────────────────────── */}
-      <div className="plm-search-wrap">
-        <Form form={form}>
-          <Input
-            prefix={<SearchOutlined className="plm-search-icon" />}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Search projects…"
-            variant="borderless"
-            className="plm-search-input"
-            autoFocus
-            allowClear
-          />
-        </Form>
-      </div>
+      {!asDropdown && (
+        <div className="plm-search-wrap">
+          <Form form={form}>
+            <Input
+              prefix={<SearchOutlined className="plm-search-icon" />}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Search projects…"
+              variant="borderless"
+              className="plm-search-input"
+              autoFocus
+              allowClear
+            />
+          </Form>
+        </div>
+      )}
 
       {/* ── Results ──────────────────────────────────────────── */}
       <div className="plm-body">
@@ -275,8 +279,26 @@ const ProjectListModal = ({
         <span><kbd>Enter</kbd> open</span>
         <span><kbd>Esc</kbd> close</span>
       </div>
+    </div>
+  );
+
+  if (asDropdown) {
+    return content;
+  }
+
+  return (
+    <Modal
+      footer={false}
+      open={isModalOpen}
+      width={640}
+      closable={false}
+      onCancel={handleCancel}
+      className="plm-modal"
+      styles={{ body: { padding: 0 } }}
+    >
+      {content}
     </Modal>
   );
-};
+});
 
 export default ProjectListModal;

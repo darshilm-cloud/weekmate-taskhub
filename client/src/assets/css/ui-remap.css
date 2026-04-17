@@ -127,10 +127,10 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 /* Icon inside menu item */
 .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
-.sidebar-menu ul.ant-menu li.ant-menu-item > i,
+.sidebar-menu ul.ant-menu li.ant-menu-item>i,
 .sidebar-menu ul.ant-menu li.ant-menu-item svg,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .anticon,
-.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item > i,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item>i,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item svg {
   color: var(--app-text-subtle) !important;
   display: flex !important;
@@ -174,10 +174,10 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover .ant-menu-title-content,
 .sidebar-menu ul.ant-menu li.ant-menu-item:hover .anticon,
-.sidebar-menu ul.ant-menu li.ant-menu-item:hover > i,
+.sidebar-menu ul.ant-menu li.ant-menu-item:hover>i,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .anticon,
-.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover > i {
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover>i {
   color: var(--wm-sidebar-text-strong) !important;
 }
 
@@ -192,10 +192,10 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .anticon,
-.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected > i,
+.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected>i,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
 .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .anticon,
-.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected > i {
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected>i {
   color: var(--wm-sidebar-text-strong) !important;
 }
 
@@ -207,7 +207,7 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   margin-bottom: 2px !important;
 }
 
-.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title {
+.sidebar-menu .ant-menu-submenu>.ant-menu-submenu-title {
   display: flex !important;
   flex-direction: column !important;
   color: var(--app-text-muted) !important;
@@ -223,20 +223,20 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   height: auto !important;
 }
 
-.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content,
-.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title i {
+.sidebar-menu .ant-menu-submenu>.ant-menu-submenu-title .ant-menu-title-content,
+.sidebar-menu .ant-menu-submenu>.ant-menu-submenu-title i {
   color: var(--app-text-muted) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
 }
 
-.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+.sidebar-menu .ant-menu-submenu>.ant-menu-submenu-title .ant-menu-submenu-arrow {
   color: var(--app-text-subtle) !important;
   margin: 0 !important;
 }
 
-.sidebar-menu .ant-menu-submenu:hover > .ant-menu-submenu-title,
-.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
+.sidebar-menu .ant-menu-submenu:hover>.ant-menu-submenu-title,
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open>.ant-menu-submenu-title {
   background: var(--wm-sidebar-hover) !important;
   color: var(--wm-sidebar-text-strong) !important;
 }
@@ -262,7 +262,7 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 }
 
 /* Submenu popup on collapsed */
-.ant-menu-submenu-popup > .ant-menu {
+.ant-menu-submenu-popup>.ant-menu {
   background: var(--wm-sidebar-bg) !important;
 }
 
@@ -270,7 +270,7 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   padding-left: 10px !important;
 }
 
-.weekmate-sidebar-popup.ant-menu-submenu-popup > .ant-menu {
+.weekmate-sidebar-popup.ant-menu-submenu-popup>.ant-menu {
   min-width: 150px !important;
   padding: 8px !important;
   border-radius: 8px !important;
@@ -369,11 +369,12 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 /* ── UserProfile inline alignment ── */
 .top-header .main-heading {
-  display: flex !important;
-  align-items: center !important;
-  height: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .top-header .header-wrapper {
@@ -450,10 +451,25 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
   font-size: 22px;
 }
 
-.stat-card-icon-wrap.blue   { background: rgba(37, 99, 235, 0.12); color: var(--app-primary); }
-.stat-card-icon-wrap.green  { background: rgba(45, 212, 191, 0.14); color: #2dd4bf; }
-.stat-card-icon-wrap.yellow { background: rgba(250, 173, 20, 0.14); color: #d97706; }
-.stat-card-icon-wrap.red    { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+.stat-card-icon-wrap.blue {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--app-primary);
+}
+
+.stat-card-icon-wrap.green {
+  background: rgba(45, 212, 191, 0.14);
+  color: #2dd4bf;
+}
+
+.stat-card-icon-wrap.yellow {
+  background: rgba(250, 173, 20, 0.14);
+  color: #d97706;
+}
+
+.stat-card-icon-wrap.red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
 
 .stat-card-body .stat-card-title {
   font-size: 13px;
@@ -472,7 +488,8 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .new-dashboard-columns {
   display: flex;
   flex-wrap: wrap;
-  margin: 0 -8px; /* Negative margin to offset column padding */
+  margin: 0 -8px;
+  /* Negative margin to offset column padding */
 }
 
 /* Left column */
@@ -528,7 +545,7 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   opacity: 0.18;
 }
 
-.dashboard-section-card > :not(.stats-watermark) {
+.dashboard-section-card> :not(.stats-watermark) {
   position: relative;
   z-index: 1;
 }
@@ -830,9 +847,17 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   flex-shrink: 0;
 }
 
-.priority-dot.low    { background: #2dd4bf; }
-.priority-dot.medium { background: #faad14; }
-.priority-dot.high   { background: #ff4d4f; }
+.priority-dot.low {
+  background: #2dd4bf;
+}
+
+.priority-dot.medium {
+  background: #faad14;
+}
+
+.priority-dot.high {
+  background: #ff4d4f;
+}
 
 .priority-item .priority-count {
   font-weight: 600;
@@ -900,8 +925,13 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   border-radius: 50%;
 }
 
-.legend-dot.completed { background: #2dd4bf; }
-.legend-dot.incomplete { background: #ff4d4f; }
+.legend-dot.completed {
+  background: #2dd4bf;
+}
+
+.legend-dot.incomplete {
+  background: #ff4d4f;
+}
 
 /* New dashboard wrapper */
 .new-dashboard-wrapper {
@@ -910,9 +940,11 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
   background: var(--app-bg);
   padding: 20px;
 }
-button{
+
+button {
   cursor: pointer;
 }
+
 /* ─────────────────────────────────────────────────────────────
    GLOBAL TABLE REMAP — Ant Design Table (light, smooth, UX)
    Matches sidebar/topbar/dashboard color theme
@@ -953,8 +985,8 @@ button{
 }
 
 /* ── Header ── */
-.ant-table-wrapper .ant-table-thead > tr > th,
-.ant-table .ant-table-thead > tr > th {
+.ant-table-wrapper .ant-table-thead>tr>th,
+.ant-table .ant-table-thead>tr>th {
   background: var(--app-surface-2) !important;
   color: var(--app-text) !important;
   font-weight: 600 !important;
@@ -965,25 +997,25 @@ button{
   line-height: 1.4 !important;
 }
 
-.ant-table-wrapper .ant-table-thead > tr > th::before {
+.ant-table-wrapper .ant-table-thead>tr>th::before {
   display: none !important;
 }
 
 /* Sort / filter icons in header */
-.ant-table-thead > tr > th .ant-table-column-sorter .ant-table-column-sorter-inner .anticon,
-.ant-table-thead > tr > th .ant-table-filter-icon .anticon {
+.ant-table-thead>tr>th .ant-table-column-sorter .ant-table-column-sorter-inner .anticon,
+.ant-table-thead>tr>th .ant-table-filter-icon .anticon {
   color: var(--app-text-subtle) !important;
   font-size: 12px;
 }
 
-.ant-table-thead > tr > th.ant-table-column-has-sorters:hover .ant-table-column-sorter .anticon,
-.ant-table-thead > tr > th .ant-table-filter-trigger-container:hover .anticon {
+.ant-table-thead>tr>th.ant-table-column-has-sorters:hover .ant-table-column-sorter .anticon,
+.ant-table-thead>tr>th .ant-table-filter-trigger-container:hover .anticon {
   color: var(--app-primary) !important;
 }
 
 /* ── Body cells ── */
-.ant-table-wrapper .ant-table-tbody > tr > td,
-.ant-table .ant-table-tbody > tr > td {
+.ant-table-wrapper .ant-table-tbody>tr>td,
+.ant-table .ant-table-tbody>tr>td {
   padding: 12px 16px !important;
   font-size: 14px !important;
   color: var(--app-text-muted) !important;
@@ -992,31 +1024,31 @@ button{
   transition: background 0.2s ease;
 }
 
-.ant-table-wrapper .ant-table-tbody > tr:last-child > td,
-.ant-table .ant-table-tbody > tr:last-child > td {
+.ant-table-wrapper .ant-table-tbody>tr:last-child>td,
+.ant-table .ant-table-tbody>tr:last-child>td {
   border-bottom: none !important;
 }
 
 /* Row hover */
-.ant-table-wrapper .ant-table-tbody > tr:hover > td,
-.ant-table .ant-table-tbody > tr.ant-table-row-hover > td {
+.ant-table-wrapper .ant-table-tbody>tr:hover>td,
+.ant-table .ant-table-tbody>tr.ant-table-row-hover>td {
   background: var(--app-surface-2) !important;
 }
 
 /* Selected row */
-.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td,
-.ant-table .ant-table-tbody > tr.ant-table-row-selected > td {
+.ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected>td,
+.ant-table .ant-table-tbody>tr.ant-table-row-selected>td {
   background: rgba(37, 99, 235, 0.14) !important;
   border-bottom-color: rgba(37, 99, 235, 0.25) !important;
 }
 
-.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+.ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected:hover>td {
   background: rgba(37, 99, 235, 0.20) !important;
 }
 
 /* Expanded row */
-.ant-table-wrapper .ant-table-tbody > tr.ant-table-expanded-row > td,
-.ant-table .ant-table-tbody > tr.ant-table-expanded-row > td {
+.ant-table-wrapper .ant-table-tbody>tr.ant-table-expanded-row>td,
+.ant-table .ant-table-tbody>tr.ant-table-expanded-row>td {
   background: var(--app-surface-2) !important;
   border-bottom: 1px solid var(--app-border);
 }
@@ -1082,25 +1114,25 @@ button{
 }
 
 /* Bordered variant: softer borders */
-.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th,
-.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody > tr > td {
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead>tr>th,
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody>tr>td {
   border-right: 1px solid var(--app-border) !important;
 }
 
-.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th:last-child,
-.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody > tr > td:last-child {
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead>tr>th:last-child,
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody>tr>td:last-child {
   border-right: none !important;
 }
 
 /* Small table density */
-.ant-table-wrapper .ant-table.ant-table-small .ant-table-thead > tr > th,
-.ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-thead>tr>th,
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody>tr>td {
   padding: 8px 12px !important;
 }
 
 /* Selection checkbox column */
-.ant-table-wrapper .ant-table-thead > tr > th.ant-table-selection-column,
-.ant-table-wrapper .ant-table-tbody > tr > td.ant-table-selection-column {
+.ant-table-wrapper .ant-table-thead>tr>th.ant-table-selection-column,
+.ant-table-wrapper .ant-table-tbody>tr>td.ant-table-selection-column {
   padding: 12px 12px !important;
 }
 
@@ -1138,19 +1170,19 @@ button{
   background: #1a1a2e !important;
 }
 
-[data-theme="dark"] .ant-table-wrapper .ant-table-thead > tr > th {
+[data-theme="dark"] .ant-table-wrapper .ant-table-thead>tr>th {
   background: #252538 !important;
   color: #e4e4e7 !important;
   border-bottom-color: #2d2d3d !important;
 }
 
-[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td {
+[data-theme="dark"] .ant-table-wrapper .ant-table-tbody>tr>td {
   background: #1a1a2e !important;
   color: #c0c0d0 !important;
   border-bottom-color: #2d2d3d !important;
 }
 
-[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+[data-theme="dark"] .ant-table-wrapper .ant-table-tbody>tr:hover>td {
   background: #252538 !important;
 }
 
@@ -1159,6 +1191,7 @@ button{
   .new-stat-cards-row {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .new-dashboard-columns {
     grid-template-columns: 1fr;
   }
@@ -1512,22 +1545,22 @@ body[data-theme="dark"] .project-wrapper .profilerightbar .error-message {
 
 /* Tables inside Project App */
 body.dark-theme .project-wrapper .ant-table,
-body.dark-theme .project-wrapper .ant-table-thead > tr > th,
-body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
+body.dark-theme .project-wrapper .ant-table-thead>tr>th,
+body.dark-theme .project-wrapper .ant-table-tbody>tr>td,
 body[data-theme="dark"] .project-wrapper .ant-table,
-body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th,
-body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+body[data-theme="dark"] .project-wrapper .ant-table-thead>tr>th,
+body[data-theme="dark"] .project-wrapper .ant-table-tbody>tr>td {
   color: #e2e8f0 !important;
   border-color: rgba(148, 163, 184, 0.14) !important;
 }
 
-body.dark-theme .project-wrapper .ant-table-thead > tr > th,
-body[data-theme="dark"] .project-wrapper .ant-table-thead > tr > th {
+body.dark-theme .project-wrapper .ant-table-thead>tr>th,
+body[data-theme="dark"] .project-wrapper .ant-table-thead>tr>th {
   background: #16202d !important;
 }
 
-body.dark-theme .project-wrapper .ant-table-tbody > tr > td,
-body[data-theme="dark"] .project-wrapper .ant-table-tbody > tr > td {
+body.dark-theme .project-wrapper .ant-table-tbody>tr>td,
+body[data-theme="dark"] .project-wrapper .ant-table-tbody>tr>td {
   background: transparent !important;
 }
 
@@ -1585,11 +1618,11 @@ body[data-theme="dark"] .discussion-wrapper .discussion-comment-block {
 body.dark-theme .discussion-wrapper,
 body.dark-theme .discussion-wrapper .profilerightbar h3,
 body.dark-theme .discussion-wrapper span.ant-comment-content-author-name,
-body.dark-theme .discussion-wrapper .discussion-comment-block ul li > span,
+body.dark-theme .discussion-wrapper .discussion-comment-block ul li>span,
 body[data-theme="dark"] .discussion-wrapper,
 body[data-theme="dark"] .discussion-wrapper .profilerightbar h3,
 body[data-theme="dark"] .discussion-wrapper span.ant-comment-content-author-name,
-body[data-theme="dark"] .discussion-wrapper .discussion-comment-block ul li > span {
+body[data-theme="dark"] .discussion-wrapper .discussion-comment-block ul li>span {
   color: #e2e8f0 !important;
 }
 
@@ -1811,11 +1844,11 @@ body[data-theme="dark"] .ant-skeleton,
 body.dark-theme .ant-skeleton-element,
 body[data-theme="dark"] .ant-skeleton-element,
 body.dark-theme .ant-skeleton-content .ant-skeleton-title,
-body.dark-theme .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.dark-theme .ant-skeleton-content .ant-skeleton-paragraph>li,
 body.dark-theme .ant-skeleton-avatar,
 body.dark-theme .ant-skeleton-input,
 body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-title,
-body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-paragraph > li,
+body[data-theme="dark"] .ant-skeleton-content .ant-skeleton-paragraph>li,
 body[data-theme="dark"] .ant-skeleton-avatar,
 body[data-theme="dark"] .ant-skeleton-input {
   background: rgba(255, 255, 255, 0.08) !important;

@@ -44,6 +44,7 @@ import ProjectExpenseFilterComponent from "./ProjectExpenseFilterComponent";
 import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -1150,6 +1151,11 @@ const Projectexpences = () => {
           dataSource={projectexpencesList}
           rowKey="_id"
           loading={tableLoading}
+          locale={
+            {
+               emptyText: <NoDataFoundIcon />,
+            }
+          }
           pagination={{
             showSizeChanger:  true,
             pageSizeOptions:  PAGINATION_OPTIONS,

@@ -228,7 +228,15 @@ body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.weekmate-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0%;
   min-width: 0;
 }
 
@@ -300,31 +308,51 @@ body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
   display: flex;
   align-items: center;
   gap: 14px;
-  flex-shrink: 0;
+  flex: 1 1 0%;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
-.weekmate-navbar-search-btn {
+.weekmate-navbar-search-input.ant-input-affix-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   height: 38px;
-  padding: 0 14px;
+  padding: 4px 16px;
   border: 1px solid #dbe3ee;
   border-radius: 999px;
   background: #ffffff;
   color: #0f172a;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  cursor: text;
+  transition: all 0.2s ease;
 }
 
-.weekmate-navbar-search-btn:hover,
-.weekmate-navbar-search-btn:focus-visible {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0b3a5b;
+.weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+.weekmate-navbar-search-input.ant-input-affix-wrapper-focused,
+.weekmate-navbar-search-input.ant-input-affix-wrapper:focus-within {
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
   outline: none;
+}
+
+.weekmate-navbar-search-input .ant-input {
+  background: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.weekmate-navbar-search-input .ant-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.weekmate-navbar-search-input .ant-input-prefix {
+  margin-right: 8px;
+  color: #94a3b8;
 }
 
 /* Subscription expiry badge */
@@ -512,19 +540,20 @@ body[data-theme="dark"] .weekmate-header-icon-btn:hover {
   color: #ffffff;
 }
 
-body.dark-theme .weekmate-navbar-search-btn,
-body[data-theme="dark"] .weekmate-navbar-search-btn {
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper {
   background: rgba(15, 23, 42, 0.92);
   border-color: rgba(71, 85, 105, 0.8);
   color: #e2e8f0;
 }
 
-body.dark-theme .weekmate-navbar-search-btn:hover,
-body.dark-theme .weekmate-navbar-search-btn:focus-visible,
-body[data-theme="dark"] .weekmate-navbar-search-btn:hover,
-body[data-theme="dark"] .weekmate-navbar-search-btn:focus-visible {
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper-focused,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper-focused {
   background: rgba(30, 41, 59, 0.98);
-  border-color: rgba(100, 116, 139, 0.9);
+  border-color: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
   color: #ffffff;
 }
 

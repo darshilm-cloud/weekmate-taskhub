@@ -1328,7 +1328,10 @@ const Dashboard = () => {
                 })}
               </div>
             ) : (
+              <>
+              <NoDataFoundIcon  />
               <div className="team-incomplete-empty">No incomplete tasks</div>
+              </>
             )}
           </div>
 
@@ -1422,7 +1425,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="db-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-              <NoDataFoundIcon width={120} height={96} />
+              <NoDataFoundIcon  />
              
             </div>
           )}
@@ -1474,14 +1477,7 @@ const Dashboard = () => {
                 ))
             ) : (
               <div className="db-empty-state db-empty-discussion">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="6" y="8" width="36" height="26" rx="6" fill="#dbeafe"/>
-                  <rect x="14" y="40" width="8" height="4" rx="2" fill="#dbeafe"/>
-                  <rect x="14" y="38" width="8" height="6" rx="2" fill="#93c5fd"/>
-                  <circle cx="17" cy="21" r="2.5" fill="#3b82f6"/>
-                  <circle cx="24" cy="21" r="2.5" fill="#3b82f6"/>
-                  <circle cx="31" cy="21" r="2.5" fill="#3b82f6"/>
-                </svg>
+              <NoDataFoundIcon  />
                 <p>No discussions yet</p>
               </div>
             )}
@@ -1552,7 +1548,11 @@ const Dashboard = () => {
                 </tbody>
               </table>
             ) : (
+              <>
+
+               <NoDataFoundIcon /> 
               <div className="db-empty-state">No recent activity</div>
+              </>
             )}
           </div>
         </div>
