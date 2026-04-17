@@ -13,6 +13,7 @@ const ProjectBugs = mongoose.model("projecttaskbugs");
 const StarProject = mongoose.model("star_project");
 const ProjectMainTasks = mongoose.model("projectmaintasks");
 const WorkflowStatus = mongoose.model("workflowstatus");
+const ProjectWorkFlow = mongoose.model("projectworkflows");
 
 // const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
@@ -658,6 +659,54 @@ async function aggregateTaskListStatusCounts(matchQueryInput) {
   ]);
 }
 
+async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuses = []) {
+  if (!companyId) return countedStatuses;
+
+  const workflowRows = await ProjectWorkFlow.find({
+    isDeleted: false,
+    companyId: new mongoose.Types.ObjectId(companyId),
+  })
+    .select("_id")
+    .lean();
+
+  const workflowIds = (workflowRows || []).map((row) => row?._id).filter(Boolean);
+  if (!workflowIds.length) return countedStatuses;
+
+  const statusRows = await WorkflowStatus.find({
+    isDeleted: false,
+    workflow_id: { $in: workflowIds },
+  })
+    .select("_id title color sequence")
+    .sort({ sequence: 1, _id: 1 })
+    .lean();
+
+  const countMap = new Map();
+  (countedStatuses || []).forEach((item) => {
+    const key = item?.statusId ? String(item.statusId) : "";
+    if (!key) return;
+    countMap.set(key, item);
+  });
+
+  const merged = (statusRows || []).map((status) => {
+    const statusKey = String(status?._id || "");
+    const existing = countMap.get(statusKey);
+    return {
+      statusId: status?._id || null,
+      title: status?.title || existing?.title || "No status",
+      color: status?.color || existing?.color || "#d9d9d9",
+      count: Number(existing?.count || 0),
+    };
+  });
+
+  const mergedIds = new Set(merged.map((item) => String(item?.statusId || "")));
+  const extras = (countedStatuses || []).filter((item) => {
+    const key = String(item?.statusId || "");
+    return key && !mergedIds.has(key);
+  });
+
+  return [...merged, ...extras];
+}
+
 // Get task list for Task page (List/Kanban/Calendar). Admin can pass view_all to see all tasks.
 exports.getTaskList = async (req, res) => {
   try {
@@ -826,7 +875,11 @@ exports.getTaskList = async (req, res) => {
     }
 
     const baseMatchQuery = { ...matchQuery };
-    const statusCountAgg = await aggregateTaskListStatusCounts(baseMatchQuery);
+    const statusCountAggRaw = await aggregateTaskListStatusCounts(baseMatchQuery);
+    const statusCountAgg = await getCompanyWorkflowStatusesWithZeroCount(
+      req?.user?.companyId,
+      statusCountAggRaw
+    );
 
     if (value.metadata_only) {
       const totalAll = await ProjectTasks.countDocuments(baseMatchQuery);
