@@ -631,6 +631,32 @@
   box-shadow: inset 0 0 0 1px rgba(22, 119, 255, 0.18);
 }
 
+.kanban-add-stage-column {
+  flex: 0 0 64px;
+  min-width: 64px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+  margin-left: 10px;
+}
+
+.kanban-add-stage-icon-btn.ant-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px dashed #9ca3af;
+  color: #4b5563;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.kanban-add-stage-icon-btn.ant-btn:hover,
+.kanban-add-stage-icon-btn.ant-btn:focus {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
 .task-card {
   background: linear-gradient(285deg, #187cb70f 25.9%, #36a0df24 94.4%);
   border-bottom-right-radius: 5px;
@@ -1029,6 +1055,22 @@ body[data-theme="dark"] .kanban-column {
   border-left: 1px solid rgba(69, 99, 145, 0.18);
   border-right: 1px solid rgba(69, 99, 145, 0.18);
   border-bottom: 1px solid rgba(69, 99, 145, 0.18);
+}
+
+body.dark-theme .kanban-add-stage-icon-btn.ant-btn,
+body[data-theme="dark"] .kanban-add-stage-icon-btn.ant-btn {
+  background: #132238;
+  border-color: rgba(143, 167, 204, 0.5);
+  color: #c8dafb;
+}
+
+body.dark-theme .kanban-add-stage-icon-btn.ant-btn:hover,
+body.dark-theme .kanban-add-stage-icon-btn.ant-btn:focus,
+body[data-theme="dark"] .kanban-add-stage-icon-btn.ant-btn:hover,
+body[data-theme="dark"] .kanban-add-stage-icon-btn.ant-btn:focus {
+  background: #1a3152;
+  border-color: #4d7bd6;
+  color: #e7f0ff;
 }
 
 body.dark-theme .kanban-column-header,

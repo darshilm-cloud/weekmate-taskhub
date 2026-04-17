@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
-import React, { useEffect, useState } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import BugDetailModal from "../BugDetailModal";
 import moment from "moment";
@@ -188,6 +187,75 @@ const BugList = ({
 
   const [editorInstance, setEditorInstance] = useState(null);
   const [commentDrafts, setCommentDrafts] = useState({});
+  const boardSectionStyle = {
+    height: "calc(100dvh - 220px)",
+    maxHeight: "calc(100dvh - 220px)",
+    overflowX: "auto",
+    overflowY: "hidden",
+    display: "flex",
+    gap: 16,
+    alignItems: "stretch",
+  };
+  const columnShellStyle = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    maxHeight: "100%",
+  };
+  const columnInnerStyle = {
+    flex: "1 1 auto",
+    minHeight: 0,
+    maxHeight: "100%",
+    height: "auto",
+  };
+  const dragRowStyle = {
+    display: "flex",
+    flexDirection: "column",
+    flex: "1 1 auto",
+    minHeight: 0,
+    overflow: "hidden",
+  };
+  const boardScrollStyle = {
+    minHeight: 0,
+    overflowY: "auto",
+    overflowX: "hidden",
+  };
+
+  const columnObserversRef = useRef({});
+  const loadMoreBugsRef = useRef(loadMoreBugs);
+  loadMoreBugsRef.current = loadMoreBugs;
+
+  const lastBugSentinelRef = useCallback((node, columnId) => {
+    const key = String(columnId);
+    const existing = columnObserversRef.current[key];
+    if (existing) {
+      existing.disconnect();
+      delete columnObserversRef.current[key];
+    }
+    if (!node || typeof document === "undefined") return;
+
+    const root = document.getElementById(`scrollableDiv-${columnId}`);
+    if (!root) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        loadMoreBugsRef.current(columnId);
+      },
+      { root, rootMargin: "0px 0px 200px 0px", threshold: 0 }
+    );
+    columnObserversRef.current[key] = observer;
+    observer.observe(node);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.keys(columnObserversRef.current).forEach((k) => {
+        columnObserversRef.current[k]?.disconnect();
+        delete columnObserversRef.current[k];
+      });
+    };
+  }, []);
 
   useEffect(() => {
     const loadDrafts = async () => {
@@ -228,23 +296,23 @@ const BugList = ({
 
   return (
     <>
-      <div className="container project-task-section">
+      <div className="container project-task-section" style={boardSectionStyle}>
         {tasks.map((boardData, index) => {
           const colColor = bugColColor(boardData.title, boardData.color);
           return (
           <div
             key={boardData._id}
             className={`order small-box ${dragged ? "dragged-over" : ""}`}
-            style={{ "--wm-col-border-color": colColor }}
+            style={{ "--wm-col-border-color": colColor, ...columnShellStyle }}
             onDragLeave={(e) => onDragLeave(e)}
             onDragEnter={(e) => onDragEnter(e)}
             onDragEnd={(e) => onDragEnd(e)}
             onDragOver={(e) => onDragOver(e)}
             onDrop={(e) => onDrop(e, boardData?._id)}
           >
-            <section className="drag_container">
-              <div className="container project-task-list">
-                <div className="drag_column">
+            <section className="drag_container" style={columnInnerStyle}>
+              <div className="container project-task-list" style={columnInnerStyle}>
+                <div className="drag_column" style={columnInnerStyle}>
                   <h4>
                     <span className="wm-col-title" style={{ color: colColor }}>
                       {boardData.title}
@@ -261,7 +329,7 @@ const BugList = ({
                     </span>
                   </h4>
 
-                  <div className="drag_row">
+                  <div className="drag_row" style={dragRowStyle}>
                     {showTextArea && index === 0 && (
                       <div className="project-add-task">
                         <Input.TextArea
@@ -281,7 +349,7 @@ const BugList = ({
                       </div>
                     )}
 
-                    <div className="kanbanView-bugs-data" id={`scrollableDiv-${boardData._id}`}>
+                    <div className="kanbanView-bugs-data" id={`scrollableDiv-${boardData._id}`} style={boardScrollStyle}>
                       {boardData.bugs.length === 0 && (
                         <div style={{
                           display: "flex",
@@ -295,22 +363,17 @@ const BugList = ({
                           <span style={{ fontSize: "13px" }}>No bugs here</span>
                         </div>
                       )}
-                      <InfiniteScroll
-                        dataLength={boardData.bugs.length}
-                        next={() => loadMoreBugs(boardData._id)}
-                        hasMore={boardData.bugs.length < boardData.total_bugs}
-                        loader={
-                          <div style={{ textAlign: "center", padding: "10px" }}>
-                            <Badge status="processing" text="Loading more..." />
-                          </div>
-                        }
-                        scrollableTarget={`scrollableDiv-${boardData._id}`}
-                      >
-                        {boardData.bugs.map((task) => (
+                        {boardData.bugs.map((task, bugIndex) => (
                           <div
                             className={`wm-task-card ${dragged ? "dragged" : ""}${boardData?.title === "Closed" ? " wm-task-card-done" : ""}`}
                             key={task._id}
                             id={task._id}
+                            ref={
+                              bugIndex === boardData.bugs.length - 1 &&
+                              boardData.bugs.length < boardData.total_bugs
+                                ? (el) => lastBugSentinelRef(el, boardData._id)
+                                : undefined
+                            }
                             draggable
                             onDragStart={(e) => onDragStart(e)}
                             onDragEnd={(e) => onDragEnd(e)}
@@ -436,9 +499,15 @@ const BugList = ({
                             </div>
                           </div>
                         ))}
-                      </InfiniteScroll>
+                        {loadingMore?.[boardData._id] &&
+                          boardData.bugs.length <
+                            (Number(boardData.total_bugs) || 0) && (
+                            <div style={{ textAlign: "center", padding: "10px" }}>
+                              <Badge status="processing" text="Loading more..." />
+                            </div>
+                          )}
                     </div>
-                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px" }}>
+                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px", marginTop: "auto", flexShrink: 0 }}>
                       <Button 
                         type="text" 
                         icon={<PlusOutlined />} 

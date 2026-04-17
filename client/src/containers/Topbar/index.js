@@ -43,6 +43,7 @@ function Topbar() {
         { label: "Project Form Builder",  icon: <FormOutlined />,    path: `/${companySlug}/admin/project-form-builder` },
         { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
         { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
+        { label: "Resource Matrix",       icon: <TeamOutlined />, path: `/${companySlug}/resource-matrix` },
       ],
     },
     {

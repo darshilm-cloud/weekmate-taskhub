@@ -221,6 +221,10 @@ const BugsController = () => {
   };
 
   const getBoardTasks = async () => {
+    if (!projectId) {
+      setPageLoading(false);
+      return;
+    }
     try {
       const reqBody = {
         project_id: projectId,
@@ -254,23 +258,24 @@ const BugsController = () => {
         setOpenAssignees(false);
         setIsPopoverVisibleView(false);
         setOpenLabels(false);
+        setPageLoading(false);
       } else {
-        message.error(response.data.message);
+        message.error(response?.data?.message || "Failed to load bugs");
+        setPageLoading(false);
       }
     } catch (error) {
       console.log(error);
-    } finally {
       setPageLoading(false);
     }
   };
 
   const loadMoreBugs = async (statusId) => {
-    if (loadingMore[statusId]) return;
-    
-    const currentCol = boardTasksBugs.find(c => c._id === statusId);
+    if (!statusId || loadingMore[statusId]) return;
+
+    const currentCol = boardTasksBugs.find((c) => c._id === statusId);
     if (!currentCol || currentCol.bugs.length >= currentCol.total_bugs) return;
 
-    setLoadingMore(prev => ({ ...prev, [statusId]: true }));
+    setLoadingMore((prev) => ({ ...prev, [statusId]: true }));
     const nextPage = (columnPages[statusId] || 1) + 1;
 
     try {
@@ -293,25 +298,41 @@ const BugsController = () => {
       });
 
       if (response?.data && response?.data?.status && response.data.data) {
-        // The API returns an array of columns (even if status_id is passed, it returns [column])
-        const newColData = response.data.data.find(c => c._id === statusId);
+        // The API returns an array of columns (with status_id it is a single column).
+        const newColData = response.data.data.find((c) => c._id === statusId);
         if (newColData && newColData.bugs.length > 0) {
-          setBoardTasksBugs(prev => prev.map(col => {
-            if (col._id === statusId) {
-              return {
-                ...col,
-                bugs: [...col.bugs, ...newColData.bugs]
-              };
-            }
-            return col;
-          }));
-          setColumnPages(prev => ({ ...prev, [statusId]: nextPage }));
+          setBoardTasksBugs((prev) =>
+            prev.map((col) => {
+              if (col._id === statusId) {
+                return {
+                  ...col,
+                  bugs: [...col.bugs, ...newColData.bugs],
+                };
+              }
+              return col;
+            })
+          );
+          setColumnPages((prev) => ({ ...prev, [statusId]: nextPage }));
+        } else if (newColData) {
+          // Empty page: stop further requests for this column (avoid infinite observer loops).
+          setBoardTasksBugs((prev) =>
+            prev.map((col) =>
+              col._id === statusId ? { ...col, total_bugs: col.bugs.length } : col
+            )
+          );
+        } else {
+          // Response had no matching column — treat as complete so loader / fetches stop.
+          setBoardTasksBugs((prev) =>
+            prev.map((col) =>
+              col._id === statusId ? { ...col, total_bugs: col.bugs.length } : col
+            )
+          );
         }
       }
     } catch (error) {
       console.error("Error loading more bugs:", error);
     } finally {
-      setLoadingMore(prev => ({ ...prev, [statusId]: false }));
+      setLoadingMore((prev) => ({ ...prev, [statusId]: false }));
     }
   };
 
@@ -1087,10 +1108,22 @@ const BugsController = () => {
 
   const showEditTaskModal = (data, workflowID) => {
     try {
-      const normalizedAssignees = Array.isArray(data?.assignees)
-        ? data.assignees.filter((value) => value?._id)
-        : [];
-      const normalizedAssigneeIds = normalizedAssignees.map((value) => value._id);
+      const rawAssignees = Array.isArray(data?.assignees) ? data.assignees : [];
+      const normalizedAssignees = rawAssignees
+        .map((value) => {
+          if (!value) return null;
+          if (typeof value === "string") return { _id: value };
+          const id = value?._id || value?.id;
+          if (!id) return null;
+          return {
+            ...value,
+            _id: id,
+          };
+        })
+        .filter(Boolean);
+      const normalizedAssigneeIds = normalizedAssignees
+        .map((value) => value?._id)
+        .filter(Boolean);
       setIsEditTaskModalOpen(true);
       setEditTaskData({ id: data._id, workflow_id: workflowID });      
       seteditModalDescription(data.descriptions);
@@ -1117,8 +1150,8 @@ const BugsController = () => {
       setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
       setIsAlterEstimatedTime(false);
       //Set assignnes in new state for filter data notification:
-      setNewFilteredAssignees(data.assignees.map((value) => value._id));
-      if (data.assignees.length > 0) {
+      setNewFilteredAssignees(normalizedAssigneeIds);
+      if (normalizedAssigneeIds.length > 0) {
         setShowSelectTask(true);
       } else {
         setShowSelectTask(false);

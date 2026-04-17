@@ -11,26 +11,32 @@ const normalizeDate = (value, withTime = false) => {
   return null;
 };
 
-const uploadFiles = async (files = [], type = "task") => {
-  try {
-    const validFiles = Array.isArray(files)
-      ? files.filter((file) => file instanceof File || file?.originFileObj instanceof File)
-      : [];
-    if (!validFiles.length) return [];
+const normalizeStageKey = (value = "") =>
+  String(value || "")
+      .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
 
-    const formData = new FormData();
+const uploadFiles = async (files = [], type = "task") => {
+    try {
+      const validFiles = Array.isArray(files)
+        ? files.filter((file) => file instanceof File || file?.originFileObj instanceof File)
+        : [];
+      if (!validFiles.length) return [];
+
+      const formData = new FormData();
     validFiles.forEach((file) => formData.append("document", file?.originFileObj || file));
 
-    const res = await Service.makeAPICall({
-      methodName: Service.postMethod,
-      api_url: `${Service.fileUpload}?file_for=${type}`,
-      body: formData,
-      options: { "content-type": "multipart/form-data" },
-    });
-    return Array.isArray(res?.data?.data) ? res.data.data : [];
-  } catch (error) {
-    return [];
-  }
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: `${Service.fileUpload}?file_for=${type}`,
+        body: formData,
+        options: { "content-type": "multipart/form-data" },
+      });
+      return Array.isArray(res?.data?.data) ? res.data.data : [];
+    } catch (error) {
+      return [];
+    }
 };
 
 export default function AddTaskModal({
@@ -41,6 +47,7 @@ export default function AddTaskModal({
   projectId: propProjectId,
   mainTaskId: propMainTaskId,
   initialStatusId = null,
+  initialStatusMeta = null,
 }) {
   const [submitting, setSubmitting] = useState(false);
 
@@ -52,27 +59,49 @@ export default function AddTaskModal({
 
       if (!pid || !mainId) {
         message.error("Please select project and list.");
-        return;
-      }
+      return;
+    }
 
-      let workflowId = initialStatusId || null;
-      if (!workflowId) {
-        try {
-          const boardRes = await Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectBoardTasks,
-            body: { project_id: pid, main_task_id: mainId },
-          });
-          workflowId = boardRes?.data?.data?.[0]?.workflowStatus?._id || null;
-        } catch (error) {
-          workflowId = null;
-        }
+      let workflowId = null;
+      try {
+        const boardRes = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectBoardTasks,
+        body: { project_id: pid, main_task_id: mainId },
+      });
+        const boardColumns = Array.isArray(boardRes?.data?.data) ? boardRes.data.data : [];
+        const stageById = new Map(
+          boardColumns
+            .map((column) => column?.workflowStatus)
+            .filter((stage) => stage?._id)
+            .map((stage) => [String(stage._id), stage])
+        );
+        const requestedStageTitle =
+          initialStatusMeta?.title ||
+          initialStatusMeta?.name ||
+          "";
+        const matchedByTitle = boardColumns.find((column) => {
+          const stage = column?.workflowStatus || {};
+          return (
+            requestedStageTitle &&
+            normalizeStageKey(stage?.title || stage?.name) ===
+              normalizeStageKey(requestedStageTitle)
+          );
+        });
+
+        workflowId =
+          (initialStatusId && stageById.has(String(initialStatusId)) && initialStatusId) ||
+          matchedByTitle?.workflowStatus?._id ||
+          boardColumns?.[0]?.workflowStatus?._id ||
+          null;
+      } catch (error) {
+        workflowId = initialStatusId || null;
       }
 
       if (!workflowId) {
         message.error("Workflow not found for this list. Please set up a workflow.");
-        return;
-      }
+      return;
+    }
 
       const dynamicCustomFields = { ...(values.custom_fields || {}) };
       for (const field of values.taskFormFields || []) {
@@ -90,7 +119,7 @@ export default function AddTaskModal({
           if (maybeFile instanceof File) {
             const uploaded = await uploadFiles([maybeFile], "task");
             dynamicCustomFields[key] = uploaded[0] || null;
-          } else {
+      } else {
             dynamicCustomFields[key] = null;
           }
         }
@@ -146,8 +175,8 @@ export default function AddTaskModal({
 
   return (
     <CommonTaskFormModal
-      open={open}
-      mode="create"
+        open={open}
+        mode="create"
       title="Add Task"
       submitText="Save"
       onCancel={onCancel}

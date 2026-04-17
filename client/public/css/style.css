@@ -20300,6 +20300,7 @@ textarea.ant-mentions {
 }
 
 .ant-modal-confirm .ant-modal-confirm-btns {
+  display: flex;
   float: right;
   margin-top: 24px;
 }
@@ -21533,6 +21534,7 @@ textarea.ant-pagination-options-quick-jumper input {
 
 .ant-popover-arrow {
   position: absolute;
+  border: none;
   display: block;
   width: 8.48528137px;
   height: 8.48528137px;

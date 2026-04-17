@@ -252,12 +252,47 @@ exports.addProjectsTask = async (req, res) => {
 
     value.task_labels = task_labels;
 
+    const projectData = value?.project_id
+      ? await Projects.findById(value.project_id, {
+          workFlow: 1,
+          workflow: 1,
+          work_flow: 1,
+          workflow_id: 1,
+          work_flow_id: 1,
+        }).lean()
+      : null;
+
+    const workflowId =
+      projectData?.workFlow ||
+      projectData?.workflow ||
+      projectData?.work_flow ||
+      projectData?.workflow_id ||
+      projectData?.work_flow_id;
+
+    const resolvedTaskStatus =
+      (await resolveWorkflowStageIdForTask({
+        statusValue: value.task_status,
+        workflowId,
+        userId: req.user._id,
+      })) || value.task_status;
+
+    if (
+      value?.task_status &&
+      !mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))
+    ) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Invalid task stage"
+      );
+    }
+
     let data = new ProjectTasks({
       title: value.title,
       taskId: generateRandomId(),
       project_id: value.project_id,
       main_task_id: value.main_task_id || null,
-      task_status: value.task_status || null,
+      task_status: resolvedTaskStatus || null,
       assignees: value.assignees || [],
       pms_clients: value.pms_clients || [],
       status: value.status,
@@ -272,10 +307,10 @@ exports.addProjectsTask = async (req, res) => {
       task_progress: value.task_progress,
       recurringType: value.recurringType || "",
       custom_fields: value.custom_fields || {},
-      ...(value?.task_status && {
+      ...(resolvedTaskStatus && {
         task_status_history: [
           {
-            task_status: value?.task_status,
+            task_status: resolvedTaskStatus,
             updatedBy: req.user._id,
             updatedAt: configs.utcDefault()
           }

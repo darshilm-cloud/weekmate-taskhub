@@ -326,7 +326,8 @@ const BugDetailModal = ({
     const listA = Array.isArray(subscribersList) ? subscribersList : [];
     const listB = Array.isArray(employeeList) ? employeeList : [];
     const listC = Array.isArray(taggedUserList) ? taggedUserList : [];
-    const merged = [...listA, ...listB, ...listC].filter(Boolean);
+    const listD = Array.isArray(viewBug?.assignees) ? viewBug.assignees : [];
+    const merged = [...listA, ...listB, ...listC, ...listD].filter(Boolean);
 
     const seen = new Set();
     const options = [];
@@ -343,6 +344,12 @@ const BugDetailModal = ({
 
     return options;
   })();
+
+  const selectedAssigneeIds = Array.isArray(viewBug?.assignees)
+    ? viewBug.assignees
+        .map((a) => (typeof a === "object" ? a?._id || a?.id : a))
+        .filter(Boolean)
+    : [];
 
   const disableAllEdits = () => {
     if (typeof setIsEditable !== "function") return;
@@ -501,7 +508,7 @@ const BugDetailModal = ({
                   style={{ width: "100%" }}
                   placeholder="Assignees"
                   disabled={!isEditable?.assignees}
-                  value={Array.isArray(viewBug?.assignees) ? viewBug.assignees.map(a => a?._id || a?.id || a) : []}
+                  value={selectedAssigneeIds}
                   onChange={handleSelectedItemsChange}
                   options={assigneeOptions}
                   showSearch

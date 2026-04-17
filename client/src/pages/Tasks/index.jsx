@@ -113,13 +113,18 @@ const TasksPMS = ({ flag }) => {
   const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [projectMianTask, setProjectMianTask] = useState([]);
   const [boardTasks, setBoardTasks] = useState([]);
+  /** When set, `boardTasks` was last loaded for this main-task (phase) id — used for sidebar totals. */
+  const [boardSnapshotListId, setBoardSnapshotListId] = useState(null);
+  const lastBoardFetchListIdRef = useRef(null);
   const [selectedTask, setSelectedTask] = useState({});
   const [addInputTaskData, setAddInputTaskData] = useState({});
   const [isAlterEstimatedTime, setIsAlterEstimatedTime] = useState(false);
   const [estHrs, setEstHrs] = useState("");
   const [estMins, setEstMins] = useState("");
   const [estTime, setEstTime] = useState("");
-  const [isLoadingTasksPage, setIsLoadingTasksPage] = useState(true);
+  /** Initial shell: hide only after phase lists + board (when applicable) have been fetched. */
+  const [taskListsHydrated, setTaskListsHydrated] = useState(false);
+  const [boardHydrated, setBoardHydrated] = useState(false);
   const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [fileAttachment, setFileAttachment] = useState([]);
   const [modalMode, setModalMode] = useState("add");
@@ -647,8 +652,6 @@ const TasksPMS = ({ flag }) => {
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoadingTasksPage(false);
     }
   };
 
@@ -965,6 +968,10 @@ const TasksPMS = ({ flag }) => {
 
   const getBoardTasks = async (main_task_id, { silent = false } = {}) => {
     try {
+      if (String(lastBoardFetchListIdRef.current || "") !== String(main_task_id || "")) {
+        lastBoardFetchListIdRef.current = main_task_id;
+        setBoardSnapshotListId(null);
+      }
       if (!silent) {
         setIsTasksLoading(true);
       }
@@ -980,6 +987,8 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         // Show tasks immediately — no waiting for hasDraft
         setBoardTasks(response.data.data);
+        setBoardSnapshotListId(String(main_task_id || ""));
+        setBoardHydrated(true);
         if (!silent) {
           setIsTasksLoading(false);
         }
@@ -999,12 +1008,14 @@ const TasksPMS = ({ flag }) => {
         });
       } else {
         message.error(response.data.message);
+        setBoardHydrated(true);
         if (!silent) {
           setIsTasksLoading(false);
         }
       }
     } catch (error) {
       console.log(error);
+      setBoardHydrated(true);
       if (!silent) {
         setIsTasksLoading(false);
       }
@@ -1166,12 +1177,17 @@ const TasksPMS = ({ flag }) => {
         setProjectMianTask([]);
         setBoardTasks([]);
         setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        setBoardHydrated(true);
       }
     } catch (error) {
       console.log(error);
+      if (!silent) {
+        setBoardHydrated(true);
+      }
     } finally {
       if (!silent) {
         setIsTasksLoading(false);
+        setTaskListsHydrated(true);
       }
     }
   };
@@ -1997,9 +2013,11 @@ const TasksPMS = ({ flag }) => {
   };
 
   const countTasks = (data) => {
-    const percent = (data?.totalDoneTasks * 100) / data?.totalTasks;
+    const totalTasks = Number(data?.totalTasks) || 0;
+    const totalDoneTasks = Number(data?.totalDoneTasks) || 0;
+    const percent = totalTasks > 0 ? (totalDoneTasks * 100) / totalTasks : 0;
     return {
-      taskCount: `${data?.totalDoneTasks}/${data?.totalTasks}`,
+      taskCount: `${totalDoneTasks}/${totalTasks}`,
       percent,
     };
   };
@@ -2308,6 +2326,8 @@ const TasksPMS = ({ flag }) => {
 
   useEffect(() => {
     boardTasksInitiatedRef.current = false;
+    setTaskListsHydrated(false);
+    setBoardHydrated(false);
     getProjectByID();
     getProjectMianTask();
     if (listID) {
@@ -2596,6 +2616,23 @@ const TasksPMS = ({ flag }) => {
 
     return normalizedColumns.concat(extraColumns);
   }, [boardTasks, projectWorkflowStage, workflowStatusList]);
+
+  /** Totals for the left sidebar fraction — derived from the Kanban payload, not stale `projectMianTask` aggregates. */
+  const boardListProgressForSidebar = useMemo(() => {
+    const cols = Array.isArray(fixedBoardTasks) ? fixedBoardTasks : [];
+    let totalTasks = 0;
+    let totalDoneTasks = 0;
+    cols.forEach((col) => {
+      const n = Array.isArray(col?.tasks) ? col.tasks.length : 0;
+      totalTasks += n;
+      const ws = col?.workflowStatus || col?.workflow_status || {};
+      const title = ws?.title || ws?.name || "";
+      if (normalizeStageKey(title) === "done") {
+        totalDoneTasks += n;
+      }
+    });
+    return { totalTasks, totalDoneTasks };
+  }, [fixedBoardTasks]);
 
   const filteredBoardTasks = filterTasks(fixedBoardTasks, filterSchema);
   const hasVisibleTasks = filteredBoardTasks.some(
@@ -2894,7 +2931,7 @@ const TasksPMS = ({ flag }) => {
   return (
     <>
       <div className="project-wrapper discussion-wrapper task-wrapper wm-force-dark-page">
-        <div className="peoject-page">
+        <div className="peoject-page" style={{ overflow: "hidden" }}>
           <div className="profileleftbar">
             <div className="add-project-wrapper">
               {hasPermission(["task_add"]) && (
@@ -2922,7 +2959,14 @@ const TasksPMS = ({ flag }) => {
             <ul style={{ listStyle: "none", padding: "0" }}>
               {projectMianTask.length != 0 &&
                 projectMianTask.map((item, index) => {
-                  const tasksInfo = countTasks(item);
+                  const activeListId = String(listID || selectedTask?._id || "");
+                  const useBoardCountsForSidebar =
+                    activeListId &&
+                    String(item?._id) === activeListId &&
+                    String(boardSnapshotListId || "") === activeListId;
+                  const tasksInfo = countTasks(
+                    useBoardCountsForSidebar ? { ...item, ...boardListProgressForSidebar } : item
+                  );
                   return (
                     <li
                       className="design-graph-wrapper"
@@ -2983,8 +3027,6 @@ const TasksPMS = ({ flag }) => {
                                   }
                                 >
                                   <Menu.Item
-                                    key="delete"
-                                    className="ant-delete"
                                     icon={
                                       <DeleteOutlined
                                         style={{ color: "red" }}
@@ -3024,7 +3066,7 @@ const TasksPMS = ({ flag }) => {
             </ul>
           </div>
 
-          <div className="profilerightbar">
+          <div className="profilerightbar" style={{ overflow: "hidden" }}>
             {task_ids?.length > 0 ? (
               <div
                 className={`profile-sub-head ${
@@ -3251,7 +3293,7 @@ const TasksPMS = ({ flag }) => {
               </div>
             )}
 
-            {isLoadingTasksPage || isTasksLoading ? (
+            {isTasksLoading || !taskListsHydrated || !boardHydrated ? (
               <div className="wm-kanban-skeleton">
                 {/* Toolbar skeleton */}
                 <div className="wm-skel-toolbar">
@@ -3303,7 +3345,7 @@ const TasksPMS = ({ flag }) => {
                 <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No task found</p>
               </div>
             ) : null}
-            {isLoadingTasksPage || isTasksLoading || projectMianTask.length === 0 ? null : selectedView === "board" ? (
+            {isTasksLoading || !taskListsHydrated || !boardHydrated || projectMianTask.length === 0 ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}

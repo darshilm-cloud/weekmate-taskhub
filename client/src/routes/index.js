@@ -97,7 +97,9 @@ const DiscussionPage = React.lazy(() =>
   import("../pages/Discussion/index")
 );
 
-
+const ResourceMatrix = React.lazy(() =>
+  import("../pages/ResourceMatrix/ResourceMatrix")
+);
 
 const ProjectsRunning = React.lazy(() => import("../pages/Reports"));
 const TimeSheet = React.lazy(() => import("../pages/Reports/TimeSheet"));
@@ -548,6 +550,11 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,
       ],
+    },
+    {
+      path: ":companySlug/resource-matrix",
+      component: ResourceMatrix,
+      roleName: [config.PMS_ROLES.ADMIN],
     },
   ];
   let userData = JSON.parse(localStorage.getItem("user_data"));

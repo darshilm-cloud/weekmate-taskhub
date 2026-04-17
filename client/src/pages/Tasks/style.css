@@ -289,20 +289,35 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     margin-bottom: 5px;
 }
 
-.task-wrapper .profilerightbar .project-task-section {
+/* Bounded height chain: main column stretches, board area scrolls inside columns */
+.project-wrapper.discussion-wrapper.task-wrapper {
     height: 100%;
-    max-height: calc(100vh - 194px);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-
-
-.task-wrapper .profileleftbar>ul {
-    max-height: calc(100vh - 255px);
-    padding-right: 5px !important;
+/* Fill layout column height (override discussion align-items:flex-start) so Kanban can shrink + scroll */
+.project-wrapper.discussion-wrapper.task-wrapper .peoject-page {
+    align-items: stretch;
+    min-height: 0;
+    flex: 1 1 auto;
+    height: auto;
+    overflow: hidden;
 }
 
 .task-wrapper .profilerightbar {
     max-width: calc(100% - 270px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.task-wrapper .profileleftbar>ul {
+    max-height: calc(100vh - 255px);
+    padding-right: 5px !important;
 }
 
 .fileAttachment_viewBox {
@@ -1500,6 +1515,10 @@ body[data-theme="dark"] .move-task-stage-title {
 }
 
 @media screen and (max-width: 991px) {
+    .task-wrapper {
+        --wm-board-column-body-height: calc(100vh - 236px);
+    }
+
     .task-wrapper .profileleftbar>ul {
         max-height: calc(100vh - 187px);
     }
@@ -1510,6 +1529,12 @@ body[data-theme="dark"] .move-task-stage-title {
 
     .task-wrapper .profilerightbar .project-task-section {
         max-height: calc(100vh - 148px);
+    }
+
+    .project-wrapper.discussion-wrapper.task-wrapper .peoject-page {
+        min-height: 0;
+        flex: 1 1 auto;
+        height: auto;
     }
 
     .ant-popover-inner .ant-menu {
@@ -1530,6 +1555,7 @@ body[data-theme="dark"] .move-task-stage-title {
     --wm-task-muted: #64748b;
     --wm-task-accent: #2563eb;
     --wm-col-border-color: #94a3b8;
+    --wm-board-column-body-height: calc(100vh - 282px);
 }
 
 /* Dark-mode only: force dark surfaces on task page */
@@ -2824,8 +2850,12 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     display: flex;
     gap: 16px;
     padding: 6px 2px 16px;
-    align-items: flex-start;
+    align-items: stretch;
     flex-wrap: nowrap;
+    min-height: 0;
+    flex: 1 1 auto;
+    max-height: calc(100vh - 194px);
+    overflow: hidden;
 }
 
 /* ── Column outer shell ── */
@@ -2839,18 +2869,26 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
     background: #f4f6f9 !important;
-    align-self: flex-start;
+    align-self: stretch;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .task-wrapper .order.small-box .drag_container,
 .task-wrapper .order.small-box .container.project-task-list,
 .task-wrapper .order.small-box .drag_column {
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
 }
 
 .task-wrapper .order.small-box .drag_column {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 /* ── Column header ── */
@@ -2868,6 +2906,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     border-bottom: 1px solid rgba(0,0,0,0.07) !important;
     margin-bottom: 0 !important;
     background: #ffffff !important;
+    flex-shrink: 0;
 }
 
 .task-wrapper .drag_column h4 .wm-col-title {
@@ -2892,13 +2931,23 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
 /* ── Column body (drag area) ── */
 .task-wrapper .drag_row {
     padding: 6px 10px 10px !important;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     align-items: stretch;
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
+    overflow: hidden;
+    height: var(--wm-board-column-body-height);
+    max-height: var(--wm-board-column-body-height);
+}
+
+/* Quick-add strip above the scrollable list */
+.task-wrapper .drag_row .project-add-task {
+    flex-shrink: 0;
+    grid-row: 1;
 }
 
 /* ── Task cards container ── */
@@ -2907,6 +2956,19 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     flex-direction: column !important;
     gap: 8px !important;
     width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    grid-row: 2;
+}
+
+/* Footer "+ Add Task" — stays pinned under the scrollable list */
+.task-wrapper .add-task-col-btn-wrapper {
+    flex-shrink: 0;
+    margin-top: 8px;
+    grid-row: 3;
 }
 
 /* ── Task card wrapper ── */

@@ -57,6 +57,7 @@ const taskFormBuilder = require("./taskFormBuilder")
 const projectFormBuilder = require("./projectFormBuilder")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
+const resourceMatrix = require("./resourceMatrix");
 
 Router.use("/project/type", ProjectTypes);
 Router.use("/projectTech", ProjectTech);
@@ -111,6 +112,7 @@ Router.use('/maintenance', Maintenance)
 Router.use('/activityLog', ActivityLog)
 Router.use('/task-form-builder', taskFormBuilder)
 Router.use('/project-form-builder', projectFormBuilder)
+Router.use('/resourceMatrix', resourceMatrix);
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 

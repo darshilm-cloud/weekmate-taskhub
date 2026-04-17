@@ -20254,6 +20254,7 @@ textarea.ant-mentions {
 }
 
 .ant-modal-confirm .ant-modal-confirm-btns {
+  display: flex;
   float: right;
   margin-top: 24px;
 }

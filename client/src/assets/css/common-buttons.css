@@ -120,9 +120,9 @@
 .delete-btn,
 .ant-btn.delete-btn,
 .ant-layout .ant-layout-content .ant-delete {
-    background: var(--dashboard-negative, #fef2f2);
-    color: var(--dashboard-negative, #dc2626);
-    border: 1px solid var(--dashboard-negative, #fee2e2);
+    /* background: var(--dashboard-negative, #fef2f2); */
+    /* color: var(--dashboard-negative, #dc2626); */
+    /* border: 1px solid var(--dashboard-negative, #fee2e2); */
     border-radius: var(--border-radius, 6px);
     height: 36px;
     padding: 8px 16px;
@@ -139,9 +139,9 @@
 .delete-btn:hover,
 .ant-btn.delete-btn:hover,
 .ant-layout .ant-layout-content .ant-delete:hover {
-    background: var(--dashboard-negative, #fee2e2);
-    border-color: var(--dashboard-negative, #fecaca);
-    color: var(--dashboard-negative, #dc2626);
+    /* background: var(--dashboard-negative, #fee2e2); */
+    /* border-color: var(--dashboard-negative, #fecaca); */
+    /* color: var(--dashboard-negative, #dc2626); */
 }
 
 /* Import Button */
@@ -216,6 +216,11 @@
     color: var(--add-button-color, #ffffff);
     background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
     border-color: var(--add-button-border-color, #185d87);
+}
+
+.ant-popover-content .ant-popover-inner .ant-popconfirm-inner-content .ant-popconfirm-buttons {
+    display: flex;
+    flex-direction: row-reverse;
 }
 
 .add-btn::before {

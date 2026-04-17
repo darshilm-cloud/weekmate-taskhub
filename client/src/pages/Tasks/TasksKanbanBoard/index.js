@@ -901,11 +901,18 @@ const TaskList = ({
   const lastTaskElementRef = useCallback((node, columnId) => {
     if (observers.current[columnId]) observers.current[columnId].disconnect();
 
-    observers.current[columnId] = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && node) {
-        loadMoreTasks(columnId);
-      }
-    });
+    if (!node || typeof document === "undefined") return;
+    const root = document.getElementById(`scrollableDiv-${columnId}`);
+    if (!root) return;
+
+    observers.current[columnId] = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && node) {
+          loadMoreTasks(columnId);
+        }
+      },
+      { root, rootMargin: "0px 0px 180px 0px", threshold: 0 }
+    );
 
     if (node) observers.current[columnId].observe(node);
   }, []);
@@ -960,15 +967,48 @@ const TaskList = ({
   const isDisabledTrackManually = !getRoles(["TL"]) && !getRoles(["Admin"]) && !getRoles(["Client"])
   const boardCardStyle = {};
   const taskBoxStyle = {};
+  const boardSectionStyle = {
+    height: "calc(100dvh - 220px)",
+    maxHeight: "calc(100dvh - 220px)",
+    overflowX: "auto",
+    overflowY: "hidden",
+    display: "flex",
+    gap: 16,
+    alignItems: "stretch",
+  };
+  const columnShellStyle = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    maxHeight: "100%",
+  };
+  const columnInnerStyle = {
+    flex: "1 1 auto",
+    minHeight: 0,
+    maxHeight: "100%",
+    height: "auto",
+  };
+  const dragRowStyle = {
+    display: "flex",
+    flexDirection: "column",
+    flex: "1 1 auto",
+    minHeight: 0,
+    overflow: "hidden",
+  };
+  const boardScrollStyle = {
+    minHeight: 0,
+    overflowY: "auto",
+    overflowX: "hidden",
+  };
 
   return (
     <>
-      <div className="container project-task-section">
+      <div className="container project-task-section" style={boardSectionStyle}>
         {tasks.map((boardData, index) => (
           <div
             key={`${boardData?._id}_${index}`}
             className={`order small-box ${dragged ? "dragged-over" : ""}`}
-            style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6" }}
+            style={{ "--wm-col-border-color": boardData?.workflowStatus?.color || "#3b82f6", ...columnShellStyle }}
             onDragLeave={(e) => onDragLeave(e)}
             onDragEnter={(e) => onDragEnter(e)}
             onDragOver={(e) => onDragOver(e)}
@@ -976,9 +1016,9 @@ const TaskList = ({
             onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
             onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
           >
-            <section className="drag_container">
-              <div className="container project-task-list">
-                <div className="drag_column">
+            <section className="drag_container" style={columnInnerStyle}>
+              <div className="container project-task-list" style={columnInnerStyle}>
+                <div className="drag_column" style={columnInnerStyle}>
                   <h4>
                     <span className="wm-col-title" style={{ color: boardData?.workflowStatus?.color || "#3b82f6" }}>
                       {boardData?.workflowStatus?.title}
@@ -996,6 +1036,7 @@ const TaskList = ({
 
                   <div
                     className="drag_row"
+                    style={dragRowStyle}
                     onDragLeave={(e) => onDragLeave(e)}
                     onDragEnter={(e) => onDragEnter(e)}
                     onDragOver={(e) => onDragOver(e)}
@@ -1024,6 +1065,8 @@ const TaskList = ({
 
                     <div
                       className="borad-task-data"
+                      id={`scrollableDiv-${boardData.workflowStatus?._id}`}
+                      style={boardScrollStyle}
                       onDragLeave={(e) => onDragLeave(e)}
                       onDragEnter={(e) => onDragEnter(e)}
                       onDragOver={(e) => onDragOver(e)}
@@ -1032,17 +1075,9 @@ const TaskList = ({
                       onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
                     >
                       {boardData.tasks
-                        .slice(0, sliceStates[boardData.workflowStatus?._id])
-                        .map((task, cardIndex) => {
+                        .map((task) => {
                           const isDoneColumn =
                             boardData.workflowStatus?.title === "Done";
-                          const isLastTask =
-                            cardIndex ===
-                            boardData.tasks.slice(
-                              0,
-                              sliceStates[boardData.workflowStatus?._id]
-                            ).length -
-                            1;
                           return (
                             <>
                               <div
@@ -1053,17 +1088,6 @@ const TaskList = ({
                                 draggable
                                 onDragStart={(e) => onDragStart(e)}
                                 onDragEnd={(e) => onDragEnd(e)}
-                                ref={
-                                  isLastTask &&
-                                    boardData.tasks.length >
-                                    sliceStates[boardData.workflowStatus?._id]
-                                    ? (node) =>
-                                      lastTaskElementRef(
-                                        node,
-                                        boardData.workflowStatus?._id
-                                      )
-                                    : null
-                                }
                               >
                                 <div
                                   className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
@@ -1288,7 +1312,7 @@ const TaskList = ({
                           );
                         })}
                     </div>
-                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px" }}>
+                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px", marginTop: "auto", flexShrink: 0 }}>
                       <Button 
                         type="text" 
                         icon={<PlusOutlined />} 

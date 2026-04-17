@@ -253,8 +253,8 @@ const BugsPMS = () => {
   return (
     <>
 	      <div className="project-wrapper discussion-wrapper task-wrapper bugs-task-wrapper wm-force-dark-page">
-	        <div className="peoject-page">
-          <div className="profilerightbar">
+	        <div className="peoject-page" style={{ overflow: "hidden" }}>
+          <div className="profilerightbar" style={{ overflow: "hidden" }}>
             <div className="profile-sub-head">
               <div className="task-sub-header">
                 <div className="head-box-inner">

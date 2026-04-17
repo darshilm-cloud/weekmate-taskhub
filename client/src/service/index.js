@@ -491,6 +491,7 @@ export default class Service {
   static stopMultiple = "/projects/task-timers/stop-multiple"
   static getTaskTimer = "/projects/task-timers/task"
 
+  static getResourceMatrix = "/resourceMatrix/getTaskHubMatrix"
 
   static async makeAPICall({
     props,

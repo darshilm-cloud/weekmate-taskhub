@@ -933,9 +933,14 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
+    const rawStatus = String(workFlowStatusId || "").trim();
+    const looksLikeMongoId = /^[a-f\d]{24}$/i.test(rawStatus);
     const resolvedStatusId = resolveWorkflowStatusId(workFlowStatusId);
-    const statusToSend = resolvedStatusId || workFlowStatusId;
-    const canMoveOptimistically = Boolean(resolvedStatusId);
+    // Drop targets usually pass a real workflow _id. If resolveWorkflowStatusId
+    // returns empty (e.g. workflow list not loaded yet), still optimistically move
+    // when the value looks like a persisted ObjectId string.
+    const statusToSend = resolvedStatusId || rawStatus;
+    const canMoveOptimistically = Boolean(resolvedStatusId) || looksLikeMongoId;
     const targetStatus =
       (projectWorkflowStage || []).find((item) => item?._id === statusToSend) ||
       (tasks || []).find((column) => column?.workflowStatus?._id === statusToSend)?.workflowStatus ||

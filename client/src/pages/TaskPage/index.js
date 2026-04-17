@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -29,6 +29,24 @@ import "./TaskPage.css";
 const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
+
+const computeBucketHasMore = (mergedLength, fetchedLength, total, meta = {}) => {
+  const tot = Number(total) || 0;
+  const page = Number(meta.page);
+  const rawTp = Number(meta.totalPages);
+  const tp =
+    Number.isFinite(rawTp) && rawTp > 0
+      ? rawTp
+      : tot > 0
+        ? Math.ceil(tot / SECTION_PAGE_LIMIT)
+        : 0;
+
+  if (fetchedLength === 0) return false;
+  if (tot > 0 && mergedLength >= tot) return false;
+  if (Number.isFinite(page) && tp > 0 && page >= tp) return false;
+  if (tot > 0 && mergedLength < tot) return true;
+  return fetchedLength >= SECTION_PAGE_LIMIT;
+};
 
 const DATE_PRESET_LABELS = {
   any: "Date Type",
@@ -632,6 +650,7 @@ const TaskPage = () => {
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
   const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
   const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
+  const [modalInitialStatusMeta, setModalInitialStatusMeta] = useState(null);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -644,9 +663,13 @@ const TaskPage = () => {
   const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [addStageModalOpen, setAddStageModalOpen] = useState(false);
+  const [stageSubmitting, setStageSubmitting] = useState(false);
+  const [defaultWorkflowId, setDefaultWorkflowId] = useState("");
   const tasksContainerRef = React.useRef(null);
   const sectionBucketsRef = useRef({});
   const listSectionLoadGuardRef = useRef(new Set());
+  const [stageForm] = Form.useForm();
 
   useEffect(() => {
     sectionBucketsRef.current = sectionBuckets;
@@ -720,6 +743,28 @@ const TaskPage = () => {
     } finally {
       isFetchingRef.current = false;
       setIsFetchingProjects(false);
+    }
+  }, []);
+
+  const fetchDefaultWorkflowId = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getworkflow,
+        body: {
+          isDropdown: true,
+          pageNo: 1,
+          limit: 100,
+        },
+      });
+
+      const workflows = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const firstWorkflow = workflows[0]?._id || "";
+      setDefaultWorkflowId(firstWorkflow);
+      return firstWorkflow;
+    } catch (error) {
+      setDefaultWorkflowId("");
+      return "";
     }
   }, []);
 
@@ -814,10 +859,12 @@ const TaskPage = () => {
         const m = r?.data?.metadata || {};
         const fetchedTasks = Array.isArray(raw) ? raw : [];
         const total = Number(m.total || 0);
+        const pageNo = Number(m.page) > 0 ? Number(m.page) : 1;
+        const mergedLen = fetchedTasks.length;
         nextBuckets[bucketId] = {
           tasks: fetchedTasks,
-          pageNo: 1,
-          hasMore: total > fetchedTasks.length,
+          pageNo,
+          hasMore: computeBucketHasMore(mergedLen, fetchedTasks.length, total, m),
           loading: false,
           total,
         };
@@ -858,16 +905,18 @@ const TaskPage = () => {
         const raw = res?.status === 200 ? res?.data?.data : [];
         const m = res?.data?.metadata || {};
         const fetchedTasks = Array.isArray(raw) ? raw : [];
-        const total = Number(m.total || 0);
+        const total = Number(m.total || sectionBucketsRef.current[sectionId]?.total || 0);
+        const respPage = Number(m.page) > 0 ? Number(m.page) : nextPage;
         setSectionBuckets((prev) => {
           const cur = prev[sectionId] || { tasks: [], pageNo: 1, hasMore: false, total: 0, loading: false };
           const merged = [...(cur.tasks || []), ...fetchedTasks];
+          const metaForHasMore = { ...m, page: respPage };
           return {
             ...prev,
             [sectionId]: {
               tasks: merged,
-              pageNo: nextPage,
-              hasMore: total > merged.length,
+              pageNo: respPage,
+              hasMore: computeBucketHasMore(merged.length, fetchedTasks.length, total, metaForHasMore),
               loading: false,
               total,
             },
@@ -876,7 +925,7 @@ const TaskPage = () => {
       } catch (e) {
         setSectionBuckets((prev) => ({
           ...prev,
-          [sectionId]: { ...prev[sectionId], loading: false },
+          [sectionId]: { ...prev[sectionId], loading: false, hasMore: false },
         }));
       } finally {
         listSectionLoadGuardRef.current.delete(sectionId);
@@ -890,6 +939,11 @@ const TaskPage = () => {
   }, [fetchProjects]);
 
   useEffect(() => {
+    fetchDefaultWorkflowId();
+  }, [fetchDefaultWorkflowId]);
+
+  useEffect(() => {
+    setLoading(true);
     initializeBoardData();
   }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate, isAdmin]);
 
@@ -971,8 +1025,19 @@ const TaskPage = () => {
 
   const sortedTasks = useMemo(() => sortTaskList(filteredTasks, sortMode), [filteredTasks, sortMode]);
 
-  const openAddTaskModalForStatus = useCallback((statusId = null) => {
-    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
+  const openAddTaskModalForStatus = useCallback((statusInput = null) => {
+    const normalizedStatusId =
+      typeof statusInput === "string"
+        ? statusInput
+        : typeof statusInput === "object" && statusInput?._id
+        ? statusInput._id
+        : null;
+    setModalInitialStatusId(normalizedStatusId);
+    setModalInitialStatusMeta(
+      typeof statusInput === "object" && statusInput
+        ? statusInput
+        : null
+    );
     setAddTaskModalSessionKey((prev) => prev + 1);
     setAddTaskModalOpen(true);
   }, []);
@@ -980,6 +1045,96 @@ const TaskPage = () => {
   const handleAddTaskClick = useCallback(() => {
     openAddTaskModalForStatus();
   }, [openAddTaskModalForStatus]);
+
+  const handleOpenAddStageModal = useCallback(async () => {
+    let workflowId = defaultWorkflowId;
+    if (!workflowId) {
+      workflowId = await fetchDefaultWorkflowId();
+    }
+    if (!workflowId) {
+      message.error("No workflow found to add stage.");
+      return;
+    }
+    setAddStageModalOpen(true);
+  }, [defaultWorkflowId, fetchDefaultWorkflowId]);
+
+  const handleAddStageSubmit = useCallback(async () => {
+    try {
+      const values = await stageForm.validateFields();
+      const workflowId = defaultWorkflowId || (await fetchDefaultWorkflowId());
+
+      if (!workflowId) {
+        message.error("No workflow found to add stage.");
+        return;
+      }
+
+      setStageSubmitting(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addworkflowStatus,
+        body: {
+          workflow_id: workflowId,
+          title: String(values?.title || "").trim(),
+          color: values?.color || "#64748b",
+        },
+      });
+
+      if (response?.data?.status) {
+        const createdStage = response?.data?.data || {};
+        const stageKey = normalizeKanbanStatusKey(createdStage);
+        const stageId = createdStage?._id || null;
+        const stageTitle = createdStage?.title || createdStage?.name || "New Stage";
+        const stageColor = createdStage?.color || "#64748b";
+
+        message.success(response?.data?.message || "Stage added successfully");
+        setAddStageModalOpen(false);
+        stageForm.resetFields();
+        await initializeBoardData();
+
+        if (stageKey && stageKey !== "_none_") {
+          setStatusMetaBySection((prev) => ({
+            ...prev,
+            [stageKey]: {
+              statusId: stageId,
+              title: stageTitle,
+              color: stageColor,
+            },
+          }));
+
+          setStatusTotals((prev) => ({
+            ...prev,
+            [stageKey]: Number(prev?.[stageKey] || 0),
+          }));
+
+          setSectionBuckets((prev) => ({
+            ...prev,
+            [stageKey]:
+              prev?.[stageKey] ||
+              {
+                tasks: [],
+                pageNo: 1,
+                hasMore: false,
+                loading: false,
+                total: 0,
+              },
+          }));
+
+          setListSectionIds((prev) => {
+            const current = Array.isArray(prev) ? prev : [];
+            if (current.includes(stageKey)) return current;
+            return [...current, stageKey];
+          });
+        }
+      } else {
+        message.error(response?.data?.message || "Failed to add stage");
+      }
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(error?.response?.data?.message || error?.message || "Failed to add stage");
+    } finally {
+      setStageSubmitting(false);
+    }
+  }, [defaultWorkflowId, fetchDefaultWorkflowId, initializeBoardData, stageForm]);
 
   const kanbanColumns = useMemo(() => {
     const statusOrder = ["todo", "inprogress", "onhold", "done"];
@@ -1515,14 +1670,52 @@ const TaskPage = () => {
         onCancel={() => {
           setAddTaskModalOpen(false);
           setModalInitialStatusId(null);
+          setModalInitialStatusMeta(null);
         }}
         onSuccess={() => {
           setAddTaskModalOpen(false);
           setModalInitialStatusId(null);
+          setModalInitialStatusMeta(null);
           initializeBoardData();
         }}
+        initialStatusMeta={modalInitialStatusMeta}
         standalone
       />
+
+      <Modal
+        open={addStageModalOpen}
+        title="Add Stage"
+        okText="Save"
+        onOk={handleAddStageSubmit}
+        confirmLoading={stageSubmitting}
+        onCancel={() => {
+          setAddStageModalOpen(false);
+          stageForm.resetFields();
+        }}
+      >
+        <Form
+          form={stageForm}
+          layout="vertical"
+          initialValues={{ title: "", color: "#64748b" }}
+        >
+          <Form.Item
+            name="title"
+            label="Stage Name"
+            rules={[
+              { required: true, whitespace: true, message: "Please enter stage name" },
+            ]}
+          >
+            <Input placeholder="e.g. In Review" maxLength={60} />
+          </Form.Item>
+          <Form.Item
+            name="color"
+            label="Color"
+            rules={[{ required: true, message: "Please choose a color" }]}
+          >
+            <Input type="color" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <CommonTaskFormModal
         key={taskToEdit?._id || "edit-task"}
@@ -1594,6 +1787,7 @@ const TaskPage = () => {
                 sectionId={s.id}
                 title={s.title}
                 statusId={s.statusId}
+                statusMeta={s.statusMeta || { _id: s.statusId, title: s.title, color: s.color }}
                 count={statusTotals[s.id] ?? s.tasks.length}
                 tasks={s.tasks}
                 onAddTask={openAddTaskModalForStatus}
@@ -1667,13 +1861,30 @@ const TaskPage = () => {
                   size="small"
                   icon={<PlusOutlined />}
                   className="kanban-column-add-btn"
-                  onClick={() => openAddTaskModalForStatus(col.statusId)}
+                  onClick={() =>
+                    openAddTaskModalForStatus(
+                      col.statusMeta || { _id: col.statusId, title: col.title, color: col.color }
+                    )
+                  }
                 >
                   Add Task
                 </Button>
               </div>
             </div>
           ))}
+          <div className="kanban-add-stage-column" aria-label="Add stage column action">
+            <Tooltip title="Add a stage" placement="top">
+              <Button
+                type="text"
+                shape="circle"
+                size="large"
+                className="kanban-add-stage-icon-btn"
+                icon={<PlusOutlined />}
+                onClick={handleOpenAddStageModal}
+                aria-label="Add a stage"
+              />
+            </Tooltip>
+          </div>
         </div>
       ) : view === "calendar" ? (
         <div className="task-calendar-view">
@@ -1737,6 +1948,7 @@ function TaskListSection({
   sectionId,
   title,
   statusId,
+  statusMeta,
   count,
   tasks,
   onAddTask,
@@ -1761,7 +1973,7 @@ function TaskListSection({
           type="text"
           size="small"
           icon={<PlusOutlined />}
-          onClick={() => onAddTask?.(statusId)}
+          onClick={() => onAddTask?.(statusMeta || statusId)}
         >
           Add Task
         </Button>
