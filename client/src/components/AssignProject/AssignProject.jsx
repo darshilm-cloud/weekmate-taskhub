@@ -408,7 +408,7 @@ const AssignProject = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isloadingProject, setIsloadingProject] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE });
-  const [listViewInfiniteScroll, setListViewInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+  const [infiniteScroll, setInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
@@ -524,9 +524,7 @@ const AssignProject = () => {
 
   useEffect(() => {
     // Reset infinite scroll when filters/sort change
-    if (viewMode === "list") {
-      setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
-    }
+    setInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
     getProjectListing(currentSkipFilters, currentFilters);
   }, [viewMode, pagination.current, pagination.pageSize, sortOption, currentFilters, currentSkipFilters, activeTab, isViewAllProjects, debouncedSearchText]);
 
@@ -634,16 +632,16 @@ const AssignProject = () => {
 
 
   const onLoadMore = async () => {
-    if (listViewInfiniteScroll.isLoadingMore || !listViewInfiniteScroll.hasMore || viewMode !== "list") return;
+    if (infiniteScroll.isLoadingMore || !infiniteScroll.hasMore) return;
 
     try {
-      setListViewInfiniteScroll((prev) => ({ ...prev, isLoadingMore: true }));
+      setInfiniteScroll((prev) => ({ ...prev, isLoadingMore: true }));
 
       const reqBody = buildReqBody(
         TAB_FILTER_MAP[activeTab] || "all",
         currentSkipFilters,
         currentFilters,
-        listViewInfiniteScroll.skip
+        infiniteScroll.skip
       );
 
       // Archived status requires isArchived: true on the request body.
@@ -664,7 +662,7 @@ const AssignProject = () => {
       });
 
       const newProjects = response?.data?.data || [];
-      const metaTotal = response?.data?.metadata?.total ?? listColumnDetails.length + newProjects.length;
+      const metaTotal = response?.data?.metadata?.total ?? (viewMode === "list" ? listColumnDetails.length : columnDetails.length) + newProjects.length;
 
       // Extract stats from projects
       const statsFromProjects = {};
@@ -676,13 +674,17 @@ const AssignProject = () => {
       }
 
       // Append new projects to existing list
-      setListColumnDetails((prev) => [...prev, ...newProjects]);
+      if (viewMode === "list") {
+        setListColumnDetails((prev) => [...prev, ...newProjects]);
+      } else {
+        setColumnDetails((prev) => [...prev, ...newProjects]);
+      }
 
       // Update infinite scroll state
-      const newLoadedCount = listViewInfiniteScroll.loadedCount + newProjects.length;
+      const newLoadedCount = infiniteScroll.loadedCount + newProjects.length;
       const hasMoreData = newLoadedCount < metaTotal && newProjects.length > 0;
 
-      setListViewInfiniteScroll((prev) => ({
+      setInfiniteScroll((prev) => ({
         ...prev,
         skip: prev.skip + DEFAULT_PAGE_SIZE,
         loadedCount: newLoadedCount,
@@ -691,7 +693,7 @@ const AssignProject = () => {
       }));
     } catch (error) {
       console.error("Error loading more projects:", error);
-      setListViewInfiniteScroll((prev) => ({ ...prev, isLoadingMore: false }));
+      setInfiniteScroll((prev) => ({ ...prev, isLoadingMore: false }));
     }
   };
 
@@ -737,16 +739,14 @@ const AssignProject = () => {
         }
         setPagination((prev) => ({ ...prev, total: cached.total }));
 
-        // Update infinite scroll state for list view
-        if (viewMode === "list") {
-          const hasMoreData = cached.projects.length < cached.total && cached.projects.length > 0;
-          setListViewInfiniteScroll((prev) => ({
-            ...prev,
-            skip: DEFAULT_PAGE_SIZE,
-            loadedCount: cached.projects.length,
-            hasMore: hasMoreData,
-          }));
-        }
+        // Update infinite scroll state
+        const hasMoreData = cached.projects.length < cached.total && cached.projects.length > 0;
+        setInfiniteScroll((prev) => ({
+          ...prev,
+          skip: DEFAULT_PAGE_SIZE,
+          loadedCount: cached.projects.length,
+          hasMore: hasMoreData,
+        }));
 
         setIsloadingProject(false);
         return;
@@ -758,9 +758,7 @@ const AssignProject = () => {
           setColumnDetails([]);
         }
         setPagination((prev) => ({ ...prev, total: 0 }));
-        if (viewMode === "list") {
-          setListViewInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: false, isLoadingMore: false });
-        }
+        setInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: false, isLoadingMore: false });
       }
       setIsloadingProject(true);
 
@@ -795,16 +793,14 @@ const AssignProject = () => {
       }
       setPagination((prev) => ({ ...prev, total: metaTotal }));
 
-      // Update infinite scroll state for list view
-      if (viewMode === "list") {
-        const hasMoreData = projects.length < metaTotal && projects.length > 0;
-        setListViewInfiniteScroll((prev) => ({
-          ...prev,
-          skip: DEFAULT_PAGE_SIZE,
-          loadedCount: projects.length,
-          hasMore: hasMoreData,
-        }));
-      }
+      // Update infinite scroll state
+      const hasMoreData = projects.length < metaTotal && projects.length > 0;
+      setInfiniteScroll((prev) => ({
+        ...prev,
+        skip: DEFAULT_PAGE_SIZE,
+        loadedCount: projects.length,
+        hasMore: hasMoreData,
+      }));
 
       setIsloadingProject(false);
 
@@ -1763,7 +1759,19 @@ const AssignProject = () => {
                 <p>{emptyProjectsMessage}</p>
               </div>
             ) : (
-              <Spin spinning={isloadingProject} tip="Loading projects...">
+              <InfiniteScroll
+                dataLength={visibleProjects.length}
+                next={onLoadMore}
+                hasMore={infiniteScroll.hasMore && !isViewAllProjects}
+                loader={
+                  infiniteScroll.isLoadingMore ? (
+                    <div style={{ padding: "20px", textAlign: "center", width: "100%", gridColumn: "1 / -1" }}>
+                      <Spin tip="Loading more projects..." />
+                    </div>
+                  ) : null
+                }
+                scrollThreshold={0.7}
+              >
                 <div className="ap-cards-grid">
                   {visibleProjects.map((record) => (
                     <ProjectCard
@@ -1779,26 +1787,9 @@ const AssignProject = () => {
                     />
                   ))}
                 </div>
-              </Spin>
+              </InfiniteScroll>
             )}
-            {!isViewAllProjects && !isloadingProject && visibleProjects.length > 0 && (
-              <div className="ap-grid-pagination">
-                <Pagination
-                  current={pagination.current}
-                  pageSize={pagination.pageSize}
-                  total={totalCount}
-                  showSizeChanger
-                  responsive
-                  showLessItems
-                  pageSizeOptions={["25", "50", "100"]}
-                  showTotal={showTotal}
-                  onChange={(page, size) => {
-                    setPagination({ current: page, pageSize: size });
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              </div>
-            )}
+
           </div>
         ) : (
           <div className="ap-browser-layout">
@@ -1819,9 +1810,9 @@ const AssignProject = () => {
                     <InfiniteScroll
                       dataLength={visibleProjects.length}
                       next={onLoadMore}
-                      hasMore={listViewInfiniteScroll.hasMore && !isViewAllProjects}
+                      hasMore={infiniteScroll.hasMore && !isViewAllProjects}
                       loader={
-                        listViewInfiniteScroll.isLoadingMore ? (
+                        infiniteScroll.isLoadingMore ? (
                           <div style={{ padding: "12px", textAlign: "center" }}>
                             <Spin size="small" />
                           </div>
