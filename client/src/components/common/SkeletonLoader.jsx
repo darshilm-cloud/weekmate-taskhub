@@ -9,6 +9,8 @@ const Sk = ({ w, h = 14, r = 6, style, className = "" }) => (
   />
 );
 
+export const SkeletonBlock = Sk;
+
 /* ── Reusable row of lines ── */
 const SkLines = ({ lines = 2, widths }) => (
   <>
@@ -59,7 +61,7 @@ const ChartsRow = () => (
    cols: array of flex widths e.g. ["2fr","1fr","1fr","1fr","1fr","0.7fr"]
    rows: number of data rows
 ────────────────────────────────────────────── */
-const TableSk = ({ cols = 6, rows = 7, colStyle }) => {
+export const TableSk = ({ cols = 6, rows = 7, colStyle }) => {
   const colCount = typeof cols === "number" ? cols : cols.length;
   const gridCols =
     typeof cols === "number"
@@ -902,6 +904,33 @@ export const PermissionPageSkeleton = () => (
 );
 
 /* ──────────────────────────────────────────────
+   TIMESHEET SKELETON COMPONENTS
+────────────────────────────────────────────── */
+export const TimesheetStatsSkeleton = () => (
+  <div className="sk-ts-stat-inline">
+    <Sk w={32} h={32} r={6} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <Sk w={75} h={10} />
+      <Sk w={50} h={18} />
+    </div>
+  </div>
+);
+
+export const TimesheetChartsSkeleton = () => (
+  <div className="sk-ts-charts-row" style={{ marginTop: 0 }}>
+    {[180, 200, 180].map((h, i) => (
+      <div key={i} className="sk-ts-chart-card">
+        <Sk w="45%" h={13} />
+        <Sk w="100%" h={h} r={8} />
+        <div style={{ display: "flex", gap: 8 }}>
+          {[0, 1, 2].map((j) => <Sk key={j} w={55} h={10} />)}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+/* ──────────────────────────────────────────────
    TIMESHEET SKELETON
 ────────────────────────────────────────────── */
 export const TimesheetSkeleton = () => (
@@ -910,13 +939,7 @@ export const TimesheetSkeleton = () => (
     <div className="sk-ts-header">
       <Sk w={200} h={22} />
       <div className="sk-ts-header-right">
-        <div className="sk-ts-stat-inline">
-          <Sk w={32} h={32} r={6} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <Sk w={75} h={10} />
-            <Sk w={50} h={18} />
-          </div>
-        </div>
+        <TimesheetStatsSkeleton />
         <Sk w={220} h={32} r={8} />
       </div>
     </div>
@@ -929,17 +952,7 @@ export const TimesheetSkeleton = () => (
     </div>
 
     {/* 3 charts */}
-    <div className="sk-ts-charts-row">
-      {[180, 200, 180].map((h, i) => (
-        <div key={i} className="sk-ts-chart-card">
-          <Sk w="45%" h={13} />
-          <Sk w="100%" h={h} r={8} />
-          <div style={{ display: "flex", gap: 8 }}>
-            {[0, 1, 2].map((j) => <Sk key={j} w={55} h={10} />)}
-          </div>
-        </div>
-      ))}
-    </div>
+    <TimesheetChartsSkeleton />
 
     {/* table */}
     <TableSk cols={["2fr", "1.5fr", "1fr", "1fr", "1fr", "1fr", "0.8fr"]} rows={7} />

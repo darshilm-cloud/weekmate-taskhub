@@ -29,7 +29,13 @@ import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
-import { TimesheetSkeleton } from "../../../components/common/SkeletonLoader";
+import {
+  TimesheetSkeleton,
+  TimesheetStatsSkeleton,
+  TimesheetChartsSkeleton,
+  TableSk,
+  SkeletonBlock,
+} from "../../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 
 dayjs.extend(quarterOfYear);
@@ -730,7 +736,7 @@ const TimeSheet = () => {
 
   // ── Render ─────────────────────────────────────────────────
 
-  if (pageLoading) return <TimesheetSkeleton />;
+  // if (pageLoading) return <TimesheetSkeleton />;
 
   return (
     <div className="timesheet-page">
@@ -747,7 +753,11 @@ const TimeSheet = () => {
               <div className="timesheet-stat-body">
                 <span className="timesheet-stat-label">Total Hours</span>
                 <span className="timesheet-stat-value">
-                  {loading ? "—" : totalLoggedHours || "0"}
+                  {loading && !totalLoggedHours ? (
+                    <SkeletonBlock w={60} h={22} />
+                  ) : (
+                    totalLoggedHours || "0"
+                  )}
                 </span>
               </div>
             </div>
@@ -781,23 +791,28 @@ const TimeSheet = () => {
         />
       )}
 
-      {/* ── Section 2: Charts (only when data is available) ── */}
-      {!loading && tableData.length > 0 && (
-        <div className="timesheet-charts">
-          <div className="timesheet-charts-grid">
-            {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-            {renderChart(horizontalBarChartConfig, "bar", "Hours by Category")}
-            {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
+      {/* ── Section 2: Charts ── */}
+      {(loading && tableData.length === 0) || pageLoading ? (
+        <TimesheetChartsSkeleton />
+      ) : (
+        tableData.length > 0 && (
+          <div className="timesheet-charts">
+            <div className="timesheet-charts-grid">
+              {renderChart(pieChartConfig, "pie", "Hours by Manager")}
+              {renderChart(horizontalBarChartConfig, "bar", "Hours by Category")}
+              {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* ── Section 3: Table / Loading / Empty state ── */}
       <div className="timesheet-table-section">
-        {loading ? (
-          <div className="timesheet-loading-state">
-            <Spin size="large" tip="Loading timesheet data..." />
-          </div>
+        {(loading && tableData.length === 0) || pageLoading ? (
+          <TableSk
+            cols={["2fr", "1.5fr", "1.5fr", "1fr", "1fr"]}
+            rows={8}
+          />
         ) : tableData.length > 0 ? (
           <>
             <div className="timesheet-table-header">
@@ -846,11 +861,12 @@ const TimeSheet = () => {
                 size="middle"
                 scroll={{ x: "max-content" }}
                 className="timesheet-table"
+                loading={loading}
               />
             </div>
           </>
         ) : (
-          <NoDataFound />
+          !loading && <NoDataFound />
         )}
       </div>
     </div>
