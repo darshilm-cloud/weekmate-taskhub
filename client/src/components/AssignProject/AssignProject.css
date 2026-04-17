@@ -10,6 +10,18 @@
   flex-direction: column;
 }
 
+/* 💀 UNIFY SCROLLBARS: Hide outer browser scrollbars and layout scrollbars */
+body.no-body-scroll, body.no-body-scroll html {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+body.no-body-scroll .gx-app-layout, 
+body.no-body-scroll .ant-layout, 
+body.no-body-scroll .gx-layout-content {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
 /* ── Top Bar (white sticky header + tabs) ─────────────────── */
 .ap-topbar {
   background: #fff;
@@ -1394,20 +1406,13 @@ body[data-theme="dark"] .ap-browser-status-label {
   width: 100%;
 }
 .ap-grid-section {
-    width: 100%;
-    height: calc(100dvh - 195px);
-    display: flex;
-    flex-direction: column;
+  width: 100%;
 }
 .ap-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-overflow: auto;
-}
-.page-project-list  .ap-cards-grid {
-  /* max-height: calc(100dvh - 275px); */
-  overflow: auto;
+  padding-bottom: 4px;
 }
 .page-project-list  .ap-grid-pagination{
   margin-top:  auto;
@@ -1479,7 +1484,7 @@ fill: rgb(46, 125, 50);
 }
 
 .ap-card-check-icon--done {
-  /* already green checkmark state */
+  pointer-events: none;
 }
 
 .ap-status-pill {
@@ -1558,6 +1563,7 @@ fill: rgb(46, 125, 50);
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.15s;
