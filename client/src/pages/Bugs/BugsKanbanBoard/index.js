@@ -560,7 +560,7 @@ const BugList = ({
                             </div>
                           )}
                     </div>
-                    <div className="add-task-col-btn-wrapper" style={{ marginTop: "auto", flexShrink: 0 }}>
+                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px", marginTop: "auto", flexShrink: 0 }}>
                       <Button 
                         type="text" 
                         icon={<PlusOutlined />} 

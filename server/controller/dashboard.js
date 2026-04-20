@@ -970,9 +970,9 @@ exports.getTaskList = async (req, res) => {
     }
 
     // 3. GET TOTAL COUNT for the current row query (per bucket when kanban_bucket is set)
-    console.log(`[getTaskList] count query:`, JSON.stringify(matchForRows));
+    // console.log(`[getTaskList] count query:`, JSON.stringify(matchForRows));
     const totalDocuments = await ProjectTasks.countDocuments(matchForRows);
-    console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
+    // console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
 
     // 4. MAIN DATA PIPELINE
     const mainQuery = [

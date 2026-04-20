@@ -416,6 +416,7 @@ class MaintenanceController {
       // Step 8: Create Bug Workflow Statuses
       console.log(chalk.blue("📋 Step 8: Setting up bug workflow statuses..."));
       const existingBugStatuses = await BugsWorkFlowStatus.find({
+        companyId: new mongoose.Types.ObjectId(companyId),
         isDeleted: false
       }).lean();
 
@@ -451,6 +452,7 @@ class MaintenanceController {
         for (const status of bugStatuses) {
           const newStatus = new BugsWorkFlowStatus({
             ...status,
+            companyId: new mongoose.Types.ObjectId(companyId),
             createdBy: creatorEmployee._id,
             updatedBy: creatorEmployee._id
           });

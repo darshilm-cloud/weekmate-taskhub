@@ -235,11 +235,10 @@ exports.addProjectsTask = async (req, res) => {
       projectData?.workflow_id ||
       projectData?.work_flow_id;
 
-    const resolvedTaskStatus =
-      (await resolveWorkflowStageIdForTask({
-        statusValue: value.task_status,
-        workflowId,
-      })) || value.task_status;
+    const resolvedTaskStatus = await resolveWorkflowStageIdForTask({
+      statusValue: value.task_status,
+      workflowId,
+    });
 
     if (
       value?.task_status &&
@@ -1272,11 +1271,10 @@ exports.updateMultipleTaskStatus = async (req, res) => {
       projectData?.workflow_id ||
       projectData?.work_flow_id;
 
-    const resolvedTaskStatus =
-      (await resolveWorkflowStageIdForTask({
-        statusValue: value.task_status,
-        workflowId,
-      })) || value.task_status;
+    const resolvedTaskStatus = await resolveWorkflowStageIdForTask({
+      statusValue: value.task_status,
+      workflowId,
+    });
 
     if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
       return errorResponse(
@@ -1476,11 +1474,10 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       getData?.project?.workflow_id ||
       getData?.project?.work_flow_id;
 
-    const resolvedTaskStatus =
-      (await resolveWorkflowStageIdForTask({
-        statusValue: value?.task_status,
-        workflowId,
-      })) || value?.task_status;
+    const resolvedTaskStatus = await resolveWorkflowStageIdForTask({
+      statusValue: value?.task_status,
+      workflowId,
+    });
 
     if (!mongoose.Types.ObjectId.isValid(String(resolvedTaskStatus))) {
       return errorResponse(

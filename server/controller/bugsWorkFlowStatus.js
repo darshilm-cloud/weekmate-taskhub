@@ -18,10 +18,17 @@ const PROTECTED_DEFAULT_BUG_STAGES = [
   "closed",
 ];
 
-const isTitleExists = async (title, id = null) => {
+const getCompanyObjectId = (req) => {
+  const companyId = req?.user?.companyId;
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) return null;
+  return new mongoose.Types.ObjectId(companyId);
+};
+
+const isTitleExists = async (title, companyId, id = null) => {
   const rows = await BugsWorkFlowStatus.aggregate([
     {
       $match: {
+        companyId,
         isDeleted: false,
         ...(id ? { _id: { $ne: new mongoose.Types.ObjectId(id) } } : {}),
       },
@@ -49,6 +56,11 @@ const isProtectedDefaultStage = (stageDoc) => {
 
 exports.addBugsWorkFlowStatus = async (req, res) => {
   try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().required(),
@@ -58,11 +70,12 @@ exports.addBugsWorkFlowStatus = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    if (await isTitleExists(value.title)) {
+    if (await isTitleExists(value.title, companyObjectId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
     }
 
     const last = await BugsWorkFlowStatus.find({
+      companyId: companyObjectId,
       isDeleted: false,
     })
       .sort({ sequence: -1 })
@@ -72,6 +85,7 @@ exports.addBugsWorkFlowStatus = async (req, res) => {
       Array.isArray(last) && last.length > 0 ? Number(last[0]?.sequence || 0) + 1 : 1;
 
     const data = new BugsWorkFlowStatus({
+      companyId: companyObjectId,
       title: value.title,
       color: value.color,
       sequence: nextSequence,
@@ -88,6 +102,11 @@ exports.addBugsWorkFlowStatus = async (req, res) => {
 
 exports.getBugsWorkFlowStatus = async (req, res) => {
   try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
     const validationSchema = Joi.object({
       _id: Joi.string().optional().allow(""),
       pageNo: Joi.number().integer().min(1).optional().default(1),
@@ -101,6 +120,7 @@ exports.getBugsWorkFlowStatus = async (req, res) => {
 
     if (value._id) {
       const row = await BugsWorkFlowStatus.findOne({
+        companyId: companyObjectId,
         _id: value._id,
         isDeleted: false,
       }).lean();
@@ -108,6 +128,7 @@ exports.getBugsWorkFlowStatus = async (req, res) => {
     }
 
     const matchQuery = {
+      companyId: companyObjectId,
       isDeleted: false,
       ...(value.search
         ? {
@@ -160,6 +181,11 @@ exports.getBugsWorkFlowStatus = async (req, res) => {
 
 exports.updateBugsWorkFlowStatus = async (req, res) => {
   try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       color: Joi.string().required(),
@@ -169,11 +195,12 @@ exports.updateBugsWorkFlowStatus = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    if (await isTitleExists(value.title, req.params.id)) {
+    if (await isTitleExists(value.title, companyObjectId, req.params.id)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
     }
 
     const existingStage = await BugsWorkFlowStatus.findOne({
+      companyId: companyObjectId,
       _id: req.params.id,
       isDeleted: false,
     }).lean();
@@ -208,6 +235,11 @@ exports.updateBugsWorkFlowStatus = async (req, res) => {
 
 exports.reorderBugsWorkFlowStatus = async (req, res) => {
   try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
     const validationSchema = Joi.object({
       ordered_stage_ids: Joi.array().items(Joi.string().required()).min(1).required(),
     });
@@ -217,7 +249,7 @@ exports.reorderBugsWorkFlowStatus = async (req, res) => {
     }
 
     const existingStages = await BugsWorkFlowStatus.find(
-      { isDeleted: false },
+      { companyId: companyObjectId, isDeleted: false },
       { _id: 1 }
     ).lean();
     const existingIdSet = new Set(existingStages.map((row) => String(row._id)));
@@ -244,6 +276,7 @@ exports.reorderBugsWorkFlowStatus = async (req, res) => {
       updateOne: {
         filter: {
           _id: new mongoose.Types.ObjectId(stageId),
+          companyId: companyObjectId,
           isDeleted: false,
         },
         update: {
@@ -261,7 +294,7 @@ exports.reorderBugsWorkFlowStatus = async (req, res) => {
     }
 
     const rows = await BugsWorkFlowStatus.find(
-      { isDeleted: false },
+      { companyId: companyObjectId, isDeleted: false },
       { _id: 1, title: 1, color: 1, sequence: 1, isDefault: 1 }
     )
       .sort({ sequence: 1 })
@@ -275,7 +308,13 @@ exports.reorderBugsWorkFlowStatus = async (req, res) => {
 
 exports.deleteBugsWorkFlowStatus = async (req, res) => {
   try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
     const existingStage = await BugsWorkFlowStatus.findOne({
+      companyId: companyObjectId,
       _id: req.params.id,
       isDeleted: false,
     }).lean();

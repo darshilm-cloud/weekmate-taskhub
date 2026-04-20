@@ -3,6 +3,12 @@ const { utcDefault } = require("../configs");
 const Schema = mongoose.Schema;
 
 const BugsWorkFlowStatusSchema = new mongoose.Schema({
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: "companies",
+    required: false,
+    index: true,
+  },
   title: {
     type: String,
     required: true,

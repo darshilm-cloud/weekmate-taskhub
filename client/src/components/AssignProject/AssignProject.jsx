@@ -1774,7 +1774,7 @@ const AssignProject = () => {
                   ) : null
                 }
                 height={"calc(100vh - 195px)"}
-                scrollThreshold={0.7}
+                scrollThreshold="8px"
               >
                 <div className="ap-cards-grid">
                   {visibleProjects.map((record) => (

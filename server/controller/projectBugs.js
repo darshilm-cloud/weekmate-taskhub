@@ -180,11 +180,13 @@ exports.addProjectsBugs = async (req, res) => {
     } else {
       let statusData = await ProjectBugsWorkFlowStatus.findOne({
         title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+        companyId: decodedCompanyId,
         isDeleted: false,
       }).select("_id");
       if (!statusData?._id) {
         statusData = await ProjectBugsWorkFlowStatus.findOne({
           title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+          companyId: decodedCompanyId,
           isDeleted: false,
           $or: [{ project_id: null }, { project_id: { $exists: false } }],
         }).select("_id");
@@ -1063,6 +1065,7 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     if (value?.bug_status) {
       const validBugStage = await ProjectBugsWorkFlowStatus.findOne({
         _id: value.bug_status,
+        companyId: decodedCompanyId,
         isDeleted: false,
       }).lean();
       if (!validBugStage?._id) {
@@ -1205,6 +1208,7 @@ exports.projectBugsDetailedData = async (req, res) => {
       checkLoginUserIsProjectAccountManager(value.project_id, req.user._id),
       mongoose.model("projects").findOne({ _id: projectObjectId, isDeleted: false }, { pms_clients: 1 }).lean(),
       ProjectBugsWorkFlowStatus.find({
+        companyId: req.user.companyId,
         isDeleted: false,
         ...(value.status_id ? { _id: new mongoose.Types.ObjectId(value.status_id) } : {}),
       }).sort({ sequence: 1 }).lean()
@@ -2775,6 +2779,7 @@ exports.importBugsData = async (req, res) => {
 
       const bugStatus = await ProjectBugsWorkFlowStatus.findOne({
         title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
+        companyId: req.user.companyId,
         isDeleted: false,
       });
 
