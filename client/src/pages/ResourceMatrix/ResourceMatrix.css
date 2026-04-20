@@ -899,6 +899,56 @@
     color: #333;
 }
 
+/* Resource Matrix toolbar/pagination polish */
+.resource-matrix .global-search {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.resource-matrix .filter-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.resource-matrix .rm-pagination-container {
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Prevent paginator clipping at page bottom */
+.ant-layout .ant-layout-content .resource-matrix.ant-card {
+    overflow: visible !important;
+}
+
+.ant-layout .ant-layout-content .resource-matrix .ant-card-body {
+    overflow: visible !important;
+    padding-bottom: 20px;
+}
+
+.resource-matrix .rm-table-container {
+    margin-bottom: 12px;
+}
+
+.resource-matrix .rm-pagination-container {
+    padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .resource-matrix .global-search {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .resource-matrix .filter-btn-wrapper {
+        justify-content: space-between;
+    }
+}
+
 .resource-matrix .rm-guide-icon {
     color: #1890ff;
     margin-top: 2px;

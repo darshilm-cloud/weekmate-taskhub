@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layout, Form, Popover, Input, Dropdown } from "antd";
 import { useDispatch } from "react-redux";
 import {
@@ -32,15 +32,24 @@ function Topbar() {
   const history = useHistory();
   const location = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hasAnyProjectBugsEnabled, setHasAnyProjectBugsEnabled] = useState(false);
 
-  const SETTINGS_MENU = [
+  const getProjectBugsEnabled = useCallback((project) => {
+    return Boolean(
+      project?.isBugsEnabled ??
+      project?.is_bugs_enabled ??
+      project?.bugs_enabled
+    );
+  }, []);
+
+  const SETTINGS_MENU = useMemo(() => ([
     {
       group: "GENERAL",
       items: [
         { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
         { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
-        { label: "Task Form Builder",     icon: <FormOutlined />,    path: `/${companySlug}/admin/task-form-builder` },
         { label: "Project Form Builder",  icon: <FormOutlined />,    path: `/${companySlug}/admin/project-form-builder` },
+        { label: "Task Form Builder",     icon: <FormOutlined />,    path: `/${companySlug}/admin/task-form-builder` },
         { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
         { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
         { label: "Resource Matrix",       icon: <TeamOutlined />, path: `/${companySlug}/resource-matrix` },
@@ -56,12 +65,14 @@ function Topbar() {
         { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
         { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },
         { label: "Task Stages",        icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflow-stages` },
-        { label: "Bug Stages",         icon: <NodeIndexOutlined />,    path: `/${companySlug}/bug-workflow-stages` },
+        ...(hasAnyProjectBugsEnabled
+          ? [{ label: "Bug Stages", icon: <NodeIndexOutlined />, path: `/${companySlug}/bug-workflow-stages` }]
+          : []),
         { label: "Archived Project",   icon: <InboxOutlined />,        path: `/${companySlug}/project-archieved` },
         { label: "Trash",              icon: <DeleteOutlined />,       path: `/${companySlug}/trash` },
       ],
     },
-  ];
+  ]), [companySlug, hasAnyProjectBugsEnabled]);
 
   // paths that appear more than once should never be highlighted
   const allPaths = SETTINGS_MENU.flatMap(s => s.items.map(i => i.path));
@@ -118,6 +129,7 @@ function Topbar() {
           const parsedProjects = JSON.parse(cachedProjects);
           if (Array.isArray(parsedProjects) && parsedProjects.length > 0) {
             setProjectList(parsedProjects);
+            setHasAnyProjectBugsEnabled(parsedProjects.some(getProjectBugsEnabled));
           }
         } catch (error) {
           sessionStorage.removeItem(cacheKey);
@@ -154,6 +166,7 @@ function Topbar() {
 
       if (Array.isArray(response?.data?.data)) {
         setProjectList(response.data.data);
+        setHasAnyProjectBugsEnabled(response.data.data.some(getProjectBugsEnabled));
         sessionStorage.setItem(cacheKey, JSON.stringify(response.data.data));
       }
     } catch (error) {
@@ -163,7 +176,7 @@ function Topbar() {
       projectRequestRef.current = null;
       setIsProjectListLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, getProjectBugsEnabled]);
 
   const getVisitedData = useCallback(async () => {
     if (recentRequestRef.current) {
@@ -247,6 +260,19 @@ function Topbar() {
     getProjectList();
     getVisitedData();
   }, [getProjectList, getVisitedData]);
+
+  useEffect(() => {
+    const handleProjectsChanged = (event) => {
+      if (event?.detail?.action === "toggle-bugs" && event?.detail?.isBugsEnabled === true) {
+        setHasAnyProjectBugsEnabled(true);
+      }
+      getProjectList({ forceRefresh: true });
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectsChanged);
+    return () => {
+      window.removeEventListener("weekmate:projects-changed", handleProjectsChanged);
+    };
+  }, [getProjectList]);
 
   return (
     <>

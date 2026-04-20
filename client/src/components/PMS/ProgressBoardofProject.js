@@ -124,6 +124,11 @@ function ProgressBoardofProject() {
   const [projectTasksLoading, setProjectTasksLoading] = useState(false);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
+  const isBugsTabEnabledForProject = Boolean(
+    projectData?.isBugsEnabled ??
+      projectData?.is_bugs_enabled ??
+      projectData?.bugs_enabled
+  );
 
   const handleChange = (name, value) => {
     setPeopleValues({ ...peopleValues, [name]: value });
@@ -460,7 +465,7 @@ function ProgressBoardofProject() {
         setSelectedTab("Time");
         break;
       case "Bugs":
-        setSelectedTab("Bugs");
+        setSelectedTab(isBugsTabEnabledForProject ? "Bugs" : "Overview");
         break;
       case "Discussion":
         setSelectedTab("Discussion");
@@ -481,7 +486,13 @@ function ProgressBoardofProject() {
         setSelectedTab("Overview");
         break;
     }
-  }, [tab]);
+  }, [tab, isBugsTabEnabledForProject]);
+
+  useEffect(() => {
+    if (!isBugsTabEnabledForProject && selectedTab === "Bugs") {
+      setSelectedTab("Overview");
+    }
+  }, [isBugsTabEnabledForProject, selectedTab]);
 
   const fetchProjectTasksForTimeline = useCallback(async () => {
     if (!projectId) return;
@@ -575,14 +586,6 @@ function ProgressBoardofProject() {
       ),
     },
     {
-      key: "Discussion",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Discussion")}>
-          Discussion
-        </Menu.Item>
-      ),
-    },
-    {
       key: "Tasks",
       label: (
         <Menu.Item onClick={() => handleLiClick("Tasks")}>Tasks</Menu.Item>
@@ -625,10 +628,19 @@ function ProgressBoardofProject() {
         </Menu.Item>
       ),
     },
+    {
+      key: "Discussion",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Discussion")}>
+          Discussion
+        </Menu.Item>
+      ),
+    },
   ];
 
   const filteredTabOptions = tabOptions.filter((tab) => {
     if (tab.key === "Calendar" || tab.key === "Gantt") return true;
+    if (tab.key === "Bugs") return isBugsTabEnabledForProject;
     return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
   });
 
@@ -851,13 +863,12 @@ function ProgressBoardofProject() {
       </div>{/* /pb-topbar */}
 
       {selectedTab === "Overview" && <Overview />}
-      {selectedTab === "Discussion" && <DiscussionForm />}
       {selectedTab === "Tasks" && (
         <div className="pb-tasks-pane">
           <TasksPMS flag={assigneesflag} />
         </div>
       )}
-      {selectedTab === "Bugs" && <BugsPMS />}
+      {selectedTab === "Bugs" && isBugsTabEnabledForProject && <BugsPMS />}
       {selectedTab === "Notes" && <NotesPMS />}
       {selectedTab === "Files" && <FileModule />}
       {selectedTab === "Time" && <TimeForPMS />}
@@ -923,6 +934,8 @@ function ProgressBoardofProject() {
           )}
         </div>
       )}
+      {selectedTab === "Discussion" && <DiscussionForm />}
+
 
       <Modal
         title={null}

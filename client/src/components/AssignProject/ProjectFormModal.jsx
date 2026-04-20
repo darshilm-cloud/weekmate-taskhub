@@ -1994,6 +1994,7 @@ const ProjectFormModal = ({
             </Form.Item>
           </div>
         </div>
+        <div className="pfm-divider" />
 
           </div>{/* end pfm-fields-grid */}
 

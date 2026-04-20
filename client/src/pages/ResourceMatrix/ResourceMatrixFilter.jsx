@@ -158,6 +158,9 @@ const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
     // [FILTER_TYPES.TECHNOLOGY]: [],
     [FILTER_TYPES.ASSIGNEES]: [],
   });
+  const [appliedFilters, setAppliedFilters] = useState({
+    [FILTER_TYPES.ASSIGNEES]: [],
+  });
   const [searchTerms, setSearchTerms] = useState({
     // [FILTER_TYPES.TECHNOLOGY]: "",
     [FILTER_TYPES.ASSIGNEES]: "",
@@ -184,11 +187,11 @@ const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
   });
 
   const activeFiltersCount = useMemo(() => {
-    return Object.values(selectedFilters).reduce(
+    return Object.values(appliedFilters).reduce(
       (count, filters) => count + (filters.length > 0 ? 1 : 0),
       0
     );
-  }, [selectedFilters]);
+  }, [appliedFilters]);
 
   const fetchFilterData = useCallback(
     async (filterType, page = 1, search = "", reset = false) => {
@@ -350,18 +353,24 @@ const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
   }, []);
 
   const resetFilter = useCallback((filterType) => {
-    setSelectedFilters((prev) => ({ ...prev, [filterType]: [] }));
-    onFilterChange(FILTER_CONFIG[filterType].skipParam);
-  }, []);
+    setSelectedFilters((prev) => {
+      const next = { ...prev, [filterType]: [] };
+      setAppliedFilters(next);
+      onFilterChange([], next);
+      return next;
+    });
+  }, [onFilterChange]);
 
   const resetAllFilters = useCallback(() => {
-    setSelectedFilters({
+    const emptyFilters = {
       // [FILTER_TYPES.TECHNOLOGY]: [],
       [FILTER_TYPES.ASSIGNEES]: [],
-    });
-    onFilterChange(["skipAll"]);
+    };
+    setSelectedFilters(emptyFilters);
+    setAppliedFilters(emptyFilters);
+    onFilterChange([], emptyFilters);
     setIsPopoverOpen(false);
-  }, []);
+  }, [onFilterChange]);
 
   useEffect(() => {
     if (
@@ -425,6 +434,7 @@ const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
         onSelect={(item) => handleFilterSelection(item, activeFilter)}
         onLoadMore={() => handleLoadMore(activeFilter)}
         onApply={() => {
+          setAppliedFilters(selectedFilters);
           onFilterChange([], selectedFilters);
           setIsPopoverOpen(false);
         }}

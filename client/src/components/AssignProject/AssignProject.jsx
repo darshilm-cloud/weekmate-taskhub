@@ -134,10 +134,13 @@ const getCompletionPercent = (record, stats) => {
 };
 
 /* ─── Project Card ────────────────────────────────────────── */
-const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onCloseProject }) => {
+const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onCloseProject, onToggleBugs }) => {
   const history = useHistory();
   const currentStatusMeta = getProjectStatusMeta(record?.project_status, projectStatusList);
   const statusTitle = currentStatusMeta.title || "Active";
+  const isClosedProject = ["closed", "completed", "done"].includes(
+    String(statusTitle || "").toLowerCase()
+  );
   const sc = getStatusStyle(statusTitle);
   const normalizedStats = normalizeProjectTaskStats({
     ...(record?.stats || {}),
@@ -164,7 +167,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 
   /* Navigate to project detail */
   const handleCardClick = () => {
-    history.push(`/${companySlug}/project/app/${record._id}?tab=Tasks`);
+    history.push(`/${companySlug}/project/app/${record._id}?tab=Overview`);
   };
 
   const handleStatClick = (e, label) => {
@@ -228,26 +231,28 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
       },
     });
   }
+  if (hasPermission(["project_edit"])) {
+    const isBugsEnabled = Boolean(
+      record?.isBugsEnabled ??
+      record?.is_bugs_enabled ??
+      record?.bugs_enabled
+    );
+    menuItems.push({
+      key: "toggle-bugs",
+      icon: isBugsEnabled ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
+      label: isBugsEnabled ? "Disable Bugs" : "Enable Bugs",
+      onClick: ({ domEvent }) => {
+        domEvent?.stopPropagation?.();
+        onToggleBugs(record, !isBugsEnabled);
+      },
+    });
+  }
 
   return (
     <div className="ap-card" onClick={handleCardClick}>
       {/* Top row */}
       <div className="ap-card-top">
         <div className="ap-card-status-row">
-          {/* Circle → close project */}
-          <span
-            className={`ap-card-check-icon ${pct >= 100 ? "ap-card-check-icon--done" : ""}`}
-            onClick={handleCircleClick}
-            title="Click to close project"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="8" stroke={pct >= 100 ? "#43A047" : "#BDBDBD"} strokeWidth="1.5" fill={pct >= 100 ? "#E8F5E9" : "transparent"} />
-              {pct >= 100 && (
-                <path d="M5.5 9l2.5 2.5 4.5-4.5" stroke="#43A047" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </svg>
-          </span>
-
           {/* Status → inline dropdown */}
           <div onClick={(e) => e.stopPropagation()}>
             <Dropdown
@@ -993,7 +998,17 @@ const AssignProject = () => {
     applyProjectStatusLocally(projectId, statusMeta);
   }, [applyProjectStatusLocally, invalidateProjectCaches]);
 
-  const buildProjectUpdatePayload = useCallback((project, statusId) => {
+  const applyProjectBugsFlagLocally = useCallback((projectId, isBugsEnabled) => {
+    if (!projectId) return;
+    const applyFlag = (project) =>
+      project?._id === projectId ? { ...project, isBugsEnabled } : project;
+
+    setColumnDetails((prev) => (Array.isArray(prev) ? prev.map(applyFlag) : prev));
+    setListColumnDetails((prev) => (Array.isArray(prev) ? prev.map(applyFlag) : prev));
+    setSelectedProject((prev) => (prev?._id === projectId ? { ...prev, isBugsEnabled } : prev));
+  }, []);
+
+  const buildProjectUpdatePayload = useCallback((project, statusId, overrides = {}) => {
     if (!project) return { project_status: statusId };
 
     const getSingleEntityId = (value) => {
@@ -1031,6 +1046,11 @@ const AssignProject = () => {
           ? String(project.estimatedHours)
           : "",
       isBillable: Boolean(project?.isBillable),
+      isBugsEnabled: Boolean(
+        project?.isBugsEnabled ??
+        project?.is_bugs_enabled ??
+        project?.bugs_enabled
+      ),
       recurringType: project?.recurringType || "",
     };
 
@@ -1041,7 +1061,10 @@ const AssignProject = () => {
     if (project?.start_date) payload.start_date = project.start_date;
     if (project?.end_date) payload.end_date = project.end_date;
 
-    return payload;
+    return {
+      ...payload,
+      ...overrides,
+    };
   }, []);
 
   const handleStatusChange = async (project, statusId) => {
@@ -1097,6 +1120,44 @@ const AssignProject = () => {
     }
   };
 
+  const handleToggleProjectBugs = async (project, nextEnabledValue) => {
+    try {
+      const projectId = project?._id;
+      if (!projectId) return;
+      const statusId =
+        project?.project_status?._id ||
+        project?.project_status?.id ||
+        project?.project_status ||
+        "";
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateProjectdetails}/${projectId}`,
+        body: buildProjectUpdatePayload(project, statusId, {
+          isBugsEnabled: Boolean(nextEnabledValue),
+        }),
+        options: { moduleprefix: "project" },
+      });
+      if (response?.data?.status) {
+        message.success(`Bugs ${nextEnabledValue ? "enabled" : "disabled"} for project`);
+        invalidateProjectCaches();
+        window.dispatchEvent(
+          new CustomEvent("weekmate:projects-changed", {
+            detail: {
+              action: "toggle-bugs",
+              projectId,
+              isBugsEnabled: Boolean(nextEnabledValue),
+            },
+          })
+        );
+        applyProjectBugsFlagLocally(projectId, Boolean(nextEnabledValue));
+      } else {
+        message.error(response?.data?.message || "Failed to update bugs setting");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const getSidebarProjectMenuItems = (project) => {
     const items = [
       {
@@ -1104,7 +1165,7 @@ const AssignProject = () => {
         label: "Open project",
         onClick: ({ domEvent }) => {
           domEvent?.stopPropagation?.();
-          history.push(`/${companySlug}/project/app/${project._id}?tab=Tasks`);
+          history.push(`/${companySlug}/project/app/${project._id}?tab=Overview`);
         },
       },
     ];
@@ -1116,6 +1177,20 @@ const AssignProject = () => {
         onClick: ({ domEvent }) => {
           domEvent?.stopPropagation?.();
           showModal(project);
+        },
+      });
+      const isBugsEnabled = Boolean(
+        project?.isBugsEnabled ??
+        project?.is_bugs_enabled ??
+        project?.bugs_enabled
+      );
+      items.push({
+        key: "toggle-bugs",
+        icon: isBugsEnabled ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
+        label: isBugsEnabled ? "Disable Bugs" : "Enable Bugs",
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation?.();
+          handleToggleProjectBugs(project, !isBugsEnabled);
         },
       });
     }
@@ -1422,7 +1497,7 @@ const AssignProject = () => {
           (match, group1) => match.charAt(0) + group1.toUpperCase()
         );
         return (
-          <Link to={`/${companySlug}/project/app/${record._id}?tab=Tasks`}>
+          <Link to={`/${companySlug}/project/app/${record._id}?tab=Overview`}>
             <div className="project_title_main_div">
               <span>{formattedTitle}</span>
             </div>
@@ -1788,6 +1863,7 @@ const AssignProject = () => {
                       projectStatusList={projectStatusList}
                       onStatusChange={handleStatusChange}
                       onCloseProject={handleCloseProject}
+                      onToggleBugs={handleToggleProjectBugs}
                     />
                   ))}
                 </div>

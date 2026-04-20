@@ -71,6 +71,10 @@ const ProjectSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isBugsEnabled: {
+    type: Boolean,
+    default: false,
+  },
   start_date: { type: Date, default: null },
   end_date: { type: Date, default: null },
   recurringType: { 

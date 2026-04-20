@@ -18,7 +18,8 @@ import {
   Drawer,
   Pagination,
   Form,
-  Flex
+  Flex,
+  Empty
 } from "antd";
 import {
   FiClock,
@@ -77,7 +78,7 @@ const ResourceMatrix = () => {
   const [currentSkipFilters, setCurrentSkipFilters] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 30
+    pageSize: 25
   });
   const [metadata, setMetadata] = useState({});
   const [isMatrixLoading, setIsMatrixLoading] = useState(false);
@@ -159,20 +160,24 @@ const ResourceMatrix = () => {
         body: reqBody
       });
       if (response?.data?.status) {
-        setBackendData(response.data.data);
-        setMetadata(response.data.metadata);
-        setIsMatrixLoading(false);
+        setBackendData(Array.isArray(response?.data?.data) ? response.data.data : []);
+        setMetadata(response?.data?.metadata || {});
+      } else {
+        setBackendData([]);
+        setMetadata({});
       }
-      setIsMatrixLoading(false);
     } catch (error) {
       console.log(error);
+      setBackendData([]);
+      setMetadata({});
+    } finally {
       setIsMatrixLoading(false);
     }
   };
 
-  const handleFilterChange = (skipFilters = [], filterStats = {}) => {
+  const handleFilterChange = (_skipFilters = [], filterStats = {}) => {
     setCurrentFilters(filterStats);
-    setCurrentSkipFilters(skipFilters);
+    setCurrentSkipFilters(_skipFilters);
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -505,6 +510,9 @@ const ResourceMatrix = () => {
           rowClassName={rowClassName}
           showHeader={true}
           loading={isMatrixLoading}
+          locale={{
+            emptyText: <Empty description="No Data" />
+          }}
         />
       </div>
       <div className="rm-pagination-container">
@@ -516,7 +524,7 @@ const ResourceMatrix = () => {
           pageSize={pagination.pageSize}
           total={metadata.totalEmployees}
           showSizeChanger={true} // Allow user to change page size
-          showQuickJumper={true} // Optional: show jumper to jump to page
+          showQuickJumper={false}
           className="rm-pagination"
           onChange={(page, size) => {
             setPagination((prev) => ({
@@ -532,7 +540,7 @@ const ResourceMatrix = () => {
               pageSize: size
             }));
           }}
-          pageSizeOptions={["10", "20", "30", "50"]} // Optional: user selectable page sizes
+          pageSizeOptions={["10", "25", "50", "100"]}
           itemRender={(page, type, element) => {
             if (type === "prev") return <span>❮</span>;
             if (type === "next") return <span>❯</span>;
