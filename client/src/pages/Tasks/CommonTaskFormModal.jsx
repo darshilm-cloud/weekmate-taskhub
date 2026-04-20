@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
-import { ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, MoreOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import dayjs from "dayjs";
@@ -76,6 +76,37 @@ const getSubscribersArray = (response) => {
   return [];
 };
 
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "avif"];
+const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "m4v", "avi", "mkv"];
+
+const getAttachmentExtension = (value = "") => {
+  const normalized = String(value || "").split("?")[0];
+  const parts = normalized.split(".");
+  return (parts.length > 1 ? parts.pop() : "").toLowerCase();
+};
+
+const resolveAttachmentUrl = (file) => {
+  const rawPath = file?.path || file?.file_path;
+  if (!rawPath) return "";
+  const apiBase = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+  const normalized = String(rawPath).startsWith("/")
+    ? String(rawPath)
+    : `/${rawPath}`;
+  if (/^https?:\/\//i.test(String(rawPath))) return String(rawPath);
+  if (apiBase) {
+    return `${apiBase}${normalized.startsWith("/public/") ? normalized : `/public${normalized}`}`;
+  }
+  return normalized.startsWith("/public/") ? normalized : `/public${normalized}`;
+};
+
+const getAttachmentKind = (file) => {
+  const mime = String(file?.file_type || "").toLowerCase();
+  const ext = getAttachmentExtension(file?.name || file?.file_name || file?.path || file?.file_path);
+  if (mime.startsWith("image/") || IMAGE_EXTENSIONS.includes(ext)) return "image";
+  if (mime.startsWith("video/") || VIDEO_EXTENSIONS.includes(ext)) return "video";
+  return "document";
+};
+
 export default function CommonTaskFormModal({
   open,
   mode = "create",
@@ -107,9 +138,16 @@ export default function CommonTaskFormModal({
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [commentFiles, setCommentFiles] = useState([]);
+  const [playingAttachmentByComment, setPlayingAttachmentByComment] = useState({});
+  const [selectedCommentFolderId, setSelectedCommentFolderId] = useState(null);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceInterimText, setVoiceInterimText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [editingCommentAttachments, setEditingCommentAttachments] = useState([]);
   const [timeLogs, setTimeLogs] = useState([]);
   const [timeLogsLoading, setTimeLogsLoading] = useState(false);
   const [timesheetOptions, setTimesheetOptions] = useState([]);
@@ -125,6 +163,9 @@ export default function CommonTaskFormModal({
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
   const previousSelectedProjectIdRef = useRef(null);
+  const commentFileInputRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const silenceTimeoutRef = useRef(null);
   const effectiveTaskId = taskId || initialValues?._id || null;
   const loggedInUserId = useMemo(() => {
     try {
@@ -503,22 +544,210 @@ export default function CommonTaskFormModal({
     }
   }, [effectiveTaskId]);
 
+  const fetchCommentFolders = useCallback(async () => {
+    if (!effectiveProjectId) {
+      setSelectedCommentFolderId(null);
+      return;
+    }
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getFolderslist,
+        body: { project_id: effectiveProjectId },
+      });
+      const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+      if (list.length > 0) {
+        setSelectedCommentFolderId((prev) =>
+          prev && list.some((item) => item?._id === prev) ? prev : list[0]?._id || null
+        );
+      } else {
+        setSelectedCommentFolderId(null);
+      }
+    } catch {
+      setSelectedCommentFolderId(null);
+    }
+  }, [effectiveProjectId]);
+
   useEffect(() => {
     if (!open || mode !== "view" || !effectiveTaskId) return;
     fetchComments();
   }, [open, mode, effectiveTaskId, fetchComments]);
 
+  useEffect(() => {
+    if (!open || mode !== "view") return;
+    fetchCommentFolders();
+  }, [open, mode, fetchCommentFolders]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SR));
+  }, []);
+
+  useEffect(() => {
+    if (!open && speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      speechRecognitionRef.current = null;
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      setIsVoiceListening(false);
+      setVoiceInterimText("");
+    }
+  }, [open]);
+
+  const resetVoiceSilenceTimeout = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    silenceTimeoutRef.current = setTimeout(() => {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch (e) {
+          // no-op
+        }
+      }
+    }, 3500);
+  }, []);
+
+  const uploadCommentFiles = useCallback(async (files) => {
+    if (!Array.isArray(files) || files.length === 0) return [];
+    const formData = new FormData();
+    files.forEach((file) => formData.append("document", file));
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: `${Service.fileUpload}?file_for=comment`,
+      body: formData,
+      options: {
+        "content-type": "multipart/form-data",
+      },
+    });
+    return Array.isArray(response?.data?.data) ? response.data.data : [];
+  }, []);
+
+  const handleCommentFilesChange = useCallback((event) => {
+    const selectedFiles = Array.from(event?.target?.files || []);
+    const allowed = [];
+    selectedFiles.forEach((file) => {
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB <= 20) {
+        allowed.push(file);
+      } else {
+        message.error(`File '${file.name}' exceeds the 20MB file size limit.`);
+      }
+    });
+    if (allowed.length) setCommentFiles((prev) => [...prev, ...allowed]);
+    if (event?.target) event.target.value = "";
+  }, []);
+
+  const removeCommentFile = useCallback((index) => {
+    setCommentFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleDownloadAttachment = useCallback((file) => {
+    const href = resolveAttachmentUrl(file);
+    if (!href) return;
+    window.open(href, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const handleVoiceToggle = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      message.error("Voice input is not supported in this browser.");
+      return;
+    }
+    if (isVoiceListening && speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      return;
+    }
+
+    const recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      setIsVoiceListening(true);
+      setVoiceInterimText("");
+      resetVoiceSilenceTimeout();
+    };
+    recognition.onresult = (event) => {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i][0]?.transcript || "";
+        if (event.results[i].isFinal) finalTranscript += `${text} `;
+        else interimTranscript += text;
+      }
+      if (finalTranscript.trim()) {
+        setCommentText((prev) => `${prev}${prev && !/\s$/.test(prev) ? " " : ""}${finalTranscript}`.trimStart());
+      }
+      setVoiceInterimText(interimTranscript);
+      if (finalTranscript.trim() || interimTranscript.trim()) {
+        resetVoiceSilenceTimeout();
+      }
+    };
+    recognition.onerror = () => {
+      setIsVoiceListening(false);
+      setVoiceInterimText("");
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+    };
+    recognition.onend = () => {
+      setIsVoiceListening(false);
+      setVoiceInterimText("");
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      speechRecognitionRef.current = null;
+    };
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  }, [isVoiceListening, resetVoiceSilenceTimeout]);
+
   const handleAddComment = useCallback(async () => {
-    if (!effectiveTaskId || !commentText.trim()) return;
+    const hasFiles = commentFiles.length > 0;
+    const commentToSend = `${commentText}${voiceInterimText ? ` ${voiceInterimText}` : ""}`.trim();
+    if (!effectiveTaskId || (!commentToSend && !hasFiles)) return;
+    if (hasFiles && !selectedCommentFolderId) {
+      message.error("Please select a folder before attaching files.");
+      return;
+    }
     setSubmittingComment(true);
     try {
+      let uploadedAttachments = [];
+      if (hasFiles) {
+        uploadedAttachments = await uploadCommentFiles(commentFiles);
+      }
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addTaskComments,
-        body: { task_id: effectiveTaskId, comment: commentText.trim() },
+        body: {
+          task_id: effectiveTaskId,
+          comment: commentToSend,
+          taggedUsers: [],
+          attachments: uploadedAttachments,
+          ...(hasFiles ? { folder_id: selectedCommentFolderId } : {}),
+        },
       });
       if (res?.data?.status) {
         setCommentText("");
+        setCommentFiles([]);
+        setVoiceInterimText("");
         fetchComments();
       } else {
         message.error(res?.data?.message || "Failed to add comment");
@@ -528,7 +757,16 @@ export default function CommonTaskFormModal({
     } finally {
       setSubmittingComment(false);
     }
-  }, [effectiveTaskId, commentText, fetchComments]);
+  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments]);
+
+  const handleCommentInputPressEnter = useCallback((event) => {
+    if (event?.shiftKey) return;
+    event?.preventDefault?.();
+    if (submittingComment) return;
+    const composedComment = `${commentText}${voiceInterimText ? ` ${voiceInterimText}` : ""}`.trim();
+    if (!composedComment && commentFiles.length === 0) return;
+    handleAddComment();
+  }, [submittingComment, commentText, voiceInterimText, commentFiles.length, handleAddComment]);
 
   const handleDeleteComment = useCallback(async (commentId) => {
     if (!commentId) return;
@@ -551,11 +789,13 @@ export default function CommonTaskFormModal({
   const handleStartEditComment = useCallback((comment) => {
     setEditingCommentId(comment?._id || null);
     setEditingCommentText(comment?.comment || "");
+    setEditingCommentAttachments(Array.isArray(comment?.attachments) ? comment.attachments : []);
   }, []);
 
   const handleCancelEditComment = useCallback(() => {
     setEditingCommentId(null);
     setEditingCommentText("");
+    setEditingCommentAttachments([]);
   }, []);
 
   const handleSaveEditComment = useCallback(async () => {
@@ -567,13 +807,14 @@ export default function CommonTaskFormModal({
         body: {
           comment: editingCommentText,
           taggedUsers: [],
-          attachments: [],
+          attachments: editingCommentAttachments,
         },
       });
       if (res?.data?.status) {
         message.success("Comment updated");
         setEditingCommentId(null);
         setEditingCommentText("");
+        setEditingCommentAttachments([]);
         fetchComments();
       } else {
         message.error(res?.data?.message || "Failed to update comment");
@@ -581,7 +822,7 @@ export default function CommonTaskFormModal({
     } catch {
       message.error("Failed to update comment");
     }
-  }, [editingCommentId, editingCommentText, fetchComments]);
+  }, [editingCommentId, editingCommentText, editingCommentAttachments, fetchComments]);
 
   const fetchTaskTimeLogs = useCallback(async () => {
     if (!effectiveTaskId || !effectiveProjectId) return;
@@ -1101,7 +1342,7 @@ export default function CommonTaskFormModal({
   ]);
   const formatMetricDate = (value) => {
     if (!value) return "Not set";
-    if (value?.format) return value.format("MMM D, YYYY");
+    if (value?.format) return value.format("DD-MM-YYYY");
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "Not set";
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -1370,6 +1611,96 @@ export default function CommonTaskFormModal({
                                       <div style={{ fontSize: 11, color: "#6d7784", textAlign: "right" }}>
                                         {new Date(item?.createdAt || item?.updatedAt || Date.now()).toLocaleString()}
                                       </div>
+                                      {Array.isArray(item?.attachments) && item.attachments.length > 0 && (
+                                        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                                          {item.attachments.map((file, fileIndex) => (
+                                            (() => {
+                                              const attachmentKey = file?._id || `${item?._id}-file-${fileIndex}`;
+                                              const attachmentName = file?.name || file?.file_name || "Attachment";
+                                              const attachmentUrl = resolveAttachmentUrl(file);
+                                              const kind = getAttachmentKind(file);
+                                              const isVideoPlaying = Boolean(playingAttachmentByComment[attachmentKey]);
+
+                                              return (
+                                                <div
+                                                  key={attachmentKey}
+                                                  style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 8,
+                                                    border: "1px solid #e2e8f0",
+                                                    borderRadius: 8,
+                                                    padding: "6px 8px",
+                                                    background: "#f8fafc",
+                                                  }}
+                                                >
+                                                  <div
+                                                    style={{
+                                                      display: "flex",
+                                                      alignItems: "center",
+                                                      justifyContent: "space-between",
+                                                      gap: 8,
+                                                    }}
+                                                  >
+                                                    <span style={{ fontSize: 12, color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                      {attachmentName}
+                                                    </span>
+                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                                      {kind === "video" && attachmentUrl && (
+                                                        <Button
+                                                          type="text"
+                                                          size="small"
+                                                          icon={<PlayCircleOutlined />}
+                                                          onClick={() =>
+                                                            setPlayingAttachmentByComment((prev) => ({
+                                                              ...prev,
+                                                              [attachmentKey]: !prev[attachmentKey],
+                                                            }))
+                                                          }
+                                                        />
+                                                      )}
+                                                      <Button
+                                                        type="text"
+                                                        size="small"
+                                                        icon={<DownloadOutlined />}
+                                                        onClick={() => handleDownloadAttachment(file)}
+                                                      />
+                                                    </div>
+                                                  </div>
+
+                                                  {kind === "image" && attachmentUrl && (
+                                                    <img
+                                                      src={attachmentUrl}
+                                                      alt={attachmentName}
+                                                      style={{
+                                                        width: "100%",
+                                                        maxWidth: 260,
+                                                        borderRadius: 8,
+                                                        objectFit: "cover",
+                                                        border: "1px solid #dbe4f0",
+                                                      }}
+                                                    />
+                                                  )}
+
+                                                  {kind === "video" && attachmentUrl && isVideoPlaying && (
+                                                    <video
+                                                      src={attachmentUrl}
+                                                      controls
+                                                      style={{
+                                                        width: "100%",
+                                                        maxWidth: 300,
+                                                        borderRadius: 8,
+                                                        border: "1px solid #dbe4f0",
+                                                        background: "#000",
+                                                      }}
+                                                    />
+                                                  )}
+                                                </div>
+                                              );
+                                            })()
+                                          ))}
+                                        </div>
+                                      )}
                                     </>
                                   )}
                                 </div>
@@ -1388,20 +1719,75 @@ export default function CommonTaskFormModal({
                           <Input.TextArea
                             rows={4}
                             placeholder="Share an update..."
-                            value={commentText}
+                            value={`${commentText}${voiceInterimText ? `${commentText ? " " : ""}${voiceInterimText}` : ""}`}
                             onChange={(event) => setCommentText(event.target.value)}
+                            onPressEnter={handleCommentInputPressEnter}
+                            readOnly={isVoiceListening}
                           />
+                          {commentFiles.length > 0 && (
+                            <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                              {commentFiles.map((file, index) => (
+                                <span
+                                  key={`${file?.name || "file"}-${index}`}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    border: "1px solid #dbe4f0",
+                                    borderRadius: 999,
+                                    background: "#f8fafc",
+                                    padding: "3px 8px",
+                                    maxWidth: 240,
+                                  }}
+                                >
+                                  <PaperClipOutlined />
+                                  <span style={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {file?.name || `File ${index + 1}`}
+                                  </span>
+                                  <Button type="text" size="small" icon={<CloseOutlined />} onClick={() => removeCommentFile(index)} />
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <div className="task-detail-composer-actions">
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <Button
+                                type="default"
+                                icon={<PaperClipOutlined />}
+                                onClick={() => commentFileInputRef.current?.click()}
+                                disabled={!effectiveTaskId || submittingComment}
+                              >
+                                Attach
+                              </Button>
+                              {voiceSupported && (
+                                <Button
+                                  type={isVoiceListening ? "primary" : "default"}
+                                  icon={isVoiceListening ? <LoadingOutlined spin /> : <AudioOutlined />}
+                                  onClick={handleVoiceToggle}
+                                  disabled={!effectiveTaskId || submittingComment}
+                                >
+                                  {isVoiceListening ? "Stop recording" : "Voice"}
+                                </Button>
+                              )}
+                            </div>
                             <Button
                               className="task-detail-comment-submit"
                               type="primary"
                               onClick={handleAddComment}
                               loading={submittingComment}
-                              disabled={!commentText.trim()}
+                              disabled={!`${commentText}${voiceInterimText ? ` ${voiceInterimText}` : ""}`.trim() && commentFiles.length === 0}
                             >
-                              Add comment
+                              Send
                             </Button>
                           </div>
+                          <input
+                            ref={commentFileInputRef}
+                            type="file"
+                            multiple
+                            accept="*"
+                            style={{ display: "none" }}
+                            onChange={handleCommentFilesChange}
+                          />
                         </>
                       ) : (
                         <div className="task-detail-composer-title">Comments are available in view mode.</div>

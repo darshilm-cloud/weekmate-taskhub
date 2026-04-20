@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Avatar,
@@ -34,6 +34,8 @@ import {
   TagsOutlined,
   ClockCircleOutlined,
   MoreOutlined,
+  AudioOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 
 import Service from "../../service";
@@ -58,6 +60,24 @@ import BugsGanttView from "./BugsGanttView";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
+
+const parseBugUiDate = (value) => {
+  if (!value) return null;
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : null;
+  if (value instanceof Date) {
+    const parsedFromDate = dayjs(value);
+    return parsedFromDate.isValid() ? parsedFromDate : null;
+  }
+  const raw = String(value).trim();
+  const ddmmyyyyMatch = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const [, dd, mm, yyyy] = ddmmyyyyMatch;
+    const parsed = dayjs(`${yyyy}-${mm}-${dd}`);
+    if (parsed.isValid()) return parsed;
+  }
+  const fallbackParsed = dayjs(raw);
+  return fallbackParsed.isValid() ? fallbackParsed : null;
+};
 
 const BugsPMS = () => {
   const { projectId } = useParams();
@@ -200,6 +220,187 @@ const BugsPMS = () => {
 
   const [addBugCommentDraft, setAddBugCommentDraft] = useState("");
   const [editBugCommentDraft, setEditBugCommentDraft] = useState("");
+  const [addBugCommentFiles, setAddBugCommentFiles] = useState([]);
+  const [editBugCommentFiles, setEditBugCommentFiles] = useState([]);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceInterimAdd, setVoiceInterimAdd] = useState("");
+  const [voiceInterimEdit, setVoiceInterimEdit] = useState("");
+  const [voiceListeningTarget, setVoiceListeningTarget] = useState(null);
+  const addCommentFileInputRef = useRef(null);
+  const editCommentFileInputRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const silenceTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SR));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch (e) {
+          // no-op
+        }
+      }
+    };
+  }, []);
+
+  const resetVoiceSilenceTimeout = () => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    silenceTimeoutRef.current = setTimeout(() => {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch (error) {
+          // no-op
+        }
+      }
+    }, 3500);
+  };
+
+  const handleCommentFilesChange = (event, type = "add") => {
+    const selectedFiles = Array.from(event?.target?.files || []);
+    const allowedFiles = [];
+    selectedFiles.forEach((file) => {
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB <= 20) {
+        allowedFiles.push(file);
+      } else {
+        message.error(`File '${file.name}' exceeds the 20MB file size limit.`);
+      }
+    });
+
+    if (allowedFiles.length > 0) {
+      if (type === "edit") {
+        setEditBugCommentFiles((prev) => [...prev, ...allowedFiles]);
+      } else {
+        setAddBugCommentFiles((prev) => [...prev, ...allowedFiles]);
+      }
+    }
+    if (event?.target) event.target.value = "";
+  };
+
+  const removeCommentFile = (index, type = "add") => {
+    if (type === "edit") {
+      setEditBugCommentFiles((prev) => prev.filter((_, idx) => idx !== index));
+      return;
+    }
+    setAddBugCommentFiles((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleVoiceToggle = (target = "add") => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      message.error("Voice input is not supported in this browser.");
+      return;
+    }
+    if (speechRecognitionRef.current && voiceListeningTarget === target) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      return;
+    }
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+    }
+
+    const recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      setVoiceListeningTarget(target);
+      if (target === "edit") setVoiceInterimEdit("");
+      else setVoiceInterimAdd("");
+      resetVoiceSilenceTimeout();
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i][0]?.transcript || "";
+        if (event.results[i].isFinal) finalTranscript += `${text} `;
+        else interimTranscript += text;
+      }
+      if (target === "edit") {
+        if (finalTranscript.trim()) {
+          setEditBugCommentDraft((prev) => `${prev}${prev && !/\s$/.test(prev) ? " " : ""}${finalTranscript}`.trimStart());
+        }
+        setVoiceInterimEdit(interimTranscript);
+      } else {
+        if (finalTranscript.trim()) {
+          setAddBugCommentDraft((prev) => `${prev}${prev && !/\s$/.test(prev) ? " " : ""}${finalTranscript}`.trimStart());
+        }
+        setVoiceInterimAdd(interimTranscript);
+      }
+      if (finalTranscript.trim() || interimTranscript.trim()) {
+        resetVoiceSilenceTimeout();
+      }
+    };
+
+    recognition.onerror = () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      setVoiceListeningTarget(null);
+      setVoiceInterimAdd("");
+      setVoiceInterimEdit("");
+      speechRecognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      setVoiceListeningTarget(null);
+      setVoiceInterimAdd("");
+      setVoiceInterimEdit("");
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const handleComposerSubmit = (type = "add") => {
+    const draft = type === "edit" ? editBugCommentDraft : addBugCommentDraft;
+    const interim = type === "edit" ? voiceInterimEdit : voiceInterimAdd;
+    const files = type === "edit" ? editBugCommentFiles : addBugCommentFiles;
+    const composedValue = `${draft}${interim ? ` ${interim}` : ""}`.trim();
+    if (!composedValue && files.length === 0) return;
+    if (type === "edit") {
+      message.info("Comment saving will be available after this bug record is loaded in detail view.");
+      return;
+    }
+    message.info("Save the bug first, then add comments.");
+  };
+
+  const handleComposerPressEnter = (event, type = "add") => {
+    if (event?.shiftKey) return;
+    event?.preventDefault?.();
+    handleComposerSubmit(type);
+  };
 
   useEffect(() => {
     let active = true;
@@ -877,7 +1078,7 @@ const BugsPMS = () => {
                 <Form.Item name="title" style={ { marginBottom: 0 } }>
                   <Input
                     value={ addInputTaskData?.title || "" }
-                    placeholder="Add Task Bug"
+                    placeholder="Enter Bug Name"
                     className="bug-header-title-input"
                     bordered={ false }
                     onChange={ (e) => {
@@ -886,40 +1087,6 @@ const BugsPMS = () => {
                     } }
                   />
                 </Form.Item>
-              </div>
-
-              <div className="bug-breadcrumb-text">Create bug and assign details</div>
-
-              <div className="header-meta-cards">
-                <div className="meta-card">
-                  <div className="meta-card-label">DUE DATE</div>
-                  <div className="meta-card-value">
-                    <DatePicker
-                      value={
-                        addInputTaskData?.end_date &&
-                        dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
-                      }
-                      placeholder="Set Date"
-                      className="bug-header-card-input"
-                      suffixIcon={ <CalendarOutlined /> }
-                      onChange={ (date, dateString) =>
-                        handleTaskInput("end_date", dateString)
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="meta-card">
-                  <div className="meta-card-label">ASSIGNEES</div>
-                  <div className="meta-card-value">
-                    { addBugAssigneeCount } Member{ addBugAssigneeCount !== 1 ? "s" : "" }
-                  </div>
-                </div>
-                <div className="meta-card">
-                  <div className="meta-card-label">ASSETS</div>
-                  <div className="meta-card-value">
-                    { addBugFileCount } attachment{ addBugFileCount !== 1 ? "s" : "" }
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -985,18 +1152,45 @@ const BugsPMS = () => {
               <div className="card-row">
                 <div className="section-card">
                   <div className="section-card-title">
-                    <span>Project</span>
+                    <span>Start Date</span>
                   </div>
                   <div className="meta-value">
-                    <Input
-                      value={ addBugProjectValue }
-                      placeholder="Project"
-                      size="large"
-                      disabled
+                    <DatePicker
+                      value={ parseBugUiDate(addInputTaskData?.start_date) }
+                      format="DD-MM-YYYY"
+                      placeholder="Select date"
+                      style={ { width: "100%" } }
+                      onChange={ (date, dateString) =>
+                        handleTaskInput("start_date", dateString)
+                      }
                     />
                   </div>
                 </div>
 
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>End Date</span>
+                  </div>
+                  <div className="meta-value">
+                    <DatePicker
+                      value={ parseBugUiDate(addInputTaskData?.end_date) }
+                      format="DD-MM-YYYY"
+                      placeholder="Select date"
+                      style={ { width: "100%" } }
+                      disabledDate={ (current) => {
+                        const startDate = parseBugUiDate(addInputTaskData?.start_date);
+                        if (!startDate) return false;
+                        return current && current < startDate.startOf("day");
+                      } }
+                      onChange={ (date, dateString) =>
+                        handleTaskInput("end_date", dateString)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-row">
                 <div className="section-card">
                   <div className="section-card-title">
                     <span>Assignee(s)</span>
@@ -1012,27 +1206,6 @@ const BugsPMS = () => {
                         showTagLabel
                       />
                     </Form.Item>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-row">
-                <div className="section-card">
-                  <div className="section-card-title">
-                    <span>Start Date</span>
-                  </div>
-                  <div className="meta-value">
-                    <DatePicker
-                      value={
-                        addInputTaskData?.start_date &&
-                        dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
-                      }
-                      placeholder="Select date"
-                      style={ { width: "100%" } }
-                      onChange={ (date, dateString) =>
-                        handleTaskInput("start_date", dateString)
-                      }
-                    />
                   </div>
                 </div>
 
@@ -1059,6 +1232,22 @@ const BugsPMS = () => {
                         </Option>
                       )) }
                     </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-row">
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Project</span>
+                  </div>
+                  <div className="meta-value">
+                    <Input
+                      value={ addBugProjectValue }
+                      placeholder="Project"
+                      size="large"
+                      disabled
+                    />
                   </div>
                 </div>
               </div>
@@ -1220,21 +1409,59 @@ const BugsPMS = () => {
                     className="bug-detail-composer-input"
                     rows={ 3 }
                     placeholder="Share an update, mention blockers, or document the next step..."
-                    value={ addBugCommentDraft }
+                    value={ `${addBugCommentDraft}${voiceInterimAdd ? `${addBugCommentDraft ? " " : ""}${voiceInterimAdd}` : ""}` }
                     onChange={ (e) => setAddBugCommentDraft(e.target.value) }
+                    onPressEnter={ (event) => handleComposerPressEnter(event, "add") }
+                    readOnly={ voiceListeningTarget === "add" }
                   />
+                  { addBugCommentFiles.length > 0 && (
+                    <div className="bug-detail-composer-file-list">
+                      { addBugCommentFiles.map((file, index) => (
+                        <span key={ `${file?.name || "file"}-${index}` } className="bug-detail-composer-file-chip">
+                          <span title={ file?.name }>{ file?.name || `File ${index + 1}` }</span>
+                          <button type="button" onClick={ () => removeCommentFile(index, "add") }>
+                            x
+                          </button>
+                        </span>
+                      )) }
+                    </div>
+                  ) }
                   <div className="bug-detail-composer-actions">
+                    <div className="bug-detail-composer-left-actions">
+                      <Button
+                        type="default"
+                        icon={ <PaperClipOutlined /> }
+                        onClick={ () => addCommentFileInputRef.current?.click() }
+                      >
+                        Attach
+                      </Button>
+                      { voiceSupported && (
+                        <Button
+                          type={ voiceListeningTarget === "add" ? "primary" : "default" }
+                          icon={ voiceListeningTarget === "add" ? <LoadingOutlined spin /> : <AudioOutlined /> }
+                          onClick={ () => handleVoiceToggle("add") }
+                        >
+                          { voiceListeningTarget === "add" ? "Stop recording" : "Voice" }
+                        </Button>
+                      ) }
+                    </div>
                     <Button
                       className="bug-detail-comment-submit"
                       type="primary"
-                      disabled={ !addBugCommentDraft.trim() }
-                      onClick={ () => {
-                        message.info("Save the bug first, then add comments.");
-                      } }
+                      disabled={ !`${addBugCommentDraft}${voiceInterimAdd ? ` ${voiceInterimAdd}` : ""}`.trim() && addBugCommentFiles.length === 0 }
+                      onClick={ () => handleComposerSubmit("add") }
                     >
-                      Add comment
+                      Send
                     </Button>
                   </div>
+                  <input
+                    ref={ addCommentFileInputRef }
+                    type="file"
+                    multiple
+                    accept="*"
+                    style={ { display: "none" } }
+                    onChange={ (event) => handleCommentFilesChange(event, "add") }
+                  />
                 </div>
               </div>
             </div>
@@ -1266,23 +1493,6 @@ const BugsPMS = () => {
               <div className="bug-breadcrumb-text">Update bug details and activity</div>
 
               <div className="header-meta-cards">
-                <div className="meta-card">
-                  <div className="meta-card-label">DUE DATE</div>
-                  <div className="meta-card-value">
-                    <DatePicker
-                      value={
-                        addInputTaskData?.end_date &&
-                        dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
-                      }
-                      placeholder="Set Date"
-                      className="bug-header-card-input"
-                      suffixIcon={ <CalendarOutlined /> }
-                      onChange={ (date, dateString) =>
-                        handleTaskInput("end_date", dateString)
-                      }
-                    />
-                  </div>
-                </div>
                 <div className="meta-card">
                   <div className="meta-card-label">ASSIGNEES</div>
                   <div className="meta-card-value">
@@ -1415,9 +1625,9 @@ const BugsPMS = () => {
                 <div className="meta-value">
                   <DatePicker
                     value={
-                      addInputTaskData?.start_date &&
-                      dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
+                      parseBugUiDate(addInputTaskData?.start_date)
                     }
+                    format="DD-MM-YYYY"
                     placeholder="Start Date"
                     style={ { width: "100%" } }
                     onChange={ (date, dateString) =>
@@ -1434,13 +1644,14 @@ const BugsPMS = () => {
                 <div className="meta-value">
                   <DatePicker
                     value={
-                      addInputTaskData?.end_date &&
-                      dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
+                      parseBugUiDate(addInputTaskData?.end_date)
                     }
-                    disabledDate={ (current) =>
-                      current &&
-                      current < dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
-                    }
+                    format="DD-MM-YYYY"
+                    disabledDate={ (current) => {
+                      const startDate = parseBugUiDate(addInputTaskData?.start_date);
+                      if (!startDate) return false;
+                      return current && current < startDate.startOf("day");
+                    } }
                     placeholder="End Date"
                     style={ { width: "100%" } }
                     onChange={ (date, dateString) =>
@@ -1666,21 +1877,59 @@ const BugsPMS = () => {
                   className="bug-detail-composer-input"
                   rows={ 3 }
                   placeholder="Share an update, mention blockers, or document the next step..."
-                  value={ editBugCommentDraft }
+                  value={ `${editBugCommentDraft}${voiceInterimEdit ? `${editBugCommentDraft ? " " : ""}${voiceInterimEdit}` : ""}` }
                   onChange={ (e) => setEditBugCommentDraft(e.target.value) }
+                  onPressEnter={ (event) => handleComposerPressEnter(event, "edit") }
+                  readOnly={ voiceListeningTarget === "edit" }
                 />
+                { editBugCommentFiles.length > 0 && (
+                  <div className="bug-detail-composer-file-list">
+                    { editBugCommentFiles.map((file, index) => (
+                      <span key={ `${file?.name || "file"}-${index}` } className="bug-detail-composer-file-chip">
+                        <span title={ file?.name }>{ file?.name || `File ${index + 1}` }</span>
+                        <button type="button" onClick={ () => removeCommentFile(index, "edit") }>
+                          x
+                        </button>
+                      </span>
+                    )) }
+                  </div>
+                ) }
                 <div className="bug-detail-composer-actions">
+                  <div className="bug-detail-composer-left-actions">
+                    <Button
+                      type="default"
+                      icon={ <PaperClipOutlined /> }
+                      onClick={ () => editCommentFileInputRef.current?.click() }
+                    >
+                      Attach
+                    </Button>
+                    { voiceSupported && (
+                      <Button
+                        type={ voiceListeningTarget === "edit" ? "primary" : "default" }
+                        icon={ voiceListeningTarget === "edit" ? <LoadingOutlined spin /> : <AudioOutlined /> }
+                        onClick={ () => handleVoiceToggle("edit") }
+                      >
+                        { voiceListeningTarget === "edit" ? "Stop recording" : "Voice" }
+                      </Button>
+                    ) }
+                  </div>
                   <Button
                     className="bug-detail-comment-submit"
                     type="primary"
-                    disabled={ !editBugCommentDraft.trim() }
-                    onClick={ () => {
-                      message.info("Comment saving will be available after this bug record is loaded in detail view.");
-                    } }
+                    disabled={ !`${editBugCommentDraft}${voiceInterimEdit ? ` ${voiceInterimEdit}` : ""}`.trim() && editBugCommentFiles.length === 0 }
+                    onClick={ () => handleComposerSubmit("edit") }
                   >
-                    Add comment
+                    Send
                   </Button>
                 </div>
+                <input
+                  ref={ editCommentFileInputRef }
+                  type="file"
+                  multiple
+                  accept="*"
+                  style={ { display: "none" } }
+                  onChange={ (event) => handleCommentFilesChange(event, "edit") }
+                />
               </div>
             </div>
           </div>

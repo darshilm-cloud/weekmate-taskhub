@@ -209,7 +209,7 @@ const BugsTable = ({
           if (!due) return <span className="ttv-muted">—</span>;
           const statusLower = String(record?._bugStatus?.title || record?.bug_status || "").toLowerCase();
           const isOverdue = moment(due).isBefore(moment(), "day") && !statusLower.includes("closed");
-          return <span className={isOverdue ? "ttv-due overdue" : "ttv-due"}>{moment(due).format("MMM D")}</span>;
+          return <span className={isOverdue ? "ttv-due overdue" : "ttv-due"}>{moment(due).format("DD-MM-YYYY")}</span>;
         },
       },
     ];

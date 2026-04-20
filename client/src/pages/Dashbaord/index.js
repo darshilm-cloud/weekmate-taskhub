@@ -96,7 +96,7 @@ const Dashboard = () => {
   const calendarWeekdays = useMemo(() => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], []);
   const calendarMonths = useMemo(
     () => Array.from({ length: 12 }, (_, monthIndex) => ({
-      label: dayjs().month(monthIndex).format("MMMM"),
+      label: dayjs().month(monthIndex).format("DD-MM-YYYY"),
       value: monthIndex,
     })),
     []
@@ -256,10 +256,10 @@ const Dashboard = () => {
     for (let i = periods - 1; i >= 0; i--) {
       if (chartView === "monthly") {
         const m = calendarValue.subtract(i, "month");
-        _labels.push(m.format("MMM YYYY"));
+        _labels.push(m.format("DD-MM-YYYY"));
         const tasksInPeriod = myTask.filter((t) => {
           const d = t.createdAt || t.due_date;
-          return d && dayjs(d).format("YYYY-MM") === m.format("YYYY-MM");
+          return d && dayjs(d).format("DD-MM-YYYY") === m.format("DD-MM-YYYY");
         });
         _completedCounts.push(
           tasksInPeriod.filter((t) => ["done", "closed"].includes(t.status?.toLowerCase())).length
@@ -1086,7 +1086,7 @@ const Dashboard = () => {
                     aria-label="Select month and year"
                     aria-expanded={isCalendarPickerOpen}
                   >
-                    <span>{calendarValue.format("MMMM YYYY")}</span>
+                    <span>{calendarValue.format("DD-MM-YYYY")}</span>
                     <span className="db-cal-title-caret">{isCalendarPickerOpen ? "˄" : "˅"}</span>
                   </button>
 

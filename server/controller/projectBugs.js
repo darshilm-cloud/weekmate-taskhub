@@ -42,6 +42,70 @@ const {
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
 const { checkUserIsAdmin } = require("./authentication");
 const { sheet } = require("../template/exportRepeatedBugsCSV");
+
+const DEFAULT_BUG_STAGE_BLUEPRINT = [
+  { title: "To-Do", color: "#89CFF0", sequence: 1, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.IN_PROGRESS, color: "#89CFF0", sequence: 2, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TO_BE_TESTED, color: "#89CFF0", sequence: 3, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.ON_HOLD, color: "#89CFF0", sequence: 4, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.DONE, color: "#89CFF0", sequence: 5, isDefault: true },
+];
+const DEFAULT_BUG_STAGE_TITLE_ALIASES = {
+  "to-do": ["to-do", "to do", "todo", "open"],
+  "in progress": ["in progress"],
+  "to be tested": ["to be tested"],
+  "on hold": ["on hold"],
+  closed: ["closed", "done"],
+};
+
+const normalizeStageTitle = (title = "") =>
+  String(title || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+const ensureCompanyDefaultBugStages = async (companyId, userId) => {
+  if (!companyId || !mongoose.Types.ObjectId.isValid(String(companyId))) return [];
+  const companyObjectId = new mongoose.Types.ObjectId(companyId);
+  const existingStages = await ProjectBugsWorkFlowStatus.find({
+    companyId: companyObjectId,
+    isDeleted: false,
+  })
+    .sort({ sequence: 1, createdAt: 1 })
+    .lean();
+
+  const existingByTitle = new Map(
+    existingStages.map((row) => [normalizeStageTitle(row.title), row])
+  );
+
+  const createDocs = [];
+  DEFAULT_BUG_STAGE_BLUEPRINT.forEach((defaultStage) => {
+    const aliases = DEFAULT_BUG_STAGE_TITLE_ALIASES[normalizeStageTitle(defaultStage.title)] || [
+      normalizeStageTitle(defaultStage.title),
+    ];
+    const hasMatch = aliases.some((alias) => existingByTitle.has(alias));
+    if (!hasMatch) {
+      createDocs.push({
+        companyId: companyObjectId,
+        title: defaultStage.title,
+        color: defaultStage.color,
+        sequence: defaultStage.sequence,
+        isDefault: true,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+    }
+  });
+
+  if (createDocs.length > 0) {
+    await ProjectBugsWorkFlowStatus.insertMany(createDocs);
+  }
+
+  return ProjectBugsWorkFlowStatus.find({
+    companyId: companyObjectId,
+    isDeleted: false,
+  })
+    .sort({ sequence: 1, createdAt: 1 })
+    .lean();
+};
+
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
@@ -178,19 +242,18 @@ exports.addProjectsBugs = async (req, res) => {
     if (await this.projectBugExists(value)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
-      let statusData = await ProjectBugsWorkFlowStatus.findOne({
-        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
-        companyId: decodedCompanyId,
-        isDeleted: false,
-      }).select("_id");
-      if (!statusData?._id) {
-        statusData = await ProjectBugsWorkFlowStatus.findOne({
-          title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
-          companyId: decodedCompanyId,
-          isDeleted: false,
-          $or: [{ project_id: null }, { project_id: { $exists: false } }],
-        }).select("_id");
-      }
+      const availableStatuses = await ensureCompanyDefaultBugStages(
+        decodedCompanyId,
+        req.user?._id
+      );
+      const statusData =
+        availableStatuses.find((status) => {
+          const normalized = normalizeStageTitle(status?.title);
+          return ["to-do", "to do", "todo", "open"].includes(normalized);
+        }) ||
+        availableStatuses.find((status) => status?.isDefault) ||
+        availableStatuses[0] ||
+        null;
       if (!statusData?._id) {
         return errorResponse(
           res,
@@ -212,7 +275,7 @@ exports.addProjectsBugs = async (req, res) => {
         task_id: value.task_id || null,
         sub_task_id: value.sub_task_id || null,
         bug_status: value.bug_status || statusData._id,
-        assignees: value.assignees || [],
+      assignees: value.assignees || [],
         pms_clients: value.pms_clients || [],
         status: value.status,
         descriptions: value.descriptions || "",
@@ -1202,17 +1265,21 @@ exports.projectBugsDetailedData = async (req, res) => {
 
     // 1. Concurrent Privilege & Project Meta Check
     // 1. Concurrent Privilege & Project Meta Check
-    const [isAdmin, isManager, isAccManager, project, statuses] = await Promise.all([
+    const [isAdmin, isManager, isAccManager, project] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
       checkLoginUserIsProjectAccountManager(value.project_id, req.user._id),
       mongoose.model("projects").findOne({ _id: projectObjectId, isDeleted: false }, { pms_clients: 1 }).lean(),
-      ProjectBugsWorkFlowStatus.find({
-        companyId: req.user.companyId,
-        isDeleted: false,
-        ...(value.status_id ? { _id: new mongoose.Types.ObjectId(value.status_id) } : {}),
-      }).sort({ sequence: 1 }).lean()
     ]);
+    const allCompanyStatuses = await ensureCompanyDefaultBugStages(
+      req.user.companyId,
+      req.user?._id
+    );
+    const statuses = value.status_id
+      ? allCompanyStatuses.filter(
+          (stage) => String(stage?._id) === String(value.status_id)
+        )
+      : allCompanyStatuses;
 
     const isPrivileged = isAdmin || isManager || isAccManager;
     const isProjectClient = project?.pms_clients?.some(id => id.equals(userId)) ?? false;

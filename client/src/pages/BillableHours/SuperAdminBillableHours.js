@@ -1362,12 +1362,12 @@ const SuperAdminBillableHours = () => {
                   <i className="fi fi-rr-calendar-minus"></i>
                   {selectedMonth && selectedYear ? (
                     <span style={{ marginLeft: "8px" }}>
-                      {moment(selectedMonth).format("MMM")}{" "}
+                      {moment(selectedMonth).format("MM")}{" "}
                       {moment(selectedYear).format("YY")}
                     </span>
                   ) : (
                     <span style={{ marginLeft: "8px" }}>
-                      {moment(currentMonth).format("MMM")}{" "}
+                      {moment(currentMonth).format("MM")}{" "}
                       {moment(currentYear).format("YY")}
                     </span>
                   )}

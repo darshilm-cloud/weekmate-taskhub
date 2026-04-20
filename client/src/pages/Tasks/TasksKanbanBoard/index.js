@@ -1147,7 +1147,7 @@ const TaskList = ({
                                     {task.due_date ? (
                                       <>
                                         <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
-                                        {moment(task.due_date).format("MMM D, YYYY")}
+                                        {moment(task.due_date).format("DD-MM-YYYY")}
                                       </>
                                     ) : "—"}
                                   </div>

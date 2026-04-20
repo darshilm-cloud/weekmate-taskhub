@@ -738,14 +738,14 @@ const ResourceMatrix = () => {
                             <FiCalendar size={14} />
                             <span className="date-label">Start:</span>
                             <span className="date-value">
-                              {task?.startDate ?dayjs(task?.startDate).format("DD-MMM-YYYY") : "-"}
+                              {task?.startDate ?dayjs(task?.startDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                           <div className="date-item">
                             <FiCalendar size={14} />
                             <span className="date-label">End:</span>
                             <span className="date-value">
-                              {task?.endDate  ? dayjs(task?.endDate).format("DD-MMM-YYYY") : "-"}
+                              {task?.endDate  ? dayjs(task?.endDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                         </div>

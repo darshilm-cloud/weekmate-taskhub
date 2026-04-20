@@ -206,7 +206,7 @@ const TasksTableView = ({
           const isOverdue = moment(due).isBefore(moment(), "day");
           return (
             <span className={isOverdue ? "ttv-due overdue" : "ttv-due"}>
-              {moment(due).format("MMM D")}
+              {moment(due).format("DD-MM-YYYY")}
             </span>
           );
         },

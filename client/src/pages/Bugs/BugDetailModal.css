@@ -1257,6 +1257,93 @@ body[data-theme="dark"] .bug-detail-secondary-btn:focus {
   background: #64748b !important;
 }
 
+.bug-detail-composer-left-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bug-detail-composer-folder-select {
+  min-width: 170px;
+}
+
+.bug-detail-composer-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bug-detail-composer-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #dbe4f0;
+  background: #f8fafc;
+  font-size: 12px;
+  color: #334155;
+}
+
+.bug-detail-composer-file-chip span {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bug-detail-composer-file-chip .ant-btn {
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+}
+
+.bug-detail-composer-voice-preview {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  font-size: 12px;
+  background: #f8fafc;
+}
+
+.comment-attachment-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comment-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 6px 8px;
+}
+
+.comment-attachment-name {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 12px;
+}
+
+.comment-attachment-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .history-content {
   font-size: 13px;
   color: #475569;
@@ -1340,4 +1427,29 @@ body[data-theme="dark"] .comment-sender-name h1,
 body.dark-theme .history-content,
 body[data-theme="dark"] .history-content {
   color: #e2e8f0 !important;
+}
+
+body.dark-theme .bug-detail-composer-file-chip,
+body[data-theme="dark"] .bug-detail-composer-file-chip {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+body.dark-theme .bug-detail-composer-voice-preview,
+body[data-theme="dark"] .bug-detail-composer-voice-preview {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #94a3b8;
+}
+
+body.dark-theme .comment-attachment-item,
+body[data-theme="dark"] .comment-attachment-item {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+body.dark-theme .comment-attachment-name,
+body[data-theme="dark"] .comment-attachment-name {
+  color: #cbd5e1;
 }

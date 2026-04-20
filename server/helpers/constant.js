@@ -39,7 +39,7 @@ module.exports = {
       DONE: "Done",
     },
     BUG_WORKFLOW_STATUS: {
-      TODO: "Open", //"To Do",
+      TODO: "To-Do",
       IN_PROGRESS: "In Progress",
       TO_BE_TESTED: "To be Tested",
       ON_HOLD: "On Hold",

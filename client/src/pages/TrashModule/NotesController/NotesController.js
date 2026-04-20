@@ -63,7 +63,7 @@ const NotesController = () => {
       key: "date",
       render: (_, record) => {
         const deletedAt = moment(record?.deletedAt).format(
-          "DD-MM-YYYY, hh:mm A"
+          "DD-MM-YYYY"
         );
 
         return <span>{deletedAt}</span>;

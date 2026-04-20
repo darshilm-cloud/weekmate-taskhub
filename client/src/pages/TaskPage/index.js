@@ -2321,7 +2321,7 @@ function TaskRow({
   canEditTask = false,
   canDeleteTask = false,
 }) {
-  const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : null;
   const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
   const assigneeNames = getAssigneesDisplay(task.assignees);
@@ -2394,7 +2394,7 @@ function TaskRow({
 }
 
 function TaskCard({ task, onClick, draggable = false, isDragging = false, onDragStart, onDragEnd }) {
-  const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
   return (

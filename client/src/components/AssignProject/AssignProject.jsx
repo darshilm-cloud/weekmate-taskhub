@@ -2192,7 +2192,7 @@ const AssignProject = () => {
                   {workspaceSubtab === "calendar" && (
                     <div className="ap-browser-calendar">
                       <div className="ap-browser-calendar-header">
-                        <div className="ap-browser-calendar-title">{dayjs().format("MMMM YYYY")}</div>
+                        <div className="ap-browser-calendar-title">{dayjs().format("DD-MM-YYYY")}</div>
                         <div className="ap-browser-calendar-controls">
                           <button type="button" className="ap-browser-calendar-btn">Today</button>
                           <button type="button" className="ap-browser-calendar-btn">Month</button>

@@ -37,6 +37,18 @@ import setCookie from "../../hooks/setCookie";
 import getCookie from "../../hooks/getCookie";
 
 const BugsController = () => {
+  const formatBugDateForApi = (value) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    const parsedDdMmYyyy = moment(raw, "DD-MM-YYYY", true);
+    if (parsedDdMmYyyy.isValid()) return parsedDdMmYyyy.toISOString();
+
+    const parsedIso = moment(raw);
+    if (parsedIso.isValid()) return parsedIso.toISOString();
+    return null;
+  };
 
   const importRef = useRef(null);
   const { emitEvent } = useSocketAction();
@@ -526,14 +538,19 @@ const BugsController = () => {
 
     dispatch(showAuthLoader());
     try {
+      const normalizedStartDate = formatBugDateForApi(addInputTaskData.start_date);
+      const normalizedDueDate = formatBugDateForApi(addInputTaskData.end_date);
       const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
         ? values.selectedItems
         : selectedItems.map((item) => item?._id).filter(Boolean);
       const fallbackBugStatusId =
         modalInitialStatusId ||
-        boardTasksBugs.find(
-          (item) => String(item?.title || "").trim().toLowerCase() === "to do"
+        boardTasksBugs.find((item) =>
+          ["to-do", "to do", "todo", "open"].includes(
+            String(item?.title || "").trim().toLowerCase()
+          )
         )?._id ||
+        boardTasksBugs.find((item) => Boolean(item?.isDefault))?._id ||
         boardTasksBugs[0]?._id ||
         null;
       let reqBody = {
@@ -543,8 +560,8 @@ const BugsController = () => {
         status: "active",
         descriptions: editorData,
         bug_labels: addInputTaskData.labels,
-        start_date: addInputTaskData.start_date,
-        due_date: addInputTaskData.end_date,
+        start_date: normalizedStartDate,
+        due_date: normalizedDueDate,
         assignees: resolvedAssigneeIds,
         bug_status: fallbackBugStatusId,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
@@ -585,6 +602,8 @@ const BugsController = () => {
   const updateTasks = async (values, uploadedFiles) => {
     dispatch(showAuthLoader());
     try {
+      const normalizedStartDate = formatBugDateForApi(addInputTaskData.start_date);
+      const normalizedDueDate = formatBugDateForApi(addInputTaskData.end_date);
       const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
         ? values.selectedItems
         : selectedItems.map((item) => item?._id).filter(Boolean);
@@ -619,11 +638,11 @@ const BugsController = () => {
         progress: "0",
         isRepeated: isRepeated,
       };
-      if (addInputTaskData.start_date) {
-        reqBody.start_date = addInputTaskData.start_date;
+      if (normalizedStartDate) {
+        reqBody.start_date = normalizedStartDate;
       }
-      if (addInputTaskData.end_date) {
-        reqBody.due_date = addInputTaskData.end_date;
+      if (normalizedDueDate) {
+        reqBody.due_date = normalizedDueDate;
       }
       if (uploadedFiles) {
         reqBody = {
@@ -686,9 +705,21 @@ const BugsController = () => {
     dispatch(getLables());
     dispatch(getSubscribersList(projectId));
     getTaskDetails();
+    setShowSelectTask(false);
+    setSelectedsassignees([]);
     setSelectedItems([]);
+    setSearchKeyword("");
     setEditorData("");
+    setShowEditor(false);
     setAddInputTaskData({});
+    setEstHrs("");
+    setEstMins("");
+    setEstTime("");
+    setEstHrsError("");
+    setEstMinsError("");
+    setIsAlterEstimatedTime(false);
+    setIsRepeated(false);
+    setFileAttachment([]);
     addform.resetFields();
   };
 

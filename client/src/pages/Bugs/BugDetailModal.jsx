@@ -17,6 +17,8 @@ import {
 import {
   CommentOutlined,
   PaperClipOutlined,
+  AudioOutlined,
+  StopOutlined,
   HistoryOutlined,
   EditOutlined,
   DeleteOutlined,
@@ -41,6 +43,7 @@ import { isCreatedBy } from "../../util/isCreatedBy";
 import { fileImageSelect } from "../../util/FIleSelection";
 import config from "../../settings/config.json";
 import "./BugDetailModal.css";
+import Service from "../../service";
 
 const { Option } = Select;
 
@@ -87,6 +90,7 @@ const BugDetailModal = ({
   removeAttachmentViewFile,
   onFileViewChange,
   attachmentViewfileRef,
+  foldersList,
   projectId,
   getBoardTasks,
   addComments,
@@ -104,9 +108,16 @@ const BugDetailModal = ({
 }) => {
   const [editorInstance, setEditorInstance] = useState(null);
   const [postingComment, setPostingComment] = useState(false);
+  const [commentAttachments, setCommentAttachments] = useState([]);
+  const [commentFolderId, setCommentFolderId] = useState(null);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceInterim, setVoiceInterim] = useState("");
   const [expandHistoryId, setExpandHistoryId] = useState(null);
   const isApplyingEditorDataRef = useRef(false);
   const lastEditorInitRef = useRef({ bugId: null, wasEditing: false });
+  const commentFileInputRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (open && taskDetails?._id) {
@@ -117,16 +128,158 @@ const BugDetailModal = ({
 
   const commentValue = typeof setTextAreaValue === "function" ? (textAreaValue || "") : "";
   const setCommentValue = typeof setTextAreaValue === "function" ? setTextAreaValue : () => {};
+  const availableFolders = Array.isArray(foldersList) ? foldersList : [];
+  const hasCommentFiles = commentAttachments.length > 0;
+
+  useEffect(() => {
+    if (availableFolders.length === 0) {
+      setCommentFolderId(null);
+      return;
+    }
+    setCommentFolderId((prev) =>
+      prev && availableFolders.some((f) => f?._id === prev)
+        ? prev
+        : availableFolders[0]?._id || null
+    );
+  }, [foldersList]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SR));
+  }, []);
+
+  useEffect(() => {
+    if (!open && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      recognitionRef.current = null;
+      setIsVoiceListening(false);
+      setVoiceInterim("");
+    }
+  }, [open]);
+
+  const uploadCommentFiles = async (files) => {
+    if (!Array.isArray(files) || files.length === 0) return [];
+    const formData = new FormData();
+    files.forEach((file) => formData.append("document", file));
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: `${Service.fileUpload}?file_for=comment`,
+      body: formData,
+      options: {
+        "content-type": "multipart/form-data",
+      },
+    });
+    return response?.data?.data || [];
+  };
+
+  const onCommentFilesChange = (event) => {
+    const selectedFiles = Array.from(event?.target?.files || []);
+    const allowedFiles = [];
+    selectedFiles.forEach((file) => {
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB <= 20) {
+        allowedFiles.push(file);
+      } else {
+        message.error(`File '${file.name}' exceeds the 20MB file size limit.`);
+      }
+    });
+    if (allowedFiles.length > 0) {
+      setCommentAttachments((prev) => [...prev, ...allowedFiles]);
+    }
+    if (event?.target) event.target.value = "";
+  };
+
+  const removeCommentAttachment = (index) => {
+    setCommentAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVoiceToggle = () => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      message.error("Voice input is not supported in this browser.");
+      return;
+    }
+
+    if (isVoiceListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      return;
+    }
+
+    const recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      setIsVoiceListening(true);
+      setVoiceInterim("");
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = event.results[i][0]?.transcript || "";
+        if (event.results[i].isFinal) {
+          finalTranscript += `${transcript} `;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      if (finalTranscript.trim()) {
+        const prev = String(commentValue || "");
+        const spacer = prev && !/\s$/.test(prev) ? " " : "";
+        setCommentValue(`${prev}${spacer}${finalTranscript}`.trimStart());
+      }
+      setVoiceInterim(interimTranscript);
+    };
+
+    recognition.onerror = () => {
+      setIsVoiceListening(false);
+      setVoiceInterim("");
+    };
+
+    recognition.onend = () => {
+      setIsVoiceListening(false);
+      setVoiceInterim("");
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
 
   const handlePostComment = async () => {
     const taskId = taskDetails?._id;
     const next = (commentValue || "").trim();
-    if (!taskId || !next) return;
+    if (!taskId || (!next && !hasCommentFiles)) return;
+    if (hasCommentFiles && !commentFolderId) {
+      message.error("Please select a folder before attaching files.");
+      return;
+    }
     setPostingComment(true);
     try {
-      await addComments?.(taskId, [], null, [], next);
+      let uploadedAttachments = [];
+      if (hasCommentFiles) {
+        uploadedAttachments = await uploadCommentFiles(commentAttachments);
+      }
+      await addComments?.(taskId, [], commentFolderId || null, uploadedAttachments, next);
       setCommentValue("");
+      setCommentAttachments([]);
+      setVoiceInterim("");
       await getComment?.(taskId);
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to post comment.");
     } finally {
       setPostingComment(false);
     }
@@ -720,6 +873,23 @@ const BugDetailModal = ({
                             </div>
                           </div>
                           <div className="comment-content" dangerouslySetInnerHTML={{ __html: comment.comment }} />
+                          {Array.isArray(comment?.attachments) && comment.attachments.length > 0 && (
+                            <div className="comment-attachment-list">
+                              {comment.attachments.map((file, fileIndex) => (
+                                <div key={file?._id || `${comment?._id}-file-${fileIndex}`} className="comment-attachment-item">
+                                  <div className="comment-attachment-name">
+                                    {fileImageSelect(file.file_type || file.type)}
+                                    <span>{file.name || file.file_name || "Attachment"}</span>
+                                  </div>
+                                  <Button
+                                    type="text"
+                                    icon={<DownloadOutlined />}
+                                    onClick={() => handleDownloadFile(file)}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -737,17 +907,83 @@ const BugDetailModal = ({
                     onChange={(e) => setCommentValue(e.target.value)}
                     disabled={!taskDetails?._id}
                   />
+                  {!!voiceInterim && (
+                    <div className="bug-detail-composer-voice-preview">
+                      Listening: {voiceInterim}
+                    </div>
+                  )}
+                  {hasCommentFiles && (
+                    <div className="bug-detail-composer-file-list">
+                      {commentAttachments.map((file, index) => (
+                        <div key={`${file?.name || "file"}-${index}`} className="bug-detail-composer-file-chip">
+                          <PaperClipOutlined />
+                          <span>{file?.name || `File ${index + 1}`}</span>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<CloseOutlined />}
+                            onClick={() => removeCommentAttachment(index)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="bug-detail-composer-actions">
+                    <div className="bug-detail-composer-left-actions">
+                      <Tooltip title="Attach files">
+                        <Button
+                          type="default"
+                          icon={<PaperClipOutlined />}
+                          onClick={() => commentFileInputRef.current?.click()}
+                          disabled={!taskDetails?._id || postingComment}
+                        >
+                          Attach
+                        </Button>
+                      </Tooltip>
+                      {voiceSupported && (
+                        <Tooltip title={isVoiceListening ? "Stop voice input" : "Start voice input"}>
+                          <Button
+                            type={isVoiceListening ? "primary" : "default"}
+                            icon={isVoiceListening ? <StopOutlined /> : <AudioOutlined />}
+                            onClick={handleVoiceToggle}
+                            disabled={!taskDetails?._id || postingComment}
+                          >
+                            {isVoiceListening ? "Stop" : "Voice"}
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </div>
+                    {hasCommentFiles && (
+                      <Select
+                        className="bug-detail-composer-folder-select"
+                        placeholder="Select folder"
+                        value={commentFolderId}
+                        onChange={setCommentFolderId}
+                        options={availableFolders.map((folder) => ({
+                          value: folder?._id,
+                          label: folder?.name,
+                        }))}
+                        disabled={postingComment}
+                      />
+                    )}
                     <Button
                       className="bug-detail-comment-submit"
                       type="primary"
                       onClick={handlePostComment}
                       loading={postingComment}
-                      disabled={!commentValue.trim()}
+                      disabled={!commentValue.trim() && !hasCommentFiles}
                     >
                       Add comment
                     </Button>
                   </div>
+                  <input
+                    ref={commentFileInputRef}
+                    type="file"
+                    multiple
+                    accept="*"
+                    style={{ display: "none" }}
+                    onChange={onCommentFilesChange}
+                  />
                 </div>
               </div>
             )}

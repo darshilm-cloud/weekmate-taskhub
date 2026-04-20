@@ -56,7 +56,7 @@ const MylogtimeWidget = () => {
   const [html, setHtml] = useState([]);
 
   const dayAndMonth = modalData?.logged_date
-    ? moment(modalData?.logged_date, "DD-MM-YYYY").format("D MMMM YYYY")
+    ? moment(modalData?.logged_date, "DD-MM-YYYY").format("DD-MM-YYYY")
     : "";
 
   const deleteTime = async (id) => {
@@ -510,7 +510,7 @@ const MylogtimeWidget = () => {
                               onClick={() => handleRowClick(entry)}
                             >
                               {moment(entry?.logged_date, "DD-MM-YYYY").format(
-                                "D MMM YYYY"
+                                "DD-MM-YYYY"
                               )}
                             </td>
                             <td onClick={() => handleRowClick(entry)}>
@@ -611,7 +611,7 @@ const MylogtimeWidget = () => {
                               onClick={() => handleRowClick(entry)}
                             >
                               {moment(entry?.logged_date, "DD-MM-YYYY").format(
-                                "D MMM YYYY"
+                                "DD-MM-YYYY"
                               )}
                             </td>
                             <td onClick={() => handleRowClick(entry)}>

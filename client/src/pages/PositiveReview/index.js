@@ -169,10 +169,10 @@ const PositiveReview = () => {
 
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
-      monthlyMap[moment().subtract(i, "months").format("MMM YY")] = 0;
+      monthlyMap[moment().subtract(i, "months").format("DD-MM-YYYY")] = 0;
     }
     allReviews.forEach((r) => {
-      const key = moment(r.createdAt).format("MMM YY");
+      const key = moment(r.createdAt).format("DD-MM-YYYY");
       if (key in monthlyMap) monthlyMap[key]++;
     });
 

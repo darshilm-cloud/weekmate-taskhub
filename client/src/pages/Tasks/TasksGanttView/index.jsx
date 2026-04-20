@@ -257,14 +257,14 @@ export default function TasksGanttView({
         <div className="gt-header" style={{ minWidth: LEFT_W + totalW + RIGHT_W }}>
           <div className="gt-wrow">
             <div className="gt-lhd gt-lhd-w">
-              <span className="gt-date-pill">{start.format("MMM D YYYY")}</span>
+              <span className="gt-date-pill">{start.format("DD-MM-YYYY")}</span>
             </div>
               <div className="gt-wtrack" style={{ width: totalW }}>
                 {weekGroups.map((g) => (
                   <div key={g.idx} className="gt-wcell" style={{ width: g.count * dayPx }}>
                     <span className="gt-wlbl">{g.label}</span>
                     <span className="gt-wdates">
-                      {g.s && g.e ? `${g.s.format("MMM D")}–${g.e.format("D")}` : ""}
+                      {g.s && g.e ? `${g.s.format("DD-MM-YYYY")}–${g.e.format("DD-MM-YYYY")}` : ""}
                     </span>
                   </div>
                 ))}
@@ -334,7 +334,7 @@ export default function TasksGanttView({
                           title={
                               <div className="gt-tip-box">
                                 <div className="gt-tip-name">{task.title}</div>
-                                <div className="gt-tip-row"><i className="fa-regular fa-calendar" /> {p.s.format("MMM D")} – {p.e.format("MMM D, YYYY")}</div>
+                                <div className="gt-tip-row"><i className="fa-regular fa-calendar" /> {p.s.format("DD-MM-YYYY")} – {p.e.format("DD-MM-YYYY")}</div>
                                 {overdue && <div className="gt-tip-late">⚠ Overdue</div>}
                               </div>
                             }

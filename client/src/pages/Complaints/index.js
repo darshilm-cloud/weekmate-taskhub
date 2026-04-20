@@ -193,10 +193,10 @@ const Complaints = () => {
     /* monthly trend — last 6 months */
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
-      monthlyMap[moment().subtract(i, "months").format("MMM YY")] = 0;
+      monthlyMap[moment().subtract(i, "months").format("DD-MM-YYYY")] = 0;
     }
     allComplaints.forEach((c) => {
-      const key = moment(c.createdAt).format("MMM YY");
+      const key = moment(c.createdAt).format("DD-MM-YYYY");
       if (key in monthlyMap) monthlyMap[key]++;
     });
 

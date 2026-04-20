@@ -2580,7 +2580,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
       <div className="user-report-chart-card">
         <div className="user-report-card-head">
           <div>
-            <h2>{filters.date ? moment(filters.date).format("MMM D, YYYY") : moment().format("MMM D, YYYY")} to</h2>
+            <h2>{filters.date ? moment(filters.date).format("DD-MM-YYYY") : moment().format("DD-MM-YYYY")} to</h2>
             <div className="user-report-legend-note">
               <span><i className="closed" />Closed</span>
               <span><i className="pending" />Pending</span>
@@ -3418,11 +3418,11 @@ function normalizeTaskOwners(task, userMap) {
 }
 
 function formatDate(dateValue) {
-  return dateValue ? moment(dateValue).format("MMM D, YYYY") : "-";
+  return dateValue ? moment(dateValue).format("DD-MM-YYYY") : "-";
 }
 
 function formatDateTime(dateValue) {
-  return dateValue ? moment(dateValue).format("DD-MM-YYYY HH:mm:ss") : "-";
+  return dateValue ? moment(dateValue).format("DD-MM-YYYY") : "-";
 }
 
 function formatText(value) {

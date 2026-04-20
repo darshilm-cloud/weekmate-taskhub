@@ -52,7 +52,7 @@ const LoggedTimeDetail = ({
 
   const dayAndMonth = columnDetails[recordIndex]?.logged_date
     ? moment(columnDetails[recordIndex]?.logged_date, "DD-MM-YYYY").format(
-        "D MMMM YYYY"
+        "DD-MM-YYYY"
       )
     : "";
 

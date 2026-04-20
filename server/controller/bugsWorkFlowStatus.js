@@ -11,6 +11,9 @@ const configs = require("../configs");
 
 const BugsWorkFlowStatus = mongoose.model("bugsworkflowstatus");
 const PROTECTED_DEFAULT_BUG_STAGES = [
+  "to-do",
+  "to do",
+  "todo",
   "open",
   "in progress",
   "to be tested",
