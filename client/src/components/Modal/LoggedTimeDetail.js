@@ -86,7 +86,7 @@ const LoggedTimeDetail = ({
       key: "date",
       render: (text, record) => {
         const parsedDate = moment(record.logged_date, "DD-MM-YYYY");
-        const formattedDate = parsedDate.format("DD MMM, YY");
+        const formattedDate = parsedDate.format("DD-MM-YYYY");
         return (
           <div>
             <span style={{ textTransform: "capitalize" }}>{formattedDate}</span>
@@ -410,7 +410,7 @@ const LoggedTimeDetail = ({
                           onChange={(date, dateString) =>
                             handleTaskInput(
                               "start_date",
-                              dayjs(dateString, "YYYY-MM-DD")
+                              dayjs(dateString, "DD-MM-YYYY")
                             )
                           }
                           disabledDate={(current) => {

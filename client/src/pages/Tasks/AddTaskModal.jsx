@@ -7,7 +7,7 @@ import CommonTaskFormModal from "./CommonTaskFormModal";
 const normalizeDate = (value, withTime = false) => {
   if (!value) return null;
   if (typeof value === "string") return value;
-  if (value?.format) return value.format(withTime ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD");
+  if (value?.format) return value.format(withTime ? "DD-MM-YYYY HH:mm:ss" : "DD-MM-YYYY");
   return null;
 };
 

@@ -68,7 +68,7 @@ const FILTER_CONFIG = {
               <DatePicker
                 value={
                   customDates.start_date
-                    ? dayjs(customDates.start_date, "YYYY-MM-DD")
+                    ? dayjs(customDates.start_date, "DD-MM-YYYY")
                     : null
                 }
                 onChange={(date, dateString) =>
@@ -81,7 +81,7 @@ const FILTER_CONFIG = {
               <DatePicker
                 value={
                   customDates.end_date
-                    ? dayjs(customDates.end_date, "YYYY-MM-DD")
+                    ? dayjs(customDates.end_date, "DD-MM-YYYY")
                     : null
                 }
                 onChange={(date, dateString) =>
@@ -284,8 +284,8 @@ const MyLoggedTimeFilterComponent = ({ onFilterChange }) => {
     [FILTER_TYPES.PROJECT]: false,
   });
   const [customDates, setCustomDates] = useState({
-    start_date: moment().startOf("month").format("YYYY-MM-DD"),
-    end_date: moment().endOf("month").format("YYYY-MM-DD"),
+    start_date: moment().startOf("month").format("DD-MM-YYYY"),
+    end_date: moment().endOf("month").format("DD-MM-YYYY"),
   });
 
   const activeFiltersCount = useMemo(() => {
@@ -469,8 +469,8 @@ const MyLoggedTimeFilterComponent = ({ onFilterChange }) => {
       setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
       if (filterType === FILTER_TYPES.DATE_RANGE) {
         setCustomDates({
-          start_date: moment().startOf("month").format("YYYY-MM-DD"),
-          end_date: moment().endOf("month").format("YYYY-MM-DD"),
+          start_date: moment().startOf("month").format("DD-MM-YYYY"),
+          end_date: moment().endOf("month").format("DD-MM-YYYY"),
         });
       }
       onFilterChange([FILTER_CONFIG[filterType].skipParam]);
@@ -487,8 +487,8 @@ const MyLoggedTimeFilterComponent = ({ onFilterChange }) => {
     });
     setSearchTerms({ [FILTER_TYPES.PROJECT]: "" });
     setCustomDates({
-      start_date: moment().startOf("month").format("YYYY-MM-DD"),
-      end_date: moment().endOf("month").format("YYYY-MM-DD"),
+      start_date: moment().startOf("month").format("DD-MM-YYYY"),
+      end_date: moment().endOf("month").format("DD-MM-YYYY"),
     });
     onFilterChange(["skipAll"]);
     setIsPopoverOpen(false);

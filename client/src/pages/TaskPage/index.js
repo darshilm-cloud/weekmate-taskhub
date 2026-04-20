@@ -281,10 +281,10 @@ function getTaskPageStateFromSearch(search, isAdmin) {
   if (filter === "assigned_to_me") {
     base = { viewAll: false, statusFilter: "all", taskStartDate: null, taskEndDate: null };
   } else if (filter === "due_today") {
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = dayjs().format("DD-MM-YYYY");
     base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: today, taskEndDate: today };
   } else if (filter === "past_due") {
-    const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const yesterday = dayjs().subtract(1, "day").format("DD-MM-YYYY");
     base = { viewAll: isAdmin, statusFilter: "incomplete", taskStartDate: null, taskEndDate: yesterday };
   } else if (filter === "all") {
     base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: null, taskEndDate: null };
@@ -306,13 +306,13 @@ function getTaskPageStateFromSearch(search, isAdmin) {
 }
 
 function getDatePresetFromState(startDate, endDate) {
-  const today = dayjs().format("YYYY-MM-DD");
-  const weekStart = dayjs().startOf("week").format("YYYY-MM-DD");
-  const weekEnd = dayjs().endOf("week").format("YYYY-MM-DD");
-  const monthStart = dayjs().startOf("month").format("YYYY-MM-DD");
-  const monthEnd = dayjs().endOf("month").format("YYYY-MM-DD");
-  const next7End = dayjs().add(7, "day").format("YYYY-MM-DD");
-  const yesterday = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+  const today = dayjs().format("DD-MM-YYYY");
+  const weekStart = dayjs().startOf("week").format("DD-MM-YYYY");
+  const weekEnd = dayjs().endOf("week").format("DD-MM-YYYY");
+  const monthStart = dayjs().startOf("month").format("DD-MM-YYYY");
+  const monthEnd = dayjs().endOf("month").format("DD-MM-YYYY");
+  const next7End = dayjs().add(7, "day").format("DD-MM-YYYY");
+  const yesterday = dayjs().subtract(1, "day").format("DD-MM-YYYY");
 
   if (!startDate && !endDate) return "any";
   if (startDate === today && endDate === today) return "today";
@@ -1048,24 +1048,24 @@ const TaskPage = () => {
 
     switch (presetKey) {
       case "today":
-        setTaskStartDate(today.format("YYYY-MM-DD"));
-        setTaskEndDate(today.format("YYYY-MM-DD"));
+        setTaskStartDate(today.format("DD-MM-YYYY"));
+        setTaskEndDate(today.format("DD-MM-YYYY"));
         break;
       case "this_week":
-        setTaskStartDate(today.startOf("week").format("YYYY-MM-DD"));
-        setTaskEndDate(today.endOf("week").format("YYYY-MM-DD"));
+        setTaskStartDate(today.startOf("week").format("DD-MM-YYYY"));
+        setTaskEndDate(today.endOf("week").format("DD-MM-YYYY"));
         break;
       case "this_month":
-        setTaskStartDate(today.startOf("month").format("YYYY-MM-DD"));
-        setTaskEndDate(today.endOf("month").format("YYYY-MM-DD"));
+        setTaskStartDate(today.startOf("month").format("DD-MM-YYYY"));
+        setTaskEndDate(today.endOf("month").format("DD-MM-YYYY"));
         break;
       case "next_7_days":
-        setTaskStartDate(today.format("YYYY-MM-DD"));
-        setTaskEndDate(today.add(7, "day").format("YYYY-MM-DD"));
+        setTaskStartDate(today.format("DD-MM-YYYY"));
+        setTaskEndDate(today.add(7, "day").format("DD-MM-YYYY"));
         break;
       case "overdue":
         setTaskStartDate(null);
-        setTaskEndDate(today.subtract(1, "day").format("YYYY-MM-DD"));
+        setTaskEndDate(today.subtract(1, "day").format("DD-MM-YYYY"));
         break;
       default:
         setTaskStartDate(null);
@@ -1386,7 +1386,7 @@ const TaskPage = () => {
     const map = {};
     sortedTasks.forEach((t) => {
       if (!t.due_date) return;
-      const d = dayjs(t.due_date).format("YYYY-MM-DD");
+      const d = dayjs(t.due_date).format("DD-MM-YYYY");
       if (!map[d]) map[d] = [];
       map[d].push(t);
     });
@@ -1406,7 +1406,7 @@ const TaskPage = () => {
   const normalizeDateForApi = useCallback((value, withTime = false) => {
     if (!value) return null;
     if (typeof value === "string") return value;
-    if (value?.format) return value.format(withTime ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD");
+    if (value?.format) return value.format(withTime ? "DD-MM-YYYY HH:mm:ss" : "DD-MM-YYYY");
     return null;
   }, []);
 
@@ -2183,7 +2183,7 @@ const TaskPage = () => {
             <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
             <div className="calendar-title-group">
               <span className="calendar-title">
-                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "YYYY-MM-DD")}
+                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "DD-MM-YYYY")}
               </span>
               <div className="calendar-month-year-controls">
                 <Select
@@ -2322,7 +2322,7 @@ function TaskRow({
   canDeleteTask = false,
 }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("MMM D, YYYY") : "—";
-  const dueDateKey = task.due_date ? dayjs(task.due_date).format("YYYY-MM-DD") : null;
+  const dueDateKey = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : null;
   const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const projectTitle = getTaskProjectTitle(task);
@@ -2427,16 +2427,16 @@ function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
       const end = current.endOf("month").endOf("week");
       const arr = [];
       while (d.isBefore(end) || d.isSame(end, "day")) {
-        arr.push(d.format("YYYY-MM-DD"));
+        arr.push(d.format("DD-MM-YYYY"));
         d = d.add(1, "day");
       }
       return arr;
     }
     if (mode === "week") {
       const start = current.startOf("week");
-      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("YYYY-MM-DD"));
+      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
     }
-    return [current.format("YYYY-MM-DD")];
+    return [current.format("DD-MM-YYYY")];
   }, [mode, current]);
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

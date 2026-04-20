@@ -872,7 +872,7 @@ const Projectexpences = () => {
         key: "date",
         width: 110,
         render: (_, r) =>
-          r?.createdAt ? moment(r.createdAt).format("DD MMM YYYY") : "—",
+          r?.createdAt ? moment(r.createdAt).format("DD-MM-YYYY") : "—",
       },
       {
         title: "Status",
@@ -1110,7 +1110,7 @@ const Projectexpences = () => {
           value={dateRange}
           onChange={(v) => setDateRange(v || [null, null])}
           allowClear
-          format="DD MMM YYYY"
+          format="DD-MM-YYYY"
         />
 
         <div className="pe-filter-divider" />
@@ -1219,7 +1219,7 @@ const Projectexpences = () => {
             <div className="pe-drawer-field">
               <div className="pe-drawer-label">Date</div>
               <div className="pe-drawer-value">
-                {viewData?.createdAt ? moment(viewData.createdAt).format("DD MMM YYYY") : "—"}
+                {viewData?.createdAt ? moment(viewData.createdAt).format("DD-MM-YYYY") : "—"}
               </div>
             </div>
           </Col>

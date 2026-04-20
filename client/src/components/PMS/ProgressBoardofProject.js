@@ -525,7 +525,7 @@ function ProgressBoardofProject() {
     const map = {};
     projectTasks.forEach((task) => {
       if (!task?.due_date) return;
-      const dateKey = dayjs(task.due_date).format("YYYY-MM-DD");
+      const dateKey = dayjs(task.due_date).format("DD-MM-YYYY");
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(task);
     });
@@ -867,7 +867,7 @@ function ProgressBoardofProject() {
             <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
             <div className="calendar-title-group">
               <span className="calendar-title">
-                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "YYYY-MM-DD")}
+                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "DD-MM-YYYY")}
               </span>
               <div className="calendar-month-year-controls">
                 <Select
@@ -979,16 +979,16 @@ function CalendarGridForProject({ mode, current, tasksByDate }) {
       const end = current.endOf("month").endOf("week");
       const arr = [];
       while (dayPointer.isBefore(end) || dayPointer.isSame(end, "day")) {
-        arr.push(dayPointer.format("YYYY-MM-DD"));
+        arr.push(dayPointer.format("DD-MM-YYYY"));
         dayPointer = dayPointer.add(1, "day");
       }
       return arr;
     }
     if (mode === "week") {
       const start = current.startOf("week");
-      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("YYYY-MM-DD"));
+      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
     }
-    return [current.format("YYYY-MM-DD")];
+    return [current.format("DD-MM-YYYY")];
   }, [mode, current]);
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

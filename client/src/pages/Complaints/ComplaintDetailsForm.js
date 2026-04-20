@@ -290,7 +290,7 @@ const ComplaintDetailsForm = () => {
               <div className="cad-info-label"><CalendarOutlined /> Date</div>
               <div className="cad-info-value">
                 {complaintsData?.createdAt
-                  ? moment(complaintsData.createdAt).format("DD MMM YYYY")
+                  ? moment(complaintsData.createdAt).format("DD-MM-YYYY")
                   : "—"}
               </div>
             </div>
@@ -543,7 +543,7 @@ const ComplaintDetailsForm = () => {
                           {item?.createdBy?.full_name || "—"}
                         </span>
                         <span className="cad-comment-time">
-                          {moment(item.createdAt).format("DD MMM YYYY, hh:mm A")}
+                          {moment(item.createdAt).format("DD-MM-YYYY, hh:mm A")}
                         </span>
                         {loggedinUserId === item?.createdBy?._id && (
                           <div className="cad-comment-actions">

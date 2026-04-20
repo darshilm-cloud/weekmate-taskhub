@@ -277,7 +277,7 @@ const PositiveReview = () => {
       {
         title: "Date",
         width: 110,
-        render: (_, r) => moment(r.createdAt).format("DD MMM YYYY"),
+        render: (_, r) => moment(r.createdAt).format("DD-MM-YYYY"),
       },
     ];
 
@@ -486,7 +486,7 @@ const PositiveReview = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Date</div>
                   <div className="pr-drawer-value">
-                    {moment(drawerRecord.createdAt).format("DD MMM YYYY")}
+                    {moment(drawerRecord.createdAt).format("DD-MM-YYYY")}
                   </div>
                 </div>
                 <div className="pr-drawer-field">

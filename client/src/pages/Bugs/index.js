@@ -897,7 +897,7 @@ const BugsPMS = () => {
                     <DatePicker
                       value={
                         addInputTaskData?.end_date &&
-                        dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                        dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                       }
                       placeholder="Set Date"
                       className="bug-header-card-input"
@@ -1025,7 +1025,7 @@ const BugsPMS = () => {
                     <DatePicker
                       value={
                         addInputTaskData?.start_date &&
-                        dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
+                        dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
                       }
                       placeholder="Select date"
                       style={ { width: "100%" } }
@@ -1272,7 +1272,7 @@ const BugsPMS = () => {
                     <DatePicker
                       value={
                         addInputTaskData?.end_date &&
-                        dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                        dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                       }
                       placeholder="Set Date"
                       className="bug-header-card-input"
@@ -1416,7 +1416,7 @@ const BugsPMS = () => {
                   <DatePicker
                     value={
                       addInputTaskData?.start_date &&
-                      dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
+                      dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
                     }
                     placeholder="Start Date"
                     style={ { width: "100%" } }
@@ -1435,11 +1435,11 @@ const BugsPMS = () => {
                   <DatePicker
                     value={
                       addInputTaskData?.end_date &&
-                      dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                      dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                     }
                     disabledDate={ (current) =>
                       current &&
-                      current < dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
+                      current < dayjs(addInputTaskData?.start_date, "DD-MM-YYYY")
                     }
                     placeholder="End Date"
                     style={ { width: "100%" } }

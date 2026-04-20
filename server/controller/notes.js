@@ -157,7 +157,7 @@ exports.getNotes = async (req, res) => {
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional().allow(""),
       project_id: Joi.string().optional().allow(""),
-      notebook_id: Joi.string().optional().default(null),
+      // notebook_id: Joi.string().optional().default(null),
       subscribers: Joi.array().optional(),
       isBookmark: Joi.boolean().optional(),
       tab: Joi.string().valid("all", "created", "shared").default("all")
@@ -228,7 +228,7 @@ exports.getNotes = async (req, res) => {
     }
 
     // Other filters
-    if (value.notebook_id) matchQuery.noteBook_id = new mongoose.Types.ObjectId(value.notebook_id);
+    // if (value.notebook_id) matchQuery.noteBook_id = new mongoose.Types.ObjectId(value.notebook_id);
     if (value.project_id) matchQuery.project_id = new mongoose.Types.ObjectId(value.project_id);
     if (value._id) matchQuery._id = new mongoose.Types.ObjectId(value._id);
     if (value.isBookmark !== undefined) matchQuery.isBookmark = value.isBookmark;
@@ -420,7 +420,7 @@ exports.updateNotes = async (req, res) => {
     } = req.user || {};
 
     const validationSchema = Joi.object({
-      notebook_id: Joi.string().optional().default(null),
+      // notebook_id: Joi.string().optional().default(null),
       title: Joi.string().optional(),
       notesInfo: Joi.string().optional().allow(""),
       color: Joi.string().optional(),
@@ -445,7 +445,7 @@ exports.updateNotes = async (req, res) => {
       const data = await Notes.findByIdAndUpdate(
         req.params.id,
         {
-          noteBook_id: value.notebook_id,
+          // noteBook_id: value.notebook_id,
           title: value.title,
           notesInfo: value.notesInfo,
           color: value.color,

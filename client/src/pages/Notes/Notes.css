@@ -204,6 +204,24 @@
   line-height: 1.55;
 }
 
+.notes-modal-ckeditor-wrap {
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.notes-modal-ckeditor-wrap .ck.ck-editor__main > .ck-editor__editable {
+  min-height: 200px;
+  max-height: 360px;
+}
+
+body.dark-theme .notes-modal-ckeditor-wrap,
+body[data-theme="dark"] .notes-modal-ckeditor-wrap {
+  border-color: #334155;
+  background: rgba(15, 23, 42, 0.82);
+}
+
 .notes-modal-form .ant-input-textarea-show-count::after {
   display: none !important;
 }
@@ -390,11 +408,51 @@ body[data-theme="dark"] .notes-modal-shell .ant-btn-default {
   margin: 0 0 8px;
 }
 
-/* ── Cards Grid ─────────────────────────────────────── */
+/* Infinite scroll container (notes load in pages of 25) */
+.notes-infinite-scroll-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 280px);
+  padding-bottom: 8px;
+}
+
+.notes-infinite-loader {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 16px 8px;
+  width: 100%;
+}
+
+/* ── Cards Grid (5 notes per row on desktop) ───────── */
 .notes-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
+}
+
+@media (max-width: 1400px) {
+  .notes-cards-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .notes-cards-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .notes-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Light theme card ─── */
@@ -413,6 +471,21 @@ body[data-theme="dark"] .notes-modal-shell .ant-btn-default {
 .note-card:hover {
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
   transform: translateY(-2px);
+}
+
+.note-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  outline: none;
+}
+
+.note-card-body:focus-visible {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
 
 .note-card-header {
@@ -504,6 +577,96 @@ body[data-theme="dark"] .note-card-pin-btn.active {
 body.dark-theme .note-card-pin-btn.active .anticon,
 body[data-theme="dark"] .note-card-pin-btn.active .anticon {
   color: #bfdbfe !important;
+}
+
+/* View note modal */
+.notes-view-modal .notes-view-modal-body {
+  padding-top: 4px;
+}
+
+.notes-view-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.notes-view-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.notes-view-meta-label {
+  font-weight: 700;
+  color: #64748b;
+  min-width: 88px;
+}
+
+.notes-view-meta-value {
+  color: #1e293b;
+  flex: 1;
+  min-width: 0;
+}
+
+.notes-view-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.notes-view-html {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  max-height: min(420px, 55vh);
+  overflow: auto;
+}
+
+.notes-view-html p:last-child {
+  margin-bottom: 0;
+}
+
+.notes-view-empty {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+body.dark-theme .notes-view-meta,
+body[data-theme="dark"] .notes-view-meta {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: #334155;
+}
+
+body.dark-theme .notes-view-meta-label,
+body[data-theme="dark"] .notes-view-meta-label {
+  color: #94a3b8;
+}
+
+body.dark-theme .notes-view-meta-value,
+body[data-theme="dark"] .notes-view-meta-value {
+  color: #e2e8f0;
+}
+
+body.dark-theme .notes-view-html,
+body[data-theme="dark"] .notes-view-html {
+  border-color: #334155;
+  background: rgba(15, 23, 42, 0.75);
+  color: #cbd5e1;
 }
 
 .note-card-content {

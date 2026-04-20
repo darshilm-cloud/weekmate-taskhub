@@ -1206,7 +1206,7 @@ function FileModule() {
                           </div>
                           <div className="setFileDetailsFlex">
                             {moment(editFileName?.updatedAt).format(
-                              "DD MMMM, YYYY, hh:mm A"
+                              "DD-MM-YYYY"
                             )}
                           </div>
                         </div>
@@ -1216,7 +1216,7 @@ function FileModule() {
                           </div>
                           <div className="setFileDetailsFlex">
                             {moment(editFileName?.createdAt).format(
-                              "DD MMMM, YYYY, hh:mm A"
+                              "DD-MM-YYYY"
                             )}
                           </div>
                         </div>

@@ -8,6 +8,7 @@ import {
 } from "antd";
 import { SortAscendingOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
+import { render } from "react-dom";
 
 // Constants
 const SORT_TYPES = {
@@ -22,7 +23,7 @@ const SORT_MENU_ITEMS = [
 
 // Sort options
 const SORT_OPTIONS = [
-  { value: "createdAt", label: "Date" },
+  { value: "createdAt", label: "Date", render: (date) => date ? moment(date).format("DD-MM-YYYY") : "-" },
   { value: "name", label: "Name" },
   { value: "file_type", label: "Type" },
 ];

@@ -97,7 +97,7 @@ const OverviewController = () => {
     const result = [];
 
     while (currentDate <= endDate) {
-      const dateString = currentDate.format("YYYY-MM-DD");
+      const dateString = currentDate.format("DD-MM-YYYY");
       const summary = tasks_summary.find(
         (summary) => summary.date === dateString
       );

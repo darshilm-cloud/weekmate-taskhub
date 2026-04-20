@@ -108,8 +108,8 @@ function ProjectArchieved() {
       dataIndex: "date",
       key: "date",
       render: (_, record) => {
-        const startDate = moment(record?.start_date).format("DD MMM YY");
-        const endDate = moment(record?.end_date).format("DD MMM YY");
+        const startDate = moment(record?.start_date).format("DD-MM-YYYY");
+        const endDate = moment(record?.end_date).format("DD-MM-YYYY");
         return (
           <span style={{ textTransform: "capitalize" }}>
             {startDate} - {endDate}
@@ -603,8 +603,8 @@ export default ProjectArchieved;
 //       dataIndex: "date",
 //       key: "date",
 //       render: (_, record) => {
-//         const startDate = moment(record?.start_date).format("DD MMM YY");
-//         const endDate = moment(record?.end_date).format("DD MMM YY");
+//         const startDate = moment(record?.start_date).format("DD-MM-YYYY");
+//         const endDate = moment(record?.end_date).format("DD-MM-YYYY");
 //         return (
 //           <span style={{ textTransform: "capitalize" }}>
 //             {startDate} - {endDate}

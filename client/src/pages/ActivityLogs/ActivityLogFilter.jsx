@@ -111,7 +111,7 @@ const DateRangeFilterSection = ({
             onDateRangeChange(null);
           }
         }}
-        format="YYYY-MM-DD"
+        format="DD-MM-YYYY"
         placeholder={["Start Date", "End Date"]}
       />
     </div>

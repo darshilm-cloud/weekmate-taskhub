@@ -1151,7 +1151,7 @@ function TasksPMS({ flag }) {
                                 addInputTaskData?.start_date &&
                                 dayjs(
                                   addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
+                                  "DD-MM-YYYY"
                                 )
                               }
                               placeholder="Start Date"
@@ -1167,7 +1167,7 @@ function TasksPMS({ flag }) {
                             <DatePicker
                               value={
                                 addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                                dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                               }
                               placeholder="End Date"
                               onChange={(date, dateString) =>
@@ -1178,7 +1178,7 @@ function TasksPMS({ flag }) {
                                 current <
                                   dayjs(
                                     addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
+                                    "DD-MM-YYYY"
                                   )
                               }
                             />
@@ -1546,7 +1546,7 @@ function TasksPMS({ flag }) {
                                 addInputTaskData?.start_date &&
                                 dayjs(
                                   addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
+                                  "DD-MM-YYYY"
                                 )
                               }
                               placeholder="Start Date"
@@ -1562,7 +1562,7 @@ function TasksPMS({ flag }) {
                             <DatePicker
                               value={
                                 addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                                dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                               }
                               placeholder="End Date"
                               onChange={(date, dateString) =>
@@ -1573,7 +1573,7 @@ function TasksPMS({ flag }) {
                                 current <
                                   dayjs(
                                     addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
+                                    "DD-MM-YYYY"
                                   )
                               }
                             />

@@ -491,20 +491,20 @@ const DashboardController = () => {
 
       if (dates.taskStartDate && dates.taskEndDate) {
         let startDate = new Date(dates.taskStartDate).toISOString();
-        startDate = moment(startDate).format("YYYY-MM-DD");
+        startDate = moment(startDate).format("DD-MM-YYYY");
         let endDate = new Date(dates.taskEndDate).toISOString();
-        endDate = moment(endDate).format("YYYY-MM-DD");
+        endDate = moment(endDate).format("DD-MM-YYYY");
         reqBody.start_date = startDate;
         reqBody.end_date = endDate;
       } else {
         if (dates.taskStartDate) {
           let startDate = new Date(dates.taskStartDate).toISOString();
-          startDate = moment(startDate).format("YYYY-MM-DD");
+          startDate = moment(startDate).format("DD-MM-YYYY");
           reqBody.start_date = startDate;
         }
         if (dates.taskEndDate) {
           let endDate = new Date(dates.taskEndDate).toISOString();
-          endDate = moment(endDate).format("YYYY-MM-DD");
+          endDate = moment(endDate).format("DD-MM-YYYY");
           reqBody.end_date = endDate;
         }
       }
@@ -549,20 +549,20 @@ const DashboardController = () => {
 
         if (dates.bugStartDate && dates.bugEndDate) {
           let startDate = new Date(dates.bugStartDate).toISOString();
-          startDate = moment(startDate).format("YYYY-MM-DD");
+          startDate = moment(startDate).format("DD-MM-YYYY");
           let endDate = new Date(dates.bugEndDate).toISOString();
-          endDate = moment(endDate).format("YYYY-MM-DD");
+          endDate = moment(endDate).format("DD-MM-YYYY");
           reqBody.start_date = startDate;
           reqBody.end_date = endDate;
         } else {
           if (dates.bugStartDate) {
             let startDate = new Date(dates.bugStartDate).toISOString();
-            startDate = moment(startDate).format("YYYY-MM-DD");
+            startDate = moment(startDate).format("DD-MM-YYYY");
             reqBody.start_date = startDate;
           }
           if (dates.bugEndDate) {
             let endDate = new Date(dates.bugEndDate).toISOString();
-            endDate = moment(endDate).format("YYYY-MM-DD");
+            endDate = moment(endDate).format("DD-MM-YYYY");
             reqBody.end_date = endDate;
           }
         }
@@ -595,8 +595,8 @@ const DashboardController = () => {
       const end_date = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
       
       let reqBody = {
-        start_date:moment(start_date).format("YYYY-MM-DD"),
-        end_date:moment(end_date).format("YYYY-MM-DD")
+        start_date:moment(start_date).format("DD-MM-YYYY"),
+        end_date:moment(end_date).format("DD-MM-YYYY")
       };
       if (projectsTime && projectsTime.length > 0) {
         reqBody = {
@@ -608,20 +608,20 @@ const DashboardController = () => {
 
       if (dates.timeStartDate && dates.timeEndDate) {
         let startDate = new Date(dates.timeStartDate).toISOString();
-        startDate = moment(startDate).format("YYYY-MM-DD");
+        startDate = moment(startDate).format("DD-MM-YYYY");
         let endDate = new Date(dates.timeEndDate).toISOString();
-        endDate = moment(endDate).format("YYYY-MM-DD");
+        endDate = moment(endDate).format("DD-MM-YYYY");
         reqBody.start_date = startDate;
         reqBody.end_date = endDate;
       } else {
         if (dates.timeStartDate) {
           let startDate = new Date(dates.timeStartDate).toISOString();
-          startDate = moment(startDate).format("YYYY-MM-DD");
+          startDate = moment(startDate).format("DD-MM-YYYY");
           reqBody.start_date = startDate;
         }
         if (dates.timeEndDate) {
           let endDate = new Date(dates.timeEndDate).toISOString();
-          endDate = moment(endDate).format("YYYY-MM-DD");
+          endDate = moment(endDate).format("DD-MM-YYYY");
           reqBody.end_date = endDate;
         }
       }

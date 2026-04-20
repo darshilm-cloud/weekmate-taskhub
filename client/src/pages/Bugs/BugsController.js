@@ -766,43 +766,43 @@ const BugsController = () => {
     },
     {
       key: "2",
-      value: moment().format("YYYY-MM-DD"),
+      value: moment().format("DD-MM-YYYY"),
       label: "Today",
     },
     {
       key: "3",
       value: `[
-        "${moment().startOf("week").format("YYYY-MM-DD")}",
-        "${moment().endOf("week").format("YYYY-MM-DD")}"
+        "${moment().startOf("week").format("DD-MM-YYYY")}",
+        "${moment().endOf("week").format("DD-MM-YYYY")}"
       ]`,
       label: "This week",
     },
     {
       key: "4",
       value: `[
-        "${moment().startOf("month").format("YYYY-MM-DD")}", 
-        "${moment().endOf("month").format("YYYY-MM-DD")}", 
+        "${moment().startOf("month").format("DD-MM-YYYY")}", 
+        "${moment().endOf("month").format("DD-MM-YYYY")}", 
       ]`,
       label: "This month",
     },
     {
       key: "5",
-      value: moment().subtract(1, "day").format("YYYY-MM-DD"),
+      value: moment().subtract(1, "day").format("DD-MM-YYYY"),
       label: "Yesterday",
     },
     {
       key: "6",
       value: `[
-        "${moment().subtract(1, "week").startOf("week").format("YYYY-MM-DD")}",
-       "${moment().subtract(1, "week").endOf("week").format("YYYY-MM-DD")}"
+        "${moment().subtract(1, "week").startOf("week").format("DD-MM-YYYY")}",
+       "${moment().subtract(1, "week").endOf("week").format("DD-MM-YYYY")}"
       ]`,
       label: "Last week",
     },
     {
       key: "7",
       value: `[
-       "${moment().subtract(1, "month").startOf("month").format("YYYY-MM-DD")}",
-        "${moment().subtract(1, "month").endOf("month").format("YYYY-MM-DD")}"
+       "${moment().subtract(1, "month").startOf("month").format("DD-MM-YYYY")}",
+        "${moment().subtract(1, "month").endOf("month").format("DD-MM-YYYY")}"
       ]`,
       label: "Last month",
     },
@@ -1194,7 +1194,7 @@ const BugsController = () => {
           }
 
           if (matchedTask && filters.bugs.startDate) {
-            let bugStartDate = moment(bug.start_date).format("YYYY-MM-DD");
+            let bugStartDate = moment(bug.start_date).format("DD-MM-YYYY");
             if (filters.bugs.startDate === "next7days") {
               matchedTask = moment(bugStartDate).isBetween(
                 moment(),

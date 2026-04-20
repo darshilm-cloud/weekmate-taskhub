@@ -72,9 +72,9 @@ function TimeForPMS() {
   const location = useLocation();
   const attachmentfileRef = useRef();
   const history = useHistory();
-  const firstDayOfMonth = now.startOf("month").format("YYYY-MM-DD");
+  const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
   const { loggedID } = queryString.parse(location.search);
-  const today = moment().format("YYYY-MM-DD");
+  const today = moment().format("DD-MM-YYYY");
   const csvRef = document.getElementById("test-table-xls-button");
   const { projectId } = useParams();
   const [form] = Form.useForm();
@@ -1007,7 +1007,7 @@ function TimeForPMS() {
   ];
 
   const date = moment(modalData?.logged_date, "DD-MM-YYYY");
-  const dayAndMonth = date.format("DD MMMM YYYY");
+  const dayAndMonth = date.format("DD-MM-YYYY");
 
   const handleTimeSheetSelection = (item) => {
     getTimesheetById(item?._id);
@@ -1099,7 +1099,7 @@ function TimeForPMS() {
 
       render: (text) => {
         const date = moment(text, "DD-MM-YYYY");
-        const dayAndMonth = date.format("DD MMMM YYYY");
+        const dayAndMonth = date.format("DD-MM-YYYY");
         return dayAndMonth;
       },
     },
@@ -1281,7 +1281,7 @@ function TimeForPMS() {
             <DatePicker
               value={
                 addInputStartDate?.start_date &&
-                dayjs(addInputStartDate?.start_date, "YYYY-MM-DD")
+                dayjs(addInputStartDate?.start_date, "DD-MM-YYYY")
               }
               onChange={(date, dateString) =>
                 handleTaskStartDate("start_date", dateString)
@@ -1296,7 +1296,7 @@ function TimeForPMS() {
             <DatePicker
               value={
                 addInputEndDate?.end_date &&
-                dayjs(addInputEndDate?.end_date, "YYYY-MM-DD")
+                dayjs(addInputEndDate?.end_date, "DD-MM-YYYY")
               }
               onChange={(date, dateString) =>
                 handleTaskEndDate("end_date", dateString)
@@ -1868,7 +1868,7 @@ function TimeForPMS() {
             {timesheetdropdownById?.length > 0 ? (
               timesheetdropdownById.map((record, index) => {
                 const date = moment(record.logged_date, "DD-MM-YYYY");
-                const formattedDate = date.isValid() ? date.format("DD MMMM YYYY") : record.logged_date;
+                const formattedDate = date.isValid() ? date.format("DD-MM-YYYY") : record.logged_date;
                 const isSelected = selectedRowKeys.includes(record._id);
                 return (
                   <div
@@ -2128,12 +2128,12 @@ function TimeForPMS() {
                             placeholder="When"
                             value={
                               modalData?.logged_date &&
-                              dayjs(modalData?.logged_date, "YYYY-MM-DD")
+                              dayjs(modalData?.logged_date, "DD-MM-YYYY")
                             }
                             onChange={(date, dateString) =>
                               handleTaskInput(
                                 "start_date",
-                                dayjs(dateString, "YYYY-MM-DD")
+                                dayjs(dateString, "DD-MM-YYYY")
                               )
                             }
                             disabledDate={(current) => {

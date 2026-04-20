@@ -413,11 +413,11 @@ const TimeSheetController = () => {
       dispatch(showAuthLoader());
       const reqBody = {
         startDate: startDate
-          ? startDate.format("YYYY-MM-DD")
-          : dayjs().startOf("month").format("YYYY-MM-DD"),
+          ? startDate.format("DD-MM-YYYY")
+          : dayjs().startOf("month").format("DD-MM-YYYY"),
         endDate: endDate
-          ? endDate.format("YYYY-MM-DD")
-          : dayjs().format("YYYY-MM-DD"),
+          ? endDate.format("DD-MM-YYYY")
+          : dayjs().format("DD-MM-YYYY"),
         technologies:
           technologies && technologies.length > 0 ? technologies : [],
         types: types && types.length > 0 ? types : [],
@@ -483,11 +483,11 @@ const TimeSheetController = () => {
       dispatch(showAuthLoader());
       const reqBody = {
         startDate: startDate
-          ? startDate.format("YYYY-MM-DD")
-          : dayjs().startOf("month").format("YYYY-MM-DD"),
+          ? startDate.format("DD-MM-YYYY")
+          : dayjs().startOf("month").format("DD-MM-YYYY"),
         endDate: endDate
-          ? endDate.format("YYYY-MM-DD")
-          : dayjs().format("YYYY-MM-DD"),
+          ? endDate.format("DD-MM-YYYY")
+          : dayjs().format("DD-MM-YYYY"),
         technologies:
           technologies && technologies.length > 0 ? technologies : [],
         types: types && types.length > 0 ? types : [],

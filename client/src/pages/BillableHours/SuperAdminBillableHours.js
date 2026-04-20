@@ -555,7 +555,7 @@ const SuperAdminBillableHours = () => {
       key: "date",
       render: (text, record) => {
         const parsedDate = moment(record.logged_date, "DD-MM-YYYY");
-        const formattedDate = parsedDate.format("DD MMM, YY");
+        const formattedDate = parsedDate.format("DD-MM-YYYY");
         return (
           <div className="billable-hours-aproved-date">
             <span style={{ textTransform: "capitalize" }}>{formattedDate}</span>
@@ -872,7 +872,7 @@ const SuperAdminBillableHours = () => {
       key: "date",
       render: (text, record) => {
         const parsedDate = moment(record.logged_date, "DD-MM-YYYY");
-        const formattedDate = parsedDate.format("DD MMM, YY");
+        const formattedDate = parsedDate.format("DD-MM-YYYY");
         return (
           <div className="billable-hours-aproved-date">
             <span style={{ textTransform: "capitalize" }}>{formattedDate}</span>

@@ -355,8 +355,8 @@ function ReportsHub() {
       const commonTaskPayload = buildTaskPayload({
         viewAll: true,
         status: "all",
-        startDate: filters.date ? dailyStartDate.format("YYYY-MM-DD") : (filters.startDate || null),
-        endDate: filters.date ? dailyEndDate.format("YYYY-MM-DD") : (filters.endDate || null),
+        startDate: filters.date ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
+        endDate: filters.date ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
         projectIds: selectedProjectIds,
       });
 
@@ -812,8 +812,8 @@ function ReportsHub() {
         };
 
         if (filters.date) {
-          performanceRequestBody.startDate = startDate.format("YYYY-MM-DD");
-          performanceRequestBody.endDate = endDate.format("YYYY-MM-DD");
+          performanceRequestBody.startDate = startDate.format("DD-MM-YYYY");
+          performanceRequestBody.endDate = endDate.format("DD-MM-YYYY");
         }
 
         const response = await Service.makeAPICall({
@@ -971,8 +971,8 @@ function ReportsHub() {
             body: buildTaskPayload({
               viewAll: true,
               status: "all",
-              startDate: filters.date ? dailyStartDate.format("YYYY-MM-DD") : (filters.startDate || null),
-              endDate: filters.date ? dailyEndDate.format("YYYY-MM-DD") : (filters.endDate || null),
+              startDate: filters.date ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
+              endDate: filters.date ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
             }),
           }),
         ]);
@@ -1044,11 +1044,11 @@ function ReportsHub() {
 
       if (reportKey === "timesheet") {
         const timesheetStartDate = filters.date
-          ? moment(filters.date).startOf("day").format("YYYY-MM-DD")
-          : moment().subtract(12, "months").startOf("month").format("YYYY-MM-DD");
+          ? moment(filters.date).startOf("day").format("DD-MM-YYYY")
+          : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
         const timesheetEndDate = filters.date
-          ? moment(filters.date).endOf("day").format("YYYY-MM-DD")
-          : moment().format("YYYY-MM-DD");
+          ? moment(filters.date).endOf("day").format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY");
 
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
@@ -1262,7 +1262,7 @@ function ReportsHub() {
   const handleDownload = (key) => {
     let items = [];
     let headers = [];
-    let filename = `report_${key}_${moment().format("YYYY-MM-DD")}.csv`;
+    let filename = `report_${key}_${moment().format("DD-MM-YYYY")}.csv`;
 
     if (key === "daily-report") {
       items = reportData.daily?.pending || [];
@@ -1964,8 +1964,8 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           onChange={(values) => {
             setFilters(prev => ({
               ...prev,
-              startDate: values ? values[0].format("YYYY-MM-DD") : null,
-              endDate: values ? values[1].format("YYYY-MM-DD") : null,
+              startDate: values ? values[0].format("DD-MM-YYYY") : null,
+              endDate: values ? values[1].format("DD-MM-YYYY") : null,
             }));
           }}
           placeholder={rangeField.placeholder || ["From", "To"]}
@@ -1981,11 +1981,11 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           placeholder={dateField.placeholder}
           className="reports-filter-control"
           suffixIcon={<CalendarOutlined />}
-          value={filters[dateField.key] ? dayjs(filters[dateField.key], "YYYY-MM-DD") : null}
+          value={filters[dateField.key] ? dayjs(filters[dateField.key], "DD-MM-YYYY") : null}
           onChange={(value) =>
             setFilters((prev) => ({
               ...prev,
-              [dateField.key]: value ? value.format("YYYY-MM-DD") : null,
+              [dateField.key]: value ? value.format("DD-MM-YYYY") : null,
             }))
           }
           allowClear
@@ -3422,7 +3422,7 @@ function formatDate(dateValue) {
 }
 
 function formatDateTime(dateValue) {
-  return dateValue ? moment(dateValue).format("DD MMM YYYY HH:mm:ss") : "-";
+  return dateValue ? moment(dateValue).format("DD-MM-YYYY HH:mm:ss") : "-";
 }
 
 function formatText(value) {

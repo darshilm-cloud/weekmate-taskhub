@@ -1,6 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Pagination, Spin } from "antd";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
+import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin } from "antd";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import Custombuild from "ckeditor5-custom-build/build/ckeditor";
+import InfiniteScroll from "react-infinite-scroll-component";
 import GlobalSearchInput from "../../components/common/GlobalSearchInput";
+import "../../components/CkEditorSuperBuild/ckEditor.css";
 import {
   PlusOutlined,
   PushpinOutlined,
@@ -8,11 +13,55 @@ import {
   EditOutlined,
   UserAddOutlined,
   BgColorsOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Notes.css";
 
-const { TextArea } = Input;
+const NOTES_CKEDITOR_CONFIG = {
+  toolbar: [
+    "heading",
+    "|",
+    "bold",
+    "italic",
+    "underline",
+    "|",
+    "fontColor",
+    "fontBackgroundColor",
+    "|",
+    "link",
+    "|",
+    "numberedList",
+    "bulletedList",
+    "|",
+    "alignment:left",
+    "alignment:center",
+    "alignment:right",
+    "|",
+    "fontSize",
+  ],
+  removePlugins: ["MediaEmbed", "ImageUpload", "EasyImage", "CKFinderUploadAdapter"],
+  fontSize: {
+    options: ["default", 10, 11, 12, 13, 14, 15, 16, 18, 20],
+  },
+};
+
+/** Ant Design Form.Item compatible wrapper (value / onChange = HTML string). */
+function NotesFormCkEditor({ value, onChange }) {
+  const html = value ?? "";
+  return (
+    <div className="notes-modal-ckeditor-wrap">
+      <CKEditor
+        editor={Custombuild}
+        data={html}
+        config={NOTES_CKEDITOR_CONFIG}
+        onChange={(event, editor) => {
+          onChange?.(editor.getData());
+        }}
+      />
+    </div>
+  );
+}
 
 const CARD_COLORS_LIGHT = ["#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec", "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd"];
 const CARD_COLORS_DARK = [
@@ -57,10 +106,9 @@ const MODAL_OK_BUTTON_PROPS = {
   type: "primary",
 };
 
-export default function NotesPage() {
-  const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-  const currentUserId = userData?._id;
+const NOTES_PAGE_SIZE = 25;
 
+export default function NotesPage() {
   const [isDark, setIsDark] = useState(checkIsDark);
 
   useEffect(() => {
@@ -74,24 +122,27 @@ export default function NotesPage() {
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [totalNotes, setTotalNotes] = useState(0);
-  const [pagination, setPagination] = useState({ pageNo: 1, limit: 10 });
+  const [hasMore, setHasMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const latestFetchIdRef = useRef(0);
 
-  // Add Note modal
-  const [addOpen, setAddOpen] = useState(false);
-  const [addForm] = Form.useForm();
+  // Add / Edit note (single modal, same form)
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteModalMode, setNoteModalMode] = useState("add");
+  const [editingNote, setEditingNote] = useState(null);
+  const [noteForm] = Form.useForm();
   const [projects, setProjects] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
   const [notebooksLoading, setNotebooksLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [noteModalSubmitting, setNoteModalSubmitting] = useState(false);
 
-  // Edit modal
-  const [editOpen, setEditOpen] = useState(false);
-  const [editForm] = Form.useForm();
-  const [editNote, setEditNote] = useState(null);
-  const [editSubmitting, setEditSubmitting] = useState(false);
+  // View note (read-only)
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewNote, setViewNote] = useState(null);
 
   // Subscribers modal
   const [subOpen, setSubOpen] = useState(false);
@@ -103,42 +154,85 @@ export default function NotesPage() {
   // Color popover
   const [colorNoteId, setColorNoteId] = useState(null);
 
-  const fetchNotes = useCallback(async (searchVal = "") => {
-    setLoading(true);
-    try {
-      const res = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getNotes,
-        body: {
-          pageNo: pagination.pageNo,
-          limit: pagination.limit,
-          sort: "_id",
-          sortBy: "desc",
-          tab: activeTab,
-          ...(searchVal ? { search: searchVal } : {})
-        },
-      });
-      const data = res?.data?.data;
-      const meta = res?.data?.metadata;
-      const total = meta?.total || 0;
-      setNotes(Array.isArray(data) ? data : []);
-      setTotalNotes(total);
-
-      // Reset to page 1 if current page is now out of bounds
-      if (total > 0 && pagination.pageNo > Math.ceil(total / pagination.limit)) {
-        setPagination(p => ({ ...p, pageNo: 1 }));
+  const fetchNotesPage = useCallback(
+    async ({ page, append = false, searchVal = "", silent = false }) => {
+      const fetchId = ++latestFetchIdRef.current;
+      if (append) {
+        setLoadingMore(true);
+      } else if (!silent) {
+        setLoading(true);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.pageNo, pagination.limit, activeTab]);
+      try {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getNotes,
+          body: {
+            pageNo: page,
+            limit: NOTES_PAGE_SIZE,
+            sort: "_id",
+            sortBy: "desc",
+            tab: activeTab,
+            ...(searchVal ? { search: searchVal } : {}),
+          },
+        });
+
+        const data = res?.data?.data;
+        const meta = res?.data?.metadata;
+        const total = meta?.total ?? meta?.totalCount ?? 0;
+        const list = Array.isArray(data) ? data : [];
+
+        if (fetchId !== latestFetchIdRef.current) return;
+
+        let nextList = [];
+        flushSync(() => {
+          setNotes((prev) => {
+            nextList = append ? [...prev, ...list] : list;
+            return nextList;
+          });
+        });
+        const nextLoaded = nextList.length;
+        let more =
+          total > 0 ? nextLoaded < total : list.length >= NOTES_PAGE_SIZE;
+        if (append && list.length === 0) {
+          more = false;
+        }
+        setHasMore(more);
+        setTotalNotes(total);
+        setCurrentPage(page);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (fetchId === latestFetchIdRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [activeTab]
+  );
 
   useEffect(() => {
-    const t = setTimeout(() => fetchNotes(search), 400);
+    const debounceMs = search.trim() ? 400 : 0;
+    const t = setTimeout(() => {
+      setCurrentPage(1);
+      setHasMore(false);
+      fetchNotesPage({ page: 1, append: false, searchVal: search.trim(), silent: false });
+    }, debounceMs);
     return () => clearTimeout(t);
-  }, [search, fetchNotes]);
+  }, [search, activeTab, fetchNotesPage]);
+
+  const loadMoreNotes = useCallback(() => {
+    if (loading || loadingMore || !hasMore) return;
+    fetchNotesPage({
+      page: currentPage + 1,
+      append: true,
+      searchVal: search.trim(),
+    });
+  }, [loading, loadingMore, hasMore, currentPage, search, fetchNotesPage]);
+
+  const refreshNotes = useCallback(() => {
+    fetchNotesPage({ page: 1, append: false, searchVal: search.trim(), silent: true });
+  }, [fetchNotesPage, search]);
 
   const loadProjects = async () => {
     try {
@@ -169,17 +263,7 @@ export default function NotesPage() {
     }
   }, [allUsers.length]);
 
-  const openAddNote = async () => {
-    setAddOpen(true);
-    try {
-      await Promise.all([loadProjects(), loadAllUsers()]);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const onProjectChange = async (pid) => {
-    addForm.setFieldValue("noteBook_id", undefined);
+  const loadNotebooksForProject = async (pid) => {
     setNotebooks([]);
     if (!pid) return;
     setNotebooksLoading(true);
@@ -191,66 +275,130 @@ export default function NotesPage() {
       });
       const list = res?.data?.data?.data || res?.data?.data || [];
       setNotebooks(Array.isArray(list) ? list : []);
-    } catch (e) { console.error(e); }
-    finally { setNotebooksLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setNotebooksLoading(false);
+    }
   };
 
-  const handleAddNote = async () => {
+  const openAddNote = async () => {
+    setNoteModalMode("add");
+    setEditingNote(null);
+    noteForm.resetFields();
+    setNotebooks([]);
+    setNoteModalOpen(true);
     try {
-      const values = await addForm.validateFields();
-      setSubmitting(true);
+      await Promise.all([loadProjects(), loadAllUsers()]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openNoteEdit = async (note) => {
+    setNoteModalMode("edit");
+    setEditingNote(note);
+    setNotebooks([]);
+    try {
+      await Promise.all([loadProjects(), loadAllUsers()]);
+      const pid = note.project?._id || note.project_id;
+      // const nbId = note.noteBook_id || note.notebook?._id || note.notebook;
+      noteForm.setFieldsValue({
+        title: note.title,
+        notesInfo: note.notesInfo || "",
+        project_id: pid,
+        // noteBook_id: nbId,
+        subscribers: (note.subscribers || []).map((s) => s._id || s),
+      });
+      if (pid) await loadNotebooksForProject(pid);
+      setNoteModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      message.error("Could not open note for editing");
+    }
+  };
+
+  const onProjectChange = async (pid) => {
+    noteForm.setFieldValue("noteBook_id", undefined);
+    await loadNotebooksForProject(pid);
+  };
+
+  const closeNoteModal = () => {
+    setNoteModalOpen(false);
+    noteForm.resetFields();
+    setEditingNote(null);
+    setNotebooks([]);
+  };
+
+  const handleSaveNote = async () => {
+    try {
+      const values = await noteForm.validateFields();
+      setNoteModalSubmitting(true);
       const subscribers = Array.isArray(values.subscribers) ? values.subscribers : [];
-      const res = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.addNotes,
-        body: {
-          title: values.title,
-          notesInfo: values.notesInfo || "",
-          project_id: values.project_id,
-          ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}),
-          isPrivate: false,
-          subscribers,
-          pms_clients: [],
-        },
-      });
-      if (res?.data?.status === 1 || res?.data?.success) {
-        message.success("Note added successfully");
-        addForm.resetFields(); setAddOpen(false); setNotebooks([]);
-        fetchNotes(search);
-      } else { message.error(res?.data?.message || "Failed to add note"); }
-    } catch (e) { if (e?.errorFields) return; message.error("Something went wrong"); }
-    finally { setSubmitting(false); }
+      if (noteModalMode === "add") {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.addNotes,
+          body: {
+            title: values.title,
+            notesInfo: values.notesInfo || "",
+            project_id: values.project_id,
+            ...(values.noteBook_id ? { noteBook_id: values.noteBook_id } : {}),
+            isPrivate: false,
+            subscribers,
+            pms_clients: [],
+          },
+        });
+        if (res?.data?.status === 1 || res?.data?.success) {
+          message.success("Note added successfully");
+          closeNoteModal();
+          refreshNotes();
+        } else {
+          message.error(res?.data?.message || "Failed to add note");
+        }
+      } else if (editingNote?._id) {
+        const res = await Service.makeAPICall({
+          methodName: Service.putMethod,
+          api_url: `${Service.updateNotes}/${editingNote._id}`,
+          body: {
+            title: values.title,
+            notesInfo: values.notesInfo || "",
+            subscribers,
+            pms_clients: editingNote.pms_clients || [],
+            // notebook_id: values.noteBook_id || null,
+          },
+        });
+        if (res?.data?.status === 1 || res?.data?.success) {
+          message.success("Note updated");
+          closeNoteModal();
+          refreshNotes();
+        } else {
+          message.error(res?.data?.message || "Update failed");
+        }
+      }
+    } catch (e) {
+      if (e?.errorFields) return;
+      message.error("Something went wrong");
+    } finally {
+      setNoteModalSubmitting(false);
+    }
   };
 
-  // ── Edit ──────────────────────────────────────────────────
-  const openEdit = (note) => {
-    setEditNote(note);
-    editForm.setFieldsValue({ title: note.title, notesInfo: note.notesInfo || "" });
-    setEditOpen(true);
+  const openViewNote = (note) => {
+    setViewNote(note);
+    setViewOpen(true);
   };
 
-  const handleEdit = async () => {
-    try {
-      const values = await editForm.validateFields();
-      setEditSubmitting(true);
-      const res = await Service.makeAPICall({
-        methodName: Service.putMethod,
-        api_url: `${Service.updateNotes}/${editNote._id}`,
-        body: {
-          title: values.title,
-          notesInfo: values.notesInfo || "",
-          project_id: editNote.project?._id || editNote.project_id,
-          subscribers: (editNote.subscribers || []).map(s => s._id || s),
-          pms_clients: editNote.pms_clients || [],
-        },
-      });
-      if (res?.data?.status === 1 || res?.data?.success) {
-        message.success("Note updated");
-        setEditOpen(false); editForm.resetFields(); setEditNote(null);
-        fetchNotes(search);
-      } else { message.error(res?.data?.message || "Update failed"); }
-    } catch (e) { if (e?.errorFields) return; message.error("Something went wrong"); }
-    finally { setEditSubmitting(false); }
+  const closeViewNote = () => {
+    setViewOpen(false);
+    setViewNote(null);
+  };
+
+  const goFromViewToEdit = async () => {
+    if (!viewNote) return;
+    const n = viewNote;
+    closeViewNote();
+    await openNoteEdit(n);
   };
 
   // ── Subscribers ───────────────────────────────────────────
@@ -284,7 +432,7 @@ export default function NotesPage() {
       if (res?.data?.status === 1 || res?.data?.success) {
         message.success("Subscribers updated");
         setSubOpen(false); setSubNote(null);
-        fetchNotes(search);
+        refreshNotes();
       } else { message.error(res?.data?.message || "Failed"); }
     } catch (e) { message.error("Something went wrong"); }
     finally { setSubSubmitting(false); }
@@ -308,7 +456,7 @@ export default function NotesPage() {
     try {
       await Service.makeAPICall({ methodName: Service.deleteMethod, api_url: `${Service.deleteNotes}/${id}` });
       message.success("Note deleted");
-      fetchNotes(search);
+      refreshNotes();
     } catch (e) { message.error("Delete failed"); }
   };
 
@@ -334,19 +482,6 @@ export default function NotesPage() {
       message.error("Pin update failed");
     }
   };
-
-  const normalizedSearch = search.trim().toLowerCase();
-
-  const displayedNotes = notes;
-
-  // Since we already filtered on the backend for tab logic might be tricky if we don't pass tab state to backend.
-  // The current backend doesn't know about 'created' vs 'shared' logic exactly as specified in frontend.
-  // Wait, if we paginate on the backend, we should also filter on the backend.
-  // Let's check if the backend getNotes can filter by "created by me with no subscribers" vs "shared".
-  // Actually, for now, I'll keep the frontend filtering but it will only work on the current page of 12.
-  // This is a known limitation when mixing frontend filter and backend pagination.
-  // To do it properly, we should update backend to support these 'activeTab' modes.
-
 
   const colorPickerContent = (noteId) => (
     <div className="color-picker-grid">
@@ -380,13 +515,13 @@ export default function NotesPage() {
 
       {/* Tabs */}
       <div className="notes-page-tabs">
-        <button className={`notes-tab-btn${activeTab === "all" ? " active" : ""}`} onClick={() => { setActiveTab("all"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
+        <button className={`notes-tab-btn${activeTab === "all" ? " active" : ""}`} type="button" onClick={() => setActiveTab("all")}>
           All
         </button>
-        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} onClick={() => { setActiveTab("created"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
-          <PushpinOutlined style={{ marginRight: 6 }} />Created
+        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} type="button" onClick={() => setActiveTab("created")}>
+          Created
         </button>
-        <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} onClick={() => { setActiveTab("shared"); setPagination(p => ({ ...p, pageNo: 1 })); }}>
+        <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} type="button" onClick={() => setActiveTab("shared")}>
           Shared
         </button>
       </div>
@@ -396,10 +531,7 @@ export default function NotesPage() {
         <GlobalSearchInput
           placeholder="Search..."
           value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPagination(p => ({ ...p, pageNo: 1 }));
-          }}
+          onChange={(val) => setSearch(val)}
           allowClear
           className="notes-search-input"
         />
@@ -408,7 +540,7 @@ export default function NotesPage() {
       {/* Notes Grid */}
       {loading ? (
         <div className="notes-cards-grid">
-          {Array.from({ length: 12 }).map((_, i) => (
+          {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="note-card note-card-skeleton">
               <div className="note-card-header">
                 <Skeleton.Input active size="small" style={{ width: "60%", borderRadius: 6 }} />
@@ -425,7 +557,7 @@ export default function NotesPage() {
             </div>
           ))}
         </div>
-      ) : displayedNotes.length === 0 ? (
+      ) : notes.length === 0 ? (
         <div className="notes-page-empty">
           <svg width="120" height="120" viewBox="0 0 200 200" fill="none">
             <circle cx="100" cy="100" r="100" fill="#EFF6FF" />
@@ -442,39 +574,73 @@ export default function NotesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
         </div>
       ) : (
-        <Spin spinning={loading && notes.length > 0} tip="Loading...">
-          <p className="notes-count-label">All</p>
+        <>
+          <p className="notes-count-label">
+            {totalNotes} note{totalNotes === 1 ? "" : "s"}
+          </p>
+          <div id="notes-infinite-scroll" className="notes-infinite-scroll-wrap">
+            <InfiniteScroll
+              key={activeTab}
+              scrollableTarget="notes-infinite-scroll"
+              dataLength={notes.length}
+              next={loadMoreNotes}
+              hasMore={hasMore && !loading}
+              loader={
+                loadingMore ? (
+                  <div className="notes-infinite-loader">
+                    <Spin size="small" tip="Loading more..." />
+                  </div>
+                ) : null
+              }
+              scrollThreshold="8px"
+            >
           <div className="notes-cards-grid">
-            {displayedNotes.map((note, idx) => {
+            {notes.map((note, idx) => {
               const bgColor = isDark
                 ? CARD_COLORS[idx % CARD_COLORS.length]
                 : (isLightColor(note.color) ? note.color : CARD_COLORS[idx % CARD_COLORS.length]);
               const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
               return (
                 <div key={note._id} className="note-card" style={{ background: bgColor }}>
-                  <div className="note-card-header">
-                    <span className="note-card-title">{note.title}</span>
-                    <button
-                      className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
-                      onClick={() => handleBookmarkToggle(note._id, note.isBookmark)}
-                      type="button"
-                      aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
-                    >
-                      <PushpinOutlined style={{ fontSize: 14 }} />
-                      {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
-                    </button>
+                  <div
+                    className="note-card-body"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openViewNote(note)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openViewNote(note);
+                      }
+                    }}
+                  >
+                    <div className="note-card-header">
+                      <span className="note-card-title">{note.title}</span>
+                      <button
+                        className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBookmarkToggle(note._id, note.isBookmark);
+                        }}
+                        type="button"
+                        aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
+                      >
+                        <PushpinOutlined style={{ fontSize: 14 }} />
+                        {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
+                      </button>
+                    </div>
+                    <div className="note-card-content">
+                      {content || <span style={{ color: "#94a3b8", fontSize: 12 }}>No content</span>}
+                    </div>
                   </div>
-                  <div className="note-card-content">
-                    {content || <span style={{ color: "#94a3b8", fontSize: 12 }}>No content</span>}
-                  </div>
-                  <div className="note-card-footer">
+                  <div className="note-card-footer" onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Subscribers">
-                      <button className="note-card-action" onClick={() => openSubscribers(note)}>
+                      <button type="button" className="note-card-action" onClick={() => openSubscribers(note)}>
                         <UserAddOutlined />
                       </button>
                     </Tooltip>
                     <Tooltip title="Edit">
-                      <button className="note-card-action" onClick={() => openEdit(note)}>
+                      <button type="button" className="note-card-action" onClick={() => openNoteEdit(note)}>
                         <EditOutlined />
                       </button>
                     </Tooltip>
@@ -486,14 +652,14 @@ export default function NotesPage() {
                       onOpenChange={(v) => setColorNoteId(v ? note._id : null)}
                     >
                       <Tooltip title="Change color">
-                        <button className="note-card-action">
+                        <button type="button" className="note-card-action">
                           <BgColorsOutlined />
                         </button>
                       </Tooltip>
                     </Popover>
                     <Popconfirm title="Delete this note?" onConfirm={() => handleDelete(note._id)} okText="Yes" cancelText="No">
                       <Tooltip title="Delete">
-                        <button className="note-card-action delete"><DeleteOutlined /></button>
+                        <button type="button" className="note-card-action delete"><DeleteOutlined /></button>
                       </Tooltip>
                     </Popconfirm>
                   </div>
@@ -501,43 +667,52 @@ export default function NotesPage() {
               );
             })}
           </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24, paddingBottom: 20 }}>
-            <Pagination
-              current={pagination.pageNo}
-              pageSize={pagination.limit}
-              total={totalNotes}
-              onChange={(page, pageSize) => setPagination({ pageNo: page, limit: pageSize })}
-              showSizeChanger
-              pageSizeOptions={["10", "20", "30"]}
-            />
+            </InfiniteScroll>
           </div>
-        </Spin>
+        </>
       )}
 
-      {/* Add Note Modal */}
-      <Modal title={getModalTitle("Add New Note", "Set up a fresh note with project and subscriber details.")} open={addOpen} onCancel={() => { setAddOpen(false); addForm.resetFields(); setNotebooks([]); }} onOk={handleAddNote} confirmLoading={submitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
-        <Form form={addForm} layout="vertical" className="notes-modal-form">
+      {/* Add / Edit note (same modal & fields) */}
+      <Modal
+        title={getModalTitle(
+          noteModalMode === "edit" ? "Edit Note" : "Add New Note",
+        )}
+        open={noteModalOpen}
+        onCancel={closeNoteModal}
+        onOk={handleSaveNote}
+        confirmLoading={noteModalSubmitting}
+        okText="Save"
+        okButtonProps={MODAL_OK_BUTTON_PROPS}
+        destroyOnClose
+        className="global-app-modal notes-modal-shell"
+        width={640}
+      >
+        <Form form={noteForm} layout="vertical" className="notes-modal-form">
           <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
             <Input placeholder="Enter note title" />
           </Form.Item>
-          <Form.Item name="notesInfo" label="Content">
-            <TextArea
-              rows={4}
-              placeholder="Write note content"
-              maxLength={1000}
-              showCount={{ formatter: ({ count, maxLength }) => `${count}/${maxLength}` }}
-            />
+          <Form.Item name="notesInfo" label="Content" initialValue="">
+            <NotesFormCkEditor key={noteModalMode === "edit" ? editingNote?._id || "edit" : "add"} />
           </Form.Item>
           <Form.Item name="project_id" label="Project" rules={[{ required: true, message: "Select a project" }]}>
-            <Select showSearch placeholder="Select project" onChange={onProjectChange}
+            <Select
+              showSearch
+              placeholder="Select project"
+              disabled={noteModalMode === "edit"}
+              onChange={onProjectChange}
               filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
-              options={projects.map((p) => ({ value: p._id, label: p.title }))} />
+              options={projects.map((p) => ({ value: p._id, label: p.title }))}
+            />
           </Form.Item>
-          <Form.Item name="noteBook_id" label="Notebook (optional)">
-            <Select showSearch placeholder="Select notebook" loading={notebooksLoading} allowClear
-              options={notebooks.map((nb) => ({ value: nb._id, label: nb.title }))} />
-          </Form.Item>
+          {/* <Form.Item name="noteBook_id" label="Notebook (optional)">
+            <Select
+              showSearch
+              placeholder="Select notebook"
+              loading={notebooksLoading}
+              allowClear
+              options={notebooks.map((nb) => ({ value: nb._id, label: nb.title }))}
+            /> */}
+          {/* </Form.Item> */}
           <Form.Item name="subscribers" label="Subscribers">
             <Select
               mode="multiple"
@@ -552,21 +727,56 @@ export default function NotesPage() {
         </Form>
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal title={getModalTitle("Edit Note", "Refresh the title and keep your note details tidy.")} open={editOpen} onCancel={() => { setEditOpen(false); editForm.resetFields(); setEditNote(null); }} onOk={handleEdit} confirmLoading={editSubmitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
-        <Form form={editForm} layout="vertical" className="notes-modal-form">
-          <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
-            <Input placeholder="Enter note title" />
-          </Form.Item>
-          <Form.Item name="notesInfo" label="Content">
-            <TextArea
-              rows={4}
-              placeholder="Write note content"
-              maxLength={1000}
-              showCount={{ formatter: ({ count, maxLength }) => `${count}/${maxLength}` }}
+      {/* View note (read-only) */}
+      <Modal
+        title={getModalTitle(
+          viewNote?.title || "Note",
+        )}
+        open={viewOpen}
+        onCancel={closeViewNote}
+        footer={[
+          <Button key="close" onClick={closeViewNote}>
+            Close
+          </Button>,
+        ]}
+        destroyOnClose
+        className="global-app-modal notes-modal-shell notes-view-modal"
+        width={720}
+      >
+        {viewNote ? (
+          <div className="notes-view-modal-body">
+            <div className="notes-view-meta">
+              <div className="notes-view-meta-row">
+                <span className="notes-view-meta-label">Project</span>
+                <span className="notes-view-meta-value">{viewNote.project?.title || "—"}</span>
+              </div>
+              {/* <div className="notes-view-meta-row">
+                <span className="notes-view-meta-label">Notebook</span>
+                <span className="notes-view-meta-value">{viewNote.notebook?.title || "—"}</span>
+              </div> */}
+              <div className="notes-view-meta-row">
+                <span className="notes-view-meta-label">Subscribers</span>
+                <span className="notes-view-meta-value">
+                  {Array.isArray(viewNote.subscribers) && viewNote.subscribers.length > 0
+                    ? viewNote.subscribers
+                        .map((s) => s.full_name || s.name || s.email || "")
+                        .filter(Boolean)
+                        .join(", ")
+                    : "—"}
+                </span>
+              </div>
+            </div>
+            <div className="notes-view-section-label">Content</div>
+            <div
+              className="notes-view-html"
+              dangerouslySetInnerHTML={{
+                __html: viewNote.notesInfo?.trim()
+                  ? viewNote.notesInfo
+                  : '<p class="notes-view-empty">No content</p>',
+              }}
             />
-          </Form.Item>
-        </Form>
+          </div>
+        ) : null}
       </Modal>
 
       {/* Subscribers Modal */}

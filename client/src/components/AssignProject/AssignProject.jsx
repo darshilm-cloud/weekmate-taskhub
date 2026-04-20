@@ -1275,9 +1275,9 @@ const AssignProject = () => {
 
   const groupByBucket = (tasks, bucket) => {
     if (!Array.isArray(tasks)) return [];
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = dayjs().format("DD-MM-YYYY");
     return tasks.filter((t) => {
-      const due = t?.due_date ? dayjs(t.due_date).format("YYYY-MM-DD") : null;
+      const due = t?.due_date ? dayjs(t.due_date).format("DD-MM-YYYY") : null;
       if (!due) return false;
       if (bucket === "today") return due === today;
       if (bucket === "overdue") return dayjs(due).isBefore(dayjs(today), "day");
@@ -1453,10 +1453,10 @@ const AssignProject = () => {
       width: 200,
       render: (_, record) => {
         const startDate = moment(record?.start_date).isValid()
-          ? moment(record.start_date).format("DD MMM YY")
+          ? moment(record.start_date).format("DD-MM-YYYY")
           : "";
         const endDate = moment(record?.end_date).isValid()
-          ? moment(record.end_date).format("DD MMM YY")
+          ? moment(record.end_date).format("DD-MM-YYYY")
           : "";
         return (
           <span style={{ textTransform: "capitalize" }}>
@@ -2159,7 +2159,7 @@ const AssignProject = () => {
                                   }}
                                 >
                                   <div className="ap-browser-task-name">{task.title || task.name || "Untitled"}</div>
-                                  <div>{task.due_date ? moment(task.due_date).format("MMM D, YYYY") : "-"}</div>
+                                  <div>{task.due_date ? moment(task.due_date).format("DD-MM-YYYY") : "-"}</div>
                                   <div>-</div>
                                   <div>
                                     <span className="ap-browser-status-pill">Pending</span>
@@ -2208,7 +2208,7 @@ const AssignProject = () => {
                           const dayTasks = tasksForDate(day);
                           const isCurrentMonth = day.month() === calendarBase.month();
                           return (
-                            <div key={day.format("YYYY-MM-DD")} className="ap-browser-calendar-cell">
+                            <div key={day.format("DD-MM-YYYY")} className="ap-browser-calendar-cell">
                               <span className={`ap-browser-calendar-date ${isCurrentMonth ? "" : "muted"}`}>
                                 {day.date()}
                               </span>
@@ -2295,10 +2295,10 @@ const AssignProject = () => {
                 : createdTask?.end_date
                   ? dayjs(createdTask.end_date)
                   : null;
-              const todayKey = dayjs().format("YYYY-MM-DD");
+              const todayKey = dayjs().format("DD-MM-YYYY");
               let bumpKey = null;
               if (due && due.isValid()) {
-                const dueKey = due.format("YYYY-MM-DD");
+                const dueKey = due.format("DD-MM-YYYY");
                 if (dueKey === todayKey) bumpKey = "today";
                 else if (due.isBefore(dayjs(), "day")) bumpKey = "overDue";
                 else if (due.isAfter(dayjs(), "day")) bumpKey = "upComing";

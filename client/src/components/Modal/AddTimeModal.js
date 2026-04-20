@@ -80,7 +80,7 @@ const AddTimeModal = memo(({
   );
 
   const dateValue = useMemo(() => 
-    addInputTaskData?.start_date ? dayjs(addInputTaskData.start_date, 'YYYY-MM-DD') : null,
+    addInputTaskData?.start_date ? dayjs(addInputTaskData.start_date, 'DD-MM-YYYY') : null,
     [addInputTaskData?.start_date]
   );
 

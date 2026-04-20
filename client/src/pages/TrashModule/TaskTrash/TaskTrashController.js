@@ -66,7 +66,7 @@ const TaskTrashController = () => {
       render: (_, record) => {
         const val =
           record?.deletedAt !== "" && record?.deletedAt !== null
-            ? moment(record?.deletedAt).format("DD MMM YY, hh:mm A")
+            ? moment(record?.deletedAt).format("DD-MM-YYYY, hh:mm A")
             : "-";
 
         return <span>{val}</span>;

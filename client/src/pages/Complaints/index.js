@@ -310,7 +310,7 @@ const Complaints = () => {
       {
         title: "Date",
         width: 110,
-        render: (_, r) => moment(r.createdAt).format("DD MMM YYYY"),
+        render: (_, r) => moment(r.createdAt).format("DD-MM-YYYY"),
       },
     ];
 
@@ -525,7 +525,7 @@ const Complaints = () => {
                 </div>
                 <div className="cmp-drawer-field">
                   <div className="cmp-drawer-label">Date</div>
-                  <div className="cmp-drawer-value">{moment(drawerRecord.createdAt).format("DD MMM YYYY")}</div>
+                  <div className="cmp-drawer-value">{moment(drawerRecord.createdAt).format("DD-MM-YYYY")}</div>
                 </div>
                 <div className="cmp-drawer-field">
                   <div className="cmp-drawer-label">Created By</div>

@@ -19,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import Password from "antd/es/input/Password";
 import Service from "../../service";
+import moment from "moment";
 
 const Administrator = () => {
   const [admin, setAdmin] = useState([]);
@@ -240,13 +241,7 @@ const Administrator = () => {
       render: (text, record) => {
         if (!text) return "-";
         const date = new Date(text);
-        const formattedDate = `${String(date.getDate()).padStart(
-          2,
-          "0"
-        )}-${String(date.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${date.getFullYear()}`;
+        const formattedDate = `${date ? moment(date).format("DD-MM-YYYY") : "-"}`;
         return formattedDate;
       },
     },
@@ -258,13 +253,7 @@ const Administrator = () => {
         // if (!dateStr) return '-';
 
         const date = new Date(record?.lastActiveTime);
-        const formattedDate = `${String(date.getDate()).padStart(
-          2,
-          "0"
-        )}-${String(date.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${date.getFullYear()}`;
+        const formattedDate = `${date ? moment(date).format("DD-MM-YYYY") : "-"}`;
         return formattedDate;
       },
     },

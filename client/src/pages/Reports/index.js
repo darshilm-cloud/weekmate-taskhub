@@ -238,7 +238,7 @@ const ProjectsRunning = () => {
   }, []);
 
   const formatDate = useCallback(
-    (date) => moment(date).format("DD MMM YYYY"),
+    (date) => moment(date).format("DD-MM-YYYY"),
     []
   );
 
@@ -1016,7 +1016,7 @@ export default React.memo(ProjectsRunning);
 //   }, []);
 
 //   const formatDate = useCallback(
-//     (date) => moment(date).format("DD MMM YYYY"),
+//     (date) => moment(date).format("DD-MM-YYYY"),
 //     []
 //   );
 
@@ -1823,7 +1823,7 @@ export default React.memo(ProjectsRunning);
 //   }, []);
 
 //   const formatDate = useCallback(
-//     (date) => moment(date).format("DD MMM YYYY"),
+//     (date) => moment(date).format("DD-MM-YYYY"),
 //     []
 //   );
 

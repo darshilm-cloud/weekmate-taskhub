@@ -84,7 +84,7 @@ const ReviewDetailsForm = () => {
               <div className="cad-info-label"><CalendarOutlined /> Date</div>
               <div className="cad-info-value">
                 {reviewData?.createdAt
-                  ? moment(reviewData.createdAt).format("DD MMM YYYY")
+                  ? moment(reviewData.createdAt).format("DD-MM-YYYY")
                   : "—"}
               </div>
             </div>

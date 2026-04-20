@@ -158,7 +158,7 @@ const BugDetailModal = ({
     const key = String(updatedKey || "").toLowerCase();
     if (key.includes("date")) {
       try {
-        return moment(value).format("DD MMM, YY");
+        return moment(value).format("DD-MM-YYYY");
       } catch (e) {
         return toPlainText(value) || String(value);
       }

@@ -107,7 +107,7 @@ const Dashboard = () => {
   }, [calendarValue]);
 
   // Memoized derived values — only recalculate when myTask changes
-  const today = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
+  const today = useMemo(() => dayjs().format("DD-MM-YYYY"), []);
 
   const isDone = useCallback((t) => {
     const title = (t.task_status?.title || "").toLowerCase();
@@ -129,7 +129,7 @@ const Dashboard = () => {
       totalTask: myTask.length,
       assignedToMe: assignedCount,
       dueToday: myTask.filter(
-        (t) => t.due_date && dayjs(t.due_date).format("YYYY-MM-DD") === today
+        (t) => t.due_date && dayjs(t.due_date).format("DD-MM-YYYY") === today
       ).length,
       pastDue: myTask.filter(
         (t) =>
@@ -221,7 +221,7 @@ const Dashboard = () => {
   }, [isCalendarPickerOpen]);
 
   useEffect(() => {
-    const activeNode = calendarStripItemRefs.current[calendarValue.format("YYYY-MM-DD")];
+    const activeNode = calendarStripItemRefs.current[calendarValue.format("DD-MM-YYYY")];
     if (activeNode?.scrollIntoView) {
       activeNode.scrollIntoView({
         behavior: "smooth",
@@ -273,7 +273,7 @@ const Dashboard = () => {
         const tasksOnDay = myTask.filter(
           (t) =>
             (t.createdAt || t.due_date) &&
-            dayjs(t.createdAt || t.due_date).format("YYYY-MM-DD") === d.format("YYYY-MM-DD")
+            dayjs(t.createdAt || t.due_date).format("DD-MM-YYYY") === d.format("DD-MM-YYYY")
         );
         _completedCounts.push(
           tasksOnDay.filter((t) => ["done", "closed"].includes(t.status?.toLowerCase())).length
@@ -406,13 +406,13 @@ const Dashboard = () => {
     priorityMedium: myTask.filter((t) => getTaskPriority(t) === "medium").length,
     priorityHigh: myTask.filter((t) => getTaskPriority(t) === "high").length,
     newToday: myTask.filter(
-      (t) => t.createdAt && dayjs(t.createdAt).format("YYYY-MM-DD") === today
+      (t) => t.createdAt && dayjs(t.createdAt).format("DD-MM-YYYY") === today
     ).length,
     closedToday: myTask.filter(
       (t) =>
         ["done", "closed"].includes(t.status?.toLowerCase()) &&
         t.updatedAt &&
-        dayjs(t.updatedAt).format("YYYY-MM-DD") === today
+        dayjs(t.updatedAt).format("DD-MM-YYYY") === today
     ).length,
     teamIncomplete: myTask
       .filter((t) => !["done", "closed"].includes(t.status?.toLowerCase()))
@@ -569,8 +569,8 @@ const Dashboard = () => {
       const reqBody = {};
       if (taskProjects?.length > 0) reqBody.project_id = taskProjects;
       if (taskStatus && taskStatus !== "all") reqBody.status = taskStatus;
-      if (taskDates?.startDate) reqBody.start_date = dayjs(taskDates.startDate).format("YYYY-MM-DD");
-      if (taskDates?.endDate) reqBody.end_date = dayjs(taskDates.endDate).format("YYYY-MM-DD");
+      if (taskDates?.startDate) reqBody.start_date = dayjs(taskDates.startDate).format("DD-MM-YYYY");
+      if (taskDates?.endDate) reqBody.end_date = dayjs(taskDates.endDate).format("DD-MM-YYYY");
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -616,8 +616,8 @@ const Dashboard = () => {
       let reqBody = {};
       if (bugStatus && bugStatus !== "all") reqBody = { ...reqBody, status: bugStatus };
       if (bugProjects?.length > 0) reqBody = { ...reqBody, project_id: bugProjects };
-      if (bugDates.startDate) reqBody.start_date = dayjs(bugDates.startDate).format("YYYY-MM-DD");
-      if (bugDates.endDate) reqBody.end_date = dayjs(bugDates.endDate).format("YYYY-MM-DD");
+      if (bugDates.startDate) reqBody.start_date = dayjs(bugDates.startDate).format("DD-MM-YYYY");
+      if (bugDates.endDate) reqBody.end_date = dayjs(bugDates.endDate).format("DD-MM-YYYY");
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myBugs, body: reqBody,
       });
@@ -630,12 +630,12 @@ const Dashboard = () => {
       dispatch(showAuthLoader());
       const now = new Date();
       let reqBody = {
-        start_date: moment(new Date(now.getFullYear(), now.getMonth(), 1)).format("YYYY-MM-DD"),
-        end_date: moment(new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)).format("YYYY-MM-DD"),
+        start_date: moment(new Date(now.getFullYear(), now.getMonth(), 1)).format("DD-MM-YYYY"),
+        end_date: moment(new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)).format("DD-MM-YYYY"),
       };
       if (timeProjects?.length > 0) reqBody = { ...reqBody, project_id: timeProjects };
-      if (timeDates.startDate) reqBody.start_date = dayjs(timeDates.startDate).format("YYYY-MM-DD");
-      if (timeDates.endDate) reqBody.end_date = dayjs(timeDates.endDate).format("YYYY-MM-DD");
+      if (timeDates.startDate) reqBody.start_date = dayjs(timeDates.startDate).format("DD-MM-YYYY");
+      if (timeDates.endDate) reqBody.end_date = dayjs(timeDates.endDate).format("DD-MM-YYYY");
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myLoggedTime, body: reqBody,
       });
@@ -1145,9 +1145,9 @@ const Dashboard = () => {
                     const isActive = day.isSame(calendarValue, "day");
                     return (
                       <button
-                        key={day.format("YYYY-MM-DD")}
+                        key={day.format("DD-MM-YYYY")}
                         ref={(node) => {
-                          const key = day.format("YYYY-MM-DD");
+                          const key = day.format("DD-MM-YYYY");
                           if (node) {
                             calendarStripItemRefs.current[key] = node;
                           } else {
@@ -1207,7 +1207,7 @@ const Dashboard = () => {
                   const isCurrentMonth = day.month() === calendarValue.month();
                   return (
                     <button
-                      key={day.format("YYYY-MM-DD")}
+                      key={day.format("DD-MM-YYYY")}
                       type="button"
                       className={`db-cal-date${isSelected ? " selected" : ""}${isCurrentMonth ? "" : " muted"}`}
                       onClick={() => setCalendarValue(day)}
@@ -1521,7 +1521,7 @@ const Dashboard = () => {
                     const d = log.createdAt ? new Date(log.createdAt) : null;
                     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
                     const timestamp = d
-                      ? `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`
+                      ? `${moment(d).format("DD-MM-YYYY")}`
                       : "-";
                     const OP_COLORS = {
                       LOGIN:  { bg: "#f0fdf4", color: "#16a34a" },

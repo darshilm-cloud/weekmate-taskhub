@@ -134,11 +134,11 @@ const TimeSheet = () => {
         dispatch(showAuthLoader());
         const reqBody = {
           startDate: startDate
-            ? startDate.format("YYYY-MM-DD")
-            : dayjs().startOf("month").format("YYYY-MM-DD"),
+            ? startDate.format("DD-MM-YYYY")
+            : dayjs().startOf("month").format("DD-MM-YYYY"),
           endDate: endDate
-            ? endDate.format("YYYY-MM-DD")
-            : dayjs().format("YYYY-MM-DD"),
+            ? endDate.format("DD-MM-YYYY")
+            : dayjs().format("DD-MM-YYYY"),
           technologies: tech && tech.length > 0 ? tech : [],
           types: types && types.length > 0 ? types : [],
           managers: mgr && mgr.length > 0 ? mgr : [],
@@ -210,11 +210,11 @@ const TimeSheet = () => {
         dispatch(showAuthLoader());
         const reqBody = {
           startDate: startDate
-            ? startDate.format("YYYY-MM-DD")
-            : dayjs().startOf("month").format("YYYY-MM-DD"),
+            ? startDate.format("DD-MM-YYYY")
+            : dayjs().startOf("month").format("DD-MM-YYYY"),
           endDate: endDate
-            ? endDate.format("YYYY-MM-DD")
-            : dayjs().format("YYYY-MM-DD"),
+            ? endDate.format("DD-MM-YYYY")
+            : dayjs().format("DD-MM-YYYY"),
           technologies: tech && tech.length > 0 ? tech : [],
           types: types && types.length > 0 ? types : [],
           managers: mgr && mgr.length > 0 ? mgr : [],
@@ -607,7 +607,7 @@ const TimeSheet = () => {
           <div className="date-cell">
             <CalendarOutlined className="date-icon" />
             <span className="date-text">
-              {moment(record.logged_date).format("DD MMM YYYY")}
+              {moment(record.logged_date).format("DD-MM-YYYY")}
             </span>
           </div>
         ),

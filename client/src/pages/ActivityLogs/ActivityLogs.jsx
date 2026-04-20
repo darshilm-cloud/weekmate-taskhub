@@ -9,6 +9,7 @@ import { SimpleTableSkeleton } from "../../components/common/SkeletonLoader";
 import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import ViewIcon from "../../assets/icons/ViewIcon";
+import moment from "moment";
 
 /* ── operation badge styles ────────────────────────────────── */
 const OP_STYLES = {
@@ -156,7 +157,7 @@ const ActivityLogs = () => {
     if (!dateString) return "-";
     const d = new Date(dateString);
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+    return `${moment(d).format("DD-MM-YYYY")}`;
   };
 
   const formatKeyToLabel = (key) => {
@@ -400,7 +401,7 @@ const ActivityLogs = () => {
                   </div>
                   <div>
                     <div className="field-label">Timestamp</div>
-                    <div className="field-value">{formatDate(selectedLog.createdAt)}</div>
+                    <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
                   </div>
                 </div>
               </div>
@@ -440,7 +441,7 @@ const ActivityLogs = () => {
                     </div>
                     <div>
                       <div className="field-label">Timestamp</div>
-                      <div className="field-value">{formatDate(selectedLog.createdAt)}</div>
+                      <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
                     </div>
                     {selectedLog.companyName && (
                       <div>
@@ -569,7 +570,7 @@ const ActivityLogs = () => {
                     </div>
                     <div>
                       <div className="field-label">Timestamp</div>
-                      <div className="field-value">{formatDate(selectedLog.createdAt)}</div>
+                      <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
                     </div>
                     {selectedLog.companyName && (
                       <div>
