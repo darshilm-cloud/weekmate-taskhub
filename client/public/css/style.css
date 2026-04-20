@@ -48847,9 +48847,11 @@ body .gx-drawer-sidebar-dark .gx-layout-sider-header {
   color: #fff;
   padding: 12px 16px;
   width: 100%;
+height: auto;
   font-size: 14px;
   text-transform: uppercase;
   font-weight: 500;
+
 }
 
 a.ant.ant-btn-back {
