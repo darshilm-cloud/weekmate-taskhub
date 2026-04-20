@@ -150,7 +150,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
     (m, g) => m.charAt(0) + g.toUpperCase()
   );
   const dueDate = moment(record?.end_date).isValid()
-    ? `Due On ${moment(record.end_date).format("MMM DD, YYYY")}`
+    ? `Due On ${moment(record.end_date).format("DD-MM-YYYY")}`
     : null;
   const lastUpdated = record?.updatedAt ? moment(record.updatedAt).fromNow() : "recently";
   const managerName = record?.manager?.full_name?.replace(/^(Mr\.|Mrs\.|Ms\.|Dr\.)\s*/i, "") || "";
@@ -332,7 +332,7 @@ const PROJECT_CACHE_TTL_MS = 5 * 60 * 1000;
 const PROJECT_CACHE_MAX_CHARS = 250_000;
 const PROJECT_CACHE_MAX_PAGE_SIZE = 30;
 const PROJECT_CACHE_WRITE_DEBOUNCE_MS = 500;
-const DEFAULT_PAGE_SIZE = 24;
+const DEFAULT_PAGE_SIZE = 27;
 
 
 const normalizeProjectFilters = (filters = {}) => ({

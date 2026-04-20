@@ -438,7 +438,7 @@ const BugDetailModal = ({
                       title="Click to edit due date"
                     >
                       {viewBug?.due_date
-                        ? moment(viewBug.due_date).format("MMM DD, YYYY")
+                        ? moment(viewBug.due_date).format("DD-MM-YYYY")
                         : "Set Date"}
                     </span>
                   )}

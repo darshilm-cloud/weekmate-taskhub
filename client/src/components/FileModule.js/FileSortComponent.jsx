@@ -9,6 +9,7 @@ import {
 import { SortAscendingOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { render } from "react-dom";
+import moment from "moment";
 
 // Constants
 const SORT_TYPES = {

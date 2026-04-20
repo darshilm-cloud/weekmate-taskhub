@@ -1970,7 +1970,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           }}
           placeholder={rangeField.placeholder || ["From", "To"]}
           allowClear
-          format="MMM DD, YYYY"
+          format="DD-MM-YYYY"
           style={{ minWidth: 260 }}
         />
       ) : null}
@@ -1989,7 +1989,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
             }))
           }
           allowClear
-          format="MMM DD, YYYY"
+          format="DD-MM-YYYY"
         />
       ) : null}
       {facetFields.length ? (
