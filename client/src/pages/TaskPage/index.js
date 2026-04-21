@@ -1883,6 +1883,7 @@ const TaskPage = () => {
           {canAddTask && (
             <Button
               type="primary"
+              className="add-btn"
               onClick={handleAddTaskClick}
             >
               <PlusOutlined /> Add Task
@@ -2145,8 +2146,8 @@ const TaskPage = () => {
               <div className="kanban-column-footer">
                 {canAddTask && (
                   <Button
-                    type="text"
-                    size="small"
+                   className="add-btn "
+                    type="primary"
                     icon={<PlusOutlined />}
                     className="kanban-column-add-btn"
                     onClick={() =>
@@ -2264,8 +2265,8 @@ function TaskListSection({
         </button>
         {onAddTask && (
           <Button
-            type="text"
-            size="small"
+           className="add-btn "
+           type="primary"
             icon={<PlusOutlined />}
             onClick={() => onAddTask?.(statusMeta || statusId)}
           >

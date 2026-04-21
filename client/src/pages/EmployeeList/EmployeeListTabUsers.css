@@ -6,14 +6,6 @@
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
 }
 
-.add-and-edit-employee .ant-modal-header {
-  margin: 0;
-  padding: 18px 24px 14px;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  background:
-    radial-gradient(circle at top left, rgba(96, 165, 250, 0.24), transparent 34%),
-    linear-gradient(135deg, #0b2f4a 0%, #123f63 48%, #0f2740 100%);
-}
 
 .add-and-edit-employee .ant-modal-title {
   padding-right: 28px;
@@ -34,7 +26,6 @@
   font-size: 24px;
   line-height: 1.1;
   font-weight: 800;
-  color: #f8fbff;
   letter-spacing: -0.03em;
 }
 
@@ -42,7 +33,6 @@
   margin: 6px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: rgba(219, 234, 254, 0.82);
   max-width: 520px;
 }
 
@@ -90,8 +80,7 @@
   overflow-x: hidden;
   overflow-y: visible;
   scrollbar-width: none;
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.62) 0%, rgba(255, 255, 255, 0.96) 100%);
+
 }
 
 .employee-modal-body-wrap::-webkit-scrollbar,

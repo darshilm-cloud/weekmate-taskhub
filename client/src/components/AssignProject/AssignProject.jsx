@@ -1978,6 +1978,7 @@ const AssignProject = () => {
                     <div className="ap-browser-workspace-actions">
                       <Button
                         type="primary"
+              
                         icon={<PlusOutlined />}
                         className="add-btn ap-add-task-btn"
                         onClick={() => setIsAddTaskOpen(true)}

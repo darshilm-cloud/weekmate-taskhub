@@ -1554,7 +1554,6 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 
 /* ── Header ── */
 .admin-user .global-app-modal .ant-modal-header {
-  padding: 18px 24px !important;
   border-bottom: 1px solid #e8ecf0 !important;
   margin-bottom: 0 !important;
   border-radius: 0 !important;
@@ -1581,12 +1580,7 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 .admin-user .global-app-modal .ant-modal-close:hover {
   background: #e2e8f0 !important;
 }
-.admin-user .global-app-modal .ant-modal-close-x {
-  width: 30px !important;
-  height: 30px !important;
-  line-height: 30px !important;
-  font-size: 13px !important;
-}
+
 
 /* ── Body ── */
 .admin-user .global-app-modal .ant-modal-body {
@@ -1605,17 +1599,17 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 
 /* ── Cancel button (built-in Ant default btn) → grey ── */
 .admin-user .global-app-modal .ant-modal-footer .ant-btn-default {
-  background: #f1f5f9 !important;
-  background-color: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #64748b !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+  background: #f1f5f9 ;
+  background-color: #f1f5f9 ;
+  border: 1px solid #e2e8f0 ;
+  color: #64748b ;
+  border-radius: 8px ;
+  box-shadow: none ;
 }
 .admin-user .global-app-modal .ant-modal-footer .ant-btn-default:hover {
-  background: #e2e8f0 !important;
-  background-color: #e2e8f0 !important;
-  color: #475569 !important;
+  background: #e2e8f0 ;
+  background-color: #e2e8f0 ;
+  color: #475569 ;
 }
 
 /* ── OK / Save / Create button → blue ── */
@@ -1624,7 +1618,7 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 .admin-user .global-app-modal .ant-input,
 .admin-user .global-app-modal .ant-select-selector,
 .admin-user .global-app-modal .ant-picker {
-  border-radius: 8px !important;
+  border-radius: 8px ;
   border-color: #e2e8f0 !important;
 }
 .admin-user .global-app-modal .ant-input:focus,

@@ -242,12 +242,7 @@
     animation: sh02 0.5s 0s linear;
 }
 
-/* Button Sizes */
-.ant-btn.ant-btn-sm {
-    height: 32px;
-    padding: 0 12px;
-    font-size: 13px;
-}
+
 
 .ant-btn.ant-btn-lg {
     height: 40px;
