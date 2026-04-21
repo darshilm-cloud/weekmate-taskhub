@@ -269,7 +269,7 @@ const PositiveReviewForm = () => {
               </Col>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Client Name"
+                  label="Client"
                   name="client_name"
                   rules={[{ required: true, message: "Please enter client name!" }]}
                 >

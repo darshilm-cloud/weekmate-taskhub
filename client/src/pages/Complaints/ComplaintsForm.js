@@ -63,9 +63,15 @@ const PRIORITY_COLORS = {
 /* ══════════════════════════════════════════════════════════════
    COMPONENT
 ══════════════════════════════════════════════════════════════ */
-const ComplaintsForm = () => {
+const ComplaintsForm = ({
+  embedded = false,
+  complaintId: complaintIdProp,
+  onSuccess: onSuccessCallback,
+  onCancel: onCancelCallback,
+} = {}) => {
   const companySlug      = localStorage.getItem("companyDomain");
-  const { complaint_id } = useParams();
+  const { complaint_id: complaint_idFromRoute } = useParams();
+  const complaint_id = embedded ? complaintIdProp : complaint_idFromRoute;
   const [form]           = Form.useForm();
   const dispatch         = useDispatch();
   const history          = useHistory();
@@ -184,7 +190,11 @@ const ComplaintsForm = () => {
 
       if (response?.data?.status === 1) {
         message.success(response.data.message);
-        history.push(`/${companySlug}/complaints`);
+        if (embedded) {
+          onSuccessCallback?.();
+        } else {
+          history.push(`/${companySlug}/complaints`);
+        }
       } else {
         message.error(response?.data?.message || "Failed to save complaint");
       }
@@ -196,12 +206,18 @@ const ComplaintsForm = () => {
     }
   };
 
-  /* ── Render ───────────────────────────────────────────────── */
-  return (
-    <div className="ps-page">
+  const handleLeave = () => {
+    if (embedded) {
+      onCancelCallback?.();
+    } else {
+      history.push(`/${companySlug}/complaints`);
+    }
+  };
 
-      {/* Header */}
-      <div className="ps-card">
+  /* ── Render ───────────────────────────────────────────────── */
+  const formInner = (
+    <>
+      {!embedded && (
         <div className="ps-header">
           <h2 className="ps-title">
             <span className="ps-title-icon">
@@ -210,16 +226,14 @@ const ComplaintsForm = () => {
             {isEdit ? "Edit Complaint" : "Add Complaint"}
           </h2>
           <div className="ps-header-right">
-            <button
-              className="add-btn"
-              onClick={() => history.push(`/${companySlug}/complaints`)}
-            >
+            <button className="add-btn" type="button" onClick={handleLeave}>
               <ArrowLeftOutlined /> Back to Complaints
             </button>
           </div>
         </div>
+      )}
 
-        <div className="ps-form-wrap">
+      <div className={embedded ? "ps-form-wrap cmp-embedded-ps-form-wrap" : "ps-form-wrap"}>
           <Form
             form={form}
             layout="vertical"
@@ -273,7 +287,7 @@ const ComplaintsForm = () => {
 
               <Form.Item
                 name="client_name"
-                label="Client Name"
+                label="Client"
                 rules={[{ required: true, message: "Please enter client name" }]}
               >
                 <Input
@@ -380,20 +394,20 @@ const ComplaintsForm = () => {
                   {isSubmitting ? "Saving..." : isEdit ? "Update" : "Submit"}
                 </button>
               )}
-              <button
-                type="button"
-                className="ps-btn-secondary"
-                onClick={() => history.push(`/${companySlug}/complaints`)}
-              >
+              <button type="button" className="ps-btn-secondary" onClick={handleLeave}>
                 Cancel
               </button>
             </div>
           </Form>
         </div>
-      </div>
-
-    </div>
+    </>
   );
+
+  if (embedded) {
+    return <div className="ps-card cmp-embedded-complaint-form">{formInner}</div>;
+  }
+
+  return <div className="ps-page"><div className="ps-card">{formInner}</div></div>;
 };
 
 export default ComplaintsForm;
