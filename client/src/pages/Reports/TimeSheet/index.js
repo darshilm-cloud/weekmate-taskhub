@@ -852,7 +852,7 @@ const TimeSheet = () => {
                 }
                 pagination={{
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "30"],
+                  pageSizeOptions: ["10", "20", "25", "30"],
                   showTotal: showTotal,
                   showQuickJumper: true,
                   ...pagination,

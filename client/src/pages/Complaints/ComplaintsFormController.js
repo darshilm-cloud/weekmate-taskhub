@@ -25,7 +25,7 @@ const ComplaintsFormController = () => {
   const [status, setStatus] = useState("");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
   });
   const [popOver, setPopOver] = useState({
     project: false,

@@ -126,7 +126,7 @@ function ReportsHub() {
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [pageNo, setPageNo] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [total, setTotal] = useState(0);
   const [focusedProjectIds, setFocusedProjectIds] = useState([]);
   const [metricsLoading, setMetricsLoading] = useState(false);
@@ -2280,7 +2280,7 @@ function ProjectReportContent({
               setPageSize(size);
             },
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "30"],
+            pageSizeOptions: ["10", "20", "25", "30"],
           }}
           locale={{ emptyText: <Empty description="No project data found" /> }}
         />
@@ -2382,7 +2382,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
             setPageSize(size);
           },
           showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "30"],
+          pageSizeOptions: ["10", "20", "25", "30"],
         }}
         rowKey="key"
         locale={{ emptyText: <Empty description="No report data found" /> }}
@@ -2667,7 +2667,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
                   setPageSize(size);
                 },
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
+                pageSizeOptions: ["10", "20", "25", "30"],
               }}
               columns={[
                 { title: "User", dataIndex: "user", key: "user" },
@@ -3718,7 +3718,7 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"
@@ -4014,7 +4014,7 @@ function TimesheetReportContent({
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"

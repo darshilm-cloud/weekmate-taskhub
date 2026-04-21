@@ -259,7 +259,7 @@ function ManageProjectType() {
               dataSource={projectList}
               rowKey="_id"
               footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
               onChange={page => setPagination({ ...pagination, ...page })}
             />
           </div>

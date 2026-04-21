@@ -56,7 +56,7 @@ const USER_ROLES = {
   SUPER_ADMIN:          ["Admin"],
   CLIENT_USER_ID:       sideBarContentId2,
 };
-const PAGINATION_OPTIONS = ["10", "20", "30"];
+const PAGINATION_OPTIONS = ["10", "20", "25", "30"];
 
 /* ─── helpers ───────────────────────────────────────────────────── */
 const fmtINRCompact = (v) => {
@@ -344,7 +344,7 @@ const Projectexpences = () => {
   const [analyticsLoading,     setAnalyticsLoading]     = useState(false);
   const [tableLoading,         setTableLoading]         = useState(false);
   const [pageLoading,          setPageLoading]          = useState(true);
-  const [pagination,           setPagination]           = useState({ current: 1, pageSize: 20 });
+  const [pagination,           setPagination]           = useState({ current: 1, pageSize: 25 });
 
   /* ── drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);

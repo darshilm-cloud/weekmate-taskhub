@@ -489,7 +489,7 @@ function ProjectLabels() {
               rowKey="_id"
               pagination={{
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
+                pageSizeOptions: ["10", "20", "25", "30"],
                 showTotal: (total) => `Total ${total} records`,
                 ...pagination,
               }}
