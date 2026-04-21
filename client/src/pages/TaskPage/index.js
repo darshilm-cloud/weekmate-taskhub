@@ -12,6 +12,7 @@ import {
   BarChartOutlined,
   EditOutlined,
   DeleteOutlined,
+  DragOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -31,6 +32,8 @@ const { Option } = Select;
 const SECTION_PAGE_LIMIT = 25;
 const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
 const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
+const LIST_AUTOSCROLL_EDGE_PX = 56;
+const LIST_AUTOSCROLL_STEP = 18;
 
 const computeBucketHasMore = (mergedLength, fetchedLength, total, meta = {}) => {
   const tot = Number(total) || 0;
@@ -1041,6 +1044,28 @@ const TaskPage = () => {
     [loadMoreSection]
   );
 
+  const handleListViewDragOver = useCallback(
+    (event) => {
+      if (!canManageStageOrder || !draggingStageId) return;
+      const container = tasksContainerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const pointerY = event.clientY;
+      const distanceToTop = pointerY - rect.top;
+      const distanceToBottom = rect.bottom - pointerY;
+
+      if (distanceToBottom <= LIST_AUTOSCROLL_EDGE_PX) {
+        container.scrollTop += LIST_AUTOSCROLL_STEP;
+        event.preventDefault();
+      } else if (distanceToTop <= LIST_AUTOSCROLL_EDGE_PX) {
+        container.scrollTop -= LIST_AUTOSCROLL_STEP;
+        event.preventDefault();
+      }
+    },
+    [canManageStageOrder, draggingStageId]
+  );
+
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
     setGanttAppliedDefaultRange(false);
@@ -2029,7 +2054,12 @@ const TaskPage = () => {
       {loading ? (
         <TaskPageSkeleton view={view} />
       ) : view === "list" ? (
-        <div className="task-list-view" ref={tasksContainerRef} style={{ overflowY: "auto", height: "calc(100vh - 300px)" }}>
+        <div
+          className="task-list-view"
+          ref={tasksContainerRef}
+          style={{ overflowY: "auto", height: "calc(100vh - 300px)" }}
+          onDragOver={handleListViewDragOver}
+        >
           <div className="task-list-column-header">
             <span className="task-list-header-spacer" aria-hidden />
             <span className="task-list-header-spacer" aria-hidden />
@@ -2058,6 +2088,11 @@ const TaskPage = () => {
                 onSelectTask={handleSelectTask}
                 onSectionScroll={handleListSectionScroll}
                 isSectionLoading={Boolean(sectionBuckets[s.id]?.loading)}
+                canManageStageOrder={canManageStageOrder}
+                draggingStageId={draggingStageId}
+                onStageDragStart={(id) => setDraggingStageId(id)}
+                onStageDragEnd={() => setDraggingStageId(null)}
+                onStageReorder={reorderSections}
               />
             ))}
         </div>
@@ -2250,13 +2285,40 @@ function TaskListSection({
   onSelectTask,
   onSectionScroll,
   isSectionLoading,
+  canManageStageOrder = false,
+  draggingStageId,
+  onStageDragStart,
+  onStageDragEnd,
+  onStageReorder,
   canEditTask = false,
   canDeleteTask = false,
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const isDropTarget =
+    canManageStageOrder &&
+    Boolean(draggingStageId) &&
+    String(draggingStageId) !== String(sectionId);
   return (
     <div className="task-list-section">
-      <div className="task-list-section-header">
+      <div
+        className={`task-list-section-header ${isDropTarget ? "is-drop-target" : ""}`}
+        draggable={canManageStageOrder}
+        onDragStart={() => onStageDragStart?.(sectionId)}
+        onDragOver={(event) => {
+          if (!canManageStageOrder) return;
+          event.preventDefault();
+        }}
+        onDrop={(event) => {
+          if (!canManageStageOrder) return;
+          event.preventDefault();
+          onStageReorder?.(draggingStageId, sectionId);
+          onStageDragEnd?.();
+        }}
+        onDragEnd={() => onStageDragEnd?.()}
+      >
+        {canManageStageOrder ? (
+          <DragOutlined className="task-list-section-drag-icon" />
+        ) : null}
         <button type="button" className="task-list-section-toggle" onClick={() => setCollapsed((c) => !c)}>
           <span className={`section-chevron ${collapsed ? "collapsed" : ""}`} />
           <span className="section-title">{title}</span>

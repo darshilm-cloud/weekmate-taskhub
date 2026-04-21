@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Drawer, Popconfirm, Table, Tooltip, message } from "antd";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Button, Popconfirm, Table, Tooltip, message } from "antd";
 import {
   AlertOutlined,
   CalendarOutlined,
@@ -9,7 +8,6 @@ import {
   ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
-  ExclamationCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
   PlusOutlined,
@@ -25,6 +23,7 @@ import ComplaintFilterComponent from "./ComplaintFilterComponent";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
@@ -67,7 +66,6 @@ const StatCard = ({ icon, label, value, color }) => (
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const Complaints = () => {
-  const companySlug   = localStorage.getItem("companyDomain");
   const dispatch      = useDispatch();
 
   /* ── list (paginated) ── */
@@ -85,9 +83,40 @@ const Complaints = () => {
   const [priority,        setPriority]        = useState("");
   const [status,          setStatus]          = useState("");
 
-  /* ── drawer ── */
-  const [drawerOpen,   setDrawerOpen]   = useState(false);
-  const [drawerRecord, setDrawerRecord] = useState(null);
+  /* ── unified modal: view | add | edit | actions ── */
+  const [complaintModal, setComplaintModal] = useState({
+    open: false,
+    mode: "view",
+    record: null,
+    complaintId: null,
+  });
+
+  const closeComplaintModal = useCallback(() => {
+    setComplaintModal({
+      open: false,
+      mode: "view",
+      record: null,
+      complaintId: null,
+    });
+  }, []);
+
+  const openComplaintModal = useCallback((payload) => {
+    setComplaintModal({
+      open: true,
+      mode: payload.mode || "view",
+      record: payload.record ?? null,
+      complaintId: payload.complaintId ?? payload.record?._id ?? null,
+    });
+  }, []);
+
+  const handleComplaintModalNavigate = useCallback((nextMode, id) => {
+    setComplaintModal((prev) => ({
+      open: true,
+      mode: nextMode,
+      complaintId: id,
+      record: prev.record && String(prev.record._id) === String(id) ? prev.record : null,
+    }));
+  }, []);
 
   const [tableLoading, setTableLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -168,6 +197,11 @@ const Complaints = () => {
       console.error(error);
     }
   }, [dispatch, getComplaintList, fetchAllForAnalytics]);
+
+  const handleComplaintModalSuccess = useCallback(() => {
+    getComplaintList();
+    fetchAllForAnalytics();
+  }, [getComplaintList, fetchAllForAnalytics]);
 
   useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
   useEffect(() => { getComplaintList(); },     [getComplaintList]);
@@ -322,23 +356,30 @@ const Complaints = () => {
           <div className="cmp-action-row">
             <Tooltip title="View details">
               <button
+                type="button"
                 className="cmp-action-btn view"
-                onClick={() => { setDrawerRecord(record); setDrawerOpen(true); }}
+                onClick={() => openComplaintModal({ mode: "view", record, complaintId: record._id })}
               >
                 <EyeOutlined />
               </button>
             </Tooltip>
             <Tooltip title="Action details">
-              <Link to={`/${companySlug}/add/complaintForm-action-details/${record._id}`}>
-                <button className="cmp-action-btn view">
-                  <FileTextOutlined />
-                </button>
-              </Link>
+              <button
+                type="button"
+                className="cmp-action-btn view"
+                onClick={() => openComplaintModal({ mode: "actions", complaintId: record._id })}
+              >
+                <FileTextOutlined />
+              </button>
             </Tooltip>
             <Tooltip title="Edit">
-              <Link to={`/${companySlug}/edit/complaintsForm/${record._id}`}>
-                <button className="cmp-action-btn edit"><EditOutlined /></button>
-              </Link>
+              <button
+                type="button"
+                className="cmp-action-btn edit"
+                onClick={() => openComplaintModal({ mode: "edit", complaintId: record._id })}
+              >
+                <EditOutlined />
+              </button>
             </Tooltip>
             <Popconfirm
               icon={<QuestionCircleOutlined style={{ color: "red" }} />}
@@ -357,7 +398,7 @@ const Complaints = () => {
     }
 
     return base;
-  }, [userHasAccess, deleteComplaints, companySlug]);
+  }, [userHasAccess, deleteComplaints, openComplaintModal]);
 
   /* ───────────────────────────────────────────────────────────
      RENDER
@@ -372,12 +413,12 @@ const Complaints = () => {
         <h1 className="cmp-title">Complaints</h1>
         {canAdd && (
           <div>
-            <Link to={`/${companySlug}/add/complaintsform`}>
-            <Button type="primary">
-
+            <Button
+              type="primary"
+              onClick={() => openComplaintModal({ mode: "add" })}
+            >
               <PlusOutlined /> Add Complaint
             </Button>
-            </Link>
           </div>
         )}
       </div>
@@ -453,99 +494,16 @@ const Complaints = () => {
         />
       </div>
 
-      {/* Detail Drawer */}
-      <Drawer
-        title={
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <ExclamationCircleOutlined style={{ color: "#dc2626" }} />
-            <span>Complaint Detail</span>
-          </div>
-        }
-        placement="right"
-        width={480}
-        open={drawerOpen}
-        onClose={() => { setDrawerOpen(false); setDrawerRecord(null); }}
-        bodyStyle={{ padding: 0 }}
-        extra={
-          drawerRecord && userHasAccess && (
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link to={`/${companySlug}/add/complaintForm-action-details/${drawerRecord._id}`}>
-                <button className="btn-secondary">
-                  <FileTextOutlined /> Actions
-                </button>
-              </Link>
-              <Link to={`/${companySlug}/edit/complaintsForm/${drawerRecord._id}`}>
-                <button className="btn-secondary">
-                  <EditOutlined /> Edit
-                </button>
-              </Link>
-            </div>
-          )
-        }
-      >
-        {drawerRecord && (
-          <>
-            <div className="cmp-drawer-section">
-              <div className="cmp-drawer-fields">
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Project</div>
-                  <div className="cmp-drawer-value">{drawerRecord.project?.title || "—"}</div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Client</div>
-                  <div className="cmp-drawer-value">{drawerRecord.client_name || "—"}</div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Account Manager</div>
-                  <div className="cmp-drawer-value">{drawerRecord.acc_manager?.full_name || "—"}</div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Project Manager</div>
-                  <div className="cmp-drawer-value">{drawerRecord.manager?.full_name || "—"}</div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Status</div>
-                  <div className="cmp-drawer-value">
-                    {drawerRecord.status ? (
-                      <span className={`cmp-status-badge ${statusClass(drawerRecord.status)}`}>
-                        {formatStatus(drawerRecord.status)}
-                      </span>
-                    ) : "—"}
-                  </div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Priority</div>
-                  <div className="cmp-drawer-value">
-                    {drawerRecord.priority ? (
-                      <span className={`cmp-priority-badge ${priorityClass(drawerRecord.priority)}`}>
-                        {drawerRecord.priority.charAt(0).toUpperCase() + drawerRecord.priority.slice(1)}
-                      </span>
-                    ) : "—"}
-                  </div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Date</div>
-                  <div className="cmp-drawer-value">{moment(drawerRecord.createdAt).format("DD-MM-YYYY")}</div>
-                </div>
-                <div className="cmp-drawer-field">
-                  <div className="cmp-drawer-label">Created By</div>
-                  <div className="cmp-drawer-value">{drawerRecord.createdBy?.full_name || "—"}</div>
-                </div>
-              </div>
-            </div>
-
-            {drawerRecord.complaint && (
-              <div className="cmp-drawer-section">
-                <div className="cmp-drawer-label" style={{ marginBottom: 10 }}>Complaint</div>
-                <div
-                  className="cmp-complaint-content"
-                  dangerouslySetInnerHTML={{ __html: drawerRecord.complaint }}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </Drawer>
+      <ComplaintsUnifiedModal
+        open={complaintModal.open}
+        mode={complaintModal.mode}
+        record={complaintModal.record}
+        complaintId={complaintModal.complaintId}
+        userHasAccess={userHasAccess}
+        onClose={closeComplaintModal}
+        onSuccess={handleComplaintModalSuccess}
+        onNavigate={handleComplaintModalNavigate}
+      />
 
     </div>
   );

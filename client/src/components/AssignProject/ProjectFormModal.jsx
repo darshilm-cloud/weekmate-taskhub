@@ -1754,7 +1754,7 @@ const ProjectFormModal = ({
           <UserOutlined className="pfm-icon" />
           <div className="pfm-input-group">
             <div className="pfm-field-label-row">
-              <div className="pfm-field-label">Client Name</div>
+              <div className="pfm-field-label">Client</div>
               <button type="button" className="pfm-add-new-btn" onClick={openAddClientModal}>
                 <PlusOutlined /> Add New
               </button>

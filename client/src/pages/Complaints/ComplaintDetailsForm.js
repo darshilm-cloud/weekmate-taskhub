@@ -54,10 +54,14 @@ const statusBadgeClass = (s = "") => {
 /* ══════════════════════════════════════════════════════════
    COMPONENT
 ══════════════════════════════════════════════════════════ */
-const ComplaintDetailsForm = () => {
+const ComplaintDetailsForm = ({
+  embedded = false,
+  complaintId: complaintIdProp,
+} = {}) => {
   const [form]        = Form.useForm();
   const [commentForm] = Form.useForm();
-  const { id }        = useParams();
+  const { id: idFromRoute } = useParams();
+  const id = embedded ? complaintIdProp : idFromRoute;
   const dispatch      = useDispatch();
 
   const loggedinUserId = JSON.parse(localStorage.getItem("user_data") || "{}")?._id;
@@ -138,6 +142,10 @@ const ComplaintDetailsForm = () => {
       getComplaintComments(id);
     }
   }, [id, getComplaintById, getComplaintStatus, getComplaintComments]);
+
+  if (embedded && !id) {
+    return null;
+  }
 
   /* ── Status form submit ────────────────────────────────── */
   const handleSubmit = async (values) => {
@@ -261,8 +269,8 @@ const ComplaintDetailsForm = () => {
   const showForm      = !hasStatus || isEdit;
 
   /* ── Render ────────────────────────────────────────────── */
-  return (
-    <div className="cad-page">
+  const page = (
+    <div className={`cad-page${embedded ? " cad-page--embedded" : ""}`}>
 
       {/* ── Complaint Info ── */}
       <div className="cad-info-card">
@@ -495,7 +503,6 @@ const ComplaintDetailsForm = () => {
 
                 <div className="cad-form-actions">
                   <button type="submit" className="cad-btn primary">
-                    <CheckCircleOutlined />
                     {isEditComment ? "Update" : "Submit"}
                   </button>
                   <button
@@ -596,6 +603,16 @@ const ComplaintDetailsForm = () => {
 
     </div>
   );
+
+  if (embedded) {
+    return (
+      <div className="cmp-embedded-complaint-actions">
+        {page}
+      </div>
+    );
+  }
+
+  return page;
 };
 
 export default ComplaintDetailsForm;
