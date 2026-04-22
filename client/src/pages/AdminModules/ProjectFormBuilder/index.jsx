@@ -338,7 +338,7 @@ const ProjectFormBuilder = () => {
             </Text>
           </div>
           <div className="task-form-builder-header-actions">
-            <Button icon={<PlusOutlined />} onClick={openAddFieldModal} disabled={!canConfigure}>
+            <Button type="primary" className="add-btn" icon={<PlusOutlined />} onClick={openAddFieldModal} disabled={!canConfigure}>
               Add Field
             </Button>
             <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving} disabled={!canConfigure}>
@@ -489,7 +489,8 @@ const ProjectFormBuilder = () => {
       <Modal
         title={editingFieldKey ? "Edit Field" : "Add Field"}
         open={fieldModalOpen}
-        onCancel={closeFieldModal}
+        onCancel={closeFieldModal} 
+        cancelButtonProps={{ className: "delete-btn" }}
         onOk={handleAddOrEditField}
         okText={editingFieldKey ? "Update Field" : "Add Field"}
         okButtonProps={{ disabled: !canConfigure }}

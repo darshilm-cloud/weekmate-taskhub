@@ -4579,7 +4579,7 @@ html {
   position: relative;
 }
 
-.ant-btn>.anticon+span,
+/* .ant-btn>.anticon+span, */
 .ant-btn>span+.anticon {
   margin-left: 8px;
 }
@@ -17662,7 +17662,8 @@ textarea.ant-input {
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button {
   border-radius: 0 6px 6px 0;
-  border: 1px solid #d1d5db ;
+  border-left: 1px solid #d1d5db ;
+  
 }
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button:not(.ant-btn-primary) {
@@ -20251,12 +20252,17 @@ textarea.ant-mentions {
 .ant-modal-confirm .ant-modal-body {
   padding: 32px 32px 24px;
 }
-
+ .ant-modal-body {
+  max-height: 600px;
+ }
 .ant-modal-confirm-body-wrapper::before {
   display: table;
   content: "";
 }
-
+.ant-modal-body .ant-form-item-label label {
+    font-size: 14px;
+    text-transform: capitalize;
+}
 .ant-modal-confirm-body-wrapper::after {
   display: table;
   clear: both;
@@ -21540,7 +21546,6 @@ textarea.ant-pagination-options-quick-jumper input {
   height: 8.48528137px;
   background: transparent;
   border-style: solid;
-  border-width: 4.24264069px;
   transform: rotate(45deg);
 }
 
@@ -22936,7 +22941,7 @@ span.ant-radio+* {
 }
 
 .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-  border-color: #28aaeb;
+  border-color: #28aaeb !important;
   border-right-width: 1px !important;
 }
 

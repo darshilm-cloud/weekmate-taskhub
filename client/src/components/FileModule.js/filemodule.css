@@ -222,7 +222,9 @@
     text-align: center;
     margin: auto;
 }
-
+.upload-file-main-wrapper .upload-file-wrapper button{
+    margin: 0 auto;
+}
 .upload-file-main-wrapper {
     display: flex;
     flex-wrap: wrap;
@@ -612,15 +614,6 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     box-shadow: 0 30px 90px rgba(15, 23, 42, 0.22) !important;
 }
 
-.file-folder-modal .ant-modal-header {
-    padding: 22px 28px 20px !important;
-    background: linear-gradient(135deg, #0b3a5b 0%, #114a70 100%) !important;
-    border-bottom: none !important;
-}
-
-.file-folder-modal .ant-modal-title {
-    color: #ffffff !important;
-}
 
 .file-folder-modal__title-wrap {
     display: flex;
@@ -628,22 +621,7 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     gap: 6px;
 }
 
-.file-folder-modal__eyebrow {
-    font-size: 11px;
-    line-height: 1;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: rgba(255, 255, 255, 0.72);
-}
 
-.file-folder-modal__title {
-    margin: 0;
-    font-size: 29px;
-    line-height: 1.1;
-    font-weight: 700;
-    color: #ffffff;
-}
 
 .file-folder-modal button.ant-modal-close {
     top: 18px !important;
@@ -674,16 +652,6 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     justify-content: center;
 }
 
-.file-folder-modal .ant-modal-body {
-    padding: 0 !important;
-    background:
-        radial-gradient(circle at top right, rgba(17, 74, 112, 0.09), transparent 30%),
-        linear-gradient(180deg, #f8fbff 0%, #ffffff 30%);
-}
-
-.file-folder-modal__body {
-    padding: 28px 28px 26px;
-}
 
 .file-folder-modal__form .ant-form-item {
     margin-bottom: 18px;
@@ -698,31 +666,6 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     color: #53657d;
 }
 
-.file-folder-modal__intro {
-    margin-bottom: 18px;
-    padding: 16px 18px;
-    border: 1px solid #dfe9f3;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.82);
-    color: #61758f;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.file-folder-modal__form .ant-input {
-    min-height: 52px;
-    border-radius: 14px;
-    border: 1px solid #d7e1ec;
-    background: #ffffff;
-    color: #18293d;
-    font-size: 15px;
-    padding-inline: 16px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-
-.file-folder-modal__form .ant-input::placeholder {
-    color: #a8b6c7;
-}
 
 .file-folder-modal__footer {
     margin-top: 10px;
@@ -736,7 +679,7 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     gap: 12px;
 }
 
-.file-folder-modal__primary.ant-btn,
+
 .file-folder-modal__secondary.ant-btn {
     min-width: 110px;
     height: 44px;
@@ -747,18 +690,9 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     box-shadow: none !important;
 }
 
-.file-folder-modal__primary.ant-btn {
-    background: #0b3a5b !important;
-    border-color: #0b3a5b !important;
-    color: #ffffff !important;
-}
 
-.file-folder-modal__primary.ant-btn:hover,
-.file-folder-modal__primary.ant-btn:focus {
-    background: #0b3a5b !important;
-    border-color: #0b3a5b !important;
-    color: #ffffff !important;
-}
+
+
 
 .file-folder-modal__secondary.ant-btn {
     background: #f4f8fc !important;

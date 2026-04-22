@@ -357,27 +357,67 @@ function Workflows() {
         )}
       </div>
 
-      <Modal
-        open={isModalOpen}
-        onCancel={handleCancel}
-        title={<><NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add WorkFlow</>}
-        className="ps-modal"
-        width={480}
-        footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" onClick={() => addform.submit()} loading={isSubmitting}>Save</Button>,
-        ]}
-      >
-        <Form form={addform} layout="vertical" onFinish={addWorkflowDetails}>
-          <Form.Item
-            name="project_workflow"
-            label="Workflow Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid workflow name" }]}
-          >
-            <Input autoComplete="off" size="large" placeholder="e.g. Development, Testing" />
-          </Form.Item>
-        </Form>
-      </Modal>
+    <Modal
+  open={isModalOpen}
+  onCancel={handleCancel}
+  title={
+    <>
+      <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+      Add WorkFlow
+    </>
+  }
+  className="ps-modal"
+  width="100%"
+  style={{ maxWidth: 480 }}
+  footer={[
+    <Button
+      key="cancel"
+      className="delete-btn"
+      onClick={handleCancel}
+    >
+      Cancel
+    </Button>,
+    <Button
+    type="primary"
+      key="submit"
+      className="add-btn"
+      onClick={() => addform.submit()}
+      loading={isSubmitting}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <Form
+    form={addform}
+    layout="vertical"
+    onFinish={addWorkflowDetails}
+  >
+    <Row gutter={[24, 0]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="project_workflow"
+          label="Workflow Name"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter a valid workflow name",
+            },
+          ]}
+        >
+          <Input
+            autoComplete="off"
+            size="large"
+            placeholder="e.g. Development, Testing"
+          />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 }

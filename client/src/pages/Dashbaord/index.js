@@ -1684,6 +1684,7 @@ const Dashboard = () => {
         onCancel={() => { setAddNoteOpen(false); noteForm.resetFields(); }}
         onOk={handleNoteSubmit}
         okText="Add Note"
+            okButtonProps={{className: "add-btn", type: "primary"}}
         confirmLoading={noteSubmitting}
         destroyOnClose
       >

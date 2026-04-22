@@ -211,7 +211,7 @@
     font-size: 14px;
     border-width: 1px;
 }
-
+.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover,
 .add-btn:hover {
     color: var(--add-button-color, #ffffff);
     background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));

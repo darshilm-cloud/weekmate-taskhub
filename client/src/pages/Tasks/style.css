@@ -5269,10 +5269,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
    ADD LIST MODAL — Refined Light Theme
    ══════════════════════════════════════════════ */
 
-.ant-modal.add-task-modal.add-list-modal:not(.copy-task-modal) {
-    width: 980px !important;
-    max-width: 94vw !important;
-}
+
 
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-content {
     border-radius: 18px !important;
@@ -5281,18 +5278,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     box-shadow: 0 26px 90px rgba(11, 58, 91, 0.20) !important;
 }
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-header {
-    padding: 18px 24px !important;
-    background: #0b3a5b !important;
-    border-bottom: none !important;
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-title {
-    color: #ffffff !important;
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em;
-}
 
 .add-task-modal.add-list-modal:not(.copy-task-modal) button.ant-modal-close {
     top: 18px !important;
@@ -5318,58 +5304,22 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     line-height: 34px !important;
 }
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-body {
-    padding: 0 !important;
-    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 24%) !important;
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .overview-modal-wrapper {
-    padding: 28px 26px 24px !important;
-    background: transparent !important;
-}
-
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-row {
-    row-gap: 12px;
-}
 
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-form-item {
     margin-bottom: 16px !important;
 }
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-form-item-label > label,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-section label,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .client-section label {
-    color: #52637a !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-select-selector,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input-affix-wrapper {
-    min-height: 48px !important;
-    border-radius: 12px !important;
-    border: 1px solid #d7e1ec !important;
-    background: #ffffff !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
+
+
 
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-input::placeholder,
 .add-task-modal.add-list-modal:not(.copy-task-modal) .ant-select-selection-placeholder {
     color: #a7b6c8 !important;
 }
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-section,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .client-section,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stages-section {
-    padding: 18px 18px 14px;
-    border: 1px solid #e3ebf4;
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
+
 
 .add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stages-section h4 {
     color: #183b56 !important;
@@ -5383,7 +5333,9 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     border: 1px solid #e4ecf5;
     background: #f8fbff;
 }
-
+.add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stage-card .subscriber-info {
+margin-bottom: 10px;
+}
 .add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-name {
     color: #183b56;
     font-weight: 600;
@@ -5399,37 +5351,10 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     font-weight: 600;
 }
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-modal-footer {
-    padding: 16px 24px 20px !important;
-    background: #ffffff !important;
-    border-top: 1px solid #e7eef6 !important;
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.delete-btn {
-    min-width: 104px;
-    height: 42px;
-    border-radius: 12px !important;
-    background: #f3f7fb !important;
-    border: 1px solid #d9e5f0 !important;
-    color: #52637a !important;
-    font-weight: 700 !important;
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.square-primary-btn {
-    min-width: 104px;
-    height: 42px;
-    border-radius: 12px !important;
-    background: #0b3a5b !important;
-    border-color: #0b3a5b !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    box-shadow: 0 10px 24px rgba(11, 58, 91, 0.22);
-}
 
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.square-primary-btn:hover,
-.add-task-modal.add-list-modal:not(.copy-task-modal) .ant-btn.delete-btn:hover {
-    transform: none !important;
-}
+
 
 /* ── CSV Ellipsis Dropdown ──────────────────────────────────── */
 .wm-csv-dropdown .ant-dropdown-menu {

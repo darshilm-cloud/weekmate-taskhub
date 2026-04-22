@@ -1,7 +1,4 @@
-.admin-user .ant-modal-content .ant-modal-header .ant-modal-title {
-    font-weight: 600;
-    background-color: transparent;
-}
+
 .ant-modal-content .ant-modal-title {
     padding: 16px 24px;
     color: #545454;
@@ -15,6 +12,9 @@
     background-color: var(--chat-body-wrapper);
     padding: 20px;
     border-radius: 8px;
+    max-height: 70dvh;
+    overflow-y: auto;
+
 }
 
 .admin-user .ant-modal-content .ant-modal-body .ant-radio-wrapper:hover .ant-radio-inner {

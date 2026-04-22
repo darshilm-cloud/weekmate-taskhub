@@ -48,6 +48,7 @@ import Service from "../../service";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
 import { isEmpty } from "lodash"
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 
 function RestrictedRoute({
@@ -305,6 +306,7 @@ function App() {
   };
 
   const currentAppLocale = AppLocale[locale.locale];
+  const renderNoDataState = () => <NoDataFoundIcon />;
 
   return (
     <>
@@ -313,7 +315,7 @@ function App() {
         <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
       </Helmet>
       <SocketProvider user={authUser}>
-        <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)}>
+        <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)} renderEmpty={renderNoDataState}>
           <IntlProvider
             locale={currentAppLocale.locale}
             messages={currentAppLocale.messages}

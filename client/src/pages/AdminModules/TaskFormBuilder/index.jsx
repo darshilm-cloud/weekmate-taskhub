@@ -343,7 +343,7 @@ const TaskFormBuilder = () => {
             </Text>
           </div>
           <div className="task-form-builder-header-actions">
-            <Button icon={<PlusOutlined />} onClick={openAddFieldModal}>
+            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddFieldModal}>
               Add Field
             </Button>
             <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
@@ -493,6 +493,7 @@ const TaskFormBuilder = () => {
         title={editingFieldKey ? "Edit Field" : "Add Field"}
         open={fieldModalOpen}
         onCancel={closeFieldModal}
+        cancelButtonProps={{ className: "delete-btn" }}
         onOk={handleAddOrEditField}
         okText={editingFieldKey ? "Update Field" : "Add Field"}
       >

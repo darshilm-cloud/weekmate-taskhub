@@ -58,6 +58,7 @@
 
 .overview-modal-wrapper .ant-form-item-control-input .ant-select-selector .ant-select-selection-overflow {
     max-height: 149px;
+        gap: 6px;
 }
 
 /* ---------------- all projects------------ */

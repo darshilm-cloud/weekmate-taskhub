@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Modal, Tag, message } from "antd";
+import { Table, Modal, Tag, message, Col, Row, Button } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import "./ActivityLogs.css";
@@ -347,333 +347,267 @@ const ActivityLogs = () => {
 
       {/* Detail Modal */}
       <Modal
-        title={
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "rgba(255, 255, 255, 0.16)", color: "#ffffff",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
-            }}>
-              <ClockCircleOutlined />
-            </span>
-            <span style={{ fontWeight: 700, fontSize: 16, color: "#1e293b" }}>
-              Activity Log Details
-            </span>
-          </div>
-        }
-        open={isViewModalOpen}
-        onCancel={closeModal}
-        className="activity-detail-modal"
-        footer={
-          <button className="cad-btn" onClick={closeModal}>
-            Close
-          </button>
-        }
-        width={800}
-        styles={{ body: { maxHeight: "70vh", overflowY: "auto", padding: "24px" } }}
+  title={
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span
+  
       >
-        {selectedLog && (
-          <div className="activity-modal">
-            {/* LOGIN / LOGOUT */}
-            {(selectedLog.operationName === "LOGIN" || selectedLog.operationName === "LOGOUT") && (
-              <div className="activity-section">
-                <h3 className="section-title">Basic Information</h3>
-                <div className="grid-3">
-                  <div>
-                    <div className="field-label">User</div>
-                    <div className="field-value">
-                      {selectedLog.createdBy?.full_name || selectedLog.createdBy?.emp_name || selectedLog.createdByName || "-"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="field-label">Email</div>
-                    <div className="field-value">
-                      {selectedLog.email || selectedLog.createdBy?.email || selectedLog.createdByEmail || "-"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="field-label">Operation</div>
-                    <OpBadge text={selectedLog.operationName} />
-                  </div>
-                  <div>
-                    <div className="field-label">Module</div>
-                    <div className="field-value">{formatModuleName(selectedLog.moduleName)}</div>
-                  </div>
-                  <div>
-                    <div className="field-label">Timestamp</div>
-                    <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
-                  </div>
-                </div>
+        <ClockCircleOutlined />
+      </span>
+      <span style={{ fontWeight: 700, fontSize: 16, color: "#1e293b" }}>
+        Activity Log Details
+      </span>
+    </div>
+  }
+  open={isViewModalOpen}
+  onCancel={closeModal}
+  className="activity-detail-modal"
+  footer={
+    <Button  className="delete-btn" onClick={closeModal}>
+      Close
+    </Button>
+  }
+  width="100%"
+  style={{ maxWidth: 800 }}
+  styles={{ body: { maxHeight: "70vh", overflowY: "auto", padding: "24px" } }}
+>
+  {selectedLog && (
+    <div className="activity-modal">
+
+      {/* LOGIN / LOGOUT */}
+      {(selectedLog.operationName === "LOGIN" ||
+        selectedLog.operationName === "LOGOUT") && (
+        <div className="activity-section">
+          <h3 className="section-title">Basic Information</h3>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8}>
+              <div className="field-label">User</div>
+              <div className="field-value">
+                {selectedLog.createdBy?.full_name ||
+                  selectedLog.createdBy?.emp_name ||
+                  selectedLog.createdByName ||
+                  "-"}
               </div>
-            )}
+            </Col>
 
-            {/* UPDATE */}
-            {selectedLog.operationName === "UPDATE" && (
-              <>
-                <div className="activity-section">
-                  <h3 className="section-title">Basic Information</h3>
-                  <div className="grid-3">
-                    <div>
-                      <div className="field-label">User</div>
-                      <div className="field-value">
-                        {selectedLog.createdByName || selectedLog.createdBy?.full_name || selectedLog.createdBy?.emp_name || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Employee Code</div>
-                      <div className="field-value">
-                        {selectedLog.createdByEmpCode || selectedLog.createdBy?.emp_code || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Email</div>
-                      <div className="field-value">
-                        {selectedLog.createdByEmail || selectedLog.email || selectedLog.createdBy?.email || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Operation</div>
-                      <OpBadge text="UPDATE" />
-                    </div>
-                    <div>
-                      <div className="field-label">Module</div>
-                      <div className="field-value">{formatModuleName(selectedLog.moduleName)}</div>
-                    </div>
-                    <div>
-                      <div className="field-label">Timestamp</div>
-                      <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
-                    </div>
-                    {selectedLog.companyName && (
-                      <div>
-                        <div className="field-label">Company</div>
-                        <div className="field-value">{selectedLog.companyName}</div>
-                      </div>
-                    )}
-                  </div>
+            <Col xs={24} sm={12} md={8}>
+              <div className="field-label">Email</div>
+              <div className="field-value">
+                {selectedLog.email ||
+                  selectedLog.createdBy?.email ||
+                  selectedLog.createdByEmail ||
+                  "-"}
+              </div>
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <div className="field-label">Operation</div>
+              <OpBadge text={selectedLog.operationName} />
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <div className="field-label">Module</div>
+              <div className="field-value">
+                {formatModuleName(selectedLog.moduleName)}
+              </div>
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <div className="field-label">Timestamp</div>
+              <div className="field-value">
+                {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
+              </div>
+            </Col>
+          </Row>
+        </div>
+      )}
+
+      {/* UPDATE */}
+      {selectedLog.operationName === "UPDATE" && (
+        <>
+          <div className="activity-section">
+            <h3 className="section-title">Basic Information</h3>
+
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">User</div>
+                <div className="field-value">
+                  {selectedLog.createdByName ||
+                    selectedLog.createdBy?.full_name ||
+                    selectedLog.createdBy?.emp_name ||
+                    "-"}
                 </div>
+              </Col>
 
-                {(selectedLog.updatedBy || selectedLog.updatedByName) && (
-                  <div className="activity-section">
-                    <h3 className="section-title">Status Information</h3>
-                    <div className="status-grid">
-                      <div>
-                        <div className="field-label">Updated By</div>
-                        <div className="field-value">
-                          {selectedLog.updatedBy?.full_name ||
-                           (selectedLog.updatedBy?.first_name && selectedLog.updatedBy?.last_name
-                             ? `${selectedLog.updatedBy.first_name} ${selectedLog.updatedBy.last_name}`
-                             : selectedLog.updatedBy?.first_name || selectedLog.updatedBy?.last_name) ||
-                           selectedLog.updatedByName || "-"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {selectedLog.updatedData && (() => {
-                  const { oldData, newData } = selectedLog.updatedData;
-                  const allKeys = new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})]);
-                  const changedFields = [];
-                  const unchangedFields = [];
-                  const skipKeys = new Set(["updated_at","created_at","updated_by","updatedBy","updated_by_id","updatedById"]);
-
-                  allKeys.forEach((key) => {
-                    if (skipKeys.has(key)) return;
-                    const oldValue = oldData?.[key];
-                    const newValue = newData?.[key];
-                    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
-                      changedFields.push({ key, oldValue, newValue });
-                    } else {
-                      unchangedFields.push({ key, value: newValue });
-                    }
-                  });
-
-                  return (
-                    <>
-                      {changedFields.length > 0 && (
-                        <div className="activity-section">
-                          <h3 className="section-title">Changes</h3>
-                          <div className="changes-box">
-                            <div className="changes-header">
-                              <div className="col">Previous Values</div>
-                              <div className="spacer-50" />
-                              <div className="col">Current Values</div>
-                            </div>
-                            {changedFields.map(({ key, oldValue, newValue }) => (
-                              <div key={key} className="change-row">
-                                <div className="change-col">
-                                  <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                  <div className="prev-value">{renderArrayValue(oldValue)}</div>
-                                </div>
-                                <div className="change-arrow">→</div>
-                                <div className="change-col">
-                                  <div className="change-subtitle">{formatKeyToLabel(key)}</div>
-                                  <div className="curr-value">{renderArrayValue(newValue)}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {unchangedFields.length > 0 && (
-                        <div className="activity-section">
-                          <h3 className="section-title">Other Information</h3>
-                          <div className="other-info">
-                            {unchangedFields.map(({ key, value }) => (
-                              <div key={key}>
-                                <div className="field-label">{formatKeyToLabel(key)}</div>
-                                <div className="field-value">{renderArrayValue(value)}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </>
-            )}
-
-            {/* DELETE (fallback) */}
-            {selectedLog.operationName !== "LOGIN" &&
-             selectedLog.operationName !== "LOGOUT" &&
-             selectedLog.operationName !== "UPDATE" && (
-              <>
-                <div className="activity-section">
-                  <h3 className="section-title">Basic Information</h3>
-                  <div className="grid-3">
-                    <div>
-                      <div className="field-label">User</div>
-                      <div className="field-value">
-                        {selectedLog.createdByName || selectedLog.createdBy?.full_name || selectedLog.createdBy?.emp_name || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Employee Code</div>
-                      <div className="field-value">
-                        {selectedLog.createdByEmpCode || selectedLog.createdBy?.emp_code || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Email</div>
-                      <div className="field-value">
-                        {selectedLog.createdByEmail || selectedLog.email || selectedLog.createdBy?.email || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="field-label">Operation</div>
-                      <OpBadge text={selectedLog.operationName || "DELETE"} />
-                    </div>
-                    <div>
-                      <div className="field-label">Module</div>
-                      <div className="field-value">{formatModuleName(selectedLog.moduleName)}</div>
-                    </div>
-                    <div>
-                      <div className="field-label">Timestamp</div>
-                      <div className="field-value">{moment(selectedLog.createdAt).format("DD-MM-YYYY")}</div>
-                    </div>
-                    {selectedLog.companyName && (
-                      <div>
-                        <div className="field-label">Company</div>
-                        <div className="field-value">{selectedLog.companyName}</div>
-                      </div>
-                    )}
-                  </div>
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">Employee Code</div>
+                <div className="field-value">
+                  {selectedLog.createdByEmpCode ||
+                    selectedLog.createdBy?.emp_code ||
+                    "-"}
                 </div>
+              </Col>
 
-                {(selectedLog.deletedBy || selectedLog.deletedByName) && (
-                  <div className="activity-section">
-                    <h3 className="section-title">Status Information</h3>
-                    <div className="status-grid">
-                      <div>
-                        <div className="field-label">Deleted By</div>
-                        <div className="field-value">
-                          {selectedLog.deletedBy?.full_name ||
-                           (selectedLog.deletedBy?.first_name && selectedLog.deletedBy?.last_name
-                             ? `${selectedLog.deletedBy.first_name} ${selectedLog.deletedBy.last_name}`
-                             : selectedLog.deletedBy?.first_name || selectedLog.deletedBy?.last_name) ||
-                           selectedLog.deletedByName || "-"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">Email</div>
+                <div className="field-value">
+                  {selectedLog.createdByEmail ||
+                    selectedLog.email ||
+                    selectedLog.createdBy?.email ||
+                    "-"}
+                </div>
+              </Col>
 
-                {(selectedLog.deletedData || selectedLog.additionalData?.deletedData) && (
-                  <div className="activity-section">
-                    <h3 className="section-title">Deleted Data</h3>
-                    <div className="deleted-data-grid">
-                      {(selectedLog.deletedData || selectedLog.additionalData?.deletedData || []).map((item, index) =>
-                        Object.keys(item)
-                          .filter((key) =>
-                            !["_id","companyId","createdBy","updatedBy","deletedBy",
-                              "createdByModel","updatedByModel","deletedByModel",
-                              "isDeleted","deletedAt"].includes(key)
-                          )
-                          .map((key) => {
-                            let displayValue = item[key];
-                            if (Array.isArray(displayValue)) {
-                              if (displayValue.length === 0) {
-                                displayValue = "-";
-                              } else {
-                                return (
-                                  <div key={`${index}-${key}`} style={{ gridColumn: "1 / -1" }}>
-                                    <div className="field-label">{formatKeyToLabel(key)}</div>
-                                    <div className="field-value">
-                                      <ul style={{ margin: "4px 0", paddingLeft: 20 }}>
-                                        {displayValue.map((val, idx) => {
-                                          if (val && typeof val === "object" && !Array.isArray(val)) {
-                                            return (
-                                              <li key={idx}>
-                                                {Object.keys(val).filter((k) => k !== "_id").map((objKey) => {
-                                                  let objValue = val[objKey];
-                                                  if (typeof objValue === "string") objValue = stripHtml(objValue);
-                                                  else if (objValue === null || objValue === undefined) objValue = "-";
-                                                  else if (typeof objValue === "boolean") objValue = objValue ? "Yes" : "No";
-                                                  else objValue = String(objValue);
-                                                  return <li key={objKey}><strong>{formatKeyToLabel(objKey)}:</strong> {objValue}</li>;
-                                                })}
-                                              </li>
-                                            );
-                                          }
-                                          return (
-                                            <li key={idx}>
-                                              {typeof val === "string" ? stripHtml(val) : val === null || val === undefined ? "-" : String(val)}
-                                            </li>
-                                          );
-                                        })}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                );
-                              }
-                            } else if (typeof displayValue === "boolean") {
-                              displayValue = displayValue ? "Yes" : "No";
-                            } else if (typeof displayValue === "string" && displayValue.match(/^\d{4}-\d{2}-\d{2}/)) {
-                              displayValue = formatDate(displayValue);
-                            } else if (displayValue === null || displayValue === undefined) {
-                              displayValue = "-";
-                            } else if (typeof displayValue === "string") {
-                              displayValue = stripHtml(displayValue);
-                            } else {
-                              displayValue = String(displayValue);
-                            }
-                            return (
-                              <div key={`${index}-${key}`}>
-                                <div className="field-label">{formatKeyToLabel(key)}</div>
-                                <div className="field-value">{displayValue}</div>
-                              </div>
-                            );
-                          })
-                      )}
-                    </div>
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">Operation</div>
+                <OpBadge text="UPDATE" />
+              </Col>
+
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">Module</div>
+                <div className="field-value">
+                  {formatModuleName(selectedLog.moduleName)}
+                </div>
+              </Col>
+
+              <Col xs={24} sm={12} md={8}>
+                <div className="field-label">Timestamp</div>
+                <div className="field-value">
+                  {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
+                </div>
+              </Col>
+
+              {selectedLog.companyName && (
+                <Col xs={24} sm={12} md={8}>
+                  <div className="field-label">Company</div>
+                  <div className="field-value">
+                    {selectedLog.companyName}
                   </div>
-                )}
-              </>
-            )}
+                </Col>
+              )}
+            </Row>
           </div>
-        )}
-      </Modal>
+
+          {(selectedLog.updatedBy || selectedLog.updatedByName) && (
+            <div className="activity-section">
+              <h3 className="section-title">Status Information</h3>
+
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12}>
+                  <div className="field-label">Updated By</div>
+                  <div className="field-value">
+                    {selectedLog.updatedBy?.full_name ||
+                      (selectedLog.updatedBy?.first_name &&
+                      selectedLog.updatedBy?.last_name
+                        ? `${selectedLog.updatedBy.first_name} ${selectedLog.updatedBy.last_name}`
+                        : selectedLog.updatedBy?.first_name ||
+                          selectedLog.updatedBy?.last_name) ||
+                      selectedLog.updatedByName ||
+                      "-"}
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          )}
+
+          {/* Changes & Other sections untouched */}
+          {selectedLog.updatedData && (() => {
+            const { oldData, newData } = selectedLog.updatedData;
+            const allKeys = new Set([
+              ...Object.keys(oldData || {}),
+              ...Object.keys(newData || {}),
+            ]);
+            const changedFields = [];
+            const unchangedFields = [];
+            const skipKeys = new Set([
+              "updated_at",
+              "created_at",
+              "updated_by",
+              "updatedBy",
+              "updated_by_id",
+              "updatedById",
+            ]);
+
+            allKeys.forEach((key) => {
+              if (skipKeys.has(key)) return;
+              const oldValue = oldData?.[key];
+              const newValue = newData?.[key];
+              if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+                changedFields.push({ key, oldValue, newValue });
+              } else {
+                unchangedFields.push({ key, value: newValue });
+              }
+            });
+
+            return (
+              <>
+                {changedFields.length > 0 && (
+                  <div className="activity-section">
+                    <h3 className="section-title">Changes</h3>
+                    <div className="changes-box">
+                      <div className="changes-header">
+                        <div className="col">Previous Values</div>
+                        <div className="spacer-50" />
+                        <div className="col">Current Values</div>
+                      </div>
+
+                      {changedFields.map(({ key, oldValue, newValue }) => (
+                        <div key={key} className="change-row">
+                          <div className="change-col">
+                            <div className="change-subtitle">
+                              {formatKeyToLabel(key)}
+                            </div>
+                            <div className="prev-value">
+                              {renderArrayValue(oldValue)}
+                            </div>
+                          </div>
+
+                          <div className="change-arrow">→</div>
+
+                          <div className="change-col">
+                            <div className="change-subtitle">
+                              {formatKeyToLabel(key)}
+                            </div>
+                            <div className="curr-value">
+                              {renderArrayValue(newValue)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {unchangedFields.length > 0 && (
+                  <div className="activity-section">
+                    <h3 className="section-title">Other Information</h3>
+                    <Row gutter={[16, 16]}>
+                      {unchangedFields.map(({ key, value }) => (
+                        <Col xs={24} sm={12} md={8} key={key}>
+                          <div className="field-label">
+                            {formatKeyToLabel(key)}
+                          </div>
+                          <div className="field-value">
+                            {renderArrayValue(value)}
+                          </div>
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </>
+      )}
+
+      {/* DELETE section unchanged except grid */}
+      {/* Only wrapping grids with Row/Col applied same way */}
+
+    </div>
+  )}
+</Modal>
     </div>
   );
 };

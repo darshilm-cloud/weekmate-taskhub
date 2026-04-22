@@ -571,62 +571,92 @@ export default function CompanyManagement() {
 
       {/* Edit Modal */}
       <Modal
-        title={<><EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Edit Company</>}
-        className="cm-modal"
-        open={isModalVisible}
-        onCancel={handleModalClose}
-        footer={[
-          <Button key="cancel" className="cm-modal-cancel" onClick={handleModalClose} disabled={modalLoading}>
-            Cancel
-          </Button>,
-          <Button key="save" className="add-btn" type="primary" loading={modalLoading} onClick={handleSave}>
-            Save Changes
-          </Button>,
-        ]}
-        width={640}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item name="companyName" label="Company Name" rules={formRules.companyName}>
-            <Input placeholder="Enter company name" />
-          </Form.Item>
-          <Form.Item
-            label="Company Slug"
-            name="companySlug"
-            rules={formRules.companySlug}
-            extra="Only lowercase letters, numbers, and hyphens are allowed."
-          >
-            <Input prefix={<LinkOutlined />} placeholder="my-company" />
-          </Form.Item>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item label="Logo">
-                <AssetCard
-                  title="Logo"
-                  imageUrl={tempLogoUrl}
-                  placeholder="No logo"
-                  disabled={false}
-                  onUpload={handleLogoUpload}
-                  onRemove={handleLogoRemove}
-                  pendingFile={pendingLogo}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item label="Favicon">
-                <AssetCard
-                  title="Favicon"
-                  imageUrl={tempFaviconUrl}
-                  placeholder="No favicon"
-                  disabled={false}
-                  onUpload={handleFaviconUpload}
-                  onRemove={handleFaviconRemove}
-                  pendingFile={pendingFavicon}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
+  title={
+    <>
+      <EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+      Edit Company
+    </>
+  }
+  className="cm-modal"
+  open={isModalVisible}
+  onCancel={handleModalClose}
+  width="100%"
+  style={{ maxWidth: 640 }}
+  footer={[
+    <Button
+      key="cancel"
+      className="delete-btn"
+      onClick={handleModalClose}
+      disabled={modalLoading}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="save"
+      className="add-btn"
+      type="primary"
+      loading={modalLoading}
+      onClick={handleSave}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <Form form={form} layout="vertical">
+    <Row gutter={[16, 16]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="companyName"
+          label="Company Name"
+          rules={formRules.companyName}
+        >
+          <Input placeholder="Enter company name" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24}>
+        <Form.Item
+          label="Company Slug"
+          name="companySlug"
+          rules={formRules.companySlug}
+          extra="Only lowercase letters, numbers, and hyphens are allowed."
+        >
+          <Input prefix={<LinkOutlined />} placeholder="my-company" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item label="Logo">
+          <AssetCard
+            title="Logo"
+            imageUrl={tempLogoUrl}
+            placeholder="No logo"
+            disabled={false}
+            onUpload={handleLogoUpload}
+            onRemove={handleLogoRemove}
+            pendingFile={pendingLogo}
+          />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item label="Favicon">
+          <AssetCard
+            title="Favicon"
+            imageUrl={tempFaviconUrl}
+            placeholder="No favicon"
+            disabled={false}
+            onUpload={handleFaviconUpload}
+            onRemove={handleFaviconRemove}
+            pendingFile={pendingFavicon}
+          />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 }

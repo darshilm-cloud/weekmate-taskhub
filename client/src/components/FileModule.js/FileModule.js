@@ -492,8 +492,8 @@ function FileModule() {
   };
   // upload file function end
 
-  const handlemenuClick = (e) => {};
-  const handlemenuClickEdit = (e) => {};
+  const handlemenuClick = (e) => { };
+  const handlemenuClickEdit = (e) => { };
 
   // rename file function start
   const renameFile = async (values) => {
@@ -847,7 +847,7 @@ function FileModule() {
         <div className="peoject-page">
           <div className="profileleftbar">
             <div className="add-project-wrapper">
-              <Dropdown trigger={ ["click"] } overlay={ yourMenu }>
+              <Dropdown trigger={["click"]} overlay={yourMenu}>
                 <Button type="primary" className="add-btn">
                   <i className="fi fi-br-plus"></i> Add
                   <i className="fi fi-ss-angle-small-down"></i>
@@ -1081,7 +1081,7 @@ function FileModule() {
                 </div>
               )}
               {/* } */}
-              {}
+              { }
               {editFolderDataById?.length <= 0 && (
                 <div className="upload-file-wrapper">
                   <FolderOpenOutlined />
@@ -1101,53 +1101,57 @@ function FileModule() {
                 open={isModalOpenFile}
                 width={800}
                 onCancel={handleModalCloseFile}
-                title={null}
-                footer={null}
+                title={<h2>Edit Filename</h2>}
+                footer={[<>
+                  <Button
+                    type="default"
+                    
+                    onClick={handleModalCloseFile}
+                    className="delete-btn"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="square-primary-btn"
+                  >
+                    Update
+                  </Button>
+
+                
+                </>]}
                 className="add-task-modal"
+                destroyOnClose
               >
-                <div className="modal-header">
-                  <h1>Edit Filename</h1>
-                  <span className="info-btn"></span>
-                </div>
+
                 <div className="overview-modal-wrapper">
                   <Form
                     form={editFileForm}
+                    layout="vertical"
                     onFinish={(values) => renameFile(values)}
                   >
-                    <Form.Item
-                      name="name"
-                      rules={[
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please enter a valid file name",
-                        },
-                      ]}
-                    >
-                      <Input style={{ width: "440px" }} />
-                    </Form.Item>
+                    <Row gutter={[16, 16]}>
 
-                    <div
-                      style={{ marginTop: "10px" }}
-                      className="modal-footer-flex"
-                    >
-                      <div className="flex-btn">
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          className="square-primary-btn"
+                      {/* File Name */}
+                      <Col xs={24}>
+                        <Form.Item
+                          name="name"
+                          rules={[
+                            {
+                              required: true,
+                              whitespace: true,
+                              message: "Please enter a valid file name",
+                            },
+                          ]}
                         >
-                          Update
-                        </Button>
-                        <Button
-                          type="Outlined"
-                          onClick={handleModalCloseFile}
-                          className="square-outline-btn ant-delete"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
+                          <Input placeholder="Enter file name" />
+                        </Form.Item>
+                      </Col>
+
+
+
+                    </Row>
                   </Form>
                 </div>
               </Modal>
@@ -1169,9 +1173,8 @@ function FileModule() {
                       </div>
                       <div className="project-file-img-text">
                         {editFileName?.name?.length > 15
-                          ? `${editFileName?.name.slice(0, 15)}.....${
-                              editFileName.file_type
-                            }`
+                          ? `${editFileName?.name.slice(0, 15)}.....${editFileName.file_type
+                          }`
                           : editFileName?.name + editFileName?.file_type}
                         {/* <p>{editFileName?.name}</p> */}
                       </div>
@@ -1548,13 +1551,13 @@ function FileModule() {
         open={isopenModelUpload}
         onCancel={handleCancelUpload}
         title="Upload Files"
-        width={1000}
+
         footer={[
           <Button
             key="cancel"
             onClick={handleCancelUpload}
             size="large"
-            style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', boxShadow: 'none' }}
+            className="delete-btn"
           >
             Cancel
           </Button>,
@@ -1562,7 +1565,7 @@ function FileModule() {
             key="submit"
             size="large"
             onClick={() => fileForm.submit()}
-            style={{ background: '#3b82f6', border: '1px solid #3b82f6', color: '#fff', borderRadius: '8px', boxShadow: 'none' }}
+            type="primary"
           >
             Ok
           </Button>,
@@ -1775,78 +1778,81 @@ function FileModule() {
       </Modal>
 
       {/*        folder  model               */}
-      <Modal
-        open={isopenModelFolder}
-        footer={null}
-        onCancel={handleCancelFolder}
-        className="file-folder-modal"
-        width={760}
-        title={
-          <div className="file-folder-modal__title-wrap">
-            <span className="file-folder-modal__eyebrow">
-              {addEditFolder === "Add Folder" ? "Create" : "Update"}
-            </span>
-            <h2 className="file-folder-modal__title">
-              {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
-            </h2>
-          </div>
-        }
+   <Modal
+  open={isopenModelFolder}
+  footer={[
+    addEditFolder === "Add Folder" ? (
+      <Button
+        key="add"
+        type="primary"
+        className="file-folder-modal__primary"
+        onClick={() => addFolderForm.submit()}
       >
-        <div className="file-folder-modal__body">
-          <Form
-            form={addFolderForm}
-            onFinish={(values) => {
-              addEditFolder === "Add Folder"
-                ? handleSubmit(values)
-                : updateFolder(values);
-            }}
-            layout="vertical"
-            className="file-folder-modal__form"
+        Add
+      </Button>
+    ) : (
+      <Button
+        key="update"
+        type="primary"
+        className="file-folder-modal__primary"
+        onClick={() => addFolderForm.submit()}
+      >
+        Update
+      </Button>
+    ),
+
+    <Button
+      key="cancel"
+      onClick={handleCancelFolder}
+      className="delete-btn"
+    >
+      Cancel
+    </Button>,
+  ]}
+  onCancel={handleCancelFolder}
+  className="file-folder-modal"
+  width={760}
+  title={
+    <div className="file-folder-modal__title-wrap">
+      <span className="file-folder-modal__eyebrow">
+        {addEditFolder === "Add Folder" ? "Create" : "Update"}
+      </span>
+      <h2 className="file-folder-modal__title">
+        {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
+      </h2>
+    </div>
+  }
+>
+  <div className="file-folder-modal__body">
+    <Form
+      form={addFolderForm}
+      onFinish={(values) => {
+        addEditFolder === "Add Folder"
+          ? handleSubmit(values)
+          : updateFolder(values);
+      }}
+      layout="vertical"
+      className="file-folder-modal__form"
+    >
+      <div className="file-folder-modal__intro">
+        Create a clean space for files, proofs, and references inside this project.
+      </div>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={24} md={24}>
+          <Form.Item
+            label="Folder Name"
+            name="title"
+            rules={[{ required: true, message: "Please add a title" }]}
           >
-            <div className="file-folder-modal__intro">
-              Create a clean space for files, proofs, and references inside this
-              project.
-            </div>
+            <Input placeholder="Enter folder name" />
+          </Form.Item>
+        </Col>
+      </Row>
 
-            <Form.Item
-              label="Folder Name"
-              name="title"
-              rules={[{ required: true, message: "Please add a title" }]}
-            >
-              <Input placeholder="Enter folder name" />
-            </Form.Item>
-
-            <div className="file-folder-modal__footer">
-              <div className="file-folder-modal__actions">
-                {addEditFolder === "Add Folder" ? (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="file-folder-modal__primary"
-                  >
-                    Add
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="file-folder-modal__primary"
-                  >
-                    Update
-                  </Button>
-                )}
-
-                <Button
-                  onClick={handleCancelFolder}
-                  className="file-folder-modal__secondary"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </Form>
-        </div>
-      </Modal>
+    </Form>
+  </div>
+</Modal>
     </>
   );
 }

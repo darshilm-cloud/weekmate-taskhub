@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
+  Col,
   Form,
   Input,
   Modal,
   Popconfirm,
+  Row,
   Select,
   Space,
   Table,
@@ -225,6 +227,7 @@ function WorkflowStages() {
         <Space>
           <span
             style={{
+              display: "inline-block",
               width: 14,
               height: 14,
               borderRadius: "50%",
@@ -322,69 +325,104 @@ function WorkflowStages() {
           </div>
         )}
       </div>
+<Modal
+  open={modalOpen}
+  title={
+    <>
+      <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+      {editingStage ? "Edit Stage" : "Add Stage"}
+    </>
+  }
+  className="ps-modal"
+  width="100%"
+  style={{ maxWidth: 520 }}
+  onCancel={() => {
+    setModalOpen(false);
+    setEditingStage(null);
+    form.resetFields();
+  }}
+  footer={[
+    <Button
+      key="cancel"
+   className="delete-btn"
+      onClick={() => {
+        setModalOpen(false);
+        setEditingStage(null);
+        form.resetFields();
+      }}
+    >
+      Cancel
+    </Button>,
+    <Button
+    type="primary"
+      key="submit"
+      className="add-btn"
+      onClick={submitModal}
+      loading={modalSubmitting}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <Form
+    form={form}
+    layout="vertical"
+    initialValues={{ color: DEFAULT_STAGE_COLOR }}
+  >
+    <Row gutter={[24, 0]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="workflow_id"
+          label="Workflow"
+          rules={[
+            { required: true, message: "Please select workflow" },
+          ]}
+        >
+          <Select placeholder="Select workflow">
+            {workflows.map((workflow) => (
+              <Option
+                key={workflow?._id}
+                value={workflow?._id}
+              >
+                {workflow?.project_workflow || "-"}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+      </Col>
 
-      <Modal
-        open={modalOpen}
-        title={
-          <>
-            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
-            {editingStage ? "Edit Stage" : "Add Stage"}
-          </>
-        }
-        className="ps-modal"
-        width={520}
-        onCancel={() => {
-          setModalOpen(false);
-          setEditingStage(null);
-          form.resetFields();
-        }}
-        footer={[
-          <Button
-            key="cancel"
-            className="ps-modal-cancel"
-            onClick={() => {
-              setModalOpen(false);
-              setEditingStage(null);
-              form.resetFields();
-            }}
-          >
-            Cancel
-          </Button>,
-          <Button key="submit" className="add-btn" onClick={submitModal} loading={modalSubmitting}>
-            Save
-          </Button>,
-        ]}
-      >
-        <Form form={form} layout="vertical" initialValues={{ color: DEFAULT_STAGE_COLOR }}>
-          <Form.Item
-            name="workflow_id"
-            label="Workflow"
-            rules={[{ required: true, message: "Please select workflow" }]}
-          >
-            <Select placeholder="Select workflow">
-              {workflows.map((workflow) => (
-                <Option key={workflow?._id} value={workflow?._id}>
-                  {workflow?.project_workflow || "-"}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="title"
-            label="Stage Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter stage name" }]}
-          >
-            <Input placeholder="e.g. In Review" maxLength={60} />
-          </Form.Item>
-          <Form.Item
-            name="color"
-            label="Color"
-            rules={[{ required: true, message: "Please choose color" }]}
-          >
-            <Input type="color" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Col xs={24}>
+        <Form.Item
+          name="title"
+          label="Stage Name"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter stage name",
+            },
+          ]}
+        >
+          <Input placeholder="e.g. In Review" maxLength={60} />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24}>
+        <Form.Item
+          name="color"
+          label="Color"
+          rules={[
+            { required: true, message: "Please choose color" },
+          ]}
+        >
+          <Input type="color" />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 }

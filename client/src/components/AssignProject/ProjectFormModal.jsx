@@ -1477,25 +1477,23 @@ const ProjectFormModal = ({
 <Modal
   open={isModalOpen}
   onCancel={handleCancel}
-  width={960}
+  width={700}
   className="pfm-modal"
   destroyOnClose
   title={
-    <div className="pfm-header">
-      <span className="pfm-title">
+    <div className="modal-title">
+      <h2>
         {isEdit ? "Update Project Details" : "Add Project Details"}
-      </span>
-      <button
-        type="button"
-        className="pfm-close-btn"
-        onClick={handleCancel}
-      >
-        <CloseOutlined />
-      </button>
+      </h2>
     </div>
   }
   footer={[
-    <Button key="cancel" onClick={handleCancel} className="pfm-cancel-btn">
+    <Button
+      type="secondry"
+      key="cancel"
+      onClick={handleCancel}
+      className="delete-btn"
+    >
       Cancel
     </Button>,
     <Button
@@ -1519,30 +1517,36 @@ const ProjectFormModal = ({
           : addProjectDetails(values)
       }
     >
-      <div className="pfm-fields-grid">
-        {visibleConfiguredFields.map((field) => (
-          <div
-            key={field.key}
-            className="pfm-field-row"
-            style={
-              String(field?.key || "").trim() === "descriptions"
-                ? { gridColumn: "1 / -1" }
-                : undefined
-            }
-          >
-            <TagOutlined className="pfm-icon" />
+      <Row gutter={[16, 16]}>
+        
+        <Col xs={24}>
+          <div className="pfm-fields-grid">
+            {visibleConfiguredFields.map((field) => (
+              <div
+                key={field.key}
+                className="pfm-field-row"
+                style={
+                  String(field?.key || "").trim() === "descriptions"
+                    ? { gridColumn: "1 / -1" }
+                    : undefined
+                }
+              >
+                <TagOutlined className="pfm-icon" />
 
-            <div className="pfm-input-group">
-              <div className="pfm-field-label">
-                {field?.required ? "* " : ""}
-                {field?.label || field?.key}
+                <div className="pfm-input-group">
+                  <div className="pfm-field-label">
+                    {field?.required ? "* " : ""}
+                    {field?.label || field?.key}
+                  </div>
+
+                  {renderConfiguredField(field)}
+                </div>
               </div>
-
-              {renderConfiguredField(field)}
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </Col>
+
+      </Row>
     </Form>
   </Spin>
 </Modal>
@@ -2053,10 +2057,10 @@ const ProjectFormModal = ({
 
         {/* Footer buttons */}
         <div className="pfm-footer">
-          <Button className="pfm-cancel-btn" onClick={handleCancel}>
+          <Button className="delete-btn" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit" className="pfm-submit-btn" loading={isSubmitting}>
+          <Button type="primary" htmlType="submit" className="add-btn" loading={isSubmitting}>
             {isEdit ? "Update" : "Save"}
           </Button>
         </div>

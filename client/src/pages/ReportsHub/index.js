@@ -2795,8 +2795,9 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
         </div>
 
         {items.length === 0 ? (
-          <div className="reports-empty-inline">
-            <Empty description="No daily report data found" />
+          <div className="no-data-found">
+          <NoDataFoundIcon />
+          <p>No daily report data found</p>
           </div>
         ) : (
           <>

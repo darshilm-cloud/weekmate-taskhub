@@ -1022,6 +1022,7 @@ ul.tab_menu li.active-tab {
 
 .profileleftbar {
     width: 100%;
+    height: 100%;
     max-width: 270px;
     border-right: 1px solid #ECF0F5;
 
@@ -1286,7 +1287,6 @@ ul.tab_menu li.active-tab {
 }
 
 .ant-modal-content button.ant-modal-close span.ant-modal-close-x {
-    display: inline-block;
     height: auto;
     width: auto;
 }
@@ -1342,7 +1342,11 @@ ul.tab_menu li.active-tab {
     flex-wrap: wrap;
         */
 }
-
+.ant-select-multiple .ant-select-selection-overflow ,
+.ant-select-multiple .ant-select-selection-overflow {
+  max-height: 120px;
+  overflow: auto;
+}
 .overview-modal-wrapper .topic-cancel-wrapper .subscriber-btn .list-clear-btn {
     display: block;
     margin-top: 20px;
@@ -1706,9 +1710,12 @@ button.ant-btn>.fi-ss-link:before {
     flex-direction: column;
     gap: 0;
     text-align: left;
-    align-items: flex-start;
+    align-items:center;
+    justify-content: center;
 }
-
+.block-status-content .filter-btn-wrapper{
+    align-items: center;
+}
 .block-status-content .status-content h6 {
     color: #131313;
     font-size: 12px;
@@ -1795,7 +1802,7 @@ button.ant-btn>.fi-ss-link:before {
     background: rgba(56, 189, 248, 0.14);
     font-size: 13px;
     padding: 4px;
-    border-radius: 100%;
+    border-radius: 18px;
     line-height: 1;
     height: 22px;
     display: inline-block;
@@ -2383,7 +2390,9 @@ body[data-theme="dark"] .container.project-task-list {
     color: #131313;
     height: 26px;
 }
-
+.log-time-modal .main-comment-wrapper span.anticon.anticon-more {
+font-size: 18px;
+}
 .log-time-modal p {
     margin-bottom: 0;
     color: #000;
@@ -3413,7 +3422,6 @@ span.anticon.anticon-down svg {
 
 .right-task-detail-panel .main-comment-wrapper {
     width: 100%;
-    padding: 10px 0px 0px 0px;
     margin-top: 10px;
 }
 
@@ -3468,7 +3476,7 @@ span.anticon.anticon-down svg {
 }
 
 .main-avatar-wrapper .comment-sender-name h1 {
-    font-size: 18px;
+    font-size: 14px;
     margin: 0;
 
 }
@@ -4459,13 +4467,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout .ant-layout-content .ant-card .ant-btn-primary {
-    background: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
     color: #fff;
     color: var(--white-color);
     font-size: var(--font-size-14px);
     font-weight: 500;
-    height: auto;
-    line-height: normal;
     overflow: hidden;
     padding: 8px 16px;
     position: relative;
@@ -4493,7 +4498,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout .ant-layout-content .ant-card .ant-btn-primary:hover {
-    background-image: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
     color: #fff;
     transition: all 0.2s ease-out;
 }
@@ -5637,13 +5641,14 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 
 .admin-user .ant-modal .ant-modal-content .ant-modal-footer {
     margin-top: 0;
-    padding: 0 16px 16px;
 }
 
 .ant-modal .ant-modal-content .ant-modal-footer {
     display: flex;
     justify-content: end;
     gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #e8e8e8;
 }
 
 .project-running-reports-fillter {

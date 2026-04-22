@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Drawer, Popconfirm, Table, Tooltip, message } from "antd";
+import { Button, Col, Modal, Popconfirm, Row, Table, Tooltip, message } from "antd";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   CalendarOutlined,
@@ -424,76 +424,96 @@ const PositiveReview = () => {
         </div>
       </div>
 
-      {/* Detail Drawer */}
-      <Drawer
+      {/* Detail Modal */}
+      <Modal
         title={
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <FileTextOutlined style={{ color: "#2563eb" }} />
-            <span>Review Detail</span>
+          <div className="pr-detail-modal-header">
+            <div className="pr-detail-modal-title-wrap">
+              <FileTextOutlined style={{ color: "#2563eb" }} />
+              <span>Review Detail</span>
+            </div>
           </div>
         }
-        placement="right"
-        width={480}
         open={drawerOpen}
-        onClose={() => { setDrawerOpen(false); setDrawerRecord(null); }}
-        bodyStyle={{ padding: 0 }}
-        extra={
-          drawerRecord && userHasAccess && (
-            <Link to={`/${companySlug}/edit/positiveReviewForm/${drawerRecord._id}`}>
-              <button className="btn-primary">
-                <EditOutlined /> Edit
-              </button>
-            </Link>
-          )
+        width={760}
+        footer={
+          drawerRecord && userHasAccess ? (
+            <div className="pr-detail-modal-footer">
+              <Link to={`/${companySlug}/edit/positiveReviewForm/${drawerRecord._id}`}>
+                <Button type="primary" icon={<EditOutlined />} className="pr-detail-edit-btn">
+                  Edit
+                </Button>
+              </Link>
+            </div>
+          ) : null
         }
+        className="pr-detail-modal"
+        onClose={() => { setDrawerOpen(false); setDrawerRecord(null); }}
+        onCancel={() => { setDrawerOpen(false); setDrawerRecord(null); }}
       >
         {drawerRecord && (
           <>
             <div className="pr-drawer-section">
-              <div className="pr-drawer-fields">
-                <div className="pr-drawer-field">
+              <Row gutter={[16, 16]} className="pr-drawer-fields">
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Project</div>
                   <div className="pr-drawer-value">{drawerRecord.project?.title || "—"}</div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Client</div>
                   <div className="pr-drawer-value">{drawerRecord.client_name || "—"}</div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Account Manager</div>
                   <div className="pr-drawer-value">{drawerRecord.acc_manager?.full_name || "—"}</div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Project Manager</div>
                   <div className="pr-drawer-value">{drawerRecord.manager?.full_name || "—"}</div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Feedback Type</div>
                   <div className="pr-drawer-value">
                     <span className={`pr-type-badge ${typeBadgeClass(drawerRecord.feedback_type)}`}>
                       {drawerRecord.feedback_type || "—"}
                     </span>
                   </div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">NDA Signed</div>
                   <div className="pr-drawer-value">
                     {drawerRecord.client_nda_sign
                       ? <span className="pr-nda-yes">YES</span>
                       : <span className="pr-nda-no">NO</span>}
                   </div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Date</div>
                   <div className="pr-drawer-value">
                     {moment(drawerRecord.createdAt).format("DD-MM-YYYY")}
                   </div>
-                </div>
-                <div className="pr-drawer-field">
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Created By</div>
                   <div className="pr-drawer-value">{drawerRecord.createdBy?.full_name || "—"}</div>
                 </div>
-              </div>
+                </Col>
+              </Row>
             </div>
 
             {drawerRecord.feedback && (
@@ -507,7 +527,7 @@ const PositiveReview = () => {
             )}
           </>
         )}
-      </Drawer>
+      </Modal>
 
     </div>
   );

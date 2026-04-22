@@ -26,6 +26,7 @@ import { removeTitle } from "../../util/nameFilter";
 import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -490,7 +491,8 @@ const UserDashboard = ({ user }) => {
     <div className="ud-task-table-wrap">
       {tasks.length === 0 && !loading ? (
         <div className="ud-empty-state">
-          <Empty description="No tasks found for this user" />
+          <NoDataFoundIcon/>
+          <p>No tasks found for this user</p>
         </div>
       ) : (
         <Table

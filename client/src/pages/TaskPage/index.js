@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -1966,40 +1966,58 @@ const TaskPage = () => {
         standalone
       />
 
-      <Modal
-        open={addStageModalOpen}
-        title="Add Stage"
-        okText="Save"
-        onOk={handleAddStageSubmit}
-        confirmLoading={stageSubmitting}
-        onCancel={() => {
-          setAddStageModalOpen(false);
-          stageForm.resetFields();
-        }}
-      >
-        <Form
-          form={stageForm}
-          layout="vertical"
-          initialValues={{ title: "", color: "#64748b" }}
+<Modal
+  open={addStageModalOpen}
+  title="Add Stage"
+  okText="Save"
+  onOk={handleAddStageSubmit}
+  confirmLoading={stageSubmitting}
+  onCancel={() => {
+    setAddStageModalOpen(false);
+    stageForm.resetFields();
+  }}
+  cancelButtonProps={{className:"delete-btn"}}
+  width="100%"
+  style={{ maxWidth: 480 }}
+>
+  <Form
+    form={stageForm}
+    layout="vertical"
+    initialValues={{ title: "", color: "#64748b" }}
+  >
+    <Row gutter={[16, 16]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="title"
+          label="Stage Name"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter stage name",
+            },
+          ]}
         >
-          <Form.Item
-            name="title"
-            label="Stage Name"
-            rules={[
-              { required: true, whitespace: true, message: "Please enter stage name" },
-            ]}
-          >
-            <Input placeholder="e.g. In Review" maxLength={60} />
-          </Form.Item>
-          <Form.Item
-            name="color"
-            label="Color"
-            rules={[{ required: true, message: "Please choose a color" }]}
-          >
-            <Input type="color" />
-          </Form.Item>
-        </Form>
-      </Modal>
+          <Input placeholder="e.g. In Review" maxLength={60} />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24}>
+        <Form.Item
+          name="color"
+          label="Color"
+          rules={[
+            { required: true, message: "Please choose a color" },
+          ]}
+        >
+          <Input type="color" />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
 
       <CommonTaskFormModal
         key={taskToEdit?._id || "edit-task"}

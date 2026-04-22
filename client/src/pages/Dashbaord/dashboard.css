@@ -826,7 +826,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 }
 
 .team-incomplete-card {
-  height: 350px;
+  height: 370px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1055,7 +1055,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   display: grid !important;
   grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   grid-auto-rows: 24px;
-  row-gap: 2px;
+  row-gap: 6px;
   padding: 8px 0 0;
 }
 
@@ -1245,6 +1245,7 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 14px;
+  max-height: 330px;
 }
 
 .db-project-card {

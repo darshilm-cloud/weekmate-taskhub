@@ -4571,7 +4571,7 @@ html {
   position: relative;
 }
 
-.ant-btn>.anticon+span,
+/* .ant-btn>.anticon+span, */
 .ant-btn>span+.anticon {
   margin-left: 8px;
 }
@@ -21493,7 +21493,6 @@ textarea.ant-pagination-options-quick-jumper input {
   height: 8.48528137px;
   background: transparent;
   border-style: solid;
-  border-width: 4.24264069px;
   transform: rotate(45deg);
 }
 
@@ -22889,7 +22888,7 @@ span.ant-radio+* {
 }
 
 .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-  border-color: #28aaeb;
+  border-color: #28aaeb !important;
   border-right-width: 1px !important;
 }
 

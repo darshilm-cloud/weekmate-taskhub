@@ -1049,9 +1049,11 @@ function NotesPMS() {
         onCancel={handleCancelNote}
         title={modelModeNotes === "add" ? "Add Note" : "Edit Note"}
         className="add-task-modal add-list-modal"
-        width={1000}
+        width="100%"
+        style={{ maxWidth: 600 }}
         footer={[
           <Button
+          type="secondry"
             key="cancel"
             className="delete-btn"
             onClick={handleCancelNote}
@@ -1081,9 +1083,10 @@ function NotesPMS() {
                 : updateProjectNotes(values, val);
             }}
           >
-            <Row gutter={[0, 0]}>
-              {/* Title - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+            <Row gutter={[24, 0]}>
+
+              {/* Title */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Title"
                   name="title"
@@ -1099,8 +1102,8 @@ function NotesPMS() {
                 </Form.Item>
               </Col>
 
-              {/* Subscribers - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+              {/* Subscribers */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Subscribers"
                   name="subscribers"
@@ -1115,18 +1118,17 @@ function NotesPMS() {
                       search={searchKeyword}
                     />
                   )}
-                  <div className="list-clear-btn" style={{ marginTop: 8 }}>
+
+                  <div style={{ marginTop: 8 }}>
                     <Button
                       className="clearbtn ant-delete"
                       onClick={() => {
-                        formNotes.setFieldsValue({
-                          subscribers: [],
-                        });
-                        
+                        formNotes.setFieldsValue({ subscribers: [] });
                         setselectedSubscribers([]);
                         setSelectedSubscriberIds([]);
                       }}
                       size="small"
+                      block   // ✅ full width on mobile
                     >
                       Clear
                     </Button>
@@ -1134,8 +1136,8 @@ function NotesPMS() {
                 </Form.Item>
               </Col>
 
-              {/* Client - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+              {/* Client */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Client"
                   name="clients"
@@ -1150,23 +1152,24 @@ function NotesPMS() {
                       search={searchKeyword}
                     />
                   )}
-                  <div className="clear-btn" style={{ marginTop: 8 }}>
+
+                  <div style={{ marginTop: 8 }}>
                     <Button
                       className="clearbtn ant-delete"
                       onClick={() => {
-                        formNotes.setFieldsValue({
-                          clients: [],
-                        });
+                        formNotes.setFieldsValue({ clients: [] });
                         setSelectedClient([]);
                         setSelectedClientIds([]);
                       }}
                       size="small"
+                      block   // ✅ better mobile UX
                     >
                       Clear
                     </Button>
                   </div>
                 </Form.Item>
               </Col>
+
             </Row>
           </Form>
         </div>
@@ -1336,88 +1339,88 @@ function NotesPMS() {
           <div className="notes">
             {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
-              <NoDataFoundIcon/>
+                <NoDataFoundIcon />
                 <p>No notes yet</p>
               </div>
             )}
 
             {projectNotebook.length == 0 &&
               getDetails.length > 0 &&
-                getDetails?.map((note, index) => {
-                  const Title = note.title;
+              getDetails?.map((note, index) => {
+                const Title = note.title;
 
-                  return (
-                    <>
-                      <div className="main-notes-wrapper" key={note._id}>
-                        <div
-                          className="notes-div"
-                          style={{ marginBottom: "0px" }}
-                        >
-                          <div className={`notes-box note-color-${index % 7}`}>
-                            <div className="note-inner-block">
-                              <div className="note-block-head">
-                                <h1
-                                  onClick={() => {
-                                    openModelList(note._id);
-                                    setIsOpenTechnicalModal(true);
-                                    getComment(note._id);
-                                  }}
-                                  style={{
-                                    textTransform: "capitalize",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {Title.length > 23
-                                    ? `${Title.slice(0, 22)}...`
-                                    : Title}{" "}
-                                  {(commentDrafts[note._id] ||
-                                    hasUnsavedChanges[note._id]) && (
+                return (
+                  <>
+                    <div className="main-notes-wrapper" key={note._id}>
+                      <div
+                        className="notes-div"
+                        style={{ marginBottom: "0px" }}
+                      >
+                        <div className={`notes-box note-color-${index % 7}`}>
+                          <div className="note-inner-block">
+                            <div className="note-block-head">
+                              <h1
+                                onClick={() => {
+                                  openModelList(note._id);
+                                  setIsOpenTechnicalModal(true);
+                                  getComment(note._id);
+                                }}
+                                style={{
+                                  textTransform: "capitalize",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {Title.length > 23
+                                  ? `${Title.slice(0, 22)}...`
+                                  : Title}{" "}
+                                {(commentDrafts[note._id] ||
+                                  hasUnsavedChanges[note._id]) && (
                                     <span style={{ color: "red" }}>Draft</span>
                                   )}
-                                </h1>
-                                <PushpinOutlined className="note-pin-icon" />
-                              </div>
-                              {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
-                                <div
-                                  className="note-content-preview"
-                                  dangerouslySetInnerHTML={{
-                                    __html:
-                                      note?.notesInfo.length > 100
-                                        ? `${note?.notesInfo.slice(0, 100)}...`
-                                        : note?.notesInfo,
-                                  }}
-                                />
-                              ) : (
-                                <p className="note-no-content">No content</p>
-                              )}
-                              <footer>
-                                <div className="note-footer-icons">
-                                  <UserOutlined
-                                    className="note-icon note-icon-person"
-                                    onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
-                                  />
-                                  <EditOutlined
-                                    className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
-                                    onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
-                                  />
-                                  <Popconfirm
-                                    title="Do you want to delete?"
-                                    okText="Yes"
-                                    cancelText="No"
-                                    onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
-                                    disabled={!isCreatedBy(note?.createdBy)}
-                                  >
-                                    <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
-                                  </Popconfirm>
-                                </div>
-                              </footer>
+                              </h1>
+                              <PushpinOutlined className="note-pin-icon" />
                             </div>
+                            {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
+                              <div
+                                className="note-content-preview"
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    note?.notesInfo.length > 100
+                                      ? `${note?.notesInfo.slice(0, 100)}...`
+                                      : note?.notesInfo,
+                                }}
+                              />
+                            ) : (
+                              <p className="note-no-content">No content</p>
+                            )}
+                            <footer>
+                              <div className="note-footer-icons">
+                                <UserOutlined
+                                  className="note-icon note-icon-person"
+                                  onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
+                                />
+                                <EditOutlined
+                                  className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
+                                  onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
+                                />
+                                <Popconfirm
+                                  title="Do you want to delete?"
+                                  okText="Yes"
+                                  cancelText="No"
+                                  onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
+                                  disabled={!isCreatedBy(note?.createdBy)}
+                                >
+                                  <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
+                                </Popconfirm>
+                              </div>
+                            </footer>
                           </div>
                         </div>
                       </div>
-                    </>
-                  );
-                })}
+                    </div>
+                  </>
+                );
+              })}
 
             <Modal
               destroyOnClose
@@ -1673,13 +1676,12 @@ function NotesPMS() {
                                             >
                                               {file.name.length > 15
                                                 ? `${file.name.slice(
-                                                    0,
-                                                    15
-                                                  )}.....${
-                                                    file.file_type || file.type
-                                                  }`
+                                                  0,
+                                                  15
+                                                )}.....${file.file_type || file.type
+                                                }`
                                                 : file.name + file.file_type ||
-                                                  file.type}
+                                                file.type}
                                             </a>
                                           </div>
                                         </div>
@@ -1775,7 +1777,7 @@ function NotesPMS() {
                               ) : (
                                 <>
                                   {notesDetails.subscribers &&
-                                  notesDetails.subscribers.length > 0 ? (
+                                    notesDetails.subscribers.length > 0 ? (
                                     notesDetails.subscribers
                                       ?.filter((data) =>
                                         data.full_name

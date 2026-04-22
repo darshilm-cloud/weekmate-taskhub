@@ -18,10 +18,7 @@
 }
 
 .task-page-detail-modal button.ant-modal-close {
-  position: absolute !important;
-  top: 33px !important;
-  right: 24px !important;
-  z-index: 30 !important;
+
   width: 36px !important;
   min-width: 36px !important;
   height: 36px !important;
@@ -62,7 +59,7 @@
   background: #456c88 !important;
 }
 
-.task-page-detail-modal .ant-modal-body {
+.admin-user .task-page-detail-modal  .ant-modal-content .ant-modal-body {
   padding: 0;
   max-height: 90vh;
   overflow: hidden;
@@ -304,10 +301,7 @@
 
 /* ── Sections ────────────────────────────────── */
 .task-detail-section {
-  padding: 12px 14px;
-  border: 1px solid #e8edf3;
-  border-radius: 10px;
-  background: #ffffff;
+  padding: 8px 0;
 }
 
 .task-detail-section-featured {
@@ -331,17 +325,14 @@
 }
 
 .task-detail-label {
-  margin-bottom: 4px;
-  color: #64748b;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .task-detail-section-title {
   color: #0f172a;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -465,12 +456,11 @@
 .task-detail-modal-footer-actions {
   display: flex;
   gap: 10px;
-  padding-top: 12px;
+padding: 10px 20px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   margin-top: 6px;
-  position: sticky;
-  bottom: 0;
   z-index: 4;
+  justify-content: flex-end;
   background: #ffffff;
   border-top: 1px solid #e8edf3;
   margin-top: auto;
@@ -870,6 +860,7 @@
   color: #64748b;
   font-size: 10px;
   font-weight: 700;
+  margin-left: 10px;
 }
 
 .task-detail-tabs .ant-tabs-tab-active .comment-badge {

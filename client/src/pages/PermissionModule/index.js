@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import ReactDOM from "react-dom";
-import { Switch, Tooltip } from "antd";
+import { Button, Switch, Tooltip } from "antd";
 import {
   BugOutlined,
   CalendarOutlined,
@@ -445,20 +445,22 @@ const PermissionModule = () => {
                 </strong>
               </div>
               <div className="rpm-save-bar-actions">
-                <button
-                  className="rpm-save-btn discard"
+                <Button
+                  className="secondary-btn"
                   onClick={discardChanges}
                   disabled={saving}
                 >
                   Discard
-                </button>
-                <button
-                  className="rpm-save-btn confirm"
+                </Button>
+                <Button
+                  type="primary"
+                  
+                  className="add-btn"
                   onClick={savePermissions}
                   disabled={saving}
                 >
                   {saving ? "Saving…" : "Save Changes"}
-                </button>
+                </Button>
               </div>
             </div>,
             document.body

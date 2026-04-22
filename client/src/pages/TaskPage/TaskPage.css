@@ -535,7 +535,7 @@
 }
 
 .task-row-action-btn.ant-btn {
-  padding: 0 6px;
+  padding:6px;
 }
 
 /* Status pill — outlined, dot-style like TaskOPad */

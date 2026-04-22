@@ -17,13 +17,6 @@
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
 }
 
-.pfm-modal .ant-modal-body {
-  padding: 16px 18px 18px;
-  background: #ffffff;
-  color: #111111;
-  max-height: 85vh;
-  overflow-y: auto;
-}
 
 /* Custom Scrollbar for inner modal body */
 .pfm-modal .ant-modal-body::-webkit-scrollbar {
@@ -100,7 +93,6 @@
 /* Icon */
 .pfm-icon {
   font-size: 16px;
-  color: #b9c4d2;
   flex-shrink: 0;
   margin-top: 34px;
 }
@@ -122,18 +114,10 @@
 .pfm-input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
-.pfm-field-label {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: #6b7a90;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 
 .pfm-field-label-row {
   display: flex;
@@ -268,35 +252,10 @@
   display: none;
 }
 
-.pfm-datepicker {
-  flex: 1;
-  font-size: 14px;
-  width: 100%;
-  color: #111111 !important;
-  min-height: 42px;
-  border: 1px solid #d7e1ef !important;
-  border-radius: 8px !important;
-  background: #ffffff !important;
-  padding: 0 12px !important;
-  display: flex;
-  align-items: center;
-  box-shadow: none !important;
-}
 
-.pfm-datepicker.ant-picker-borderless,
-.pfm-datepicker.ant-picker {
-  border: 1px solid #d7e1ef !important;
-  border-radius: 8px !important;
-  background: #ffffff !important;
-  padding: 0 12px !important;
-  box-shadow: none !important;
-}
 
-.pfm-datepicker input {
-  padding-left: 0 !important;
-  color: #111111 !important;
-  -webkit-text-fill-color: #111111 !important;
-}
+
+
 
 .pfm-datepicker .ant-picker-input {
   display: flex;

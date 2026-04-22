@@ -3426,250 +3426,255 @@ const TasksPMS = ({ flag }) => {
         </div>
       </div>
 
-      <Modal
-        open={isModalOpenList}
-        onCancel={handleCancelList}
-        onOk={handleOkList}
-        title={modalMode === "add" ? "Add List" : "Edit List"}
-        className="add-task-modal add-list-modal"
-        width={1000}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelList}
-            className="delete-btn"
-            size="large"
-            disabled={isSavingList}
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            className="square-primary-btn"
-            size="large"
-            onClick={() => listForm.submit()}
-            loading={isSavingList}
-            disabled={isSavingList}
-          >
-            Save
-          </Button>,
-        ]}
-      >
-        <div className="overview-modal-wrapper">
-          <Form
-            form={listForm}
-            layout="vertical"
-            initialValues={{ markAsPrivate: false }}
-            onFinish={(values) => {
-              modalMode === "add"
-                ? addProjectMainTask(values)
-                : editProjectmainTask(values);
-            }}
-          >
-            <Row gutter={[0, 0]}>
-              {/* Title Field */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Enter title" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Subscribers */}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  label={
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span>Subscribers</span>
-                      <Button
-                        type="link"
-                        style={{ padding: 0, height: "auto" }}
-                        onClick={openAddSubscriberModal}
-                      >
-                        + Add subscriber
-                      </Button>
-                    </div>
-                  }
-                  className="subscriber-section"
-                >
-                  <MultiSelect
-                    onSearch={handleListSubscriberSearch}
-                    onChange={handleSubscribersChange}
-                    values={selectSubscriber}
-                    listData={subscribersDropdownData}
-                    search={listSubscriberSearch}
-                  />
-
-                  {selectSubscriber.length > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      <Button
-                        className="list-clear-btn ant-delete"
-                        onClick={() => setSelectSubscribers([])}
-                        size="small"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  )}
-                </Form.Item>
-              </Col>
-
-              {/* Client */}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  label={
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span>Client</span>
-                      <Button
-                        type="link"
-                        style={{ padding: 0, height: "auto" }}
-                        onClick={() => setIsAddClientModalOpen(true)}
-                      >
-                        + Add client
-                      </Button>
-                    </div>
-                  }
-                  className="client-section"
-                >
-                  <MultiSelect
-                    onSearch={setListClientSearch}
-                    onChange={handleListClientChange}
-                    values={
-                      selectedListClient
-                        ? selectedListClient.map((item) => item?._id)
-                        : []
-                    }
-                    listData={clientsList}
-                    search={listClientSearch}
-                  />
-
-                  {selectedListClient && selectedListClient.length > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      <Button
-                        className="list-clear-btn ant-delete"
-                        onClick={() => setSelectedListClient([])}
-                        size="small"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  )}
-                </Form.Item>
-              </Col>
-
-              {/* Dynamic Subscriber Stages */}
-              {selectSubscriber.length > 0 && (
-                <Col xs={24} sm={24} md={24} lg={24}>
-                  <div className="subscriber-stages-section">
-                    <h4
-                      style={{
-                        marginBottom: 16,
-                        color: "#666",
-                        fontSize: "16px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Assign Stages to Subscribers
-                    </h4>
-                    <Row gutter={[16, 16]}>
-                      {selectSubscriber.map((subscriberId, index) => {
-                        const subscriber = subscribersDropdownData.find(
-                          (item) => item?._id === subscriberId
-                        );
-
-                        return (
-                          <Col xs={24} sm={12} md={8} lg={8} key={index}>
-                            <div className="subscriber-stage-card">
-                              {/* Subscriber Info */}
-                              <div className="subscriber-info">
-                                <MyAvatar
-                                  userName={subscriber?.full_name}
-                                  key={subscriber?.full_name}
-                                  alt={subscriber?.full_name}
-                                  src={subscriber?.emp_img}
-                                  size="default"
-                                />
-                                <span className="subscriber-name">
-                                  {removeTitle(subscriber?.full_name)}
-                                </span>
-                              </div>
-
-                              {/* Stage Selection */}
-                              <Form.Item
-  label="Stage"
-  name={["subscriber_stages", index]}
-  className="stage-select-item"
-  initialValue={defaultStageId} // Add this
-  rules={[
-    {
-      required: true,
-      message: "Please select a stage",
-    },
+   <Modal
+  open={isModalOpenList}
+  onCancel={handleCancelList}
+  onOk={handleOkList}
+  title={modalMode === "add" ? "Add List" : "Edit List"}
+  className="add-task-modal add-list-modal"
+  width="100%"
+  style={{ maxWidth: 1000 }}
+  footer={[
+    <Button
+      key="cancel"
+      onClick={handleCancelList}
+      className="delete-btn"
+      size="large"
+      disabled={isSavingList}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      type="primary"
+      className="square-primary-btn"
+      size="large"
+      onClick={() => listForm.submit()}
+      loading={isSavingList}
+      disabled={isSavingList}
+    >
+      Save
+    </Button>,
   ]}
 >
-  <Select
-    size="large"
-    placeholder="Select Stage"
-    showSearch
-    filterOption={(input, option) =>
-      String(option?.children || "")
-        .toLowerCase()
-        .includes(input.toLowerCase())
-    }
-    filterSort={(optionA, optionB) =>
-      String(optionA?.children || "")
-        .toLowerCase()
-        .localeCompare(String(optionB?.children || "").toLowerCase())
-    }
-    onDropdownVisibleChange={(open) => {
-      if (!open || !stagesId) return;
-      // Keep both in sync; some flows rely on local state
-      dispatch(getSpecificProjectWorkflowStage(stagesId));
-      getListWorkflowStatus();
-    }}
-  >
-    {listStageOptions.map((item, stageIndex) => (
-      <Option
-        key={item?._id || stageIndex}
-        value={item?._id}
-        style={{ textTransform: "capitalize" }}
-      >
-        {item?.title || item?.name || "-"}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
-                            </div>
-                          </Col>
-                        );
-                      })}
-                    </Row>
-                  </div>
-                </Col>
-              )}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  key="checkbox"
-                  name="markAsPrivate"
-                  valuePropName="checked"
+  <div className="overview-modal-wrapper">
+    <Form
+      form={listForm}
+      layout="vertical"
+      initialValues={{ markAsPrivate: false }}
+      onFinish={(values) => {
+        modalMode === "add"
+          ? addProjectMainTask(values)
+          : editProjectmainTask(values);
+      }}
+    >
+      <Row gutter={[24, 16]}>
+
+        {/* Title */}
+        <Col xs={24}>
+          <Form.Item
+            label="Title"
+            name="title"
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: "Please enter a valid title",
+              },
+            ]}
+          >
+            <Input placeholder="Enter title" size="large" />
+          </Form.Item>
+        </Col>
+
+        {/* Subscribers */}
+        <Col xs={24} md={12}>
+          <Form.Item
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span>Subscribers</span>
+                <Button
+                  type="link"
+                  style={{ padding: 0, height: "auto" }}
+                  onClick={openAddSubscriberModal}
                 >
-                  <Checkbox>Mark as Private</Checkbox>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </div>
-      </Modal>
+                  + Add subscriber
+                </Button>
+              </div>
+            }
+            className="subscriber-section"
+          >
+            <MultiSelect
+              onSearch={handleListSubscriberSearch}
+              onChange={handleSubscribersChange}
+              values={selectSubscriber}
+              listData={subscribersDropdownData}
+              search={listSubscriberSearch}
+            />
+
+            {selectSubscriber.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Button
+                  className="list-clear-btn ant-delete"
+                  onClick={() => setSelectSubscribers([])}
+                  size="small"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
+          </Form.Item>
+        </Col>
+
+        {/* Client */}
+        <Col xs={24} md={12}>
+          <Form.Item
+            label={
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span>Client</span>
+                <Button
+                  type="link"
+                  style={{ padding: 0, height: "auto" }}
+                  onClick={() => setIsAddClientModalOpen(true)}
+                >
+                  + Add client
+                </Button>
+              </div>
+            }
+            className="client-section"
+          >
+            <MultiSelect
+              onSearch={setListClientSearch}
+              onChange={handleListClientChange}
+              values={
+                selectedListClient
+                  ? selectedListClient.map((item) => item?._id)
+                  : []
+              }
+              listData={clientsList}
+              search={listClientSearch}
+            />
+
+            {selectedListClient && selectedListClient.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Button
+                  className="list-clear-btn ant-delete"
+                  onClick={() => setSelectedListClient([])}
+                  size="small"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
+          </Form.Item>
+        </Col>
+
+        {/* Subscriber Stages */}
+        {selectSubscriber.length > 0 && (
+          <Col xs={24}>
+            <div className="subscriber-stages-section">
+              <h4
+                style={{
+                  marginBottom: 16,
+                  color: "#666",
+                  fontSize: "16px",
+                  fontWeight: 500,
+                }}
+              >
+                Assign Stages to Subscribers
+              </h4>
+
+              <Row gutter={[16, 16]}>
+                {selectSubscriber.map((subscriberId, index) => {
+                  const subscriber = subscribersDropdownData.find(
+                    (item) => item?._id === subscriberId
+                  );
+
+                  return (
+                    <Col xs={24} md={12} key={index}>
+                      <div className="subscriber-stage-card">
+
+                        <div className="subscriber-info">
+                          <MyAvatar
+                            userName={subscriber?.full_name}
+                            key={subscriber?.full_name}
+                            alt={subscriber?.full_name}
+                            src={subscriber?.emp_img}
+                            size="default"
+                          />
+                          <span className="subscriber-name">
+                            {removeTitle(subscriber?.full_name)}
+                          </span>
+                        </div>
+
+                        <Form.Item
+                          label="Stage"
+                          name={["subscriber_stages", index]}
+                          className="stage-select-item"
+                          initialValue={defaultStageId}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select a stage",
+                            },
+                          ]}
+                        >
+                          <Select
+                            size="large"
+                            placeholder="Select Stage"
+                            showSearch
+                            filterOption={(input, option) =>
+                              String(option?.children || "")
+                                .toLowerCase()
+                                .includes(input.toLowerCase())
+                            }
+                            filterSort={(optionA, optionB) =>
+                              String(optionA?.children || "")
+                                .toLowerCase()
+                                .localeCompare(
+                                  String(optionB?.children || "").toLowerCase()
+                                )
+                            }
+                            onDropdownVisibleChange={(open) => {
+                              if (!open || !stagesId) return;
+                              dispatch(
+                                getSpecificProjectWorkflowStage(stagesId)
+                              );
+                              getListWorkflowStatus();
+                            }}
+                          >
+                            {listStageOptions.map((item, stageIndex) => (
+                              <Option
+                                key={item?._id || stageIndex}
+                                value={item?._id}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {item?.title || item?.name || "-"}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+
+                      </div>
+                    </Col>
+                  );
+                })}
+              </Row>
+            </div>
+          </Col>
+        )}
+
+        {/* Private Checkbox */}
+        <Col xs={24}>
+          <Form.Item name="markAsPrivate" valuePropName="checked">
+            <Checkbox>Mark as Private</Checkbox>
+          </Form.Item>
+        </Col>
+
+      </Row>
+    </Form>
+  </div>
+</Modal>
 
       <Modal
         open={isAddSubscriberModalOpen}

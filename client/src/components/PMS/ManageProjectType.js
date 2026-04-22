@@ -266,27 +266,68 @@ function ManageProjectType() {
         )}
       </div>
 
-      <Modal
-        open={isModalOpen}
-        onCancel={handleCancel}
-        title={<><AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Category</>}
-        className="ps-modal"
-        width={480}
-        footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => addprojectform.submit()} loading={isSubmitting}>Save</Button>,
-        ]}
-      >
-        <Form form={addprojectform} layout="vertical" onFinish={handleOk}>
-          <Form.Item
-            name="project_type"
-            label="Category Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid category" }]}
-          >
-            <Input autoComplete="off" onChange={e => setprojectname(e.target.value)} size="large" placeholder="e.g. Internal, Client Work" />
-          </Form.Item>
-        </Form>
-      </Modal>
+    <Modal
+  open={isModalOpen}
+  onCancel={handleCancel}
+  title={
+    <>
+      <AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+      Add Category
+    </>
+  }
+  className="ps-modal"
+  width="100%"
+  style={{ maxWidth: 480 }}
+  footer={[
+    <Button
+      key="cancel"
+      className="delete-btn"
+      onClick={handleCancel}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      className="add-btn"
+      type="primary"
+      onClick={() => addprojectform.submit()}
+      loading={isSubmitting}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <Form
+    form={addprojectform}
+    layout="vertical"
+    onFinish={handleOk}
+  >
+    <Row gutter={[16, 16]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="project_type"
+          label="Category Name"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter a valid category",
+            },
+          ]}
+        >
+          <Input
+            autoComplete="off"
+            onChange={(e) => setprojectname(e.target.value)}
+            size="large"
+            placeholder="e.g. Internal, Client Work"
+          />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 }

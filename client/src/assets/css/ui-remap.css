@@ -731,7 +731,7 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
 .dashboard-calendar .db-cal-dates {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  row-gap: 4px;
+  row-gap: 6px;
   padding: 14px 0 0;
 }
 
@@ -951,13 +951,7 @@ button {
    ───────────────────────────────────────────────────────────── */
 
 /* Table wrapper: card-like container */
-.page-layout .ant-table-wrapper,
-.gx-layout-content .ant-table-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--app-surface);
-  padding: 20px;
-}
+
 
 /* Container and content */
 .page-layout .ant-table-wrapper .ant-table,
