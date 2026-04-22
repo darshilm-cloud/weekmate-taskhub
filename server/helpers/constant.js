@@ -77,6 +77,7 @@ module.exports = {
     "/v1/taskhub/complaint/resolution/feedback/get",
     "/v1/CompanyReg/registerAdminAndCompany",
     "/v1/CompanyReg/verify-registration",
+    "/v1/CompanyReg/deleteCompany",
     "/v1/CompanyManage/getCompanyDetails",
     "/v1/maintenance/delete-company-data",
     "/v1/maintenance/addTestData",
