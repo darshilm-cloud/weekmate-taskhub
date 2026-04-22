@@ -247,6 +247,17 @@ function getAssigneesDisplay(assignees) {
   return assignees.map(getAssigneeName).filter(Boolean);
 }
 
+function getTaskCommentCount(task) {
+  const directCount =
+    task?.comment_count ??
+    task?.comments_count ??
+    task?.commentsCount ??
+    task?.commentCount;
+  if (Number.isFinite(Number(directCount))) return Number(directCount);
+  if (Array.isArray(task?.comments)) return task.comments.length;
+  return 0;
+}
+
 /** Parse URL search into filter state so first fetch uses correct params (avoids race with useEffect) */
 function getTaskPageStateFromSearch(search, isAdmin) {
   const params = new URLSearchParams(search || "");
@@ -2407,6 +2418,7 @@ function TaskRow({
     assigneeNames.length > 0
       ? assigneeNames[0].slice(0, 2).toUpperCase()
       : "—";
+  const commentCount = getTaskCommentCount(task);
 
   return (
     <div
@@ -2424,7 +2436,7 @@ function TaskRow({
       </div>
       <div className="task-row-main">
         <span className="task-row-title">{task.title}</span>
-        <span className="task-row-comment"><MessageOutlined /> 0</span>
+        <span className="task-row-comment"><MessageOutlined /> {commentCount}</span>
       </div>
       <div className={`task-row-due ${isOverdue ? "overdue" : ""}`}>{dueStr}</div>
       <div className="task-row-assignees" title={assigneeNames.join(", ")}>
@@ -2474,6 +2486,7 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
   const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
+  const commentCount = getTaskCommentCount(task);
   return (
     <div
       role="button"
@@ -2491,6 +2504,9 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
       <div className="task-card-footer">
         <span className="task-card-assignees" title={assigneesLabel}>
           {assigneesLabel}
+        </span>
+        <span className="task-card-comments" title="Comments">
+          <MessageOutlined /> {commentCount}
         </span>
       </div>
     </div>

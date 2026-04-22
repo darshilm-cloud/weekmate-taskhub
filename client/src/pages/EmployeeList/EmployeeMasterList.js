@@ -131,6 +131,7 @@ const EmployeeMasterList = () => {
   /* ── selection ── */
   const [selectedUserId,   setSelectedUserId]   = useState(null);
   const [selectedClientId, setSelectedClientId] = useState(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState(null);
 
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [totalClients,   setTotalClients]   = useState(0);
@@ -184,7 +185,7 @@ const EmployeeMasterList = () => {
         limit: sidebarPageSize,
         includeDeactivated: true,
         excludeIds: favorites,
-        search: sidebarSearch,
+        search: sidebarSearch?.trim(),
         ...(employeeStatusFilter === "active"   ? { isActivate: true }            : {}),
         ...(employeeStatusFilter === "inactive" ? { isActivate: false }           : {}),
         ...(employeeStatusFilter === "admins"   ? { pms_role_id: "admins" }      : {}),
@@ -284,7 +285,7 @@ const EmployeeMasterList = () => {
         body: {
           pageNo: isInfiniteScroll ? Math.floor(skipParam / sidebarPageSize) + 1 : 1,
           limit: sidebarPageSize,
-          search: sidebarSearch,
+          search: sidebarSearch?.trim(),
         },
       });
 
@@ -547,10 +548,10 @@ const EmployeeMasterList = () => {
   })();
 
   useEffect(() => {
-    if (selectedUserId && !filteredUsers.some((u) => u._id === selectedUserId)) {
-      setSelectedUserId(null);
+    if (selectedClientId && !filteredClients.some((c) => c._id === selectedClientId)) {
+      setSelectedClientId(null);
     }
-  }, [filteredUsers, selectedUserId]);
+  }, [filteredClients, selectedClientId]);
 
   useEffect(() => {
     setEmployeeListPage(1);
@@ -563,8 +564,40 @@ const EmployeeMasterList = () => {
 
 
   /* ── selected objects ──────────────────────────────────────────── */
-  const selectedUser   = selectedUserId   ? sidebarUsers.find((u) => u._id === selectedUserId)   : null;
+  const allSidebarUsers = [
+    ...(Array.isArray(sidebarUsers) ? sidebarUsers : []),
+    ...(Array.isArray(favoriteUserObjects) ? favoriteUserObjects : []),
+  ];
+  const selectedUserFromList = selectedUserId
+    ? allSidebarUsers.find((u) => String(u?._id) === String(selectedUserId))
+    : null;
+  const selectedUser = selectedUserDetails || selectedUserFromList || null;
   const selectedClient = selectedClientId ? sidebarClients.find((c) => c._id === selectedClientId) : null;
+
+  useEffect(() => {
+    const fetchSelectedUserDetails = async () => {
+      if (!selectedUserId) {
+        setSelectedUserDetails(null);
+        return;
+      }
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: `${Service.getUsermaster}/${selectedUserId}`,
+        });
+        const data = response?.data?.data;
+        const userDetails = Array.isArray(data) ? data[0] : data;
+        if (userDetails?._id) {
+          setSelectedUserDetails(userDetails);
+        } else {
+          setSelectedUserDetails(selectedUserFromList || null);
+        }
+      } catch (e) {
+        setSelectedUserDetails(selectedUserFromList || null);
+      }
+    };
+    fetchSelectedUserDetails();
+  }, [selectedUserId, selectedUserFromList]);
 
   const displayName = sidebarMode === "employees"
     ? (selectedUser

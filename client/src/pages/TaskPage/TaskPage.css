@@ -726,6 +726,14 @@
   color: #666;
 }
 
+.task-card-comments {
+  font-size: 12px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* ── Calendar ── */
 .task-calendar-view {
   background: #fff;

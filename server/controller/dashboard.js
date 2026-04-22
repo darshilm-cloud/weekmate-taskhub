@@ -1071,6 +1071,33 @@ exports.getTaskList = async (req, res) => {
         },
       },
       { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "comments",
+          let: { taskId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$task_id", "$$taskId"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $count: "count" },
+          ],
+          as: "commentStats",
+        },
+      },
+      {
+        $addFields: {
+          comment_count: {
+            $ifNull: [{ $first: "$commentStats.count" }, 0],
+          },
+        },
+      },
 
       {
         $project: {
@@ -1092,6 +1119,7 @@ exports.getTaskList = async (req, res) => {
           project: { _id: 1, title: 1, manager: 1 },
           mainTask: { _id: 1, title: 1, isPrivateList: 1 },
           task_status: { _id: 1, title: 1, color: 1 },
+          comment_count: 1,
         },
       },
     ];
