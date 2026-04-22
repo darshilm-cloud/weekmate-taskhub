@@ -456,96 +456,99 @@ const ResourceMatrix = () => {
   return (
     <Card className="resource-matrix">
       <HeaderSection />
-      <div className="global-search">
-        <Input.Search
-          allowClear
-          placeholder="Search employee name"
-          value={employeeSearch}
-          onChange={(e) => setEmployeeSearch(e.target.value)}
-          style={{ width: 250 }}
-          onSearch={handleEmployeeSearch}
-        />
-        <div className="filter-btn-wrapper">
-          {/* Integrated Advanced Filter */}
-          <ResourceMatrixFilter
-            getRoles={() => hasPermission}
-            onFilterChange={handleFilterChange}
+      <Card className="main-content-wrapper">
+
+        <div className="global-search">
+          <Input.Search
+            allowClear
+            placeholder="Search employee name"
+            value={employeeSearch}
+            onChange={(e) => setEmployeeSearch(e.target.value)}
+            style={{ width: 250 }}
+            onSearch={handleEmployeeSearch}
           />
-          <div className="tab-view-container">
-            <span className="tab-view-label">View:</span>
-            <div className="tab-view-buttons">
-              <button
-                className={`tab-view-btn ${viewMode === "Weeks" ? "active" : ""
-                  }`}
-                onClick={() => setViewMode("Weeks")}
-              >
-                Weeks
-              </button>
-              <button
-                className={`tab-view-btn ${viewMode === "Month" ? "active" : ""
-                  }`}
-                onClick={() => setViewMode("Month")}
-              >
-                Month
-              </button>
+          <div className="filter-btn-wrapper">
+            {/* Integrated Advanced Filter */}
+            <ResourceMatrixFilter
+              getRoles={() => hasPermission}
+              onFilterChange={handleFilterChange}
+            />
+            <div className="tab-view-container">
+
+              <div className="tab-view-buttons">
+                <button
+                  className={`tab-view-btn ${viewMode === "Weeks" ? "active" : ""
+                    }`}
+                  onClick={() => setViewMode("Weeks")}
+                >
+                  Weeks
+                </button>
+                <button
+                  className={`tab-view-btn ${viewMode === "Month" ? "active" : ""
+                    }`}
+                  onClick={() => setViewMode("Month")}
+                >
+                  Month
+                </button>
+              </div>
             </div>
-          </div>
-          {/* <Button icon={<ExportOutlined />} className="export-btn">
+            {/* <Button icon={<ExportOutlined />} className="export-btn">
             Export
           </Button> */}
+          </div>
         </div>
-      </div>
-      <div className="rm-table-container">
-        <Table
-          columns={tableColumns}
-          dataSource={getExpandedData()}
-          rowKey={(record) =>
-            record.type === "project" ? record.key : record.employee?._id
-          }
-          scroll={{ x: 1200, y: 550 }}
-          pagination={false}
-          className="rm-resource-table"
-          rowClassName={rowClassName}
-          showHeader={true}
-          loading={isMatrixLoading}
-          locale={{
-            emptyText: <Empty description="No Data" />
-          }}
-        />
-      </div>
-      <div className="rm-pagination-container">
-        <div className="rm-pagination-info">
-          Showing {backendData.length} of {metadata.totalEmployees} employees
+        <div className="block-teble-content">
+          <Table
+            columns={tableColumns}
+            dataSource={getExpandedData()}
+            rowKey={(record) =>
+              record.type === "project" ? record.key : record.employee?._id
+            }
+            scroll={{ x: 1200, y: 550 }}
+            pagination={false}
+            className="rm-resource-table"
+            rowClassName={rowClassName}
+            showHeader={true}
+            loading={isMatrixLoading}
+            locale={{
+              emptyText: <Empty description="No Data" />
+            }}
+          />
         </div>
-        <Pagination
-          current={pagination.current}
-          pageSize={pagination.pageSize}
-          total={metadata.totalEmployees}
-          showSizeChanger={true} // Allow user to change page size
-          showQuickJumper={false}
-          className="rm-pagination"
-          onChange={(page, size) => {
-            setPagination((prev) => ({
-              ...prev,
-              current: page,
-              pageSize: size
-            }));
-          }}
-          onShowSizeChange={(current, size) => {
-            setPagination((prev) => ({
-              ...prev,
-              current: current,
-              pageSize: size
-            }));
-          }}
-          pageSizeOptions={["10", "25", "50", "100"]}
-          itemRender={(page, type, element) => {
-            if (type === "prev") return <span>❮</span>;
-            if (type === "next") return <span>❯</span>;
-            return element;
-          }}
-        />
-      </div>
+        <div className="rm-pagination-container">
+          <div className="rm-pagination-info">
+            Showing {backendData.length} of {metadata.totalEmployees} employees
+          </div>
+          <Pagination
+            current={pagination.current}
+            pageSize={pagination.pageSize}
+            total={metadata.totalEmployees}
+            showSizeChanger={true} // Allow user to change page size
+            showQuickJumper={false}
+            className="rm-pagination"
+            onChange={(page, size) => {
+              setPagination((prev) => ({
+                ...prev,
+                current: page,
+                pageSize: size
+              }));
+            }}
+            onShowSizeChange={(current, size) => {
+              setPagination((prev) => ({
+                ...prev,
+                current: current,
+                pageSize: size
+              }));
+            }}
+            pageSizeOptions={["10", "25", "50", "100"]}
+            itemRender={(page, type, element) => {
+              if (type === "prev") return <span>❮</span>;
+              if (type === "next") return <span>❯</span>;
+              return element;
+            }}
+          />
+        </div>
+      </Card>
 
       <div className="rm-mobile-actions">
         <Button

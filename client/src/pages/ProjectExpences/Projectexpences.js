@@ -10,6 +10,7 @@ import {
   Form,
   Input,
   message,
+  Modal,
   Popconfirm,
   Row,
   Select,
@@ -51,10 +52,10 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const USER_ROLES = {
-  ADMIN_ROLES:          ["Admin", "PC", "TL", "AM", "User"],
+  ADMIN_ROLES: ["Admin", "PC", "TL", "AM", "User"],
   EXPENSE_ACCESS_ROLES: ["Admin", "PC", "AM", "TL"],
-  SUPER_ADMIN:          ["Admin"],
-  CLIENT_USER_ID:       sideBarContentId2,
+  SUPER_ADMIN: ["Admin"],
+  CLIENT_USER_ID: sideBarContentId2,
 };
 const PAGINATION_OPTIONS = ["10", "20", "25", "30"];
 
@@ -123,10 +124,10 @@ const normalizeExpenseRecord = (expense) => {
 const statusClass = (s = "") => {
   switch (s.toLowerCase()) {
     case "approved": return "approved";
-    case "pending":  return "pending";
+    case "pending": return "pending";
     case "rejected": return "rejected";
-    case "paid":     return "paid";
-    default:         return "default";
+    case "paid": return "paid";
+    default: return "default";
   }
 };
 
@@ -315,40 +316,40 @@ const StatCard = ({ icon, label, value, sub, color }) => (
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════════ */
 const Projectexpences = () => {
-  const dispatch      = useDispatch();
-  const companySlug   = localStorage.getItem("companyDomain");
-  const history       = useHistory();
-  const location      = useLocation();
+  const dispatch = useDispatch();
+  const companySlug = localStorage.getItem("companyDomain");
+  const history = useHistory();
+  const location = useLocation();
   const { emitEvent, listenEvent } = useSocketAction();
 
   /* ── filter state (wired to existing FilterComponent) ── */
-  const [selectedProject, setSelectedProject]     = useState([]);
-  const [technology,       setTechnology]          = useState([]);
-  const [manager,          setManager]             = useState([]);
-  const [accontManager,    setAccountManager]      = useState([]);
+  const [selectedProject, setSelectedProject] = useState([]);
+  const [technology, setTechnology] = useState([]);
+  const [manager, setManager] = useState([]);
+  const [accontManager, setAccountManager] = useState([]);
   const [need_to_bill_customer, setFeedBackTypeFilter] = useState("All");
-  const [createdBy,        setCreatedBy]           = useState([]);
+  const [createdBy, setCreatedBy] = useState([]);
 
   /* ── local filter state (filter bar) ── */
-  const [statusFilter,    setStatusFilter]   = useState("All");
-  const [billableToggle,  setBillableToggle] = useState(false);
-  const [dateRange,       setDateRange]      = useState([null, null]);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [billableToggle, setBillableToggle] = useState(false);
+  const [dateRange, setDateRange] = useState([null, null]);
 
   /* ── data ── */
-  const [allExpenses,          setAllExpenses]          = useState([]); // for analytics
-  const [projectexpencesList,  setprojectexpencesList]  = useState([]); // paginated table
-  const [optimisticExpenses,   setOptimisticExpenses]   = useState([]);
+  const [allExpenses, setAllExpenses] = useState([]); // for analytics
+  const [projectexpencesList, setprojectexpencesList] = useState([]); // paginated table
+  const [optimisticExpenses, setOptimisticExpenses] = useState([]);
   const optimisticRef = React.useRef([]);
   // Keep ref in sync so fetch callbacks always read latest value
   React.useEffect(() => { optimisticRef.current = optimisticExpenses; }, [optimisticExpenses]);
-  const [analyticsLoading,     setAnalyticsLoading]     = useState(false);
-  const [tableLoading,         setTableLoading]         = useState(false);
-  const [pageLoading,          setPageLoading]          = useState(true);
-  const [pagination,           setPagination]           = useState({ current: 1, pageSize: 25 });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
   /* ── drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [viewData,   setViewData]   = useState({});
+  const [viewData, setViewData] = useState({});
 
   /* ── permissions ── */
   const userData = useMemo(() => {
@@ -356,10 +357,10 @@ const Projectexpences = () => {
     catch { return {}; }
   }, []);
   const userPermissions = useMemo(() => ({
-    hasAccess:       getRoles(USER_ROLES.ADMIN_ROLES),
+    hasAccess: getRoles(USER_ROLES.ADMIN_ROLES),
     hasClientAccess: userData._id === USER_ROLES.CLIENT_USER_ID,
-    canAddExpense:   getRoles(USER_ROLES.EXPENSE_ACCESS_ROLES),
-    isSuperAdmin:    getRoles(USER_ROLES.SUPER_ADMIN),
+    canAddExpense: getRoles(USER_ROLES.EXPENSE_ACCESS_ROLES),
+    isSuperAdmin: getRoles(USER_ROLES.SUPER_ADMIN),
   }), [userData._id]);
 
   const appliedFilters = useMemo(() => normalizeExpenseFilters({
@@ -374,7 +375,7 @@ const Projectexpences = () => {
   const fetchExpenseRecords = useCallback(async ({ pageNo, limit, filters } = {}) => {
     const response = await Service.makeAPICall({
       methodName: Service.postMethod,
-      api_url:    Service.getprojectexpanses,
+      api_url: Service.getprojectexpanses,
       body: {
         pageNo,
         limit,
@@ -575,12 +576,12 @@ const Projectexpences = () => {
       });
     }
 
-    const totalAmt   = expenses.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const billable   = expenses.filter((e) => e.need_to_bill_customer);
+    const totalAmt = expenses.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
+    const billable = expenses.filter((e) => e.need_to_bill_customer);
     const billableAmt = billable.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const pending    = expenses.filter((e) => e.status?.toLowerCase() === "pending");
+    const pending = expenses.filter((e) => e.status?.toLowerCase() === "pending");
     const pendingAmt = pending.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const approved   = expenses.filter((e) => e.status?.toLowerCase() === "approved");
+    const approved = expenses.filter((e) => e.status?.toLowerCase() === "approved");
     const approvedAmt = approved.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
 
     /* monthly trend — last 6 months */
@@ -594,7 +595,7 @@ const Projectexpences = () => {
       if (key in monthMap) monthMap[key] += parseFloat(e.cost_in_usd) || 0;
     });
     const monthlyLabels = Object.keys(monthMap);
-    const monthlyData   = Object.values(monthMap);
+    const monthlyData = Object.values(monthMap);
 
     /* expense by project — top 8 */
     const projectMap = {};
@@ -604,7 +605,7 @@ const Projectexpences = () => {
     });
     const sorted = Object.entries(projectMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const projectLabels = sorted.map(([k]) => k);
-    const projectData   = sorted.map(([, v]) => parseFloat(v.toFixed(2)));
+    const projectData = sorted.map(([, v]) => parseFloat(v.toFixed(2)));
 
     /* billable vs non-billable */
     const nonBillableAmt = totalAmt - billableAmt;
@@ -614,7 +615,7 @@ const Projectexpences = () => {
       totalAmt,
       billableCount: billable.length,
       billableAmt,
-      pendingCount:  pending.length,
+      pendingCount: pending.length,
       pendingAmt,
       approvedCount: approved.length,
       approvedAmt,
@@ -622,7 +623,7 @@ const Projectexpences = () => {
       monthlyData,
       projectLabels,
       projectData,
-      billableAmt2:     billableAmt,
+      billableAmt2: billableAmt,
       nonBillableAmt,
     };
   }, [allExpenses, projectexpencesList, statusFilter, billableToggle, dateRange]);
@@ -631,10 +632,10 @@ const Projectexpences = () => {
      CHART OPTIONS
   ───────────────────────────────────────────────────────────── */
   const lineOptions = useMemo(() => ({
-    chart:  { type: "area", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
+    chart: { type: "area", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
     stroke: { curve: "smooth", width: 3 },
     colors: ["#2563eb"],
-    fill:   {
+    fill: {
       type: "gradient",
       gradient: {
         shadeIntensity: 1,
@@ -660,7 +661,7 @@ const Projectexpences = () => {
         trim: true,
       },
     },
-    yaxis:  {
+    yaxis: {
       tickAmount: 4,
       labels: {
         formatter: (v) => fmtINRShort(v),
@@ -699,7 +700,7 @@ const Projectexpences = () => {
   );
 
   const donutOptions = useMemo(() => ({
-    chart:  { type: "donut", fontFamily: "inherit" },
+    chart: { type: "donut", fontFamily: "inherit" },
     labels: ["Billable", "Non-Billable"],
     colors: ["#2563eb", "#e2e8f0"],
     legend: { show: false },
@@ -722,7 +723,7 @@ const Projectexpences = () => {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.deleteMethod,
-        api_url:    `${Service.deleteprojectexpanses}/${deleteId}`,
+        api_url: `${Service.deleteprojectexpanses}/${deleteId}`,
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
@@ -745,8 +746,8 @@ const Projectexpences = () => {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.getprojectexpanses,
-        body:       { _id: expenseId },
+        api_url: Service.getprojectexpanses,
+        body: { _id: expenseId },
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
@@ -763,12 +764,12 @@ const Projectexpences = () => {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.exportProjectExpenses,
-        body:       { exportFileType: "csv", isExport: true },
+        api_url: Service.exportProjectExpenses,
+        body: { exportFileType: "csv", isExport: true },
       });
       if (response?.data?.data) {
         const link = document.createElement("a");
-        link.href     = "data:text/csv;base64," + response.data.data;
+        link.href = "data:text/csv;base64," + response.data.data;
         link.download = "Project Expense.csv";
         link.style.display = "none";
         document.body.appendChild(link);
@@ -793,12 +794,12 @@ const Projectexpences = () => {
       setManager([]); setAccountManager([]); setFeedBackTypeFilter("All");
       setPagination((p) => ({ ...p, current: 1 }));
     } else {
-      if (nextSkipParams.includes("skipProject"))            setSelectedProject([]);
-      if (nextSkipParams.includes("skipDepartment"))         setTechnology([]);
-      if (nextSkipParams.includes("skipManager"))            setManager([]);
-      if (nextSkipParams.includes("skipAccountManager"))     setAccountManager([]);
+      if (nextSkipParams.includes("skipProject")) setSelectedProject([]);
+      if (nextSkipParams.includes("skipDepartment")) setTechnology([]);
+      if (nextSkipParams.includes("skipManager")) setManager([]);
+      if (nextSkipParams.includes("skipAccountManager")) setAccountManager([]);
       if (nextSkipParams.includes("skipNeedToBillCustomer")) setFeedBackTypeFilter("All");
-      if (nextSkipParams.includes("skipCreatedBy"))          setCreatedBy([]);
+      if (nextSkipParams.includes("skipCreatedBy")) setCreatedBy([]);
     }
     if (selectedFilters) {
       const normalizedFilters = normalizeExpenseFilters(selectedFilters);
@@ -1153,15 +1154,15 @@ const Projectexpences = () => {
           loading={tableLoading}
           locale={
             {
-               emptyText: <NoDataFoundIcon />,
+              emptyText: <NoDataFoundIcon />,
             }
           }
           pagination={{
-            showSizeChanger:  true,
-            pageSizeOptions:  PAGINATION_OPTIONS,
-            current:          pagination.current,
-            pageSize:         pagination.pageSize,
-            total:            pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: PAGINATION_OPTIONS,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
             showTotal: (total) => `Total ${total} records`,
           }}
           onChange={(page) => setPagination((p) => ({ ...p, ...page }))}
@@ -1170,14 +1171,35 @@ const Projectexpences = () => {
       </div>
 
       {/* ══ View Drawer ══ */}
-      <Drawer
-        className="pe-drawer"
-        title="Expense Details"
-        placement="right"
-        width={480}
+      <Modal
         open={drawerOpen}
-        onClose={() => { setDrawerOpen(false); setViewData({}); }}
+        onCancel={() => { setDrawerOpen(false); setViewData({}); }}
+        title="Expense Details"
+        width={600}
         destroyOnClose
+        footer={[
+          
+
+          userPermissions.hasAccess && (
+            <Popconfirm
+              key="delete"
+              title="Delete this expense?"
+              onConfirm={() => { deleteProjectExpences(viewData?._id); setDrawerOpen(false); }}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Button icon={<DeleteOutlined />} className="delete-btn">
+                Delete
+              </Button>
+            </Popconfirm>
+          ),
+          <Link key="edit" to={`/${companySlug}/edit/projectexpenseform/${viewData?._id}`}>
+            <Button icon={<EditOutlined />} type="primary" className="add-btn">
+              Edit Expense
+            </Button>
+          </Link>,
+        ]}
       >
         {/* Amount highlight */}
         <div className="pe-drawer-field">
@@ -1190,13 +1212,13 @@ const Projectexpences = () => {
         <div className="pe-drawer-divider" />
 
         <Row gutter={[16, 0]}>
-          <Col span={14}>
+          <Col xs={24} sm={14}>
             <div className="pe-drawer-field">
               <div className="pe-drawer-label">Project</div>
               <div className="pe-drawer-value">{viewData?.project?.title || "—"}</div>
             </div>
           </Col>
-          <Col span={10}>
+          <Col xs={24} sm={10}>
             <div className="pe-drawer-field">
               <div className="pe-drawer-label">Status</div>
               <div style={{ paddingTop: 6 }}>
@@ -1209,13 +1231,13 @@ const Projectexpences = () => {
         </Row>
 
         <Row gutter={[16, 0]}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <div className="pe-drawer-field">
               <div className="pe-drawer-label">Created By</div>
               <div className="pe-drawer-value">{viewData?.createdBy?.full_name || "—"}</div>
             </div>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <div className="pe-drawer-field">
               <div className="pe-drawer-label">Date</div>
               <div className="pe-drawer-value">
@@ -1273,28 +1295,7 @@ const Projectexpences = () => {
             </a>
           </div>
         )}
-
-        {/* Footer actions */}
-        <div className="pe-drawer-divider" />
-        <div style={{ display: "flex", gap: 10 }}>
-          <Link to={`/${companySlug}/edit/projectexpenseform/${viewData?._id}`}>
-            <Button icon={<EditOutlined />} type="primary" size="middle">
-              Edit Expense
-            </Button>
-          </Link>
-          {userPermissions.hasAccess && (
-            <Popconfirm
-              title="Delete this expense?"
-              onConfirm={() => { deleteProjectExpences(viewData?._id); setDrawerOpen(false); }}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-            >
-              <Button icon={<DeleteOutlined />} danger size="middle">Delete</Button>
-            </Popconfirm>
-          )}
-        </div>
-      </Drawer>
+      </Modal>
     </div>
   );
 };

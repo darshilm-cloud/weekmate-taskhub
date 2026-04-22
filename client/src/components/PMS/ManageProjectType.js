@@ -104,7 +104,7 @@ function ManageProjectType() {
             </>
           ) : (
             <>
-              <Button type="link pe-action-btn edit">
+              <Button type="link edit pe-action-btn">
                 <EditOutlined style={{ fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Do you really want to delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>

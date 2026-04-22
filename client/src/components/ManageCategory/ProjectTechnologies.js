@@ -272,7 +272,7 @@ const ProjectTechnologies = () => {
               </>
             ) : (
               <>
-                <Button type="link" className="edit">
+                <Button type="link edit pe-action-btn">
                   <EditOutlined
                     style={{ fontSize: "18px" }}
                     onClick={() => handleStartEdit(record)}

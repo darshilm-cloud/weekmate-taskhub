@@ -806,7 +806,9 @@
     align-items: center;
     border-top: 1px solid #f0f0f0;
 }
-
+.rm-pagination-container  .ant-pagination>li{
+margin-bottom: 0;
+}
 .resource-matrix .rm-pagination-info {
     color: #666;
     font-size: 14px;
@@ -1273,7 +1275,7 @@
 }
 
 .tab-view-btn.active {
-    background: linear-gradient(-303deg, #002742, #2772a8 56%, #043152);
+    background:#185d87 ;
     color: #fff;
     color: var(--white-color);
     font-size: var(--font-size-14px);

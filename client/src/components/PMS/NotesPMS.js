@@ -1121,14 +1121,14 @@ function NotesPMS() {
 
                   <div style={{ marginTop: 8 }}>
                     <Button
-                      className="clearbtn ant-delete"
+                      className="delete-btn ant-delete"
                       onClick={() => {
                         formNotes.setFieldsValue({ subscribers: [] });
                         setselectedSubscribers([]);
                         setSelectedSubscriberIds([]);
                       }}
                       size="small"
-                      block   // ✅ full width on mobile
+                     
                     >
                       Clear
                     </Button>
@@ -1155,14 +1155,14 @@ function NotesPMS() {
 
                   <div style={{ marginTop: 8 }}>
                     <Button
-                      className="clearbtn ant-delete"
+                      className="delete-btn ant-delete"
                       onClick={() => {
                         formNotes.setFieldsValue({ clients: [] });
                         setSelectedClient([]);
                         setSelectedClientIds([]);
                       }}
                       size="small"
-                      block   // ✅ better mobile UX
+                    
                     >
                       Clear
                     </Button>

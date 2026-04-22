@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
-import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col } from "antd";
+import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col, Card } from "antd";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -574,10 +574,13 @@ export default function NotesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
         </div>
       ) : (
-        <>
+        <Card className="main-content-wrapper">
+          <div className="global-search">
+
           <p className="notes-count-label">
             {totalNotes} note{totalNotes === 1 ? "" : "s"}
           </p>
+          </div>
           <div id="notes-infinite-scroll" className="notes-infinite-scroll-wrap">
             <InfiniteScroll
               key={activeTab}
@@ -669,7 +672,7 @@ export default function NotesPage() {
               </div>
             </InfiniteScroll>
           </div>
-        </>
+        </Card>
       )}
 
       {/* Add / Edit note (same modal & fields) */}

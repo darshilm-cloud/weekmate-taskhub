@@ -187,11 +187,11 @@ function ProjectStatus() {
             </>
           ) : (
             <>
-              <Button disabled={record.isDefault} type="link" className="btn-secondary pe-action-btn">
+              <Button disabled={record.isDefault} type="link edit pe-action-btn">
                 <EditOutlined onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
-                <Button disabled={record.isDefault} type="link" className="pe-action-btn">
+                <Button disabled={record.isDefault} type="link edit pe-action-btn delete ">
                   <AiOutlineDelete />
                 </Button>
               </Popconfirm>

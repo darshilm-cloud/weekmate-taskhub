@@ -495,7 +495,6 @@ i.width-18 {
     padding: 20px;
     background-color: #fff;
     border-radius: 6px;
-    box-shadow: 0 1px 2px #0000000d;
 }
 
 .main-content-wrapper .block-table-content.new-block-table {
@@ -3204,11 +3203,11 @@ p {
     margin: 0 !important;
     font-size: 16px;
 }
-
+.ant-card-body table td.ant-table-cell button.ant-btn.edit,
 .ant-card-body table td.ant-table-cell .edit-delete button.ant-btn.edit {
     color: green;
 }
-
+.ant-card-body table td.ant-table-cell button.ant-btn.delete,
 .ant-card-body table td.ant-table-cell .edit-delete button.ant-btn.delete {
     color: red;
 }
@@ -5018,7 +5017,9 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: #1f2937;
     margin-bottom: 0;
 }
-
+.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2  span{
+ margin-right: 6px;
+}
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
     align-items: center;
     background-color: #fff;
