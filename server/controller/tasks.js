@@ -44,6 +44,19 @@ const {
   checkLoginUserIsProjectAccountManager
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
+
+const parseTaskInputDate = (rawValue) => {
+  if (rawValue === undefined || rawValue === null || rawValue === "") return null;
+  if (rawValue instanceof Date) {
+    return Number.isNaN(rawValue.getTime()) ? null : rawValue;
+  }
+  const dateStr = String(rawValue).trim();
+  let parsed = moment(dateStr, "DD-MM-YYYY", true);
+  if (!parsed.isValid()) parsed = moment(dateStr, "YYYY-MM-DD", true);
+  if (!parsed.isValid()) parsed = moment(dateStr, moment.ISO_8601, true);
+  return parsed.isValid() ? parsed.toDate() : null;
+};
+
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
@@ -207,9 +220,9 @@ exports.addProjectsTask = async (req, res) => {
       descriptions: Joi.string().optional().allow("").default(""),
       priority: Joi.string().valid("Low", "Medium", "High").optional().default("Low"),
       task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
-      start_date: Joi.date().optional(),
-      due_date: Joi.date().optional(),
-      end_date: Joi.date().optional().allow(null),
+      start_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(""),
+      due_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(""),
+      end_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(null, ""),
       assignees: Joi.array().optional(),
       pms_clients: Joi.array().optional().default([]),
       estimated_hours: Joi.string().optional().default("00"),
@@ -228,6 +241,20 @@ exports.addProjectsTask = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const parsedStartDate = parseTaskInputDate(value.start_date);
+    const parsedDueDate = parseTaskInputDate(value.due_date);
+    const parsedEndDate = parseTaskInputDate(value.end_date);
+
+    if (value.start_date && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+    if (value.due_date && !parsedDueDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"due_date" must be a valid date');
+    }
+    if (value.end_date && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
 
     if (
@@ -302,9 +329,9 @@ exports.addProjectsTask = async (req, res) => {
       status: value.status,
       descriptions: value.descriptions || "",
       task_labels: value.task_labels || [],
-      start_date: value.start_date || null,
-      end_date: value.end_date || null,
-      due_date: value.due_date || null,
+      start_date: parsedStartDate,
+      end_date: parsedEndDate,
+      due_date: parsedDueDate,
       estimated_hours: value.estimated_hours,
       estimated_minutes: value.estimated_minutes,
       // attachments: value.attachments || [],
