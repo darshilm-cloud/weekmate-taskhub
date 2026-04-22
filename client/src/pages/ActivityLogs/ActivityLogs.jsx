@@ -314,21 +314,21 @@ const ActivityLogs = () => {
 
   /* ── Render ──────────────────────────────────────────────── */
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        {/* Header */}
-        <div className="heading-wrapper">
+    <>
+    <Card className="ps-page">
+      {/* Header */}
+      <div className="heading-wrapper">
           <div className="heading-main">
-
-            <h2 >
-              <span ><ClockCircleOutlined /></span>
+            <h2>
+              <span><ClockCircleOutlined /></span>
               Activity Logs
             </h2>
           </div>
-          <div className="header-btns">
+          <div className="ps-header-right">
             <ActivityLogFilter onFilterChange={handleFilterChange} />
           </div>
         </div>
+
         <Card className="main-content-wrapper">
           <div className="block-table-content">
             <Table
@@ -347,30 +347,24 @@ const ActivityLogs = () => {
             />
           </div>
         </Card>
-      </div>
+      </Card>
 
       {/* Detail Modal */}
       <Modal
         title={
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-
-            >
-              <ClockCircleOutlined />
-            </span>
-            <span style={{ fontWeight: 700, fontSize: 16, color: "#1e293b" }}>
-              Activity Log Details
-            </span>
-          </div>
+          <>
+            <ClockCircleOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            Activity Log Details
+          </>
         }
         open={isViewModalOpen}
         onCancel={closeModal}
-        className="activity-detail-modal"
-        footer={
-          <Button className="delete-btn" onClick={closeModal}>
+        className="ps-modal activity-detail-modal"
+        footer={[
+          <Button key="close" className="delete-btn" onClick={closeModal}>
             Close
           </Button>
-        }
+        ]}
         width="100%"
         style={{ maxWidth: 800 }}
         styles={{ body: { maxHeight: "70vh", overflowY: "auto", padding: "24px" } }}
@@ -612,7 +606,7 @@ const ActivityLogs = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </>
   );
 };
 

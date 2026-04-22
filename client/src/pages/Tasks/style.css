@@ -407,10 +407,10 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
 }
 
 .ant-avatar-string {
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, -50%) !important;
-    top: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) !important;
 }
 
 /* --------------- add task pop -------------- */

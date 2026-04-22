@@ -219,8 +219,8 @@ const ResourceMatrix = () => {
         viewMode === "Weeks"
           ? current.endOf("week")
           : viewMode === "Month"
-          ? current.endOf("month")
-          : current;
+            ? current.endOf("month")
+            : current;
 
       while (current.isBefore(end) || current.isSame(end, "day")) {
         const dateKey = current.format("DD-MM-YYYY");
@@ -475,17 +475,15 @@ const ResourceMatrix = () => {
             <span className="tab-view-label">View:</span>
             <div className="tab-view-buttons">
               <button
-                className={`tab-view-btn ${
-                  viewMode === "Weeks" ? "active" : ""
-                }`}
+                className={`tab-view-btn ${viewMode === "Weeks" ? "active" : ""
+                  }`}
                 onClick={() => setViewMode("Weeks")}
               >
                 Weeks
               </button>
               <button
-                className={`tab-view-btn ${
-                  viewMode === "Month" ? "active" : ""
-                }`}
+                className={`tab-view-btn ${viewMode === "Month" ? "active" : ""
+                  }`}
                 onClick={() => setViewMode("Month")}
               >
                 Month
@@ -631,10 +629,10 @@ const ResourceMatrix = () => {
                   <div className="stat-value">
                     {selectedProjectForModal.hours.estimated > 0
                       ? Math.round(
-                          (selectedProjectForModal.hours.logged /
-                            selectedProjectForModal.hours.estimated) *
-                            100
-                        )
+                        (selectedProjectForModal.hours.logged /
+                          selectedProjectForModal.hours.estimated) *
+                        100
+                      )
                       : 0}
                     %
                   </div>
@@ -650,10 +648,10 @@ const ResourceMatrix = () => {
                 <span className="progress-percentage">
                   {selectedProjectForModal.hours.estimated > 0
                     ? Math.round(
-                        (selectedProjectForModal.hours.logged /
-                          selectedProjectForModal.hours.estimated) *
-                          100
-                      )
+                      (selectedProjectForModal.hours.logged /
+                        selectedProjectForModal.hours.estimated) *
+                      100
+                    )
                     : 0}
                   %
                 </span>
@@ -662,16 +660,15 @@ const ResourceMatrix = () => {
                 <div
                   className="progress-bar-fill"
                   style={{
-                    width: `${
-                      selectedProjectForModal.hours.estimated > 0
-                        ? Math.min(
-                            (selectedProjectForModal.hours.logged /
-                              selectedProjectForModal.hours.estimated) *
-                              100,
-                            100
-                          )
-                        : 0
-                    }%`,
+                    width: `${selectedProjectForModal.hours.estimated > 0
+                      ? Math.min(
+                        (selectedProjectForModal.hours.logged /
+                          selectedProjectForModal.hours.estimated) *
+                        100,
+                        100
+                      )
+                      : 0
+                      }%`,
                     backgroundColor: getProgressColor(
                       selectedProjectForModal.hours.logged,
                       selectedProjectForModal.hours.estimated
@@ -722,8 +719,8 @@ const ResourceMatrix = () => {
                   const taskProgress =
                     task?.estimatedHours > 0
                       ? Math.round(
-                          (task?.loggedHours / task?.estimatedHours) * 100
-                        )
+                        (task?.loggedHours / task?.estimatedHours) * 100
+                      )
                       : 0;
 
                   return (
@@ -746,14 +743,14 @@ const ResourceMatrix = () => {
                             <FiCalendar size={14} />
                             <span className="date-label">Start:</span>
                             <span className="date-value">
-                              {task?.startDate ?dayjs(task?.startDate).format("DD-MM-YYYY") : "-"}
+                              {task?.startDate ? dayjs(task?.startDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                           <div className="date-item">
                             <FiCalendar size={14} />
                             <span className="date-label">End:</span>
                             <span className="date-value">
-                              {task?.endDate  ? dayjs(task?.endDate).format("DD-MM-YYYY") : "-"}
+                              {task?.endDate ? dayjs(task?.endDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                         </div>
@@ -793,8 +790,8 @@ const ResourceMatrix = () => {
                                   taskProgress < 34
                                     ? "red"
                                     : taskProgress < 67
-                                    ? "yellow"
-                                    : "green"
+                                      ? "yellow"
+                                      : "green"
                               }}
                             ></div>
                           </div>

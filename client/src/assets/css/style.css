@@ -2045,7 +2045,8 @@ html {
 .ant-avatar-string {
   position: absolute;
   left: 50%;
-  transform-origin: 0 center;
+  top: 50%;
+  transform: translate(-50%, -50%) !important;
 }
 
 .ant-avatar.ant-avatar-icon {

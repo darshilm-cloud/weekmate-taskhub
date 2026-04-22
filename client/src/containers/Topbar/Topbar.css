@@ -122,6 +122,11 @@
   color: #ffffff;
 }
 
+.wm-settings-item.danger-item .wm-settings-item-icon {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
 .wm-settings-item.danger-item:hover {
   background: #fff1f0;
   color: #cf1322;
@@ -136,6 +141,11 @@
   background: #fff1f0;
   color: #cf1322;
   border-left-color: #ff4d4f;
+}
+
+.wm-settings-item.danger-item.active .wm-settings-item-icon {
+  background: #ff4d4f;
+  color: #ffffff;
 }
 
 /* Active settings button */

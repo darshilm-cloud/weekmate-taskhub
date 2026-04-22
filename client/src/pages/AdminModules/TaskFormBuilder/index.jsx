@@ -153,9 +153,9 @@ const TaskFormBuilder = () => {
     const options =
       isSelectType && optionSource === "static"
         ? String(values.options || "")
-            .split(",")
-            .map((option) => option.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((option) => option.trim())
+          .filter(Boolean)
         : [];
 
     if (isSelectType && optionSource === "static" && options.length === 0) {
@@ -173,15 +173,15 @@ const TaskFormBuilder = () => {
         return sortedPrev.map((field, index) =>
           field.key === editingFieldKey
             ? {
-                ...field,
-                label,
-                type: values.type,
-                required: Boolean(values.required),
-                optionSource,
-                linkedModule,
-                options,
-                order: index,
-              }
+              ...field,
+              label,
+              type: values.type,
+              required: Boolean(values.required),
+              optionSource,
+              linkedModule,
+              options,
+              order: index,
+            }
             : { ...field, order: index }
         );
       }
@@ -270,15 +270,15 @@ const TaskFormBuilder = () => {
       const payloadFields = [...fields]
         .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
         .map((field) => ({
-        key: field.key,
-        label: field.label,
-        type: field.type,
-        required: Boolean(field.required),
-        isDefault: Boolean(field.isDefault),
-        optionSource: field.optionSource || "static",
-        linkedModule: field.linkedModule || null,
-        options: Array.isArray(field.options) ? field.options : [],
-      }));
+          key: field.key,
+          label: field.label,
+          type: field.type,
+          required: Boolean(field.required),
+          isDefault: Boolean(field.isDefault),
+          optionSource: field.optionSource || "static",
+          linkedModule: field.linkedModule || null,
+          options: Array.isArray(field.options) ? field.options : [],
+        }));
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -394,63 +394,63 @@ const TaskFormBuilder = () => {
 
                   nodes.push(
                     <Col xs={24} md={span} key={field.key}>
-                  <div
-                    className="task-form-builder-field-card"
-                    draggable
-                    onDragStart={() => setDraggingFieldKey(field.key)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => {
-                      moveFieldByDrag(draggingFieldKey, field.key);
-                      setDraggingFieldKey(null);
-                    }}
-                    onDragEnd={() => setDraggingFieldKey(null)}
-                  >
-                    <div className="task-form-builder-field-header">
-                      <Space size={8}>
-                        <DragOutlined className="task-form-drag-icon" />
-                        <Text strong>
-                          {field.required ? "* " : ""}
-                          {field.label || toLabel(field.key)}
-                        </Text>
-                      </Space>
-                      <div className="task-form-builder-row-actions">
-                        <Switch
-                          size="small"
-                          checked={Boolean(field.required)}
-                          onChange={(checked) => handleRequiredToggle(field.key, checked)}
-                          disabled
-                        />
-                        <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
-                          <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            disabled={Boolean(field.isDefault)}
-                            onClick={() => openEditFieldModal(field)}
-                          />
-                        </Tooltip>
-                        <Tooltip title={field.isDefault ? "Default fields cannot be deleted." : "Delete field"}>
-                          <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            disabled={Boolean(field.isDefault)}
-                            onClick={() => removeField(field.key)}
-                          />
-                        </Tooltip>
+                      <div
+                        className="task-form-builder-field-card"
+                        draggable
+                        onDragStart={() => setDraggingFieldKey(field.key)}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          moveFieldByDrag(draggingFieldKey, field.key);
+                          setDraggingFieldKey(null);
+                        }}
+                        onDragEnd={() => setDraggingFieldKey(null)}
+                      >
+                        <div className="task-form-builder-field-header">
+                          <Space size={8}>
+                            <DragOutlined className="task-form-drag-icon" />
+                            <Text strong>
+                              {field.required ? "* " : ""}
+                              {field.label || toLabel(field.key)}
+                            </Text>
+                          </Space>
+                          <div className="task-form-builder-row-actions">
+                            <Switch
+                              size="small"
+                              checked={Boolean(field.required)}
+                              onChange={(checked) => handleRequiredToggle(field.key, checked)}
+                              disabled
+                            />
+                            <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
+                              <Button
+                                size="small"
+                                icon={<EditOutlined />}
+                                disabled={Boolean(field.isDefault)}
+                                onClick={() => openEditFieldModal(field)}
+                              />
+                            </Tooltip>
+                            <Tooltip title={field.isDefault ? "Default fields cannot be deleted." : "Delete field"}>
+                              <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                                disabled={Boolean(field.isDefault)}
+                                onClick={() => removeField(field.key)}
+                              />
+                            </Tooltip>
+                          </div>
+                        </div>
+                        <Form.Item className="task-form-builder-field-input">
+                          {renderFieldPreviewInput(field)}
+                        </Form.Item>
+                        <Space size={8}>
+                          <Tag>{field.type}</Tag>
+                          {(field.type === "select" || field.type === "multiselect") && field.optionSource === "linked" ? (
+                            <Tag color="purple">Linked: {field.linkedModule || "module"}</Tag>
+                          ) : null}
+                          {field.isDefault ? <Tag color="blue">Default</Tag> : null}
+                        </Space>
                       </div>
-                    </div>
-                    <Form.Item className="task-form-builder-field-input">
-                      {renderFieldPreviewInput(field)}
-                    </Form.Item>
-                    <Space size={8}>
-                      <Tag>{field.type}</Tag>
-                      {(field.type === "select" || field.type === "multiselect") && field.optionSource === "linked" ? (
-                        <Tag color="purple">Linked: {field.linkedModule || "module"}</Tag>
-                      ) : null}
-                      {field.isDefault ? <Tag color="blue">Default</Tag> : null}
-                    </Space>
-                  </div>
-                </Col>
+                    </Col>
                   );
 
                   rowFill = span === 24 ? 0 : rowFill === 12 ? 0 : 12;
