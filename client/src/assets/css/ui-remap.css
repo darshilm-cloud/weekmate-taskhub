@@ -1011,7 +1011,7 @@ button {
 .ant-table-wrapper .ant-table-tbody>tr>td,
 .ant-table .ant-table-tbody>tr>td {
   padding: 12px 16px !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   color: var(--app-text-muted) !important;
   border-bottom: 1px solid var(--app-border) !important;
   background: var(--app-surface) !important;
@@ -1891,4 +1891,13 @@ body .weekmate-sidebar .ant-menu-item svg,
 body .weekmate-sidebar .ant-menu-submenu-title svg {
   fill: #ffffff !important;
   stroke: #ffffff !important;
+}
+
+@media (max-width: 992px) {
+
+  .sidebar-menu .ant-layout-sider,
+  .sidebar-menu .Sidebar {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
 }

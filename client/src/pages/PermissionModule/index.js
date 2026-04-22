@@ -459,7 +459,7 @@ const PermissionModule = () => {
                   onClick={savePermissions}
                   disabled={saving}
                 >
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? "Saving…" : "Save "}
                 </Button>
               </div>
             </div>,

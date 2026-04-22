@@ -531,6 +531,7 @@ export default function DiscussionPage() {
         title={`New ${addType === "Member" ? "Member Chat" : "Group Chat"}`}
         open={addOpen}
         onCancel={() => { setAddOpen(false); addForm.resetFields(); }}
+        cancelButtonProps={{className:"delete-btn"}}
         onOk={handleAdd}
         confirmLoading={addSubmitting}
         okText="Create"

@@ -336,12 +336,12 @@ const PositiveReviewForm = () => {
               type="primary"
               htmlType="submit"
               loading={submitting}
-              className="prf-submit-btn"
+              className="add-btn"
             >
               {submitButtonText}
             </Button>
             <Button
-              className="prf-cancel-btn"
+              className="delete-btn"
               onClick={handleCancel}
               disabled={submitting}
             >

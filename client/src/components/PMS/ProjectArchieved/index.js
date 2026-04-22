@@ -195,7 +195,7 @@ function ProjectArchieved() {
               title="Do you want to activate the archived project?"
               okText="Yes"
               cancelText="No"
-              cancelButtonProps={{className:"delete-btn"}}
+              cancelButtonProps={{ className: "delete-btn" }}
               onConfirm={() => projectArchieved(record?._id)}
             >
               <ProjectOutlined />
@@ -372,20 +372,25 @@ function ProjectArchieved() {
   };
 
   return (
-    <div className="ant-project-task archived-main-wrapper">
-      <Card>
-        <div className="heading-wrapper">
-          <div className="heading-main">
-            <h2>Archived Projects</h2>
-          </div>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><ProjectOutlined /></span>
+            Archived Projects
+          </h2>
         </div>
+      </div>
+
+      <Card className="main-content-wrapper">
         <div className="global-search">
           <Input.Search
             ref={searchRef}
             placeholder="Search..."
-            style={{ width: 200 }}
+            style={{ width: 260 }}
             onSearch={onSearch}
-            onKeyUp={resetSearchFilter}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
           />
           <div className="filter-section">
             <ProjectArchivedFilterComponent
@@ -397,12 +402,7 @@ function ProjectArchieved() {
             />
           </div>
         </div>
-        <div className="project-radio">
-          <Radio.Group
-            onChange={({ target: { value } }) => setSelectionType(value)}
-            value={selectionType}
-          />
-        </div>
+
         <div className="block-table-content new-block-table">
           <Table
             columns={columns}
@@ -418,7 +418,7 @@ function ProjectArchieved() {
           />
         </div>
       </Card>
-    </div>
+    </Card>
   );
 }
 

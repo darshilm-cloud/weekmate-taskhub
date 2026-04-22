@@ -9,7 +9,9 @@ import {
   Row,
   Col,
   Input,
+  Card,
 } from "antd";
+import Search from "antd/lib/input/Search";
 import {
   EditOutlined,
   SaveTwoTone,
@@ -19,7 +21,6 @@ import {
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import SkeletonTable from "../common/SkeletonTable";
-import GlobalSearchInput from "../common/GlobalSearchInput";
 import Service from "../../service";
 import "./ProjectStatus.css";
 
@@ -202,39 +203,37 @@ function ProjectStatus() {
   ];
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        {/* Header */}
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><NodeIndexOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><NodeIndexOutlined /></span>
             Project Status
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-              Add Status
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            Add Status
+          </Button>
+        </div>
+      </div>
 
-        {/* Search */}
-        <div className="ps-search">
-          <GlobalSearchInput
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search status..."
-            value={searchText}
-            onChange={setSearchText}
             onSearch={onSearch}
-            className="ps-search-input"
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
             style={{ width: 260 }}
           />
         </div>
 
-        {/* Table / Skeleton */}
         {isLoading ? (
           <SkeletonTable cols={2} />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={projectList}
@@ -245,7 +244,7 @@ function ProjectStatus() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Modal */}
       <Modal
@@ -269,7 +268,7 @@ function ProjectStatus() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

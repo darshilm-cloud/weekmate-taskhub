@@ -7886,7 +7886,6 @@ textarea.ant-picker-input>input {
   width: 10px;
   height: 10px;
   margin-left: 16.5px;
-  box-shadow: 2px -2px 6px rgba(0, 0, 0, 0.06);
   transition: left 0.3s ease-out;
 }
 
@@ -17662,8 +17661,8 @@ textarea.ant-input {
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button {
   border-radius: 0 6px 6px 0;
-  border-left: 1px solid #d1d5db ;
-  
+  border-left: 1px solid #d1d5db;
+
 }
 
 .ant-input-search>.ant-input-group>.ant-input-group-addon .ant-input-search-button:not(.ant-btn-primary) {
@@ -20252,17 +20251,21 @@ textarea.ant-mentions {
 .ant-modal-confirm .ant-modal-body {
   padding: 32px 32px 24px;
 }
- .ant-modal-body {
+
+.ant-modal-body {
   max-height: 600px;
- }
+}
+
 .ant-modal-confirm-body-wrapper::before {
   display: table;
   content: "";
 }
+
 .ant-modal-body .ant-form-item-label label {
-    font-size: 14px;
-    text-transform: capitalize;
+  font-size: 14px;
+  text-transform: capitalize;
 }
+
 .ant-modal-confirm-body-wrapper::after {
   display: table;
   clear: both;
@@ -23513,9 +23516,6 @@ span.ant-radio+* {
   line-height: 36px;
 }
 
-.user-dashboard {
-  padding: 0 16px;
-}
 
 .ant-skeleton-element .ant-skeleton-input-lg {
   width: 100%;
@@ -48852,7 +48852,7 @@ body .gx-drawer-sidebar-dark .gx-layout-sider-header {
   color: #fff;
   padding: 12px 16px;
   width: 100%;
-height: auto;
+  height: auto;
   font-size: 14px;
   text-transform: uppercase;
   font-weight: 500;

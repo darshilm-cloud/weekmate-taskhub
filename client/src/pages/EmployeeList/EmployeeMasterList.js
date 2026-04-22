@@ -78,10 +78,10 @@ const AnalyticsCard = ({ icon, value, label, colorClass, onClick, active = false
 ══════════════════════════════════════════════════════════════════ */
 const EmployeeMasterList = () => {
   const { search } = useLocation();
-  const dispatch   = useDispatch(); // kept for child components that use it
+  const dispatch = useDispatch(); // kept for child components that use it
 
   const searchParams = new URLSearchParams(search);
-  const paramTab     = searchParams.get("tab");
+  const paramTab = searchParams.get("tab");
 
   /* ── sidebar mode ── */
   const [sidebarMode, setSidebarMode] = useState(
@@ -90,10 +90,10 @@ const EmployeeMasterList = () => {
 
   /* ── action refs for hidden child components ── */
   const employeeActionsRef = useRef(null);
-  const clientActionsRef   = useRef(null);
+  const clientActionsRef = useRef(null);
 
   /* ── sidebar ui ── */
-  const [sidebarOpen,   setSidebarOpen]   = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
@@ -109,8 +109,8 @@ const EmployeeMasterList = () => {
 
   // Stable refs so the scroll handler never captures a stale closure
   const onLoadMoreEmployeesRef = useRef(null);
-  const onLoadMoreClientsRef   = useRef(null);
-  const sidebarModeRef         = useRef(sidebarMode);
+  const onLoadMoreClientsRef = useRef(null);
+  const sidebarModeRef = useRef(sidebarMode);
   useEffect(() => { sidebarModeRef.current = sidebarMode; }, [sidebarMode]);
 
   const openEmployeeSegment = useCallback((segment) => {
@@ -129,17 +129,17 @@ const EmployeeMasterList = () => {
   });
 
   /* ── selection ── */
-  const [selectedUserId,   setSelectedUserId]   = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedClientId, setSelectedClientId] = useState(null);
 
   const [totalEmployees, setTotalEmployees] = useState(0);
-  const [totalClients,   setTotalClients]   = useState(0);
+  const [totalClients, setTotalClients] = useState(0);
   const [favoriteUserObjects, setFavoriteUserObjects] = useState([]);
 
   /* ── employee data ── */
-  const [sidebarUsers,   setSidebarUsers]   = useState([]);
+  const [sidebarUsers, setSidebarUsers] = useState([]);
   const [sidebarLoading, setSidebarLoading] = useState(false);
-  const [pageLoading,    setPageLoading]    = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [analytics, setAnalytics] = useState({
     total: 0, active: 0, inactive: 0, admins: 0,
     roleBreakdown: {}, statusBreakdown: { active: 0, inactive: 0 },
@@ -151,8 +151,8 @@ const EmployeeMasterList = () => {
   });
 
   /* ── client data ── */
-  const [sidebarClients,  setSidebarClients]  = useState([]);
-  const [clientsLoading,  setClientsLoading]  = useState(false);
+  const [sidebarClients, setSidebarClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
   const [clientAnalytics, setClientAnalytics] = useState({ total: 0, active: 0, inactive: 0 });
 
   /* ── fetch employees ───────────────────────────────────────────── */
@@ -185,9 +185,9 @@ const EmployeeMasterList = () => {
         includeDeactivated: true,
         excludeIds: favorites,
         search: sidebarSearch,
-        ...(employeeStatusFilter === "active"   ? { isActivate: true }            : {}),
-        ...(employeeStatusFilter === "inactive" ? { isActivate: false }           : {}),
-        ...(employeeStatusFilter === "admins"   ? { pms_role_id: "admins" }      : {}),
+        ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
+        ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
+        ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
       };
 
       const response = await Service.makeAPICall({
@@ -197,7 +197,7 @@ const EmployeeMasterList = () => {
       });
 
       const users = response?.data?.data || [];
-      const meta  = response?.data?.metadata || {};
+      const meta = response?.data?.metadata || {};
       const total = meta.total || 0;
 
       if (isInfiniteScroll) {
@@ -226,19 +226,19 @@ const EmployeeMasterList = () => {
       setTotalEmployees(total);
       setAnalytics(prev => ({
         ...prev,
-        total:    total + favorites.length,
-        active:   meta.active   || 0,
+        total: total + favorites.length,
+        active: meta.active || 0,
         inactive: meta.inactive || 0,
-        admins:   meta.admins   || 0,
+        admins: meta.admins || 0,
       }));
       // Only lock in the card numbers when we’re NOT searching —
       // cards should always reflect the true full dataset, not a filtered view.
       if (!sidebarSearch) {
         setPermanentAnalytics({
-          total:    total + favorites.length,
-          active:   meta.active   || 0,
+          total: total + favorites.length,
+          active: meta.active || 0,
           inactive: meta.inactive || 0,
-          admins:   meta.admins   || 0,
+          admins: meta.admins || 0,
         });
       }
 
@@ -255,8 +255,8 @@ const EmployeeMasterList = () => {
         setPageLoading(false);
       }
     }
-  // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here — it would cause a
-  //     recursive re-fetch loop: loadedCount changes → new fn → useEffect fires → fresh reload.
+    // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here — it would cause a
+    //     recursive re-fetch loop: loadedCount changes → new fn → useEffect fires → fresh reload.
   }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeListPage]);
 
   const onLoadMoreEmployees = useCallback(() => {
@@ -289,8 +289,8 @@ const EmployeeMasterList = () => {
       });
 
       const clients = response?.data?.data || [];
-      const meta    = response?.data?.metadata || {};
-      const total   = meta.total || 0;
+      const meta = response?.data?.metadata || {};
+      const total = meta.total || 0;
 
       if (isInfiniteScroll) {
         setSidebarClients(prev => [...prev, ...clients]);
@@ -316,7 +316,7 @@ const EmployeeMasterList = () => {
       setTotalClients(total);
       setClientAnalytics({
         total,
-        active:   meta.active   || 0,
+        active: meta.active || 0,
         inactive: meta.inactive || 0,
       });
     } catch { /* silent */ }
@@ -324,7 +324,7 @@ const EmployeeMasterList = () => {
       isClientScrollLoadingRef.current = false;
       if (!isInfiniteScroll) setClientsLoading(false);
     }
-  // No clientInfiniteScroll in deps — same reason as employees: it would cause re-fetch loops
+    // No clientInfiniteScroll in deps — same reason as employees: it would cause re-fetch loops
   }, [sidebarPageSize, sidebarSearch]);
 
   const onLoadMoreClients = useCallback(() => {
@@ -362,13 +362,13 @@ const EmployeeMasterList = () => {
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageLoading]); // re-runs once: pageLoading true→false
 
 
 
 
-  useEffect(() => { fetchSidebarUsers();   }, [fetchSidebarUsers]);
+  useEffect(() => { fetchSidebarUsers(); }, [fetchSidebarUsers]);
   useEffect(() => { fetchSidebarClients(); }, [fetchSidebarClients]);
   useEffect(() => { fetchFavoriteUsers(); }, [fetchFavoriteUsers]);
 
@@ -487,7 +487,7 @@ const EmployeeMasterList = () => {
   }, [filteredClients, downloadCsvFile]);
 
   const favoriteUsers = favoriteUserObjects;
-  const regularUsers  = sidebarUsers;
+  const regularUsers = sidebarUsers;
   const paginatedRegularUsers = sidebarUsers;
   const paginatedClients = sidebarClients;
 
@@ -496,11 +496,11 @@ const EmployeeMasterList = () => {
   // stays visible even when no results match — giving the impression of stale data.
   const displayFavoriteUsers = sidebarSearch.trim()
     ? favoriteUsers.filter(u => {
-        const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).toLowerCase();
-        const email = (u.email || "").toLowerCase();
-        const q = sidebarSearch.trim().toLowerCase();
-        return name.includes(q) || email.includes(q);
-      })
+      const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).toLowerCase();
+      const email = (u.email || "").toLowerCase();
+      const q = sidebarSearch.trim().toLowerCase();
+      return name.includes(q) || email.includes(q);
+    })
     : favoriteUsers;
 
   const filteredAnalytics = (() => {
@@ -563,26 +563,26 @@ const EmployeeMasterList = () => {
 
 
   /* ── selected objects ──────────────────────────────────────────── */
-  const selectedUser   = selectedUserId   ? sidebarUsers.find((u) => u._id === selectedUserId)   : null;
+  const selectedUser = selectedUserId ? sidebarUsers.find((u) => u._id === selectedUserId) : null;
   const selectedClient = selectedClientId ? sidebarClients.find((c) => c._id === selectedClientId) : null;
 
   const displayName = sidebarMode === "employees"
     ? (selectedUser
-        ? removeTitle(selectedUser.full_name   || `${selectedUser.first_name   || ""} ${selectedUser.last_name   || ""}`)
-        : employeeStatusFilter === "active"
-          ? "Active Employees"
-          : employeeStatusFilter === "inactive"
-            ? "Inactive Employees"
-            : employeeStatusFilter === "admins"
-              ? "Admins"
-              : "All Employees")
+      ? removeTitle(selectedUser.full_name || `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`)
+      : employeeStatusFilter === "active"
+        ? "Active Employees"
+        : employeeStatusFilter === "inactive"
+          ? "Inactive Employees"
+          : employeeStatusFilter === "admins"
+            ? "Admins"
+            : "All Employees")
     : (selectedClient
-        ? removeTitle(selectedClient.full_name || `${selectedClient.first_name || ""} ${selectedClient.last_name || ""}`)
-        : "All Clients");
+      ? removeTitle(selectedClient.full_name || `${selectedClient.first_name || ""} ${selectedClient.last_name || ""}`)
+      : "All Clients");
 
   /* ── chart configs ─────────────────────────────────────────────── */
-  const roleLabels  = Object.keys(analytics.roleBreakdown);
-  const roleSeries  = Object.values(analytics.roleBreakdown);
+  const roleLabels = Object.keys(analytics.roleBreakdown);
+  const roleSeries = Object.values(analytics.roleBreakdown);
   const donutOptions = {
     chart: {
       type: "donut",
@@ -635,11 +635,11 @@ const EmployeeMasterList = () => {
 
   /* ── sidebar employee item ─────────────────────────────────────── */
   const SidebarUserItem = ({ user }) => {
-    const name     = removeTitle(user.full_name || `${user.first_name || ""} ${user.last_name || ""}`);
-    const role     = user?.pms_role?.role_name || "";
+    const name = removeTitle(user.full_name || `${user.first_name || ""} ${user.last_name || ""}`);
+    const role = user?.pms_role?.role_name || "";
     const isActive = selectedUserId === user._id;
-    const isFav    = favorites.includes(user._id);
-    const bg       = avatarColor(name);
+    const isFav = favorites.includes(user._id);
+    const bg = avatarColor(name);
     return (
       <div
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
@@ -668,10 +668,10 @@ const EmployeeMasterList = () => {
 
   /* ── sidebar client item ───────────────────────────────────────── */
   const SidebarClientItem = ({ client }) => {
-    const name     = removeTitle(client.full_name || `${client.first_name || ""} ${client.last_name || ""}`);
-    const company  = client.company_name || "";
+    const name = removeTitle(client.full_name || `${client.first_name || ""} ${client.last_name || ""}`);
+    const company = client.company_name || "";
     const isActive = selectedClientId === client._id;
-    const bg       = avatarColor(name);
+    const bg = avatarColor(name);
     return (
       <div
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
@@ -785,15 +785,15 @@ const EmployeeMasterList = () => {
 
                   {!sidebarLoading && filteredUsers.length === 0 && displayFavoriteUsers.length === 0 && (
                     <>
-                      <NoDataFoundIcon/>
+                      <NoDataFoundIcon />
                       <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                         No employees found
                       </div>
                     </>
                   )}
-                  </>
-                ) : (
-                  <>
+                </>
+              ) : (
+                <>
                   {/* Search Bar */}
                   <div className="sidebar-search-container" style={{ padding: "8px 16px" }}>
                     <Search
@@ -807,29 +807,29 @@ const EmployeeMasterList = () => {
                     />
                   </div>
 
-                    {/* Plain list — same scroll listener handles clients */}
-                    {paginatedClients.map((c) => (
-                      <SidebarClientItem key={c._id} client={c} />
-                    ))}
-                    {clientInfiniteScroll.isLoadingMore && (
-                      <div style={{ padding: "12px", textAlign: "center" }}>
-                        <Spin size="small" />
-                      </div>
-                    )}
+                  {/* Plain list — same scroll listener handles clients */}
+                  {paginatedClients.map((c) => (
+                    <SidebarClientItem key={c._id} client={c} />
+                  ))}
+                  {clientInfiniteScroll.isLoadingMore && (
+                    <div style={{ padding: "12px", textAlign: "center" }}>
+                      <Spin size="small" />
+                    </div>
+                  )}
 
                   {!clientsLoading && filteredClients.length === 0 && (
                     <>
-                      <NoDataFoundIcon/>
-                    <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                      <NoDataFoundIcon />
+                      <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                         No clients found
                       </div>
-                      </  >
-                    )}
-                  </>
-                )}
+                    </  >
+                  )}
+                </>
+              )}
             </div>
           </Spin>
-	        </div>
+        </div>
       </aside>
 
       {/* ══════════ RIGHT DASHBOARD ══════════ */}
@@ -878,7 +878,7 @@ const EmployeeMasterList = () => {
                   <UploadOutlined /> <span>Import CSV</span>
                 </Button>
               </Tooltip>
-              <Button  type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
+              <Button type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Employee</span>
               </Button>
             </div>
@@ -892,7 +892,7 @@ const EmployeeMasterList = () => {
                   <DownloadOutlined /> <span>Export CSV</span>
                 </Button>
               </Tooltip>
-              <Button   type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>
+              <Button type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Client</span>
               </Button>
             </div>
@@ -901,12 +901,14 @@ const EmployeeMasterList = () => {
           {/* Client header actions — when a client is selected */}
           {sidebarMode === "clients" && selectedClient && (
             <div className="dashboard-header-actions">
-              <button
-                className="header-action-btn"
+              <Button
+                className="add-btn"
+                type="primary"
+                icon={<EditOutlined />}
                 onClick={() => clientActionsRef.current?.openEditModal(selectedClient._id)}
               >
-                <EditOutlined /> <span>Edit Client</span>
-              </button>
+                Edit Client
+              </Button>
             </div>
           )}
         </div>
@@ -917,7 +919,7 @@ const EmployeeMasterList = () => {
         {sidebarMode === "employees" && selectedUser ? (
           <UserDashboard user={selectedUser} />
 
-        /* Client detail */
+          /* Client detail */
         ) : sidebarMode === "clients" && selectedClient ? (
           <div className="dashboard-content">
             <div className="client-detail-card">
@@ -972,7 +974,7 @@ const EmployeeMasterList = () => {
             </div>
           </div>
 
-        /* Analytics overview */
+          /* Analytics overview */
         ) : (
           <div className="dashboard-content">
 
@@ -1034,7 +1036,7 @@ const EmployeeMasterList = () => {
                     </div>
                   </>
                 )}
-                
+
                 <div className="analytics-charts-section" style={{ marginTop: 32 }}>
                   {filteredAnalytics.total > 0 && (
                     <div className="charts-section">
@@ -1071,8 +1073,8 @@ const EmployeeMasterList = () => {
             ) : (
               <>
                 <div className="analytics-cards-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                  <AnalyticsCard icon={<TeamOutlined />}        value={clientAnalytics.total}    label="Total Clients"    colorClass="blue" />
-                  <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active}   label="Active Clients"   colorClass="green" />
+                  <AnalyticsCard icon={<TeamOutlined />} value={clientAnalytics.total} label="Total Clients" colorClass="blue" />
+                  <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active} label="Active Clients" colorClass="green" />
                   <AnalyticsCard icon={<CloseCircleOutlined />} value={clientAnalytics.inactive} label="Inactive Clients" colorClass="red" />
                 </div>
 

@@ -160,12 +160,7 @@
   color: #374151;
 }
 
-.app-theme .btn-secondary:hover,
-.app-theme .btn-secondary:focus {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
-}
+
 
 .app-theme .btn-secondary:focus {
   outline: none;
@@ -373,9 +368,11 @@
     opacity: 0;
     left: 0%;
   }
+
   50% {
     opacity: 1;
   }
+
   to {
     opacity: 0;
     left: 100%;

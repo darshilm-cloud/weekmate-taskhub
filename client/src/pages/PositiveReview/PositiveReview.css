@@ -472,7 +472,7 @@ body[data-theme="dark"] .pr-form-page .feedback-submit-button-form .delete-btn {
 }
 
 .pr-drawer-section {
-  padding: 14px 18px;
+  padding: 14px 0px;
   border-bottom: 1px solid #eef2f7;
 }
 

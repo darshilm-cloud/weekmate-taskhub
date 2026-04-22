@@ -38,7 +38,7 @@ const EmployeeListTabClient = ({
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [isListLoading, setisListLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [sortBy, setSortBy] = useState({sortBy:"desc"});
+  const [sortBy, setSortBy] = useState({ sortBy: "desc" });
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 25,
@@ -82,16 +82,16 @@ const EmployeeListTabClient = ({
   // ✅ Updated: Clear all filters function
   const clearAllFilters = () => {
     console.log("Clear Filter button clicked");
-    
+
     // Reset applied filters
     setAppliedFilters({
       client: "",
       status: ""
     });
-    
+
     // Reset pagination
     setPagination({ ...pagination, current: 1 });
-    
+
     // Note: The ClientFilterComponent manages its own internal state
     // When filters are cleared, it will call handleFilterChange with empty values
   };
@@ -226,7 +226,7 @@ const EmployeeListTabClient = ({
     });
     setaddModal(true);
     setModalMode("add");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addemployee]);
 
   // ✅ Updated: Export CSV with new filter format
@@ -246,7 +246,7 @@ const EmployeeListTabClient = ({
         reqBody.search = searchText;
         setSearchEnabled(true);
       }
-      
+
       // ✅ Updated: Use appliedFilters instead of filterData
       if (appliedFilters.status) {
         reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
@@ -254,7 +254,7 @@ const EmployeeListTabClient = ({
       if (appliedFilters.client) {
         reqBody.user_id = appliedFilters.client;
       }
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -363,8 +363,8 @@ const EmployeeListTabClient = ({
       render: (text, record) => {
         const full_name = record.full_name;
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { removeTitle(full_name) }
+          <span style={{ textTransform: "capitalize" }}>
+            {removeTitle(full_name)}
           </span>
         );
       },
@@ -375,7 +375,7 @@ const EmployeeListTabClient = ({
       key: "email",
       width: 200,
       render: (_, record) => {
-        return <span>{ record.email }</span>;
+        return <span>{record.email}</span>;
       },
     },
     {
@@ -385,8 +385,8 @@ const EmployeeListTabClient = ({
       width: 300,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.company_name }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.company_name}
           </span>
         );
       },
@@ -398,8 +398,8 @@ const EmployeeListTabClient = ({
       width: 200,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.phone_number }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.phone_number}
           </span>
         );
       },
@@ -412,8 +412,8 @@ const EmployeeListTabClient = ({
       render: (text, record) => {
         return record?._id == editid ? (
           <Select
-            defaultValue={ record.isActivate ? "Active" : "Not Active" }
-            options={ [
+            defaultValue={record.isActivate ? "Active" : "Not Active"}
+            options={[
               {
                 value: true,
                 label: "Active",
@@ -422,11 +422,11 @@ const EmployeeListTabClient = ({
                 value: false,
                 label: "Not Active",
               },
-            ] }
+            ]}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.isActivate ? "Active" : "Not Active" }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.isActivate ? "Active" : "Not Active"}
           </span>
         );
       },
@@ -438,19 +438,19 @@ const EmployeeListTabClient = ({
       render: (text, record, index) => (
         <div
           className="action-edit-btn"
-          style={ {
+          style={{
             display: "flex",
             flexwrap: "wrap",
-          } }
+          }}
         >
           <Button type="link edit">
             <EditOutlined
               className="edit-btn"
-              style={ { color: "green" } }
-              onClick={ () => {
+              style={{ color: "green" }}
+              onClick={() => {
                 showModal(record._id);
                 setModalMode("Edit");
-              } }
+              }}
             />
           </Button>
 
@@ -460,7 +460,7 @@ const EmployeeListTabClient = ({
             cancelText="No"
             onConfirm={() => handleDelete(record)}
           >
-            <DeleteOutlined className="edit-btn" style={ { color: "red" } } />
+            <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
           </Popconfirm>
         </div>
       ),
@@ -471,7 +471,7 @@ const EmployeeListTabClient = ({
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
+        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
       </label>
     );
   };
@@ -512,7 +512,7 @@ const EmployeeListTabClient = ({
       if (appliedFilters.status) {
         reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
       }
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -531,7 +531,7 @@ const EmployeeListTabClient = ({
       }
     } catch (error) {
       console.log(error);
-    } finally{
+    } finally {
       setisListLoading(false);
     }
   };
@@ -548,7 +548,7 @@ const EmployeeListTabClient = ({
         exportCSV,
       };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openAddModal, exportCSV]);
 
   // ✅ Updated: useEffect dependency changed from filterData to appliedFilters
@@ -571,7 +571,7 @@ const EmployeeListTabClient = ({
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
     const currentValue = searchRef.current?.input?.value || '';
-    
+
     switch (keyCode) {
       case 8: // Backspace
         if (currentValue.length <= 1 && seachEnabled) {
@@ -613,58 +613,58 @@ const EmployeeListTabClient = ({
 
   return (
     <>
-    
-        <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
-          <Search
-            ref={ searchRef }
-            placeholder={taskLikeDesign ? "Search" : "Search..."}
-            className="client-search-bar"
-            onSearch={ onSearch }
-            onChange={ (e) => {
-              setPagination({ ...pagination, current: 1 });
-            } }
-            allowClear
-            onKeyUp={ resetSearchFilter }
-        style={{width: taskLikeDesign ? "220px" : "200px"}}
-          />
-          <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
-            {taskLikeDesign ? (
-              <>
-                <Select
-                  size="middle"
-                  defaultValue="all"
-                  onChange={(val) => {
-                    setAppliedFilters(prev => ({ ...prev, status: val === "all" ? "" : val }));
-                    setPagination(prev => ({ ...prev, current: 1 }));
-                  }}
-                  options={[
-                    { label: "All Status", value: "all" },
-                    { label: "Active", value: "Active" },
-                    { label: "Not Active", value: "Not Active" },
-                  ]}
-                  style={{ width: 130 }}
-                />
-              </>
-            ) : (
-              <>
-                <Button onClick={openAddModal} type="primary" className="btn">
-                  <i className="fi fi-rr-plus-small"></i> Add
-                </Button>
-                <ClientFilterComponent onFilterChange={handleFilterChange} />
-                <Button
-                  className="mr2 export-btn"
-                  id="exportButton"
-                  disabled={pagination.total != 0 ? false : true}
-                  onClick={exportCSV}
-                >
-                  Export CSV
-                </Button>
-              </>
-            )}
-          </div>
+
+      <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
+        <Search
+          ref={searchRef}
+          placeholder={taskLikeDesign ? "Search" : "Search..."}
+          className="client-search-bar"
+          onSearch={onSearch}
+          onChange={(e) => {
+            setPagination({ ...pagination, current: 1 });
+          }}
+          allowClear
+          onKeyUp={resetSearchFilter}
+          style={{ width: taskLikeDesign ? "220px" : "200px" }}
+        />
+        <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
+          {taskLikeDesign ? (
+            <>
+              <Select
+                size="middle"
+                defaultValue="all"
+                onChange={(val) => {
+                  setAppliedFilters(prev => ({ ...prev, status: val === "all" ? "" : val }));
+                  setPagination(prev => ({ ...prev, current: 1 }));
+                }}
+                options={[
+                  { label: "All Status", value: "all" },
+                  { label: "Active", value: "Active" },
+                  { label: "Not Active", value: "Not Active" },
+                ]}
+                style={{ width: 130 }}
+              />
+            </>
+          ) : (
+            <>
+              <Button onClick={openAddModal} type="primary" className="btn">
+                <i className="fi fi-rr-plus-small"></i> Add
+              </Button>
+              <ClientFilterComponent onFilterChange={handleFilterChange} />
+              <Button
+                className="mr2 export-btn"
+                id="exportButton"
+                disabled={pagination.total != 0 ? false : true}
+                onClick={exportCSV}
+              >
+                Export CSV
+              </Button>
+            </>
+          )}
         </div>
-    
-      
+      </div>
+
+
       <div className={taskLikeDesign ? "block-table-content client-table-block tasklike-table-wrap" : "block-table-content client-table-block"}>
         <Table
           columns={columns1}
@@ -678,129 +678,112 @@ const EmployeeListTabClient = ({
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}
-          footer={ getFooterDetails }
-          onChange={ handleTableChange }
-          dataSource={ clientList }
+          footer={getFooterDetails}
+          onChange={handleTableChange}
+          dataSource={clientList}
         />
       </div>
 
-      {/* Add edit button modal */}
       <Modal
         className="add-and-edit-client"
         title={
-          <div className="client-modal-header">
-            <div className="client-modal-title-wrap">
-              <h2 className="client-modal-title">{ modalMode === "add" ? "Add Client" : "Edit Client" }</h2>
-              <p className="client-modal-subtitle">
-                {modalMode === "add"
-                  ? "Create a polished client profile with contact and company details."
-                  : "Update the client profile information and access details."}
-              </p>
-            </div>
-          </div>
+          <>
+
+            <h2 >
+              {modalMode === "add" ? "Add Client" : "Edit Client"}
+            </h2>
+            <h5>
+              {modalMode === "add"
+                ? "Create a polished client profile with contact and company details."
+                : "Update the client profile information and access details."}
+            </h5>
+
+          </>
         }
-        open={ addModal }
-        width={ 920 }
-        footer={ [
-          <Button
-            key="submit"
-            className="client-modal-submit-btn"
-            htmlType="submit"
-            form="addClientForm"
-            style={{
-              background: "#0b3a5b",
-              backgroundColor: "#0b3a5b",
-              borderColor: "#0b3a5b",
-              color: "#ffffff",
-              backgroundImage: "none",
-              boxShadow: "none",
-            }}
-          >
-            { modalMode === "add" ? "Add" : "Save" }
-          </Button>,
-          <Button
-            className="ant-delete"
-            type="primary"
-            onClick={ handleCancel }
+        open={addModal}
+        width={600}
+        footer={[
+               <Button
+            key="cancel"
+            className="delete-btn"
+      
+            onClick={handleCancel}
           >
             Cancel
-          </Button>
-        ] }
-        onOk={ handleOk }
-        onCancel={ handleCancel }
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="add-btn"
+            htmlType="submit"
+            form="addClientForm"
+
+          >
+            {modalMode === "add" ? "Add" : "Save"}
+          </Button>,
+     
+        ]}
+        onCancel={handleCancel}
       >
-
-        <div className="overview-modal-wrapper ">
-
+        <div className="overview-modal-wrapper">
           <Form
             id="addClientForm"
-            form={ addemployee }
+            form={addemployee}
             layout="vertical"
             className="client-modal-form"
-            onFinish={ (values) => {
+            onFinish={(values) => {
               modalMode === "add" ? addemp(values) : UpdateClient(values);
-            } }
+            }}
           >
+            <Row gutter={[20, 8]} className="client-modal-grid">
 
-             <Row gutter={ [20, 8] } className="client-modal-grid">
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
-                  label="First name"
+                  label="First Name"
                   name="first_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter first name",
-                    },
-                  ] }
+                  rules={[{ required: true, message: "Please enter first name" }]}
                 >
                   <Input placeholder="Enter First Name" />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-              <Form.Item
+
+              <Col xs={24} sm={24} md={12} lg={12}>
+                <Form.Item
                   label="Last Name"
                   name="last_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter last name",
-                    },
-                  ] }
+                  rules={[{ required: true, message: "Please enter last name" }]}
                 >
                   <Input placeholder="Enter Last Name" />
                 </Form.Item>
-               
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
+              <Col xs={24}>
                 <Form.Item
                   label="Email"
                   name="email"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please Enter email",
                       type: "email",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Email" />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
+              <Col xs={24}>
                 <Form.Item label="Extra Info" name="extra_details">
                   <TextArea />
                 </Form.Item>
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-
-              <Form.Item
-                  label="Phone number"
+              <Col xs={24} sm={24} md={12}>
+                <Form.Item
+                  label="Phone Number"
                   name="phone_number"
-                  rules={ [
+                  rules={[
                     {
                       len: 10,
                       message: "Phone number must be 10 digits",
@@ -809,63 +792,48 @@ const EmployeeListTabClient = ({
                       pattern: /^[0-9]+$/,
                       message: "Phone number must contain only digits",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Phone Number" />
                 </Form.Item>
-               
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Company Name"
                   name="company_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter company name",
-                    },
-                  ] }
+                  rules={[{ required: true, message: "Please enter company name" }]}
                 >
                   <Input placeholder="Enter Company Name" />
                 </Form.Item>
               </Col>
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item label="Status" name="status">
                   <Select
-                    onChange={ (e) => console.log(e, "eeee") }
-                    options={ [
-                      {
-                        value: "Active",
-                        label: "Active",
-                      },
-                      {
-                        value: "Not Active",
-                        label: "Not Active",
-                      },
-                    ] }
+                    options={[
+                      { value: "Active", label: "Active" },
+                      { value: "Not Active", label: "Not Active" },
+                    ]}
                   />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-                { modalMode === "add" && (
+              <Col xs={24} sm={24} md={12}>
+                {modalMode === "add" && (
                   <Form.Item
-                    className=" client-input-password"
                     label="Password"
                     name="plain_password"
-                    rules={ passwordRules }
+                    rules={passwordRules}
                   >
                     <Input
                       placeholder="Enter Password"
-                      type={ passwordVisible ? "text" : "password" }
-                      min={ 8 }
+                      type={passwordVisible ? "text" : "password"}
                       autoComplete="off"
                       suffix={
                         <Button
                           type="link"
-                          onClick={ togglePasswordVisibility }
+                          onClick={togglePasswordVisibility}
                           icon={
                             passwordVisible ? (
                               <EyeInvisibleOutlined />
@@ -877,13 +845,11 @@ const EmployeeListTabClient = ({
                       }
                     />
                   </Form.Item>
-                ) }
+                )}
               </Col>
-            
+
             </Row>
-
           </Form>
-
         </div>
       </Modal>
     </>

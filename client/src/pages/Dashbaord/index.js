@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import "./dashboard.css";
-import { Form, Modal, Select, Input, message, Button } from "antd";
+import { Form, Modal, Select, Input, message, Button, Table } from "antd";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
@@ -545,7 +545,7 @@ const Dashboard = () => {
     if (!hasFilters) {
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
-        try { setMyProj(JSON.parse(cached)); } catch {}
+        try { setMyProj(JSON.parse(cached)); } catch { }
       }
     }
     try {
@@ -832,13 +832,13 @@ const Dashboard = () => {
       body: { pageNo: 1, limit: 200, sort: "_id", sortBy: "desc" },
     }).then((res) => {
       setAllNotes(Array.isArray(res?.data?.data) ? res.data.data : []);
-    }).catch(() => {}).finally(() => setAllNotesLoading(false));
+    }).catch(() => { }).finally(() => setAllNotesLoading(false));
   };
 
   const openAddNote = () => {
     // Always fetch all projects (not limited to 4 recent)
     const cached = sessionStorage.getItem("note_all_projects");
-    if (cached) { try { setNoteProjects(JSON.parse(cached)); } catch {} }
+    if (cached) { try { setNoteProjects(JSON.parse(cached)); } catch { } }
     Service.makeAPICall({ methodName: Service.postMethod, api_url: Service.myProjects, body: { pageNo: 1, limit: 500 } })
       .then((res) => {
         const list = res?.data?.data?.data || res?.data?.data || [];
@@ -846,7 +846,7 @@ const Dashboard = () => {
           setNoteProjects(list);
           sessionStorage.setItem("note_all_projects", JSON.stringify(list));
         }
-      }).catch(() => {});
+      }).catch(() => { });
     setAddNoteOpen(true);
   };
 
@@ -860,10 +860,10 @@ const Dashboard = () => {
       api_url: Service.getNotebook,
       body: { project_id: pid, pageNo: 1, sort: "_id", sortBy: "des" },
     }).then((res) => {
-        if (Array.isArray(res?.data?.data) && res.data.data.length > 0)
-          setNoteNotebooks(res.data.data);
-      })
-      .catch(() => {}).finally(() => setNoteNotebooksLoading(false));
+      if (Array.isArray(res?.data?.data) && res.data.data.length > 0)
+        setNoteNotebooks(res.data.data);
+    })
+      .catch(() => { }).finally(() => setNoteNotebooksLoading(false));
   };
 
   const createNotebook = async (title) => {
@@ -1043,16 +1043,16 @@ const Dashboard = () => {
                 {chartConnectors
                   .filter((connector) => connector.index === hoveredChartIndex)
                   .map((connector) => (
-                  <span
-                    key={connector.key}
-                    className="stats-chart-connector"
-                    style={{
-                      left: connector.left,
-                      top: connector.top,
-                      height: connector.height,
-                    }}
-                  />
-                ))}
+                    <span
+                      key={connector.key}
+                      className="stats-chart-connector"
+                      style={{
+                        left: connector.left,
+                        top: connector.top,
+                        height: connector.height,
+                      }}
+                    />
+                  ))}
               </div>
               <ReactApexChart
                 options={chartOptions}
@@ -1230,7 +1230,7 @@ const Dashboard = () => {
             {(priorityLow + priorityMedium + priorityHigh) === 0 ? (
               <div className="priority-donut-empty">
                 <svg width="150" height="150" viewBox="0 0 150 150">
-                  <circle cx="75" cy="75" r="52" fill="none" stroke={isDarkTheme ? "#2d3f55" : "#e2e8f0"} strokeWidth="22"/>
+                  <circle cx="75" cy="75" r="52" fill="none" stroke={isDarkTheme ? "#2d3f55" : "#e2e8f0"} strokeWidth="22" />
                   <text x="75" y="82" textAnchor="middle" fontSize="26" fontWeight="700" fill={isDarkTheme ? "#94a3b8" : "#94a3b8"}>0</text>
                 </svg>
               </div>
@@ -1312,7 +1312,7 @@ const Dashboard = () => {
                     (assignee?.name || assignee?.full_name || item?.assignedTo?.name || item?.title || "Task")
                       .trim();
                   const initials = assigneeName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-                  const colors = ["#f59e0b","#3b82f6","#10b981","#8b5cf6","#ef4444"];
+                  const colors = ["#f59e0b", "#3b82f6", "#10b981", "#8b5cf6", "#ef4444"];
                   const bg = colors[idx % colors.length];
                   return (
                     <Link
@@ -1329,8 +1329,8 @@ const Dashboard = () => {
               </div>
             ) : (
               <>
-              <NoDataFoundIcon  />
-              <div className="team-incomplete-empty">No incomplete tasks</div>
+                <NoDataFoundIcon />
+                <div className="team-incomplete-empty">No incomplete tasks</div>
               </>
             )}
           </div>
@@ -1342,21 +1342,21 @@ const Dashboard = () => {
       {<div className="standalone-add-task">
         <div className="standalone-add-task-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="6" width="18" height="22" rx="3" fill="white" opacity="0.9"/>
-            <rect x="8" y="11" width="10" height="2" rx="1" fill="#0e9f6e"/>
-            <rect x="8" y="15" width="7" height="2" rx="1" fill="#0e9f6e" opacity="0.7"/>
-            <rect x="8" y="19" width="8" height="2" rx="1" fill="#0e9f6e" opacity="0.5"/>
-            <circle cx="24" cy="24" r="6" fill="white" opacity="0.3"/>
-            <rect x="21" y="23" width="6" height="2" rx="1" fill="white"/>
-            <rect x="23" y="21" width="2" height="6" rx="1" fill="white"/>
+            <rect x="4" y="6" width="18" height="22" rx="3" fill="white" opacity="0.9" />
+            <rect x="8" y="11" width="10" height="2" rx="1" fill="#0e9f6e" />
+            <rect x="8" y="15" width="7" height="2" rx="1" fill="#0e9f6e" opacity="0.7" />
+            <rect x="8" y="19" width="8" height="2" rx="1" fill="#0e9f6e" opacity="0.5" />
+            <circle cx="24" cy="24" r="6" fill="white" opacity="0.3" />
+            <rect x="21" y="23" width="6" height="2" rx="1" fill="white" />
+            <rect x="23" y="21" width="2" height="6" rx="1" fill="white" />
           </svg>
         </div>
         <p className="standalone-add-task-title">You haven't added any tasks.</p>
         <p className="standalone-add-task-sub">Welcome Let's get started.</p>
         <Button
-           type="primary"
-           className="add-btn"
-           icon={<PlusOutlined />}
+          type="primary"
+          className="add-btn"
+          icon={<PlusOutlined />}
           onClick={() => setAddTaskOpen(true)}
         >
           Add Task
@@ -1377,56 +1377,56 @@ const Dashboard = () => {
                 .sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0))
                 .slice(0, 7)
                 .map((proj) => {
-                const daysLeft = proj.end_date
-                  ? Math.ceil((new Date(proj.end_date) - new Date()) / 86400000)
-                  : null;
-                const completedCount = proj.completedTaskCount ?? proj.completed_task_count ?? 0;
-                const totalCount     = proj.totalTaskCount ?? proj.total_task_count ?? proj.taskCount ?? 0;
-                const progress       = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-                return (
-                  <div
-                    key={proj._id}
-                    className="db-project-card"
-                    onClick={() => getProjectMianTask(proj._id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && getProjectMianTask(proj._id)}
-                  >
-                    <div className="db-project-card-top">
-                      <span className="db-project-title">{proj.title}</span>
-                      <span className="db-project-star" aria-label="bookmark">
-                        {proj.isStarred ? "★" : "☆"}
-                      </span>
+                  const daysLeft = proj.end_date
+                    ? Math.ceil((new Date(proj.end_date) - new Date()) / 86400000)
+                    : null;
+                  const completedCount = proj.completedTaskCount ?? proj.completed_task_count ?? 0;
+                  const totalCount = proj.totalTaskCount ?? proj.total_task_count ?? proj.taskCount ?? 0;
+                  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+                  return (
+                    <div
+                      key={proj._id}
+                      className="db-project-card"
+                      onClick={() => getProjectMianTask(proj._id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && getProjectMianTask(proj._id)}
+                    >
+                      <div className="db-project-card-top">
+                        <span className="db-project-title">{proj.title}</span>
+                        <span className="db-project-star" aria-label="bookmark">
+                          {proj.isStarred ? "★" : "☆"}
+                        </span>
+                      </div>
+                      {proj.createdBy?.name && (
+                        <p className="db-project-author">By <strong>{proj.createdBy.name}</strong></p>
+                      )}
+                      {daysLeft !== null && (
+                        <span className={`db-project-due-badge ${daysLeft < 0 ? "overdue" : daysLeft <= 7 ? "soon" : ""}`}>
+                          {daysLeft < 0
+                            ? `${Math.abs(daysLeft)} Days Overdue`
+                            : daysLeft === 0
+                              ? "Due Today"
+                              : `${daysLeft} Days Due`}
+                        </span>
+                      )}
+                      <div className="db-project-progress-row">
+                        <span className="db-project-progress-label">
+                          Task Completed: {completedCount}/{totalCount}
+                        </span>
+                        <span className="db-project-progress-pct">{completedCount}</span>
+                      </div>
+                      <div className="db-project-progress-bar">
+                        <div className="db-project-progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
                     </div>
-                    {proj.createdBy?.name && (
-                      <p className="db-project-author">By <strong>{proj.createdBy.name}</strong></p>
-                    )}
-                    {daysLeft !== null && (
-                      <span className={`db-project-due-badge ${daysLeft < 0 ? "overdue" : daysLeft <= 7 ? "soon" : ""}`}>
-                        {daysLeft < 0
-                          ? `${Math.abs(daysLeft)} Days Overdue`
-                          : daysLeft === 0
-                          ? "Due Today"
-                          : `${daysLeft} Days Due`}
-                      </span>
-                    )}
-                    <div className="db-project-progress-row">
-                      <span className="db-project-progress-label">
-                        Task Completed: {completedCount}/{totalCount}
-                      </span>
-                      <span className="db-project-progress-pct">{completedCount}</span>
-                    </div>
-                    <div className="db-project-progress-bar">
-                      <div className="db-project-progress-fill" style={{ width: `${progress}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           ) : (
             <div className="db-empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-              <NoDataFoundIcon  />
-             
+              <NoDataFoundIcon />
+
             </div>
           )}
         </div>
@@ -1435,7 +1435,7 @@ const Dashboard = () => {
         <div className="db-bottom-card db-discussion">
           <div className="db-section-header">
             <h3>Recent Discussion</h3>
-            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/discussion`)}>
+            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/discussion`)}>
               View All <span>›</span>
             </Button>
           </div>
@@ -1477,7 +1477,7 @@ const Dashboard = () => {
                 ))
             ) : (
               <div className="db-empty-state db-empty-discussion">
-              <NoDataFoundIcon  />
+                <NoDataFoundIcon />
                 <p>No discussions yet</p>
               </div>
             )}
@@ -1493,65 +1493,77 @@ const Dashboard = () => {
         <div className="db-bottom-card db-activity">
           <div className="db-section-header">
             <h3>Activity</h3>
-            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
+            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
               View All <span>›</span>
             </Button>
           </div>
           <div className="db-activity-table-wrap">
             {activityLogs.length > 0 ? (
-              <table className="db-activity-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th>Operation</th>
-                    <th>Module</th>
-                    <th>Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activityLogs.map((log, i) => {
-                    const user = log.createdBy;
-                    const userName = (user && typeof user === "object")
-                      ? (user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "-")
-                      : (log.createdByName || "-");
-                    const email = log.email || log.createdBy?.email || log.createdByEmail || "-";
-                    const operation = log.operationName || "-";
-                    const module = (log.moduleName || "-").replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2");
-                    const d = log.createdAt ? new Date(log.createdAt) : null;
-                    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-                    const timestamp = d
-                      ? `${moment(d).format("DD-MM-YYYY")}`
-                      : "-";
-                    const OP_COLORS = {
-                      LOGIN:  { bg: "#f0fdf4", color: "#16a34a" },
-                      LOGOUT: { bg: "#eff6ff", color: "#2563eb" },
-                      UPDATE: { bg: "#fff7ed", color: "#ea580c" },
-                      DELETE: { bg: "#fef2f2", color: "#dc2626" },
-                      CREATE: { bg: "#f0fdf4", color: "#16a34a" },
-                    };
-                    const opStyle = OP_COLORS[operation] || { bg: "#f1f5f9", color: "#64748b" };
-                    return (
-                      <tr key={log._id || i}>
-                        <td className="db-act-user">{userName}</td>
-                        <td className="db-act-email">{email}</td>
-                        <td>
-                          <span className="db-act-op-badge" style={{ background: opStyle.bg, color: opStyle.color }}>
-                            {operation}
-                          </span>
-                        </td>
-                        <td className="db-act-module">{module}</td>
-                        <td className="db-act-time">{timestamp}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <Table
+                columns={[
+                  {
+                    title: "User",
+                    key: "user",
+                    render: (_, log) => {
+                      const user = log.createdBy;
+                      return (user && typeof user === "object")
+                        ? (user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "-")
+                        : (log.createdByName || "-");
+                    },
+                    className: "db-act-user",
+                  },
+                  {
+                    title: "Email",
+                    key: "email",
+                    render: (_, log) => log.email || log.createdBy?.email || log.createdByEmail || "-",
+                    className: "db-act-email",
+                  },
+                  {
+                    title: "Operation",
+                    key: "operation",
+                    render: (_, log) => {
+                      const operation = log.operationName || "-";
+                      const OP_COLORS = {
+                        LOGIN: { bg: "#f0fdf4", color: "#16a34a" },
+                        LOGOUT: { bg: "#eff6ff", color: "#2563eb" },
+                        UPDATE: { bg: "#fff7ed", color: "#ea580c" },
+                        DELETE: { bg: "#fef2f2", color: "#dc2626" },
+                        CREATE: { bg: "#f0fdf4", color: "#16a34a" },
+                      };
+                      const opStyle = OP_COLORS[operation] || { bg: "#f1f5f9", color: "#64748b" };
+                      return (
+                        <span className="db-act-op-badge" style={{ background: opStyle.bg, color: opStyle.color }}>
+                          {operation}
+                        </span>
+                      );
+                    },
+                  },
+                  {
+                    title: "Module",
+                    key: "module",
+                    render: (_, log) => (log.moduleName || "-").replace(/_/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2"),
+                    className: "db-act-module",
+                  },
+                  {
+                    title: "Timestamp",
+                    key: "timestamp",
+                    render: (_, log) => {
+                      const d = log.createdAt ? new Date(log.createdAt) : null;
+                      return d ? moment(d).format("DD-MM-YYYY") : "-";
+                    },
+                    className: "db-act-time",
+                  },
+                ]}
+                dataSource={activityLogs}
+                pagination={false}
+                rowKey={(record, index) => record._id || index}
+                className="db-activity-table"
+              />
             ) : (
               <>
 
-               <NoDataFoundIcon /> 
-              <div className="db-empty-state">No recent activity</div>
+                <NoDataFoundIcon />
+                <div className="db-empty-state">No recent activity</div>
               </>
             )}
           </div>
@@ -1561,7 +1573,7 @@ const Dashboard = () => {
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
             <h3>Pin Notes</h3>
-            <Button className="db-view-all" onClick={() => history.push(`/${companySlug}/notes`)}>
+            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes`)}>
               View All <span>›</span>
             </Button>
           </div>
@@ -1576,8 +1588,8 @@ const Dashboard = () => {
                 >
                   <span className="db-note-pin">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399"/>
-                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399" />
+                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   </span>
                   <div className="db-note-body">
@@ -1595,19 +1607,19 @@ const Dashboard = () => {
               onClick={openAddNote}
             >
               <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="70" cy="70" r="60" fill="#eff6ff"/>
-                <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24"/>
-                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8"/>
-                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6"/>
-                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6"/>
-                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6"/>
-                <rect x="50" y="14" width="40" height="52" rx="6" fill="#3b82f6"/>
-                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9"/>
-                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7"/>
-                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7"/>
-                <circle cx="102" cy="98" r="18" fill="#1d4ed8"/>
-                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white"/>
-                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white"/>
+                <circle cx="70" cy="70" r="60" fill="#eff6ff" />
+                <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24" />
+                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8" />
+                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="50" y="14" width="40" height="52" rx="6" fill="#3b82f6" />
+                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9" />
+                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7" />
+                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7" />
+                <circle cx="102" cy="98" r="18" fill="#1d4ed8" />
+                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white" />
+                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white" />
               </svg>
               <p className="db-pin-notes-empty-text">Add your first notes</p>
               <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>Click to add a note</p>
@@ -1684,7 +1696,7 @@ const Dashboard = () => {
         onCancel={() => { setAddNoteOpen(false); noteForm.resetFields(); }}
         onOk={handleNoteSubmit}
         okText="Add Note"
-            okButtonProps={{className: "add-btn", type: "primary"}}
+        okButtonProps={{ className: "add-btn", type: "primary" }}
         confirmLoading={noteSubmitting}
         destroyOnClose
       >

@@ -94,44 +94,9 @@
   margin-bottom: 18px;
 }
 
-.employee-modal-form .ant-form-item-label > label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #334155;
-  letter-spacing: 0.01em;
-}
 
-.employee-modal-form .ant-input,
-.employee-modal-form .ant-input-affix-wrapper,
-.employee-modal-form .ant-select-selector {
-  min-height: 46px;
-  border-radius: 14px !important;
-  border-color: #d7e1ee !important;
-  background: #ffffff !important;
-  box-shadow: none !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
 
-.employee-modal-form .ant-input,
-.employee-modal-form .ant-input-affix-wrapper,
-.employee-modal-form .ant-select-selector {
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-}
 
-.employee-modal-form .ant-input::placeholder {
-  color: #94a3b8;
-}
-
-.employee-modal-form .ant-input:hover,
-.employee-modal-form .ant-input:focus,
-.employee-modal-form .ant-input-affix-wrapper:hover,
-.employee-modal-form .ant-input-affix-wrapper-focused,
-.employee-modal-form .ant-select-focused .ant-select-selector,
-.employee-modal-form .ant-select:hover .ant-select-selector {
-  border-color: #7aa7ff !important;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08) !important;
-}
 
 .employee-modal-form .ant-input-affix-wrapper .ant-input {
   min-height: auto;
@@ -158,13 +123,6 @@
   background: #ffffff;
 }
 
-.add-and-edit-employee .ant-modal-footer .ant-btn {
-  min-width: 94px;
-  height: 42px;
-  border-radius: 12px;
-  font-weight: 700;
-  box-shadow: none;
-}
 
 .add-and-edit-employee .ant-modal-footer button.employee-modal-submit-btn.ant-btn,
 .add-and-edit-employee .ant-modal-footer button.employee-modal-submit-btn.ant-btn:hover,
@@ -178,7 +136,7 @@
     padding: 8px 16px;
     overflow: hidden;
     text-align: center;
-    border-radius: var(--border-radius, 6px);
+    border-radius:6px;
     transition: all 0.3s ease-in-out;
     border-color: var(--add-button-border-color, #185d87);
     background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));

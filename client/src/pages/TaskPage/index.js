@@ -2119,6 +2119,7 @@ const TaskPage = () => {
         <div className="task-kanban-view">
           {kanbanColumns.length === 0 ? (
             <div className="task-list-empty" style={{ padding: 48, textAlign: "center", width: "100%" }}>
+            <NoDataFoundIcon/>
               No tasks to show. Adjust filters or add a task.
             </div>
           ) : kanbanColumns.map((col) => (
@@ -2220,7 +2221,7 @@ const TaskPage = () => {
               <Tooltip title="Add a stage" placement="top">
                 <Button
                   type="text"
-                  shape="circle"
+              
                   size="large"
                   className="kanban-add-stage-icon-btn"
                   icon={<PlusOutlined />}

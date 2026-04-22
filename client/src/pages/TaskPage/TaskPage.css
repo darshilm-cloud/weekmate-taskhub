@@ -665,6 +665,7 @@
   color: #4b5563;
   background: #ffffff;
   box-shadow: none;
+  padding: 0;
 }
 
 .kanban-add-stage-icon-btn.ant-btn:hover,

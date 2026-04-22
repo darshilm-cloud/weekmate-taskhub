@@ -3180,7 +3180,7 @@ const TasksPMS = ({ flag }) => {
                       </Form.Item>
                       <Form.Item>
                         <Button
-                          className="ant-btn-primary"
+                          className="add-btn"
                           type="primary"
                           htmlType="button"
                           onClick={handleSubmit}
@@ -3198,8 +3198,8 @@ const TasksPMS = ({ flag }) => {
                       </Form.Item>
                       <Form.Item>
                         <Button
-                          className="ant-delete"
-                          type="primary"
+                          className="delete-btn"
+                      
                           htmlType="button"
                           icon={<CloseOutlined />}
                           onClick={() => {
@@ -3375,8 +3375,8 @@ const TasksPMS = ({ flag }) => {
               </div>
             ) : !hasVisibleTasks ? (
               <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-                <NoDataFoundIcon  />
-                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No task found</p>
+                {/* <NoDataFoundIcon  />
+                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No task found</p> */}
               </div>
             ) : null}
             {isTasksLoading || !taskListsHydrated || !boardHydrated || projectMianTask.length === 0 ? null : selectedView === "board" ? (
@@ -3515,7 +3515,7 @@ const TasksPMS = ({ flag }) => {
             {selectSubscriber.length > 0 && (
               <div style={{ marginTop: 8 }}>
                 <Button
-                  className="list-clear-btn ant-delete"
+               className="delete-btn"
                   onClick={() => setSelectSubscribers([])}
                   size="small"
                 >
@@ -3558,7 +3558,7 @@ const TasksPMS = ({ flag }) => {
             {selectedListClient && selectedListClient.length > 0 && (
               <div style={{ marginTop: 8 }}>
                 <Button
-                  className="list-clear-btn ant-delete"
+                 className="delete-btn"
                   onClick={() => setSelectedListClient([])}
                   size="small"
                 >

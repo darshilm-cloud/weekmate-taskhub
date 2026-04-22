@@ -567,7 +567,7 @@
 .ant-picker-panel {
   border: 0;
   border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(15, 39, 68, 0.15);
+    box-shadow: 1px 1px 0px rgba(15, 39, 68, 0.15);
 }
 
 .ant-picker-panel-container {

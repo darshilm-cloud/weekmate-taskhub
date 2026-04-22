@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
+  Button,
   Form,
   Input,
   message,
@@ -563,17 +564,17 @@ const ProjectExpensesForm = () => {
 
             {/* Actions */}
             <div className="ps-form-actions">
-              <button type="submit" className="add-btn">
-                <CheckCircleOutlined />
+              <Button type="submit" className="add-btn">
+             
                 {isEdit ? "Update" : "Submit"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="ps-btn-secondary"
+                className="delete-btn"
                 onClick={() => history.push(`/${companySlug}/projectexpense`)}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </Form>
         </div>

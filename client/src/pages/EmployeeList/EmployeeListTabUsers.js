@@ -406,7 +406,7 @@ const CombinedEmployeeList = ({
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
     const currentValue = searchRef.current?.input?.value || '';
-    
+
     switch (keyCode) {
       case 8: // Backspace
         if (currentValue.length <= 1 && seachEnabled) {
@@ -533,9 +533,8 @@ const CombinedEmployeeList = ({
             </Tooltip>
 
             <Popconfirm
-              title={`Are you sure you want to delete ${
-                record?.first_name || record?.full_name
-              } ${record?.last_name || ""}?`}
+              title={`Are you sure you want to delete ${record?.first_name || record?.full_name
+                } ${record?.last_name || ""}?`}
               onConfirm={() => handleDelete(record._id)}
               okText="Yes"
               cancelText="No"
@@ -655,139 +654,152 @@ const CombinedEmployeeList = ({
         />
       </div>
 
-        <Modal
-          title={
-            <div className="employee-modal-header">
-              <div className="employee-modal-title-wrap">
-                <h2 className="employee-modal-title">
-                  {modalMode === "view"
-                    ? "View Employee"
-                    : editData
-                      ? "Edit Employee"
-                      : "Add Employee"}
-                </h2>
-                <p className="employee-modal-subtitle">
-                  {modalMode === "view"
-                    ? "Review employee profile details and role information."
-                    : editData
-                      ? "Update employee identity, access role, and account settings."
-                      : "Create a polished employee profile with role and login access details."}
-                </p>
-              </div>
-            </div>
-          }
-          open={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          className="global-app-modal add-and-edit-employee"
-          width={820}
-          footer={
-            modalMode === "view"
-              ? null
-              : [
-                  <Button
-                    key="cancel"
-                    className="ant-delete"
-                    onClick={() => setModalVisible(false)}
-                  >
-                    Cancel
-                  </Button>,
-                  <Button
-                    key="submit"
-                    className="employee-modal-submit-btn"
-                    onClick={handleSubmit}
-                    style={{
-                      background: "#0b3a5b",
-                      backgroundColor: "#0b3a5b",
-                      borderColor: "#0b3a5b",
-                      color: "#ffffff",
-                      backgroundImage: "none",
-                      boxShadow: "none",
-                    }}
-                  >
-                    {editData ? "Update" : "Add"}
-                  </Button>,
-                ]
-          }
-        >
-          <div className="employee-modal-body-wrap">
+      <Modal
+        title={
+
+            <>
+              <h2 >
+                {modalMode === "view"
+                  ? "View Employee"
+                  : editData
+                    ? "Edit Employee"
+                    : "Add Employee"}
+              </h2>
+              <h5 >
+                {modalMode === "view"
+                  ? "Review employee profile details and role information."
+                  : editData
+                    ? "Update employee identity, access role, and account settings."
+                    : "Create a polished employee profile with role and login access details."}
+              </h5>
+            </>
+  
+        }
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        className="global-app-modal add-and-edit-employee"
+        width={820}
+        footer={
+          modalMode === "view"
+            ? null
+            : [
+              <Button
+                key="cancel"
+                className="delete-btn"
+                onClick={() => setModalVisible(false)}
+              >
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                className="add-btn"
+                onClick={handleSubmit}
+        
+              >
+                {editData ? "Update" : "Add"}
+              </Button>,
+            ]
+        }
+      >
+        <div className="employee-modal-body-wrap">
           <Form form={form} layout="vertical" className="employee-modal-form">
-            <Form.Item
-              name="first_name"
-              label="First Name"
-              rules={[{ required: true }]}
-            >
-              <Input
-                placeholder="Enter first name"
-                disabled={modalMode === "view"}
-              />
-            </Form.Item>
 
-            <Form.Item
-              name="last_name"
-              label="Last Name"
-              rules={[{ required: true }]}
-            >
-              <Input
-                placeholder="Enter last name"
-                disabled={modalMode === "view"}
-              />
-            </Form.Item>
+            <Row gutter={[16, 0]}>
 
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[{ required: true, type: "email" }]}
-            >
-              <Input placeholder="Enter email" disabled={modalMode === "view"} />
-            </Form.Item>
+              {/* First Name */}
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="first_name"
+                  label="First Name"
+                  rules={[{ required: true }]}
+                >
+                  <Input
+                    placeholder="Enter first name"
+                    disabled={modalMode === "view"}
+                  />
+                </Form.Item>
+              </Col>
 
-            {/* Add Role dropdown field */}
-            <Form.Item
-              name="pmsRoleId"
-              label="Role"
-              rules={[{ required: true, message: "Please select a role" }]}
-            >
-              <Select
-                placeholder="Select a role"
-                loading={rolesLoading}
-                disabled={modalMode === "view" || user_data?._id == editData?._id}
-                allowClear
-              >
-                {roles.map((role) => (
-                  <Option key={role._id} value={role._id}>
-                    {role.role_name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+              {/* Last Name */}
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="last_name"
+                  label="Last Name"
+                  rules={[{ required: true }]}
+                >
+                  <Input
+                    placeholder="Enter last name"
+                    disabled={modalMode === "view"}
+                  />
+                </Form.Item>
+              </Col>
 
-            {!editData && modalMode !== "view" && (
-              <Form.Item
-                name="password"
-                label="Password"
-                rules={[
-                  { required: true, message: "Password is required" },
-                  {
-                    validator: (_, value) => {
-                      if (value && /\s/.test(value)) {
-                        return Promise.reject(
-                          new Error("Password should not contain spaces")
-                        );
-                      }
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <Input.Password
-                  placeholder="Enter password"
-                  autoComplete="new-password"
-                />
-              </Form.Item>
-            )}
+              {/* Email */}
+              <Col xs={24}>
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[{ required: true, type: "email" }]}
+                >
+                  <Input
+                    placeholder="Enter email"
+                    disabled={modalMode === "view"}
+                  />
+                </Form.Item>
+              </Col>
 
-            {editData && (
-              <Row gutter={24}>
+              {/* Role */}
+              <Col xs={24}>
+                <Form.Item
+                  name="pmsRoleId"
+                  label="Role"
+                  rules={[{ required: true, message: "Please select a role" }]}
+                >
+                  <Select
+                    placeholder="Select a role"
+                    loading={rolesLoading}
+                    disabled={modalMode === "view" || user_data?._id == editData?._id}
+                    allowClear
+                  >
+                    {roles.map((role) => (
+                      <Option key={role._id} value={role._id}>
+                        {role.role_name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Password */}
+              {!editData && modalMode !== "view" && (
+                <Col xs={24}>
+                  <Form.Item
+                    name="password"
+                    label="Password"
+                    rules={[
+                      { required: true, message: "Password is required" },
+                      {
+                        validator: (_, value) => {
+                          if (value && /\s/.test(value)) {
+                            return Promise.reject(
+                              new Error("Password should not contain spaces")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      placeholder="Enter password"
+                      autoComplete="new-password"
+                    />
+                  </Form.Item>
+                </Col>
+              )}
+
+              {/* Is Active */}
+              {editData && (
                 <Col xs={24} sm={12}>
                   <Form.Item
                     name="isActivate"
@@ -800,11 +812,13 @@ const CombinedEmployeeList = ({
                     </Radio.Group>
                   </Form.Item>
                 </Col>
-              </Row>
-            )}
+              )}
+
+            </Row>
+
           </Form>
-          </div>
-        </Modal>
+        </div>
+      </Modal>
     </div>
   );
 };

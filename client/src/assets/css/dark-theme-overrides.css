@@ -1509,21 +1509,6 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
   color: #1e293b !important;
 }
 
-/* ── Close btn ── */
-.admin-user .global-app-modal .ant-modal-close {
-  top: 14px !important;
-  right: 16px !important;
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 50% !important;
-  background: #f1f5f9 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-.admin-user .global-app-modal .ant-modal-close:hover {
-  background: #e2e8f0 !important;
-}
 
 
 /* ── Body ── */

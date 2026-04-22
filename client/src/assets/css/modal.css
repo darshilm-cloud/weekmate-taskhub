@@ -6,7 +6,9 @@
     border-bottom: 1px solid #e8e8e8;
     border-radius: 6px 6px 0 0;
 }
-
+.ant-modal-content .ant-modal-title h5{
+    margin-top: 5px;
+}
 
 .admin-user .ant-modal-content .ant-modal-body {
     background-color: var(--chat-body-wrapper);

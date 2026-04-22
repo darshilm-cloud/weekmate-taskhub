@@ -21,7 +21,7 @@
     text-align: center;
     white-space: nowrap;
     vertical-align: middle;
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     margin-bottom: 0;
     color: var(--font-color, #545454);
     background: var(--white-bg-color, #fff);
@@ -40,14 +40,15 @@
     padding: 8px 16px;
     overflow: hidden;
     text-align: center;
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     transition: all 0.3s ease-in-out;
     border-color: var(--add-button-border-color, #185d87);
     background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
     margin-bottom: 0;
     color: var(--add-button-color, #ffffff);
 }
-.admin-user  .ant-modal-footer .ant-btn-primary:hover,
+
+.admin-user .ant-modal-footer .ant-btn-primary:hover,
 .ant-layout .ant-layout-content .ant-btn-primary:hover,
 .btn-primary:hover,
 .ant-btn-primary:hover,
@@ -68,7 +69,7 @@
     background: var(--secondary-btn-bg, #ffffff);
     color: var(--secondary-btn-color, #005282);
     border: 1px solid var(--secondary-btn-border, #005282);
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     padding: 8px 16px;
     font-weight: 500;
     height: 36px;
@@ -81,7 +82,7 @@
     transition: all 0.3s ease-in-out;
 }
 
-.btn-secondary:hover,
+
 .ant-btn-secondary:hover,
 .ant-btn-default:hover,
 .ant-layout .btn-secondary:hover {
@@ -123,7 +124,7 @@
     /* background: var(--dashboard-negative, #fef2f2); */
     /* color: var(--dashboard-negative, #dc2626); */
     /* border: 1px solid var(--dashboard-negative, #fee2e2); */
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     height: 36px;
     padding: 8px 16px;
     font-weight: 500;
@@ -155,7 +156,7 @@
     padding: 8px 16px;
     height: 36px;
     font-weight: 500;
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     line-height: 1;
     transition: all 0.3s ease-in-out;
     cursor: pointer;
@@ -182,7 +183,7 @@
     position: relative;
     height: 36px;
     padding: 8px 16px;
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
 }
 
 .export-btn:hover {
@@ -202,7 +203,7 @@
     background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
     height: 36px;
     padding: 8px 16px;
-    border-radius: var(--border-radius, 6px);
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -211,6 +212,7 @@
     font-size: 14px;
     border-width: 1px;
 }
+
 .ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover,
 .add-btn:hover {
     color: var(--add-button-color, #ffffff);

@@ -691,7 +691,7 @@ export default function NotesPage() {
         style={{ maxWidth: 640 }}
       >
         <Form form={noteForm} layout="vertical" className="notes-modal-form">
-          <Row gutter={[16, 16]}>
+          <Row gutter={[24, 0]}>
 
             {/* Title */}
             <Col xs={24}>

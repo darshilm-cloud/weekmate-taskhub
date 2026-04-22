@@ -8,7 +8,8 @@ import {
   Modal,
   Popconfirm,
   Row,
-  Col
+  Col,
+  Card,
 } from "antd";
 import {
   EditOutlined,
@@ -222,26 +223,26 @@ function ProjectLabels() {
         record._id === editingId ? (
           <Input
             type="color"
-            value={ selectedColor }
-            onChange={ (e) => setSelectedColor(e.target.value) }
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
           />
         ) : (
           <div
-            style={ {
+            style={{
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-            } }
+            }}
           >
             <div
-              style={ {
+              style={{
                 backgroundColor: color || "#000000",
                 width: "80%",
                 height: "18px",
                 border: "1px solid #d9d9d9",
                 borderRadius: "2px",
-              } }
+              }}
             />
           </div>
         ),
@@ -253,13 +254,13 @@ function ProjectLabels() {
       render: (title, record) =>
         record._id === editingId ? (
           <Input
-            value={ editingLabel }
-            onChange={ (e) => setEditingLabel(e.target.value) }
-            style={ { width: 200 } }
-            onPressEnter={ () => handleEditLabel(record._id) }
+            value={editingLabel}
+            onChange={(e) => setEditingLabel(e.target.value)}
+            style={{ width: 200 }}
+            onPressEnter={() => handleEditLabel(record._id)}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>{ title }</span>
+          <span style={{ textTransform: "capitalize" }}>{title}</span>
         ),
     },
     {
@@ -267,46 +268,46 @@ function ProjectLabels() {
       dataIndex: "action",
       width: 150,
       render: (_, record) => (
-        <div style={ { display: "flex", gap: "8px" } }>
-          { editingId === record._id ? (
+        <div style={{ display: "flex", gap: "8px" }}>
+          {editingId === record._id ? (
             <>
               <Button
                 type="link pe-action-btn"
-                onClick={ () => handleEditLabel(record._id) }
-                icon={ <SaveTwoTone style={ { fontSize: "18px" } } /> }
+                onClick={() => handleEditLabel(record._id)}
+                icon={<SaveTwoTone style={{ fontSize: "18px" }} />}
               />
               <Button
                 type="link pe-action-btn"
-                onClick={ cancelEdit }
-                icon={ <CloseCircleTwoTone style={ { fontSize: "18px" } } /> }
+                onClick={cancelEdit}
+                icon={<CloseCircleTwoTone style={{ fontSize: "18px" }} />}
               />
             </>
           ) : (
             <>
               <Button
                 type="link pe-action-btn"
-                onClick={ () => startEdit(record) }
+                onClick={() => startEdit(record)}
                 icon={
-                  <EditOutlined style={ { color: "green", fontSize: "18px" } } />
+                  <EditOutlined style={{ color: "green", fontSize: "18px" }} />
                 }
               />
               <Popconfirm
                 title="Do you really want to delete this Label?"
                 okText="Yes"
                 cancelText="No"
-                onConfirm={ () => handleDeleteLabel(record._id) }
+                onConfirm={() => handleDeleteLabel(record._id)}
               >
                 <Button
                   type="link pe-action-btn"
                   icon={
                     <AiOutlineDelete
-                      style={ { color: "red", fontSize: "18px" } }
+                      style={{ color: "red", fontSize: "18px" }}
                     />
                   }
                 />
               </Popconfirm>
             </>
-          ) }
+          )}
         </div>
       ),
     },
@@ -439,7 +440,7 @@ function ProjectLabels() {
 
   const SkeletonTable = () => (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
         <div className="ps-shimmer" style={{ width: "8%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "40%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
@@ -455,21 +456,23 @@ function ProjectLabels() {
   );
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><TagsOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><TagsOutlined /></span>
             Project Labels
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn"  type="primary"  icon={<PlusOutlined />} onClick={showModal}>
-              Add Label
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={showModal}>
+            Add Label
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
+      <Card className="main-content-wrapper">
+        <div className="global-search">
           <Search
             placeholder="Search labels..."
             onSearch={onSearch}
@@ -482,7 +485,7 @@ function ProjectLabels() {
         {isTableLoading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={projectlabelListing}
@@ -497,7 +500,7 @@ function ProjectLabels() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       <Modal
         open={isModalOpen}
@@ -537,7 +540,7 @@ function ProjectLabels() {
           </Row>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

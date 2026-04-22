@@ -1333,7 +1333,7 @@ const TaskList = ({
                           textAlign: "left", 
                           display: "flex", 
                           alignItems: "center", 
-                          justifyContent: "flex-start", 
+                          justifyContent: "center", 
                           marginTop: 8, 
                           color: "#64748b",
                           background: "rgba(241, 245, 249, 0.6)",

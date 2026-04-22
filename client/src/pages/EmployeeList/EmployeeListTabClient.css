@@ -227,13 +227,7 @@
     background: #ffffff;
 }
 
-.add-and-edit-client .ant-modal-footer .ant-btn {
-    min-width: 94px;
-    height: 42px;
-    border-radius: 12px;
-    font-weight: 700;
-    box-shadow: none;
-}
+
 
 .add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn,
 .add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn:hover,

@@ -12,6 +12,7 @@ import {
   Table,
   Tag,
   message,
+  Card,
 } from "antd";
 import {
   DeleteOutlined,
@@ -20,7 +21,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
-import GlobalSearchInput from "../../components/common/GlobalSearchInput";
+import Search from "antd/lib/input/Search";
 import "../../components/PMS/settings.css";
 
 const { Option } = Select;
@@ -31,12 +32,14 @@ const SKELETON_ROWS = 6;
 function SkeletonTable() {
   return (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
         <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
       </div>
       {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
         <div className="ps-skeleton-row" key={i}>
           <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 35}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
         </div>
       ))}
     </div>
@@ -268,32 +271,33 @@ function WorkflowStages() {
   ];
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon">
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span>
               <NodeIndexOutlined />
             </span>
             Task Stages
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-              Add Stage
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
+            Add Stage
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
-          <GlobalSearchInput
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search workflow or stage..."
-            value={searchText}
-            onChange={setSearchText}
             onSearch={(value) => {
               setSearchText(value);
             }}
-            className="ps-search-input"
+            onChange={(e) => setSearchText(e.target.value)}
+            allowClear
             style={{ width: 280 }}
           />
         </div>
@@ -301,7 +305,7 @@ function WorkflowStages() {
         {loading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               rowKey="key"
               columns={columns}
@@ -324,106 +328,106 @@ function WorkflowStages() {
             />
           </div>
         )}
-      </div>
-<Modal
-  open={modalOpen}
-  title={
-    <>
-      <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
-      {editingStage ? "Edit Stage" : "Add Stage"}
-    </>
-  }
-  className="ps-modal"
-  width="100%"
-  style={{ maxWidth: 520 }}
-  onCancel={() => {
-    setModalOpen(false);
-    setEditingStage(null);
-    form.resetFields();
-  }}
-  footer={[
-    <Button
-      key="cancel"
-   className="delete-btn"
-      onClick={() => {
-        setModalOpen(false);
-        setEditingStage(null);
-        form.resetFields();
-      }}
-    >
-      Cancel
-    </Button>,
-    <Button
-    type="primary"
-      key="submit"
-      className="add-btn"
-      onClick={submitModal}
-      loading={modalSubmitting}
-    >
-      Save
-    </Button>,
-  ]}
->
-  <Form
-    form={form}
-    layout="vertical"
-    initialValues={{ color: DEFAULT_STAGE_COLOR }}
-  >
-    <Row gutter={[24, 0]}>
-      
-      <Col xs={24}>
-        <Form.Item
-          name="workflow_id"
-          label="Workflow"
-          rules={[
-            { required: true, message: "Please select workflow" },
-          ]}
+      </Card>
+      <Modal
+        open={modalOpen}
+        title={
+          <>
+            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            {editingStage ? "Edit Stage" : "Add Stage"}
+          </>
+        }
+        className="ps-modal"
+        width="100%"
+        style={{ maxWidth: 520 }}
+        onCancel={() => {
+          setModalOpen(false);
+          setEditingStage(null);
+          form.resetFields();
+        }}
+        footer={[
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={() => {
+              setModalOpen(false);
+              setEditingStage(null);
+              form.resetFields();
+            }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            type="primary"
+            key="submit"
+            className="add-btn"
+            onClick={submitModal}
+            loading={modalSubmitting}
+          >
+            Save
+          </Button>,
+        ]}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ color: DEFAULT_STAGE_COLOR }}
         >
-          <Select placeholder="Select workflow">
-            {workflows.map((workflow) => (
-              <Option
-                key={workflow?._id}
-                value={workflow?._id}
+          <Row gutter={[24, 0]}>
+
+            <Col xs={24}>
+              <Form.Item
+                name="workflow_id"
+                label="Workflow"
+                rules={[
+                  { required: true, message: "Please select workflow" },
+                ]}
               >
-                {workflow?.project_workflow || "-"}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Col>
+                <Select placeholder="Select workflow">
+                  {workflows.map((workflow) => (
+                    <Option
+                      key={workflow?._id}
+                      value={workflow?._id}
+                    >
+                      {workflow?.project_workflow || "-"}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
 
-      <Col xs={24}>
-        <Form.Item
-          name="title"
-          label="Stage Name"
-          rules={[
-            {
-              required: true,
-              whitespace: true,
-              message: "Please enter stage name",
-            },
-          ]}
-        >
-          <Input placeholder="e.g. In Review" maxLength={60} />
-        </Form.Item>
-      </Col>
+            <Col xs={24}>
+              <Form.Item
+                name="title"
+                label="Stage Name"
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter stage name",
+                  },
+                ]}
+              >
+                <Input placeholder="e.g. In Review" maxLength={60} />
+              </Form.Item>
+            </Col>
 
-      <Col xs={24}>
-        <Form.Item
-          name="color"
-          label="Color"
-          rules={[
-            { required: true, message: "Please choose color" },
-          ]}
-        >
-          <Input type="color" />
-        </Form.Item>
-      </Col>
+            <Col xs={24}>
+              <Form.Item
+                name="color"
+                label="Color"
+                rules={[
+                  { required: true, message: "Please choose color" },
+                ]}
+              >
+                <Input type="color" />
+              </Form.Item>
+            </Col>
 
-    </Row>
-  </Form>
-</Modal>
-    </div>
+          </Row>
+        </Form>
+      </Modal>
+    </Card>
   );
 }
 

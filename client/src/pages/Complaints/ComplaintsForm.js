@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Form, Input, Select, message, Popconfirm } from "antd";
+import { Form, Input, Select, message, Popconfirm, Button } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {
   AlertOutlined,
@@ -375,6 +375,9 @@ const ComplaintsForm = ({
 
             {/* Actions */}
             <div className="ps-form-actions">
+              <Button type="button" className="delete-btn" onClick={handleLeave}>
+                Cancel
+              </Button>
               {selectedStatus === "resolved" ? (
                 <Popconfirm
                   icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
@@ -383,20 +386,18 @@ const ComplaintsForm = ({
                   okText="Yes, resolve"
                   cancelText="No"
                 >
-                  <button type="button" className="add-btn" disabled={isSubmitting}>
-                    <CheckCircleOutlined />
+                  <Button type="button" className="add-btn" disabled={isSubmitting}>
+                    
                     {isEdit ? "Update" : "Submit"}
-                  </button>
+                  </Button>
                 </Popconfirm>
               ) : (
-                <button type="submit" className="add-btn" disabled={isSubmitting}>
-                  <CheckCircleOutlined />
+                <Button type="primary" className="add-btn" disabled={isSubmitting}>
+             
                   {isSubmitting ? "Saving..." : isEdit ? "Update" : "Submit"}
-                </button>
+                </Button>
               )}
-              <button type="button" className="ps-btn-secondary" onClick={handleLeave}>
-                Cancel
-              </button>
+            
             </div>
           </Form>
         </div>
