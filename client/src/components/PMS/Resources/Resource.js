@@ -150,7 +150,7 @@ function Resource() {
               rowKey="_id"
               footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
               onChange={page => setPagination({ ...pagination, ...page })}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
             />
           </div>
         )}

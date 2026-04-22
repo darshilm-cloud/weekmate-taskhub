@@ -70,7 +70,7 @@ const Complaints = () => {
 
   /* ── list (paginated) ── */
   const [complaintList, setComplaintList] = useState([]);
-  const [pagination,    setPagination]    = useState({ current: 1, pageSize: 20 });
+  const [pagination,    setPagination]    = useState({ current: 1, pageSize: 25 });
 
   /* ── all complaints (analytics) ── */
   const [allComplaints, setAllComplaints] = useState([]);
@@ -485,7 +485,7 @@ const Complaints = () => {
           }}
           pagination={{
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "30"],
+            pageSizeOptions: ["10", "20", "25", "30"],
             showTotal: (total) => `Total ${total} complaints`,
             ...pagination,
           }}

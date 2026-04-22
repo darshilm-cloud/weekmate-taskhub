@@ -70,7 +70,7 @@ const PositiveReview = () => {
   const dispatch = useDispatch();
 
   const [reviewList, setReviewList] = useState([]);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 20 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [allReviews, setAllReviews] = useState([]);
 
   const [selectedProject, setSelectedProject] = useState([]);
@@ -414,7 +414,7 @@ const PositiveReview = () => {
             }}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
               showTotal: (total) => `Total ${total} reviews`,
               ...pagination,
             }}

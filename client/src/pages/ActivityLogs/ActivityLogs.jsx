@@ -46,7 +46,7 @@ const ActivityLogs = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [loading,         setLoading]         = useState(false);
   const [pageLoading,     setPageLoading]     = useState(true);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25, total: 0 });
   const [filters,    setFilters]    = useState({ operation: [], dateRange: null });
 
   /* ── API ─────────────────────────────────────────────────── */
@@ -337,7 +337,7 @@ const ActivityLogs = () => {
             onChange={handleTableChange}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
               showTotal: (total) => `Total ${total} records`,
               ...pagination,
             }}

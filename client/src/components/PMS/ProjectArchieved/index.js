@@ -409,7 +409,7 @@ function ProjectArchieved() {
             dataSource={columnDetails}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
               showTotal: getFooterDetails,
               ...pagination,
             }}
@@ -1454,7 +1454,7 @@ export default ProjectArchieved;
 //             footer={getFooterDetails}
 //             pagination={{
 //               showSizeChanger: true,
-//               pageSizeOptions: ["10", "20", "30"],
+//               pageSizeOptions: ["10", "20", "25", "30"],
 //               ...pagination,
 //             }}
 //             onChange={handleTableChange}

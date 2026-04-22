@@ -44,6 +44,15 @@ const configRoles = require("../settings/config.json");
 const { generateCacheKey } = require("../middleware/CryptoKey");
 const { getCache, storeCache } = require("../middleware/cacheStore");
 
+const parseReportRangeDate = (raw) => {
+  if (raw == null || raw === "") return null;
+  const s = String(raw).trim();
+  let m = moment(s, "DD-MM-YYYY", true);
+  if (!m.isValid()) m = moment(s, "YYYY-MM-DD", true);
+  if (!m.isValid()) m = moment(s, moment.ISO_8601, true);
+  return m.isValid() ? m : null;
+};
+
 // Check is exists..
 // exports.taskHoursExists = async (task_id, project_id) => {
 //   try {
@@ -2029,8 +2038,8 @@ exports.getTimesheetsReports = async (req, res) => {
       departments: Joi.array().optional(),
       users: Joi.array().optional(),
       isExport: Joi.boolean().required(),
-      startDate: Joi.date().optional().allow(""),
-      endDate: Joi.date().optional().allow(""),
+      startDate: Joi.string().allow("").optional(),
+      endDate: Joi.string().allow("").optional(),
       search: Joi.string().trim().allow("").optional(),
     });
 
@@ -2039,7 +2048,16 @@ exports.getTimesheetsReports = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    const { limit, pageNo, sort, sortBy, startDate, endDate, search, isExport } = value;
+    const { limit, pageNo, sort, sortBy, search, isExport } = value;
+    const startM = parseReportRangeDate(value.startDate);
+    const endM = parseReportRangeDate(value.endDate);
+    if (!startM || !endM) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        '"startDate" and "endDate" must be valid dates (DD-MM-YYYY, YYYY-MM-DD, or ISO).'
+      );
+    }
     const skip = (pageNo - 1) * limit;
     const sortOrder = sortBy === "desc" ? -1 : 1;
 
@@ -2050,8 +2068,8 @@ exports.getTimesheetsReports = async (req, res) => {
     let matchStage = {
       isDeleted: false,
       logged_date: {
-        $gte: moment(startDate).startOf("day").toDate(),
-        $lte: moment(endDate).endOf("day").toDate(),
+        $gte: startM.clone().startOf("day").toDate(),
+        $lte: endM.clone().endOf("day").toDate(),
       },
     };
 

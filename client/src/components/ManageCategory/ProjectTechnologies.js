@@ -344,7 +344,7 @@ const ProjectTechnologies = () => {
               dataSource={projectList}
               rowKey="_id"
               footer={() => <span>Total Records: {pagination.total}</span>}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
               onChange={handleTableChange}
             />
           </div>
