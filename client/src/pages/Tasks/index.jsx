@@ -87,7 +87,7 @@ function normalizeStageKey(title) {
   const compact = t.replace(/[\s_-]+/g, "");
   if (compact.includes("todo")) return "todo";
   if (compact.includes("inprogress") || t.includes("progress")) return "inprogress";
-  if (compact.includes("onhold") || t.includes("hold") || t.includes("review")) return "onhold";
+  if (compact.includes("onhold") || t.includes("hold")) return "onhold";
   if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
   return "";
 }
@@ -99,6 +99,17 @@ function getStageColumnKey(title) {
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "");
+}
+
+function getStageDisplayKey(status = {}) {
+  const title =
+    status?.title ||
+    status?.name ||
+    status ||
+    "";
+  const key = getStageColumnKey(title);
+  if (key) return key;
+  return String(status?._id || status?.id || "").trim();
 }
 const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
 
@@ -2410,154 +2421,114 @@ const TasksPMS = ({ flag }) => {
 
   const [movingTasks, setMovingTasks] = useState(false);
   const stageTiles = useMemo(() => {
-    const fromBoard = Array.isArray(boardTasks)
-      ? boardTasks
-        .map((col) => {
-          const ws = col?.workflowStatus || col?.workflow_status || col?.status || {};
-          const id = ws?._id || ws?.id || col?._id;
-          const title = ws?.title || col?.title || "";
-          const color = ws?.color || col?.color || "";
-          const count = Array.isArray(col?.tasks) ? col.tasks.length : (col?.tasks_count || 0);
-          return id ? { id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count } : null;
-        })
-        .filter(Boolean)
-      : [];
+    const byDisplayKey = new Map();
+    const sequenceByDisplayKey = new Map();
 
-    const fromWorkflow = Array.isArray(workflowStatusList)
-      ? workflowStatusList
-        .map((ws) => {
-          const title = ws?.title || "";
-          const color = ws?.color || "";
-          return { id: ws?._id || ws?.id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count: 0 };
-        })
-        .filter((x) => x.id)
-      : [];
+    (Array.isArray(workflowStatusList) ? workflowStatusList : []).forEach((ws, idx) => {
+      const id = String(ws?._id || ws?.id || "").trim();
+      if (!id) return;
+      const title = ws?.title || ws?.name || "Untitled";
+      const color = ws?.color || "";
+      const displayKey = getStageDisplayKey(ws) || id;
+      byDisplayKey.set(displayKey, {
+        id,
+        key: displayKey,
+        title,
+        color,
+        badgeColor: stageBadgeColor(title, color),
+        count: 0,
+      });
+      sequenceByDisplayKey.set(
+        displayKey,
+        Number.isFinite(Number(ws?.sequence)) ? Number(ws.sequence) : idx
+      );
+    });
 
-    const list = fromBoard.length ? fromBoard : fromWorkflow;
-    const byKey = new Map(list.filter((x) => x.key).map((x) => [x.key, x]));
-    const extras = list.filter((item) => item?.id && !item?.key);
+    (Array.isArray(boardTasks) ? boardTasks : []).forEach((col, idx) => {
+      const ws = col?.workflowStatus || col?.workflow_status || col?.status || {};
+      const id = String(ws?._id || ws?.id || col?._id || "").trim();
+      if (!id) return;
+      const title = ws?.title || ws?.name || col?.title || "Untitled";
+      const color = ws?.color || col?.color || "";
+      const count = Array.isArray(col?.tasks) ? col.tasks.length : (col?.tasks_count || 0);
+      const displayKey = getStageDisplayKey({ ...ws, title }) || id;
+      const previous = byDisplayKey.get(displayKey);
+      byDisplayKey.set(displayKey, {
+        id: previous?.id || id,
+        key: displayKey,
+        title: previous?.title || title,
+        color: previous?.color || color,
+        badgeColor: stageBadgeColor(previous?.title || title, previous?.color || color),
+        count: (previous?.count || 0) + Number(count || 0),
+      });
+      if (!sequenceByDisplayKey.has(displayKey)) {
+        sequenceByDisplayKey.set(
+          displayKey,
+          Number.isFinite(Number(ws?.sequence)) ? Number(ws.sequence) : idx + 1000
+        );
+      }
+    });
 
-    // Fixed 4 columns: To-Do / In progress / On Hold / Done
-    const wanted = [
-      { key: "todo", label: "To-Do" },
-      { key: "inprogress", label: "In progress" },
-      { key: "onhold", label: "On Hold" },
-      { key: "done", label: "Done" },
-    ];
-
-    return wanted.map((w) => {
-      const hit = byKey.get(w.key);
-      if (hit) return { ...hit, title: w.label };
-      return { id: w.key, key: w.key, title: w.label, badgeColor: stageBadgeColor(w.label), count: 0 };
-    }).concat(
-      extras.map((item) => ({
-        ...item,
-        key: item?.id,
-        title: item?.title || "Untitled",
-        badgeColor: item?.badgeColor || stageBadgeColor(item?.title, item?.color),
-      }))
+    return [...byDisplayKey.values()].sort(
+      (a, b) =>
+        Number(sequenceByDisplayKey.get(a.key) || 0) -
+        Number(sequenceByDisplayKey.get(b.key) || 0)
     );
   }, [boardTasks, workflowStatusList]);
 
   const listStageOptions = useMemo(() => {
-    const wanted = [
-      { _id: "todo", title: "To-Do" },
-      { _id: "inprogress", title: "In progress" },
-      { _id: "onhold", title: "On Hold" },
-      { _id: "done", title: "Done" },
-    ];
-
-    const fromApi =
-      Array.isArray(projectWorkflowStage) && projectWorkflowStage.length > 0
+    const source =
+      (Array.isArray(projectWorkflowStage) && projectWorkflowStage.length > 0
         ? projectWorkflowStage
         : Array.isArray(workflowStatusList) && workflowStatusList.length > 0
           ? workflowStatusList
-          : [];
+          : []) || [];
 
-    if (fromApi.length > 0) {
-      const byKey = new Map(
-        fromApi
-          .map((ws) => {
-            const title = ws?.title || ws?.name || "";
-            const key = normalizeStageKey(title);
-            return key ? [key, ws] : null;
-          })
-          .filter(Boolean)
-      );
-      const extras = fromApi.filter((ws) => {
-        const title = ws?.title || ws?.name || "";
-        return !normalizeStageKey(title);
+    const byId = new Map();
+    source.forEach((stage) => {
+      const id = String(stage?._id || stage?.id || "").trim();
+      if (!id) return;
+      byId.set(id, {
+        ...stage,
+        _id: id,
+        title: stage?.title || stage?.name || "Untitled",
       });
+    });
 
-      return wanted.map((wantedStage) => {
-        const matched = byKey.get(wantedStage._id);
-        if (matched) {
-          return {
-            ...matched,
-            _id: matched?._id || matched?.id || wantedStage._id,
-            title: wantedStage.title,
-          };
-        }
-        return wantedStage;
-      }).concat(
-        extras.map((stage) => ({
-          ...stage,
-          _id: stage?._id || stage?.id,
-          title: stage?.title || stage?.name || "Untitled",
-        }))
-      );
-    }
-
-    const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
-    const hasRealIds =
-      Array.isArray(stageTiles) &&
-      stageTiles.some(
-        (t) => typeof t?.id === "string" && t.id.length > 8 && !placeholderIds.has(t.id)
-      );
-    if (hasRealIds) {
-      const tileBased = wanted
-        .map((w) => {
-          const hit = stageTiles.find((t) => t?.key === w._id);
-          if (!hit) return null;
-          return { _id: hit.id, title: w.title };
-        })
-        .filter(Boolean);
-
-      if (tileBased.length > 0) return tileBased;
-    }
-
-    return wanted;
+    if (byId.size > 0) return [...byId.values()];
+    return (stageTiles || []).map((tile) => ({ _id: tile.id, title: tile.title }));
   }, [projectWorkflowStage, stageTiles, workflowStatusList]);
 
   const fixedBoardTasks = useMemo(() => {
     const inputColumns = Array.isArray(boardTasks) ? boardTasks : [];
-    const byStageKey = new Map();
+    const byDisplayKey = new Map();
 
     inputColumns.forEach((column) => {
       const workflowStatus =
         column?.workflowStatus || column?.workflow_status || column?.status || {};
-      const stageTitle = workflowStatus?.title || workflowStatus?.name || column?.title || "";
-      const stageKey = getStageColumnKey(stageTitle);
-      if (!stageKey) return;
       const stageId = workflowStatus?._id || workflowStatus?.id || column?._id || "";
+      if (!stageId) return;
+      const stageTitle = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+      const displayKey = getStageDisplayKey({ ...workflowStatus, title: stageTitle });
+      if (!displayKey) return;
       const normalized = {
         ...column,
-        _id: column?._id || stageId || stageKey,
+        _id: column?._id || stageId,
         workflowStatus: {
           ...workflowStatus,
-          _id: stageId || stageKey,
+          _id: stageId,
           title: stageTitle || "Untitled",
           color: workflowStatus?.color || column?.color || "#64748b",
         },
         tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
       };
 
-      if (!byStageKey.has(stageKey)) {
-        byStageKey.set(stageKey, normalized);
+      if (!byDisplayKey.has(displayKey)) {
+        byDisplayKey.set(displayKey, normalized);
         return;
       }
 
-      const existing = byStageKey.get(stageKey);
+      const existing = byDisplayKey.get(displayKey);
       existing.tasks = [
         ...(Array.isArray(existing?.tasks) ? existing.tasks : []),
         ...(Array.isArray(normalized?.tasks) ? normalized.tasks : []),
@@ -2575,35 +2546,35 @@ const TasksPMS = ({ flag }) => {
       })
       .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
 
-    const orderedStageKeys = [];
+    const orderedDisplayKeys = [];
     const orderedStageMeta = new Map();
     knownStages.forEach((stage) => {
       const stageId = String(stage?._id || stage?.id || "");
+      if (!stageId) return;
       const stageTitle = stage?.title || stage?.name || "Untitled";
-      const stageKey = getStageColumnKey(stageTitle);
-      if (!stageKey) return;
-      if (!byStageKey.has(stageKey)) {
-        byStageKey.set(stageKey, {
-          _id: stageId || stageKey,
+      const displayKey = getStageDisplayKey({ ...stage, title: stageTitle }) || stageId;
+      if (!byDisplayKey.has(displayKey)) {
+        byDisplayKey.set(displayKey, {
+          _id: stageId,
           workflowStatus: {
             ...stage,
-            _id: stageId || stageKey,
+            _id: stageId,
             title: stageTitle,
             color: stage?.color || "#64748b",
           },
           tasks: [],
         });
       }
-      if (!orderedStageMeta.has(stageKey)) {
-        orderedStageMeta.set(stageKey, {
-          _id: stageId || stageKey,
+      if (!orderedStageMeta.has(displayKey)) {
+        orderedStageMeta.set(displayKey, {
+          _id: stageId,
           title: stageTitle,
           color: stage?.color || "#64748b",
           sequence: Number(stage?.sequence || 0),
         });
       }
-      if (!orderedStageKeys.includes(stageKey)) {
-        orderedStageKeys.push(stageKey);
+      if (!orderedDisplayKeys.includes(displayKey)) {
+        orderedDisplayKeys.push(displayKey);
       }
     });
 
@@ -2611,14 +2582,14 @@ const TasksPMS = ({ flag }) => {
     inputColumns.forEach((column) => {
       const workflowStatus =
         column?.workflowStatus || column?.workflow_status || column?.status || {};
-      const stageKey = getStageColumnKey(
-        workflowStatus?.title || workflowStatus?.name || column?.title || ""
-      );
-      if (!stageKey || orderedStageKeys.includes(stageKey) || !byStageKey.has(stageKey)) return;
-      orderedStageKeys.push(stageKey);
-      if (!orderedStageMeta.has(stageKey)) {
-        orderedStageMeta.set(stageKey, {
-          _id: workflowStatus?._id || workflowStatus?.id || column?._id || stageKey,
+      const stageId = String(workflowStatus?._id || workflowStatus?.id || column?._id || "").trim();
+      if (!stageId) return;
+      const displayKey = getStageDisplayKey(workflowStatus) || stageId;
+      if (orderedDisplayKeys.includes(displayKey) || !byDisplayKey.has(displayKey)) return;
+      orderedDisplayKeys.push(displayKey);
+      if (!orderedStageMeta.has(displayKey)) {
+        orderedStageMeta.set(displayKey, {
+          _id: stageId,
           title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
           color: workflowStatus?.color || column?.color || "#64748b",
           sequence: Number.MAX_SAFE_INTEGER,
@@ -2626,17 +2597,17 @@ const TasksPMS = ({ flag }) => {
       }
     });
 
-    return orderedStageKeys
-      .map((stageKey) => {
-        const col = byStageKey.get(stageKey);
-        const meta = orderedStageMeta.get(stageKey);
+    return orderedDisplayKeys
+      .map((displayKey) => {
+        const col = byDisplayKey.get(displayKey);
+        const meta = orderedStageMeta.get(displayKey);
         if (!col || !meta) return null;
         return {
           ...col,
-          _id: meta._id || col?._id || stageKey,
+          _id: meta._id || col?._id || displayKey,
           workflowStatus: {
             ...(col?.workflowStatus || {}),
-            _id: meta._id || col?.workflowStatus?._id || stageKey,
+            _id: meta._id || col?.workflowStatus?._id || displayKey,
             title: meta.title || col?.workflowStatus?.title || "Untitled",
             color: meta.color || col?.workflowStatus?.color || "#64748b",
             sequence: Number(meta?.sequence || 0),
@@ -2724,33 +2695,9 @@ const TasksPMS = ({ flag }) => {
   const resolveStageValueForSubmit = useCallback(
     (value) => {
       if (!value) return "";
-
-      const rawValue = String(value).trim();
-      const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
-      if (!placeholderIds.has(rawValue)) return rawValue;
-
-      const realStages = [
-        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
-        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
-      ];
-
-      const matchedStage = realStages.find(
-        (stage) => normalizeStageKey(stage?.title || stage?.name || "") === rawValue
-      );
-
-      if (matchedStage?._id || matchedStage?.id) {
-        return matchedStage?._id || matchedStage?.id;
-      }
-
-      const matchedTile = (Array.isArray(stageTiles) ? stageTiles : []).find(
-        (stage) => stage?.key === rawValue && stage?.id && !placeholderIds.has(String(stage.id))
-      );
-
-      if (matchedTile?.id) return matchedTile.id;
-
-      return "";
+      return String(value).trim();
     },
-    [projectWorkflowStage, stageTiles, workflowStatusList]
+    []
   );
 
   const buildSubscriberStagesForSubmit = useCallback(
@@ -2788,16 +2735,7 @@ const TasksPMS = ({ flag }) => {
 
       const resolveFromStageSource = (value) => {
         if (!value) return "";
-
-        const rawValue = String(value).trim();
-        const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
-        if (!placeholderIds.has(rawValue)) return rawValue;
-
-        const matchedStage = stageSource.find(
-          (stage) => normalizeStageKey(stage?.title || stage?.name || "") === rawValue
-        );
-
-        return matchedStage?._id || matchedStage?.id || "";
+        return String(value).trim();
       };
 
       const subscriberStages = [];

@@ -30,7 +30,6 @@ import "./TaskPage.css";
 const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
-const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
 const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 const LIST_AUTOSCROLL_EDGE_PX = 56;
 const LIST_AUTOSCROLL_STEP = 18;
@@ -120,7 +119,6 @@ function getTaskProjectTitle(task) {
 
 
 function mergeSectionKeysFromTotals(statusTotals, statusMetaBySection = {}) {
-  const order = ["todo", "inprogress", "onhold", "done"];
   const keys = new Set();
   Object.keys(statusTotals || {}).forEach((k) => {
     if (k && k !== "_none_") keys.add(k);
@@ -140,24 +138,17 @@ function mergeSectionKeysFromTotals(statusTotals, statusMetaBySection = {}) {
       if (aHas && bHas && aSeq !== bSeq) return aSeq - bSeq;
       if (aHas && !bHas) return -1;
       if (!aHas && bHas) return 1;
-      const aDef = order.indexOf(a);
-      const bDef = order.indexOf(b);
-      if (aDef !== -1 && bDef !== -1) return aDef - bDef;
-      if (aDef !== -1) return -1;
-      if (bDef !== -1) return 1;
       return String(a).localeCompare(String(b));
     });
   }
 
-  const normalized = new Set(order);
-  allKeys.forEach((k) => normalized.add(k));
-  const rest = [...normalized].filter((k) => !order.includes(k)).sort();
-  return [...order.filter((k) => normalized.has(k)), ...rest];
+  return allKeys.sort((a, b) => String(a).localeCompare(String(b)));
 }
 
 function getTaskPageSectionKeyFromStatus(item) {
-  const normalized = normalizeKanbanStatusKey({ title: item?.title, name: item?.title });
-  return normalized;
+  const statusId = String(item?.statusId || item?._id || "").trim();
+  if (statusId) return statusId;
+  return "";
 }
 
 function mapTaskToEditFormInitial(task) {
@@ -354,7 +345,7 @@ function normalizeKanbanStatusKey(status) {
 
   if (compact.includes("todo")) return "todo";
   if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
-  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (compact.includes("onhold") || title.includes("hold")) return "onhold";
   if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
 
   return title.trim() || "_none_";
@@ -896,15 +887,15 @@ const TaskPage = () => {
         acc[key] = {
           statusId: prev.statusId || incomingStatusId || null,
           statusIds: mergedStatusIds,
-          title: prev.title || item?.title || getKanbanStatusMeta({ title: key, name: key }).title,
-          color: prev.color || item?.color || getKanbanStatusMeta({ title: key, name: key }).color,
+          title: prev.title || item?.title || "Untitled",
+          color: prev.color || item?.color || "#d9d9d9",
           sequence:
             Number.isFinite(Number(prev.sequence))
               ? Number(prev.sequence)
               : Number.isFinite(Number(item?.sequence))
                 ? Number(item.sequence)
                 : null,
-          isDefault: Boolean(prev.isDefault || item?.isDefault || DEFAULT_STAGE_KEYS.has(key)),
+          isDefault: Boolean(prev.isDefault || item?.isDefault),
           workflowId: prev.workflowId || item?.workflowId || null,
           workflowName: prev.workflowName || item?.workflowName || "",
         };
@@ -1202,8 +1193,7 @@ const TaskPage = () => {
   const isCustomStage = useCallback(
     (column) =>
       Boolean(column?.statusId) &&
-      !Boolean(column?.statusMeta?.isDefault) &&
-      !DEFAULT_STAGE_KEYS.has(normalizeKanbanStatusKey(column?.title || "")),
+      !Boolean(column?.statusMeta?.isDefault),
     []
   );
 
@@ -1270,10 +1260,10 @@ const TaskPage = () => {
   }, [canManageStageOrder, isCustomStage, resolveTaskPageWorkflowId, stageRenameValue]);
 
   const persistStageOrder = useCallback(async (orderedSectionIds) => {
-    const orderedTitleKeys = orderedSectionIds
-      .map((sectionId) => normalizeKanbanStatusKey(statusMetaBySection?.[sectionId]?.title || sectionId))
-      .filter(Boolean);
-    if (!orderedTitleKeys.length) return;
+    const orderedStatusIds = (orderedSectionIds || [])
+      .map((sectionId) => String(statusMetaBySection?.[sectionId]?.statusId || sectionId || "").trim())
+      .filter((id) => MONGO_ID_REGEX.test(id));
+    if (!orderedStatusIds.length) return;
 
     const workflowsResponse = await Service.makeAPICall({
       methodName: Service.postMethod,
@@ -1305,29 +1295,14 @@ const TaskPage = () => {
       );
       if (!workflowStages.length) continue;
 
-      const stagesByTitleKey = workflowStages.reduce((acc, stage) => {
-        const key = normalizeKanbanStatusKey(stage?.title || stage?.name || "");
-        if (!key) return acc;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(stage);
-        return acc;
-      }, {});
-
-      const usedIds = new Set();
-      const orderedStageIdsFromColumns = [];
-      orderedTitleKeys.forEach((titleKey) => {
-        const candidates = stagesByTitleKey[titleKey] || [];
-        const nextStage = candidates.find((row) => !usedIds.has(String(row?._id || "")));
-        if (!nextStage?._id) return;
-        usedIds.add(String(nextStage._id));
-        orderedStageIdsFromColumns.push(String(nextStage._id));
-      });
+      const workflowStageIds = workflowStages
+        .map((stage) => String(stage?._id || ""))
+        .filter(Boolean);
+      const workflowStageIdSet = new Set(workflowStageIds);
 
       const orderedStageIds = [
-        ...orderedStageIdsFromColumns,
-        ...workflowStages
-          .map((stage) => String(stage?._id || ""))
-          .filter((id) => id && !usedIds.has(id)),
+        ...orderedStatusIds.filter((id) => workflowStageIdSet.has(id)),
+        ...workflowStageIds.filter((id) => !orderedStatusIds.includes(id)),
       ]
         .filter((id) => MONGO_ID_REGEX.test(String(id || "")))
         .filter((id, index, arr) => arr.indexOf(id) === index);
@@ -1366,7 +1341,7 @@ const TaskPage = () => {
   }, [canManageStageOrder, persistStageOrder]);
 
   const kanbanColumns = useMemo(() => {
-      const all = listSectionIds.map((bucketId) => {
+      const rawColumns = listSectionIds.map((bucketId) => {
       const sectionMeta = statusMetaBySection[bucketId] || {};
       const meta = getKanbanStatusMeta({ title: sectionMeta.title || bucketId, name: sectionMeta.title || bucketId });
       const colTasks = sectionBuckets[bucketId]?.tasks || [];
@@ -1388,13 +1363,38 @@ const TaskPage = () => {
       };
     });
 
+    const grouped = new Map();
+    rawColumns.forEach((col) => {
+      const displayKey = normalizeKanbanStatusKey(col?.title || col?.id || "");
+      const safeKey = displayKey || String(col?.id || "");
+      if (!grouped.has(safeKey)) {
+        grouped.set(safeKey, {
+          ...col,
+          id: safeKey,
+          tasks: [...(col?.tasks || [])],
+        });
+        return;
+      }
+      const existing = grouped.get(safeKey);
+      const mergedTasks = [
+        ...(Array.isArray(existing?.tasks) ? existing.tasks : []),
+        ...(Array.isArray(col?.tasks) ? col.tasks : []),
+      ];
+      grouped.set(safeKey, {
+        ...existing,
+        tasks: sortTaskList(mergedTasks, sortMode),
+      });
+    });
+
+    const all = [...grouped.values()];
+
     if (!kanbanStatusFilter) return all;
 
-    const needle = normalizeKanbanStatusKey(kanbanStatusFilter);
+    const needle = String(kanbanStatusFilter || "");
     const filtered = all.filter(
       (col) =>
-        normalizeKanbanStatusKey(col.id) === needle ||
-        normalizeKanbanStatusKey(col.title) === needle
+        String(col.id || "") === needle ||
+        String(col.statusId || "") === needle
     );
     return filtered.length ? filtered : all;
   }, [listSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
@@ -1551,7 +1551,9 @@ const TaskPage = () => {
 
   const moveTaskLocally = useCallback((taskId, targetColumn) => {
     if (!taskId || !targetColumn?.id) return;
-    const targetId = targetColumn.id;
+    const targetStatusId = String(
+      targetColumn?.statusId || targetColumn?.statusMeta?._id || ""
+    );
     setSectionBuckets((prev) => {
       let found = null;
       let sourceId = null;
@@ -1563,7 +1565,18 @@ const TaskPage = () => {
         }
       });
       if (!found || sourceId === null) return prev;
-      if (String(sourceId) === String(targetId)) return prev;
+
+      const mappedTargetBucketId =
+        listSectionIds.find(
+          (bid) =>
+            String(statusMetaBySection?.[bid]?.statusId || "") === targetStatusId
+        ) ||
+        (listSectionIds.includes(String(targetColumn.id))
+          ? String(targetColumn.id)
+          : null);
+      if (!mappedTargetBucketId) return prev;
+      if (String(sourceId) === String(mappedTargetBucketId)) return prev;
+
       const updatedTask = {
         ...found,
         _stId: targetColumn.statusId || found?._stId || found?.task_status?._id || null,
@@ -1585,15 +1598,22 @@ const TaskPage = () => {
         ...next[sourceId],
         tasks: (next[sourceId].tasks || []).filter((t) => t._id !== taskId),
       };
-      const targetBucket = next[targetId] || { tasks: [], pageNo: 1, hasMore: false, loading: false, total: 0 };
+      const targetBucket =
+        next[mappedTargetBucketId] || {
+          tasks: [],
+          pageNo: 1,
+          hasMore: false,
+          loading: false,
+          total: 0,
+        };
       const targetTasks = [...(targetBucket.tasks || []).filter((t) => t._id !== taskId), updatedTask];
-      next[targetId] = {
+      next[mappedTargetBucketId] = {
         ...targetBucket,
         tasks: targetTasks,
       };
       return next;
     });
-  }, [listSectionIds]);
+  }, [listSectionIds, statusMetaBySection]);
 
   const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null) => {
     if (!canEditTask) {
@@ -1680,11 +1700,6 @@ const TaskPage = () => {
           previousBucketId ||
           derivedBucketFromStatus ||
           listSectionIds.find((id) => id === previousStatusId) ||
-          listSectionIds.find(
-            (id) =>
-              normalizeKanbanStatusKey(statusMetaBySection?.[id]?.title || id) ===
-              normalizeKanbanStatusKey(previousTask?.task_status)
-          ) ||
           null;
 
         Object.keys(next).forEach((bid) => {
@@ -1743,7 +1758,7 @@ const TaskPage = () => {
         draggedTask?.task_status?._id ||
           draggedTask?._stId ||
           ""
-      ) || normalizeKanbanStatusKey(draggedTask.task_status);
+      );
     const targetStatusId = String(targetColumn?.statusId || targetColumn?.id || "");
     if (currentStatusId && targetStatusId && currentStatusId === targetStatusId) {
       setDragOverColumnId(null);

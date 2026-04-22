@@ -1047,12 +1047,13 @@ const TaskList = ({
                   <div
                     className="drag_row"
                     style={dragRowStyle}
+                    data-workflow-status-id={stageId}
                     onDragLeave={(e) => onDragLeave(e)}
                     onDragEnter={(e) => onDragEnter(e)}
                     onDragOver={(e) => onDragOver(e)}
                     onDragOverCapture={(e) => onDragOver(e)}
-                    onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
-                    onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                    onDrop={(e) => onDrop(e, stageId)}
+                    onDropCapture={(e) => onDrop(e, stageId)}
                   >
                     {showTextArea && index == 0 && (
                       <div className="project-add-task">
@@ -1077,12 +1078,13 @@ const TaskList = ({
                       className="borad-task-data"
                       id={`scrollableDiv-${boardData.workflowStatus?._id}`}
                       style={boardScrollStyle}
+                      data-workflow-status-id={stageId}
                       onDragLeave={(e) => onDragLeave(e)}
                       onDragEnter={(e) => onDragEnter(e)}
                       onDragOver={(e) => onDragOver(e)}
                       onDragOverCapture={(e) => onDragOver(e)}
-                      onDrop={(e) => onDrop(e, boardData.workflowStatus?._id)}
-                      onDropCapture={(e) => onDrop(e, boardData.workflowStatus?._id)}
+                      onDrop={(e) => onDrop(e, stageId)}
+                      onDropCapture={(e) => onDrop(e, stageId)}
                     >
                       {boardData.tasks
                         .map((task) => {

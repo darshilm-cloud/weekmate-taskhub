@@ -968,7 +968,7 @@ useEffect(() => {
       (tasks || []).find((column) => column?.workflowStatus?._id === statusToSend)?.workflowStatus ||
       null;
 
-    if (!statusToSend) {
+    if (!statusToSend || String(statusToSend) === String(taskId)) {
       message.error("This stage is not available for the current project workflow.");
       const currentListId = selectedTask?._id;
       if (currentListId) {
@@ -1141,19 +1141,24 @@ useEffect(() => {
     const data =
       evt.dataTransfer.getData("application/x-task-id") ||
       evt.dataTransfer.getData("text/plain");
-    if (!data || !status) return;
+    const statusFromDataset =
+      evt?.currentTarget?.dataset?.workflowStatusId ||
+      evt?.currentTarget?.getAttribute?.("data-workflow-status-id") ||
+      "";
+    const resolvedStatus = status || statusFromDataset;
+    if (!data || !resolvedStatus) return;
 
     const now = Date.now();
     if (
       lastDropRef.current.taskId === data &&
-      lastDropRef.current.status === status &&
+      lastDropRef.current.status === resolvedStatus &&
       now - lastDropRef.current.at < 250
     ) {
       return;
     }
 
-    lastDropRef.current = { taskId: data, status, at: now };
-    updateTaskWorkflowStats(status, data);
+    lastDropRef.current = { taskId: data, status: resolvedStatus, at: now };
+    updateTaskWorkflowStats(resolvedStatus, data);
   };
 
   const shouldIgnoreTaskClick = () => Date.now() < suppressClickUntilRef.current;

@@ -99,7 +99,7 @@ const normalizeWorkflowStageKey = (value) => {
 
   if (compact.includes("todo")) return "todo";
   if (compact.includes("inprogress") || raw.includes("progress")) return "inprogress";
-  if (compact.includes("onhold") || raw.includes("hold") || raw.includes("review")) return "onhold";
+  if (compact.includes("onhold") || raw.includes("hold")) return "onhold";
   if (raw.includes("done") || raw.includes("complete") || raw.includes("closed")) return "done";
 
   return compact;
@@ -112,6 +112,53 @@ const resolveWorkflowStageIdForTask = async ({
   if (!statusValue) return "";
 
   const rawValue = String(statusValue).trim();
+  if (mongoose.Types.ObjectId.isValid(rawValue)) {
+    // If workflow id is missing/invalid on task's project, still accept a real stage id.
+    if (!workflowId || !mongoose.Types.ObjectId.isValid(String(workflowId))) {
+      const stageById = await ProjectWorkFlowStatus.findOne({
+        _id: new mongoose.Types.ObjectId(rawValue),
+        isDeleted: false,
+      }).lean();
+      return stageById?._id?.toString() || "";
+    }
+
+    const existingStagesForWorkflow = await ProjectWorkFlowStatus.find({
+      workflow_id: new mongoose.Types.ObjectId(workflowId),
+      isDeleted: false,
+    })
+      .sort({ sequence: 1 })
+      .lean();
+
+    if (!existingStagesForWorkflow.length) return "";
+
+    const matchedById = existingStagesForWorkflow.find(
+      (stage) => String(stage?._id || "") === rawValue
+    );
+    if (matchedById?._id) return matchedById._id.toString();
+
+    // If UI passed stage id from another workflow with same stage title (e.g. Done),
+    // resolve by semantic stage key within the current task's workflow.
+    const stageById = await ProjectWorkFlowStatus.findOne({
+      _id: new mongoose.Types.ObjectId(rawValue),
+      isDeleted: false,
+    }).lean();
+    const crossWorkflowTitle = String(stageById?.title || stageById?.name || "").trim();
+    if (!crossWorkflowTitle) return "";
+    const matchedByExactTitle = existingStagesForWorkflow.find((stage) => {
+      const stageTitle = String(stage?.title || stage?.name || "").trim().toLowerCase();
+      return stageTitle && stageTitle === crossWorkflowTitle.toLowerCase();
+    });
+    if (matchedByExactTitle?._id) return matchedByExactTitle._id.toString();
+
+    const crossWorkflowKey = normalizeWorkflowStageKey(crossWorkflowTitle);
+    if (!crossWorkflowKey) return "";
+    const matchedByTitle = existingStagesForWorkflow.find((stage) => {
+      const stageKey = normalizeWorkflowStageKey(stage?.title || stage?.name || "");
+      return stageKey === crossWorkflowKey;
+    });
+    return matchedByTitle?._id?.toString() || "";
+  }
+
   if (!workflowId || !mongoose.Types.ObjectId.isValid(String(workflowId))) return "";
 
   const existingStages = await ProjectWorkFlowStatus.find({
@@ -122,13 +169,6 @@ const resolveWorkflowStageIdForTask = async ({
     .lean();
 
   if (!existingStages.length) return "";
-
-  if (mongoose.Types.ObjectId.isValid(rawValue)) {
-    const matchedById = existingStages.find(
-      (stage) => String(stage?._id || "") === rawValue
-    );
-    return matchedById?._id?.toString() || "";
-  }
 
   const targetKey = normalizeWorkflowStageKey(rawValue);
   if (!targetKey) return "";
