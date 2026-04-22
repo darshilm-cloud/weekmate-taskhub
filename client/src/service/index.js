@@ -538,7 +538,7 @@ export default class Service {
       this._responseInterceptorId = axios.interceptors.response.use(
         (response) => response,
         async (error) => {
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          if (error.response?.status === 401) {
             this.logOut();
           }
           return Promise.reject(error);
@@ -663,29 +663,46 @@ export default class Service {
   static permissionRoleChange(data) {
     try {
       const pms_role = getCookie("pms_role_id");
-      const storage_permission = JSON.parse(getCookie("user_permission"));
+      const cookiePermRaw = getCookie("user_permission");
+      
+      // If cookies aren't set yet, don't trigger logout
+      if (!pms_role || !cookiePermRaw) return;
+
+      const storage_permission = JSON.parse(cookiePermRaw);
       const permissions = data.permissions;
 
+      // If the API didn't return permissions in this response, skip check
+      if (!permissions) return;
+
       function arraysAreEqual(arr1, arr2) {
-        if (arr1.length !== arr2.length) {
+        if (!arr1 || !arr2 || arr1.length !== arr2.length) {
           return false;
         }
-        for (let i = 0; i < arr1.length; i++) {
-          if (arr1[i] !== arr2[i]) {
+        // Sort and convert to string to ensure stable comparison of IDs
+        const s1 = [...arr1].map(String).sort();
+        const s2 = [...arr2].map(String).sort();
+        
+        for (let i = 0; i < s1.length; i++) {
+          if (s1[i] !== s2[i]) {
             return false;
           }
         }
         return true;
       }
 
+      const roleIdFromApi = (data.pms_role_id && typeof data.pms_role_id === 'object') 
+        ? data.pms_role_id._id 
+        : data.pms_role_id;
+
       if (
-        (pms_role && data.pms_role_id !== pms_role) ||
+        (roleIdFromApi && String(roleIdFromApi) !== String(pms_role)) ||
         !arraysAreEqual(permissions, storage_permission)
       ) {
+        console.log("Permission mismatch detected, logging out...");
         this.logOut();
       }
     } catch (error) {
-      console.log(error, "error");
+      console.log(error, "error in permissionRoleChange");
     }
   }
 }

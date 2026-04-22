@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import ReactDOM from "react-dom";
-import { Switch, Tooltip } from "antd";
+import { Modal, Form, Input, Switch, Tooltip, Button } from "antd";
 import {
   BugOutlined,
   CalendarOutlined,
@@ -8,6 +8,7 @@ import {
   FolderOutlined,
   KeyOutlined,
   LockOutlined,
+  PlusOutlined,
   ProjectOutlined,
   SettingOutlined,
   TeamOutlined,
@@ -188,7 +189,11 @@ const PermissionModule = () => {
     onPermissionChange,
     savePermissions,
     discardChanges,
+    createRole,
   } = PermissionModuleController();
+
+  const [isAddRoleModalOpen, setIsAddRoleModalOpen] = React.useState(false);
+  const [addRoleForm] = Form.useForm();
 
   /* ── selected role object ── */
   const selectedRole = useMemo(
@@ -245,6 +250,14 @@ const PermissionModule = () => {
       {/* ══ Header ══ */}
       <div className="rpm-header">
         <h1 className="rpm-title">Role &amp; Permissions</h1>
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />} 
+          onClick={() => setIsAddRoleModalOpen(true)}
+          className="rpm-add-role-btn"
+        >
+          Add Role
+        </Button>
       </div>
 
       {/* ══ Stats Cards ══ */}
@@ -465,6 +478,38 @@ const PermissionModule = () => {
           )}
         </section>
       </div>
+
+      {/* ══ Add Role Modal ══ */}
+      <Modal
+        title="Add New Role"
+        open={isAddRoleModalOpen}
+        onCancel={() => {
+          setIsAddRoleModalOpen(false);
+          addRoleForm.resetFields();
+        }}
+        onOk={() => addRoleForm.submit()}
+        confirmLoading={saving}
+      >
+        <Form
+          form={addRoleForm}
+          layout="vertical"
+          onFinish={async (values) => {
+            const success = await createRole(values);
+            if (success) {
+              setIsAddRoleModalOpen(false);
+              addRoleForm.resetFields();
+            }
+          }}
+        >
+          <Form.Item
+            name="role_name"
+            label="Role Name"
+            rules={[{ required: true, message: "Please enter the role name" }]}
+          >
+            <Input placeholder="e.g. Quality Analyst" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
     </div>
   );

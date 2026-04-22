@@ -35,6 +35,12 @@
   gap: 10px;
 }
 
+.rpm-add-role-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  height: 38px;
+}
+
 .rpm-btn {
   display: inline-flex;
   align-items: center;

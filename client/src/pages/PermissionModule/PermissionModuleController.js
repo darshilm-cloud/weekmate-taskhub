@@ -194,7 +194,7 @@ const PermissionModuleController = () => {
 
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
-          api_url:    "/roles/add",
+          api_url:    "/roles/addRole",
           body:       reqBody,
         });
         dispatch(hideAuthLoader());
