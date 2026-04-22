@@ -159,6 +159,7 @@ exports.addUser = async (req, res) => {
     const { error, value } = validateFormatter(getAddUserSchema(), req.body);
 
     if (error) {
+      console.log("Error: ",error)
       return errorResponse(
         res,
         statusCode.BAD_REQUEST,
