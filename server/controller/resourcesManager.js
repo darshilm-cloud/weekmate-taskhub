@@ -166,14 +166,18 @@ exports.updateResource = async (req, res) => {
       return errorResponse(res, 400, error.details[0].message);
     }
 
-    if (await this.resourceExists(value.resource_name, req.params.id)) {
+    const existing = await Resources.findById(value.resourceId);
+    if (!existing) return errorResponse(res, 404, "Resource not found");
+    if (existing.isDefault) return errorResponse(res, 403, "Default resources cannot be edited");
+
+    if (await this.resourceExists(value.resource_name, value.resourceId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       const updateResourceData = await Resources.findByIdAndUpdate(
         value.resourceId,
         {
           resource_name: value.resource_name,
-          updatedBy: req.user._id, // assuming you have user id in req.user
+          updatedBy: req.user._id,
         },
         { new: true }
       );
@@ -204,12 +208,16 @@ exports.deleteResource = async (req, res) => {
       return errorResponse(res, 400, error.details[0].message);
     }
 
+    const existing = await Resources.findById(value.resourceId);
+    if (!existing) return errorResponse(res, 404, "Resource type not found");
+    if (existing.isDefault) return errorResponse(res, 403, "Default resources cannot be deleted");
+
     const ResourceData = await Resources.findByIdAndUpdate(
       value.resourceId,
       {
         isDeleted: true,
         deletedBy: req.user._id,
-        deletedAt: configs.utcDefault(), // assuming you have user id in req.user
+        deletedAt: configs.utcDefault(),
       },
       { new: true }
     );

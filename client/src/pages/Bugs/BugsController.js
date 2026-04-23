@@ -66,6 +66,8 @@ const BugsController = () => {
   const [editform] = Form.useForm();
   const [listForm] = Form.useForm();
   const searchRef = useRef();
+  const searchTextRef = useRef("");
+  const searchDebounceRef = useRef(null);
   const attachmentfileRef = useRef();
   const Search = Input.Search;
   const { Dragger } = Upload;
@@ -238,16 +240,19 @@ const BugsController = () => {
       return;
     }
     try {
+      const bugs = filterSchema?.bugs || {};
       const reqBody = {
         project_id: projectId,
         limit: 25,
         pageNo: 1,
-        ...filterSchema?.bugs,
+        ...(searchTextRef.current ? { search: searchTextRef.current } : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+        ...(filterAssigned?.length > 0 ? { assignees: filterAssigned } : {}),
+        ...(filterOnLabels?.length > 0 ? { labels: filterOnLabels } : {}),
+        ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
+        ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
+        ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
       };
-      if (searchText) reqBody.title = searchText;
-      if (filterStatus) reqBody.status = filterStatus;
-      if (filterAssigned?.length > 0) reqBody.assignees = filterAssigned;
-      if (filterOnLabels?.length > 0) reqBody.bug_labels = filterOnLabels;
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -291,17 +296,20 @@ const BugsController = () => {
     const nextPage = (columnPages[statusId] || 1) + 1;
 
     try {
+      const bugs = filterSchema?.bugs || {};
       const reqBody = {
         project_id: projectId,
         status_id: statusId,
         limit: 25,
         pageNo: nextPage,
-        ...filterSchema?.bugs,
+        ...(searchTextRef.current ? { search: searchTextRef.current } : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+        ...(filterAssigned?.length > 0 ? { assignees: filterAssigned } : {}),
+        ...(filterOnLabels?.length > 0 ? { labels: filterOnLabels } : {}),
+        ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
+        ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
+        ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
       };
-      if (searchText) reqBody.title = searchText;
-      if (filterStatus) reqBody.status = filterStatus;
-      if (filterAssigned?.length > 0) reqBody.assignees = filterAssigned;
-      if (filterOnLabels?.length > 0) reqBody.bug_labels = filterOnLabels;
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -446,11 +454,15 @@ const BugsController = () => {
   };
 
   const onSearchTask = (value) => {
-    setSearchText(value);
-    setFilterSchema((prev) => ({
-      ...prev,
-      bugs: { ...prev.bugs, title: value },
-    }));
+    searchTextRef.current = value;
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setSearchText(value);
+      setFilterSchema((prev) => ({
+        ...prev,
+        bugs: { ...prev.bugs, search: value },
+      }));
+    }, 400);
   };
 
   useEffect(() => {
@@ -876,7 +888,7 @@ const BugsController = () => {
     }
     setFilterSchema({
       ...filterSchema,
-      bugs: { ...filterSchema.bugs, startDate, dueDate },
+      bugs: { ...filterSchema.bugs, start_date: startDate, due_date: dueDate },
     });
     getBoardTasks();
     setIsPopoverVisibleView(false);

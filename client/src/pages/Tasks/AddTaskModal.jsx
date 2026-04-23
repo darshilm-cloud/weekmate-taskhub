@@ -103,6 +103,17 @@ export default function AddTaskModal({
       return;
     }
 
+      if (!values.start_date) {
+        message.error("Start date is required.");
+        setSubmitting(false);
+        return;
+      }
+      if (!values.end_date) {
+        message.error("End date is required.");
+        setSubmitting(false);
+        return;
+      }
+
       const dynamicCustomFields = { ...(values.custom_fields || {}) };
       for (const field of values.taskFormFields || []) {
         const key = String(field?.key || "");

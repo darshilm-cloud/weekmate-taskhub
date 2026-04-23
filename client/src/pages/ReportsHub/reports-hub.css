@@ -89,6 +89,8 @@
 .reports-hub-card-accent {
   position: absolute;
   border-radius: 999px;
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .reports-hub-card-accent-top {
