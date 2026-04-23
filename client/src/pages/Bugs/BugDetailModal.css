@@ -89,7 +89,7 @@
   line-height: 1.1;
 }
 
-.bug-header-title-input.ant-input,
+
 .bug-header-title-input.ant-input-borderless {
   background: transparent !important;
   color: #ffffff !important;
@@ -133,7 +133,9 @@
   display: flex;
   gap: 8px;
 }
-
+.bug-tittle .ant-input-borderless{
+    border: 1px solid #c2c3c5;
+}
 .action-icon-wrapper {
   width: 32px;
   height: 32px;
