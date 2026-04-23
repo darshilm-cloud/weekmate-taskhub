@@ -90,20 +90,23 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     width: 100%;
     transition: border-color 0.2s, background 0.2s;
 }
+
 .task-detail-title-input.ant-input:hover {
     border-color: #6b7280 !important;
     background: #fff !important;
 }
+
 .task-detail-title-input.ant-input:focus {
     border-color: #3b82f6 !important;
     background: #fff !important;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.1) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* Description CKEditor always shown */
 .task-detail-description-editor {
     margin-bottom: 12px;
 }
+
 .task-detail-description-editor .ck-editor__editable {
     min-height: 80px;
     max-height: 200px;
@@ -407,10 +410,10 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
 }
 
 .ant-avatar-string {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) !important;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) !important;
 }
 
 /* --------------- add task pop -------------- */
@@ -1031,12 +1034,14 @@ body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:ho
     border: 1px solid #b0b8c4 !important;
     border-radius: 4px !important;
 }
+
 .task-model .task-inner-card .flex-table .ant-select:hover .ant-select-selector {
     border-color: #6b7280 !important;
 }
+
 .task-model .task-inner-card .flex-table .ant-select-focused .ant-select-selector {
     border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.1) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 .task-model .task-inner-card .ant-select-dropdown {
@@ -1057,12 +1062,14 @@ body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:ho
     border: 1px solid #b0b8c4 !important;
     border-radius: 4px !important;
 }
+
 .task-model .flex-table .ant-picker:hover {
     border-color: #6b7280 !important;
 }
+
 .task-model .flex-table .ant-picker.ant-picker-focused {
     border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.1) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 .task-model .ant-form-horizontal .ant-row {
@@ -1085,18 +1092,22 @@ body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:ho
     margin-left: unset;
     margin-right: unset;
 }
-.task-model .task-inner-card .table-schedule-wrapper .estimated_time_input_container{
+
+.task-model .task-inner-card .table-schedule-wrapper .estimated_time_input_container {
     align-items: normal;
 }
+
 .task-model .right-task-detail-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners {
     max-height: 100px;
     overflow-y: auto;
     height: 100%;
 }
-.task-comment-icon{
+
+.task-comment-icon {
     display: flex;
     gap: 5px
 }
+
 /* -------------------------------- aug 16 ritesh ----------------------------- */
 .profile-sub-head .update-workflow-status {
     width: 100%;
@@ -1207,6 +1218,7 @@ body[data-theme="dark"] .profile-sub-head.update-task .update-workflow-status {
     .profile-sub-head.update-task .update-workflow-status .update-workflow-status-form {
         flex-wrap: wrap;
     }
+
     .profile-sub-head.update-task .update-workflow-status .ant-select {
         min-width: 220px;
         width: 100%;
@@ -1419,10 +1431,12 @@ body[data-theme="dark"] .move-task-stage-title {
     .profile-sub-head.update-task .head-box-inner .update-workflow-status {
         max-width: 90%;
     }
+
     .profile-sub-head.update-task .head-box-inner .update-workflow-status .update-workflow-status-form {
         flex-wrap: wrap;
     }
-    .profile-sub-head.update-task .head-box-inner .update-workflow-status .ant-form.ant-form-horizontal{
+
+    .profile-sub-head.update-task .head-box-inner .update-workflow-status .ant-form.ant-form-horizontal {
         justify-content: unset;
     }
 }
@@ -1674,10 +1688,10 @@ body.dark-theme .wm-force-dark-page .task-box h3,
 body.dark-theme .wm-force-dark-page .assignee-name,
 body.dark-theme .wm-force-dark-page .assignee-name p,
 body.dark-theme .wm-force-dark-page .task-time,
-body.dark-theme .wm-force-dark-page .task-time > span,
+body.dark-theme .wm-force-dark-page .task-time>span,
 body.dark-theme .wm-force-dark-page .task-due-date,
-body.dark-theme .wm-force-dark-page .task-due-date > span,
-body.dark-theme .wm-force-dark-page .task-due-date > a,
+body.dark-theme .wm-force-dark-page .task-due-date>span,
+body.dark-theme .wm-force-dark-page .task-due-date>a,
 body.dark-theme .wm-force-dark-page .task-comment-hour-detail-wrapper,
 body.dark-theme .wm-force-dark-page .task-comment-hour-detail-wrapper a,
 body.dark-theme .wm-force-dark-page .task-comment-hour-detail-wrapper i,
@@ -1688,10 +1702,10 @@ body[data-theme="dark"] .wm-force-dark-page .task-box h3,
 body[data-theme="dark"] .wm-force-dark-page .assignee-name,
 body[data-theme="dark"] .wm-force-dark-page .assignee-name p,
 body[data-theme="dark"] .wm-force-dark-page .task-time,
-body[data-theme="dark"] .wm-force-dark-page .task-time > span,
+body[data-theme="dark"] .wm-force-dark-page .task-time>span,
 body[data-theme="dark"] .wm-force-dark-page .task-due-date,
-body[data-theme="dark"] .wm-force-dark-page .task-due-date > span,
-body[data-theme="dark"] .wm-force-dark-page .task-due-date > a,
+body[data-theme="dark"] .wm-force-dark-page .task-due-date>span,
+body[data-theme="dark"] .wm-force-dark-page .task-due-date>a,
 body[data-theme="dark"] .wm-force-dark-page .task-comment-hour-detail-wrapper,
 body[data-theme="dark"] .wm-force-dark-page .task-comment-hour-detail-wrapper a,
 body[data-theme="dark"] .wm-force-dark-page .task-comment-hour-detail-wrapper i,
@@ -2117,11 +2131,11 @@ body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment 
     -webkit-text-fill-color: #dbe7f3 !important;
 }
 
-body.dark-theme .task-model .left-task-detail-panel .item-inner > p,
-body.dark-theme .task-model .left-task-detail-panel .item-inner > span,
+body.dark-theme .task-model .left-task-detail-panel .item-inner>p,
+body.dark-theme .task-model .left-task-detail-panel .item-inner>span,
 body.dark-theme .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table small,
-body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner > p,
-body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner > span,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner>p,
+body[data-theme="dark"] .task-model .left-task-detail-panel .item-inner>span,
 body[data-theme="dark"] .task-model .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table small {
     color: #94a3b8 !important;
     -webkit-text-fill-color: #94a3b8 !important;
@@ -2522,13 +2536,13 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head .
 
 .task-wrapper .task-box .task-due-date-wrapper,
 .task-wrapper .task-box .task-due-date-wrapper .task-due-date,
-.task-wrapper .task-box .task-due-date-wrapper .task-due-date > span,
-.task-wrapper .task-box .task-due-date-wrapper .task-due-date > a,
+.task-wrapper .task-box .task-due-date-wrapper .task-due-date>span,
+.task-wrapper .task-box .task-due-date-wrapper .task-due-date>a,
 .task-wrapper .task-box .assignee-name,
 .task-wrapper .task-box .assignee-name p,
 .task-wrapper .task-box .assignee-task-time,
 .task-wrapper .task-box .task-time,
-.task-wrapper .task-box .task-time > span,
+.task-wrapper .task-box .task-time>span,
 .task-wrapper .task-box .task-comment-hour-detail-wrapper,
 .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-bar,
 .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2537,13 +2551,13 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head .
 .task-wrapper .task-box i,
 .task-wrapper .wm-task-box .task-due-date-wrapper,
 .task-wrapper .wm-task-box .task-due-date-wrapper .task-due-date,
-.task-wrapper .wm-task-box .task-due-date-wrapper .task-due-date > span,
-.task-wrapper .wm-task-box .task-due-date-wrapper .task-due-date > a,
+.task-wrapper .wm-task-box .task-due-date-wrapper .task-due-date>span,
+.task-wrapper .wm-task-box .task-due-date-wrapper .task-due-date>a,
 .task-wrapper .wm-task-box .assignee-name,
 .task-wrapper .wm-task-box .assignee-name p,
 .task-wrapper .wm-task-box .assignee-task-time,
 .task-wrapper .wm-task-box .task-time,
-.task-wrapper .wm-task-box .task-time > span,
+.task-wrapper .wm-task-box .task-time>span,
 .task-wrapper .wm-task-box .task-comment-hour-detail-wrapper,
 .task-wrapper .wm-task-box .task-comment-hour-detail-wrapper .task-comment-bar,
 .task-wrapper .wm-task-box .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2587,13 +2601,13 @@ body[data-theme="dark"] .task-wrapper .task-box h3 {
 
 body.dark-theme .task-wrapper .task-box .task-due-date-wrapper,
 body.dark-theme .task-wrapper .task-box .task-due-date-wrapper .task-due-date,
-body.dark-theme .task-wrapper .task-box .task-due-date-wrapper .task-due-date > span,
-body.dark-theme .task-wrapper .task-box .task-due-date-wrapper .task-due-date > a,
+body.dark-theme .task-wrapper .task-box .task-due-date-wrapper .task-due-date>span,
+body.dark-theme .task-wrapper .task-box .task-due-date-wrapper .task-due-date>a,
 body.dark-theme .task-wrapper .task-box .assignee-name,
 body.dark-theme .task-wrapper .task-box .assignee-name p,
 body.dark-theme .task-wrapper .task-box .assignee-task-time,
 body.dark-theme .task-wrapper .task-box .task-time,
-body.dark-theme .task-wrapper .task-box .task-time > span,
+body.dark-theme .task-wrapper .task-box .task-time>span,
 body.dark-theme .task-wrapper .task-box .task-comment-hour-detail-wrapper,
 body.dark-theme .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-bar,
 body.dark-theme .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2602,13 +2616,13 @@ body.dark-theme .task-wrapper .task-box .task-comment-hour-detail-wrapper .draft
 body.dark-theme .task-wrapper .task-box i,
 body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper,
 body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper .task-due-date,
-body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper .task-due-date > span,
-body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper .task-due-date > a,
+body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper .task-due-date>span,
+body[data-theme="dark"] .task-wrapper .task-box .task-due-date-wrapper .task-due-date>a,
 body[data-theme="dark"] .task-wrapper .task-box .assignee-name,
 body[data-theme="dark"] .task-wrapper .task-box .assignee-name p,
 body[data-theme="dark"] .task-wrapper .task-box .assignee-task-time,
 body[data-theme="dark"] .task-wrapper .task-box .task-time,
-body[data-theme="dark"] .task-wrapper .task-box .task-time > span,
+body[data-theme="dark"] .task-wrapper .task-box .task-time>span,
 body[data-theme="dark"] .task-wrapper .task-box .task-comment-hour-detail-wrapper,
 body[data-theme="dark"] .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-bar,
 body[data-theme="dark"] .task-wrapper .task-box .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2651,13 +2665,13 @@ body[data-theme="dark"] .task-wrapper .task-box .avtar-group button.ant-btn svg 
 
 .task-wrapper .task-box.task-box-done .task-due-date-wrapper,
 .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date,
-.task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > span,
-.task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > a,
+.task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>span,
+.task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>a,
 .task-wrapper .task-box.task-box-done .assignee-name,
 .task-wrapper .task-box.task-box-done .assignee-name p,
 .task-wrapper .task-box.task-box-done .assignee-task-time,
 .task-wrapper .task-box.task-box-done .task-time,
-.task-wrapper .task-box.task-box-done .task-time > span,
+.task-wrapper .task-box.task-box-done .task-time>span,
 .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper,
 .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-bar,
 .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2665,13 +2679,13 @@ body[data-theme="dark"] .task-wrapper .task-box .avtar-group button.ant-btn svg 
 .task-wrapper .task-box.task-box-done i,
 .task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper,
 .task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper .task-due-date,
-.task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper .task-due-date > span,
-.task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper .task-due-date > a,
+.task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper .task-due-date>span,
+.task-wrapper .wm-task-box.wm-task-box-done .task-due-date-wrapper .task-due-date>a,
 .task-wrapper .wm-task-box.wm-task-box-done .assignee-name,
 .task-wrapper .wm-task-box.wm-task-box-done .assignee-name p,
 .task-wrapper .wm-task-box.wm-task-box-done .assignee-task-time,
 .task-wrapper .wm-task-box.wm-task-box-done .task-time,
-.task-wrapper .wm-task-box.wm-task-box-done .task-time > span,
+.task-wrapper .wm-task-box.wm-task-box-done .task-time>span,
 .task-wrapper .wm-task-box.wm-task-box-done .task-comment-hour-detail-wrapper,
 .task-wrapper .wm-task-box.wm-task-box-done .task-comment-hour-detail-wrapper .task-comment-bar,
 .task-wrapper .wm-task-box.wm-task-box-done .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2714,13 +2728,13 @@ body[data-theme="dark"] .task-wrapper .task-box.task-box-done h3 {
 
 body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper,
 body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date,
-body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > span,
-body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > a,
+body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>span,
+body.dark-theme .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>a,
 body.dark-theme .task-wrapper .task-box.task-box-done .assignee-name,
 body.dark-theme .task-wrapper .task-box.task-box-done .assignee-name p,
 body.dark-theme .task-wrapper .task-box.task-box-done .assignee-task-time,
 body.dark-theme .task-wrapper .task-box.task-box-done .task-time,
-body.dark-theme .task-wrapper .task-box.task-box-done .task-time > span,
+body.dark-theme .task-wrapper .task-box.task-box-done .task-time>span,
 body.dark-theme .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper,
 body.dark-theme .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-bar,
 body.dark-theme .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2728,13 +2742,13 @@ body.dark-theme .task-wrapper .task-box.task-box-done .task-comment-hour-detail-
 body.dark-theme .task-wrapper .task-box.task-box-done i,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date,
-body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > span,
-body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date > a,
+body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>span,
+body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-due-date-wrapper .task-due-date>a,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .assignee-name,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .assignee-name p,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .assignee-task-time,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-time,
-body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-time > span,
+body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-time>span,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-bar,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done .task-comment-hour-detail-wrapper .task-comment-icon,
@@ -2784,9 +2798,9 @@ body.admin-user[data-theme="dark"] .task-wrapper .wm-task-box {
 body.dark-theme .task-wrapper .drag_column h4,
 body[data-theme="dark"] .task-wrapper .drag_column h4,
 body.admin-user[data-theme="dark"] .task-wrapper .drag_column h4 {
-    background-color: rgba(255,255,255,0.06) !important;
+    background-color: rgba(255, 255, 255, 0.06) !important;
     color: var(--wm-task-text) !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
 }
 
 body.dark-theme .task-wrapper .drag_column h4 .wm-col-title,
@@ -2798,12 +2812,12 @@ body[data-theme="dark"] .task-wrapper .drag_column h4 .wm-col-title {
 body.dark-theme .task-wrapper .order.small-box,
 body[data-theme="dark"] .task-wrapper .order.small-box,
 body.admin-user[data-theme="dark"] .task-wrapper .order.small-box {
-    background-color: rgba(255,255,255,0.04) !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    border: 1px solid rgba(255,255,255,0.09) !important;
-    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-top: 3px solid var(--wm-col-border-color, rgba(148, 163, 184, 0.4)) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
 }
 
 /* Dark theme: column body wrappers transparent */
@@ -2831,7 +2845,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
 .task-wrapper .profilerightbar .project-task-section {
     display: flex;
     gap: 16px;
-    padding: 6px 2px 16px;
+    padding: 10px 16px;
     align-items: stretch;
     flex-wrap: nowrap;
     min-height: 0;
@@ -2847,9 +2861,9 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     flex: 0 0 285px;
     border-radius: 12px !important;
     overflow: hidden !important;
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.3)) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-top: 3px solid var(--wm-col-border-color, rgba(148, 163, 184, 0.3)) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07) !important;
     background: #f4f6f9 !important;
     align-self: stretch;
     max-height: 100%;
@@ -2885,7 +2899,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     justify-content: space-between !important;
     border-radius: 9px 9px 0 0 !important;
     border: none !important;
-    border-bottom: 1px solid rgba(0,0,0,0.07) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
     margin-bottom: 0 !important;
     background: #ffffff !important;
     flex-shrink: 0;
@@ -2923,7 +2937,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     background: transparent !important;
     overflow: hidden;
     height: var(--wm-board-column-body-height);
-    max-height: var(--wm-board-column-body-height);
+    max-height: calc(100dvh - 320px);
 }
 
 /* Quick-add strip above the scrollable list */
@@ -2953,11 +2967,15 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     grid-row: 3;
 }
 
+.task-wrapper .add-task-col-btn-wrapper button {
+    width: 100%;
+}
+
 /* ── Task card wrapper ── */
 .task-wrapper .wm-task-card,
 .task-wrapper .project-task-list .card {
-    border-top-right-radius:5px;
-    border-bottom-right-radius:5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
 
     margin-bottom: 0 !important;
     padding: 0 !important;
@@ -3084,6 +3102,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     opacity: 0.6;
     transition: opacity 0.15s;
 }
+
 .task-wrapper .drag_row button.ant-btn.add-task:hover {
     opacity: 1;
 }
@@ -3228,8 +3247,8 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 {
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .order.small-box {
     background: #f4f6f9 !important;
     border: 1px solid #e2e8f0 !important;
-    border-top: 3px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07) !important;
+    border-top: 3px solid var(--wm-col-border-color, rgba(148, 163, 184, 0.4)) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07) !important;
 }
 
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_row {
@@ -3377,8 +3396,13 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task button.ant-b
    ═══════════════════════════════════════════ */
 
 @keyframes wm-shimmer {
-    0%   { background-position: -600px 0; }
-    100% { background-position: 600px 0; }
+    0% {
+        background-position: -600px 0;
+    }
+
+    100% {
+        background-position: 600px 0;
+    }
 }
 
 /* ── Shared structure (no colors here) ── */
@@ -3401,8 +3425,14 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task button.ant-b
     padding-bottom: 8px;
 }
 
-.wm-skel-columns::-webkit-scrollbar { height: 4px; }
-.wm-skel-columns::-webkit-scrollbar-track { background: transparent; }
+.wm-skel-columns::-webkit-scrollbar {
+    height: 4px;
+}
+
+.wm-skel-columns::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .wm-skel-columns::-webkit-scrollbar-thumb {
     background: rgba(148, 163, 184, 0.15);
     border-radius: 2px;
@@ -3455,9 +3485,20 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task button.ant-b
     animation: wm-shimmer 1.6s ease-in-out infinite;
 }
 
-.wm-skel-card-title { height: 14px; width: 82%; }
-.wm-skel-card-sub   { height: 11px; width: 62%; }
-.wm-skel-card-date  { height: 10px; width: 44%; }
+.wm-skel-card-title {
+    height: 14px;
+    width: 82%;
+}
+
+.wm-skel-card-sub {
+    height: 11px;
+    width: 62%;
+}
+
+.wm-skel-card-date {
+    height: 10px;
+    width: 44%;
+}
 
 .wm-skel-card-footer {
     display: flex;
@@ -3559,13 +3600,33 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
 }
 
 /* ── Stagger shimmer (theme-agnostic, just delays) ── */
-.wm-skel-col:nth-child(1) .wm-skel-card:nth-child(2) .wm-skel-line { animation-delay: 0.1s; }
-.wm-skel-col:nth-child(1) .wm-skel-card:nth-child(3) .wm-skel-line { animation-delay: 0.2s; }
-.wm-skel-col:nth-child(2) .wm-skel-card:nth-child(1) .wm-skel-line { animation-delay: 0.15s; }
-.wm-skel-col:nth-child(2) .wm-skel-card:nth-child(2) .wm-skel-line { animation-delay: 0.25s; }
-.wm-skel-col:nth-child(3) .wm-skel-card:nth-child(1) .wm-skel-line { animation-delay: 0.05s; }
-.wm-skel-col:nth-child(3) .wm-skel-card:nth-child(2) .wm-skel-line { animation-delay: 0.2s; }
-.wm-skel-col:nth-child(4) .wm-skel-card:nth-child(1) .wm-skel-line { animation-delay: 0.1s; }
+.wm-skel-col:nth-child(1) .wm-skel-card:nth-child(2) .wm-skel-line {
+    animation-delay: 0.1s;
+}
+
+.wm-skel-col:nth-child(1) .wm-skel-card:nth-child(3) .wm-skel-line {
+    animation-delay: 0.2s;
+}
+
+.wm-skel-col:nth-child(2) .wm-skel-card:nth-child(1) .wm-skel-line {
+    animation-delay: 0.15s;
+}
+
+.wm-skel-col:nth-child(2) .wm-skel-card:nth-child(2) .wm-skel-line {
+    animation-delay: 0.25s;
+}
+
+.wm-skel-col:nth-child(3) .wm-skel-card:nth-child(1) .wm-skel-line {
+    animation-delay: 0.05s;
+}
+
+.wm-skel-col:nth-child(3) .wm-skel-card:nth-child(2) .wm-skel-line {
+    animation-delay: 0.2s;
+}
+
+.wm-skel-col:nth-child(4) .wm-skel-card:nth-child(1) .wm-skel-line {
+    animation-delay: 0.1s;
+}
 
 /* Task detail popup polish */
 .task-detail-popup .ant-modal-content {
@@ -3628,7 +3689,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.task-detail-popup .status-button > span {
+.task-detail-popup .status-button>span {
     padding: 6px 10px;
     border-radius: 999px;
     background: #f8fafc;
@@ -3646,14 +3707,14 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
 }
 
 .task-detail-popup .task-editbtn .ant-btn,
-.task-detail-popup .task-editbtn > .anticon {
+.task-detail-popup .task-editbtn>.anticon {
     border-radius: 10px;
     border: 1px solid #dbe6f2;
     background: #ffffff;
     padding: 8px;
 }
 
-.task-detail-popup .task-inner-card > h3 {
+.task-detail-popup .task-inner-card>h3 {
     font-size: 30px;
     font-weight: 700;
     color: #0f172a;
@@ -3877,7 +3938,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
     color: #475569 !important;
 }
 
-.task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main > .ck-editor__editable {
+.task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main>.ck-editor__editable {
     min-height: 132px;
     border: 1px solid #d6e2ef;
     border-radius: 0 0 12px 12px;
@@ -4041,8 +4102,8 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
     white-space: normal;
 }
 
-.task-detail-popup .left-task-detail-panel .table-schedule-wrapper .flex-table > div,
-.task-detail-popup .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table > div {
+.task-detail-popup .left-task-detail-panel .table-schedule-wrapper .flex-table>div,
+.task-detail-popup .left-task-detail-panel .attachment-comment .table-schedule-wrapper .flex-table>div {
     max-width: 100%;
 }
 
@@ -4173,8 +4234,8 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
 }
 
 .task-detail-popup .right-task-detail-panel .comment-textarea,
-.task-detail-popup .right-task-detail-panel .comment-textarea > .comment-textarea,
-.task-detail-popup .right-task-detail-panel .comment-textarea > .comment-textarea > div,
+.task-detail-popup .right-task-detail-panel .comment-textarea>.comment-textarea,
+.task-detail-popup .right-task-detail-panel .comment-textarea>.comment-textarea>div,
 .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor,
 .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main,
 .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-content.ck-editor__editable {
@@ -4219,7 +4280,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
     white-space: normal;
 }
 
-.task-detail-popup .task-history-inner.task-detail-inner.issue .table-left > .flex-table > a {
+.task-detail-popup .task-history-inner.task-detail-inner.issue .table-left>.flex-table>a {
     width: auto;
     max-width: 100%;
 }
@@ -4255,6 +4316,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
 }
 
 @media (max-width: 767px) {
+
     .task-detail-popup .left-task-detail-panel .table-schedule-wrapper ul li,
     .task-detail-popup .left-task-detail-panel .attachment-comment .table-schedule-wrapper ul li,
     .task-detail-popup .task-history-inner.task-detail-inner.issue .table-schedule-wrapper ul li {
@@ -4300,17 +4362,17 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel {
     background: linear-gradient(180deg, #0f1728 0%, #111c30 100%);
 }
 
-body.dark-theme .task-detail-popup .status-button > span,
+body.dark-theme .task-detail-popup .status-button>span,
 body.dark-theme .task-detail-popup .head-toolbar .done-btn,
 body.dark-theme .task-detail-popup .task-editbtn .ant-btn,
-body.dark-theme .task-detail-popup .task-editbtn > .anticon,
+body.dark-theme .task-detail-popup .task-editbtn>.anticon,
 body.dark-theme .task-detail-popup .task-inner-card .item-inner,
 body.dark-theme .task-detail-popup .right-task-detail-panel .main-comment-wrapper,
 body.dark-theme .task-detail-popup .right-task-detail-panel .task-no-comments,
-body[data-theme="dark"] .task-detail-popup .status-button > span,
+body[data-theme="dark"] .task-detail-popup .status-button>span,
 body[data-theme="dark"] .task-detail-popup .head-toolbar .done-btn,
 body[data-theme="dark"] .task-detail-popup .task-editbtn .ant-btn,
-body[data-theme="dark"] .task-detail-popup .task-editbtn > .anticon,
+body[data-theme="dark"] .task-detail-popup .task-editbtn>.anticon,
 body[data-theme="dark"] .task-detail-popup .task-inner-card .item-inner,
 body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .main-comment-wrapper,
 body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .task-no-comments {
@@ -4404,9 +4466,9 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 }
 
 body.dark-theme .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-toolbar,
-body.dark-theme .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main > .ck-editor__editable,
+body.dark-theme .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main>.ck-editor__editable,
 body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-toolbar,
-body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main > .ck-editor__editable {
+body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-textarea .ck.ck-editor__main>.ck-editor__editable {
     background: #0f1728 !important;
     border-color: rgba(69, 99, 145, 0.24) !important;
     color: #dce8fb !important;
@@ -4472,8 +4534,8 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .task-overview-m
     color: #dce7fb !important;
 }
 
-body.dark-theme .add-task-modal.edit-details-task-model .ant-form-item-label > label,
-body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-form-item-label > label {
+body.dark-theme .add-task-modal.edit-details-task-model .ant-form-item-label>label,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-form-item-label>label {
     color: #64829e !important;
 }
 
@@ -4497,20 +4559,20 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model textarea {
 body.dark-theme .add-task-modal.edit-details-task-model .ant-input::placeholder,
 body.dark-theme .add-task-modal.edit-details-task-model textarea::placeholder,
 body.dark-theme .add-task-modal.edit-details-task-model .ant-select-selection-placeholder,
-body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input > input::placeholder,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input>input::placeholder,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input::placeholder,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model textarea::placeholder,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-selection-placeholder,
-body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input > input::placeholder {
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input>input::placeholder {
     color: #3f5a74 !important;
 }
 
-body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input > input,
+body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-input>input,
 body.dark-theme .add-task-modal.edit-details-task-model .ant-select-selection-item,
 body.dark-theme .add-task-modal.edit-details-task-model .ant-select-arrow,
 body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-suffix,
 body.dark-theme .add-task-modal.edit-details-task-model .ant-picker-separator,
-body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input > input,
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-input>input,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-selection-item,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-select-arrow,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-picker-suffix,
@@ -4526,9 +4588,9 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .ant-input-numbe
 
 /* CKEditor dark */
 body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-toolbar,
-body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-editor__main > .ck-editor__editable,
+body.dark-theme .add-task-modal.edit-details-task-model .ck.ck-editor__main>.ck-editor__editable,
 body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-toolbar,
-body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-editor__main > .ck-editor__editable {
+body[data-theme="dark"] .add-task-modal.edit-details-task-model .ck.ck-editor__main>.ck-editor__editable {
     background: #0c1e33 !important;
     border-color: #1e3a58 !important;
     color: #dce7fb !important;
@@ -4592,7 +4654,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     border-radius: 12px !important;
     overflow: hidden !important;
     padding: 0 !important;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12) !important;
     border: 1px solid #e8edf3;
     background: #fff !important;
 }
@@ -4679,7 +4741,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
 }
 
 /* Task ID badge */
-.task-detail-popup .head-toolbar .status-button > span {
+.task-detail-popup .head-toolbar .status-button>span {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     color: #64748b;
@@ -4831,7 +4893,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     font-weight: 500 !important;
     height: 36px !important;
     padding: 0 20px !important;
-    box-shadow: 0 2px 0 rgba(5,145,255,0.1) !important;
+    box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1) !important;
     transition: all 0.2s;
     font-size: 14px !important;
 }
@@ -4846,7 +4908,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
 .task-detail-popup .modal-footer-flex .ant-btn:not(.ant-btn-primary) {
     background: #fff !important;
     border-color: #d9d9d9 !important;
-    color: rgba(0,0,0,0.88) !important;
+    color: rgba(0, 0, 0, 0.88) !important;
     border-radius: 6px !important;
     height: 36px !important;
     padding: 0 16px !important;
@@ -4926,27 +4988,27 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
 body.dark-theme .task-detail-popup .ant-modal-content,
 body[data-theme="dark"] .task-detail-popup .ant-modal-content {
     background: #141e2e !important;
-    border-color: rgba(74,104,150,0.2) !important;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5) !important;
 }
 
 body.dark-theme .task-detail-popup .head-toolbar,
 body[data-theme="dark"] .task-detail-popup .head-toolbar {
     background: #141e2e !important;
-    border-bottom-color: rgba(74,104,150,0.18) !important;
+    border-bottom-color: rgba(74, 104, 150, 0.18) !important;
 }
 
 body.dark-theme .task-detail-popup .head-toolbar .done-btn,
 body[data-theme="dark"] .task-detail-popup .head-toolbar .done-btn {
-    background: rgba(14,165,233,0.12) !important;
-    border-color: rgba(14,165,233,0.25) !important;
+    background: rgba(14, 165, 233, 0.12) !important;
+    border-color: rgba(14, 165, 233, 0.25) !important;
     color: #7dd3fc !important;
 }
 
-body.dark-theme .task-detail-popup .head-toolbar .status-button > span,
-body[data-theme="dark"] .task-detail-popup .head-toolbar .status-button > span {
-    background: rgba(255,255,255,0.06) !important;
-    border-color: rgba(255,255,255,0.12) !important;
+body.dark-theme .task-detail-popup .head-toolbar .status-button>span,
+body[data-theme="dark"] .task-detail-popup .head-toolbar .status-button>span {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     color: #94a3b8 !important;
 }
 
@@ -4954,15 +5016,15 @@ body.dark-theme .task-detail-popup .head-toolbar .task-actions button,
 body.dark-theme .task-detail-popup .head-toolbar button.ant-btn,
 body[data-theme="dark"] .task-detail-popup .head-toolbar .task-actions button,
 body[data-theme="dark"] .task-detail-popup .head-toolbar button.ant-btn {
-    background: rgba(255,255,255,0.06) !important;
-    border-color: rgba(255,255,255,0.12) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     color: #94a3b8 !important;
 }
 
 body.dark-theme .task-detail-popup .left-task-detail-panel,
 body[data-theme="dark"] .task-detail-popup .left-task-detail-panel {
     background: #141e2e !important;
-    border-right-color: rgba(74,104,150,0.18) !important;
+    border-right-color: rgba(74, 104, 150, 0.18) !important;
 }
 
 body.dark-theme .task-detail-popup .left-task-detail-panel .item-inner h3,
@@ -4972,12 +5034,12 @@ body[data-theme="dark"] .task-detail-popup .left-task-detail-panel .item-inner h
 
 body.dark-theme .task-detail-popup .table-schedule-wrapper ul li,
 body[data-theme="dark"] .task-detail-popup .table-schedule-wrapper ul li {
-    border-bottom-color: rgba(74,104,150,0.12) !important;
+    border-bottom-color: rgba(74, 104, 150, 0.12) !important;
 }
 
 body.dark-theme .task-detail-popup .table-schedule-wrapper ul li:hover,
 body[data-theme="dark"] .task-detail-popup .table-schedule-wrapper ul li:hover {
-    background: rgba(255,255,255,0.03) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
 }
 
 body.dark-theme .task-detail-popup .table-schedule-wrapper .table-left,
@@ -4993,15 +5055,15 @@ body[data-theme="dark"] .task-detail-popup .table-schedule-wrapper .table-right 
 body.dark-theme .task-detail-popup .modal-footer-flex,
 body[data-theme="dark"] .task-detail-popup .modal-footer-flex {
     background: #141e2e !important;
-    border-top-color: rgba(74,104,150,0.18) !important;
+    border-top-color: rgba(74, 104, 150, 0.18) !important;
 }
 
 body.dark-theme .task-detail-popup .modal-footer-flex .flex-btn:not(.save-btn) button,
 body.dark-theme .task-detail-popup .modal-footer-flex .ant-btn:not(.ant-btn-primary),
 body[data-theme="dark"] .task-detail-popup .modal-footer-flex .flex-btn:not(.save-btn) button,
 body[data-theme="dark"] .task-detail-popup .modal-footer-flex .ant-btn:not(.ant-btn-primary) {
-    background: rgba(255,255,255,0.06) !important;
-    border-color: rgba(255,255,255,0.12) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     color: #94a3b8 !important;
 }
 
@@ -5013,7 +5075,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel {
 body.dark-theme .task-detail-popup .right-task-detail-panel .right-toolbar,
 body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .right-toolbar {
     background: #141e2e !important;
-    border-bottom-color: rgba(74,104,150,0.18) !important;
+    border-bottom-color: rgba(74, 104, 150, 0.18) !important;
 }
 
 body.dark-theme .task-detail-popup .right-task-detail-panel .right-toolbar .right-toolbar-tab,
@@ -5037,7 +5099,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .task-detail
 body.dark-theme .task-detail-popup .right-task-detail-panel .comment-textarea,
 body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-textarea {
     background: #141e2e !important;
-    border-color: rgba(74,104,150,0.2) !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
 }
 
 /* ═══════════════════════════════════════════════
@@ -5217,7 +5279,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
     display: flex;
     align-items: center;
@@ -5227,7 +5289,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 }
 
 .task-detail-drawer .ant-drawer-close:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     color: #fff;
 }
 
@@ -5315,9 +5377,11 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
     border: 1px solid #e4ecf5;
     background: #f8fbff;
 }
+
 .add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-stage-card .subscriber-info {
-margin-bottom: 10px;
+    margin-bottom: 10px;
 }
+
 .add-task-modal.add-list-modal:not(.copy-task-modal) .subscriber-name {
     color: #183b56;
     font-weight: 600;
@@ -5340,43 +5404,43 @@ margin-bottom: 10px;
 
 /* ── CSV Ellipsis Dropdown ──────────────────────────────────── */
 .wm-csv-dropdown .ant-dropdown-menu {
-  padding: 6px !important;
-  border-radius: 10px !important;
-  border: 1px solid #e8edf3 !important;
-  box-shadow: 0 6px 24px rgba(11, 58, 91, 0.13), 0 1px 4px rgba(0,0,0,0.06) !important;
-  background: #ffffff !important;
-  min-width: 160px !important;
+    padding: 6px !important;
+    border-radius: 10px !important;
+    border: 1px solid #e8edf3 !important;
+    box-shadow: 0 6px 24px rgba(11, 58, 91, 0.13), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+    background: #ffffff !important;
+    min-width: 160px !important;
 }
 
 .wm-csv-dropdown .ant-dropdown-menu-item {
-  border-radius: 8px !important;
-  margin-bottom: 2px !important;
-  padding: 8px 12px !important;
-  transition: background 0.15s ease !important;
+    border-radius: 8px !important;
+    margin-bottom: 2px !important;
+    padding: 8px 12px !important;
+    transition: background 0.15s ease !important;
 }
 
 .wm-csv-dropdown .ant-dropdown-menu-item:last-child {
-  margin-bottom: 0 !important;
+    margin-bottom: 0 !important;
 }
 
 .wm-csv-dropdown .ant-dropdown-menu-item:hover {
-  background: #f1f5f9 !important;
+    background: #f1f5f9 !important;
 }
 
 /* Dark theme */
 body.dark-theme .wm-csv-dropdown .ant-dropdown-menu,
 body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu {
-  background: #0f1e30 !important;
-  border-color: rgba(74, 104, 150, 0.28) !important;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4) !important;
+    background: #0f1e30 !important;
+    border-color: rgba(74, 104, 150, 0.28) !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4) !important;
 }
 
 body.dark-theme .wm-csv-dropdown .ant-dropdown-menu-item:hover,
 body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu-item:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
 }
 
 body.dark-theme .wm-csv-dropdown .ant-dropdown-menu-item span,
 body[data-theme="dark"] .wm-csv-dropdown .ant-dropdown-menu-item span {
-  color: #dce7fb !important;
+    color: #dce7fb !important;
 }

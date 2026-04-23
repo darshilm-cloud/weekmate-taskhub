@@ -594,14 +594,13 @@ const BugList = ({
             <Tooltip title="Add a stage" placement="top">
               <Button
                 type="text"
-                shape="circle"
-                size="large"
+          
+         
                 aria-label="Add a stage"
                 icon={<PlusOutlined />}
                 onClick={onAddStageClick}
                 style={{
-                  width: 36,
-                  height: 36,
+              
                   border: "1px dashed #9ca3af",
                   color: "#4b5563",
                   background: "#ffffff",

@@ -131,8 +131,7 @@
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden;
-    height: var(--wm-bugs-column-body-height);
-    max-height: var(--wm-bugs-column-body-height);
+    max-height:calc(100dvh - 320px);
 }
 
 .bugs-task-wrapper .drag_row .project-add-task {
@@ -167,7 +166,6 @@ width: 100%;
     border-radius: 10px !important;
     border: 1px solid #e5e7eb !important;
     border-left: 1px solid #e5e7eb !important;
-    overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
     background: #ffffff !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;

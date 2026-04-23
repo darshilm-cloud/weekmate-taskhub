@@ -41,19 +41,21 @@
 
 /* Hide scrollbars for the whole modal content body */
 .admin-user .modern-bug-detail-modal .ant-modal-body {
-padding: 0;
-height: 100%;
-max-height: 100%;
+  padding: 0;
+  height: 100%;
+  max-height: 100%;
 }
 
 .modern-bug-detail-modal .ant-modal-body::-webkit-scrollbar {
   display: none;
   /* Chrome, Safari and Opera */
 }
-.modern-bug-detail-modal .task-detail-content-grid{
-      max-height: calc(100dvh - 380px);
-      min-height: 400px;
+
+.modern-bug-detail-modal .task-detail-content-grid {
+  max-height: calc(100dvh - 380px);
+  min-height: 400px;
 }
+
 /* Header Redesign */
 .bug-detail-header-premium {
   background: #003a61;
@@ -122,6 +124,9 @@ max-height: 100%;
 .add-bug-modern-modal .bug-header-title-input.ant-input,
 .add-bug-modern-modal .bug-header-title-input.ant-input-borderless {
   padding-left: 18px !important;
+  margin-bottom: 20px;
+  background-color: #ffffff46 !important;
+  max-width: 90%;
 }
 
 .header-actions {
@@ -301,26 +306,9 @@ max-height: 100%;
   display: none;
 }
 
-/* Section Card Styling */
-.section-card {
-  background: white;
-  border-radius: 10px;
-  padding: 14px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 12px;
-}
 
-.section-card-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-  letter-spacing: 0.5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+
+
 
 .section-card-main-title {
   font-size: 16px;
@@ -403,13 +391,12 @@ max-height: 100%;
   font-size: 14px;
 }
 
-/* Select and Input styling within cards */
-.section-card .ant-select-selector,
-.section-card .ant-picker,
-.section-card .ant-input {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  background: #f8fafc !important;
+.section-card-title {
+  margin-bottom: 4px;
+}
+
+.bug-files-container {
+  border: 1px dashed #9ca3af;
 }
 
 /* Show all selected assignees (avoid "+N" collapse) */
@@ -455,7 +442,7 @@ max-height: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 12px;
+
 }
 
 .premium-global-save-btn {
@@ -478,7 +465,7 @@ max-height: 100%;
 .bug-detail-modal-footer-actions {
   display: flex;
   gap: 10px;
-  padding:10px 12px;
+  padding: 10px 12px;
   position: sticky;
   bottom: 0;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(248, 250, 252, 1) 40%);
