@@ -1095,6 +1095,7 @@ const BugsPMS = () => {
               layout="vertical"
               onFinish={ (values) => handleTaskOps(values) }
             >
+   <div className="task-detail-content-grid">
               <div className="section-card">
                 <div className="section-card-title">
                   <span>Task Brief</span>
@@ -1353,10 +1354,11 @@ const BugsPMS = () => {
                   </div>
                 </div>
               </div>
+   </div>
 
               <div className="bug-detail-modal-footer-actions">
                 <Button
-                  className="bug-detail-primary-btn"
+                  className="add-btn"
                   type="primary"
                   icon={ <SaveOutlined /> }
                   onClick={ () => {
@@ -1367,7 +1369,7 @@ const BugsPMS = () => {
                 >
                   Save
                 </Button>
-                <Button className="bug-detail-secondary-btn" onClick={ handleCancelTaskModal }>
+                <Button className="delete-btn" onClick={ handleCancelTaskModal }>
                   Close
                 </Button>
               </div>
@@ -1419,7 +1421,8 @@ const BugsPMS = () => {
                       { addBugCommentFiles.map((file, index) => (
                         <span key={ `${file?.name || "file"}-${index}` } className="bug-detail-composer-file-chip">
                           <span title={ file?.name }>{ file?.name || `File ${index + 1}` }</span>
-                          <button type="button" onClick={ () => removeCommentFile(index, "add") }>
+                          <button     type="text"
+                            size="small"  onClick={ () => removeCommentFile(index, "add") }>
                             x
                           </button>
                         </span>
@@ -1513,6 +1516,7 @@ const BugsPMS = () => {
             layout="vertical"
             onFinish={ (values) => handleTaskOps(values, true) }
           >
+   <div className="task-detail-content-grid">
             <div className="section-card">
               <div className="section-card-title">
                 <span>Bug Setup</span>
@@ -1825,17 +1829,18 @@ const BugsPMS = () => {
                 </div>
               </div>
             </div>
+   </div>
 
             <div className="bug-detail-modal-footer-actions">
               <Button
-                className="bug-detail-primary-btn"
+                className="add-btn"
                 type="primary"
-                icon={ <SaveOutlined /> }
+           
                 onClick={ () => editform.submit() }
               >
                 Save
               </Button>
-              <Button className="bug-detail-secondary-btn" onClick={ handleCancelTaskModal }>
+              <Button className="delete-btn" onClick={ handleCancelTaskModal }>
                 Close
               </Button>
             </div>
@@ -1887,7 +1892,8 @@ const BugsPMS = () => {
                     { editBugCommentFiles.map((file, index) => (
                       <span key={ `${file?.name || "file"}-${index}` } className="bug-detail-composer-file-chip">
                         <span title={ file?.name }>{ file?.name || `File ${index + 1}` }</span>
-                        <button type="button" onClick={ () => removeCommentFile(index, "edit") }>
+                        <button     type="text"
+                            size="small"  onClick={ () => removeCommentFile(index, "edit") }>
                           x
                         </button>
                       </span>

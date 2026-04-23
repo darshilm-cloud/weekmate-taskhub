@@ -43,6 +43,8 @@ import {
   Tooltip,
   message,
   Image,
+  Row,
+  Col,
 } from "antd";
 import dayjs from "dayjs";
 import "../style.css";
@@ -1324,27 +1326,13 @@ const TaskList = ({
                           );
                         })}
                     </div>
-                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px", marginTop: "auto", flexShrink: 0 }}>
+                    <div className="add-task-col-btn-wrapper" >
                       <Button 
                         type="text" 
                         icon={<PlusOutlined />} 
                         onClick={() => showModalTaskModal(boardData?.workflowStatus?._id)}
-                        className="add-task-col-btn"
-                        style={{ 
-                          width: "100%", 
-                          textAlign: "left", 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          marginTop: 8, 
-                          color: "#64748b",
-                          background: "rgba(241, 245, 249, 0.6)",
-                          borderRadius: "8px",
-                          padding: "8px 12px",
-                          fontWeight: 500,
-                          border: "1px dashed #cbd5e1",
-                          transition: "all 0.2s ease"
-                        }}
+                        className="add-btn"
+              
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = "#e2e8f0";
                           e.currentTarget.style.color = "#334155";
@@ -1369,195 +1357,206 @@ const TaskList = ({
         ))}
       </div>
 
-      <Modal
-        title={null}
-        open={isCopyModalOpen}
-        footer={null}
-        onCancel={handleCancelCopyModal}
-        onOk={handleOkCopyModal}
-        className="copy-task-modal add-list-modal"
-      >
-        <div className="modal-header">
-          <h1>Copy Task</h1>
-        </div>
-        <div className="overview-modal-wrapper">
-          <Form form={copyform} onFinish={addCopyOfTask}>
-            <div className="topic-cancel-wrapper task-list-pop-wrapper">
-              <Form.Item>
-                <Input
-                  name="title"
-                  placeholder="Title"
-                  value={copyFormData.title || `Copy Of ${taskDetails?.title}`}
+    <Modal
+  title="Copy Task"
+  open={isCopyModalOpen}
+  onCancel={handleCancelCopyModal}
+  onOk={handleOkCopyModal}
+  className="copy-task-modal add-list-modal"
+  footer={[
+        <Button
+      key="cancel"
+      onClick={handleCancelCopyModal}
+      className="delete-btn ant-delete"
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="save"
+      type="primary"
+      className="add-btn"
+      onClick={() => copyform.submit()}
+    >
+      Save
+    </Button>,
+
+  ]}
+>
+  <div className="overview-modal-wrapper">
+    <Form form={copyform} onFinish={addCopyOfTask}>
+      <div className="topic-cancel-wrapper task-list-pop-wrapper">
+        <Row gutter={[16, 0]}>
+          <Col xs={24}>
+            <Form.Item>
+              <Input
+                name="title"
+                placeholder="Title"
+                value={copyFormData.title || `Copy Of ${taskDetails?.title}`}
+                onChange={(e) =>
+                  setCopyFormData({ ...copyFormData, title: e.target.value })
+                }
+              />
+            </Form.Item>
+          </Col>
+
+          <Col xs={24}>
+            <Form.Item className="subscriber-btn">
+              <Select
+                disabled={true}
+                placeholder="select project"
+                size="large"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children
+                    ?.toLowerCase()
+                    .indexOf(input?.toLowerCase()) >= 0
+                }
+                filterSort={(optionA, optionB) =>
+                  optionA.children
+                    ?.toLowerCase()
+                    .localeCompare(optionB.children?.toLowerCase())
+                }
+                value={projectTitle}
+              >
+                <option>{projectTitle}</option>
+              </Select>
+            </Form.Item>
+          </Col>
+
+          <Col xs={24}>
+            <Form.Item className="subscriber-btn">
+              <Select
+                placeholder="select Task"
+                size="large"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children
+                    ?.toLowerCase()
+                    .indexOf(input?.toLowerCase()) >= 0
+                }
+                filterSort={(optionA, optionB) =>
+                  optionA.children
+                    ?.toLowerCase()
+                    .localeCompare(optionB.children?.toLowerCase())
+                }
+                value={copyFormData.task_id || taskDetails?.mainTask?.title}
+                onChange={(value) =>
+                  setCopyFormData({ ...copyFormData, task_id: value })
+                }
+              >
+                {mainTask.map((item, index) => (
+                  <Option
+                    key={index}
+                    value={item._id}
+                    style={{ textTransform: "capitalize" }}
+                  >
+                    {item.title}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+
+          <Col xs={24}>
+            <Form.Item className="subscriber-btn">
+              <Select
+                placeholder="select workflow stage"
+                size="large"
+                showSearch
+                filterOption={(input, option) =>
+                  option.children
+                    ?.toLowerCase()
+                    .indexOf(input?.toLowerCase()) >= 0
+                }
+                filterSort={(optionA, optionB) =>
+                  optionA.children
+                    ?.toLowerCase()
+                    .localeCompare(optionB.children?.toLowerCase())
+                }
+                value={
+                  copyFormData.task_status || taskDetails?.task_status?._id
+                }
+                onChange={(value) =>
+                  setCopyFormData({ ...copyFormData, task_status: value })
+                }
+              >
+                {projectWorkflowStage.map((item, index) => (
+                  <Option
+                    key={index}
+                    value={item._id}
+                    style={{ textTransform: "capitalize" }}
+                  >
+                    {item.title}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+
+          <Col xs={24}>
+            <h2>Copy:</h2>
+          </Col>
+
+          <Col xs={24}>
+            <div className="coppy-task-data">
+              <Form.Item
+                name="assignee"
+                valuePropName="checked"
+                initialValue={copyFormData.isCopyAssignee}
+              >
+                <Checkbox
+                  checked={true}
                   onChange={(e) =>
-                    setCopyFormData({ ...copyFormData, title: e.target.value })
-                  }
-                />
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  disabled={true}
-                  placeholder="select project"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={projectTitle}
-                >
-                  <option>{projectTitle}</option>
-                </Select>
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  placeholder="select Task"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={copyFormData.task_id || taskDetails?.mainTask?.title}
-                  onChange={(value) =>
-                    setCopyFormData({ ...copyFormData, task_id: value })
+                    setCopyFormData({
+                      ...copyFormData,
+                      isCopyAssignee: e.target.checked,
+                    })
                   }
                 >
-                  {mainTask.map((item, index) => (
-                    <Option
-                      key={index}
-                      value={item._id}
-                      style={{ textTransform: "capitalize" }}
-                    >
-                      {item.title}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  placeholder="select workflow stage"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={
-                    copyFormData.task_status || taskDetails?.task_status?._id
-                  }
-                  onChange={(value) =>
-                    setCopyFormData({ ...copyFormData, task_status: value })
-                  }
-                >
-                  {projectWorkflowStage.map((item, index) => (
-                    <Option
-                      key={index}
-                      value={item._id}
-                      style={{ textTransform: "capitalize" }}
-                    >
-                      {item.title}
-                    </Option>
-                  ))}
-                </Select>
+                  Assignees
+                </Checkbox>
               </Form.Item>
 
-              <h2>Copy:</h2>
-              <div className="coppy-task-data">
-                <Form.Item
-                  name="assignee"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyAssignee}
+              <Form.Item
+                name="dates"
+                valuePropName="checked"
+                initialValue={copyFormData.isCopyDates}
+              >
+                <Checkbox
+                  onChange={(e) =>
+                    setCopyFormData({
+                      ...copyFormData,
+                      isCopyDates: e.target.checked,
+                    })
+                  }
                 >
-                  <Checkbox
-                    value={copyFormData.isCopyAssignee}
-                    checked={true}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyAssignee: e.target.checked,
-                      })
-                    }
-                  >
-                    Assignees
-                  </Checkbox>
-                </Form.Item>
+                  Dates
+                </Checkbox>
+              </Form.Item>
 
-                <Form.Item
-                  name="dates"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyDates}
+              <Form.Item
+                name="comments"
+                valuePropName="checked"
+                initialValue={copyFormData.isCopyComments}
+              >
+                <Checkbox
+                  onChange={(e) =>
+                    setCopyFormData({
+                      ...copyFormData,
+                      isCopyComments: e.target.checked,
+                    })
+                  }
                 >
-                  <Checkbox
-                    value={copyFormData.isCopyDates}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyDates: e.target.checked,
-                      })
-                    }
-                  >
-                    Dates
-                  </Checkbox>
-                </Form.Item>
-
-                <Form.Item
-                  name="comments"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyComments}
-                >
-                  <Checkbox
-                    value={copyFormData.isCopyComments}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyComments: e.target.checked,
-                      })
-                    }
-                  >
-                    Comments
-                  </Checkbox>
-                </Form.Item>
-              </div>
+                  Comments
+                </Checkbox>
+              </Form.Item>
             </div>
-
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  htmlType="submit"
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={handleCancelCopyModal}
-                  className="square-outline-btn ant-delete"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </Form>
-        </div>
-      </Modal>
+          </Col>
+        </Row>
+      </div>
+    </Form>
+  </div>
+</Modal>
 
       <TaskDetailModal
         open={modalIsOpen}

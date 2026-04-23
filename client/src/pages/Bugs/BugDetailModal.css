@@ -40,24 +40,20 @@
 }
 
 /* Hide scrollbars for the whole modal content body */
-.modern-bug-detail-modal .ant-modal-body {
-  height: 90vh;
-  max-height: 90vh;
-  padding: 12px !important;
-  /* white inset like Task modal screenshot */
-  background: #ffffff;
-  overflow: hidden;
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE and Edge */
+.admin-user .modern-bug-detail-modal .ant-modal-body {
+padding: 0;
+height: 100%;
+max-height: 100%;
 }
 
 .modern-bug-detail-modal .ant-modal-body::-webkit-scrollbar {
   display: none;
   /* Chrome, Safari and Opera */
 }
-
+.modern-bug-detail-modal .task-detail-content-grid{
+      max-height: calc(100dvh - 380px);
+      min-height: 400px;
+}
 /* Header Redesign */
 .bug-detail-header-premium {
   background: #003a61;
@@ -341,9 +337,7 @@
   padding: 6px 10px !important;
 }
 
-.bug-detail-modal-left .section-card {
-  margin: 12px;
-}
+
 
 .bug-description-content {
   min-height: 20px;
@@ -425,6 +419,7 @@
 
 .section-card .ant-select-multiple .ant-select-selection-overflow {
   flex-wrap: wrap !important;
+  column-gap: 8px;
 }
 
 
@@ -483,12 +478,13 @@
 .bug-detail-modal-footer-actions {
   display: flex;
   gap: 10px;
-  padding: 0 12px 14px;
+  padding:10px 12px;
   position: sticky;
   bottom: 0;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(248, 250, 252, 1) 40%);
   border-top: 1px solid #eef2f7;
   z-index: 6;
+  justify-content: flex-end;
 }
 
 .bug-detail-primary-btn {
@@ -590,7 +586,7 @@
 
 /* Adjusting header content */
 .bug-detail-header-premium {
-  min-height: 140px;
+  /* min-height: 140px; */
   background: #0b3a5b;
   padding: 14px 18px;
   color: white;
@@ -711,7 +707,7 @@
 
 .bug-detail-discussion .comment-list-wrapper {
   flex: 1;
-  overflow-y: scroll;
+  overflow-y: auto;
   /* always show scrollbar track */
   height: 100%;
   padding: 10px 10px 2px;

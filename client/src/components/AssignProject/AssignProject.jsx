@@ -2219,8 +2219,11 @@ const AssignProject = () => {
                             </div>
                             {section.items.length === 0 ? (
                               <div className="ap-browser-list-empty">
-                                <InboxOutlined style={{ fontSize: "16px", marginRight: "6px" }} />
-                                No tasks
+                              <p className="no-data-found">
+
+                                <NoDataFoundIcon />
+                                <span> No tasks</span> 
+                              </p>
                               </div>
                             ) : (
                               section.items.map((task) => (
@@ -2260,7 +2263,7 @@ const AssignProject = () => {
                         <div className="ap-browser-kanban-setting">Setting</div>
                       </div>
                       <div className="ap-browser-kanban-empty">
-                        <div className="ap-browser-kanban-icon">⋯</div>
+                        <div className="ap-browser-kanban-icon"><NoDataFoundIcon/></div>
                         <div>Please Select OR Set Pipeline</div>
                       </div>
                     </div>
