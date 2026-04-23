@@ -172,6 +172,8 @@ function ReportsHub() {
   // Cache for the computed project progress map — avoids re-fetching 5000 tasks on search
   // Stores: { projectProgressMap, totalTasks, completedTasks, absoluteTotal }
   const taskProgressCacheRef = useRef(null);
+  const reportDataRef = useRef(reportData);
+  reportDataRef.current = reportData;
 
   const currentPage = pageMeta[reportKey];
 
@@ -340,13 +342,14 @@ function ReportsHub() {
         setLoading(true);
       }
 
-      const selectedDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[0]) : moment(filters.date)) : null;
-      const dailyStartDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[0]).startOf("day") : moment(filters.date).startOf("day")) : null;
-      const dailyEndDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[1]).endOf("day") : moment(filters.date).endOf("day")) : null;
+      const reportDateRange = getReportDateRange(filters);
+      const selectedDate = reportDateRange.selectedDate;
+      const dailyStartDate = reportDateRange.startMoment;
+      const dailyEndDate = reportDateRange.endMoment;
       if (signal?.aborted) return;
 
-      const startDate = filters.startDate ? moment(filters.startDate).startOf("day") : (filters.date && Array.isArray(filters.date) ? moment(filters.date[0]).startOf("day") : moment().startOf("month"));
-      const endDate = filters.endDate ? moment(filters.endDate).endOf("day") : (filters.date && Array.isArray(filters.date) ? moment(filters.date[1]).endOf("day") : moment().endOf("day"));
+      const startDate = reportDateRange.startMoment || moment().startOf("month");
+      const endDate = reportDateRange.endMoment || moment().endOf("day");
       const selectedProjectIds = Array.isArray(filters.projectIds)
         ? filters.projectIds.filter(Boolean)
         : [];
@@ -357,116 +360,52 @@ function ReportsHub() {
         viewAll: true,
         status: filters.status || "all",
         userId: filters.userId && filters.userId !== "all" ? filters.userId : undefined,
-        startDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
-        endDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
+        startDate: reportDateRange.startIso,
+        endDate: reportDateRange.endIso,
         projectIds: selectedProjectIds,
+        search: filters.search?.trim() || null,
       });
 
       if (reportKey === "project-report") {
-        const isPageChangeOnly = previousFiltersRef.current === filters;
-
         // Detect if ONLY the search text changed (not dates/projects/page)
         const previousFilters = previousFiltersRef.current || defaultFilters;
         const isSearchOnlyChange =
           previousFilters.search !== filters.search &&
           previousFilters.startDate === filters.startDate &&
           previousFilters.endDate === filters.endDate &&
+          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
+          previousFilters.status === filters.status &&
           JSON.stringify(previousFilters.projectIds) === JSON.stringify(filters.projectIds);
 
         // ─── FAST PATH: search-only with warm cache ───────────────────────
         // Skip ALL task API calls; just filter the project list and reuse cached progress
-        if (isSearchOnlyChange && taskProgressCacheRef.current) {
+        if (isSearchOnlyChange && taskProgressCacheRef.current?.projectRows) {
           console.log('⚡ Search-only fast path — reusing cached progress map');
 
-          const [projectsResponse, projectListResponse] = await Promise.all([
-            Service.makeAPICall({
-              methodName: Service.postMethod,
-              api_url: Service.getProjectRunningReportsDetails,
-              body: {
-                technologies: [],
-                types: [],
-                managers: [],
-                search: filters.search?.trim() || "",
-                pageNo: pageNo,
-                limit: pageSize,
-                sort: "title",
-                sortBy: "asc",
-                isExport: false,
-              },
-            }),
-            Service.makeAPICall({
-              methodName: Service.getMethod,
-              api_url: Service.getProjectList,
-              params: `page=${pageNo}&limit=${pageSize}&includeClosed=true${filters.search ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
-            }),
-          ]);
+          const { projectProgressMap, projectRows: cachedProjectRows, totalTasks, completedTasks, absoluteTotal } = taskProgressCacheRef.current;
+          const searchFilteredProjects = filterProjectReportRecords(cachedProjectRows, filters.search);
+          const summaryProjects =
+            selectedProjectIds.length > 0
+              ? searchFilteredProjects.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
+              : searchFilteredProjects;
+          const summary = summarizeProjectReportProjects(summaryProjects, projectProgressMap);
 
-          const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
-          const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
-          const projectRows = mergeProjectRows(reportProjects, masterProjects);
+          const rows = mapProjectReportRows(searchFilteredProjects, projectProgressMap);
+          const isSearchActive = Boolean(filters.search?.trim());
+          const displaySummary = isSearchActive || selectedProjectIds.length > 0
+            ? summary
+            : {
+                totalProjects: absoluteTotal || cachedProjectRows.length,
+                totalTasks: totalTasks || summary.totalTasks,
+                completedTasks: completedTasks || summary.completedTasks,
+                incompleteTasks: Math.max((totalTasks || summary.totalTasks) - (completedTasks || summary.completedTasks), 0),
+              };
 
-          const { projectProgressMap } = taskProgressCacheRef.current;
-
-          // Aggregate task counts for ONLY the filtered/searched projects
-          let filteredTotalTasks = 0;
-          let filteredCompletedTasks = 0;
-
-          const rows = projectRows.map((project) => {
-            const projectId = getProjectRecordId(project);
-            const projectMetrics = projectProgressMap[projectId] || { total: 0, completed: 0 };
-            filteredTotalTasks += projectMetrics.total;
-            filteredCompletedTasks += projectMetrics.completed;
-            const projectProgress = projectMetrics.total > 0 ? Math.round((projectMetrics.completed / projectMetrics.total) * 100) : 0;
-            return {
-              key: projectId,
-              taskName: getProjectRecordTitle(project),
-              progress: projectProgress,
-              startDate: formatDate(getProjectRecordStartDate(project)),
-              endDate: formatDate(getProjectRecordEndDate(project)),
-              status: getProjectRecordStatus(project),
-            };
-          });
-
-          const getMetaTotalFast = (resp) => {
-            if (!resp || !resp.data) return 0;
-            if (resp.data.metadata?.total != null) return Number(resp.data.metadata.total);
-            if (resp.data.data?.pagination?.totalCount) return Number(resp.data.data.pagination.totalCount);
-            if (resp.data.meta?.total) return Number(resp.data.meta.total);
-            if (resp.data.totalCount) return Number(resp.data.totalCount);
-            if (resp.data.total) return Number(resp.data.total);
-            return 0;
-          };
-          const filteredTotal = getMetaTotalFast(projectsResponse) || projectRows.length;
-
-          // Determine if we are actively filtering or if search was just cleared
-          const isActiveSearch = Boolean(filters.search?.trim());
-          const isActiveFilter = Array.isArray(filters.projectIds) && filters.projectIds.length > 0;
-          const hasActiveFiltering = isActiveSearch || isActiveFilter;
-
-          let displayTotalProjects, displayTotalTasks, displayCompletedTasks;
-
-          if (hasActiveFiltering) {
-            // Active search/filter → use row-level aggregated counts
-            displayTotalProjects = projectRows.length;
-            displayTotalTasks = filteredTotalTasks;
-            displayCompletedTasks = filteredCompletedTasks;
-          } else {
-            // Search cleared, no filters → restore global cached totals
-            displayTotalProjects = taskProgressCacheRef.current.absoluteTotal || filteredTotal;
-            displayTotalTasks = taskProgressCacheRef.current.totalTasks || filteredTotalTasks;
-            displayCompletedTasks = taskProgressCacheRef.current.completedTasks || filteredCompletedTasks;
-          }
-
-          setTotal(hasActiveFiltering ? filteredTotal : (taskProgressCacheRef.current.absoluteTotal || filteredTotal));
+          setTotal(rows.length);
           setReportData((prev) => ({
             ...prev,
             project: {
-              summary: {
-                totalProjects: displayTotalProjects,
-                totalTasks: displayTotalTasks,
-                completedTasks: displayCompletedTasks,
-                incompleteTasks: Math.max(displayTotalTasks - displayCompletedTasks, 0),
-              },
+              summary: displaySummary,
               rows,
             },
           }));
@@ -483,9 +422,9 @@ function ReportsHub() {
               technologies: [],
               types: [],
               managers: [],
-              search: filters.search?.trim() || "",
-              pageNo: pageNo,
-              limit: pageSize,
+              search: "",
+              pageNo: 1,
+              limit: 10000,
               sort: "title",
               sortBy: "asc",
               isExport: false,
@@ -494,28 +433,14 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.getMethod,
             api_url: Service.getProjectList,
-            params: `page=${pageNo}&limit=${pageSize}&includeClosed=true${filters.search ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
+            params: `page=1&limit=10000&includeClosed=true`,
           }),
         ]);
 
-        let absoluteProjectsResponse = null;
-        absoluteProjectsResponse = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getProjectRunningReportsDetails,
-          body: {
-            technologies: [],
-            types: [],
-            managers: [],
-            search: "",
-            pageNo: 1,
-            limit: 10000,
-            isExport: false,
-          },
-        });
-
         const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
         const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
-        const projectRows = mergeProjectRows(reportProjects, masterProjects);
+        const allProjectRows = mergeProjectRows(reportProjects, masterProjects);
+        const searchFilteredProjects = filterProjectReportRecords(allProjectRows, filters.search);
 
         // Robust parsing for total counts from various API response shapes
         // Comprehensive parsing for total counts from all possible backend response shapes
@@ -547,25 +472,18 @@ function ReportsHub() {
           return 0;
         };
 
-        const totalProjectsCount = getMetaTotal(projectsResponse) || projectRows.length;
-
-        // Get absolute total including archived and closed projects
-        const masterProjectsTotal = getMetaTotal(projectListResponse);
-        const absoluteTotalProjects = masterProjectsTotal || getMetaTotal(absoluteProjectsResponse) || totalProjectsCount;
+        const absoluteTotalProjects = getMetaTotal(projectListResponse) || allProjectRows.length;
 
         console.log('📊 Project counts:', {
-          totalProjectsCount,
-          masterProjectsTotal,
           absoluteTotalProjects,
           projectListResponseMeta: projectListResponse?.data?.meta || projectListResponse?.data?.metadata
         });
 
         // Determine effective project IDs for metrics (only from top-level dropdown filter)
         // focusedProjectIds (row click) is handled separately by updateProjectMetrics
-        const isSearchActive = Boolean(filters.search?.trim());
-        let effectiveProjectIds = (Array.isArray(filters.projectIds) && filters.projectIds.length > 0
-          ? filters.projectIds
-          : (isSearchActive ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []));
+        const effectiveProjectIds = selectedProjectIds.length > 0
+          ? selectedProjectIds
+          : searchFilteredProjects.map((project) => getProjectRecordId(project)).filter(Boolean);
 
         let tasksTotalResponse, tasksCompletedResponse;
         let tasksTotalResponseAll, tasksCompletedResponseAll;
@@ -578,30 +496,30 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
-            body: {
-              view_all: true,
-              pageNo: 1,
-              limit: 5000,
-              status: "all",
-              start_date: filters.startDate || undefined,
-              end_date: filters.endDate || undefined
-            },
-          }),
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.taskList,
-            body: {
-              view_all: true,
-              pageNo: 1,
-              limit: 5000,
-              status: "completed",
-              start_date: filters.startDate || undefined,
-              end_date: filters.endDate || undefined
-            },
-          }),
-        ]);
+              body: {
+                view_all: true,
+                pageNo: 1,
+                limit: 5000,
+                status: "all",
+                start_date: reportDateRange.startIso || undefined,
+                end_date: reportDateRange.endIso || undefined
+              },
+            }),
+            Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.taskList,
+              body: {
+                view_all: true,
+                pageNo: 1,
+                limit: 5000,
+                status: "completed",
+                start_date: reportDateRange.startIso || undefined,
+                end_date: reportDateRange.endIso || undefined
+              },
+            }),
+          ]);
 
-        // If projects are selected, fetch filtered data for top metrics
+        // If search or projects are selected, fetch filtered data for top metrics
         if (effectiveProjectIds.length > 0) {
           [tasksTotalResponse, tasksCompletedResponse] = await Promise.all([
             Service.makeAPICall({
@@ -613,8 +531,8 @@ function ReportsHub() {
                 limit: 5000,
                 status: "all",
                 project_id: effectiveProjectIds,
-                start_date: filters.startDate || undefined,
-                end_date: filters.endDate || undefined
+                start_date: reportDateRange.startIso || undefined,
+                end_date: reportDateRange.endIso || undefined
               },
             }),
             Service.makeAPICall({
@@ -626,8 +544,8 @@ function ReportsHub() {
                 limit: 5000,
                 status: "completed",
                 project_id: effectiveProjectIds,
-                start_date: filters.startDate || undefined,
-                end_date: filters.endDate || undefined
+                start_date: reportDateRange.startIso || undefined,
+                end_date: reportDateRange.endIso || undefined
               },
             }),
           ]);
@@ -698,57 +616,32 @@ function ReportsHub() {
           totalTasks,
           completedTasks,
           absoluteTotal: absoluteTotalProjects,
+          projectRows: allProjectRows,
         };
 
-        const rows = projectRows.map((project) => {
-          const projectId = getProjectRecordId(project);
-          const projectMetrics = projectProgressMap[projectId] || { total: 0, completed: 0 };
-          const projectProgress = projectMetrics.total > 0 ? Math.round((projectMetrics.completed / projectMetrics.total) * 100) : 0;
-
-          console.log(`📈 Project ${projectId}: ${projectMetrics.completed}/${projectMetrics.total} = ${projectProgress}%`);
-
-          return {
-            key: projectId,
-            taskName: getProjectRecordTitle(project),
-            progress: projectProgress,
-            startDate: formatDate(getProjectRecordStartDate(project)),
-            endDate: formatDate(getProjectRecordEndDate(project)),
-            status: getProjectRecordStatus(project),
-          };
-        });
+        const rows = mapProjectReportRows(searchFilteredProjects, projectProgressMap);
 
         // Aggregated metrics for display
         // totalTasks/completedTasks are already filtered by effectiveProjectIds from the API
-        let displayTotalProjects = absoluteTotalProjects;
-        let displayTotalTasks = totalTasks;
-        let displayCompletedTasks = completedTasks;
+        const summaryProjects =
+          selectedProjectIds.length > 0
+            ? searchFilteredProjects.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
+            : searchFilteredProjects;
+        const isSearchActive = Boolean(filters.search?.trim());
+        const displaySummary = isSearchActive || selectedProjectIds.length > 0
+          ? summarizeProjectReportProjects(summaryProjects, projectProgressMap)
+          : {
+              totalProjects: absoluteTotalProjects,
+              totalTasks,
+              completedTasks,
+              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+            };
 
-        // If filtering is active (project filter, search, or date), update "Total Projects"
-        // to reflect the actual filtered count, not the global total.
-        const isFilteringActive = Boolean(
-          filters.startDate || filters.endDate || (filters.date && Array.isArray(filters.date)) || filters.search ||
-          (Array.isArray(filters.projectIds) && filters.projectIds.length > 0)
-        );
-        if (isFilteringActive) {
-          if (Array.isArray(filters.projectIds) && filters.projectIds.length > 0) {
-            // Project dropdown filter → exact count of selected projects
-            displayTotalProjects = filters.projectIds.length;
-          } else {
-            // Search/date filter → count of merged visible rows
-            displayTotalProjects = projectRows.length;
-          }
-        }
-
-        setTotal(absoluteTotalProjects);
+        setTotal(rows.length);
         setReportData((prev) => ({
           ...prev,
           project: {
-            summary: {
-              totalProjects: displayTotalProjects,
-              totalTasks: displayTotalTasks,
-              completedTasks: displayCompletedTasks,
-              incompleteTasks: Math.max(displayTotalTasks - displayCompletedTasks, 0),
-            },
+            summary: displaySummary,
             rows,
           },
         }));
@@ -756,6 +649,20 @@ function ReportsHub() {
       }
 
       if (reportKey === "activity-report") {
+        const previousFilters = previousFiltersRef.current || defaultFilters;
+        const isSearchOnlyChange =
+          previousFilters.search !== filters.search &&
+          previousFilters.startDate === filters.startDate &&
+          previousFilters.endDate === filters.endDate &&
+          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
+          previousFilters.status === filters.status &&
+          previousFilters.activity === filters.activity &&
+          previousFilters.userId === filters.userId;
+
+        if (isSearchOnlyChange && Array.isArray(reportDataRef.current.activity) && reportDataRef.current.activity.length > 0) {
+          return;
+        }
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getActivityLogList,
@@ -765,6 +672,7 @@ function ReportsHub() {
             operationName: filters.activity || "",
             fromDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.toISOString() : (filters.startDate ? moment(filters.startDate).toISOString() : undefined),
             toDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.toISOString() : (filters.endDate ? moment(filters.endDate).toISOString() : undefined),
+            ...(filters.search?.trim() ? { search: filters.search.trim() } : {}),
             sortBy: "createdAt",
             sortOrder: "desc",
           },
@@ -806,6 +714,7 @@ function ReportsHub() {
           departments: filters.departments || [],
           users:
             filters.userId && filters.userId !== "all" ? [filters.userId] : [],
+          search: filters.search?.trim() || "",
           pageNo: pageNo,
           limit: pageSize,
           sort: "logged_date",
@@ -816,6 +725,12 @@ function ReportsHub() {
         if (filters.date && Array.isArray(filters.date)) {
           performanceRequestBody.startDate = startDate.format("DD-MM-YYYY");
           performanceRequestBody.endDate = endDate.format("DD-MM-YYYY");
+        } else if (filters.startDate || filters.endDate) {
+          if (filters.startDate) performanceRequestBody.startDate = moment(filters.startDate, ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).format("DD-MM-YYYY");
+          if (filters.endDate) performanceRequestBody.endDate = moment(filters.endDate, ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).format("DD-MM-YYYY");
+        } else {
+          performanceRequestBody.startDate = moment().startOf("month").format("DD-MM-YYYY");
+          performanceRequestBody.endDate = moment().format("DD-MM-YYYY");
         }
 
         const response = await Service.makeAPICall({
@@ -975,8 +890,9 @@ function ReportsHub() {
               status: filters.status || "all",
               userId: filters.userId && filters.userId !== "all" ? filters.userId : undefined,
               projectIds: Array.isArray(filters.projectIds) && filters.projectIds.length > 0 ? filters.projectIds : undefined,
-              startDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
-              endDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
+              startDate: reportDateRange.startIso,
+              endDate: reportDateRange.endIso,
+              search: filters.search?.trim() || null,
             }),
           }),
         ]);
@@ -998,7 +914,6 @@ function ReportsHub() {
             technologies: [],
             types: [],
             managers: [],
-            date: filters.date || null,
             search: filters.search?.trim() || "",
             pageNo: pageNo,
             limit: pageSize,
@@ -1009,7 +924,7 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
-          const meta = response.data.meta || {};
+          const meta = response.data.metadata || response.data.meta || {};
           setTotal(meta.total || 0);
           const projectRunningData = {
             data: Array.isArray(response.data.data.data)
@@ -1024,7 +939,7 @@ function ReportsHub() {
             technologies: Array.isArray(response.data.data.technologies)
               ? response.data.data.technologies
               : [],
-            metadata: response.data.metadata || {},
+            metadata: meta,
           };
           setReportData((prev) => ({ ...prev, 'project-running': projectRunningData }));
         } else {
@@ -1034,6 +949,20 @@ function ReportsHub() {
       }
 
       if (reportKey === "status-report") {
+        const previousFilters = previousFiltersRef.current || defaultFilters;
+        const isSearchOnlyChange =
+          previousFilters.search !== filters.search &&
+          previousFilters.startDate === filters.startDate &&
+          previousFilters.endDate === filters.endDate &&
+          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
+          previousFilters.status === filters.status &&
+          JSON.stringify(previousFilters.projectIds) === JSON.stringify(filters.projectIds) &&
+          previousFilters.userId === filters.userId;
+
+        if (isSearchOnlyChange && Array.isArray(reportDataRef.current.status) && reportDataRef.current.status.length > 0) {
+          return;
+        }
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.taskList,
@@ -1042,16 +971,17 @@ function ReportsHub() {
 
         const taskRows = Array.isArray(response?.data?.data) ? response.data.data : [];
         const rows = buildStatusRows(taskRows, filters, selectedDate, userMap);
+        setTotal(rows.length);
         setReportData((prev) => ({ ...prev, status: rows }));
         return;
       }
 
       if (reportKey === "timesheet") {
         const timesheetStartDate = filters.date && Array.isArray(filters.date)
-          ? moment(filters.date[0]).startOf("day").format("DD-MM-YYYY")
+          ? moment(filters.date[0], ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).startOf("day").format("DD-MM-YYYY")
           : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
         const timesheetEndDate = filters.date && Array.isArray(filters.date)
-          ? moment(filters.date[1]).endOf("day").format("DD-MM-YYYY")
+          ? moment(filters.date[1], ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).endOf("day").format("DD-MM-YYYY")
           : moment().format("DD-MM-YYYY");
 
         const response = await Service.makeAPICall({
@@ -1065,7 +995,8 @@ function ReportsHub() {
             managers: [],
             projects: selectedProjectIds,
             departments: [],
-            users: [],
+            users: filters.userId && filters.userId !== "all" ? [filters.userId] : [],
+            search: filters.search?.trim() || "",
             pageNo: pageNo,
             limit: pageSize,
             sort: "logged_date",
@@ -1102,7 +1033,7 @@ function ReportsHub() {
         setLoading(false);
       }
     }
-  }, [fetchAllProjectReportRows, fetchAllProjects, filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
+  }, [filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
 
   useEffect(() => {
     // Only fetch dropdown options if we are in a specific report page
@@ -1118,11 +1049,12 @@ function ReportsHub() {
   // Does NOT reload the full page — only fetches task counts for the selected project.
   const updateProjectMetrics = useCallback(async (projectIds) => {
     if (!reportKey || reportKey !== "project-report") return;
+    const reportDateRange = getReportDateRange(filters);
 
     // No project selected — restore full totals from cache
     if (!projectIds || projectIds.length === 0) {
       if (taskProgressCacheRef.current) {
-        const { projectProgressMap, totalTasks, completedTasks } = taskProgressCacheRef.current;
+        const { totalTasks, completedTasks } = taskProgressCacheRef.current;
         setReportData((prev) => ({
           ...prev,
           project: {
@@ -1152,8 +1084,8 @@ function ReportsHub() {
             limit: 1,
             status: "all",
             project_id: projectIds,
-            start_date: filters.startDate || undefined,
-            end_date: filters.endDate || undefined,
+            start_date: reportDateRange.startIso || undefined,
+            end_date: reportDateRange.endIso || undefined,
           },
         }),
         Service.makeAPICall({
@@ -1165,8 +1097,8 @@ function ReportsHub() {
             limit: 1,
             status: "completed",
             project_id: projectIds,
-            start_date: filters.startDate || undefined,
-            end_date: filters.endDate || undefined,
+            start_date: reportDateRange.startIso || undefined,
+            end_date: reportDateRange.endIso || undefined,
           },
         }),
       ]);
@@ -1202,7 +1134,7 @@ function ReportsHub() {
     } finally {
       setMetricsLoading(false);
     }
-  }, [reportKey, filters.startDate, filters.endDate]);
+  }, [reportKey, filters]);
 
   // Trigger metric update on project row click (does NOT reload full page)
   useEffect(() => {
@@ -1241,9 +1173,9 @@ function ReportsHub() {
         previousFilters.search !== filters.search &&
         JSON.stringify(previousWithoutSearch) === JSON.stringify(currentWithoutSearch);
 
-      // If filters changed significantly (not just search), reset to page 1
-      if (filtersChanged && !isSearchOnly) {
+      if (filtersChanged && pageNo !== 1) {
         setPageNo(1);
+        return () => controller.abort();
       }
 
       // Detect report switch to avoid silent load on initial switch
@@ -1460,6 +1392,7 @@ function ReportsHub() {
       { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
       { key: "activity", label: "Activity", placeholder: "All Activity", options: activityOptions, defaultValue: "" },
       { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
+      { key: "search", placeholder: "Search by email...", type: "search" },
     ],
     "user-performance-report": [
       { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
@@ -1478,6 +1411,9 @@ function ReportsHub() {
       { key: "search", placeholder: "Search members...", type: "search" },
     ],
     "timesheet": [
+      { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
+      { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
       { key: "search", placeholder: "Search timesheets...", type: "search" },
     ],
   };
@@ -1989,10 +1925,10 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
             size="small"
             className="reports-filter-control"
             value={
-              rangeField.key === "date" && filters.date 
-                ? filters.date.map(d => dayjs(d, "DD-MM-YYYY"))
-                : filters.startDate && filters.endDate 
-                  ? [dayjs(filters.startDate), dayjs(filters.endDate)] 
+              rangeField.key === "date" && filters.date
+                ? toPickerRange(filters.date)
+                : filters.startDate && filters.endDate
+                  ? toPickerRange([filters.startDate, filters.endDate])
                   : null
             }
             onChange={(values) => {
@@ -2022,7 +1958,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
             placeholder={dateField.placeholder}
             className="reports-filter-control"
             suffixIcon={<CalendarOutlined />}
-            value={filters[dateField.key] ? dayjs(filters[dateField.key], "DD-MM-YYYY") : null}
+            value={filters[dateField.key] ? toPickerDayjs(filters[dateField.key]) : null}
             onChange={(value) =>
               setFilters((prev) => ({
                 ...prev,
@@ -2187,11 +2123,11 @@ function ProjectReportContent({
 
     // Top-level Date Range Filter (Filter projects by their activity window)
     if (filters?.startDate || filters?.endDate || (filters?.date && Array.isArray(filters.date))) {
-      const start = filters.startDate ? dayjs(filters.startDate) : (filters.date && Array.isArray(filters.date) ? dayjs(filters.date[0]) : null);
-      const end = filters.endDate ? dayjs(filters.endDate) : (filters.date && Array.isArray(filters.date) ? dayjs(filters.date[1]) : null);
+      const start = parseReportDate(filters.startDate || (filters.date && Array.isArray(filters.date) ? filters.date[0] : null));
+      const end = parseReportDate(filters.endDate || (filters.date && Array.isArray(filters.date) ? filters.date[1] : null));
 
-      const projectStart = row.startDate ? dayjs(row.startDate) : null;
-      const projectEnd = row.endDate ? dayjs(row.endDate) : null;
+      const projectStart = parseReportDate(row.startDate);
+      const projectEnd = parseReportDate(row.endDate);
 
       // Logic: Show project if it overlaps with the filter range OR if it has no dates defined (optional)
       if (start && projectEnd && projectEnd.isBefore(start, 'day')) return false;
@@ -2209,6 +2145,10 @@ function ProjectReportContent({
   );
   const rowsAreFiltered = filteredRows.length !== (data.rows || []).length;
   const useDynamic = hasActiveClientFilter || rowsAreFiltered;
+  const safeCurrentPage = Math.min(
+    pageNo,
+    Math.max(Math.ceil((filteredRows.length || 1) / pageSize), 1)
+  );
 
   const dynamicMetrics = (() => {
     if (!useDynamic) {
@@ -2314,9 +2254,9 @@ function ProjectReportContent({
             },
           })}
           pagination={{
-            current: pageNo,
+            current: safeCurrentPage,
             pageSize: pageSize,
-            total: total,
+            total: filteredRows.length,
             onChange: (page, size) => {
               setPageNo(page);
               setPageSize(size);
@@ -2397,6 +2337,11 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
       return searchHaystack.includes(normalizedSearch);
     });
   }, [normalizedSearch, rows]);
+  const paginationTotal = reportKey === "status-report" ? filteredRows.length : total;
+  const safeCurrentPage = Math.min(
+    pageNo,
+    Math.max(Math.ceil((paginationTotal || 1) / pageSize), 1)
+  );
 
   return (
     <div className="reports-result-card">
@@ -2414,11 +2359,11 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
       ) : null}
       <Table
         columns={config.columns}
-        dataSource={rows}
+        dataSource={filteredRows}
         pagination={{
-          current: pageNo,
+          current: safeCurrentPage,
           pageSize: pageSize,
-          total: total,
+          total: paginationTotal,
           onChange: (page, size) => {
             setPageNo(page);
             setPageSize(size);
@@ -2616,6 +2561,10 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
       { label: "Completed", value: filteredMembers.reduce((s, r) => s + (r.completed || 0), 0) },
       { label: "Incomplete", value: filteredMembers.reduce((s, r) => s + (r.incomplete || 0), 0) },
     ];
+  const safeCurrentPage = Math.min(
+    pageNo,
+    Math.max(Math.ceil(((filteredMembers.length || 1)) / pageSize), 1)
+  );
 
   return (
     <div className="user-report-layout">
@@ -2699,11 +2648,11 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
         ) : (
           <div className="user-report-table-view" style={{ padding: "20px" }}>
             <Table
-              dataSource={rows}
+              dataSource={filteredMembers}
               pagination={{
-                current: pageNo,
+                current: safeCurrentPage,
                 pageSize: pageSize,
-                total: total,
+                total: filteredMembers.length,
                 onChange: (page, size) => {
                   setPageNo(page);
                   setPageSize(size);
@@ -3325,6 +3274,107 @@ function getProjectRecordStatus(project) {
     project?.status ||
     "-"
   );
+}
+
+function parseReportDate(dateValue) {
+  if (!dateValue || dateValue === "-") {
+    return null;
+  }
+
+  const parsed = moment(dateValue, ["DD-MM-YYYY", moment.ISO_8601], true);
+  return parsed.isValid() ? parsed : null;
+}
+
+function toPickerDayjs(dateValue) {
+  const parsed = parseReportDate(dateValue);
+  return parsed ? dayjs(parsed.toDate()) : null;
+}
+
+function toPickerRange(dateValues = []) {
+  if (!Array.isArray(dateValues) || dateValues.length < 2) {
+    return null;
+  }
+
+  const parsedRange = dateValues.map((dateValue) => toPickerDayjs(dateValue));
+  return parsedRange.every(Boolean) ? parsedRange : null;
+}
+
+function getReportDateRange(filters = {}) {
+  const hasRange = Array.isArray(filters?.date) && filters.date.length >= 2;
+  const startValue = hasRange ? filters.date[0] : filters?.startDate || null;
+  const endValue = hasRange ? filters.date[1] : filters?.endDate || null;
+  const startMoment = parseReportDate(startValue)?.startOf("day") || null;
+  const endMoment = parseReportDate(endValue)?.endOf("day") || null;
+  const selectedDate = parseReportDate(hasRange ? filters.date[0] : filters?.date) || startMoment;
+
+  return {
+    startValue,
+    endValue,
+    startIso: startMoment ? startMoment.format("YYYY-MM-DD") : null,
+    endIso: endMoment ? endMoment.format("YYYY-MM-DD") : null,
+    startMoment,
+    endMoment,
+    selectedDate,
+  };
+}
+
+function filterProjectReportRecords(projects = [], searchQuery = "") {
+  const normalizedSearch = String(searchQuery || "").trim().toLowerCase();
+  if (!normalizedSearch) {
+    return projects;
+  }
+
+  return projects.filter((project) => {
+    const searchHaystack = [
+      getProjectRecordTitle(project),
+      project?.projectId,
+      project?.descriptions,
+      getProjectRecordStatus(project),
+      project?.managerName,
+      project?.project_typeName,
+      ...(Array.isArray(project?.technologyName) ? project.technologyName : [project?.technologyName]),
+    ]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase())
+      .join(" ");
+
+    return searchHaystack.includes(normalizedSearch);
+  });
+}
+
+function summarizeProjectReportProjects(projects = [], projectProgressMap = {}) {
+  let totalTasks = 0;
+  let completedTasks = 0;
+
+  projects.forEach((project) => {
+    const projectMetrics = projectProgressMap[getProjectRecordId(project)] || { total: 0, completed: 0 };
+    totalTasks += projectMetrics.total;
+    completedTasks += projectMetrics.completed;
+  });
+
+  return {
+    totalProjects: projects.length,
+    totalTasks,
+    completedTasks,
+    incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+  };
+}
+
+function mapProjectReportRows(projects = [], projectProgressMap = {}) {
+  return projects.map((project) => {
+    const projectId = getProjectRecordId(project);
+    const projectMetrics = projectProgressMap[projectId] || { total: 0, completed: 0 };
+    const projectProgress = projectMetrics.total > 0 ? Math.round((projectMetrics.completed / projectMetrics.total) * 100) : 0;
+
+    return {
+      key: projectId,
+      taskName: getProjectRecordTitle(project),
+      progress: projectProgress,
+      startDate: formatDate(getProjectRecordStartDate(project)),
+      endDate: formatDate(getProjectRecordEndDate(project)),
+      status: getProjectRecordStatus(project),
+    };
+  });
 }
 
 function mergeProjectRows(primaryProjects = [], fallbackProjects = []) {
