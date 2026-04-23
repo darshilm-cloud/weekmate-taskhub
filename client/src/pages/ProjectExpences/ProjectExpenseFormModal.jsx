@@ -295,14 +295,14 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
             </Col>
             <Col xs={24} md={12}>
               <Form.Item
-                label="Cost"
+                label="Cost (₹)"
                 name="cost_in_usd"
                 rules={[
                   { required: true, message: "Required" },
                   { pattern: /^\d+(\.\d{1,2})?$/, message: "Invalid amount" },
                 ]}
               >
-                <Input prefix={<DollarCircleOutlined />} type="number" step="0.01" />
+                <Input prefix="₹" type="number" step="0.01" />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>

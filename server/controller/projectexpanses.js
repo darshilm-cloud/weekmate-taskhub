@@ -958,7 +958,7 @@ exports.exportProjectExpenses = async (req, res) => {
       let item = data[i];
       result.push({
         "Project Name": item?.projectName,
-        "Cost in USD": `$ ${item.cost}`,
+        "Cost (₹)": `₹ ${item.cost}`,
         "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
         Creator: item?.CreatedBy,
         "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
@@ -976,7 +976,7 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const csvFields = [
       "Project Name",
-      "Cost in USD",
+      "Cost (₹)",
       "Need To Bill Customer",
       "Creator",
       "Creation Date",
