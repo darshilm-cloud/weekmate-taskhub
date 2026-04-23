@@ -3203,10 +3203,12 @@ p {
     margin: 0 !important;
     font-size: 16px;
 }
+
 .ant-card-body table td.ant-table-cell button.ant-btn.edit,
 .ant-card-body table td.ant-table-cell .edit-delete button.ant-btn.edit {
     color: green;
 }
+
 .ant-card-body table td.ant-table-cell button.ant-btn.delete,
 .ant-card-body table td.ant-table-cell .edit-delete button.ant-btn.delete {
     color: red;
@@ -5017,9 +5019,11 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: #1f2937;
     margin-bottom: 0;
 }
-.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2  span{
- margin-right: 6px;
+
+.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 span {
+    margin-right: 6px;
 }
+
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
     align-items: center;
     background-color: #fff;
@@ -5919,6 +5923,22 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .ant-menu-submenu-popup .ant-menu-vertical .ant-menu-item:has(.ant-input-outlined) {
     padding: 0;
     height: auto;
+}
+
+.ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector {
+    overflow: auto;
+    /* ya hidden agar scroll bhi disable karna ho */
+
+    /* Chrome, Edge, Safari */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+}
+
+.ant-form-item-control-input .ant-form-item-control-input-content .ant-select-multiple .ant-select-selector::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
 }
 
 .ant-table-wrapper .ant-table.ant-table-bordered>.ant-table-container>.ant-table-content>table>tbody>tr>td {

@@ -10,6 +10,7 @@ import './assets/css/pms.css';
 import './assets/css/Scroll.css'
 import { BrowserRouter } from "react-router-dom/cjs/react-router-dom.min";
 import './assets/css/common-buttons.css';
+import './assets/css/EnterpriseDarkTheme.css';
 
 function NextApp() {
 

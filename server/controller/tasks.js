@@ -1902,9 +1902,9 @@ exports.updateProjectsTaskProps = async (req, res) => {
       descriptions: Joi.string().optional().allow("").default(""),
       priority: Joi.string().valid("Low", "Medium", "High").optional(),
       task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
-      start_date: Joi.date().optional().allow(null),
-      due_date: Joi.date().optional().allow(null),
-      end_date: Joi.date().optional().allow(null),
+      start_date: Joi.alternatives().try(Joi.date(), Joi.string()).optional().allow(null),
+      due_date: Joi.alternatives().try(Joi.date(), Joi.string()).optional().allow(null),
+      end_date: Joi.alternatives().try(Joi.date(), Joi.string()).optional().allow(null),
       assignees: Joi.array().optional(),
       pms_clients: Joi.array().default([]),
       estimated_hours: Joi.string().optional().default("00"),
@@ -1924,6 +1924,11 @@ exports.updateProjectsTaskProps = async (req, res) => {
         error.details[0].message
       );
     }
+
+    // Parse dates if they are strings
+    if (value.start_date) value.start_date = parseTaskInputDate(value.start_date);
+    if (value.due_date) value.due_date = parseTaskInputDate(value.due_date);
+    if (value.end_date) value.end_date = parseTaskInputDate(value.end_date);
     // if (
     //   // value.updated_key == "title" &&
     //   value.updated_key.includes("title") &&

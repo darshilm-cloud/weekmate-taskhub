@@ -382,7 +382,7 @@ const TaskFormBuilder = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             color: "#8c8c8c",
-                            background: "#fafafa",
+                            background: "transparent",
                           }}
                         >
                           Drop here
@@ -473,7 +473,7 @@ const TaskFormBuilder = () => {
                           alignItems: "center",
                           justifyContent: "center",
                           color: "#8c8c8c",
-                          background: "#fafafa",
+                          background: "transparent",
                         }}
                       >
                         Drop here
