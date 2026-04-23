@@ -41,15 +41,35 @@ const getTaskProjectId = (task) => {
   return task?.project || task?.project_id;
 };
 
-const mapTaskToEditFormInitial = (t) => {
-  if (!t) return {};
+const mapTaskToEditFormInitial = (task) => {
+  if (!task) return {};
+  const projectId = getTaskProjectId(task);
+  const mainTaskId =
+    (typeof task?.mainTask === "object" && task.mainTask?._id) ||
+    (typeof task?.main_task_id === "object" && task.main_task_id?._id) ||
+    task?.main_task_id ||
+    undefined;
+  const assigneeIds = (Array.isArray(task.assignees) ? task.assignees : [])
+    .map((a) => (typeof a === "object" ? a._id || a.id : a))
+    .filter(Boolean);
+  const rawLabels = task.taskLabels || task.task_labels || task.labels || [];
+  const labelIds = (Array.isArray(rawLabels) ? rawLabels : [])
+    .map((l) => (typeof l === "object" ? l._id || l.id : l))
+    .filter(Boolean);
+  const due = task.due_date || task.end_date;
+  
   return {
-    ...t,
-    project_id: getTaskProjectId(t),
-    assignees: Array.isArray(t.assignees) ? t.assignees.map((a) => a?._id || a) : [],
-    labels: Array.isArray(t.labels) ? t.labels.map((l) => l?._id || l) : [],
-    due_date: t.due_date ? dayjs(t.due_date) : null,
-    start_date: t.start_date ? dayjs(t.start_date) : null,
+    ...task,
+    title: task.title || "",
+    description: task.descriptions || task.description || "",
+    project_id: projectId || undefined,
+    main_task_id: mainTaskId,
+    assignees: assigneeIds,
+    task_labels: labelIds,
+    start_date: task.start_date ? dayjs(task.start_date) : undefined,
+    end_date: due ? dayjs(due) : undefined,
+    priority: task.priority || "Low",
+    custom_fields: task.custom_fields && typeof task.custom_fields === "object" ? { ...task.custom_fields } : {},
   };
 };
 
@@ -803,6 +823,14 @@ const UserDashboard = ({ user }) => {
         title="View Task"
         initialValues={mapTaskToEditFormInitial(selectedTask)}
         lockedProjectId={selectedTask ? getTaskProjectId(selectedTask) || undefined : undefined}
+        lockedMainTaskId={
+          selectedTask
+            ? (typeof selectedTask?.mainTask === "object" && selectedTask?.mainTask?._id) ||
+            (typeof selectedTask?.main_task_id === "object" && selectedTask?.main_task_id?._id) ||
+            selectedTask?.main_task_id ||
+            undefined
+            : undefined
+        }
         showListSelector={false}
         viewOnly
         taskId={selectedTask?._id}
