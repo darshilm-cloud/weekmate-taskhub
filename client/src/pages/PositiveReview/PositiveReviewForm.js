@@ -6,9 +6,9 @@ import {
   UserOutlined,
   TeamOutlined,
   MessageOutlined,
-  ArrowLeftOutlined,
   StarOutlined,
   LinkOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { useHistory, useParams } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
@@ -198,9 +198,6 @@ const PositiveReviewForm = () => {
     <div className="prf-page">
       {/* Page Header */}
       <div className="prf-header">
-        <button className="prf-back-btn" onClick={handleCancel}>
-          <ArrowLeftOutlined />
-        </button>
         <div className="prf-header-text">
           <div className="prf-header-icon">
             <StarOutlined />
@@ -210,6 +207,9 @@ const PositiveReviewForm = () => {
             <p className="prf-subtitle">Fill in the details to record client feedback</p>
           </div>
         </div>
+        <Button type="primary" icon={<ArrowLeftOutlined />} className="add-btn" onClick={handleCancel}>
+          Back
+        </Button>
       </div>
 
       {/* Form Card */}
@@ -336,12 +336,12 @@ const PositiveReviewForm = () => {
               type="primary"
               htmlType="submit"
               loading={submitting}
-              className="prf-submit-btn"
+              className="add-btn"
             >
               {submitButtonText}
             </Button>
             <Button
-              className="prf-cancel-btn"
+              className="delete-btn"
               onClick={handleCancel}
               disabled={submitting}
             >

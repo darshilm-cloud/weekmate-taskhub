@@ -6,8 +6,9 @@ import {
   Table,
   Modal,
   Input,
+  Card,
 } from "antd";
-import GlobalSearchInput from "../../common/GlobalSearchInput";
+import Search from "antd/lib/input/Search";
 import {
   PlusOutlined,
   TeamOutlined,
@@ -20,12 +21,14 @@ const SKELETON_ROWS = 6;
 function SkeletonTable() {
   return (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
         <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
       </div>
       {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
         <div className="ps-skeleton-row" key={i}>
           <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 35}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
         </div>
       ))}
     </div>
@@ -114,28 +117,29 @@ function Resource() {
   ];
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><TeamOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><TeamOutlined /></span>
             Resources
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn"  type="primary"  typeof="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-              Add Resource
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            Add Resource
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
-          <GlobalSearchInput
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search resources..."
-            value={searchText}
-            onChange={setSearchText}
             onSearch={onSearch}
-            className="ps-search-input"
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
             style={{ width: 260 }}
           />
         </div>
@@ -143,7 +147,7 @@ function Resource() {
         {isLoading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={ResourceList}
@@ -154,7 +158,7 @@ function Resource() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       <Modal
         open={isModalOpen}
@@ -163,8 +167,8 @@ function Resource() {
         className="ps-modal"
         width={480}
         footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" onClick={() => addprojectTech.submit()}>Save</Button>,
+          <Button key="cancel" className="delete-btn" onClick={handleCancel}>Cancel</Button>,
+          <Button key="submit"  type="primary" className="add-btn" onClick={() => addprojectTech.submit()}>Save</Button>,
         ]}
       >
         <Form form={addprojectTech} layout="vertical" onFinish={handleOk}>
@@ -177,7 +181,7 @@ function Resource() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

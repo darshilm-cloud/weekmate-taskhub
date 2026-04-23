@@ -1665,9 +1665,9 @@ const AssignProject = () => {
         headerRender={() => null}
       />
       <div className="ap-date-dropdown-actions">
-        <button
+        <Button
           type="button"
-          className="ap-date-action ap-date-action--clear"
+          className="delete-btn"
           onClick={() => {
             setSelectedDate(null);
             setTempCalendarDate(dayjs());
@@ -1677,10 +1677,10 @@ const AssignProject = () => {
           }}
         >
           Clear All
-        </button>
-        <button
-          type="button"
-          className="ap-date-action ap-date-action--apply"
+        </Button>
+        <Button
+          type="primary"
+          className="add-btn"
           onClick={() => {
             setSelectedDate(tempCalendarDate);
             setPagination((prev) => ({ ...prev, current: 1 }));
@@ -1689,7 +1689,7 @@ const AssignProject = () => {
           }}
         >
           Apply
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1978,6 +1978,7 @@ const AssignProject = () => {
                     <div className="ap-browser-workspace-actions">
                       <Button
                         type="primary"
+              
                         icon={<PlusOutlined />}
                         className="add-btn ap-add-task-btn"
                         onClick={() => setIsAddTaskOpen(true)}

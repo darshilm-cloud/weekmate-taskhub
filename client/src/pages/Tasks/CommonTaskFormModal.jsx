@@ -1172,8 +1172,29 @@ export default function CommonTaskFormModal({
         />
       );
     }
-    if (key === "start_date" || key === "end_date") {
-      return <DatePicker style={{ width: "100%" }} disabled={viewOnly} />;
+    if (key === "start_date") {
+      return (
+        <DatePicker
+          style={{ width: "100%" }}
+          disabled={viewOnly}
+          disabledDate={(current) => {
+            const endDate = form.getFieldValue("end_date");
+            return !!(endDate && current && current.isAfter(dayjs(endDate), "day"));
+          }}
+        />
+      );
+    }
+    if (key === "end_date") {
+      return (
+        <DatePicker
+          style={{ width: "100%" }}
+          disabled={viewOnly}
+          disabledDate={(current) => {
+            const startDate = form.getFieldValue("start_date");
+            return !!(startDate && current && current.isBefore(dayjs(startDate), "day"));
+          }}
+        />
+      );
     }
     if (key === "project_id") {
       return (
@@ -1467,11 +1488,23 @@ export default function CommonTaskFormModal({
                       initialValue={key === "priority" ? "Low" : undefined}
                       valuePropName={field?.type === "checkbox" ? "checked" : field?.type === "file" ? "fileList" : "value"}
                       getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
-                      rules={
-                        field?.required
+                      rules={[
+                        ...(field?.required
                           ? [{ required: true, message: `${field?.label || toLabel(key)} is required` }]
-                          : []
-                      }
+                          : []),
+                        ...(key === "end_date"
+                          ? [
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  const startDate = getFieldValue("start_date");
+                                  if (!value || !startDate || !dayjs(value).isBefore(dayjs(startDate), "day"))
+                                    return Promise.resolve();
+                                  return Promise.reject(new Error("End date must be the same or later than start date"));
+                                },
+                              }),
+                            ]
+                          : []),
+                      ]}
                     >
                       {renderFieldControl(field, formName)}
                     </Form.Item>
@@ -1483,7 +1516,11 @@ export default function CommonTaskFormModal({
 
             </div>
           <div className="task-detail-modal-footer-actions">
+             <Button className="delete-btn" onClick={onCancel}>
+              Close
+            </Button>
             {!viewOnly && (
+              
               <Button
                 className="add-btn"
                 type="primary"
@@ -1493,9 +1530,7 @@ export default function CommonTaskFormModal({
                 {submitText || (mode === "edit" ? "Save Changes" : "Save")}
               </Button>
             )}
-            <Button className="task-detail-secondary-btn" onClick={onCancel}>
-              Close
-            </Button>
+         
           </div>
             {loadingConfig && <div style={{ color: "#8c8c8c", padding: "0 20px 18px" }}>Loading form configuration...</div>}
           </Form>

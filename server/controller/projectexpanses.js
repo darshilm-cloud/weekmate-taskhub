@@ -54,68 +54,88 @@ const upload = multer({
 
 exports.addProjectExpense = async (req, res) => {
   try {
-    const {
-      _id: decodedUserId,
-      pms_role_id: { _id: roleId, role_name: roleName } = {},
-      companyId: decodedCompanyId
-    } = req.user || {};
+    upload(req, res, async (err) => {
+      if (err) {
+        console.error("File upload error:", err);
+        return res.status(400).json({
+          status: "error",
+          message: err.message
+        });
+      }
 
-    const allowedRoles = ["PC", "TL", "Admin"];
-    const staticEmployeeId = process.env.ACCOUNTANT_ID;
+      try {
+        const {
+          _id: decodedUserId,
+          pms_role_id: { _id: roleId, role_name: roleName } = {},
+          companyId: decodedCompanyId
+        } = req.user || {};
 
-    if (
-      !allowedRoles.includes(roleName) &&
-      decodedUserId.toString() !== staticEmployeeId
-    ) {
-      return errorResponse(
-        res,
-        statusCode.UNAUTHORIZED,
-        "You do not have permission to add project expenses."
-      );
-    }
+        const allowedRoles = ["PC", "TL", "Admin"];
+        const staticEmployeeId = process.env.ACCOUNTANT_ID;
 
-    const validationSchema = Joi.object({
-      project_id: Joi.string().required(),
-      purchase_request_details: Joi.string().required(),
-      cost_in_usd: Joi.number().required(),
-      need_to_bill_customer: Joi.boolean(),
-      billing_cycle: Joi.string().optional(),
-      is_recuring: Joi.boolean()
+        if (
+          !allowedRoles.includes(roleName) &&
+          decodedUserId.toString() !== staticEmployeeId
+        ) {
+          return errorResponse(
+            res,
+            statusCode.UNAUTHORIZED,
+            "You do not have permission to add project expenses."
+          );
+        }
+
+        const validationSchema = Joi.object({
+          project_id: Joi.string().required(),
+          purchase_request_details: Joi.string().required(),
+          cost_in_usd: Joi.number().required(),
+          need_to_bill_customer: Joi.boolean(),
+          billing_cycle: Joi.string().optional(),
+          is_recuring: Joi.boolean()
+        }).unknown(true);
+
+        const { error, value } = validationSchema.validate(req.body);
+        if (error) {
+          return errorResponse(
+            res,
+            statusCode.BAD_REQUEST,
+            error.details[0].message
+          );
+        }
+
+        let fileNames = [];
+        if (req.files && req.files.length > 0) {
+          fileNames = req.files.map((file) => path.basename(file.path));
+        }
+
+        let data = new ProjectExpanses({
+          companyId: newObjectId(decodedCompanyId),
+          project_id: value?.project_id,
+          purchase_request_details:
+            value?.purchase_request_details.replace(/\n/g, "<br>") || null,
+          cost_in_usd: value.cost_in_usd,
+          need_to_bill_customer: value.need_to_bill_customer,
+          createdBy: req.user._id,
+          updatedBy: req.user._id,
+          billing_cycle: value?.billing_cycle,
+          is_recuring: value?.is_recuring,
+          projectexpences: fileNames,
+          ...(await getRefModelFromLoginUser(req?.user))
+        });
+
+        await data.save();
+        let emailDetails = await this.getReviewsDetailsForMail(data._id);
+        await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
+
+        return successResponse(
+          res,
+          statusCode.CREATED,
+          messages.PROJECTEXPENSE_CREATED,
+          data
+        );
+      } catch (innerError) {
+        return catchBlockErrorResponse(res, innerError.message);
+      }
     });
-
-    const { error, value } = validationSchema.validate(req.body);
-    if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
-    }
-
-    let data = new ProjectExpanses({
-      companyId: newObjectId(decodedCompanyId),
-      project_id: value?.project_id,
-      purchase_request_details:
-        value?.purchase_request_details.replace(/\n/g, "<br>") || null,
-      cost_in_usd: value.cost_in_usd,
-      need_to_bill_customer: value.need_to_bill_customer,
-      createdBy: req.user._id,
-      updatedBy: req.user._id,
-      billing_cycle: value?.billing_cycle,
-      is_recuring: value?.is_recuring,
-      ...(await getRefModelFromLoginUser(req?.user))
-    });
-
-    await data.save();
-    let emailDetails = await this.getReviewsDetailsForMail(data._id);
-    await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
-
-    return successResponse(
-      res,
-      statusCode.CREATED,
-      messages.PROJECTEXPENSE_CREATED,
-      data
-    );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }

@@ -4,8 +4,11 @@ const {
   UPDATED,
   LISTING,
   DELETED,
-  SERVER_ERROR
+  SERVER_ERROR,
+  USER_EMAIL_EXIST,
+  USER_ADDED
 } = require("../helpers/messages");
+const { isCompanyEmailTaken } = require("../helpers/companyEmailUniqueness");
 const {
   successResponse,
   errorResponse,
@@ -536,12 +539,8 @@ exports.addUser = async (req, res) => {
 
     const { email, firstName, lastName, password, companyId } = value;
 
-    // Check for user email and username exist
-    let isEmailExists = await employeeSchema.findOne({
-      email
-    });
-
-    if (isEmailExists) {
+    const companyObjectId = newObjectId(companyId);
+    if (await isCompanyEmailTaken(companyObjectId, email)) {
       return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
     }
 
@@ -558,7 +557,7 @@ exports.addUser = async (req, res) => {
       full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
-      companyId: newObjectId(companyId)
+      companyId: companyObjectId
     };
 
     let saveEmployee = await new employeeSchema(employeeObject).save();

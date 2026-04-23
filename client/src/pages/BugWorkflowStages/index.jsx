@@ -315,7 +315,7 @@ function BugWorkflowStages() {
         footer={[
           <Button
             key="cancel"
-            className="ps-modal-cancel"
+           className="delete-btn"
             onClick={() => {
               setModalOpen(false);
               setEditingStage(null);

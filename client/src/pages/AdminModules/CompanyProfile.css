@@ -176,7 +176,7 @@
 
 /* ── Assets section ── */
 .cm-section-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: #0b3a5b;
   margin: 0 0 4px;
@@ -212,11 +212,8 @@
 }
 
 .cm-asset-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b7a8d;
 }
 
 .cm-asset-body {
@@ -253,8 +250,13 @@
 
 /* ── Skeleton ── */
 @keyframes cm-shimmer {
-  0%   { background-position: -600px 0; }
-  100% { background-position:  600px 0; }
+  0% {
+    background-position: -600px 0;
+  }
+
+  100% {
+    background-position: 600px 0;
+  }
 }
 
 .cm-shimmer {
@@ -301,11 +303,6 @@
   border: 1px solid #e0e8f0;
 }
 
-.cm-modal .ant-modal-header {
-  padding: 18px 24px 14px !important;
-  border-bottom: 1px solid #edf0f4 !important;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef3f9 100%) !important;
-}
 
 .cm-modal .ant-modal-title {
   font-size: 16px !important;
@@ -326,7 +323,7 @@
   gap: 10px;
 }
 
-.cm-modal .ant-form-item-label > label {
+.cm-modal .ant-form-item-label>label {
   font-size: 13px !important;
   font-weight: 600 !important;
   color: #374151 !important;
@@ -417,7 +414,9 @@
   font-size: 13px;
 }
 
-.asset-upload { width: 100%; }
+.asset-upload {
+  width: 100%;
+}
 
 .asset-upload-btn.ant-btn {
   width: 100%;
@@ -436,7 +435,9 @@
 
 /* Dark theme */
 body.dark-theme .cm-page,
-body[data-theme="dark"] .cm-page { background: #0f172a; }
+body[data-theme="dark"] .cm-page {
+  background: #0f172a;
+}
 
 body.dark-theme .cm-stat-card,
 body[data-theme="dark"] .cm-stat-card {
@@ -445,7 +446,9 @@ body[data-theme="dark"] .cm-stat-card {
 }
 
 body.dark-theme .cm-stat-value,
-body[data-theme="dark"] .cm-stat-value { color: #e2e8f0; }
+body[data-theme="dark"] .cm-stat-value {
+  color: #e2e8f0;
+}
 
 body.dark-theme .cm-asset-card,
 body[data-theme="dark"] .cm-asset-card {
@@ -460,10 +463,14 @@ body[data-theme="dark"] .cm-asset-header {
 }
 
 body.dark-theme .cm-asset-body,
-body[data-theme="dark"] .cm-asset-body { background: #1e293b; }
+body[data-theme="dark"] .cm-asset-body {
+  background: #1e293b;
+}
 
 body.dark-theme .cm-section-title,
-body[data-theme="dark"] .cm-section-title { color: #e2e8f0; }
+body[data-theme="dark"] .cm-section-title {
+  color: #e2e8f0;
+}
 
 body.dark-theme .cm-shimmer,
 body[data-theme="dark"] .cm-shimmer {
@@ -473,12 +480,30 @@ body[data-theme="dark"] .cm-shimmer {
 }
 
 @media (max-width: 768px) {
-  .cm-page { padding: 16px; }
-  .cm-stats { grid-template-columns: 1fr 1fr; }
-  .cm-assets-grid { grid-template-columns: 1fr; }
-  .cm-skeleton-stats { grid-template-columns: 1fr 1fr; }
-  .cm-skeleton-assets { grid-template-columns: 1fr; }
-  .cm-hero { flex-direction: column; align-items: flex-start; }
+  .cm-page {
+    padding: 16px;
+  }
+
+  .cm-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cm-assets-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-skeleton-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cm-skeleton-assets {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* ── Edit Company Modal — Dark Theme ─────────────────────── */
@@ -494,19 +519,8 @@ body[data-theme="dark"] .cm-modal .ant-modal-header {
   border-bottom-color: #1e3a52 !important;
 }
 
-.cm-modal .ant-modal-header {
-  background: linear-gradient(135deg, #0b3a5b 0%, #0f4c75 100%) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.18) !important;
-}
 
-.cm-modal .ant-modal-title {
-  color: #ffffff !important;
-}
 
-.cm-modal .ant-modal-title .anticon,
-.cm-modal .ant-modal-title svg {
-  color: #ffffff !important;
-}
 
 .cm-modal .ant-modal-close {
   top: 16px;
@@ -559,8 +573,8 @@ body[data-theme="dark"] .cm-modal .ant-modal-footer {
   border-top-color: #1e3a52 !important;
 }
 
-body.dark-theme .cm-modal .ant-form-item-label > label,
-body[data-theme="dark"] .cm-modal .ant-form-item-label > label {
+body.dark-theme .cm-modal .ant-form-item-label>label,
+body[data-theme="dark"] .cm-modal .ant-form-item-label>label {
   color: #94a8c2 !important;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -763,7 +763,7 @@ const TaskPage = () => {
 
   const fetchProjects = useCallback(async (page = 1, searchStr = "", append = false) => {
     if (isFetchingRef.current) return;
-    
+
     isFetchingRef.current = true;
     setIsFetchingProjects(true);
     try {
@@ -776,7 +776,7 @@ const TaskPage = () => {
           search: searchStr,
         },
       });
-      
+
       if (res?.status === 200 && Array.isArray(res?.data?.data)) {
         const newProjects = res.data.data;
         setProjects(prev => append ? [...prev, ...newProjects] : newProjects);
@@ -1131,8 +1131,8 @@ const TaskPage = () => {
       typeof statusInput === "string"
         ? statusInput
         : typeof statusInput === "object" && statusInput?._id
-        ? statusInput._id
-        : null;
+          ? statusInput._id
+          : null;
     setModalInitialStatusId(normalizedStatusId);
     setModalInitialStatusMeta(
       typeof statusInput === "object" && statusInput
@@ -1352,7 +1352,7 @@ const TaskPage = () => {
   }, [canManageStageOrder, persistStageOrder]);
 
   const kanbanColumns = useMemo(() => {
-      const rawColumns = listSectionIds.map((bucketId) => {
+    const rawColumns = listSectionIds.map((bucketId) => {
       const sectionMeta = statusMetaBySection[bucketId] || {};
       const meta = getKanbanStatusMeta({ title: sectionMeta.title || bucketId, name: sectionMeta.title || bucketId });
       const colTasks = sectionBuckets[bucketId]?.tasks || [];
@@ -1767,8 +1767,8 @@ const TaskPage = () => {
     const currentStatusId =
       String(
         draggedTask?.task_status?._id ||
-          draggedTask?._stId ||
-          ""
+        draggedTask?._stId ||
+        ""
       );
     const targetStatusId = String(targetColumn?.statusId || targetColumn?.id || "");
     if (currentStatusId && targetStatusId && currentStatusId === targetStatusId) {
@@ -1934,6 +1934,7 @@ const TaskPage = () => {
           {canAddTask && (
             <Button
               type="primary"
+              className="add-btn"
               onClick={handleAddTaskClick}
             >
               <PlusOutlined /> Add Task
@@ -2001,28 +2002,46 @@ const TaskPage = () => {
           setAddStageModalOpen(false);
           stageForm.resetFields();
         }}
+        cancelButtonProps={{ className: "delete-btn" }}
+        width="100%"
+        style={{ maxWidth: 480 }}
       >
         <Form
           form={stageForm}
           layout="vertical"
           initialValues={{ title: "", color: "#64748b" }}
         >
-          <Form.Item
-            name="title"
-            label="Stage Name"
-            rules={[
-              { required: true, whitespace: true, message: "Please enter stage name" },
-            ]}
-          >
-            <Input placeholder="e.g. In Review" maxLength={60} />
-          </Form.Item>
-          <Form.Item
-            name="color"
-            label="Color"
-            rules={[{ required: true, message: "Please choose a color" }]}
-          >
-            <Input type="color" />
-          </Form.Item>
+          <Row gutter={[16, 16]}>
+
+            <Col xs={24}>
+              <Form.Item
+                name="title"
+                label="Stage Name"
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter stage name",
+                  },
+                ]}
+              >
+                <Input placeholder="e.g. In Review" maxLength={60} />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24}>
+              <Form.Item
+                name="color"
+                label="Color"
+                rules={[
+                  { required: true, message: "Please choose a color" },
+                ]}
+              >
+                <Input type="color" />
+              </Form.Item>
+            </Col>
+
+          </Row>
         </Form>
       </Modal>
 
@@ -2037,9 +2056,9 @@ const TaskPage = () => {
         lockedMainTaskId={
           taskToEdit
             ? (typeof taskToEdit?.mainTask === "object" && taskToEdit?.mainTask?._id) ||
-              (typeof taskToEdit?.main_task_id === "object" && taskToEdit?.main_task_id?._id) ||
-              taskToEdit?.main_task_id ||
-              undefined
+            (typeof taskToEdit?.main_task_id === "object" && taskToEdit?.main_task_id?._id) ||
+            taskToEdit?.main_task_id ||
+            undefined
             : undefined
         }
         showListSelector={false}
@@ -2061,9 +2080,9 @@ const TaskPage = () => {
         lockedMainTaskId={
           selectedTask
             ? (typeof selectedTask?.mainTask === "object" && selectedTask?.mainTask?._id) ||
-              (typeof selectedTask?.main_task_id === "object" && selectedTask?.main_task_id?._id) ||
-              selectedTask?.main_task_id ||
-              undefined
+            (typeof selectedTask?.main_task_id === "object" && selectedTask?.main_task_id?._id) ||
+            selectedTask?.main_task_id ||
+            undefined
             : undefined
         }
         showListSelector={false}
@@ -2073,7 +2092,7 @@ const TaskPage = () => {
           setTaskDetailModalOpen(false);
           setSelectedTask(null);
         }}
-        onSubmit={() => {}}
+        onSubmit={() => { }}
       />
 
       {/* ── Content ── */}
@@ -2095,7 +2114,15 @@ const TaskPage = () => {
             <span className="col-project">Project</span>
             <span className="col-actions">Action</span>
           </div>
-          {kanbanColumns.map((s) => (
+          {kanbanColumns.length === 0 ? (
+            <div className="task-list-empty" style={{ padding: 48, textAlign: "center", width: "100%" }}>
+              <NoDataFoundIcon />
+              <div className="" style={{ marginTop: 12, textAlign: "center", width: "100%" }}>
+                <strong className="no-task-span">No Tasks to show.</strong>
+              </div>
+            </div>
+          ) : (
+            kanbanColumns.map((s) => (
               <TaskListSection
                 key={s.id}
                 sectionId={s.id}
@@ -2120,13 +2147,17 @@ const TaskPage = () => {
                 onStageDragEnd={() => setDraggingStageId(null)}
                 onStageReorder={reorderSections}
               />
-            ))}
+            ))
+          )}
         </div>
       ) : view === "kanban" ? (
         <div className="task-kanban-view">
           {kanbanColumns.length === 0 ? (
             <div className="task-list-empty" style={{ padding: 48, textAlign: "center", width: "100%" }}>
-              No tasks to show. Adjust filters or add a task.
+              <NoDataFoundIcon />
+              <div className="" style={{ marginTop: 12, textAlign: "center", width: "100%" }}>
+                <strong className="no-task-span">No Tasks to show.</strong>
+              </div>
             </div>
           ) : kanbanColumns.map((col) => (
             <div key={col.id} className="kanban-column" style={{ borderTopColor: col.color }}>
@@ -2206,10 +2237,9 @@ const TaskPage = () => {
               <div className="kanban-column-footer">
                 {canAddTask && (
                   <Button
-                    type="text"
-                    size="small"
+                    className="add-btn "
+                    type="primary"
                     icon={<PlusOutlined />}
-                    className="kanban-column-add-btn"
                     onClick={() =>
                       openAddTaskModalForStatus(
                         col.statusMeta || { _id: col.statusId, title: col.title, color: col.color }
@@ -2227,7 +2257,7 @@ const TaskPage = () => {
               <Tooltip title="Add a stage" placement="top">
                 <Button
                   type="text"
-                  shape="circle"
+
                   size="large"
                   className="kanban-add-stage-icon-btn"
                   icon={<PlusOutlined />}
@@ -2352,8 +2382,8 @@ function TaskListSection({
         </button>
         {onAddTask && (
           <Button
-            type="text"
-            size="small"
+            className="add-btn "
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => onAddTask?.(statusMeta || statusId)}
           >
@@ -2368,9 +2398,11 @@ function TaskListSection({
           onScroll={(event) => onSectionScroll(event, sectionId)}
         >
           {tasks.length === 0 ? (
-            <div className="task-list-empty">
-              <NoDataFoundIcon />
-              <p>No tasks found</p>
+            <div className="task-list-empty" style={{ padding: "24px 0", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <NoDataFoundIcon style={{ width: 80, height: 80, marginBottom: 8 }} />
+              <div className="" style={{ marginTop: 12, textAlign: "center", width: "100%" }}>
+                <strong className="no-task-span">No Tasks to show.</strong>
+              </div>
             </div>
           ) : (
             tasks.map((t) => (
@@ -2411,7 +2443,7 @@ function TaskRow({
 }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : null;
-  const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
+  const isOverdue = task.due_date && dayjs(task.due_date).isBefore(dayjs(), "day");
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const projectTitle = getTaskProjectTitle(task);
   const initials =
@@ -2546,9 +2578,9 @@ function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
           const list = tasksByDate[dateStr] || [];
           return (
             <div key={dateStr} className="calendar-day-cell">
-              <div className="calendar-day-num">{dayjs(dateStr).format("D")}</div>
+              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
               <div className="calendar-day-tasks">
-                {list.slice(0, 3).map((t) => {
+                {list.map((t) => {
                   const names = getAssigneesDisplay(t.assignees);
                   const assigneeTip = names.length > 0 ? `Assigned to: ${names.join(", ")}` : "Unassigned";
                   return (
@@ -2563,7 +2595,6 @@ function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
                     </button>
                   );
                 })}
-                {list.length > 3 && <span className="calendar-more">+{list.length - 3}</span>}
               </div>
             </div>
           );

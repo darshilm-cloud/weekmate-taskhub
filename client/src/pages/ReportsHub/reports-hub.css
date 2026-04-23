@@ -527,7 +527,7 @@
   flex: 0 0 auto;
   min-width: 0;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 6px;
   background: #fff;
 }
 
@@ -567,7 +567,7 @@
 .ant-picker-panel {
   border: 0;
   border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(15, 39, 68, 0.15);
+    box-shadow: 1px 1px 0px rgba(15, 39, 68, 0.15);
 }
 
 .ant-picker-panel-container {
@@ -620,7 +620,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 .reports-filter-control.ant-select .ant-select-selector,
 .reports-filter-control.ant-picker {
   border: 1px solid #dbe5ef;
-  border-radius: 12px !important;
+  border-radius: 6px !important;
   box-shadow: none !important;
 }
 
@@ -1465,13 +1465,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   margin: 4px 8px !important;
 }
 
-/* Force chart container dimensions */
-.chart-card > div {
-  width: 100% !important;
-  height: 240px !important;
-  min-height: 240px !important;
-  flex: 1;
-}
+
 
 /* Bar Chart Specific Fixes */
 .chart-card .apexcharts-bar-series {

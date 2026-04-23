@@ -9,13 +9,17 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ProjectOutlined,
+  TeamOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useParams, useHistory } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import moment from "moment";
 import Service from "../../service";
-import "../Complaints/ComplaintDetails.css";
+import { Row, Col, Button } from "antd";
+import "./PositiveReview.css";
 
 const ReviewDetailsForm = () => {
   const { id } = useParams();
@@ -45,103 +49,158 @@ const ReviewDetailsForm = () => {
     if (id) getReviewById(id);
   }, [id, getReviewById]);
 
+  const typeBadgeClass = (type = "") => {
+    if (!type) return "default";
+    const t = type.toLowerCase();
+    if (t.includes("clutch")) return "clutch";
+    if (t.includes("video")) return "video";
+    if (t.includes("text")) return "text";
+    if (t.includes("feedback")) return "feedback";
+    if (t.includes("zoho")) return "zoho";
+    return "default";
+  };
+
   return (
-    <div className="cad-page">
-
-      {/* Header */}
-      <div className="cad-info-card" style={{ "--accent": "#16a34a" }}>
-        <div className="cad-info-icon" style={{ background: "#f0fdf4", color: "#16a34a" }}>
-          <StarOutlined />
-        </div>
-        <div className="cad-info-body" style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <h1 className="cad-info-title" style={{ marginBottom: 0 }}>Review Details</h1>
-            <button
-              className="cad-btn"
-              onClick={() => history.push(`/${companySlug}/positive-review`)}
-            >
-              <ArrowLeftOutlined /> Back to Reviews
-            </button>
+    <div className="prf-page">
+      {/* Page Header */}
+      <div className="prf-header">
+        <div className="prf-header-text">
+          <div className="prf-header-icon">
+            <StarOutlined />
           </div>
-          <div className="cad-info-fields" style={{ marginTop: 16 }}>
-            <div className="cad-info-field">
-              <div className="cad-info-label"><FileTextOutlined /> Project</div>
-              <div className="cad-info-value">{reviewData?.project?.title || "—"}</div>
-            </div>
-            <div className="cad-info-field">
-              <div className="cad-info-label"><UserOutlined /> Client</div>
-              <div className="cad-info-value">{reviewData?.client_name || "—"}</div>
-            </div>
-            <div className="cad-info-field">
-              <div className="cad-info-label"><UserOutlined /> Project Manager</div>
-              <div className="cad-info-value">{reviewData?.manager?.full_name || "—"}</div>
-            </div>
-            <div className="cad-info-field">
-              <div className="cad-info-label"><UserOutlined /> Account Manager</div>
-              <div className="cad-info-value">{reviewData?.acc_manager?.full_name || "—"}</div>
-            </div>
-            <div className="cad-info-field">
-              <div className="cad-info-label"><CalendarOutlined /> Date</div>
-              <div className="cad-info-value">
-                {reviewData?.createdAt
-                  ? moment(reviewData.createdAt).format("DD-MM-YYYY")
-                  : "—"}
-              </div>
-            </div>
+          <div>
+            <h2 className="prf-title">Review Details</h2>
+            <p className="prf-subtitle">Comprehensive overview of client feedback and project info</p>
           </div>
         </div>
+        <Button
+          type="primary"
+          icon={<ArrowLeftOutlined />}
+          className="add-btn"
+          onClick={() => history.push(`/${companySlug}/positive-review`)}
+        >
+          Back
+        </Button>
       </div>
 
-      {/* Feedback Details */}
-      <div className="cad-section">
-        <div className="cad-section-header">
-          <div className="cad-section-title">
-            <span className="cad-section-icon"><StarOutlined /></span>
-            Feedback Information
-          </div>
-        </div>
-        <div className="cad-section-body">
-          <div className="cad-status-view">
-            <div className="cad-status-field">
-              <div className="cad-field-label">Feedback Type</div>
-              <div className="cad-field-value">
-                <span className={`cad-status-badge ${reviewData?.feedback_type === "Clutch Review" ? "resolved" : "open"}`}>
-                  {reviewData?.feedback_type || "—"}
-                </span>
-              </div>
+      {/* Details Card */}
+      <div className="prf-card">
+        <div className="prf-form">
+          {/* Section: Project Information */}
+          <div className="prf-section">
+            <div className="prf-section-title">
+              <ProjectOutlined /> Project Information
             </div>
-            <div className="cad-status-field">
-              <div className="cad-field-label">NDA Signed</div>
-              <div className="cad-field-value">
-                {reviewData?.client_nda_sign ? (
-                  <span style={{ color: "#16a34a", fontWeight: 600 }}><CheckCircleOutlined /> Yes</span>
-                ) : (
-                  <span style={{ color: "#dc2626", fontWeight: 600 }}><CloseCircleOutlined /> No</span>
-                )}
-              </div>
-            </div>
-            {reviewData?.review_url && (
-              <div className="cad-status-field">
-                <div className="cad-field-label"><LinkOutlined /> Review URL</div>
-                <div className="cad-field-value">
-                  <a href={reviewData.review_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", wordBreak: "break-all" }}>
-                    {reviewData.review_url}
-                  </a>
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Project</div>
+                  <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FileTextOutlined style={{ color: '#0b3a5b' }} />
+                    {reviewData?.project?.title || "—"}
+                  </div>
                 </div>
-              </div>
-            )}
-            <div className="cad-status-field" style={{ gridColumn: "1 / -1" }}>
-              <div className="cad-field-label">Feedback</div>
-              <div
-                className="cad-field-value"
-                style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
-                dangerouslySetInnerHTML={{ __html: reviewData?.feedback || "—" }}
-              />
+              </Col>
+              <Col xs={24} md={12}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Client Name</div>
+                  <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <UserOutlined style={{ color: '#0b3a5b' }} />
+                    {reviewData?.client_name || "—"}
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={8}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Project Manager</div>
+                  <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <UserOutlined style={{ color: '#0b3a5b' }} />
+                    {reviewData?.manager?.full_name || "—"}
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={8}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Account Manager</div>
+                  <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TeamOutlined style={{ color: '#0b3a5b' }} />
+                    {reviewData?.acc_manager?.full_name || "—"}
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={8}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Submission Date</div>
+                  <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CalendarOutlined style={{ color: '#0b3a5b' }} />
+                    {reviewData?.createdAt
+                      ? moment(reviewData.createdAt).format("DD-MM-YYYY")
+                      : "—"}
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+          <div className="prf-divider" />
+
+          {/* Section: Feedback Details */}
+          <div className="prf-section">
+            <div className="prf-section-title">
+              <MessageOutlined /> Feedback Details
             </div>
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">Feedback Type</div>
+                  <div className="pr-drawer-value">
+                    <span className={`pr-type-badge ${typeBadgeClass(reviewData?.feedback_type)}`}>
+                      {reviewData?.feedback_type || "—"}
+                    </span>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={12}>
+                <div className="pr-drawer-field">
+                  <div className="pr-drawer-label">NDA Signed</div>
+                  <div className="pr-drawer-value">
+                    {reviewData?.client_nda_sign ? (
+                      <span className="pr-nda-yes"><CheckCircleOutlined /> YES</span>
+                    ) : (
+                      <span className="pr-nda-no"><CloseCircleOutlined /> NO</span>
+                    )}
+                  </div>
+                </div>
+              </Col>
+              {reviewData?.review_url && (
+                <Col xs={24}>
+                  <div className="pr-drawer-field">
+                    <div className="pr-drawer-label">Review URL</div>
+                    <div className="pr-drawer-value">
+                      <a
+                        href={reviewData.review_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#2563eb", display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <LinkOutlined /> {reviewData.review_url}
+                      </a>
+                    </div>
+                  </div>
+                </Col>
+              )}
+              <Col xs={24}>
+                <div className="pr-drawer-label" style={{ marginBottom: 12 }}>Feedback Content</div>
+                <div
+                  className="pr-feedback-content"
+                  style={{ minHeight: '120px' }}
+                  dangerouslySetInnerHTML={{ __html: reviewData?.feedback || "—" }}
+                />
+              </Col>
+            </Row>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

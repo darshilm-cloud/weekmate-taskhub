@@ -8,23 +8,28 @@ import {
   Table,
   Popconfirm,
   Modal,
+  Row,
+  Col,
 } from "antd";
 import {
   CloseCircleTwoTone,
   SaveTwoTone,
   EditOutlined,
+  PlusOutlined,
+  LeftOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
-import { useParams } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 
 import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import "./workflowstyle.css";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
 function WorkflowTasksUpdate() {
   const companySlug = localStorage.getItem("companyDomain");
+  const history = useHistory();
 
   const [addform] = Form.useForm();
   const [workflowName, setWorkflowName] = useState("");
@@ -53,7 +58,7 @@ function WorkflowTasksUpdate() {
     addform.resetFields();
     setIsModalOpen(false);
   };
-  // add workflow status
+
   const handleOk = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -63,9 +68,7 @@ function WorkflowTasksUpdate() {
         color: selectedColor || "#000000",
       };
 
-      const headers = {
-        token,
-      };
+      const headers = { token };
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -86,22 +89,18 @@ function WorkflowTasksUpdate() {
     }
   };
 
-  // get workflow status list
   const getListWorkflowStatus = async () => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
 
-      const reqBody = {};
-      const headers = {
-        token,
-      };
+      const headers = { token };
 
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
         api_url: Service.getworkflowStatus + "/" + id,
         headers: headers,
-        body: reqBody,
+        body: {},
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
@@ -114,7 +113,6 @@ function WorkflowTasksUpdate() {
     }
   };
 
-  // delete workflow status
   const handleDeleteWorkflowStatus = async (id) => {
     try {
       const response = await Service.makeAPICall({
@@ -203,13 +201,11 @@ function WorkflowTasksUpdate() {
       dataIndex: "title",
       key: "title",
       width: 700,
-      render: (text, record, index) => {
+      render: (text, record) => {
         const position = record?.title;
         return record?._id == editid ? (
           <span
-            onChange={(value) => {
-              handlechange(value);
-            }}
+            onChange={(value) => handlechange(value)}
             style={{ textTransform: "capitalize" }}
           >
             <Input defaultValue={position} />
@@ -219,15 +215,12 @@ function WorkflowTasksUpdate() {
         );
       },
     },
-
     {
       title: "Actions",
       key: "action",
       width: 200,
       render: (text, record) => {
-        if (record.isDefault == true) {
-          return null;
-        }
+        if (record.isDefault == true) return null;
         return (
           <div style={{ display: "flex", flexWrap: "wrap" }}>
             {flag === true && editid === record._id ? (
@@ -272,9 +265,7 @@ function WorkflowTasksUpdate() {
                   onConfirm={() => handleDeleteWorkflowStatus(record._id)}
                 >
                   <Button type="link delete">
-                    <AiOutlineDelete
-                      style={{ fontSize: "18px", color: "red" }}
-                    />
+                    <AiOutlineDelete style={{ fontSize: "18px", color: "red" }} />
                   </Button>
                 </Popconfirm>
               </>
@@ -288,87 +279,90 @@ function WorkflowTasksUpdate() {
   return (
     <>
       <Card className="employee-card">
-        <div className=" workflowtask-wrapper">
-          <div className="project-type-container">
-            <div className="heading-main">
-              <h2>Workflow Stages</h2>
-            </div>
+       
+            <div className="heading-wrapper">
+              <div className="heading-main">
+                <h2>Workflow Stages</h2>
+              </div>
+              <div className="header-btns">
 
-            <div className="profile-sub-head">
-              <div className="head-box-inner">
-                <Link to={`/${companySlug}/workflows`}>
-                  <i
-                    class="fi fi-rr-arrow-small-left"
-                    style={{ fontSize: "30px", color: "#000" }}
-                  ></i>
-                </Link>
-                <Button type="primary" onClick={showModal}>
+                <Button icon={<PlusOutlined />} type="primary" onClick={showModal}>
                   Add
+                </Button>
+                <Button
+                  type="primary"
+
+                  className="add-btn"
+                  onClick={() => history.push(`/${companySlug}/workflows`)}
+                  icon={<ArrowLeftOutlined />}
+                >
+                  Back
                 </Button>
               </div>
             </div>
 
             <Modal
               open={isModalOpen}
-              onOk={handleOk}
               onCancel={handleCancel}
-              footer={false}
+              onOk={() => addform.submit()}
+              title="Add Project Workflow Stage"
+              footer={[
+                <Button key="cancel" onClick={handleCancel} className="delete-btn ant-delete">
+                  Cancel
+                </Button>,
+                <Button key="save" type="primary" onClick={() => addform.submit()}>
+                  Save
+                </Button>,
+              ]}
             >
-              <div className="modal-header">
-                <h1>Add Project Workflow Stage</h1>
-              </div>
               <div className="overview-modal-wrapper">
-                <Form form={addform} onFinish={handleOk}>
-                  <div className="topic-cancel-wrapper">
-                    <Form.Item
-                      label="Color:"
-                      rules={[
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please select a color",
-                        },
-                      ]}
-                    >
-                      <Input
-                        type="color"
-                        label="color"
-                        name="color"
-                        onChange={(e) => setSelectedColor(e.target.value)}
-                        value={selectedColor}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      name="title"
-                      label="title"
-                      rules={[
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please enter a valid title",
-                        },
-                      ]}
-                    >
-                      <Input
-                        autoComplete="off"
-                        onChange={(e) => setWorkflowName(e.target.value)}
-                      />
-                    </Form.Item>
-                    <div className="modal-footer-flex">
-                      <div className="flex-btn">
-                        <Button type="primary" htmlType="submit">
-                          Save
-                        </Button>
-                        <Button onClick={handleCancel} className="ant-delete">
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                <Form form={addform} onFinish={handleOk} layout="vertical">
+                  <Row gutter={[0, 0]}>
+
+                    <Col xs={24}>
+                      <Form.Item
+                        label="Color"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select a color",
+                          },
+                        ]}
+                      >
+                        <Input
+                          type="color"
+                          name="color"
+                          onChange={(e) => setSelectedColor(e.target.value)}
+                          value={selectedColor}
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24}>
+                      <Form.Item
+                        name="title"
+                        label="Title"
+                        rules={[
+                          {
+                            required: true,
+                            whitespace: true,
+                            message: "Please enter a valid title",
+                          },
+                        ]}
+                      >
+                        <Input
+                          autoComplete="off"
+                          onChange={(e) => setWorkflowName(e.target.value)}
+                        />
+                      </Form.Item>
+                    </Col>
+
+                  </Row>
                 </Form>
               </div>
             </Modal>
-          </div>
+        <Card className="main-content-wrapper">
+
           <div className="block-table-content">
             <Table
               columns={columns}
@@ -377,7 +371,8 @@ function WorkflowTasksUpdate() {
               footer={null}
             />
           </div>
-        </div>
+        </Card>
+    
       </Card>
     </>
   );

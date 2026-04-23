@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
+  Button,
   Form,
   Input,
   message,
@@ -235,20 +236,29 @@ const ProjectExpensesForm = () => {
           }
         } else {
           const selectedProject = state.projects.find((project) => project?._id === values.project);
-          const reviewData = {
-            cost_in_usd:               values.cost_in_usd,
-            project_id:                values.project,
-            purchase_request_details:  values.purchase_request_details,
-            need_to_bill_customer:     values.need_to_bill_customer,
-          };
+          
+          const formData = new FormData();
+          state.file.forEach((item) => {
+            if (item.originFileObj) formData.append("projectexpences", item.originFileObj);
+          });
+
+          // Map all values from form
+          const excluded = ["project_manager", "account_manager", "billing_cycle", "is_recuring"];
+          Object.entries(values).forEach(([key, value]) => {
+            if (!excluded.includes(key) && value !== undefined && value !== null && value !== "") {
+              formData.append(key === "project" ? "project_id" : key, value);
+            }
+          });
           if (values.billing_cycle && values.is_recuring) {
-            reviewData.billing_cycle = values.billing_cycle;
-            reviewData.is_recuring   = values.is_recuring;
+            formData.append("billing_cycle", values.billing_cycle);
+            formData.append("is_recuring",   values.is_recuring);
           }
+
           const response = await Service.makeAPICall({
             methodName: Service.postMethod,
             api_url:    Service.addprojectexpanses,
-            body:       reviewData,
+            body:       formData,
+            headers:    { "Content-Type": "multipart/form-data" },
           });
           if (response?.data?.statusCode === 201) {
             message.success(response.data.message);
@@ -563,17 +573,16 @@ const ProjectExpensesForm = () => {
 
             {/* Actions */}
             <div className="ps-form-actions">
-              <button type="submit" className="add-btn">
-                <CheckCircleOutlined />
+              <Button htmlType="submit" className="add-btn">
                 {isEdit ? "Update" : "Submit"}
-              </button>
-              <button
-                type="button"
-                className="ps-btn-secondary"
+              </Button>
+              <Button
+                htmlType="button"
+                className="delete-btn"
                 onClick={() => history.push(`/${companySlug}/projectexpense`)}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </Form>
         </div>

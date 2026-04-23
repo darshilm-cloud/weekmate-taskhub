@@ -406,110 +406,132 @@ const CompanyEmployee = () => {
         />
       </Card>
 
-      <Modal
-        title={
-          modalMode === "view"
-            ? "View Employee"
-            : editData
-              ? "Edit Employee"
-              : "Add Employee"
-        }
-        open={ modalVisible }
-        onCancel={ () => setModalVisible(false) }
-        footer={
-          modalMode === "view"
-            ? null
-            : [
-              <Button
-                key="cancel"
-
-                className="delete-btn"
-                onClick={ () => setModalVisible(false) }
-              >
-                Cancel
-              </Button>,
-              <Button key="submit" type="primary" onClick={ handleSubmit } loading={isSubmitting}>
-                { editData ? "Update" : "Add" }
-              </Button>,
-            ]
-        }
-      >
-        <Form form={ form } layout="vertical">
-          <Form.Item
-            name="first_name"
-            label="First Name"
-            rules={ [{ required: true }] }
+     <Modal
+  title={
+    modalMode === "view"
+      ? "View Employee"
+      : editData
+      ? "Edit Employee"
+      : "Add Employee"
+  }
+  open={modalVisible}
+  onCancel={() => setModalVisible(false)}
+  width="100%"
+  style={{ maxWidth: 600 }}
+  footer={
+    modalMode === "view"
+      ? null
+      : [
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={() => setModalVisible(false)}
           >
-            <Input
-              placeholder="Enter first name"
-              disabled={ modalMode === "view" }
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="last_name"
-            label="Last Name"
-            rules={ [{ required: true }] }
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleSubmit}
+            loading={isSubmitting}
           >
-            <Input
-              placeholder="Enter last name"
-              disabled={ modalMode === "view" }
-            />
-          </Form.Item>
+            {editData ? "Update" : "Add"}
+          </Button>,
+        ]
+  }
+>
+  <Form form={form} layout="vertical">
+    <Row gutter={[16, 16]}>
+      
+      {/* First Name */}
+      <Col xs={24} sm={24} md={12}>
+        <Form.Item
+          name="first_name"
+          label="First Name"
+          rules={[{ required: true }]}
+        >
+          <Input
+            placeholder="Enter first name"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
 
+      {/* Last Name */}
+      <Col xs={24} sm={24} md={12}>
+        <Form.Item
+          name="last_name"
+          label="Last Name"
+          rules={[{ required: true }]}
+        >
+          <Input
+            placeholder="Enter last name"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
+
+      {/* Email */}
+      <Col xs={24}>
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={[{ required: true, type: "email" }]}
+        >
+          <Input
+            placeholder="Enter email"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
+
+      {/* Password (only Add mode) */}
+      {!editData && modalMode !== "view" && (
+        <Col xs={24}>
           <Form.Item
-            name="email"
-            label="Email"
-            rules={ [{ required: true, type: "email" }] }
-          >
-            <Input placeholder="Enter email" disabled={ modalMode === "view" } />
-          </Form.Item>
-
-          { !editData && modalMode !== "view" && (
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={ [
-                { required: true, message: "Password is required" },
-                {
-                  validator: (_, value) => {
-                    if (value && /\s/.test(value)) {
-                      return Promise.reject(
-                        new Error("Password should not contain spaces")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
+            name="password"
+            label="Password"
+            rules={[
+              { required: true, message: "Password is required" },
+              {
+                validator: (_, value) => {
+                  if (value && /\s/.test(value)) {
+                    return Promise.reject(
+                      new Error("Password should not contain spaces")
+                    );
+                  }
+                  return Promise.resolve();
                 },
-              ] }
-            >
-              <Input.Password
-                placeholder="Enter password"
-                autoComplete="new-password"
-              />
-            </Form.Item>
-          ) }
+              },
+            ]}
+          >
+            <Input.Password
+              placeholder="Enter password"
+              autoComplete="new-password"
+            />
+          </Form.Item>
+        </Col>
+      )}
 
-          { editData && (
-            <Row gutter={ 24 }>
-              <Col xs={ 24 } sm={ 12 }>
-                <Form.Item
-                  name="isActivate"
-                  label="Is Active"
-                  rules={ [{ required: true }] }
-                >
-                  <Radio.Group disabled={ modalMode === "view" }>
-                    <Radio value={ true }>Yes</Radio>
-                    <Radio value={ false }>No</Radio>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
+      {/* Active Status */}
+      {editData && (
+        <Col xs={24} sm={12}>
+          <Form.Item
+            name="isActivate"
+            label="Is Active"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group disabled={modalMode === "view"}>
+              <Radio value={true}>Yes</Radio>
+              <Radio value={false}>No</Radio>
+            </Radio.Group>
+          </Form.Item>
+        </Col>
+      )}
 
-
-            </Row>
-          ) }
-        </Form>
-      </Modal>
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 };

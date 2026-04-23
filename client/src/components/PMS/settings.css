@@ -251,38 +251,10 @@ body[data-theme="dark"] .ps-skeleton-row {
   border: 1px solid #e0e8f0;
 }
 
-.ps-modal .ant-modal-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #eef3f9 100%) !important;
-}
 
-.ps-modal .ant-modal-title {
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #0b3a5b !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.ps-modal .ant-modal-body {
-  padding: 24px !important;
-}
 
-.ps-modal .ant-modal-footer {
-  padding: 14px 24px !important;
-  border-top: 1px solid #edf0f4 !important;
-  background: #f8fafb !important;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
 
-/* Modal form inputs */
-.ps-modal .ant-form-item-label > label {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #374151 !important;
-}
 
 .ps-modal .ant-input,
 .ps-modal .ant-input-lg,

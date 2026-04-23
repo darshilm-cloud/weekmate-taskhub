@@ -354,10 +354,6 @@
   padding: 0;
 }
 
-.pr-drawer-section {
-  padding: 20px 24px;
-  border-bottom: 1px solid #f1f5f9;
-}
 
 body.dark-theme .pr-form-page,
 body[data-theme="dark"] .pr-form-page {
@@ -475,6 +471,11 @@ body[data-theme="dark"] .pr-form-page .feedback-submit-button-form .delete-btn {
   color: #fca5a5 !important;
 }
 
+.pr-drawer-section {
+  padding: 14px 0px;
+  border-bottom: 1px solid #eef2f7;
+}
+
 .pr-drawer-section:last-child {
   border-bottom: none;
 }
@@ -495,24 +496,71 @@ body[data-theme="dark"] .pr-form-page .feedback-submit-button-form .delete-btn {
 }
 
 .pr-drawer-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  margin: 0 !important;
 }
 
 .pr-drawer-field {
   background: #f8fafc;
   border-radius: 10px;
   padding: 12px 14px;
+  height: 100%;
+  border: 1px solid #eef2f7;
 }
 
 .pr-feedback-content {
   background: #f8fafc;
   border-radius: 10px;
-  padding: 16px;
+  padding: 14px;
   font-size: 14px;
   color: #334155;
   line-height: 1.6;
+  border: 1px solid #eef2f7;
+}
+
+.pr-detail-modal .ant-modal-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+
+
+.pr-detail-modal .ant-modal-body {
+  padding: 2px 0 0;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.pr-detail-modal .ant-modal-footer {
+  padding: 10px 16px;
+  margin-top: 0;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+
+.pr-detail-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pr-detail-edit-btn {
+  min-width: 92px;
+  border-radius: 6px;
+  height: 36px;
+}
+
+.pr-detail-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-right: 26px;
+}
+
+.pr-detail-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */
@@ -531,7 +579,30 @@ body[data-theme="dark"] .pr-form-page .feedback-submit-button-form .delete-btn {
 @media (max-width: 640px) {
   .pr-page { padding: 16px; gap: 14px; }
   .pr-stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .pr-drawer-fields { grid-template-columns: 1fr; }
+  .pr-detail-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto;
+  }
+  .pr-detail-modal .ant-modal-content {
+    border-radius: 10px;
+  }
+  .pr-detail-modal .ant-modal-header {
+    padding: 12px 14px;
+  }
+  .pr-detail-modal-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-right: 24px;
+  }
+  .pr-detail-modal .ant-modal-body {
+    max-height: calc(100vh - 170px);
+  }
+  .pr-detail-modal-footer {
+    justify-content: stretch;
+  }
+  .pr-detail-modal-footer .pr-detail-edit-btn {
+    width: 100%;
+  }
 }
 
 body.dark-theme .pr-page,
@@ -719,6 +790,28 @@ body[data-theme="dark"] .pr-feedback-content {
   color: #dce7fb;
 }
 
+body.dark-theme .pr-detail-modal .ant-modal-content,
+body[data-theme="dark"] .pr-detail-modal .ant-modal-content {
+  background: #0c182b;
+}
+
+body.dark-theme .pr-detail-modal .ant-modal-header,
+body[data-theme="dark"] .pr-detail-modal .ant-modal-header {
+  background: #0c182b;
+  border-bottom-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .pr-detail-modal .ant-modal-footer,
+body[data-theme="dark"] .pr-detail-modal .ant-modal-footer {
+  border-top-color: rgba(74, 104, 150, 0.2);
+  background: #0c182b;
+}
+
+body.dark-theme .pr-detail-modal .ant-modal-title,
+body[data-theme="dark"] .pr-detail-modal .ant-modal-title {
+  color: #e3ecfb;
+}
+
 /* ============================================================
    Add / Edit Review Form (prf-*)
    ============================================================ */
@@ -736,6 +829,7 @@ body[data-theme="dark"] .pr-feedback-content {
 .prf-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -743,14 +837,15 @@ body[data-theme="dark"] .pr-feedback-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
+  min-width: 88px;
   height: 38px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
   background: #fff;
   color: #475569;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 600;
   flex-shrink: 0;
   transition: all 0.15s ease;
 }
@@ -764,6 +859,7 @@ body[data-theme="dark"] .pr-feedback-content {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .prf-header-icon {
@@ -835,7 +931,7 @@ body[data-theme="dark"] .pr-feedback-content {
 .prf-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content:end;
   gap: 12px;
   padding-top: 8px;
   border-top: 1px solid #f1f5f9;
@@ -974,6 +1070,15 @@ body[data-theme="dark"] .prf-cancel-btn:hover {
 @media (max-width: 768px) {
   .prf-page {
     padding: 16px;
+  }
+  .prf-header {
+    align-items: flex-start;
+  }
+  .prf-back-btn {
+    min-width: 74px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 13px;
   }
   .prf-card {
     padding: 20px 16px;

@@ -1,0 +1,785 @@
+/* ==========================================================================
+   ENTERPRISE DARK THEME - MASTER STYLESHEET
+   Project: Weekmate Taskhub
+   Author: Antigravity AI
+   Description: Comprehensive dark mode overrides for the entire application.
+   ========================================================================== */
+
+:root {
+    /* Core Brand Colors */
+    --brand-primary: #2563eb;
+    --brand-primary-hover: #1d4ed8;
+    --brand-danger: #ef4444;
+    --brand-danger-hover: #dc2626;
+
+    /* Backgrounds */
+    --app-bg: #07111f;
+    --app-surface: #0c182b;
+    --app-surface-hover: #11213a;
+    --app-surface-active: #162a4a;
+
+    /* Borders & Dividers */
+    --app-border: rgba(74, 104, 150, 0.24);
+    --app-border-light: rgba(74, 104, 150, 0.12);
+
+    /* Text */
+    --app-text: #e2e8f0;
+    --app-text-muted: #94a3b8;
+    --app-text-dim: #64748b;
+    --app-text-bright: #ffffff;
+
+    /* Form Elements */
+    --app-input-bg: #132238;
+    --app-input-border: rgba(74, 104, 150, 0.4);
+    --app-input-focus: #2563eb;
+}
+
+/* ── 1. CORE LAYOUT & BACKGROUNDS ── */
+body.dark-theme,
+body[data-theme="dark"],
+body.dark-theme .gx-main-content-wrapper,
+body[data-theme="dark"] .gx-main-content-wrapper,
+body.dark-theme .gx-layout-sider,
+body[data-theme="dark"] .gx-layout-sider,
+body.dark-theme .gx-app-sidebar-header,
+body.dark-theme .gx-main-header,
+body.dark-theme .ant-layout-header {
+    background-color: #030a15 !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .gx-layout-sider-scrollbar {
+    background: #030a15 !important;
+}
+
+body.dark-theme .gx-main-header,
+body.dark-theme .ant-layout-header,
+body.dark-theme .ant-modal-header {
+    background-color: #0c182b !important;
+    border-bottom: 1px solid rgba(74, 104, 150, 0.15) !important;
+}
+
+/* Scrollbar Polishing */
+body.dark-theme ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+body.dark-theme ::-webkit-scrollbar-track {
+    background: #0c182b;
+}
+body.dark-theme ::-webkit-scrollbar-thumb {
+    background: #1e3a8a;
+    border-radius: 4px;
+}
+body.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+
+/* ── 2. CARDS, PANELS & CONTAINERS ── */
+body.dark-theme .gx-card,
+body.dark-theme .ant-card,
+body.dark-theme .ps-card,
+body.dark-theme .task-form-builder-card,
+body.dark-theme .task-form-preview,
+body.dark-theme .cmp-page,
+body.dark-theme .cmp-table-card,
+body.dark-theme .cmp-chart-card,
+body.dark-theme .project-panel,
+body.dark-theme .right-sidebar,
+body.dark-theme .main-content,
+body.dark-theme .overview-modal-wrapper,
+body.dark-theme .cad-info-card,
+body.dark-theme .cad-section,
+body.dark-theme .comment-list-wrapper,
+body.dark-theme .comment-wrapper,
+body.dark-theme .main-comment-wrapper,
+body.dark-theme .cad-page,
+body.dark-theme .cmp-unified-modal-body--view,
+body.dark-theme .cad-status-field,
+body.dark-theme .cad-field-value {
+    background: #0c182b !important;
+    border: 1px solid rgba(74, 104, 150, 0.2) !important;
+    color: #dce7fb !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Remove glow from main containers (Fix for Screenshots) */
+body.dark-theme .gx-main-content-wrapper,
+body.dark-theme .gx-container,
+body.dark-theme .gx-card,
+body.dark-theme .ant-card,
+body.dark-theme .ps-card,
+body.dark-theme .gx-layout-content {
+    box-shadow: none !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+}
+
+/* Force dark header again with even higher specificity */
+body.dark-theme .ant-modal-content .ant-modal-header,
+body.dark-theme .ant-drawer-content .ant-drawer-header,
+body.dark-theme .cmp-unified-modal-header {
+    background-color: #0c182b !important;
+    background: #0c182b !important;
+}
+
+body.dark-theme .task-form-builder-field-card {
+    background: #11213a !important;
+    border: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .task-form-builder-field-card:hover {
+    background: #162a4a !important;
+}
+
+/* ── 3. TYPOGRAPHY & CONTRAST ── */
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
+body.dark-theme h4, body.dark-theme h5, body.dark-theme h6,
+body.dark-theme .ant-typography,
+body.dark-theme .ant-typography strong,
+body.dark-theme .gx-card-title,
+body.dark-theme .cmp-title,
+body.dark-theme .ps-title,
+body.dark-theme .cad-info-title,
+body.dark-theme .cad-section-title {
+    color: #e3ecfb !important;
+}
+
+body.dark-theme .ant-typography-secondary,
+body.dark-theme .ant-typography[type="secondary"],
+body.dark-theme .cmp-stat-label,
+body.dark-theme .cad-field-label,
+body.dark-theme .cad-info-label {
+    color: #9bb6dd !important;
+}
+
+/* Table Chips & Action Buttons Fix (Screenshot 1 & 2) */
+body.dark-theme .ttv-list-title,
+body.dark-theme .ttv-members-text,
+body.dark-theme .ttv-title,
+body.dark-theme .cmp-project-chip {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    font-size: 12px !important;
+}
+
+body.dark-theme .cmp-action-btn,
+body.dark-theme .ant-btn-icon-only,
+body.dark-theme .gx-btn-icon-only,
+body.dark-theme .ant-btn-circle {
+    background: #132238 !important;
+    border: 1px solid rgba(74, 104, 150, 0.3) !important;
+    color: #38bdf8 !important;
+}
+
+body.dark-theme .cmp-action-btn.delete,
+body.dark-theme .ant-btn-danger.ant-btn-icon-only {
+    background: rgba(220, 38, 38, 0.15) !important;
+    color: #f87171 !important;
+    border-color: rgba(220, 38, 38, 0.3) !important;
+}
+
+body.dark-theme .cmp-action-btn:hover,
+body.dark-theme .ant-btn-icon-only:hover {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+}
+
+/* Link Visibility */
+body.dark-theme a, 
+body.dark-theme .ant-table-tbody > tr > td a {
+    color: #38bdf8 !important;
+}
+body.dark-theme a:hover, 
+body.dark-theme .ant-table-tbody > tr > td a:hover {
+    color: #7dd3fc !important;
+    text-decoration: underline !important;
+}
+
+/* ── 4. DATA TABLES (ANT DESIGN) ── */
+body.dark-theme .ant-table,
+body.dark-theme .ant-table-container {
+    background: #0c182b !important;
+    color: #dce7fb !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .ant-table-thead > tr > th {
+    background: #11213a !important;
+    color: #e3ecfb !important;
+    border-bottom: 1px solid rgba(74, 104, 150, 0.3) !important;
+    font-weight: 600 !important;
+}
+
+body.dark-theme .ant-table-tbody > tr > td {
+    border-bottom: 1px solid rgba(74, 104, 150, 0.12) !important;
+    color: #dce7fb !important;
+    background: transparent !important;
+}
+
+body.dark-theme .ant-table-tbody > tr.ant-table-row:hover > td,
+body.dark-theme .ant-table-tbody > tr:hover > td {
+    background: rgba(74, 104, 150, 0.1) !important;
+}
+
+body.dark-theme .ant-table-placeholder {
+    background: #0c182b !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+}
+
+/* ── 5. INTERACTIVE ELEMENTS (BUTTONS & INPUTS) ── */
+/* Primary Buttons */
+body.dark-theme .ant-btn-primary,
+body.dark-theme .gx-btn-primary,
+body.dark-theme .square-primary-btn,
+body.dark-theme .add-btn,
+body.dark-theme .btn-primary {
+    background: #1e40af !important;
+    border-color: #1e3a8a !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Default / Secondary Buttons */
+body.dark-theme .ant-btn:not(.ant-btn-primary):not(.ant-btn-danger):not(.gx-btn-primary),
+body.dark-theme .btn-secondary,
+body.dark-theme .square-outline-btn,
+body.dark-theme .provider-btn,
+body.dark-theme .outlook-btn {
+    background: #132238 !important;
+    border-color: rgba(74, 104, 150, 0.4) !important;
+    color: #9bb6dd !important;
+}
+
+body.dark-theme .delete-btn {
+    background: rgba(220, 38, 38, 0.1) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(220, 38, 38, 0.2) !important;
+}
+
+body.dark-theme .delete-btn:hover {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #ffffff !important;
+}
+
+/* Form Inputs */
+body.dark-theme .ant-input,
+body.dark-theme .ant-input-affix-wrapper,
+body.dark-theme .ant-select-selector,
+body.dark-theme .ant-picker,
+body.dark-theme .ant-input-number,
+body.dark-theme .ant-input-group-addon,
+body.dark-theme .ant-input-search-button,
+body.dark-theme textarea {
+    background: #132238 !important;
+    border-color: rgba(74, 104, 150, 0.3) !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .ant-input::placeholder,
+body.dark-theme .ant-select-selection-placeholder,
+body.dark-theme .ant-picker-input > input::placeholder {
+    color: rgba(155, 182, 221, 0.45) !important;
+}
+
+body.dark-theme .ant-select-arrow,
+body.dark-theme .ant-select-clear,
+body.dark-theme .ant-picker-suffix,
+body.dark-theme .ant-picker-clear,
+body.dark-theme .ant-input-password-icon,
+body.dark-theme .ant-input-search-icon {
+    color: #9bb6dd !important;
+}
+
+/* Table Icons */
+body.dark-theme .ant-table-filter-trigger,
+body.dark-theme .ant-table-column-sorter {
+    color: #6b8ab5 !important;
+}
+body.dark-theme .ant-table-filter-trigger:hover,
+body.dark-theme .ant-table-filter-trigger.active,
+body.dark-theme .ant-table-column-sorter-up.active,
+body.dark-theme .ant-table-column-sorter-down.active {
+    color: #38bdf8 !important;
+}
+
+/* Form Labels Visibility Fix (Screenshot 3) */
+body.dark-theme .ant-form-item-label > label,
+body.dark-theme .ant-form-item-label {
+    background: transparent !important;
+    color: #e3ecfb !important;
+}
+
+body.dark-theme .ant-form-item-label > label::after {
+    color: #e3ecfb !important;
+}
+
+/* ── 6. OVERLAYS (MODALS, DROPDOWNS, TOOLTIPS) ── */
+/* Global Modal & Drawer Header Force-Dark */
+body.dark-theme .ant-modal-header,
+body.dark-theme .ant-drawer-header,
+body.dark-theme .ant-modal-content,
+body.dark-theme .ant-modal-body,
+body.dark-theme .ant-drawer-wrapper-body,
+body.dark-theme .cmp-unified-modal-header,
+body.dark-theme .modal-header,
+body.dark-theme .gx-modal-header,
+body.dark-theme .ant-modal-confirm-body-wrapper {
+    background-color: #0c182b !important;
+    background: #0c182b !important;
+    border-bottom: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .ant-modal-header * {
+    background-color: transparent !important;
+}
+
+/* Specific Complaint Detail Overrides (Screenshot 3) */
+body.dark-theme .cad-section,
+body.dark-theme .cad-info-card,
+body.dark-theme .cad-status-field,
+body.dark-theme .cad-comment-item,
+body.dark-theme .cmp-unified-modal-body--view,
+body.dark-theme .cmp-unified-modal-header {
+    background: #0c182b !important;
+    background-color: #0c182b !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .cad-section-header,
+body.dark-theme .cad-info-icon,
+body.dark-theme .cad-section-title .cad-section-icon {
+    background: #11213a !important;
+    border-color: rgba(74, 104, 150, 0.2) !important;
+    color: #e3ecfb !important;
+}
+
+body.dark-theme .ant-modal-content,
+body.dark-theme .ant-modal-header,
+body.dark-theme .ant-drawer-content,
+body.dark-theme .ant-drawer-header,
+body.dark-theme .ant-select-dropdown,
+body.dark-theme .ant-dropdown-menu,
+body.dark-theme .ant-picker-panel-container,
+body.dark-theme .ant-popover-inner,
+body.dark-theme .cmp-unified-modal-body,
+body.dark-theme .cmp-unified-modal-body--view {
+    background: #0c182b !important;
+    border: 1px solid rgba(74, 104, 150, 0.35) !important;
+    color: #dce7fb !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .ant-modal-title,
+body.dark-theme .ant-drawer-title,
+body.dark-theme .ant-modal-close,
+body.dark-theme .ant-modal-close-x,
+body.dark-theme .ant-drawer-close,
+body.dark-theme .cmp-unified-modal-title {
+    color: #e3ecfb !important;
+}
+
+/* Modal Subtitles & Descriptions */
+body.dark-theme .ant-modal-body p,
+body.dark-theme .ant-modal-content .ant-typography-secondary,
+body.dark-theme .ant-modal-confirm-content {
+    color: #9bb6dd !important;
+}
+
+body.dark-theme .ant-modal-footer,
+body.dark-theme .ant-drawer-footer {
+    border-top: 1px solid rgba(74, 104, 150, 0.2) !important;
+    background: #0c182b !important;
+}
+
+body.dark-theme .ant-tooltip-inner {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+}
+
+/* ── 7. RICH TEXT EDITOR (CKEDITOR / BOLD) ── */
+body.dark-theme .ck-editor__main .ck-content,
+body.dark-theme .ck-editor__editable,
+body.dark-theme .ck-content {
+    background: #132238 !important;
+    color: #dce7fb !important;
+    border-color: rgba(74, 104, 150, 0.3) !important;
+}
+
+body.dark-theme .ck.ck-toolbar,
+body.dark-theme .ck-toolbar_grouping {
+    background: #11213a !important;
+    border-color: rgba(74, 104, 150, 0.3) !important;
+}
+
+body.dark-theme .ck.ck-button {
+    color: #dce7fb !important;
+}
+
+body.dark-theme .ck.ck-button:hover,
+body.dark-theme .ck.ck-button.ck-on {
+    background: #1e3a8a !important;
+}
+
+/* ── 8. STATUS & VISUAL INDICATORS ── */
+body.dark-theme .ant-tag {
+    background: rgba(74, 104, 150, 0.15) !important;
+    border-color: rgba(74, 104, 150, 0.3) !important;
+    color: #9bb6dd !important;
+}
+
+/* Status Badges */
+body.dark-theme .cmp-status-badge.open, body.dark-theme .cad-status-badge.open { background: rgba(37, 99, 235, 0.2) !important; color: #60a5fa !important; border: 1px solid rgba(37, 99, 235, 0.3) !important; }
+body.dark-theme .cmp-status-badge.in-progress, body.dark-theme .cad-status-badge.in_progress { background: rgba(234, 88, 12, 0.2) !important; color: #fb923c !important; border: 1px solid rgba(234, 88, 12, 0.3) !important; }
+body.dark-theme .cmp-status-badge.resolved, body.dark-theme .cad-status-badge.resolved { background: rgba(20, 184, 166, 0.2) !important; color: #4ade80 !important; border: 1px solid rgba(20, 184, 166, 0.3) !important; }
+body.dark-theme .cmp-status-badge.reopened, body.dark-theme .cad-status-badge.reopened { background: rgba(124, 58, 237, 0.2) !important; color: #a78bfa !important; border: 1px solid rgba(124, 58, 237, 0.3) !important; }
+
+/* Priority Badges */
+body.dark-theme .cmp-priority-badge.high, body.dark-theme .cmp-priority-badge.critical { background: rgba(220, 38, 38, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(220, 38, 38, 0.3) !important; }
+body.dark-theme .cmp-priority-badge.medium { background: rgba(245, 158, 11, 0.2) !important; color: #fbbf24 !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; }
+body.dark-theme .cmp-priority-badge.low { background: rgba(16, 185, 129, 0.2) !important; color: #34d399 !important; border: 1px solid rgba(16, 185, 129, 0.3) !important; }
+
+/* Pagination */
+body.dark-theme .ant-pagination-item,
+body.dark-theme .ant-pagination-prev .ant-pagination-item-link,
+body.dark-theme .ant-pagination-next .ant-pagination-item-link {
+    background: #132238 !important;
+    border-color: rgba(74, 104, 150, 0.3) !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .ant-pagination-item-active {
+    background: #1e40af !important;
+    border-color: #3b82f6 !important;
+}
+
+/* ── 9. APEXCHARTS POLISHING ── */
+body.dark-theme .apexcharts-tooltip {
+    background: #11213a !important;
+    border: 1px solid #1e3a8a !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .apexcharts-xaxis-label,
+body.dark-theme .apexcharts-yaxis-label {
+    fill: #9bb6dd !important;
+}
+
+body.dark-theme .apexcharts-gridline {
+    stroke: rgba(74, 104, 150, 0.1) !important;
+}
+
+/* ── 10. TASK BOARDS & DRAG-AND-DROP ── */
+body.dark-theme .add-task-col-btn {
+    background: rgba(30, 58, 138, 0.25) !important;
+    border: 1px dashed rgba(59, 130, 246, 0.4) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-theme .add-task-col-btn:hover {
+    background: rgba(30, 58, 138, 0.4) !important;
+    color: #ffffff !important;
+}
+
+/* Logo & Branding visibility */
+body.dark-theme .gx-site-logo img {
+    filter: brightness(0) invert(1) opacity(0.9);
+}
+
+/* Breadcrumbs */
+body.dark-theme .ant-breadcrumb,
+body.dark-theme .ant-breadcrumb a,
+body.dark-theme .ant-breadcrumb-separator {
+    color: #9bb6dd !important;
+}
+body.dark-theme .ant-breadcrumb a:hover {
+    color: #e3ecfb !important;
+}
+body.dark-theme .ant-breadcrumb-link:last-child,
+body.dark-theme .ant-breadcrumb-link:last-child a {
+    color: #e3ecfb !important;
+    font-weight: 500 !important;
+}
+
+/* ── 11. SETTINGS MODULE ── */
+body.dark-theme .settings-overview,
+body.dark-theme .settings-overview-shell,
+body.dark-theme .settings-card,
+body.dark-theme .smtp-section-container,
+body.dark-theme .quick-setup-section,
+body.dark-theme .manual-config-section,
+body.dark-theme .input-group,
+body.dark-theme .card-actions,
+body.dark-theme .quick-setup-text,
+body.dark-theme .section-header {
+    background-color: transparent !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .settings-card {
+    background-color: #0c182b !important;
+    border: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .config-tips-alert {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+body.dark-theme .config-tips-alert .alert-title,
+body.dark-theme .config-tips-alert li {
+    color: #93c5fd !important;
+}
+
+body.dark-theme .input-group label,
+body.dark-theme .required-label {
+    color: #9bb6dd !important;
+}
+
+/* ── 12. PERMISSION MODULE ── */
+body.dark-theme .rpm-page,
+body.dark-theme .rpm-workspace,
+body.dark-theme .rpm-permission-panel,
+body.dark-theme .rpm-matrix-wrap,
+body.dark-theme .rpm-panel-header {
+    background-color: transparent !important;
+}
+
+body.dark-theme .rpm-stat-card {
+    background: #0c182b !important;
+    border: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .rpm-stat-label {
+    color: #9bb6dd !important;
+}
+
+body.dark-theme .rpm-stat-value {
+    color: #e3ecfb !important;
+}
+
+body.dark-theme .rpm-role-sidebar {
+    background: #0c182b !important;
+    border-right: 1px solid rgba(74, 104, 150, 0.2) !important;
+}
+
+body.dark-theme .rpm-role-item:hover {
+    background: rgba(74, 104, 150, 0.1) !important;
+}
+
+body.dark-theme .rpm-role-item.active {
+    background: rgba(30, 58, 138, 0.3) !important;
+    border-left-color: #3b82f6 !important;
+}
+
+body.dark-theme .rpm-matrix thead th {
+    background: #11213a !important;
+    color: #e3ecfb !important;
+    border-bottom: 1px solid rgba(74, 104, 150, 0.3) !important;
+}
+
+body.dark-theme .rpm-matrix tbody td {
+    border-bottom: 1px solid rgba(74, 104, 150, 0.12) !important;
+    color: #dce7fb !important;
+}
+
+body.dark-theme .rpm-module-label {
+    color: #e3ecfb !important;
+}
+
+body.dark-theme .rpm-module-sub {
+    color: #9bb6dd !important;
+}
+
+body.dark-theme .rpm-save-bar {
+    background: #11213a !important;
+    border-top: 1px solid rgba(74, 104, 150, 0.3) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .rpm-module-icon {
+    background: rgba(74, 104, 150, 0.1) !important;
+    color: #38bdf8 !important;
+}
+
+/* ── 13. ADMIN MODULES (PROJECT STATUS, WORKFLOWS, ETC.) ── */
+body.dark-theme .ps-page,
+body.dark-theme .main-content-wrapper,
+body.dark-theme .ps-card,
+body.dark-theme .block-table-content,
+body.dark-theme .tfb-page,
+body.dark-theme .pfb-page {
+    background-color: transparent !important;
+}
+
+body.dark-theme .ps-page > .ant-card-body,
+body.dark-theme .main-content-wrapper > .ant-card-body,
+body.dark-theme .tfb-page,
+body.dark-theme .pfb-page,
+body.dark-theme .cm-page {
+    background: var(--app-surface) !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--app-border) !important;
+}
+
+body.dark-theme .heading-main h2,
+body.dark-theme .cm-hero-name,
+body.dark-theme .cm-section-title {
+    color: var(--app-text-bright) !important;
+}
+
+body.dark-theme .global-search .ant-input-search .ant-input,
+body.dark-theme .cm-modal .ant-input,
+body.dark-theme .cm-modal .ant-input-affix-wrapper {
+    background: var(--app-input-bg) !important;
+    color: var(--app-text) !important;
+    border-color: var(--app-input-border) !important;
+}
+
+body.dark-theme .ps-skeleton-row {
+    background: var(--app-surface-hover) !important;
+    border-bottom: 1px solid var(--app-border-light) !important;
+}
+
+body.dark-theme .ps-shimmer {
+    background: linear-gradient(90deg, #132238 25%, #1a2d46 50%, #132238 75%) !important;
+}
+
+body.dark-theme .pe-action-btn {
+    background: rgba(74, 104, 150, 0.1) !important;
+    border: 1px solid var(--app-border-light) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-theme .pe-action-btn:hover {
+    background: rgba(74, 104, 150, 0.2) !important;
+    color: var(--app-text-bright) !important;
+}
+
+/* ── 14. BUTTON STANDARDIZATION ── */
+body.dark-theme .add-btn,
+body.dark-theme .ant-btn-primary {
+    background: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+body.dark-theme .add-btn:hover,
+body.dark-theme .ant-btn-primary:hover {
+    background: var(--brand-primary-hover) !important;
+    border-color: var(--brand-primary-hover) !important;
+}
+
+body.dark-theme .delete-btn,
+body.dark-theme .ant-btn-danger,
+body.dark-theme .ant-delete {
+    background: var(--brand-danger) !important;
+    border-color: var(--brand-danger) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .delete-btn:hover,
+body.dark-theme .ant-btn-danger:hover {
+    background: var(--brand-danger-hover) !important;
+    border-color: var(--brand-danger-hover) !important;
+}
+
+body.dark-theme .discard-btn,
+body.dark-theme .cancel-btn {
+    background: #334155 !important;
+    border: 1px solid #475569 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .discard-btn:hover,
+body.dark-theme .cancel-btn:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+
+/* ── 15. COMPANY PROFILE & HERO CARDS ── */
+body.dark-theme .cm-hero {
+    background: linear-gradient(135deg, #0b3a5b 0%, #0c182b 100%) !important;
+    border: 1px solid var(--app-border) !important;
+}
+
+body.dark-theme .cm-stat-card,
+body.dark-theme .cm-asset-card {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-theme .cm-asset-header {
+    background: var(--app-surface-hover) !important;
+    border-bottom-color: var(--app-border-light) !important;
+}
+
+body.dark-theme .cm-asset-body {
+    background: var(--app-surface) !important;
+}
+
+/* ── 16. MISC UI FIXES ── */
+body.dark-theme .ant-popover-arrow-content {
+    background-color: var(--app-surface) !important;
+}
+
+body.dark-theme .ant-popover-inner {
+    background-color: var(--app-surface) !important;
+    border: 1px solid var(--app-border) !important;
+}
+
+body.dark-theme .ant-popover-title {
+    color: var(--app-text-bright) !important;
+    border-bottom: 1px solid var(--app-border-light) !important;
+}
+
+body.dark-theme .ant-popover-inner-content {
+    color: var(--app-text) !important;
+}
+
+/* Fix for search input in Topbar */
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper {
+    background: #11213a !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-theme .weekmate-navbar-search-input .ant-input {
+    color: var(--app-text) !important;
+}
+
+/* ── 17. INLINE STYLE OVERRIDES (FOR HARDCODED COLORS IN JSX) ── */
+body.dark-theme [style*="color: #0b3a5b"],
+body.dark-theme [style*="color: #0B3A5B"],
+body.dark-theme [style*="color: rgb(11, 58, 91)"] {
+    color: var(--app-text-bright) !important;
+}
+
+body.dark-theme [style*="color: #8c8c8c"],
+body.dark-theme [style*="color: #8C8C8C"],
+body.dark-theme [style*="color: rgb(140, 140, 140)"] {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-theme [style*="color: #1e293b"],
+body.dark-theme [style*="color: #1E293B"] {
+    color: var(--app-text) !important;
+}
+
+/* Fix for icons with hardcoded backgrounds in stat cards */
+body.dark-theme .cm-stat-icon,
+body.dark-theme .rpm-stat-icon {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--app-text-bright) !important;
+}
+
+/* Fix for activity logs specifically */
+body.dark-theme .ant-tag {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}

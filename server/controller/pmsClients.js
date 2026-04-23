@@ -54,19 +54,20 @@ exports.clientExists = async (reqData, id = null, companyId) => {
   }
 };
 
-exports.isEmpEmail = async (reqData) => {
+exports.isEmpEmail = async (reqData, companyId) => {
   try {
-    let isExist = false;
+    if (!reqData?.email || !companyId) return false;
+    const escaped = String(reqData.email).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const data = await Employees.findOne({
       isDeleted: false,
       isSoftDeleted: false,
-      isActivate: true,
-      email: { $regex: new RegExp(`^${reqData?.email}$`, "i") }
+      companyId: newObjectId(companyId),
+      email: { $regex: new RegExp(`^${escaped}$`, "i") }
     });
-    if (data) isExist = true;
-    return isExist;
+    return Boolean(data);
   } catch (error) {
     console.log("🚀 ~ exports.isEmpEmail= ~ error:", error);
+    return false;
   }
 };
 
@@ -104,7 +105,7 @@ exports.addClients = async (req, res) => {
 
     if (await this.clientExists(value, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
-    } else if (await this.isEmpEmail(value)) {
+    } else if (await this.isEmpEmail(value, decodedCompanyId)) {
       return errorResponse(
         res,
         statusCode.CONFLICT,
@@ -404,7 +405,7 @@ exports.updateClientData = async (req, res) => {
 
     if (await this.clientExists(value, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
-    } else if (await this.isEmpEmail(value)) {
+    } else if (await this.isEmpEmail(value, decodedCompanyId)) {
       return errorResponse(
         res,
         statusCode.CONFLICT,

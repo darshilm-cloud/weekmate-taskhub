@@ -180,7 +180,8 @@ const SettingsModule = () => {
               </div>
               <Space size={16} className="provider-buttons">
                 <Button
-                  className="provider-btn gmail-btn"
+                type="primary"
+                  className="add-btn"
                   icon={<img src="/assets/images/google-icon.png" alt="" style={{ width: 14, marginRight: 6 }} onError={(e) => e.target.style.display='none'} />}
                   onClick={() => handleQuickSetup("gmail")}
                 >
@@ -299,12 +300,12 @@ const SettingsModule = () => {
 
               <div className="card-actions">
                 <div className="left-actions">
-                  <Button className="secondary-btn" onClick={() => fetchData()}>Reset to Default</Button>
-                  <Button className="secondary-btn">Cancel</Button>
+                  <Button className="delete-btn" onClick={() => fetchData()}>Reset to Default</Button>
+                  <Button className="delete-btn">Cancel</Button>
                 </div>
                 <Button
                   type="primary"
-                  className="primary-action-btn"
+                  className="add-btn"
                   icon={<SyncOutlined spin={savingLoading} style={{ fontSize: '14px' }} />}
                   onClick={handleTestAndSave}
                   loading={savingLoading}
@@ -338,7 +339,7 @@ const SettingsModule = () => {
             <Col xs={24} md={6}>
               <Button
                 type="primary"
-                className="save-limit-btn"
+                className="add-btn"
                 icon={<SaveOutlined />}
                 onClick={handleSaveFileSize}
                 loading={fileSizeLoading}

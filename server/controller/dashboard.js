@@ -168,25 +168,20 @@ exports.getMyProjects = async (req, res) => {
     console.log(`[getMyProjects] START | companyId=${decodedCompanyId} userId=${decodedUserId} page=${pageNum} limit=${limitNum} isComplaints=${isComplaints} search="${search || ''}"`);
 
     const userId = new mongoose.Types.ObjectId(req?.user?._id);
-    const COMPLAINT_SLUGS = ["DY", "AMC", "FC", "TM", "DD"];
 
     // 1. Parallel Pre-fetch: Metadata + Count + Admin Check
     console.log(`[getMyProjects] [${_elapsed()}] starting parallel pre-fetch`);
-    
+
     const preFetchStart = Date.now();
-    const [isAdmin, starredProjectIds, complaintTypeIds, tabSettingStages, tabSettingProjection] = await Promise.all([
+    const [isAdmin, starredProjectIds, tabSettingStages, tabSettingProjection] = await Promise.all([
       checkUserIsAdmin(req?.user?._id),
       StarProject.find({ createdBy: userId, isDeleted: false }).distinct('project_id'),
-      isComplaints 
-        ? mongoose.model("projecttypes").find({ slug: { $in: COMPLAINT_SLUGS }, isDeleted: false }).distinct("_id")
-        : Promise.resolve([]),
       getProjectDefaultSettingQuery("_id"),
       getProjectDefaultSettingQuery("_id", true),
     ]);
-    console.log(`[getMyProjects] [${_elapsed()}] pre-fetch done in ${Date.now() - preFetchStart}ms | isAdmin=${isAdmin} starIds=${starredProjectIds.length} complaintIds=${complaintTypeIds.length}`);
+    console.log(`[getMyProjects] [${_elapsed()}] pre-fetch done in ${Date.now() - preFetchStart}ms | isAdmin=${isAdmin} starIds=${starredProjectIds.length}`);
 
     const starIds = (starredProjectIds || []).map(id => new mongoose.Types.ObjectId(id));
-    const complaintIds = (complaintTypeIds || []).map(id => new mongoose.Types.ObjectId(id));
     
     // 2. Build matchQuery using ONLY raw document fields
     console.log(`[getMyProjects] [${_elapsed()}] building matchQuery`);
@@ -216,9 +211,7 @@ exports.getMyProjects = async (req, res) => {
       ];
     }
 
-    if (isComplaints) {
-      matchQuery.project_type = { $in: complaintIds };
-    }
+    // isComplaints: true just means "show projects for complaint selection" — no type filtering needed
 
     if (search && search.trim()) {
       matchQuery.$and = matchQuery.$and || [];
