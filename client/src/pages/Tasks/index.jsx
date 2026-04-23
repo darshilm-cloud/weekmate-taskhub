@@ -18,6 +18,7 @@ import {
   ConfigProvider,
   Row,
   Col,
+  Spin,
   message,
 } from "antd";
 import {
@@ -115,6 +116,11 @@ const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
 
 const { Search } = Input;
 
+const normalizeMainTaskListResponse = (data) => {
+  if (Array.isArray(data)) return data;
+  return data ? [data] : [];
+};
+
 const TasksPMS = ({ flag }) => {
   const location = useLocation();
   const history = useHistory();
@@ -183,6 +189,8 @@ const TasksPMS = ({ flag }) => {
   const boardTasksInitiatedRef = useRef(false);
   const suppressNextBoardReloadRef = useRef(false);
   const lastApplyRef = useRef(0);
+  const locallyCreatedTaskIdRef = useRef(null);
+  const skipNextLocalTaskCreatedEventRef = useRef(false);
 
   //Filter Subscribers & Clients for List Notification:
   const [filteredSubscriber, setFilteredSubscribers] = useState([]);
@@ -894,9 +902,19 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, response.data.data);
+        const createdTask = response.data.data;
+        const currentListId =
+          createdTask?.mainTask?._id ||
+          createdTask?.main_task_id?._id ||
+          createdTask?.main_task_id ||
+          selectedTask?._id;
+
+        await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, createdTask);
         handleCancelTaskModal();
-        getProjectMianTask("", true);
+        if (currentListId) {
+          await getBoardTasks(currentListId, { silent: true });
+        }
+        await getProjectMianTask("", false, { silent: true });
       } else {
         message.error(response.data.message);
       }
@@ -1035,20 +1053,22 @@ const TasksPMS = ({ flag }) => {
         if (!silent) {
           setIsTasksLoading(false);
         }
-        // Update hasDraft in background after UI is unblocked
-        Promise.all(
-          response.data.data.map(async (column) => ({
-            ...column,
-            tasks: await Promise.all(
-              column.tasks.map(async (task) => ({
-                ...task,
-                hasDraft: await hasDraftComment(task._id),
-              }))
-            ),
-          }))
-        ).then((enrichedData) => {
-          setBoardTasks(enrichedData);
-        });
+        // Avoid a second full-board render during silent refreshes (e.g. create task).
+        if (!silent) {
+          Promise.all(
+            response.data.data.map(async (column) => ({
+              ...column,
+              tasks: await Promise.all(
+                column.tasks.map(async (task) => ({
+                  ...task,
+                  hasDraft: await hasDraftComment(task._id),
+                }))
+              ),
+            }))
+          ).then((enrichedData) => {
+            setBoardTasks(enrichedData);
+          });
+        }
       } else {
         message.error(response.data.message);
         setBoardHydrated(true);
@@ -1182,25 +1202,40 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.getProjectMianTask,
         body: reqBody,
       });
-      if (response?.data?.data?.length > 0) {
+      const mainTaskList = normalizeMainTaskListResponse(response?.data?.data);
+
+      if (mainTaskList.length > 0) {
+        const totalMainTasks =
+          Number(response?.data?.metadata?.total) || mainTaskList.length;
+
         if (filterData?.isActive === true) {
           setPagination((prevPagination) => ({
             ...prevPagination,
-            total: response.data.metadata.total,
+            total: totalMainTasks,
           }));
         } else {
           setPagination({
             ...pagination,
-            total: response.data.metadata.total,
+            total: totalMainTasks,
           });
         }
-        setProjectMianTask(response.data.data);
+        setProjectMianTask(mainTaskList);
         if (selectionFalse) {
           const preservedListId =
             taskID ||
             listID ||
             selectedTask?._id ||
-            response?.data?.data?.[0]?._id;
+            mainTaskList[0]?._id;
+
+          if (preservedListId) {
+            const matchedList = mainTaskList.find(
+              (item) => String(item?._id || "") === String(preservedListId)
+            );
+            if (matchedList) {
+              setSelectedTask(matchedList);
+            }
+          }
+
           if (preservedListId) {
             getBoardTasks(preservedListId, { silent });
           }
@@ -1208,7 +1243,7 @@ const TasksPMS = ({ flag }) => {
         }
         if (!listID) {
           const searchParams = new URLSearchParams(location.search);
-          searchParams.set("listID", response.data.data[0]._id);
+          searchParams.set("listID", mainTaskList[0]._id);
           history.push({
             pathname: window.location.pathname,
             search: searchParams.toString(),
@@ -1516,15 +1551,30 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
         const createdListId = response?.data?.data?._id;
+        const createdList = response?.data?.data;
         if (createdListId) {
+          suppressNextBoardReloadRef.current = true;
+          setSelectedTask(createdList);
+          setProjectMianTask((prev) => {
+            const currentList = Array.isArray(prev) ? prev : [];
+            const remainingLists = currentList.filter(
+              (item) => String(item?._id || "") !== String(createdListId)
+            );
+            return [createdList, ...remainingLists];
+          });
+          setTaskListsHydrated(true);
+          setBoardHydrated(false);
+
           const searchParams = new URLSearchParams(location.search);
           searchParams.set("listID", createdListId);
           history.push({
             pathname: window.location.pathname,
             search: searchParams.toString(),
           });
+
+          await getBoardTasks(createdListId, { silent: true });
         }
-        await getProjectMianTask();
+        await getProjectMianTask("", true, { silent: true });
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
@@ -2373,18 +2423,41 @@ const TasksPMS = ({ flag }) => {
 
   useEffect(() => {
     const handleExternalTaskCreated = async (event) => {
+      if (skipNextLocalTaskCreatedEventRef.current) {
+        skipNextLocalTaskCreatedEventRef.current = false;
+        return;
+      }
       const createdTask = event?.detail?.task || {};
+      const createdTaskId = createdTask?._id || createdTask?.id || null;
+      if (createdTaskId && String(locallyCreatedTaskIdRef.current || "") === String(createdTaskId)) {
+        locallyCreatedTaskIdRef.current = null;
+        return;
+      }
       const createdProjectId =
         createdTask?.project?._id ||
         createdTask?.project_id?._id ||
         createdTask?.project_id ||
+        event?.detail?.projectId ||
+        null;
+      const createdMainTaskId =
+        createdTask?.mainTask?._id ||
+        createdTask?.main_task_id?._id ||
+        createdTask?.main_task_id ||
+        event?.detail?.mainTaskId ||
         null;
 
       if (createdProjectId && String(createdProjectId) !== String(projectId)) {
         return;
       }
 
-      await getProjectMianTask("", true, { silent: true });
+      if (createdMainTaskId) {
+        const activeListId = listID || selectedTask?._id;
+        if (String(activeListId || "") === String(createdMainTaskId)) {
+          await getBoardTasks(createdMainTaskId, { silent: true });
+        }
+      }
+
+      await getProjectMianTask("", false, { silent: true });
     };
 
     window.addEventListener("weekmate:task-created", handleExternalTaskCreated);
@@ -3266,46 +3339,52 @@ const TasksPMS = ({ flag }) => {
             )}
 
             {isTasksLoading || !taskListsHydrated || !boardHydrated ? (
-              <div className="wm-kanban-skeleton">
-                {/* Toolbar skeleton */}
-                <div className="wm-skel-toolbar">
-                  <div className="wm-skel-line" style={{ width: 220, height: 32, borderRadius: 8 }} />
-                  <div className="wm-skel-line" style={{ width: 36, height: 32, borderRadius: 8 }} />
-                  <div className="wm-skel-line" style={{ width: 80, height: 32, borderRadius: 8, marginLeft: "auto" }} />
-                </div>
-                {/* Kanban columns */}
-                <div className="wm-skel-columns">
-                  {[
-                    { color: "#3b82f6", cards: 4 },
-                    { color: "#f59e0b", cards: 3 },
-                    { color: "#10b981", cards: 5 },
-                    { color: "#8b5cf6", cards: 2 },
-                    { color: "#ef4444", cards: 3 },
-                  ].map((col, ci) => (
-                    <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
-                      {/* Column header */}
-                      <div className="wm-skel-col-head">
-                        <div className="wm-skel-line" style={{ width: 90, height: 13 }} />
-                        <div className="wm-skel-badge" />
-                      </div>
-                      {/* Cards */}
-                      <div className="wm-skel-col-body">
-                        {Array.from({ length: col.cards }).map((_, ki) => (
-                          <div key={ki} className="wm-skel-card">
-                            <div className="wm-skel-line wm-skel-card-title" />
-                            <div className="wm-skel-line wm-skel-card-sub" />
-                            <div className="wm-skel-line wm-skel-card-date" />
-                            <div className="wm-skel-card-footer">
-                              <div className="wm-skel-avatar" />
-                              <div className="wm-skel-line" style={{ width: 40, height: 10 }} />
+              selectedView === "board" ? (
+                <div className="wm-kanban-skeleton">
+                  {/* Toolbar skeleton */}
+                  <div className="wm-skel-toolbar">
+                    <div className="wm-skel-line" style={{ width: 220, height: 32, borderRadius: 8 }} />
+                    <div className="wm-skel-line" style={{ width: 36, height: 32, borderRadius: 8 }} />
+                    <div className="wm-skel-line" style={{ width: 80, height: 32, borderRadius: 8, marginLeft: "auto" }} />
+                  </div>
+                  {/* Kanban columns */}
+                  <div className="wm-skel-columns">
+                    {[
+                      { color: "#3b82f6", cards: 4 },
+                      { color: "#f59e0b", cards: 3 },
+                      { color: "#10b981", cards: 5 },
+                      { color: "#8b5cf6", cards: 2 },
+                      { color: "#ef4444", cards: 3 },
+                    ].map((col, ci) => (
+                      <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
+                        {/* Column header */}
+                        <div className="wm-skel-col-head">
+                          <div className="wm-skel-line" style={{ width: 90, height: 13 }} />
+                          <div className="wm-skel-badge" />
+                        </div>
+                        {/* Cards */}
+                        <div className="wm-skel-col-body">
+                          {Array.from({ length: col.cards }).map((_, ki) => (
+                            <div key={ki} className="wm-skel-card">
+                              <div className="wm-skel-line wm-skel-card-title" />
+                              <div className="wm-skel-line wm-skel-card-sub" />
+                              <div className="wm-skel-line wm-skel-card-date" />
+                              <div className="wm-skel-card-footer">
+                                <div className="wm-skel-avatar" />
+                                <div className="wm-skel-line" style={{ width: 40, height: 10 }} />
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="error-message" style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0" }}>
+                  <Spin size="large" />
+                </div>
+              )
             ) : projectMianTask.length === 0 ? (
               <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
                 <NoDataFoundIcon  />
@@ -3855,14 +3934,24 @@ const TasksPMS = ({ flag }) => {
           handleCancelTaskModal();
         }}
         onSuccess={async (newTask) => {
+          skipNextLocalTaskCreatedEventRef.current = true;
+          const newTaskId = newTask?._id || newTask?.id || null;
+          if (newTaskId) {
+            locallyCreatedTaskIdRef.current = String(newTaskId);
+          }
           if (newTask) {
             await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, newTask);
           }
+          const currentListId =
+            newTask?.mainTask?._id ||
+            newTask?.main_task_id?._id ||
+            newTask?.main_task_id ||
+            selectedTask?._id;
           handleCancelTaskModal();
-          getProjectMianTask("", true);
-          if (selectedTask?._id) {
-            getBoardTasks(selectedTask._id);
+          if (currentListId) {
+            await getBoardTasks(currentListId, { silent: true });
           }
+          await getProjectMianTask("", false, { silent: true });
         }}
         projectId={projectId}
         mainTaskId={selectedTask?._id}

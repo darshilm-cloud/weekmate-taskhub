@@ -377,6 +377,10 @@ exports.addProjectsTask = async (req, res) => {
     });
     await newHistory.save();
 
+    // The board/details API is cached; clear task board + main task caches
+    // so the follow-up refetch includes the newly created task immediately.
+    invalidateTaskBoardCaches(value.project_id);
+
     // send mail to assignee..
     // if (value.assignees && value.assignees.length > 0) {
     try {

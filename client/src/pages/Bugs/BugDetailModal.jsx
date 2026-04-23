@@ -11,6 +11,7 @@ import {
   Select,
   Checkbox,
   Input,
+  Mentions,
   Popconfirm,
   message,
 } from "antd";
@@ -270,10 +271,17 @@ const BugDetailModal = ({
     setPostingComment(true);
     try {
       let uploadedAttachments = [];
+      const taggedUsers = getTaggedUserIdsFromComment(next);
       if (hasCommentFiles) {
         uploadedAttachments = await uploadCommentFiles(commentAttachments);
       }
-      await addComments?.(taskId, [], commentFolderId || null, uploadedAttachments, next);
+      await addComments?.(
+        taskId,
+        taggedUsers,
+        commentFolderId || null,
+        uploadedAttachments,
+        next
+      );
       setCommentValue("");
       setCommentAttachments([]);
       setVoiceInterim("");
@@ -497,6 +505,19 @@ const BugDetailModal = ({
 
     return options;
   })();
+
+  const mentionOptions = (Array.isArray(taggedUserList) ? taggedUserList : [])
+    .filter((user) => user?._id && user?.full_name)
+    .map((user) => ({
+      key: user._id,
+      value: removeTitle(user.full_name).trim(),
+      label: user.full_name,
+    }));
+
+  const getTaggedUserIdsFromComment = (commentText = "") =>
+    mentionOptions
+      .filter((user) => String(commentText || "").includes(`@${user.value}`))
+      .map((user) => user.key);
 
   const selectedAssigneeIds = Array.isArray(viewBug?.assignees)
     ? viewBug.assignees
@@ -899,12 +920,14 @@ const BugDetailModal = ({
                 </div>
                 <div className="bug-detail-sidebar-footer-card">
                   <div className="bug-detail-composer-title">Add to the conversation</div>
-                  <Input.TextArea
+                  <Mentions
                     className="bug-detail-composer-input"
                     rows={3}
-                    placeholder="Share an update, mention blockers, or document the next step..."
+                    placeholder="Share an update, mention blockers, or document the next step with @..."
                     value={commentValue}
-                    onChange={(e) => setCommentValue(e.target.value)}
+                    onChange={setCommentValue}
+                    options={mentionOptions}
+                    prefix={["@"]}
                     disabled={!taskDetails?._id}
                   />
                   {!!voiceInterim && (
