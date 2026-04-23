@@ -746,7 +746,7 @@ const BugsController = () => {
   const workflowMenu = (
     <Menu>
       <Menu.Item>
-        {" "}
+  
         <PlusOutlined /> Add WorkFlow{" "}
       </Menu.Item>
     </Menu>

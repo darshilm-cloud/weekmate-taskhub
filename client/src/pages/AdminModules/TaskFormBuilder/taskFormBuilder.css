@@ -1,7 +1,3 @@
-.task-form-builder-page {
-  padding: 20px 24px;
-}
-
 .task-form-builder-card {
   border-radius: 10px;
 }
@@ -23,7 +19,9 @@
 .task-form-builder-section {
   margin-bottom: 20px;
 }
-
+.task-form-builder-section .task-form-preview {
+padding: 20px;
+}
 .task-form-builder-list {
   border: 1px solid #f0f0f0;
   border-radius: 8px;

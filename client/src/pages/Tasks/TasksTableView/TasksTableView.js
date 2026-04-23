@@ -217,7 +217,7 @@ const TasksTableView = ({
   return (
     <>
       <div className="tasks-table-view-wrapper">
-        <div className="block-table-content new-block-table">
+        <div className=" new-block-table">
           <div className="ttv-table-card">
             <Table
               className="ttv-table"

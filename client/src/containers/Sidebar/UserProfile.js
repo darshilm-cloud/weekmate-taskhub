@@ -14,6 +14,8 @@ import {
   Checkbox,
   Switch,
   Menu,
+  Row,
+  Col,
 } from "antd";
 import PropTypes from "prop-types";
 import {
@@ -249,8 +251,7 @@ function UserProfile() {
         return {
           title: "Assign project",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -259,8 +260,7 @@ function UserProfile() {
         return {
           title: "Assign new task list",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}`
           ),
         };
@@ -269,8 +269,7 @@ function UserProfile() {
         return {
           title: "Assign task",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -279,8 +278,7 @@ function UserProfile() {
         return {
           title: "Mention in task comment",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -289,8 +287,7 @@ function UserProfile() {
         return {
           title: "Task Comment added",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -299,8 +296,7 @@ function UserProfile() {
         return {
           title: "Subscribe in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -308,8 +304,7 @@ function UserProfile() {
         return {
           title: "Mention in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -317,8 +312,7 @@ function UserProfile() {
         return {
           title: "Assign bug",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
         };
@@ -326,8 +320,7 @@ function UserProfile() {
         return {
           title: "Mention in bug",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
         };
@@ -335,8 +328,7 @@ function UserProfile() {
         return {
           title: "Hours logged in task",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&loggedID=${logged_hours_id}`
           ),
         };
@@ -344,8 +336,7 @@ function UserProfile() {
         return {
           title: "Subscribe in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -353,8 +344,7 @@ function UserProfile() {
         return {
           title: "Mention in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -362,8 +352,7 @@ function UserProfile() {
         return {
           title: "Subscribed in files",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -480,8 +469,8 @@ function UserProfile() {
           values.notificationPreference == "Never"
             ? reqBodyNever
             : values.notificationPreference == "four_hours"
-            ? reqBodyFour
-            : reqBody,
+              ? reqBodyFour
+              : reqBody,
       });
       dispatch(hideAuthLoader());
       if (response?.data?.status === 1) {
@@ -750,9 +739,8 @@ function UserProfile() {
                             <div className="filter-notification-checkbox">
                               <ul>
                                 <li
-                                  className={`${
-                                    selectedCheckbox === "All" ? "active" : ""
-                                  }`}
+                                  className={`${selectedCheckbox === "All" ? "active" : ""
+                                    }`}
                                   onClick={() => handleCheckboxChange("All")}
                                 >
                                   All
@@ -761,11 +749,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Comments")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Comments"
+                                  className={`${selectedCheckbox === "Comments"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Comments
                                 </li>
@@ -773,11 +760,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Timesheet")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Timesheet"
+                                  className={`${selectedCheckbox === "Timesheet"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Timesheet
                                 </li>
@@ -785,11 +771,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Mention")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Mention"
+                                  className={`${selectedCheckbox === "Mention"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Mention
                                 </li>
@@ -830,7 +815,7 @@ function UserProfile() {
                                           <h3>
                                             {ele?.localTitle ||
                                               checkNotificationType(ele?.type)
-                                              ?.title || "New Notification"}
+                                                ?.title || "New Notification"}
                                           </h3>
                                           <div>
                                             <button
@@ -908,9 +893,8 @@ function UserProfile() {
                             <div className="filter-notification-checkbox">
                               <ul>
                                 <li
-                                  className={`${
-                                    selectedCheckbox === "All" ? "active" : ""
-                                  }`}
+                                  className={`${selectedCheckbox === "All" ? "active" : ""
+                                    }`}
                                   onClick={() => handleCheckboxChange("All")}
                                 >
                                   All
@@ -919,11 +903,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Comments")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Comments"
+                                  className={`${selectedCheckbox === "Comments"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Comments
                                 </li>
@@ -931,11 +914,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Timesheet")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Timesheet"
+                                  className={`${selectedCheckbox === "Timesheet"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Timesheet
                                 </li>
@@ -943,11 +925,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Mention")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Mention"
+                                  className={`${selectedCheckbox === "Mention"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Mention
                                 </li>
@@ -1177,122 +1158,172 @@ function UserProfile() {
 
             <Modal
               className="setting-main-wrapper wm-settings-modal"
-              footer={false}
-              visible={settingModal}
+              open={settingModal}
               width={820}
               centered
               destroyOnClose
               maskClosable={false}
-              onOk={() => {
-                setSettingModal(false);
-              }}
               onCancel={() => {
                 setSettingModal(false);
               }}
-            >
-              <div className="wm-settings">
-                <div className="wm-settings__header">
-                  <div>
-                    <div className="wm-settings__title">Settings</div>
-                    <div className="wm-settings__subtitle">Control how you receive email notifications.</div>
-                  </div>
-                </div>
+              title={
+                <>
 
-                <Form onFinish={handleSettings} form={emailSetting} className="wm-settings__form">
-                  <div className="wm-settings__content">
+                  <h2>Settings</h2>
+                  <h5 className="modal-subtitle">
+                    Control how you receive email notifications.
+                  </h5>
+
+                </>
+              }
+              footer={[
+                <Button
+
+                  key="cancel"
+                  onClick={() => {
+                    setSettingModal(false);
+                    setSettingsSearch("");
+                  }}
+                  className="delete-btn"
+                >
+                  Cancel
+                </Button>,
+                <Button
+                  key="submit"
+                  type="primary"
+                  htmlType="submit"
+                  className="add-btn"
+                  onClick={() => emailSetting.submit()}
+                >
+                  Save 
+                </Button>,
+              ]}
+            >
+              <Form onFinish={handleSettings} form={emailSetting} className="wm-settings__form">
+                <Row gutter={[16, 16]}>
+
+                  {/* LEFT SECTION */}
+                  <Col xs={24} md={10}>
                     <div className="wm-settings__left">
                       <div className="wm-settings__sectionTitle">Email Delivery</div>
+
                       <Form.Item name="notificationPreference" className="wm-settings__radioWrap">
-                        <Radio.Group onChange={handleRadioChange} value={selectedRadio} className="wm-settings__radioGroup">
+                        <Radio.Group
+                          onChange={handleRadioChange}
+                          value={selectedRadio}
+                          className="wm-settings__radioGroup"
+                        >
                           <label className={`wm-settings__radioCard ${selectedRadio === "Never" ? "active" : ""}`}>
                             <Radio value="Never" />
                             <div>
                               <div className="wm-settings__radioTitle">Never</div>
-                              <div className="wm-settings__radioDesc">Don’t send me email notifications.</div>
+                              <div className="wm-settings__radioDesc">
+                                Don’t send me email notifications.
+                              </div>
                             </div>
                           </label>
+
                           <label className={`wm-settings__radioCard ${selectedRadio === "four_hours" ? "active" : ""}`}>
                             <Radio value="four_hours" />
                             <div>
                               <div className="wm-settings__radioTitle">Every 4 hours</div>
-                              <div className="wm-settings__radioDesc">Send me a digest email every four hours.</div>
+                              <div className="wm-settings__radioDesc">
+                                Send me a digest email every four hours.
+                              </div>
                             </div>
                           </label>
+
                           <label className={`wm-settings__radioCard ${selectedRadio === "Immediate" ? "active" : ""}`}>
                             <Radio value="Immediate" />
                             <div>
                               <div className="wm-settings__radioTitle">Immediate</div>
-                              <div className="wm-settings__radioDesc">Send emails as soon as things happen.</div>
+                              <div className="wm-settings__radioDesc">
+                                Send emails as soon as things happen.
+                              </div>
                             </div>
                           </label>
                         </Radio.Group>
                       </Form.Item>
+
                       <div className="wm-settings__hint">
                         {selectedRadio !== "Immediate"
                           ? "Event-level toggles are available only for Immediate emails."
                           : "Choose what should trigger an email."}
                       </div>
                     </div>
+                  </Col>
 
+                  {/* RIGHT SECTION */}
+                  <Col xs={24} md={14}>
                     <div className="wm-settings__right">
-                      <div className="wm-settings__rightTop">
-                        <div className="wm-settings__sectionTitle">Event Triggers</div>
-                        <Input
-                          placeholder="Search triggers..."
-                          value={settingsSearch}
-                          onChange={(e) => setSettingsSearch(e.target.value)}
-                          allowClear
-                          className="wm-settings__search"
-                        />
-                        <div className="wm-settings__bulkActions">
-                          <Button
-                            type="link"
-                            disabled={selectedRadio !== "Immediate"}
-                            onClick={() => {
-                              const next = {
-                                projectAssigned: true,
-                                discussionSubscribed: true,
-                                discussionComments: true,
-                                tasklistSubscribed: true,
-                                taskAssigned: true,
-                                taskComments: true,
-                                bugAssigned: true,
-                                bugComments: true,
-                                noteAssigned: true,
-                                noteComments: true,
-                                fileSubscribed: true,
-                              };
-                              if (getRoles(["PC", "TL", "Admin", "AM"])) next.hoursLogged = true;
-                              emailSetting.setFieldsValue(next);
-                            }}
-                          >
-                            Enable all
-                          </Button>
-                          <Button
-                            type="link"
-                            disabled={selectedRadio !== "Immediate"}
-                            onClick={() => {
-                              const next = {
-                                projectAssigned: false,
-                                discussionSubscribed: false,
-                                discussionComments: false,
-                                tasklistSubscribed: false,
-                                taskAssigned: false,
-                                taskComments: false,
-                                bugAssigned: false,
-                                bugComments: false,
-                                noteAssigned: false,
-                                noteComments: false,
-                                fileSubscribed: false,
-                                hoursLogged: false,
-                              };
-                              emailSetting.setFieldsValue(next);
-                            }}
-                          >
-                            Clear
-                          </Button>
-                        </div>
-                      </div>
+
+                      <Row gutter={[12, 12]} className="wm-settings__rightTop">
+                        <Col xs={24}>
+                          <div className="wm-settings__sectionTitle">Event Triggers</div>
+                        </Col>
+
+                        <Col xs={24}>
+                          <Input
+                            placeholder="Search triggers..."
+                            value={settingsSearch}
+                            onChange={(e) => setSettingsSearch(e.target.value)}
+                            allowClear
+                            className="wm-settings__search"
+                          />
+                        </Col>
+
+                        <Col xs={24}>
+                          <div className="wm-settings__bulkActions">
+                            <Button
+                              type="link"
+                              disabled={selectedRadio !== "Immediate"}
+                              onClick={() => {
+                                const next = {
+                                  projectAssigned: true,
+                                  discussionSubscribed: true,
+                                  discussionComments: true,
+                                  tasklistSubscribed: true,
+                                  taskAssigned: true,
+                                  taskComments: true,
+                                  bugAssigned: true,
+                                  bugComments: true,
+                                  noteAssigned: true,
+                                  noteComments: true,
+                                  fileSubscribed: true,
+                                };
+                                if (getRoles(["PC", "TL", "Admin", "AM"])) next.hoursLogged = true;
+                                emailSetting.setFieldsValue(next);
+                              }}
+                            >
+                              Enable all
+                            </Button>
+
+                            <Button
+                              type="link"
+                              disabled={selectedRadio !== "Immediate"}
+                              onClick={() => {
+                                const next = {
+                                  projectAssigned: false,
+                                  discussionSubscribed: false,
+                                  discussionComments: false,
+                                  tasklistSubscribed: false,
+                                  taskAssigned: false,
+                                  taskComments: false,
+                                  bugAssigned: false,
+                                  bugComments: false,
+                                  noteAssigned: false,
+                                  noteComments: false,
+                                  fileSubscribed: false,
+                                  hoursLogged: false,
+                                };
+                                emailSetting.setFieldsValue(next);
+                              }}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        </Col>
+                      </Row>
 
                       <div className="wm-settings__list">
                         {[
@@ -1335,11 +1366,11 @@ function UserProfile() {
                           },
                           ...(getRoles(["PC", "TL", "Admin", "AM"])
                             ? [
-                                {
-                                  group: "Timesheet",
-                                  items: [{ name: "hoursLogged", label: "Somebody has logged hours" }],
-                                },
-                              ]
+                              {
+                                group: "Timesheet",
+                                items: [{ name: "hoursLogged", label: "Somebody has logged hours" }],
+                              },
+                            ]
                             : []),
                         ]
                           .map((g) => ({
@@ -1356,7 +1387,11 @@ function UserProfile() {
                               <div className="wm-settings__groupTitle">{g.group}</div>
                               <div className="wm-settings__groupBody">
                                 {g.items.map((it) => (
-                                  <div key={it.name} className={`wm-settings__row ${selectedRadio !== "Immediate" ? "disabled" : ""}`}>
+                                  <div
+                                    key={it.name}
+                                    className={`wm-settings__row ${selectedRadio !== "Immediate" ? "disabled" : ""
+                                      }`}
+                                  >
                                     <div className="wm-settings__rowLabel">{it.label}</div>
                                     <Form.Item name={it.name} valuePropName="checked" noStyle>
                                       <Switch size="small" disabled={selectedRadio !== "Immediate"} />
@@ -1366,34 +1401,22 @@ function UserProfile() {
                               </div>
                             </div>
                           ))}
+
                         {settingsSearch?.trim() && (
-                          <div className="wm-settings__emptyNote">No triggers match your search.</div>
+                          <div className="wm-settings__emptyNote">
+                            No triggers match your search.
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Col>
 
-                  <div className="wm-settings__footer">
-                    <Button
-                      onClick={() => {
-                        setSettingModal(false);
-                        setSettingsSearch("");
-                      }}
-                      className="wm-settings__btnCancel"
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="primary" htmlType="submit" className="add-btn">
-                      Save changes
-                    </Button>
-                  </div>
-                </Form>
-              </div>
+                </Row>
+              </Form>
             </Modal>
-
             <UserProfileModal
               isModalOpen={isProfileModalOpen}
-              handleClose={()=>setIsProfileModalOpen(false)}
+              handleClose={() => setIsProfileModalOpen(false)}
             />
           </div>
         </div>

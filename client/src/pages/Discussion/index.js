@@ -351,11 +351,11 @@ export default function DiscussionPage() {
 
         {/* Add buttons */}
         <div className="disc-add-btns">
-          <Button className="add-btn" type="primary" onClick={() => openAdd("General")}>
-            <PlusOutlined /> Group Chat
+          <Button className="add-btn" icon={ <PlusOutlined />}  type="primary" onClick={() => openAdd("General")}>
+            Group Chat
           </Button>
-          <Button className="add-btn"  type="primary" onClick={() => openAdd("Member")}>
-            <PlusOutlined />Member chat
+          <Button className="add-btn" icon={ <PlusOutlined />}  type="primary" onClick={() => openAdd("Member")}>
+           Member chat
           </Button>
         </div>
 
@@ -531,6 +531,7 @@ export default function DiscussionPage() {
         title={`New ${addType === "Member" ? "Member Chat" : "Group Chat"}`}
         open={addOpen}
         onCancel={() => { setAddOpen(false); addForm.resetFields(); }}
+        cancelButtonProps={{className:"delete-btn"}}
         onOk={handleAdd}
         confirmLoading={addSubmitting}
         okText="Create"

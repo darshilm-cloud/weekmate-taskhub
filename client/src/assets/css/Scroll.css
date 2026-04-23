@@ -21,9 +21,6 @@
     overflow: auto;
 }
 
-.ant-card-bordered {
-    height: 100%;
-}
 
 .project-wrapper .peoject-page {
     overflow:auto;
@@ -58,6 +55,7 @@
 
 .overview-modal-wrapper .ant-form-item-control-input .ant-select-selector .ant-select-selection-overflow {
     max-height: 149px;
+        gap: 6px;
 }
 
 /* ---------------- all projects------------ */

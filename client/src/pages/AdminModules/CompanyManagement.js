@@ -472,10 +472,10 @@ export default function CompanyManagement() {
     : null;
 
   const STATS = [
-    { label: "Company Name",     value: company?.companyName || "—",                         icon: <BankOutlined />,     color: "#e8f0f8", iconColor: "#0b3a5b" },
-    { label: "Company Slug",     value: company?.companyDomain || "—",                       icon: <GlobalOutlined />,   color: "#e8f5e9", iconColor: "#2e7d32" },
-    { label: "Total Employees",  value: company?.employeeCount ?? 0,                          icon: <TeamOutlined />,     color: "#fff3e0", iconColor: "#e65100" },
-    { label: "Created At",       value: company ? moment(company.createdAt).format("DD-MM-YYYY") : "—", icon: <CalendarOutlined />, color: "#f3e5f5", iconColor: "#6a1b9a" },
+    { label: "Company Name", value: company?.companyName || "—", icon: <BankOutlined />, color: "#e8f0f8", iconColor: "#0b3a5b" },
+    { label: "Company Slug", value: company?.companyDomain || "—", icon: <GlobalOutlined />, color: "#e8f5e9", iconColor: "#2e7d32" },
+    { label: "Total Employees", value: company?.employeeCount ?? 0, icon: <TeamOutlined />, color: "#fff3e0", iconColor: "#e65100" },
+    { label: "Created At", value: company ? moment(company.createdAt).format("DD-MM-YYYY") : "—", icon: <CalendarOutlined />, color: "#f3e5f5", iconColor: "#6a1b9a" },
   ];
 
   if (loading && !company) {
@@ -483,14 +483,14 @@ export default function CompanyManagement() {
       <div className="cm-page">
         <div className="cm-shimmer cm-skeleton-hero" />
         <div className="cm-skeleton-stats">
-          {[1,2,3,4].map(i => <div key={i} className="cm-shimmer cm-skeleton-stat" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="cm-shimmer cm-skeleton-stat" />)}
         </div>
         <div style={{ marginBottom: 12 }}>
           <div className="cm-shimmer" style={{ width: 140, height: 14, marginBottom: 8 }} />
           <div className="cm-shimmer" style={{ width: 260, height: 12 }} />
         </div>
         <div className="cm-skeleton-assets">
-          {[1,2].map(i => <div key={i} className="cm-shimmer cm-skeleton-asset" />)}
+          {[1, 2].map(i => <div key={i} className="cm-shimmer cm-skeleton-asset" />)}
         </div>
       </div>
     );
@@ -548,7 +548,7 @@ export default function CompanyManagement() {
       <p className="cm-section-sub">Logo and favicon used across the workspace.</p>
       <div className="cm-assets-grid">
         {[
-          { label: "COMPANY LOGO",    src: logoSrc,    fallback: "No logo uploaded",    hasError: logoError,    onErr: () => setLogoError(true) },
+          { label: "COMPANY LOGO", src: logoSrc, fallback: "No logo uploaded", hasError: logoError, onErr: () => setLogoError(true) },
           { label: "COMPANY FAVICON", src: faviconSrc, fallback: "No favicon uploaded", hasError: faviconError, onErr: () => setFaviconError(true) },
         ].map(({ label, src, fallback, hasError, onErr }) => (
           <div className="cm-asset-card" key={label}>
@@ -571,33 +571,61 @@ export default function CompanyManagement() {
 
       {/* Edit Modal */}
       <Modal
-        title={<><EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Edit Company</>}
+        title={
+          <>
+            <EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            Edit Company
+          </>
+        }
         className="cm-modal"
         open={isModalVisible}
         onCancel={handleModalClose}
+        width="100%"
+        style={{ maxWidth: 640 }}
         footer={[
-          <Button key="cancel" className="cm-modal-cancel" onClick={handleModalClose} disabled={modalLoading}>
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={handleModalClose}
+            disabled={modalLoading}
+          >
             Cancel
           </Button>,
-          <Button key="save" className="add-btn" type="primary" loading={modalLoading} onClick={handleSave}>
-            Save Changes
+          <Button
+            key="save"
+            className="add-btn"
+            type="primary"
+            loading={modalLoading}
+            onClick={handleSave}
+          >
+            Save
           </Button>,
         ]}
-        width={640}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="companyName" label="Company Name" rules={formRules.companyName}>
-            <Input placeholder="Enter company name" />
-          </Form.Item>
-          <Form.Item
-            label="Company Slug"
-            name="companySlug"
-            rules={formRules.companySlug}
-            extra="Only lowercase letters, numbers, and hyphens are allowed."
-          >
-            <Input prefix={<LinkOutlined />} placeholder="my-company" />
-          </Form.Item>
-          <Row gutter={16}>
+          <Row gutter={[16, 16]}>
+
+            <Col xs={24}>
+              <Form.Item
+                name="companyName"
+                label="Company Name"
+                rules={formRules.companyName}
+              >
+                <Input placeholder="Enter company name" />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24}>
+              <Form.Item
+                label="Company Slug"
+                name="companySlug"
+                rules={formRules.companySlug}
+                extra="Only lowercase letters, numbers, and hyphens are allowed."
+              >
+                <Input prefix={<LinkOutlined />} placeholder="my-company" />
+              </Form.Item>
+            </Col>
+
             <Col xs={24} sm={12}>
               <Form.Item label="Logo">
                 <AssetCard
@@ -611,6 +639,7 @@ export default function CompanyManagement() {
                 />
               </Form.Item>
             </Col>
+
             <Col xs={24} sm={12}>
               <Form.Item label="Favicon">
                 <AssetCard
@@ -624,6 +653,7 @@ export default function CompanyManagement() {
                 />
               </Form.Item>
             </Col>
+
           </Row>
         </Form>
       </Modal>

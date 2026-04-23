@@ -17,6 +17,7 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  Card,
   Collapse,
   DatePicker,
   Dropdown,
@@ -562,8 +563,8 @@ function ReportsHub() {
         // focusedProjectIds (row click) is handled separately by updateProjectMetrics
         const isSearchActive = Boolean(filters.search?.trim());
         let effectiveProjectIds = (Array.isArray(filters.projectIds) && filters.projectIds.length > 0
-            ? filters.projectIds
-            : (isSearchActive ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []));
+          ? filters.projectIds
+          : (isSearchActive ? reportProjects.map(p => getProjectRecordId(p)).filter(Boolean) : []));
 
         let tasksTotalResponse, tasksCompletedResponse;
         let tasksTotalResponseAll, tasksCompletedResponseAll;
@@ -1203,7 +1204,7 @@ function ReportsHub() {
   // Trigger metric update on project row click (does NOT reload full page)
   useEffect(() => {
     updateProjectMetrics(focusedProjectIds);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusedProjectIds]);
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1463,27 +1464,31 @@ function ReportsHub() {
   };
 
   return (
-    <div className="reports-detail-page">
-      <div className="reports-detail-topbar">
-        <div className="reports-detail-heading">
-          <button
+    <Card className="reports-detail-page">
+      <div className="heading-wrapper">
+
+
+        <h2>{currentPage.title}</h2>
+        <div className="header-btns">
+
+          <DetailActions
+            reportKey={reportKey}
+            onDownload={() => handleDownload(reportKey)}
+            onSchedule={() => handleSchedule(reportKey)}
+            onHistory={() => handleHistory(reportKey)}
+          />
+          <Button
             type="button"
-            className="reports-back-button"
+            className="add-btn"
+            icon={<ArrowLeftOutlined />}
             onClick={() => history.push(`/${companySlug}/reports`)}
           >
-            <ArrowLeftOutlined />
-          </button>
-          <h1>{currentPage.title}</h1>
+            Back
+          </Button>
         </div>
-        <DetailActions
-          reportKey={reportKey}
-          onDownload={() => handleDownload(reportKey)}
-          onSchedule={() => handleSchedule(reportKey)}
-          onHistory={() => handleHistory(reportKey)}
-        />
       </div>
 
-      <div className="reports-hub-main">
+      <Card className="main-content-wrapper">
         <CommonFilters
           fields={fieldsByReportConfig[reportKey] || []}
           filters={filters}
@@ -1541,8 +1546,8 @@ function ReportsHub() {
             )}
           </>
         )}
-      </div>
-    </div>
+      </Card>
+    </Card>
   );
 }
 
@@ -1917,7 +1922,8 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
   ) : null;
 
   return (
-    <div className="reports-filter-bar" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, width: "100%", marginBottom: 16 }}>
+    <div className="global-search">
+
       {searchField ? (
         <Input.Search
           key={searchField.key}
@@ -1956,69 +1962,73 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           style={{ height: 40 }}
         />
       )}
-      {rangeField ? (
-        <DatePicker.RangePicker
-          size="small"
-          className="reports-filter-control"
-          value={filters.startDate && filters.endDate ? [dayjs(filters.startDate), dayjs(filters.endDate)] : null}
-          onChange={(values) => {
-            setFilters(prev => ({
-              ...prev,
-              startDate: values ? values[0].format("DD-MM-YYYY") : null,
-              endDate: values ? values[1].format("DD-MM-YYYY") : null,
-            }));
-          }}
-          placeholder={rangeField.placeholder || ["From", "To"]}
-          allowClear
-          format="DD-MM-YYYY"
-          style={{ minWidth: 260 }}
-        />
-      ) : null}
-      {dateField ? (
-        <DatePicker
-          size="small"
-          key={dateField.key}
-          placeholder={dateField.placeholder}
-          className="reports-filter-control"
-          suffixIcon={<CalendarOutlined />}
-          value={filters[dateField.key] ? dayjs(filters[dateField.key], "DD-MM-YYYY") : null}
-          onChange={(value) =>
-            setFilters((prev) => ({
-              ...prev,
-              [dateField.key]: value ? value.format("DD-MM-YYYY") : null,
-            }))
-          }
-          allowClear
-          format="DD-MM-YYYY"
-        />
-      ) : null}
-      {facetFields.length ? (
-        <Dropdown
-          key="reports-shared-filter"
-          open={isFacetOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              closeFacetPanel();
+
+      <div className="filter-btn-wrapper">
+
+        {rangeField ? (
+          <DatePicker.RangePicker
+            size="small"
+            className="reports-filter-control"
+            value={filters.startDate && filters.endDate ? [dayjs(filters.startDate), dayjs(filters.endDate)] : null}
+            onChange={(values) => {
+              setFilters(prev => ({
+                ...prev,
+                startDate: values ? values[0].format("DD-MM-YYYY") : null,
+                endDate: values ? values[1].format("DD-MM-YYYY") : null,
+              }));
+            }}
+            placeholder={rangeField.placeholder || ["From", "To"]}
+            allowClear
+            format="DD-MM-YYYY"
+            style={{ minWidth: 260 }}
+          />
+        ) : null}
+        {dateField ? (
+          <DatePicker
+            size="small"
+            key={dateField.key}
+            placeholder={dateField.placeholder}
+            className="reports-filter-control"
+            suffixIcon={<CalendarOutlined />}
+            value={filters[dateField.key] ? dayjs(filters[dateField.key], "DD-MM-YYYY") : null}
+            onChange={(value) =>
+              setFilters((prev) => ({
+                ...prev,
+                [dateField.key]: value ? value.format("DD-MM-YYYY") : null,
+              }))
             }
-          }}
-          trigger={["click"]}
-          dropdownRender={() => panel}
-          placement="bottomLeft"
-          overlayClassName="reports-facet-dropdown"
-        >
-          <Button
-            type="button"
-            className={`reports-single-filter-btn filter-btn ${isFacetOpen ? "active" : ""}`}
-            onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
-            icon={<FilterOutlined />}
+            allowClear
+            format="DD-MM-YYYY"
+          />
+        ) : null}
+        {facetFields.length ? (
+          <Dropdown
+            key="reports-shared-filter"
+            open={isFacetOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                closeFacetPanel();
+              }
+            }}
+            trigger={["click"]}
+            dropdownRender={() => panel}
+            placement="bottomLeft"
+            overlayClassName="reports-facet-dropdown"
           >
-            Filter
-            {activeFacetCount > 0 ? (
-              <span className="reports-single-filter-count">{activeFacetCount}</span>
-            ) : null}
-          </Button>
-        </Dropdown>
-      ) : null}
+            <Button
+              type="button"
+              className={`reports-single-filter-btn filter-btn ${isFacetOpen ? "active" : ""}`}
+              onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
+              icon={<FilterOutlined />}
+            >
+              Filter
+              {activeFacetCount > 0 ? (
+                <span className="reports-single-filter-count">{activeFacetCount}</span>
+              ) : null}
+            </Button>
+          </Dropdown>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -2795,8 +2805,9 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
         </div>
 
         {items.length === 0 ? (
-          <div className="reports-empty-inline">
-            <Empty description="No daily report data found" />
+          <div className="no-data-found">
+            <NoDataFoundIcon />
+            <p>No daily report data found</p>
           </div>
         ) : (
           <>
@@ -2879,10 +2890,10 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
   if (reportKey === "daily-report") {
     return (
       <div className="reports-actions">
-        <Button className="reports-action-button" onClick={onSchedule}>
+        <Button className="btn-secondary" onClick={onSchedule}>
           Schedule <ClockCircleOutlined />
         </Button>
-        <Button className="reports-action-button" onClick={onDownload}>
+        <Button className="btn-secondary" onClick={onDownload}>
           Download <DownloadOutlined />
         </Button>
       </div>
@@ -2894,7 +2905,7 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
       {/* <Button className="reports-action-button" onClick={onHistory}>
         History <HistoryOutlined />
       </Button> */}
-      <Button className="reports-action-button" onClick={onDownload}>
+      <Button className="btn-secondary" onClick={onDownload}>
         Download <DownloadOutlined />
       </Button>
     </div>
@@ -3909,80 +3920,80 @@ function TimesheetReportContent({
               <div className="chart-card chart-card--timesheet chart-card--timesheet-user">
                 <h3>Hours by User</h3>
                 <div className="timesheet-user-pie-wrap">
-                <SimplePieChart
-                  size={240}
-                  colors={timesheetUserChartColors}
-                  data={userChartData.map((item) => ({
-                    label: item.user,
-                    value: parseFloat(item.totalLoggedHours),
-                  }))}
+                  <SimplePieChart
+                    size={240}
+                    colors={timesheetUserChartColors}
+                    data={userChartData.map((item) => ({
+                      label: item.user,
+                      value: parseFloat(item.totalLoggedHours),
+                    }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {managerChartData.length > 0 && (
+              <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
+                <h3>Hours by Manager</h3>
+                <ReactApexChart
+                  options={{
+                    chart: { type: 'bar', toolbar: { show: false } },
+                    legend: { show: false },
+                    plotOptions: {
+                      bar: {
+                        horizontal: true,
+                        borderRadius: 6,
+                        barHeight: "46%",
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      style: { fontSize: "11px", colors: ["#ffffff"] },
+                    },
+                    xaxis: {
+                      categories: managerChartData.map(item => item.projectManager),
+                      labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                    },
+                    grid: { borderColor: "#e2e8f0" },
+                    colors: ["#60a5fa"],
+                  }}
+                  series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                  type="bar"
+                  height={250}
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          {managerChartData.length > 0 && (
-            <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
-              <h3>Hours by Manager</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'bar', toolbar: { show: false } },
-                  legend: { show: false },
-                  plotOptions: {
-                    bar: {
-                      horizontal: true,
-                      borderRadius: 6,
-                      barHeight: "46%",
+            {typeChartData.length > 0 && (
+              <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
+                <h3>Hours by Category</h3>
+                <ReactApexChart
+                  options={{
+                    chart: { type: 'bar', toolbar: { show: false } },
+                    legend: { show: false },
+                    plotOptions: {
+                      bar: {
+                        borderRadius: 8,
+                        columnWidth: "42%",
+                      },
                     },
-                  },
-                  dataLabels: {
-                    enabled: true,
-                    style: { fontSize: "11px", colors: ["#ffffff"] },
-                  },
-                  xaxis: {
-                    categories: managerChartData.map(item => item.projectManager),
-                    labels: { style: { fontSize: "12px", colors: "#64748b" } },
-                  },
-                  grid: { borderColor: "#e2e8f0" },
-                  colors: ["#60a5fa"],
-                }}
-                series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                type="bar"
-                height={250}
-              />
-            </div>
-          )}
-
-          {typeChartData.length > 0 && (
-            <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
-              <h3>Hours by Category</h3>
-              <ReactApexChart
-                options={{
-                  chart: { type: 'bar', toolbar: { show: false } },
-                  legend: { show: false },
-                  plotOptions: {
-                    bar: {
-                      borderRadius: 8,
-                      columnWidth: "42%",
+                    dataLabels: { enabled: false },
+                    xaxis: {
+                      categories: typeChartData.map(item => item.projectType),
+                      labels: { style: { fontSize: "12px", colors: "#64748b" } },
                     },
-                  },
-                  dataLabels: { enabled: false },
-                  xaxis: {
-                    categories: typeChartData.map(item => item.projectType),
-                    labels: { style: { fontSize: "12px", colors: "#64748b" } },
-                  },
-                  yaxis: {
-                    labels: { style: { colors: "#64748b" } },
-                  },
-                  grid: { borderColor: "#e2e8f0" },
-                  colors: ["#34d399"],
-                }}
-                series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                type="bar"
-                height={240}
-              />
-            </div>
-          )}
+                    yaxis: {
+                      labels: { style: { colors: "#64748b" } },
+                    },
+                    grid: { borderColor: "#e2e8f0" },
+                    colors: ["#34d399"],
+                  }}
+                  series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                  type="bar"
+                  height={240}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

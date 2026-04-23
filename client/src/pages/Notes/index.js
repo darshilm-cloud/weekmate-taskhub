@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
-import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin } from "antd";
+import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col, Card } from "antd";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -574,10 +574,13 @@ export default function NotesPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
         </div>
       ) : (
-        <>
+        <Card className="main-content-wrapper">
+          <div className="global-search">
+
           <p className="notes-count-label">
             {totalNotes} note{totalNotes === 1 ? "" : "s"}
           </p>
+          </div>
           <div id="notes-infinite-scroll" className="notes-infinite-scroll-wrap">
             <InfiniteScroll
               key={activeTab}
@@ -594,136 +597,177 @@ export default function NotesPage() {
               }
               scrollThreshold="8px"
             >
-          <div className="notes-cards-grid">
-            {notes.map((note, idx) => {
-              const bgColor = isDark
-                ? CARD_COLORS[idx % CARD_COLORS.length]
-                : (isLightColor(note.color) ? note.color : CARD_COLORS[idx % CARD_COLORS.length]);
-              const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
-              return (
-                <div key={note._id} className="note-card" style={{ background: bgColor }}>
-                  <div
-                    className="note-card-body"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openViewNote(note)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openViewNote(note);
-                      }
-                    }}
-                  >
-                    <div className="note-card-header">
-                      <span className="note-card-title">{note.title}</span>
-                      <button
-                        className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBookmarkToggle(note._id, note.isBookmark);
+              <div className="notes-cards-grid">
+                {notes.map((note, idx) => {
+                  const bgColor = isDark
+                    ? CARD_COLORS[idx % CARD_COLORS.length]
+                    : (isLightColor(note.color) ? note.color : CARD_COLORS[idx % CARD_COLORS.length]);
+                  const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
+                  return (
+                    <div key={note._id} className="note-card" style={{ background: bgColor }}>
+                      <div
+                        className="note-card-body"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openViewNote(note)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openViewNote(note);
+                          }
                         }}
-                        type="button"
-                        aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
                       >
-                        <PushpinOutlined style={{ fontSize: 14 }} />
-                        {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
-                      </button>
+                        <div className="note-card-header">
+                          <span className="note-card-title">{note.title}</span>
+                          <button
+                            className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBookmarkToggle(note._id, note.isBookmark);
+                            }}
+                            type="button"
+                            aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
+                          >
+                            <PushpinOutlined style={{ fontSize: 14 }} />
+                            {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
+                          </button>
+                        </div>
+                        <div className="note-card-content">
+                          {content || <span style={{ color: "#94a3b8", fontSize: 12 }}>No content</span>}
+                        </div>
+                      </div>
+                      <div className="note-card-footer" onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title="Subscribers">
+                          <button type="button" className="note-card-action" onClick={() => openSubscribers(note)}>
+                            <UserAddOutlined />
+                          </button>
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <button type="button" className="note-card-action" onClick={() => openNoteEdit(note)}>
+                            <EditOutlined />
+                          </button>
+                        </Tooltip>
+                        <Popover
+                          content={colorPickerContent(note._id)}
+                          title="Pick a color"
+                          trigger="click"
+                          open={colorNoteId === note._id}
+                          onOpenChange={(v) => setColorNoteId(v ? note._id : null)}
+                        >
+                          <Tooltip title="Change color">
+                            <button type="button" className="note-card-action">
+                              <BgColorsOutlined />
+                            </button>
+                          </Tooltip>
+                        </Popover>
+                        <Popconfirm title="Delete this note?" onConfirm={() => handleDelete(note._id)} okText="Yes" cancelText="No">
+                          <Tooltip title="Delete">
+                            <button type="button" className="note-card-action delete"><DeleteOutlined /></button>
+                          </Tooltip>
+                        </Popconfirm>
+                      </div>
                     </div>
-                    <div className="note-card-content">
-                      {content || <span style={{ color: "#94a3b8", fontSize: 12 }}>No content</span>}
-                    </div>
-                  </div>
-                  <div className="note-card-footer" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Subscribers">
-                      <button type="button" className="note-card-action" onClick={() => openSubscribers(note)}>
-                        <UserAddOutlined />
-                      </button>
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                      <button type="button" className="note-card-action" onClick={() => openNoteEdit(note)}>
-                        <EditOutlined />
-                      </button>
-                    </Tooltip>
-                    <Popover
-                      content={colorPickerContent(note._id)}
-                      title="Pick a color"
-                      trigger="click"
-                      open={colorNoteId === note._id}
-                      onOpenChange={(v) => setColorNoteId(v ? note._id : null)}
-                    >
-                      <Tooltip title="Change color">
-                        <button type="button" className="note-card-action">
-                          <BgColorsOutlined />
-                        </button>
-                      </Tooltip>
-                    </Popover>
-                    <Popconfirm title="Delete this note?" onConfirm={() => handleDelete(note._id)} okText="Yes" cancelText="No">
-                      <Tooltip title="Delete">
-                        <button type="button" className="note-card-action delete"><DeleteOutlined /></button>
-                      </Tooltip>
-                    </Popconfirm>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
             </InfiniteScroll>
           </div>
-        </>
+        </Card>
       )}
 
       {/* Add / Edit note (same modal & fields) */}
       <Modal
         title={getModalTitle(
-          noteModalMode === "edit" ? "Edit Note" : "Add New Note",
+          noteModalMode === "edit" ? "Edit Note" : "Add New Note"
         )}
         open={noteModalOpen}
         onCancel={closeNoteModal}
+        cancelButtonProps={{ className: "delete-btn" }}
         onOk={handleSaveNote}
         confirmLoading={noteModalSubmitting}
         okText="Save"
+        okButtonProps={{className: "add-btn", type: "primary"}}
         okButtonProps={MODAL_OK_BUTTON_PROPS}
         destroyOnClose
         className="global-app-modal notes-modal-shell"
-        width={640}
+        width="100%"
+        style={{ maxWidth: 640 }}
       >
         <Form form={noteForm} layout="vertical" className="notes-modal-form">
-          <Form.Item name="title" label="Title" rules={[{ required: true, message: "Title required" }]}>
-            <Input placeholder="Enter note title" />
-          </Form.Item>
-          <Form.Item name="notesInfo" label="Content" initialValue="">
-            <NotesFormCkEditor key={noteModalMode === "edit" ? editingNote?._id || "edit" : "add"} />
-          </Form.Item>
-          <Form.Item name="project_id" label="Project" rules={[{ required: true, message: "Select a project" }]}>
-            <Select
-              showSearch
-              placeholder="Select project"
-              disabled={noteModalMode === "edit"}
-              onChange={onProjectChange}
-              filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
-              options={projects.map((p) => ({ value: p._id, label: p.title }))}
-            />
-          </Form.Item>
-          {/* <Form.Item name="noteBook_id" label="Notebook (optional)">
-            <Select
-              showSearch
-              placeholder="Select notebook"
-              loading={notebooksLoading}
-              allowClear
-              options={notebooks.map((nb) => ({ value: nb._id, label: nb.title }))}
-            /> */}
-          {/* </Form.Item> */}
-          <Form.Item name="subscribers" label="Subscribers">
-            <Select
-              mode="multiple"
-              showSearch
-              allowClear
-              placeholder="Select subscribers"
-              optionFilterProp="label"
-              filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
-              options={allUsers.map((u) => ({ value: u._id, label: u.full_name || u.name || u.email }))}
-            />
-          </Form.Item>
+          <Row gutter={[24, 0]}>
+
+            {/* Title */}
+            <Col xs={24}>
+              <Form.Item
+                name="title"
+                label="Title"
+                rules={[{ required: true, message: "Title required" }]}
+              >
+                <Input placeholder="Enter note title" />
+              </Form.Item>
+            </Col>
+
+            {/* Content */}
+            <Col xs={24}>
+              <Form.Item name="notesInfo" label="Content" initialValue="">
+                <NotesFormCkEditor
+                  key={
+                    noteModalMode === "edit"
+                      ? editingNote?._id || "edit"
+                      : "add"
+                  }
+                />
+              </Form.Item>
+            </Col>
+
+            {/* Project */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="project_id"
+                label="Project"
+                rules={[{ required: true, message: "Select a project" }]}
+              >
+                <Select
+                  showSearch
+                  placeholder="Select project"
+                  disabled={noteModalMode === "edit"}
+                  onChange={onProjectChange}
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                  options={projects.map((p) => ({
+                    value: p._id,
+                    label: p.title,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
+            {/* Subscribers */}
+            <Col xs={24} sm={12}>
+              <Form.Item name="subscribers" label="Subscribers">
+                <Select
+                  mode="multiple"
+                  showSearch
+                  allowClear
+                  placeholder="Select subscribers"
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                  options={allUsers.map((u) => ({
+                    value: u._id,
+                    label: u.full_name || u.name || u.email,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
+          </Row>
         </Form>
       </Modal>
 
@@ -759,9 +803,9 @@ export default function NotesPage() {
                 <span className="notes-view-meta-value">
                   {Array.isArray(viewNote.subscribers) && viewNote.subscribers.length > 0
                     ? viewNote.subscribers
-                        .map((s) => s.full_name || s.name || s.email || "")
-                        .filter(Boolean)
-                        .join(", ")
+                      .map((s) => s.full_name || s.name || s.email || "")
+                      .filter(Boolean)
+                      .join(", ")
                     : "—"}
                 </span>
               </div>
@@ -780,18 +824,53 @@ export default function NotesPage() {
       </Modal>
 
       {/* Subscribers Modal */}
-      <Modal title={getModalTitle("Manage Subscribers", "Choose who should be able to access this note.")} open={subOpen} onCancel={() => { setSubOpen(false); setSubNote(null); }} onOk={handleSubSave} confirmLoading={subSubmitting} okText="Save" okButtonProps={MODAL_OK_BUTTON_PROPS} destroyOnClose className="global-app-modal notes-modal-shell" width={640}>
+      <Modal
+        title={getModalTitle(
+          "Manage Subscribers",
+          "Choose who should be able to access this note."
+        )}
+        open={subOpen}
+        onCancel={() => {
+          setSubOpen(false);
+          setSubNote(null);
+        }}
+        cancelButtonProps={{ className: "delete-btn" }}
+        onOk={handleSubSave}
+        confirmLoading={subSubmitting}
+        okText="Save"
+
+        okButtonProps={MODAL_OK_BUTTON_PROPS}
+        destroyOnClose
+        className="global-app-modal notes-modal-shell"
+        width="100%"
+        style={{ maxWidth: 640 }}
+      >
         <Form form={subForm} layout="vertical" className="notes-modal-form">
-          <Form.Item name="subscribers" label="Subscribers">
-            <Select
-              mode="multiple"
-              showSearch
-              placeholder="Select subscribers"
-              optionFilterProp="label"
-              filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
-              options={allUsers.map((u) => ({ value: u._id, label: u.full_name || u.name || u.email }))}
-            />
-          </Form.Item>
+
+          <Row gutter={[16, 16]}>
+
+            <Col xs={24}>
+              <Form.Item name="subscribers" label="Subscribers">
+                <Select
+                  mode="multiple"
+                  showSearch
+                  placeholder="Select subscribers"
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                  options={allUsers.map((u) => ({
+                    value: u._id,
+                    label: u.full_name || u.name || u.email,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
+          </Row>
+
         </Form>
       </Modal>
     </div>

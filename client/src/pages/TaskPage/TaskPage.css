@@ -535,7 +535,7 @@
 }
 
 .task-row-action-btn.ant-btn {
-  padding: 0 6px;
+  padding:6px;
 }
 
 /* Status pill — outlined, dot-style like TaskOPad */
@@ -572,8 +572,8 @@
   overflow-x: auto;
   padding: 24px;
   min-height: 400px;
-  height: calc(100dvh - 220px);
-  max-height: calc(100dvh - 220px);
+  height: calc(100dvh - 170px);
+  max-height: calc(100dvh - 170px);
   align-items: stretch;
   overflow-y: hidden;
 }
@@ -617,6 +617,7 @@
   gap: 8px;
   min-height: 140px;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  overflow-x: hidden;
 }
 
 .kanban-column-footer {
@@ -664,6 +665,7 @@
   color: #4b5563;
   background: #ffffff;
   box-shadow: none;
+  padding: 0;
 }
 
 .kanban-add-stage-icon-btn.ant-btn:hover,

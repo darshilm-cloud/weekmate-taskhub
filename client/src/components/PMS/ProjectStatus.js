@@ -9,7 +9,9 @@ import {
   Row,
   Col,
   Input,
+  Card,
 } from "antd";
+import Search from "antd/lib/input/Search";
 import {
   EditOutlined,
   SaveTwoTone,
@@ -19,7 +21,6 @@ import {
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import SkeletonTable from "../common/SkeletonTable";
-import GlobalSearchInput from "../common/GlobalSearchInput";
 import Service from "../../service";
 import "./ProjectStatus.css";
 
@@ -186,11 +187,11 @@ function ProjectStatus() {
             </>
           ) : (
             <>
-              <Button disabled={record.isDefault} type="link" className="btn-secondary pe-action-btn">
+              <Button disabled={record.isDefault} type="link edit pe-action-btn">
                 <EditOutlined onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
-                <Button disabled={record.isDefault} type="link" className="pe-action-btn">
+                <Button disabled={record.isDefault} type="link edit pe-action-btn delete ">
                   <AiOutlineDelete />
                 </Button>
               </Popconfirm>
@@ -202,39 +203,37 @@ function ProjectStatus() {
   ];
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        {/* Header */}
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><NodeIndexOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><NodeIndexOutlined /></span>
             Project Status
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-              Add Status
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            Add Status
+          </Button>
+        </div>
+      </div>
 
-        {/* Search */}
-        <div className="ps-search">
-          <GlobalSearchInput
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search status..."
-            value={searchText}
-            onChange={setSearchText}
             onSearch={onSearch}
-            className="ps-search-input"
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
             style={{ width: 260 }}
           />
         </div>
 
-        {/* Table / Skeleton */}
         {isLoading ? (
           <SkeletonTable cols={2} />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={projectList}
@@ -245,7 +244,7 @@ function ProjectStatus() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Modal */}
       <Modal
@@ -255,7 +254,7 @@ function ProjectStatus() {
         className="ps-modal"
         width={480}
         footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
+          <Button key="cancel" className="delete-btn" onClick={handleCancel}>Cancel</Button>,
           <Button key="submit" className="add-btn" type="primary" onClick={() => addProjectStatus.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >
@@ -269,7 +268,7 @@ function ProjectStatus() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

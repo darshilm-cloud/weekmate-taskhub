@@ -1516,7 +1516,11 @@ export default function CommonTaskFormModal({
 
             </div>
           <div className="task-detail-modal-footer-actions">
+             <Button className="delete-btn" onClick={onCancel}>
+              Close
+            </Button>
             {!viewOnly && (
+              
               <Button
                 className="add-btn"
                 type="primary"
@@ -1526,9 +1530,7 @@ export default function CommonTaskFormModal({
                 {submitText || (mode === "edit" ? "Save Changes" : "Save")}
               </Button>
             )}
-            <Button className="task-detail-secondary-btn" onClick={onCancel}>
-              Close
-            </Button>
+         
           </div>
             {loadingConfig && <div style={{ color: "#8c8c8c", padding: "0 20px 18px" }}>Loading form configuration...</div>}
           </Form>

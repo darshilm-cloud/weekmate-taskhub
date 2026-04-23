@@ -491,7 +491,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -522,8 +522,7 @@
   background: #0d4a73;
   border-color: #0d4a73;
   color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(11, 58, 91, 0.36);
+
 }
 
 /* ── Content area (scrollable) ── */

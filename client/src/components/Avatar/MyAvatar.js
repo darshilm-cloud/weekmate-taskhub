@@ -84,7 +84,7 @@ const MyAvatar = ({ userName, full_name, src, alt }) => {
         src={avatarSrc || undefined}
         alt={displayName}
         style={{
-          backgroundColor: hasImage ? "transparent" : "#7C4DFF",
+          backgroundColor: hasImage ? "" : "#7C4DFF",
           color: "#FFFFFF",
           fontWeight: 700,
         }}

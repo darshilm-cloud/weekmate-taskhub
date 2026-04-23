@@ -12,7 +12,7 @@
     --wm-sidebar-text-strong: #e8eef6;
     --wm-sidebar-muted: #aab7c6;
     --wm-sidebar-hover: #ffffff17;
-    --wm-sidebar-active:#ffffff17;
+    --wm-sidebar-active: #ffffff17;
     --wm-sidebar-accent: #ffff;
 }
 
@@ -37,7 +37,7 @@ body.admin-user[data-theme="dark"] {
     border-radius: 50%;
 }
 
-.right-popover-wrapper > a > p {
+.right-popover-wrapper>a>p {
     margin-bottom: 8px;
 }
 
@@ -438,8 +438,8 @@ body.admin-user[data-theme="light"] .sidebar-menu .ant-menu-item .anticon {
     border-left: 3px solid var(--wm-sidebar-accent) !important;
 }
 
-.weekmate-sidebar .ant-menu-inline > .ant-menu-item,
-.sidebar-menu .ant-menu-inline > .ant-menu-item {
+.weekmate-sidebar .ant-menu-inline>.ant-menu-item,
+.sidebar-menu .ant-menu-inline>.ant-menu-item {
     inset-inline-start: 0 !important;
 }
 
@@ -655,8 +655,8 @@ body.admin-user[data-theme="light"] .gx-layout-sider-dark .gx-layout-sider-heade
 }
 
 /* Hide scrollbar track/thumb elements inside the sidebar scroll area */
-.weekmate-sidebar-scroll > div:not(:first-child),
-.gx-layout-sider-scrollbar.weekmate-sidebar-scroll > div:not(:first-child) {
+.weekmate-sidebar-scroll>div:not(:first-child),
+.gx-layout-sider-scrollbar.weekmate-sidebar-scroll>div:not(:first-child) {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
@@ -798,4 +798,13 @@ body[data-theme="dark"].admin-user .ant-layout.admin .weekmate-sidebar {
 /* Hide submenu arrow for Feedback menu (shows submenu on hover but no arrow icon) */
 .weekmate-sidebar .ant-menu-submenu-title .ant-menu-submenu-arrow {
     display: none !important;
+}
+
+@media (max-width: 992px) {
+
+    .sidebar-menu .ant-layout-sider,
+    .sidebar-menu .Sidebar {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
 }

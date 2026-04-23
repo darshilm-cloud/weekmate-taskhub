@@ -5,6 +5,7 @@ import {
   CloseCircleOutlined,
   CloseOutlined,
   PlusCircleOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import {
@@ -992,10 +993,8 @@ function DiscussionForm() {
             <div className="discusstion-main-btn">
               { discussionTopic.length === 0 && !searchText ? (
                 <div className="discusstion-btn">
-                  <Button type="primary" onClick={ showAddTopicModal }>
-                    { " " }
-                    <PlusCircleOutlined />
-                    <span>Add Topic</span>
+                  <Button type="primary" className="add-btn" icon={<PlusOutlined/>} onClick={ showAddTopicModal }>
+                   Add Topic
                   </Button>
                 </div>
               ) : discussionComments &&
@@ -1319,7 +1318,7 @@ function DiscussionForm() {
                 : handleTaskOps(values, true);
             } }
           >
-            <Row gutter={ [0, 0] }>
+            <Row gutter={ [24, 0] }>
               {/* Title Field - Full width */ }
               <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
                 <Form.Item

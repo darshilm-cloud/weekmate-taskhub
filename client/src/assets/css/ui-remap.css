@@ -731,7 +731,7 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
 .dashboard-calendar .db-cal-dates {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  row-gap: 4px;
+  row-gap: 6px;
   padding: 14px 0 0;
 }
 
@@ -951,13 +951,7 @@ button {
    ───────────────────────────────────────────────────────────── */
 
 /* Table wrapper: card-like container */
-.page-layout .ant-table-wrapper,
-.gx-layout-content .ant-table-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--app-surface);
-  padding: 20px;
-}
+
 
 /* Container and content */
 .page-layout .ant-table-wrapper .ant-table,
@@ -1017,7 +1011,7 @@ button {
 .ant-table-wrapper .ant-table-tbody>tr>td,
 .ant-table .ant-table-tbody>tr>td {
   padding: 12px 16px !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   color: var(--app-text-muted) !important;
   border-bottom: 1px solid var(--app-border) !important;
   background: var(--app-surface) !important;
@@ -1897,4 +1891,13 @@ body .weekmate-sidebar .ant-menu-item svg,
 body .weekmate-sidebar .ant-menu-submenu-title svg {
   fill: #ffffff !important;
   stroke: #ffffff !important;
+}
+
+@media (max-width: 992px) {
+
+  .sidebar-menu .ant-layout-sider,
+  .sidebar-menu .Sidebar {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
 }

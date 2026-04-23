@@ -129,7 +129,7 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
       onCancel={handleModalCancel}
       title={null}
       footer={[
-        <Button key="cancel" className="upm-cancel-btn" onClick={handleModalCancel} disabled={saving}>
+        <Button key="cancel" className="delete-btn" onClick={handleModalCancel} disabled={saving}>
           Cancel
         </Button>,
         <Button
@@ -139,7 +139,7 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
           loading={saving || uploading}
           onClick={() => form.submit()}
         >
-          {uploading ? "Uploading…" : saving ? "Saving…" : "Save Changes"}
+          {uploading ? "Uploading…" : saving ? "Saving…" : "Save"}
         </Button>,
       ]}
       destroyOnClose

@@ -199,119 +199,123 @@ const AddTimeModal = memo(({
   );
 
   return (
-     <Modal
-      open={ openModal }
-      onCancel={ cancelModal }
-      title={type === "bug" ? "Add Bug" : type === "task" ? "Add Task" : "Add Time"}
-      className="add-task-modal task-aad-time-pop"
-      width={ 800 }
-      destroyOnClose
-      footer={ [
-        <Button key="cancel" onClick={ cancelModal } size="large" className="square-outline-btn ant-delete">
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          size="large"
-          className="square-primary-btn"
-          onClick={ () => formName.submit() }
-          loading={ loading }
-        >
-          Save
-        </Button>,
-      ] }
+  <Modal
+  open={openModal}
+  onCancel={cancelModal}
+  title={
+    type === "bug"
+      ? "Add Bug"
+      : type === "task"
+      ? "Add Task"
+      : "Add Time"
+  }
+  className="add-task-modal task-aad-time-pop"
+  width={800}
+  destroyOnClose
+  footer={[
+    <Button
+      key="cancel"
+      onClick={cancelModal}
+      size="large"
+      className=" delete-btn"
     >
-      <div className="overview-modal-wrapper">
-        <Form
-          form={ formName }
-          layout="vertical"
-          onFinish={ onFinish }
-        >
-          <Row gutter={ [0, 0] }>
-            {/* Conditional Selects - Full width */ }
-            <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-              { (type === "task" || type === "bug") && renderTimesheetSelect() }
-              { type === "timesheet" && renderTaskAndBugSelects() }
-            </Col>
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      type="primary"
+      size="large"
+      className="square-primary-btn"
+      onClick={() => formName.submit()}
+      loading={loading}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <div className="overview-modal-wrapper">
+    <Form form={formName} layout="vertical" onFinish={onFinish}>
+      <Row gutter={[16, 16]}>
 
-            {/* Date and Time Inputs - Full width */ }
-            <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-              <div style={ { display: 'flex', gap: '20px' } }>
-                <Form.Item
-                  label="Date"
-                  name="date"
-                  rules={ [{ required: true, message: 'Please select date' }] }
-                >
-                  <DatePicker
-                    placeholder="When"
-                    value={ dateValue }
-                    onChange={ handleDateChange }
-                    disabledDate={ disabledDate }
-                  >
-                    <i className="fi fi-rr-calendar-day"></i>
-                  </DatePicker>
-                </Form.Item>
+        {/* Conditional Selects */}
+        <Col xs={24}>
+          {(type === "task" || type === "bug") && renderTimesheetSelect()}
+          {type === "timesheet" && renderTaskAndBugSelects()}
+        </Col>
 
-                <Form.Item
-                  label="Hours"
-                  name="hours"
-                  rules={ [{ required: false }] }
-                >
-                  <div className="hours_min_container">
-                    <Input
-                      type="text"
-                      value={ estHrs }
-                      onChange={ handleHoursChange }
-                      className={ `hours_input ${estHrsError ? 'error-border' : ''}` }
-                      placeholder="Hours"
-                      size="large"
-                    />
-                    { estHrsError && <div style={ { color: 'red' } }>{ estHrsError }</div> }
-                  </div>
-                </Form.Item>
+        {/* Date */}
+        <Col xs={24} md={8}>
+          <Form.Item
+            label="Date"
+            name="date"
+            rules={[{ required: true, message: "Please select date" }]}
+          >
+            <DatePicker
+              placeholder="When"
+              value={dateValue}
+              onChange={handleDateChange}
+              disabledDate={disabledDate}
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+        </Col>
 
-                <Form.Item
-                 label="Minute"
-                  name="minutes"
-                  rules={ [{ required: false }] }
-                >
-                  <div className="hours_min_container">
-                    <Input
-                      type="text"
-                      value={ estMins }
-                      onChange={ handleMinutesChange }
-                      className={ `hours_input ${estMinsError ? 'error-border' : ''}` }
-                      placeholder="Minutes"
-                      size="large"
-                    />
-                    { estMinsError && <div style={ { color: 'red' } }>{ estMinsError }</div> }
-                  </div>
-                </Form.Item>
-              </div>
-            </Col>
+        {/* Hours */}
+        <Col xs={24} md={8}>
+          <Form.Item label="Hours" name="hours">
+            <div className="hours_min_container">
+              <Input
+                type="text"
+                value={estHrs}
+                onChange={handleHoursChange}
+                className={`hours_input ${estHrsError ? "error-border" : ""}`}
+                placeholder="Hours"
+                size="large"
+              />
+              {estHrsError && (
+                <div style={{ color: "red" }}>{estHrsError}</div>
+              )}
+            </div>
+          </Form.Item>
+        </Col>
 
-            {/* Description - Full width */ }
-            <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-              <Form.Item
-                label="Description"
-                name="Description"
-                colon={ false }
-              >
-                <CKEditor
-                  className="custom-ckeditor"
-                  editor={ Custombuild }
-                  data={ editorData }
-                  onChange={ handleChangedescription }
-                  onPaste={ handlePaste }
-                  config={ CKEDITOR_CONFIG }
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
-    </Modal>
+        {/* Minutes */}
+        <Col xs={24} md={8}>
+          <Form.Item label="Minute" name="minutes">
+            <div className="hours_min_container">
+              <Input
+                type="text"
+                value={estMins}
+                onChange={handleMinutesChange}
+                className={`hours_input ${estMinsError ? "error-border" : ""}`}
+                placeholder="Minutes"
+                size="large"
+              />
+              {estMinsError && (
+                <div style={{ color: "red" }}>{estMinsError}</div>
+              )}
+            </div>
+          </Form.Item>
+        </Col>
+
+        {/* Description */}
+        <Col xs={24}>
+          <Form.Item label="Description" name="Description" colon={false}>
+            <CKEditor
+              className="custom-ckeditor"
+              editor={Custombuild}
+              data={editorData}
+              onChange={handleChangedescription}
+              onPaste={handlePaste}
+              config={CKEDITOR_CONFIG}
+            />
+          </Form.Item>
+        </Col>
+
+      </Row>
+    </Form>
+  </div>
+</Modal>
   );
 });
 

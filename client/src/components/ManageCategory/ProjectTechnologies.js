@@ -9,6 +9,7 @@ import {
   Popconfirm,
   Col,
   Row,
+  Card,
 } from "antd";
 import {
   EditOutlined,
@@ -19,6 +20,7 @@ import {
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import { useDispatch } from "react-redux";
+import Search from "antd/lib/input/Search";
 import Service from "../../service";
 import { hideAuthLoader } from "../../appRedux/actions/Auth";
 import "../PMS/settings.css";
@@ -236,13 +238,13 @@ const ProjectTechnologies = () => {
 
         return isCurrentlyEditing ? (
           <Input
-            defaultValue={ record.project_tech }
-            onChange={ handleEditTextChange }
-            onPressEnter={ () => updateProjectTechnology(record._id) }
+            defaultValue={record.project_tech}
+            onChange={handleEditTextChange}
+            onPressEnter={() => updateProjectTechnology(record._id)}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.project_tech }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.project_tech}
           </span>
         );
       },
@@ -256,38 +258,38 @@ const ProjectTechnologies = () => {
 
         return (
           <div className="edit-delete">
-            { isCurrentlyEditing ? (
+            {isCurrentlyEditing ? (
               <>
                 <Button type="link" className="edit">
                   <SaveTwoTone
-                    style={ { fontSize: "18px" } }
-                    onClick={ () => updateProjectTechnology(record._id) }
+                    style={{ fontSize: "18px" }}
+                    onClick={() => updateProjectTechnology(record._id)}
                   />
                 </Button>
-                <Button type="link" className="delete" onClick={ handleCancelEdit }>
-                  <CloseCircleTwoTone style={ { fontSize: "18px" } } />
+                <Button type="link" className="delete" onClick={handleCancelEdit}>
+                  <CloseCircleTwoTone style={{ fontSize: "18px" }} />
                 </Button>
               </>
             ) : (
               <>
-                <Button type="link" className="edit">
+                <Button type="link edit pe-action-btn">
                   <EditOutlined
-                    style={ { fontSize: "18px" } }
-                    onClick={ () => handleStartEdit(record) }
+                    style={{ fontSize: "18px" }}
+                    onClick={() => handleStartEdit(record)}
                   />
                 </Button>
                 <Popconfirm
                   title="Do you really want to delete this Department?"
                   okText="Yes"
                   cancelText="No"
-                  onConfirm={ () => deleteProjectTechnology(record._id) }
+                  onConfirm={() => deleteProjectTechnology(record._id)}
                 >
                   <Button type="link" className="delete">
-                    <AiOutlineDelete style={ { fontSize: "18px" } } />
+                    <AiOutlineDelete style={{ fontSize: "18px" }} />
                   </Button>
                 </Popconfirm>
               </>
-            ) }
+            )}
           </div>
         );
       },
@@ -296,7 +298,7 @@ const ProjectTechnologies = () => {
 
   const SkeletonTable = () => (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
         <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
       </div>
@@ -310,22 +312,24 @@ const ProjectTechnologies = () => {
   );
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><ApartmentOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><ApartmentOutlined /></span>
             Departments
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-              Add Department
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            Add Department
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
-          <Input.Search
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search departments..."
             onSearch={handleSearch}
@@ -338,7 +342,7 @@ const ProjectTechnologies = () => {
         {isLoading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={projectList}
@@ -349,35 +353,70 @@ const ProjectTechnologies = () => {
             />
           </div>
         )}
-      </div>
+      </Card>
 
       <Modal
         open={isModalOpen}
         onCancel={handleModalClose}
-        title={<><ApartmentOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Department</>}
+        title={
+          <>
+            <ApartmentOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            Add Department
+          </>
+        }
         className="ps-modal"
-        width={480}
+        width="100%"
+        style={{ maxWidth: 480 }}
         footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleModalClose}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()}>Save</Button>,
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={handleModalClose}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            className="add-btn"
+            type="primary"
+            onClick={() => form.submit()}
+          >
+            Save
+          </Button>,
         ]}
       >
-        <Form form={form} layout="vertical" onFinish={addProjectTechnology}>
-          <Form.Item
-            name="project_tech"
-            label="Department Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid department name" }]}
-          >
-            <Input
-              autoComplete="off"
-              onChange={(e) => setProjectTech(e.target.value)}
-              size="large"
-              placeholder="e.g. Engineering, Marketing"
-            />
-          </Form.Item>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={addProjectTechnology}
+        >
+          <Row gutter={[24, 0]}>
+
+            <Col xs={24}>
+              <Form.Item
+                name="project_tech"
+                label="Department Name"
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter a valid department name",
+                  },
+                ]}
+              >
+                <Input
+                  autoComplete="off"
+                  onChange={(e) => setProjectTech(e.target.value)}
+                  size="large"
+                  placeholder="e.g. Engineering, Marketing"
+                />
+              </Form.Item>
+            </Col>
+
+          </Row>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 };
 

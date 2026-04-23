@@ -1474,53 +1474,82 @@ const ProjectFormModal = ({
 
   if (useDynamicProjectForm) {
     return (
-      <Modal
-        footer={null}
-        width={960}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        className="pfm-modal"
-        closable={false}
-        destroyOnClose
-      >
-        <div className="pfm-header">
-          <h2 className="pfm-title">{isEdit ? "Update Project Details" : "Add Project Details"}</h2>
-          <button type="button" className="pfm-close-btn" onClick={handleCancel} aria-label="Close">
-            <CloseOutlined />
-          </button>
-        </div>
-        <Spin spinning={isLoading}>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={(values) =>
-              isEdit ? editProjectdetails(selectedProject?._id, values) : addProjectDetails(values)
-            }
-          >
-            <div className="pfm-fields-grid">
-              {visibleConfiguredFields.map((field) => (
-                <div
-                  className="pfm-field-row"
-                  key={field.key}
-                  style={String(field?.key || "").trim() === "descriptions" ? { gridColumn: "1 / -1" } : undefined}
-                >
-                  <TagOutlined className="pfm-icon" />
-                  <div className="pfm-input-group">
-                    <div className="pfm-field-label">{field?.required ? "* " : ""}{field?.label || field?.key}</div>
-                    {renderConfiguredField(field)}
+<Modal
+  open={isModalOpen}
+  onCancel={handleCancel}
+  width={700}
+  className="pfm-modal"
+  destroyOnClose
+  title={
+    <div className="modal-title">
+      <h2>
+        {isEdit ? "Update Project Details" : "Add Project Details"}
+      </h2>
+    </div>
+  }
+  footer={[
+    <Button
+      type="secondry"
+      key="cancel"
+      onClick={handleCancel}
+      className="delete-btn"
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      type="primary"
+      loading={isSubmitting}
+      onClick={() => form.submit()}
+      className="pfm-submit-btn"
+    >
+      {isEdit ? "Update" : "Save"}
+    </Button>,
+  ]}
+>
+  <Spin spinning={isLoading}>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={(values) =>
+        isEdit
+          ? editProjectdetails(selectedProject?._id, values)
+          : addProjectDetails(values)
+      }
+    >
+      <Row gutter={[16, 16]}>
+        
+        <Col xs={24}>
+          <div className="pfm-fields-grid">
+            {visibleConfiguredFields.map((field) => (
+              <div
+                key={field.key}
+                className="pfm-field-row"
+                style={
+                  String(field?.key || "").trim() === "descriptions"
+                    ? { gridColumn: "1 / -1" }
+                    : undefined
+                }
+              >
+                <TagOutlined className="pfm-icon" />
+
+                <div className="pfm-input-group">
+                  <div className="pfm-field-label">
+                    {field?.required ? "* " : ""}
+                    {field?.label || field?.key}
                   </div>
+
+                  {renderConfiguredField(field)}
                 </div>
-              ))}
-            </div>
-            <div className="pfm-footer">
-              <Button className="pfm-cancel-btn" onClick={handleCancel}>Cancel</Button>
-              <Button type="primary" htmlType="submit" className="pfm-submit-btn" loading={isSubmitting}>
-                {isEdit ? "Update" : "Save"}
-              </Button>
-            </div>
-          </Form>
-        </Spin>
-      </Modal>
+              </div>
+            ))}
+          </div>
+        </Col>
+
+      </Row>
+    </Form>
+  </Spin>
+</Modal>
     );
   }
 
@@ -1539,9 +1568,7 @@ const ProjectFormModal = ({
           <h2 className="pfm-title">
             {isEdit ? "Update Project Details" : "Add Project Details"}
           </h2>
-          <button type="button" className="pfm-close-btn" onClick={handleCancel} aria-label="Close">
-            <CloseOutlined />
-          </button>
+        
         </div>
 
         <Spin spinning={isLoading}>
@@ -2037,10 +2064,10 @@ const ProjectFormModal = ({
 
         {/* Footer buttons */}
         <div className="pfm-footer">
-          <Button className="pfm-cancel-btn" onClick={handleCancel}>
+          <Button className="delete-btn" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit" className="pfm-submit-btn" loading={isSubmitting}>
+          <Button type="primary" htmlType="submit" className="add-btn" loading={isSubmitting}>
             {isEdit ? "Update" : "Save"}
           </Button>
         </div>
@@ -2085,115 +2112,109 @@ const ProjectFormModal = ({
         </Form.Item>
       </Form>
     </Modal>
-    <Modal
-      title="Add Client"
-      open={isAddClientOpen}
-      width={720}
-      className="pfm-inline-modal"
-      onCancel={() => {
-        setIsAddClientOpen(false);
-        clientCreateForm.resetFields();
-      }}
-      footer={[
-        <Button
-          key="cancel"
-          onClick={() => {
-            setIsAddClientOpen(false);
-            clientCreateForm.resetFields();
-          }}
+ <Modal
+  title="Add Client"
+  open={isAddClientOpen}
+  width={720}
+  className="pfm-inline-modal"
+  onCancel={() => {
+    setIsAddClientOpen(false);
+    clientCreateForm.resetFields();
+  }}
+  onOk={() => clientCreateForm.submit()}
+  confirmLoading={isSavingClient}
+  okText="Add"
+  cancelText="Cancel"
+>
+  <Form
+    form={clientCreateForm}
+    layout="vertical"
+    initialValues={{ status: "Active" }}
+    onFinish={handleCreateClient}
+  >
+    <Row gutter={[16, 0]}>
+      
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="First name"
+          name="first_name"
+          rules={[{ required: true, message: "First name is required" }]}
         >
-          Cancel
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          loading={isSavingClient}
-          onClick={() => clientCreateForm.submit()}
+          <Input placeholder="First name" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="Last name"
+          name="last_name"
+          rules={[{ required: true, message: "Last name is required" }]}
         >
-          Add
-        </Button>,
-      ]}
-    >
-      <Form
-        form={clientCreateForm}
-        layout="vertical"
-        initialValues={{ status: "Active" }}
-        onFinish={handleCreateClient}
-      >
-        <Row gutter={[16, 0]}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="First name"
-              name="first_name"
-              rules={[{ required: true, message: "First name is required" }]}
-            >
-              <Input placeholder="First name" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Last name"
-              name="last_name"
-              rules={[{ required: true, message: "Last name is required" }]}
-            >
-              <Input placeholder="Last name" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Company name"
-              name="company_name"
-              rules={[{ required: true, message: "Company name is required" }]}
-            >
-              <Input placeholder="Company name" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Email is required" },
-                { type: "email", message: "Enter a valid email" },
-              ]}
-            >
-              <Input placeholder="Email" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Phone" name="phone_number">
-              <Input placeholder="Phone (optional)" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Password"
-              name="plain_password"
-              rules={[{ required: true, message: "Password is required" }]}
-            >
-              <Input.Password placeholder="Password" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Status"
-              name="status"
-              rules={[{ required: true, message: "Status is required" }]}
-            >
-              <Select placeholder="Status">
-                <Select.Option value="Active">Active</Select.Option>
-                <Select.Option value="Inactive">Inactive</Select.Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24}>
-            <Form.Item label="Extra details" name="extra_details">
-              <Input.TextArea rows={3} placeholder="Notes (optional)" />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Modal>
+          <Input placeholder="Last name" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="Company name"
+          name="company_name"
+          rules={[{ required: true, message: "Company name is required" }]}
+        >
+          <Input placeholder="Company name" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[
+            { required: true, message: "Email is required" },
+            { type: "email", message: "Enter a valid email" },
+          ]}
+        >
+          <Input placeholder="Email" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item label="Phone" name="phone_number">
+          <Input placeholder="Phone (optional)" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="Password"
+          name="plain_password"
+          rules={[{ required: true, message: "Password is required" }]}
+        >
+          <Input.Password placeholder="Password" />
+        </Form.Item>
+      </Col>
+
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label="Status"
+          name="status"
+          rules={[{ required: true, message: "Status is required" }]}
+        >
+          <Select placeholder="Status">
+            <Select.Option value="Active">Active</Select.Option>
+            <Select.Option value="Inactive">Inactive</Select.Option>
+          </Select>
+        </Form.Item>
+      </Col>
+
+      <Col xs={24}>
+        <Form.Item label="Extra details" name="extra_details">
+          <Input.TextArea rows={3} placeholder="Notes (optional)" />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
     <Modal
       title={
         employeeModalType === "account_manager"

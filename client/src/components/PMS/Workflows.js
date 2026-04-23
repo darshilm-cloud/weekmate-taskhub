@@ -9,6 +9,7 @@ import {
   Modal,
   Row,
   Col,
+  Card,
 } from "antd";
 import { AiOutlineDelete } from "react-icons/ai";
 import Search from "antd/lib/input/Search";
@@ -57,16 +58,16 @@ function Workflows() {
         const position = record?.project_workflow?.trim();
         return record?._id == editid ? (
           <span
-            onChange={ (value) => {
+            onChange={(value) => {
               handlechange(value);
-            } }
-            style={ { textTransform: "capitalize" } }
+            }}
+            style={{ textTransform: "capitalize" }}
           >
-            <Input defaultValue={ position } />
+            <Input defaultValue={position} />
           </span>
         ) : (
-          <Link to={ `/${companySlug}/workflows-tasks/${record?._id}` }>
-            <span style={ { textTransform: "capitalize" } }>{ position }</span>
+          <Link to={`/${companySlug}/workflows-tasks/${record?._id}`}>
+            <span style={{ textTransform: "capitalize" }}>{position}</span>
           </Link>
         );
       },
@@ -78,54 +79,54 @@ function Workflows() {
       width: 200,
       render: (text, record, index) => (
         <div className="edit-delete">
-          { flag == true && editid == record?._id ? (
+          {flag == true && editid == record?._id ? (
             <>
               <Button type="link edit pe-action-btn">
                 <SaveTwoTone
                   twoToneColor="green"
-                  onClick={ () => {
+                  onClick={() => {
                     handleEdit(record?._id);
                     setFlag(false);
                     setEditid("");
-                  } }
+                  }}
                 />
               </Button>
               <Button
                 type="link delete pe-action-btn"
                 title="View"
-                onClick={ () => setEditid("") }
+                onClick={() => setEditid("")}
               >
-                <CloseCircleTwoTone style={ { fontSize: "18px" } } />
+                <CloseCircleTwoTone style={{ fontSize: "18px" }} />
               </Button>
             </>
           ) : (
             <>
-              { (!Object.keys(record).includes("isDefault") ||
+              {(!Object.keys(record).includes("isDefault") ||
                 record?.isDefault == false) && (
                   <>
                     <Button type="link edit pe-action-btn">
                       <EditOutlined
                         twoToneColor="green"
-                        onClick={ () => {
+                        onClick={() => {
                           setEditid(record._id);
                           setFlag(true);
-                        } }
+                        }}
                       />
                     </Button>
                     <Popconfirm
                       title="Do you really want to delete this Workflow?"
                       okText="Yes"
                       cancelText="No"
-                      onConfirm={ () => handleDeleteWorkflow(record._id) }
+                      onConfirm={() => handleDeleteWorkflow(record._id)}
                     >
                       <Button type="link delete pe-action-btn">
                         <AiOutlineDelete />
                       </Button>
                     </Popconfirm>
                   </>
-                ) }
+                )}
             </>
-          ) }
+          )}
         </div>
       ),
     },
@@ -287,7 +288,7 @@ function Workflows() {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
+        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
       </label>
     );
   };
@@ -316,21 +317,23 @@ function Workflows() {
   );
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><NodeIndexOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2 >
+            <span><NodeIndexOutlined /></span>
             WorkFlows
           </h2>
+        </div>
           <div className="ps-header-right">
-            <Button className="add-btn"   type="primary" icon={<PlusOutlined />} onClick={showModal}>
+            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={showModal}>
               Add Workflow
             </Button>
           </div>
-        </div>
+      </div>
+      <Card className="main-content-wrapper">
 
-        <div className="ps-search">
+        <div className="global-search">
           <Search
             ref={searchRef}
             placeholder="Search workflows..."
@@ -344,7 +347,7 @@ function Workflows() {
         {isLoading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={workflowList}
@@ -355,30 +358,71 @@ function Workflows() {
             />
           </div>
         )}
-      </div>
+      </Card>
+
 
       <Modal
         open={isModalOpen}
         onCancel={handleCancel}
-        title={<><NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add WorkFlow</>}
+        title={
+          <>
+            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            Add WorkFlow
+          </>
+        }
         className="ps-modal"
-        width={480}
+        width="100%"
+        style={{ maxWidth: 480 }}
         footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" onClick={() => addform.submit()} loading={isSubmitting}>Save</Button>,
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>,
+          <Button
+            type="primary"
+            key="submit"
+            className="add-btn"
+            onClick={() => addform.submit()}
+            loading={isSubmitting}
+          >
+            Save
+          </Button>,
         ]}
       >
-        <Form form={addform} layout="vertical" onFinish={addWorkflowDetails}>
-          <Form.Item
-            name="project_workflow"
-            label="Workflow Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid workflow name" }]}
-          >
-            <Input autoComplete="off" size="large" placeholder="e.g. Development, Testing" />
-          </Form.Item>
+        <Form
+          form={addform}
+          layout="vertical"
+          onFinish={addWorkflowDetails}
+        >
+          <Row gutter={[24, 0]}>
+
+            <Col xs={24}>
+              <Form.Item
+                name="project_workflow"
+                label="Workflow Name"
+                rules={[
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Please enter a valid workflow name",
+                  },
+                ]}
+              >
+                <Input
+                  autoComplete="off"
+                  size="large"
+                  placeholder="e.g. Development, Testing"
+                />
+              </Form.Item>
+            </Col>
+
+          </Row>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

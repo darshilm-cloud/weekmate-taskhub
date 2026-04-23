@@ -971,7 +971,7 @@ const BugsPMS = () => {
                   { selectedsassignees.length > 0 && (
                     <div style={ { marginTop: 8 } }>
                       <Button
-                        className="list-clear-btn ant-delete"
+                        className="delete-btn"
                         onClick={ () => setSelectedsassignees([]) }
                         size="small"
                       >

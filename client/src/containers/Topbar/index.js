@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layout, Form, Popover, Input, Dropdown } from "antd";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   SearchOutlined,
   SettingOutlined,
@@ -17,12 +17,15 @@ import {
   TagsOutlined,
   TeamOutlined,
   FormOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import UserProfile from "../Sidebar/UserProfile";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
+import { TAB_SIZE } from "../../constants/ThemeSetting";
 import "./Topbar.css";
 
 const { Header } = Layout;
@@ -89,9 +92,9 @@ function Topbar() {
             {section.items.map((item) => {
               const isActive = location.pathname === item.path && uniquePaths.has(item.path);
               return (
-                <li
+                <li 
                   key={item.label}
-                  className={`wm-settings-item${isActive ? " active" : ""}`}
+                  className={`wm-settings-item${isActive ? " active" : ""}${item.label === "Trash" ? " danger-item" : ""}`}
                   onClick={() => {
                     history.push(item.path);
                     setSettingsOpen(false);
@@ -108,6 +111,7 @@ function Topbar() {
     </div>
   );
   const dispatch = useDispatch();
+  const { navCollapsed, width } = useSelector(({ common }) => common);
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectList, setProjectList] = useState([]);
@@ -279,10 +283,21 @@ function Topbar() {
       <Header className="top-header top-header-icons weekmate-header taskpad-header weekmate-header-shell">
         <div className="weekmate-header-card">
           <div className="weekmate-header-left">
-          <div className="weekmate-header-title">
-            {companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech"}
+            {width < TAB_SIZE && (
+              <span
+                className="gx-pointer gx-mr-xs-5 gx-pt-xs-1"
+                onClick={() => {
+                  dispatch(toggleCollapsedSideNav(!navCollapsed));
+                }}
+                style={{ marginRight: 16 }}
+              >
+                <MenuOutlined style={{ fontSize: 20 }} />
+              </span>
+            )}
+            <div className="weekmate-header-title">
+              {companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech"}
+            </div>
           </div>
-        </div>
           <div className="weekmate-header-center">
             <Dropdown
               overlay={

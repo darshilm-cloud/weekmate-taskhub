@@ -219,8 +219,8 @@ const ResourceMatrix = () => {
         viewMode === "Weeks"
           ? current.endOf("week")
           : viewMode === "Month"
-          ? current.endOf("month")
-          : current;
+            ? current.endOf("month")
+            : current;
 
       while (current.isBefore(end) || current.isSame(end, "day")) {
         const dateKey = current.format("DD-MM-YYYY");
@@ -456,98 +456,99 @@ const ResourceMatrix = () => {
   return (
     <Card className="resource-matrix">
       <HeaderSection />
-      <div className="global-search">
-        <Input.Search
-          allowClear
-          placeholder="Search employee name"
-          value={employeeSearch}
-          onChange={(e) => setEmployeeSearch(e.target.value)}
-          style={{ width: 250 }}
-          onSearch={handleEmployeeSearch}
-        />
-        <div className="filter-btn-wrapper">
-          {/* Integrated Advanced Filter */}
-          <ResourceMatrixFilter
-            getRoles={() => hasPermission}
-            onFilterChange={handleFilterChange}
+      <Card className="main-content-wrapper">
+
+        <div className="global-search">
+          <Input.Search
+            allowClear
+            placeholder="Search employee name"
+            value={employeeSearch}
+            onChange={(e) => setEmployeeSearch(e.target.value)}
+            style={{ width: 250 }}
+            onSearch={handleEmployeeSearch}
           />
-          <div className="tab-view-container">
-            <span className="tab-view-label">View:</span>
-            <div className="tab-view-buttons">
-              <button
-                className={`tab-view-btn ${
-                  viewMode === "Weeks" ? "active" : ""
-                }`}
-                onClick={() => setViewMode("Weeks")}
-              >
-                Weeks
-              </button>
-              <button
-                className={`tab-view-btn ${
-                  viewMode === "Month" ? "active" : ""
-                }`}
-                onClick={() => setViewMode("Month")}
-              >
-                Month
-              </button>
+          <div className="filter-btn-wrapper">
+            {/* Integrated Advanced Filter */}
+            <ResourceMatrixFilter
+              getRoles={() => hasPermission}
+              onFilterChange={handleFilterChange}
+            />
+            <div className="tab-view-container">
+
+              <div className="tab-view-buttons">
+                <button
+                  className={`tab-view-btn ${viewMode === "Weeks" ? "active" : ""
+                    }`}
+                  onClick={() => setViewMode("Weeks")}
+                >
+                  Weeks
+                </button>
+                <button
+                  className={`tab-view-btn ${viewMode === "Month" ? "active" : ""
+                    }`}
+                  onClick={() => setViewMode("Month")}
+                >
+                  Month
+                </button>
+              </div>
             </div>
-          </div>
-          {/* <Button icon={<ExportOutlined />} className="export-btn">
+            {/* <Button icon={<ExportOutlined />} className="export-btn">
             Export
           </Button> */}
+          </div>
         </div>
-      </div>
-      <div className="rm-table-container">
-        <Table
-          columns={tableColumns}
-          dataSource={getExpandedData()}
-          rowKey={(record) =>
-            record.type === "project" ? record.key : record.employee?._id
-          }
-          scroll={{ x: 1200, y: 550 }}
-          pagination={false}
-          className="rm-resource-table"
-          rowClassName={rowClassName}
-          showHeader={true}
-          loading={isMatrixLoading}
-          locale={{
-            emptyText: <Empty description="No Data" />
-          }}
-        />
-      </div>
-      <div className="rm-pagination-container">
-        <div className="rm-pagination-info">
-          Showing {backendData.length} of {metadata.totalEmployees} employees
+        <div className="block-teble-content">
+          <Table
+            columns={tableColumns}
+            dataSource={getExpandedData()}
+            rowKey={(record) =>
+              record.type === "project" ? record.key : record.employee?._id
+            }
+            scroll={{ x: 1200, y: 550 }}
+            pagination={false}
+            className="rm-resource-table"
+            rowClassName={rowClassName}
+            showHeader={true}
+            loading={isMatrixLoading}
+            locale={{
+              emptyText: <Empty description="No Data" />
+            }}
+          />
         </div>
-        <Pagination
-          current={pagination.current}
-          pageSize={pagination.pageSize}
-          total={metadata.totalEmployees}
-          showSizeChanger={true} // Allow user to change page size
-          showQuickJumper={false}
-          className="rm-pagination"
-          onChange={(page, size) => {
-            setPagination((prev) => ({
-              ...prev,
-              current: page,
-              pageSize: size
-            }));
-          }}
-          onShowSizeChange={(current, size) => {
-            setPagination((prev) => ({
-              ...prev,
-              current: current,
-              pageSize: size
-            }));
-          }}
-          pageSizeOptions={["10", "25", "50", "100"]}
-          itemRender={(page, type, element) => {
-            if (type === "prev") return <span>❮</span>;
-            if (type === "next") return <span>❯</span>;
-            return element;
-          }}
-        />
-      </div>
+        <div className="rm-pagination-container">
+          <div className="rm-pagination-info">
+            Showing {backendData.length} of {metadata.totalEmployees} employees
+          </div>
+          <Pagination
+            current={pagination.current}
+            pageSize={pagination.pageSize}
+            total={metadata.totalEmployees}
+            showSizeChanger={true} // Allow user to change page size
+            showQuickJumper={false}
+            className="rm-pagination"
+            onChange={(page, size) => {
+              setPagination((prev) => ({
+                ...prev,
+                current: page,
+                pageSize: size
+              }));
+            }}
+            onShowSizeChange={(current, size) => {
+              setPagination((prev) => ({
+                ...prev,
+                current: current,
+                pageSize: size
+              }));
+            }}
+            pageSizeOptions={["10", "25", "50", "100"]}
+            itemRender={(page, type, element) => {
+              if (type === "prev") return <span>❮</span>;
+              if (type === "next") return <span>❯</span>;
+              return element;
+            }}
+          />
+        </div>
+      </Card>
 
       <div className="rm-mobile-actions">
         <Button
@@ -631,10 +632,10 @@ const ResourceMatrix = () => {
                   <div className="stat-value">
                     {selectedProjectForModal.hours.estimated > 0
                       ? Math.round(
-                          (selectedProjectForModal.hours.logged /
-                            selectedProjectForModal.hours.estimated) *
-                            100
-                        )
+                        (selectedProjectForModal.hours.logged /
+                          selectedProjectForModal.hours.estimated) *
+                        100
+                      )
                       : 0}
                     %
                   </div>
@@ -650,10 +651,10 @@ const ResourceMatrix = () => {
                 <span className="progress-percentage">
                   {selectedProjectForModal.hours.estimated > 0
                     ? Math.round(
-                        (selectedProjectForModal.hours.logged /
-                          selectedProjectForModal.hours.estimated) *
-                          100
-                      )
+                      (selectedProjectForModal.hours.logged /
+                        selectedProjectForModal.hours.estimated) *
+                      100
+                    )
                     : 0}
                   %
                 </span>
@@ -662,16 +663,15 @@ const ResourceMatrix = () => {
                 <div
                   className="progress-bar-fill"
                   style={{
-                    width: `${
-                      selectedProjectForModal.hours.estimated > 0
-                        ? Math.min(
-                            (selectedProjectForModal.hours.logged /
-                              selectedProjectForModal.hours.estimated) *
-                              100,
-                            100
-                          )
-                        : 0
-                    }%`,
+                    width: `${selectedProjectForModal.hours.estimated > 0
+                      ? Math.min(
+                        (selectedProjectForModal.hours.logged /
+                          selectedProjectForModal.hours.estimated) *
+                        100,
+                        100
+                      )
+                      : 0
+                      }%`,
                     backgroundColor: getProgressColor(
                       selectedProjectForModal.hours.logged,
                       selectedProjectForModal.hours.estimated
@@ -722,8 +722,8 @@ const ResourceMatrix = () => {
                   const taskProgress =
                     task?.estimatedHours > 0
                       ? Math.round(
-                          (task?.loggedHours / task?.estimatedHours) * 100
-                        )
+                        (task?.loggedHours / task?.estimatedHours) * 100
+                      )
                       : 0;
 
                   return (
@@ -746,14 +746,14 @@ const ResourceMatrix = () => {
                             <FiCalendar size={14} />
                             <span className="date-label">Start:</span>
                             <span className="date-value">
-                              {task?.startDate ?dayjs(task?.startDate).format("DD-MM-YYYY") : "-"}
+                              {task?.startDate ? dayjs(task?.startDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                           <div className="date-item">
                             <FiCalendar size={14} />
                             <span className="date-label">End:</span>
                             <span className="date-value">
-                              {task?.endDate  ? dayjs(task?.endDate).format("DD-MM-YYYY") : "-"}
+                              {task?.endDate ? dayjs(task?.endDate).format("DD-MM-YYYY") : "-"}
                             </span>
                           </div>
                         </div>
@@ -793,8 +793,8 @@ const ResourceMatrix = () => {
                                   taskProgress < 34
                                     ? "red"
                                     : taskProgress < 67
-                                    ? "yellow"
-                                    : "green"
+                                      ? "yellow"
+                                      : "green"
                               }}
                             ></div>
                           </div>

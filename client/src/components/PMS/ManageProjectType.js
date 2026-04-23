@@ -9,8 +9,9 @@ import {
   Col,
   Row,
   Input,
+  Card,
 } from "antd";
-import GlobalSearchInput from "../common/GlobalSearchInput";
+import Search from "antd/lib/input/Search";
 import {
   CloseCircleTwoTone,
   SaveTwoTone,
@@ -27,15 +28,13 @@ const SKELETON_ROWS = 6;
 function SkeletonTable() {
   return (
     <div className="ps-skeleton-wrap">
-      <div className="ps-skeleton-row ps-skeleton-header-row">
-        <div className="ps-shimmer" style={{ width: "40%", height: 12 }} />
-        <div className="ps-shimmer" style={{ width: "25%", height: 12 }} />
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
         <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
       </div>
       {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
         <div className="ps-skeleton-row" key={i}>
           <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 25}%` }} />
-          <div className="ps-shimmer" style={{ width: `${20 + Math.random() * 15}%` }} />
           <div className="ps-shimmer" style={{ width: "12%", marginLeft: "auto" }} />
         </div>
       ))}
@@ -96,21 +95,21 @@ function ManageProjectType() {
         <div style={{ display: "flex", gap: 4 }}>
           {flag && editid === record?._id ? (
             <>
-              <Button type="link pe-action-btn">
+              <Button type="link pe-action-btn edit">
                 <SaveTwoTone style={{ fontSize: 18 }} onClick={() => { handleEditProjectName(record?._id); setFlag(false); setEditid(""); }} />
               </Button>
-              <Button type="link pe-action-btn" onClick={() => setEditid("")}>
+              <Button type="link pe-action-btn delete" onClick={() => setEditid("")}>
                 <CloseCircleTwoTone style={{ fontSize: 18 }} />
               </Button>
             </>
           ) : (
             <>
-              <Button type="link pe-action-btn">
-                <EditOutlined style={{ color: "#0b3a5b", fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
+              <Button type="link edit pe-action-btn">
+                <EditOutlined style={{ fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
-              <Popconfirm title="Delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
-                <Button type="link pe-action-btn">
-                  <AiOutlineDelete style={{ color: "#e53e3e", fontSize: 17 }} />
+              <Popconfirm title="Do you really want to delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
+                <Button type="link pe-action-btn delete">
+                  <AiOutlineDelete style={{ fontSize: 17 }} />
                 </Button>
               </Popconfirm>
             </>
@@ -224,28 +223,29 @@ function ManageProjectType() {
   };
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon"><AppstoreOutlined /></span>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><AppstoreOutlined /></span>
             Categories
           </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn"  type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-              Add Type
-            </Button>
-          </div>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+            Add Type
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
-          <GlobalSearchInput
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
             ref={searchRef}
             placeholder="Search project types..."
-            value={searchText}
-            onChange={setSearchText}
             onSearch={onSearch}
-            className="ps-search-input"
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
             style={{ width: 260 }}
           />
         </div>
@@ -253,7 +253,7 @@ function ManageProjectType() {
         {isLoading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={projectList}
@@ -264,30 +264,71 @@ function ManageProjectType() {
             />
           </div>
         )}
-      </div>
+      </Card>
 
-      <Modal
-        open={isModalOpen}
-        onCancel={handleCancel}
-        title={<><AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Category</>}
-        className="ps-modal"
-        width={480}
-        footer={[
-          <Button key="cancel" className="ps-modal-cancel" onClick={handleCancel}>Cancel</Button>,
-          <Button key="submit" className="add-btn" type="primary" onClick={() => addprojectform.submit()} loading={isSubmitting}>Save</Button>,
-        ]}
-      >
-        <Form form={addprojectform} layout="vertical" onFinish={handleOk}>
-          <Form.Item
-            name="project_type"
-            label="Category Name"
-            rules={[{ required: true, whitespace: true, message: "Please enter a valid category" }]}
-          >
-            <Input autoComplete="off" onChange={e => setprojectname(e.target.value)} size="large" placeholder="e.g. Internal, Client Work" />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
+    <Modal
+  open={isModalOpen}
+  onCancel={handleCancel}
+  title={
+    <>
+      <AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+      Add Category
+    </>
+  }
+  className="ps-modal"
+  width="100%"
+  style={{ maxWidth: 480 }}
+  footer={[
+    <Button
+      key="cancel"
+      className="delete-btn"
+      onClick={handleCancel}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="submit"
+      className="add-btn"
+      type="primary"
+      onClick={() => addprojectform.submit()}
+      loading={isSubmitting}
+    >
+      Save
+    </Button>,
+  ]}
+>
+  <Form
+    form={addprojectform}
+    layout="vertical"
+    onFinish={handleOk}
+  >
+    <Row gutter={[16, 16]}>
+      
+      <Col xs={24}>
+        <Form.Item
+          name="project_type"
+          label="Category Name"
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: "Please enter a valid category",
+            },
+          ]}
+        >
+          <Input
+            autoComplete="off"
+            onChange={(e) => setprojectname(e.target.value)}
+            size="large"
+            placeholder="e.g. Internal, Client Work"
+          />
+        </Form.Item>
+      </Col>
+
+    </Row>
+  </Form>
+</Modal>
+    </Card>
   );
 }
 

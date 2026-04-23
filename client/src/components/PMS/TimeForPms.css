@@ -496,6 +496,7 @@
 
 .log-time-modal .overview-modal-wrapper.task-detail-panel {
   padding: 0 20px;
+  min-height: 70dvh;
 }
 
 .log-time-modal .task-detail-panel .right-task-detail-panel {
@@ -532,7 +533,7 @@
 }
 
 .log-time-modal .timesheet-logged-details-left-panel .modal-header {
-  padding: 16px 30px 16px 16px;
+  padding: 0;
 }
 
 .log-time-modal .timesheet-logged-details-left-panel {
@@ -582,7 +583,7 @@
 }
 
 .time-for-pms-modal .myChng .myChngLft .loggtime-avatar {
-  max-width: 30%;
+ max-width: 75px;
   width: 100%;
 }
 

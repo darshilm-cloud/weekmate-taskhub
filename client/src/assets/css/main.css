@@ -6462,10 +6462,10 @@ header.product-details-icons div:last-child {
 }
 
 .log-time-details .ant-avatar {
-  width: 65px;
-  height: 65px;
-  min-width: 65px;
-  line-height: 65px;
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+  line-height: 55px;
   font-size: 28px;
   color: #fff;
   background: #7986CB;
