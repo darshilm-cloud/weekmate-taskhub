@@ -2431,7 +2431,7 @@ function TaskRow({
 }) {
   const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : null;
-  const isOverdue = dueDateKey && dayjs(dueDateKey).isBefore(dayjs(), "day");
+  const isOverdue = task.due_date && dayjs(task.due_date).isBefore(dayjs(), "day");
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const projectTitle = getTaskProjectTitle(task);
   const initials =
@@ -2566,9 +2566,9 @@ function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
           const list = tasksByDate[dateStr] || [];
           return (
             <div key={dateStr} className="calendar-day-cell">
-              <div className="calendar-day-num">{dayjs(dateStr).format("D")}</div>
+              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
               <div className="calendar-day-tasks">
-                {list.slice(0, 3).map((t) => {
+                {list.map((t) => {
                   const names = getAssigneesDisplay(t.assignees);
                   const assigneeTip = names.length > 0 ? `Assigned to: ${names.join(", ")}` : "Unassigned";
                   return (
@@ -2583,7 +2583,6 @@ function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
                     </button>
                   );
                 })}
-                {list.length > 3 && <span className="calendar-more">+{list.length - 3}</span>}
               </div>
             </div>
           );

@@ -859,7 +859,9 @@
   border-right: 1px solid #f0f0f0;
   border-bottom: 1px solid #f0f0f0;
   padding: 8px;
-  min-height: 80px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
 }
 
 .calendar-day-num {
@@ -873,6 +875,22 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.calendar-day-tasks::-webkit-scrollbar {
+  width: 4px;
+}
+
+.calendar-day-tasks::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.calendar-day-tasks::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .calendar-task-bar {
@@ -889,6 +907,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .calendar-task-bar:hover {
@@ -1214,6 +1233,16 @@ body[data-theme="dark"] .calendar-day-num,
 body.dark-theme .calendar-more,
 body[data-theme="dark"] .calendar-more {
   color: #8fa7cc;
+}
+
+body.dark-theme .calendar-day-tasks::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .calendar-day-tasks::-webkit-scrollbar-thumb {
+  background: #314866;
+}
+
+body.dark-theme .calendar-day-tasks::-webkit-scrollbar-thumb:hover,
+body[data-theme="dark"] .calendar-day-tasks::-webkit-scrollbar-thumb:hover {
+  background: #456391;
 }
 
 body.dark-theme .calendar-task-bar,
