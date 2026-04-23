@@ -96,7 +96,7 @@ const ComplaintsUnifiedModal = ({
           ? [
               <Button
                 key="actions"
-                className="cmp-modal-footer-btn secondary"
+                className="btn-secondary"
                 onClick={() => onNavigate?.("actions", resolvedId)}
               >
                 <FileTextOutlined /> Actions
