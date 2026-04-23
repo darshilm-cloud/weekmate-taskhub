@@ -92,6 +92,7 @@ const STATUS_MAP = {
   completed: { bg: "#E3F2FD", color: "#1565C0", dot: "#42A5F5" },
   "on hold": { bg: "#FCE4EC", color: "#880E4F", dot: "#EC407A" },
   cancelled: { bg: "#F5F5F5", color: "#616161", dot: "#BDBDBD" },
+  archived: { bg: "#F3E5F5", color: "#7B1FA2", dot: "#9C27B0" },
 };
 const getStatusStyle = (title = "") =>
   STATUS_MAP[title.toLowerCase()] || { bg: "#F3F4F6", color: "#374151", dot: "#9CA3AF" };
@@ -134,7 +135,7 @@ const getCompletionPercent = (record, stats) => {
 };
 
 /* ─── Project Card ────────────────────────────────────────── */
-const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onCloseProject, onToggleBugs }) => {
+const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStatusList, onStatusChange, onArchiveProject, onCloseProject, onToggleBugs }) => {
   const history = useHistory();
   const currentStatusMeta = getProjectStatusMeta(record?.project_status, projectStatusList);
   const statusTitle = currentStatusMeta.title || "Active";
@@ -247,7 +248,22 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
       },
     });
   }
-
+  if (hasPermission(["project_edit"])) {
+    const isArchived = record?.project_status?.title?.toLowerCase() === "archived";
+    menuItems.push({
+      key: "archive",
+      icon: <InboxOutlined />,
+      label: isArchived ? "Unarchive" : "Archive",
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+        if (isArchived) {
+          onStatusChange(record, projectStatusList.find(s => ["active", "in progress"].includes(s.title?.toLowerCase()))?._id || projectStatusList[0]?._id);
+        } else {
+          onArchiveProject(record);
+        }
+      },
+    });
+  }
   return (
     <div className="ap-card" onClick={handleCardClick}>
       {/* Top row */}
@@ -724,6 +740,8 @@ const AssignProject = () => {
         reqBody.isArchived = true;
         // Archived listing is global (not per-tab).
         reqBody.filterBy = "all";
+      } else {
+        reqBody.isArchived = false;
       }
 
       // View All: ask the backend for a large single page instead of looping over all pages.
@@ -1089,6 +1107,37 @@ const AssignProject = () => {
     }
   };
 
+  const handleArchiveProject = async (project) => {
+    try {
+      const projectId = project?._id;
+      if (!projectId) return;
+      const archivedStatus =
+        projectStatusList.find((s) =>
+          ["archived"].includes(s.title?.toLowerCase())
+        );
+
+      if (!archivedStatus) {
+        message.error("Archived status not found. Please create 'Archived' status in settings.");
+        return;
+      }
+
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateProjectdetails}/${projectId}`,
+        body: buildProjectUpdatePayload(project, archivedStatus._id),
+        options: { moduleprefix: "project" },
+      });
+      if (response?.data?.status) {
+        message.success("Project archived successfully");
+        syncProjectStatusChange(projectId, archivedStatus, "status");
+      } else {
+        message.error(response?.data?.message || "Failed to archive project");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleCloseProject = async (project) => {
     try {
       const projectId = project?._id;
@@ -1234,9 +1283,19 @@ const AssignProject = () => {
   // All filtering (status, technology, search, manager, etc.) is handled by the backend.
   // The only local pass is the date-picker filter, which is a UI-only feature not sent to the server.
   const activeProjects = viewMode === "list" ? listColumnDetails : columnDetails;
-  const visibleProjects = selectedDate
+  const visibleProjects = (selectedDate
     ? activeProjects.filter((record) => doesProjectMatchDate(record, selectedDate))
-    : activeProjects;
+    : activeProjects).filter((record) => {
+      const statusTitle = record?.project_status?.title?.toLowerCase() || "";
+      const isArchived = statusTitle === "archived";
+      
+      const statusFilterId = currentFilters?.status?.[0];
+      const selectedStatus = statusFilterId ? projectStatusList.find(s => s._id === statusFilterId) : null;
+      const isViewingArchived = selectedStatus?.title?.toLowerCase() === "archived";
+
+      // Hide archived projects from the main listing unless the user explicitly filters for them
+      return isViewingArchived ? isArchived : !isArchived;
+    });
   const showInitialProjectSkeleton = isloadingProject && activeProjects.length === 0;
   const hasActiveProjectFilters =
     Boolean(searchText?.trim()) ||
@@ -1862,6 +1921,7 @@ const AssignProject = () => {
                       stats={taskStats[record._id]}
                       projectStatusList={projectStatusList}
                       onStatusChange={handleStatusChange}
+                      onArchiveProject={handleArchiveProject}
                       onCloseProject={handleCloseProject}
                       onToggleBugs={handleToggleProjectBugs}
                     />

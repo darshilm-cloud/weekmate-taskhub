@@ -17,10 +17,15 @@ import {
 } from "@ant-design/icons";
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, hasPermission } from "../../util/hasPermission";
 import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
+import {
+  BRANDING_UPDATE_EVENT,
+  getPublicAssetUrl,
+  getStoredBranding,
+} from "../../util/branding";
 
 const { Sider } = Layout;
 
@@ -53,6 +58,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const location = useLocation();
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [openKeys, setOpenKeys] = useState([]);
+  const [sidebarLogoPath, setSidebarLogoPath] = useState(
+    () => getStoredBranding(companySlug).logoPath
+  );
 
   const handleMenuClick = useCallback(
     (key, path) => {
@@ -81,19 +89,31 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     return "Dashboard";
   }, [location.pathname]);
 
-  const getDefaultOpenKeys = useCallback(() => {
-    const path = location.pathname;
-    if (path.includes("/positive-review") || path.includes("/complaints")) {
-      return ["Feedback"];
-    }
-    return [];
-  }, [location.pathname]);
-
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
     setSelectedKeys([newSelectedKey]);
-    setOpenKeys(getDefaultOpenKeys());
-  }, [location.pathname, getDefaultOpenKeys, getDefaultSelectedKey]);
+    // Do not force-open the submenu on navigation — hover trigger handles it
+    setOpenKeys([]);
+  }, [location.pathname, getDefaultSelectedKey]);
+
+  useEffect(() => {
+    setSidebarLogoPath(getStoredBranding(companySlug).logoPath);
+  }, [companySlug]);
+
+  useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const nextSlug = event?.detail?.companySlug;
+      if (nextSlug && nextSlug !== companySlug) return;
+
+      setSidebarLogoPath(event?.detail?.logoPath || "");
+    };
+
+    window.addEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+
+    return () => {
+      window.removeEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+    };
+  }, [companySlug]);
 
   const handleOpenChange = useCallback((keys) => {
     const latestKey = keys.find((k) => k === "Feedback");
@@ -106,7 +126,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const menuItemsRaw = useMemo(
     () => [
-      // 1. Dashboard
+      // 1. Dashboard (always visible for non-clients)
       !getRoles(["Client"]) && {
         key: "Dashboard",
         icon: <DashboardOutlined />,
@@ -114,21 +134,21 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
       // 2. Projects
-      {
+      (getRoles(["Admin"]) || hasPermission(["projects_view", "projects_manage", "project_add", "project_edit", "project_delete"])) && {
         key: "Projects",
         icon: <FolderOutlined />,
         label: "Projects",
         onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
       },
       // 3. Tasks
-      {
+      (getRoles(["Admin"]) || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) && {
         key: "Tasks",
         icon: <TaskSidebarIcon />,
         label: "Tasks",
         onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
       },
       // 4. Users
-      getRoles(["Admin"]) && {
+      (getRoles(["Admin"]) || hasPermission(["people_view", "people_add", "people_edit", "people_delete", "manage_people"])) && {
         key: "Users",
         icon: <TeamOutlined />,
         label: "Users",
@@ -214,6 +234,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [userData?.name]);
 
   const userDisplayName = userData?.name?.trim() || "User";
+  const sidebarLogoSrc = sidebarLogoPath
+    ? getPublicAssetUrl(sidebarLogoPath)
+    : WeekmateLogo;
 
   const userDropdownItems = useMemo(
     () => [
@@ -243,7 +266,11 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/dashboard`)}
           >
-            <img className="weekmate-logo-img" src={WeekmateLogo} alt="WeekMate" />
+            <img
+              className="weekmate-logo-img"
+              src={sidebarLogoSrc}
+              alt="Workspace logo"
+            />
           </div>
         </div>
 

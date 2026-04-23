@@ -189,24 +189,17 @@ exports.getNotes = async (req, res) => {
     const currentUserIdObj = new mongoose.Types.ObjectId(currentUserId);
 
     let matchQuery = {
-      $or: [
-        { companyId: new mongoose.Types.ObjectId(decodedCompanyId) },
-        { companyId: { $exists: false } }
-      ],
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       isDeleted: false,
     };
 
-    // Permission Match: Regular users only see notes they have access to
+    // Permission Match: Regular users only see notes they created or are subscribed to
     if (!isAdmin && !isManager && !isAccManager) {
-      matchQuery = {
-        ...matchQuery,
-        $or: [
-          { createdBy: currentUserIdObj },
-          { subscribers: currentUserIdObj },
-          { pms_clients: currentUserIdObj },
-          { subscribers: { $size: 0 } } // Public/unassigned notes (if applicable)
-        ]
-      };
+      matchQuery.$or = [
+        { createdBy: currentUserIdObj },
+        { subscribers: currentUserIdObj },
+        { pms_clients: currentUserIdObj },
+      ];
     }
 
     // Tab Filtering

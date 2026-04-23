@@ -27,7 +27,7 @@ function ProjectArchieved() {
   const dispatch = useDispatch();
   const searchRef = useRef();
 
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 30 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [searchText, setSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [sortOption, setSortOption] = useState("createdAt");

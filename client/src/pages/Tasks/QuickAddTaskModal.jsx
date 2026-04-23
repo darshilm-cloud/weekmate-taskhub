@@ -56,8 +56,19 @@ export default function QuickAddTaskModal({ open, onCancel, onSuccess }) {
       const res = await Service.makeAPICall({ methodName: Service.postMethod, api_url: Service.taskaddition, body: reqBody });
       if (res?.data?.status) {
         message.success(res.data.message || "Task created successfully");
-        form.resetFields();
-        onSuccess?.();
+        const createdTask = res?.data?.data || {};
+        onSuccess?.(createdTask);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("weekmate:task-created", {
+              detail: {
+                task: createdTask,
+                projectId: pid,
+                mainTaskId: mainId,
+              },
+            })
+          );
+        }
       } else {
         message.error(res?.data?.message || "Failed to create task");
       }

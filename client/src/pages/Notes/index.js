@@ -179,7 +179,9 @@ export default function NotesPage() {
         const data = res?.data?.data;
         const meta = res?.data?.metadata;
         const total = meta?.total ?? meta?.totalCount ?? 0;
-        const list = Array.isArray(data) ? data : [];
+        const list = (Array.isArray(data) ? data : []).filter(
+          (n) => n?.project?.project_status?.title?.toLowerCase() !== "archived"
+        );
 
         if (fetchId !== latestFetchIdRef.current) return;
 

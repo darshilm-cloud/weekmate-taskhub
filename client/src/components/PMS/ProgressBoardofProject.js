@@ -35,7 +35,7 @@ import {
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import { hasPermission } from "../../util/hasPermission";
+import { hasPermission, getRoles } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import dayjs from "dayjs";
@@ -457,15 +457,20 @@ function ProgressBoardofProject() {
   }, []);
 
   useEffect(() => {
+    const _isAdmin = getRoles(["Admin"]);
+    const canViewTasks = _isAdmin || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"]);
+    const canViewBugs  = _isAdmin || hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"]);
+    const canViewTime  = _isAdmin || hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"]);
+
     switch (tab) {
       case "Tasks":
-        setSelectedTab("Tasks");
+        setSelectedTab(canViewTasks ? "Tasks" : "Overview");
         break;
       case "Time":
-        setSelectedTab("Time");
+        setSelectedTab(canViewTime ? "Time" : "Overview");
         break;
       case "Bugs":
-        setSelectedTab(isBugsTabEnabledForProject ? "Bugs" : "Overview");
+        setSelectedTab(canViewBugs && isBugsTabEnabledForProject ? "Bugs" : "Overview");
         break;
       case "Discussion":
         setSelectedTab("Discussion");
@@ -477,10 +482,10 @@ function ProgressBoardofProject() {
         setSelectedTab("Notes");
         break;
       case "Calendar":
-        setSelectedTab("Calendar");
+        setSelectedTab(canViewTasks ? "Calendar" : "Overview");
         break;
       case "Gantt":
-        setSelectedTab("Gantt");
+        setSelectedTab(canViewTasks ? "Gantt" : "Overview");
         break;
       default:
         setSelectedTab("Overview");
@@ -488,11 +493,105 @@ function ProgressBoardofProject() {
     }
   }, [tab, isBugsTabEnabledForProject]);
 
+    const tabsAfterSettings = columnDetails.filter(
+    (item) => item.isEnable === true
+  );
+
+  
+    const tabOptions = [
+    {
+      key: "Overview",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Overview")}>
+          Overview
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "Tasks",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Tasks")}>Tasks</Menu.Item>
+      ),
+    },
+    {
+      key: "Bugs",
+      label: <Menu.Item onClick={() => handleLiClick("Bugs")}>Bugs</Menu.Item>,
+    },
+    {
+      key: "Notes",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Notes")}>Notes</Menu.Item>
+      ),
+    },
+    {
+      key: "Files",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Files")}>Files</Menu.Item>
+      ),
+    },
+    {
+      key: "Time",
+      label: "Time",
+      label: <Menu.Item onClick={() => handleLiClick("Time")}>Time</Menu.Item>,
+    },
+    {
+      key: "Calendar",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Calendar")}>
+          Calendar
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "Gantt",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Gantt")}>
+          Gantt
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "Discussion",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Discussion")}>
+          Discussion
+        </Menu.Item>
+      ),
+    },
+  ];
+  
+    const isAdmin = getRoles(["Admin"]);
+  const filteredTabOptions = tabOptions.filter((tab) => {
+    if (tab.key === "Tasks") {
+      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
+    }
+    if (tab.key === "Bugs") {
+      if (!isAdmin && !hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"])) return false;
+      return isBugsTabEnabledForProject;
+    }
+    if (tab.key === "Time") {
+      if (!isAdmin && !hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"])) return false;
+      return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
+    }
+    if (tab.key === "Calendar" || tab.key === "Gantt") {
+      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      return true;
+    }
+    return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
+  });
+
   useEffect(() => {
     if (!isBugsTabEnabledForProject && selectedTab === "Bugs") {
       setSelectedTab("Overview");
     }
   }, [isBugsTabEnabledForProject, selectedTab]);
+
+  useEffect(() => {
+    if (filteredTabOptions.length > 0 && !filteredTabOptions.some((t) => t.key === selectedTab)) {
+      setSelectedTab("Overview");
+    }
+  }, [filteredTabOptions, selectedTab]);
 
   const fetchProjectTasksForTimeline = useCallback(async () => {
     if (!projectId) return;
@@ -573,76 +672,8 @@ function ProgressBoardofProject() {
     });
   }, [projectTasks]);
 
-  const tabsAfterSettings = columnDetails.filter(
-    (item) => item.isEnable === true
-  );
-  const tabOptions = [
-    {
-      key: "Overview",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Overview")}>
-          Overview
-        </Menu.Item>
-      ),
-    },
-    {
-      key: "Tasks",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Tasks")}>Tasks</Menu.Item>
-      ),
-    },
-    {
-      key: "Bugs",
-      label: <Menu.Item onClick={() => handleLiClick("Bugs")}>Bugs</Menu.Item>,
-    },
-    {
-      key: "Notes",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Notes")}>Notes</Menu.Item>
-      ),
-    },
-    {
-      key: "Files",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Files")}>Files</Menu.Item>
-      ),
-    },
-    {
-      key: "Time",
-      label: "Time",
-      label: <Menu.Item onClick={() => handleLiClick("Time")}>Time</Menu.Item>,
-    },
-    {
-      key: "Calendar",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Calendar")}>
-          Calendar
-        </Menu.Item>
-      ),
-    },
-    {
-      key: "Gantt",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Gantt")}>
-          Gantt
-        </Menu.Item>
-      ),
-    },
-    {
-      key: "Discussion",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Discussion")}>
-          Discussion
-        </Menu.Item>
-      ),
-    },
-  ];
 
-  const filteredTabOptions = tabOptions.filter((tab) => {
-    if (tab.key === "Calendar" || tab.key === "Gantt") return true;
-    if (tab.key === "Bugs") return isBugsTabEnabledForProject;
-    return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
-  });
+
 
   const title = projectData?.title;
   const formattedTitle = title?.replace(
@@ -822,7 +853,7 @@ function ProgressBoardofProject() {
           </div>
 
           {/* Mobile: show tab switcher in header-right */}
-          {windowWidth <= 991 && (
+          {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
             <div className="pb-header-right">
               <Popover
                 content={
@@ -846,7 +877,7 @@ function ProgressBoardofProject() {
         </div>
 
         {/* ── Tabs bar (desktop only) ── */}
-        {windowWidth > 991 && (
+        {windowWidth > 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
           <div className="pb-tabs-bar">
             {filteredTabOptions.map((option) => (
               <button
@@ -861,6 +892,16 @@ function ProgressBoardofProject() {
         )}
 
       </div>{/* /pb-topbar */}
+
+      {projectData?.project_status?.title?.toLowerCase() === "archived" && (
+        <div className="project-archived-overlay">
+          <div className="project-archived-message">
+            <i className="fi fi-rs-box-archive"></i>
+            <h2>This Project is Archived</h2>
+            <p>No tasks, bugs, or actions can be taken while the project is in the archive.</p>
+          </div>
+        </div>
+      )}
 
       {selectedTab === "Overview" && <Overview />}
       {selectedTab === "Tasks" && (

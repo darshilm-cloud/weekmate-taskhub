@@ -263,7 +263,7 @@
 /* ── Charts Row ───────────────────────────────────────────────── */
 .ud-charts-row {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -274,6 +274,45 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ud-chart-card .apexcharts-canvas,
+.ud-chart-card .apexcharts-canvas svg {
+  max-width: 100% !important;
+}
+
+.ud-chart-card > div {
+  min-width: 0;
+}
+
+/* Donut chart wrapper — center and clip */
+.ud-donut-chart-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+  max-height: 220px;
+}
+
+/* Performance bar chart — hard-clip so bars never escape the card */
+.ud-perf-chart-wrap {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.ud-perf-chart-wrap .apexcharts-canvas {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.ud-perf-chart-wrap .apexcharts-canvas svg {
+  max-width: 100% !important;
+  overflow: hidden !important;
 }
 
 .ud-chart-title {
