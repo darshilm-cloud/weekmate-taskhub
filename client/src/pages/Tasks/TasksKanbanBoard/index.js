@@ -1328,7 +1328,7 @@ const TaskList = ({
                         </div>
                         <div className="add-task-col-btn-wrapper" >
                           <Button
-                            type="text"
+                            type="primary"
                             icon={<PlusOutlined />}
                             onClick={() => showModalTaskModal(boardData?.workflowStatus?._id)}
                             className="add-btn"

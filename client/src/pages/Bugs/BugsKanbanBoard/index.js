@@ -565,7 +565,7 @@ const BugList = ({
                         type="primary" 
                         icon={<PlusOutlined />} 
                         onClick={() => showModalTaskModal(boardData?._id)}
-                        className="add-task-col-btn"
+                        className="add-btn"
                   
                       >
                         Add Bug
