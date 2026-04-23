@@ -6,6 +6,8 @@ import {
   EditOutlined,
   PlusOutlined,
   MessageOutlined,
+  UserOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import ComplaintsForm from "./ComplaintsForm";
@@ -70,10 +72,12 @@ const ComplaintsUnifiedModal = ({
     }
 
     return (
-      <>
-        {icon}
-        <span style={{ marginLeft: 8 }}>{title}</span>
-      </>
+      <div className="cmp-modal-header-title">
+        <div className="cmp-modal-header-icon" style={{ backgroundColor: `${iconColor}15`, color: iconColor }}>
+          {icon}
+        </div>
+        <div className="cmp-modal-header-text">{title}</div>
+      </div>
     );
   };
 
@@ -92,7 +96,7 @@ const ComplaintsUnifiedModal = ({
           ? [
               <Button
                 key="actions"
-                className="delete-btn"
+                className="cmp-modal-footer-btn secondary"
                 onClick={() => onNavigate?.("actions", resolvedId)}
               >
                 <FileTextOutlined /> Actions
@@ -127,7 +131,7 @@ const ComplaintsUnifiedModal = ({
           : [
               <Button
                 key="close"
-                className="delete-btn"
+                className="cmp-modal-footer-btn secondary"
                 onClick={onClose}
               >
                 Close
@@ -137,57 +141,67 @@ const ComplaintsUnifiedModal = ({
     >
       {mode === "view" && record && (
         <div className="cmp-unified-modal-body cmp-unified-modal-body--view">
-          <div className="cmp-view-grid">
-            <div className="cmp-view-field">
-              <label>Project</label>
-              <div className="value">{record.project?.title || "—"}</div>
+          <div className="cmp-view-header">
+            <div className="cmp-view-header-main">
+              <div className="cmp-view-id">#{record.complaint_id || record._id?.slice(-6).toUpperCase()}</div>
+              <h2 className="cmp-view-title">{record.project?.title || "Project Complaint"}</h2>
             </div>
-            <div className="cmp-view-field">
-              <label>Client</label>
-              <div className="value">{record.client_name || "—"}</div>
+            <div className="cmp-view-badges">
+              {record.status && (
+                <span className={`cmp-status-badge ${statusClass(record.status)}`}>
+                  {formatStatus(record.status)}
+                </span>
+              )}
+              {record.priority && (
+                <span className={`cmp-priority-badge ${priorityClass(record.priority)}`}>
+                  {record.priority.toUpperCase()}
+                </span>
+              )}
             </div>
-            <div className="cmp-view-field">
-              <label>Account Manager</label>
-              <div className="value">{record.acc_manager?.full_name || "—"}</div>
-            </div>
-            <div className="cmp-view-field">
-              <label>Project Manager</label>
-              <div className="value">{record.manager?.full_name || "—"}</div>
-            </div>
-            <div className="cmp-view-field">
-              <label>Status</label>
-              <div className="value">
-                {record.status ? (
-                  <span className={`cmp-status-badge ${statusClass(record.status)}`}>
-                    {formatStatus(record.status)}
-                  </span>
-                ) : "—"}
+          </div>
+
+          <div className="cmp-view-content">
+            <div className="cmp-view-section">
+              <h3 className="cmp-section-label">General Information</h3>
+              <div className="cmp-view-grid">
+                <div className="cmp-view-field">
+                  <label><FileTextOutlined /> Project</label>
+                  <div className="value">{record.project?.title || "—"}</div>
+                </div>
+                <div className="cmp-view-field">
+                  <label><UserOutlined /> Client</label>
+                  <div className="value">{record.client_name || "—"}</div>
+                </div>
+                <div className="cmp-view-field">
+                  <label><CalendarOutlined /> Date Created</label>
+                  <div className="value">
+                    {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "—"}
+                  </div>
+                </div>
+                <div className="cmp-view-field">
+                  <label><PlusOutlined /> Created By</label>
+                  <div className="value">{record.createdBy?.full_name || "—"}</div>
+                </div>
               </div>
             </div>
-            <div className="cmp-view-field">
-              <label>Priority</label>
-              <div className="value">
-                {record.priority ? (
-                  <span className={`cmp-priority-badge ${priorityClass(record.priority)}`}>
-                    {record.priority.toUpperCase()}
-                  </span>
-                ) : "—"}
+
+            <div className="cmp-view-section">
+              <h3 className="cmp-section-label">Management Team</h3>
+              <div className="cmp-view-grid">
+                <div className="cmp-view-field">
+                  <label><UserOutlined /> Account Manager</label>
+                  <div className="value">{record.acc_manager?.full_name || "—"}</div>
+                </div>
+                <div className="cmp-view-field">
+                  <label><UserOutlined /> Project Manager</label>
+                  <div className="value">{record.manager?.full_name || "—"}</div>
+                </div>
               </div>
-            </div>
-            <div className="cmp-view-field">
-              <label>Date Created</label>
-              <div className="value">
-                {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "—"}
-              </div>
-            </div>
-            <div className="cmp-view-field">
-              <label>Created By</label>
-              <div className="value">{record.createdBy?.full_name || "—"}</div>
             </div>
 
             {record.complaint && (
-              <div className="cmp-view-section full-width">
-                <label>Complaint Description</label>
+              <div className="cmp-view-section cmp-view-section--description">
+                <h3 className="cmp-section-label">Complaint Description</h3>
                 <div className="cmp-view-description">
                   <div dangerouslySetInnerHTML={{ __html: record.complaint }} />
                 </div>
