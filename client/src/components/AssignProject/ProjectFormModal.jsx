@@ -1625,7 +1625,10 @@ const ProjectFormModal = ({
                   className="pfm-datepicker"
                   bordered={false}
                   format="DD/MM/YYYY"
-                  onChange={() => form.setFieldValue("end_date", "")}
+                  disabledDate={(current) => {
+                    const endDate = form.getFieldValue("end_date");
+                    return !!(endDate && current && current.isAfter(dayjs(endDate), "day"));
+                  }}
                 />
               </Form.Item>
             </div>
@@ -1645,7 +1648,8 @@ const ProjectFormModal = ({
                         { required: true, message: "Please select an end date" },
                         ({ getFieldValue }) => ({
                           validator(_, value) {
-                            if (!value || getFieldValue("start_date") < value)
+                            const startDate = getFieldValue("start_date");
+                            if (!value || !startDate || dayjs(value).isAfter(dayjs(startDate).subtract(1, "day")))
                               return Promise.resolve();
                             return Promise.reject(new Error("End date must be later than start date"));
                           },
@@ -1659,7 +1663,10 @@ const ProjectFormModal = ({
                   bordered={false}
                   format="DD/MM/YYYY"
                   disabled={noEndDate}
-                  disabledDate={(v) => v < form.getFieldValue("start_date")}
+                  disabledDate={(current) => {
+                    const startDate = form.getFieldValue("start_date");
+                    return !!(startDate && current && current.isBefore(dayjs(startDate), "day"));
+                  }}
                 />
               </Form.Item>
             </div>

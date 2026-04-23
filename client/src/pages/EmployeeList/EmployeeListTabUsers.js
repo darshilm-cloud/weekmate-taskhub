@@ -356,22 +356,34 @@ const CombinedEmployeeList = ({
         pmsRoleId: values.pmsRoleId, // Add role ID to payload
       };
 
-      if (editData) {
-        await Service.makeAPICall({
-          methodName: Service.putMethod,
-          api_url: `${Service.editUser}/${editData._id}`,
-          body: payload,
-        });
-        message.success("Employee updated successfully");
-      } else {
-        await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.addUser,
-          body: payload,
-        });
-        message.success("Employee added successfully");
+      const response = editData
+        ? await Service.makeAPICall({
+            methodName: Service.putMethod,
+            api_url: `${Service.editUser}/${editData._id}`,
+            body: payload,
+          })
+        : await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.addUser,
+            body: payload,
+          });
+
+      const data = response?.data;
+      const ok =
+        data?.status === 1 &&
+        data?.statusCode >= 200 &&
+        data?.statusCode < 300;
+      if (!ok) {
+        message.error(
+          data?.message ||
+            "A user with this email already exists for this company."
+        );
+        return;
       }
 
+      message.success(
+        editData ? "Employee updated successfully" : "Employee added successfully"
+      );
       setModalVisible(false);
       fetchEmployees();
       onMutationSuccess?.();

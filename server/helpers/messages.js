@@ -17,6 +17,10 @@ module.exports = {
 
   ALREADY_EXISTS: "Data Already Exists.",
   ALREADY_EXISTS_IN_EMP_EMAIL: "Email Id is Already assigned to Employee.",
+  /** AdminManage / SuperAdmin user APIs */
+  USER_EMAIL_EXIST: "A user with this email already exists for this company.",
+  USER_ADDED: "User added successfully",
+  USER_USERNAME_EXIST: "This username is already in use.",
 
   NOT_FOUND: "Data not found",
 

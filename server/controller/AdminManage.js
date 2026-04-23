@@ -24,6 +24,7 @@ const {
   employeeSchema,
   PMSRoles
 } = require("../models");
+const { isCompanyEmailTaken } = require("../helpers/companyEmailUniqueness");
 
 const CONFIG_JSON = require("../settings/config.json");
 const { searchDataArr } = require("../helpers/queryHelper");
@@ -170,12 +171,8 @@ exports.addUser = async (req, res) => {
     const { email, firstName, lastName, password, companyId, pmsRoleId } = value;
     const isActivate = req.body.isActivate !== undefined ? req.body.isActivate : true;
 
-    // Check for user email and username exist
-    let isEmailExists = await employeeSchema.findOne({
-      email
-    });
-
-    if (isEmailExists) {
+    const companyObjectId = newObjectId(companyId);
+    if (await isCompanyEmailTaken(companyObjectId, email)) {
       return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
     }
 
@@ -187,7 +184,7 @@ exports.addUser = async (req, res) => {
       full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: pmsRoleId,
-      companyId: newObjectId(companyId),
+      companyId: companyObjectId,
       isActivate
     };
 
@@ -273,18 +270,14 @@ exports.addUsersByCsv = async (req, res) => {
     const insertedUsers = [];
     const duplicateUsers = [];
     const invalidUsers = [];
+    const companyObjectId = newObjectId(companyId);
 
     for (const item of value) {
       try {
-        const existing = await employeeSchema.findOne({
-          email: item.Email,
-          isDeleted: false
-        });
-
-        if (existing) {
+        if (await isCompanyEmailTaken(companyObjectId, item.Email)) {
           duplicateUsers.push({
             email: item.Email,
-            reason: "Duplicate email"
+            reason: "Duplicate email in this company (employee or client)"
           });
           continue;
         }
@@ -296,7 +289,7 @@ exports.addUsersByCsv = async (req, res) => {
           full_name: `${item["First Name"]} ${item["Last Name"]}`,
           password: item.Password, // Optional: await bcrypt.hash(item.Password, 10)
           pms_role_id: roleData._id,
-          companyId: companyId
+          companyId: companyObjectId
         };
 
         const user = new employeeSchema(cleanedUser);
@@ -363,6 +356,11 @@ exports.editUser = async (req, res) => {
 
     const { email, firstName, lastName, companyId, isActivate,pmsRoleId } = value;
 
+    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+    if (!oldUserData) {
+      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
+
     // Create an update object with only the fields that are present in the req
     const updateFields = {};
 
@@ -377,8 +375,24 @@ exports.editUser = async (req, res) => {
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 
-    // Get old data before update for logging
-    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+    const nextCompanyId =
+      updateFields.companyId !== undefined
+        ? newObjectId(updateFields.companyId)
+        : oldUserData.companyId;
+    const nextEmail =
+      updateFields.email !== undefined ? updateFields.email : oldUserData.email;
+    const companyChanged =
+      updateFields.companyId !== undefined &&
+      String(updateFields.companyId) !== String(oldUserData.companyId);
+    const emailChanged =
+      updateFields.email !== undefined &&
+      String(updateFields.email || "").trim().toLowerCase() !==
+        String(oldUserData.email || "").trim().toLowerCase();
+    if (emailChanged || companyChanged) {
+      if (await isCompanyEmailTaken(nextCompanyId, nextEmail, { excludeEmployeeId: userId })) {
+        return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
+      }
+    }
 
     // Find and update the user with only the provided fields
     const updatedUser = await employeeSchema.findOneAndUpdate(
@@ -386,11 +400,6 @@ exports.editUser = async (req, res) => {
       { $set: updateFields },
       { new: true } // Return the updated document
     );
-
-    // Check if user exists
-    if (!updatedUser) {
-      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
-    }
 
     // Get new data after update for logging
     const newUserData = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
