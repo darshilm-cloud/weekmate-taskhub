@@ -20,7 +20,7 @@ const DEFAULT_PROJECT_FIELDS = [
   { key: "technology", label: "Department", type: "multiselect", required: true, isDefault: true },
   { key: "project_type", label: "Category", type: "select", required: true, isDefault: true },
   { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
-  { key: "assignees", label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
+  { key: "assignees", label: "Assignee", type: "multiselect", required: false, isDefault: true },
   { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },
   { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false },
   { key: "workFlow", label: "Associate Workflow", type: "select", required: true, isDefault: true },
