@@ -929,14 +929,14 @@ const Dashboard = () => {
         <h2 className="db-page-title">Dashboard</h2>
       </div>
 
-      {/* 4 Stat Cards — clickable, redirect to task page with applied filter */}
+      {/* 4 Stat Cards — clickable only for Admin */}
       <div className="new-stat-cards-row">
         <div
-          className="new-stat-card new-stat-card-clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => history.push(`/${companySlug}/project-list`)}
-          onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/project-list`)}
+          className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
+          role={isAdmin ? "button" : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => history.push(`/${companySlug}/project-list`) : undefined}
+          onKeyDown={isAdmin ? (e) => e.key === "Enter" && history.push(`/${companySlug}/project-list`) : undefined}
         >
           <div className="stat-card-icon-wrap blue">
             <FolderOutlined />
@@ -948,11 +948,11 @@ const Dashboard = () => {
         </div>
 
         <div
-          className="new-stat-card new-stat-card-clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => handleStatCardClick("all")}
-          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("all")}
+          className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
+          role={isAdmin ? "button" : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => handleStatCardClick("all") : undefined}
+          onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("all") : undefined}
         >
           <div className="stat-card-icon-wrap blue">
             <AppstoreOutlined />
@@ -964,11 +964,11 @@ const Dashboard = () => {
         </div>
 
         <div
-          className="new-stat-card new-stat-card-clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => handleStatCardClick("assigned_to_me")}
-          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("assigned_to_me")}
+          className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
+          role={isAdmin ? "button" : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => handleStatCardClick("assigned_to_me") : undefined}
+          onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("assigned_to_me") : undefined}
         >
           <div className="stat-card-icon-wrap green">
             <UserOutlined />
@@ -980,11 +980,11 @@ const Dashboard = () => {
         </div>
 
         <div
-          className="new-stat-card new-stat-card-clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => handleStatCardClick("dueToday")}
-          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("dueToday")}
+          className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
+          role={isAdmin ? "button" : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => handleStatCardClick("dueToday") : undefined}
+          onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("dueToday") : undefined}
         >
           <div className="stat-card-icon-wrap yellow">
             <ClockCircleOutlined />
@@ -996,11 +996,11 @@ const Dashboard = () => {
         </div>
 
         <div
-          className="new-stat-card new-stat-card-clickable"
-          role="button"
-          tabIndex={0}
-          onClick={() => handleStatCardClick("pastDue")}
-          onKeyDown={(e) => e.key === "Enter" && handleStatCardClick("pastDue")}
+          className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
+          role={isAdmin ? "button" : undefined}
+          tabIndex={isAdmin ? 0 : undefined}
+          onClick={isAdmin ? () => handleStatCardClick("pastDue") : undefined}
+          onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("pastDue") : undefined}
         >
           <div className="stat-card-icon-wrap red">
             <ExclamationCircleOutlined />
@@ -1012,8 +1012,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main 2-column layout */}
-      <div className="new-dashboard-columns">
+      {/* Main 2-column layout — Admin only */}
+      {isAdmin && <div className="new-dashboard-columns">
 
         {/* Left column */}
         <div className="dashboard-col-left">
@@ -1336,9 +1336,7 @@ const Dashboard = () => {
           </div>
 
         </div>
-      </div>
-
-      {/* ── Standalone Add Task section (full-width centered) ─── */}
+      </div>}
       {<div className="standalone-add-task">
         <div className="standalone-add-task-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1489,8 +1487,8 @@ const Dashboard = () => {
       {/* Activity + Pin Notes row */}
       <div className="db-bottom-grid db-bottom-grid-2">
 
-        {/* Activity */}
-        <div className="db-bottom-card db-activity">
+        {/* Activity — Admin only */}
+        {isAdmin && <div className="db-bottom-card db-activity">
           <div className="db-section-header">
             <h3>Activity</h3>
             <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
@@ -1567,7 +1565,7 @@ const Dashboard = () => {
               </>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Pin Notes */}
         <div className="db-bottom-card db-pin-notes">
