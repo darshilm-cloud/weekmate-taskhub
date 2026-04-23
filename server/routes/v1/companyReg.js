@@ -11,4 +11,6 @@ router.post("/verify-registration", CompanyRegController.verifyAndCompleteRegist
 // POST /resend-verification
 // router.post("/resend-verification", CompanyRegController.resendVerificationEmail);
 
+router.post("/deleteCompany", CompanyRegController.deleteCompany);
+
 module.exports = router;
