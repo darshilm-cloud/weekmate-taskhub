@@ -139,6 +139,9 @@ const buildExpenseFilterBody = ({
   accontManager,
   createdBy,
   need_to_bill_customer,
+  statusFilter,
+  billableToggle,
+  dateRange,
 }) => {
   const body = {};
 
@@ -157,8 +160,13 @@ const buildExpenseFilterBody = ({
   if (Array.isArray(createdBy) && createdBy.length > 0) {
     body.createdBy = createdBy;
   }
-  if (need_to_bill_customer !== "All" && need_to_bill_customer !== undefined) {
-    body.need_to_bill_customer = need_to_bill_customer;
+  if (statusFilter && statusFilter !== "All") {
+    body.status = statusFilter;
+  }
+  body.need_to_bill_customer = billableToggle ? "Yes" : "All";
+  if (Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
+    body.from_date = dateRange[0].toISOString ? dateRange[0].toISOString() : dateRange[0];
+    body.to_date = dateRange[1].toISOString ? dateRange[1].toISOString() : dateRange[1];
   }
 
   return body;
@@ -333,7 +341,7 @@ const Projectexpences = () => {
 
   /* ── local filter state (filter bar) ── */
   const [statusFilter, setStatusFilter] = useState("All");
-  const [billableToggle, setBillableToggle] = useState(false);
+  const [billableToggle, setBillableToggle] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
 
   /* ── data ── */
@@ -406,32 +414,16 @@ const Projectexpences = () => {
         accontManager,
         createdBy,
         need_to_bill_customer,
-      });
-      const shouldFilterLocally = hasLocalExpenseFilters({
-        selectedProject,
-        technology,
-        manager,
-        accontManager,
-        createdBy,
-        need_to_bill_customer,
+        statusFilter,
+        billableToggle,
+        dateRange,
       });
 
-      let { rows: serverExpenses } = await fetchExpenseRecords({
+      const { rows: serverExpenses } = await fetchExpenseRecords({
         pageNo: 1,
         limit: 1000,
-        filters: shouldFilterLocally ? {} : activeFilters,
+        filters: activeFilters,
       });
-
-      if (shouldFilterLocally) {
-        serverExpenses = filterExpensesLocally(serverExpenses, {
-          selectedProject,
-          technology,
-          manager,
-          accontManager,
-          createdBy,
-          need_to_bill_customer,
-        });
-      }
 
       setAllExpenses(serverExpenses);
       setOptimisticExpenses([]);
@@ -447,6 +439,9 @@ const Projectexpences = () => {
     accontManager,
     createdBy,
     need_to_bill_customer,
+    statusFilter,
+    billableToggle,
+    dateRange,
     fetchExpenseRecords,
   ]);
 
@@ -464,41 +459,16 @@ const Projectexpences = () => {
         accontManager,
         createdBy,
         need_to_bill_customer,
-      });
-      const shouldFilterLocally = hasLocalExpenseFilters({
-        selectedProject,
-        technology,
-        manager,
-        accontManager,
-        createdBy,
-        need_to_bill_customer,
+        statusFilter,
+        billableToggle,
+        dateRange,
       });
 
-      let { rows: serverExpenses, total: serverTotal } = await fetchExpenseRecords({
+      const { rows: serverExpenses, total: serverTotal } = await fetchExpenseRecords({
         pageNo: pagination.current,
         limit: pagination.pageSize,
-        filters: shouldFilterLocally ? {} : activeFilters,
+        filters: activeFilters,
       });
-
-      if (shouldFilterLocally) {
-        const { rows: allServerExpenses } = await fetchExpenseRecords({
-          pageNo: 1,
-          limit: 1000,
-        });
-        const locallyFilteredExpenses = filterExpensesLocally(allServerExpenses, {
-          selectedProject,
-          technology,
-          manager,
-          accontManager,
-          createdBy,
-          need_to_bill_customer,
-        });
-        const startIndex = (pagination.current - 1) * pagination.pageSize;
-        const endIndex = startIndex + pagination.pageSize;
-
-        serverExpenses = locallyFilteredExpenses.slice(startIndex, endIndex);
-        serverTotal = locallyFilteredExpenses.length;
-      }
 
       dispatch(hideAuthLoader());
 
@@ -515,6 +485,7 @@ const Projectexpences = () => {
   }, [
     pagination.current, pagination.pageSize,
     selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer,
+    statusFilter, billableToggle, dateRange,
     dispatch, fetchExpenseRecords,
   ]);
 
@@ -559,24 +530,7 @@ const Projectexpences = () => {
      ANALYTICS — computed from allExpenses
   ───────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
-    let expenses = allExpenses.length ? allExpenses : projectexpencesList;
-
-    /* local filters (status, billable, date range) */
-    if (statusFilter !== "All") {
-      expenses = expenses.filter(
-        (e) => e.status?.toLowerCase() === statusFilter.toLowerCase()
-      );
-    }
-    if (billableToggle) {
-      expenses = expenses.filter((e) => e.need_to_bill_customer === true);
-    }
-    if (dateRange[0] && dateRange[1]) {
-      const [from, to] = dateRange;
-      expenses = expenses.filter((e) => {
-        const d = moment(e.createdAt);
-        return d.isSameOrAfter(from, "day") && d.isSameOrBefore(to, "day");
-      });
-    }
+    const expenses = allExpenses.length ? allExpenses : projectexpencesList;
 
     const totalAmt = expenses.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
     const billable = expenses.filter((e) => e.need_to_bill_customer);
@@ -628,7 +582,8 @@ const Projectexpences = () => {
       billableAmt2: billableAmt,
       nonBillableAmt,
     };
-  }, [allExpenses, projectexpencesList, statusFilter, billableToggle, dateRange]);
+  }, [allExpenses, projectexpencesList]);
+
 
   /* ─────────────────────────────────────────────────────────────
      CHART OPTIONS
@@ -1092,7 +1047,7 @@ const Projectexpences = () => {
         <span className="pe-filter-label">Status:</span>
         <Select
           value={statusFilter}
-          onChange={setStatusFilter}
+          onChange={(v) => { setStatusFilter(v); setPagination((p) => ({ ...p, current: 1 })); }}
           style={{ width: 130 }}
           size="middle"
         >
@@ -1109,7 +1064,7 @@ const Projectexpences = () => {
         <RangePicker
           size="middle"
           value={dateRange}
-          onChange={(v) => setDateRange(v || [null, null])}
+          onChange={(v) => { setDateRange(v || [null, null]); setPagination((p) => ({ ...p, current: 1 })); }}
           allowClear
           format="DD-MM-YYYY"
         />
@@ -1119,7 +1074,7 @@ const Projectexpences = () => {
         <span className="pe-filter-label">Billable only:</span>
         <Switch
           checked={billableToggle}
-          onChange={setBillableToggle}
+          onChange={(v) => { setBillableToggle(v); setPagination((p) => ({ ...p, current: 1 })); }}
           size="small"
         />
 
@@ -1130,6 +1085,7 @@ const Projectexpences = () => {
               setStatusFilter("All");
               setBillableToggle(false);
               setDateRange([null, null]);
+              setPagination((p) => ({ ...p, current: 1 }));
             }}
           >
             × Clear filters
