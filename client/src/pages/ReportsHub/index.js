@@ -2890,10 +2890,10 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
   if (reportKey === "daily-report") {
     return (
       <div className="reports-actions">
-        <Button className="secondry-btn" onClick={onSchedule}>
+        <Button className="btn-secondary" onClick={onSchedule}>
           Schedule <ClockCircleOutlined />
         </Button>
-        <Button className="secondry-btn" onClick={onDownload}>
+        <Button className="btn-secondary" onClick={onDownload}>
           Download <DownloadOutlined />
         </Button>
       </div>
@@ -2905,7 +2905,7 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
       {/* <Button className="reports-action-button" onClick={onHistory}>
         History <HistoryOutlined />
       </Button> */}
-      <Button className="secondry-btn" onClick={onDownload}>
+      <Button className="btn-secondary" onClick={onDownload}>
         Download <DownloadOutlined />
       </Button>
     </div>

@@ -68,11 +68,13 @@ const ComplaintsForm = ({
   complaintId: complaintIdProp,
   onSuccess: onSuccessCallback,
   onCancel: onCancelCallback,
+  externalForm,
 } = {}) => {
   const companySlug      = localStorage.getItem("companyDomain");
   const { complaint_id: complaint_idFromRoute } = useParams();
   const complaint_id = embedded ? complaintIdProp : complaint_idFromRoute;
-  const [form]           = Form.useForm();
+  const [internalForm]   = Form.useForm();
+  const form             = externalForm || internalForm;
   const dispatch         = useDispatch();
   const history          = useHistory();
 
@@ -369,36 +371,34 @@ const ComplaintsForm = ({
               <TextArea
                 rows={5}
                 placeholder="Describe the complaint in detail…"
-                style={{ borderRadius: 8 }}
               />
             </Form.Item>
 
             {/* Actions */}
-            <div className="ps-form-actions">
-              <Button type="button" className="delete-btn" onClick={handleLeave}>
-                Cancel
-              </Button>
-              {selectedStatus === "resolved" ? (
-                <Popconfirm
-                  icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
-                  title="Marking as Resolved will send a feedback email to the client. Continue?"
-                  onConfirm={() => form.submit()}
-                  okText="Yes, resolve"
-                  cancelText="No"
-                >
-                  <Button type="button" className="add-btn" disabled={isSubmitting}>
-                    
-                    {isEdit ? "Update" : "Submit"}
-                  </Button>
-                </Popconfirm>
-              ) : (
-                <Button type="primary" className="add-btn" disabled={isSubmitting}>
-             
-                  {isSubmitting ? "Saving..." : isEdit ? "Update" : "Submit"}
+            {!embedded && (
+              <div className="ps-form-actions">
+                <Button type="button" className="delete-btn" onClick={handleLeave}>
+                  Cancel
                 </Button>
-              )}
-            
-            </div>
+                {selectedStatus === "resolved" ? (
+                  <Popconfirm
+                    icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                    title="Marking as Resolved will send a feedback email to the client. Continue?"
+                    onConfirm={() => form.submit()}
+                    okText="Yes, resolve"
+                    cancelText="No"
+                  >
+                    <Button type="button" className="add-btn" disabled={isSubmitting}>
+                      {isEdit ? "Update" : "Submit"}
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Button type="primary" className="add-btn" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : isEdit ? "Update" : "Submit"}
+                  </Button>
+                )}
+              </div>
+            )}
           </Form>
         </div>
     </>

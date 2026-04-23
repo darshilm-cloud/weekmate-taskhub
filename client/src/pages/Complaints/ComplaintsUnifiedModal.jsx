@@ -5,6 +5,7 @@ import {
   FileTextOutlined,
   EditOutlined,
   PlusOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import ComplaintsForm from "./ComplaintsForm";
@@ -25,7 +26,7 @@ const statusClass = (s = "") => {
 
 const priorityClass = (p = "") => {
   const key = p.toLowerCase();
-  if (key === "high") return "high";
+  if (key === "critical" || key === "high") return "high";
   if (key === "medium") return "medium";
   if (key === "low") return "low";
   return "default";
@@ -46,153 +47,163 @@ const ComplaintsUnifiedModal = ({
   onNavigate,
 }) => {
   const resolvedId = complaintId || record?._id || null;
+  const [form] = Form.useForm();
 
   const titleNode = () => {
+    let icon, title, iconColor;
     if (mode === "view") {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <ExclamationCircleOutlined style={{ color: "#dc2626" }} />
-          <span>Complaint Detail</span>
-        </div>
-      );
+      icon = <ExclamationCircleOutlined />;
+      title = "Complaint Detail";
+      iconColor = "#dc2626";
+    } else if (mode === "add") {
+      icon = <PlusOutlined />;
+      title = "Add Complaint";
+      iconColor = "#1890ff";
+    } else if (mode === "edit") {
+      icon = <EditOutlined />;
+      title = "Edit Complaint";
+      iconColor = "#1890ff";
+    } else {
+      icon = <FileTextOutlined />;
+      title = "Complaint Actions";
+      iconColor = "#1890ff";
     }
-    if (mode === "add") {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <PlusOutlined style={{ color: "#1890ff" }} />
-          <span>Add Complaint</span>
-        </div>
-      );
-    }
-    if (mode === "edit") {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <EditOutlined style={{ color: "#1890ff" }} />
-          <span>Edit Complaint</span>
-        </div>
-      );
-    }
+
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <FileTextOutlined style={{ color: "#1890ff" }} />
-        <span>Complaint Actions</span>
-      </div>
+      <>
+        {icon}
+        <span style={{ marginLeft: 8 }}>{title}</span>
+      </>
     );
   };
 
-  const width =
-    mode === "actions" ? 960 : mode === "view" ? 760 : 820;
+  const width = mode === "actions" ? 800 : 640;
 
   return (
-<Modal
-  title={titleNode()}
-  open={open}
-  onCancel={onClose}
-  destroyOnClose
-  width={width}
-  className="cmp-unified-modal"
-  footer={
-    mode === "view" && userHasAccess
-      ? [
-          <Button
-            key="actions"
-            className="btn-secondary"
-            onClick={() => onNavigate?.("actions", resolvedId)}
-          >
-            <FileTextOutlined /> Actions
-          </Button>,
-          <Button
-            key="edit"
-            type="primary"
-            onClick={() => onNavigate?.("edit", resolvedId)}
-          >
-            <EditOutlined /> Edit
-          </Button>,
-        ]
-      : null
-  }
->
-  {mode === "view" && record && (
-    <Form layout="vertical">
-      <Row gutter={[16, 16]}>
+    <Modal
+      title={titleNode()}
+      open={open}
+      onCancel={onClose}
+      destroyOnClose
+      width={width}
+      className="cmp-unified-modal"
+      footer={
+        mode === "view" && userHasAccess
+          ? [
+              <Button
+                key="actions"
+                className="delete-btn"
+                onClick={() => onNavigate?.("actions", resolvedId)}
+              >
+                <FileTextOutlined /> Actions
+              </Button>,
+              <Button
+                key="edit"
+                type="primary"
+                className="add-btn"
+                onClick={() => onNavigate?.("edit", resolvedId)}
+              >
+                <EditOutlined /> Edit
+              </Button>,
+            ]
+          : (mode === "add" || mode === "edit")
+          ? [
+              <Button
+                key="cancel"
+                className="delete-btn"
+                onClick={onClose}
+              >
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                className="add-btn"
+                onClick={() => form.submit()}
+              >
+                {mode === "edit" ? "Update" : "Submit"}
+              </Button>,
+            ]
+          : [
+              <Button
+                key="close"
+                className="delete-btn"
+                onClick={onClose}
+              >
+                Close
+              </Button>,
+            ]
+      }
+    >
+      {mode === "view" && record && (
+        <div className="cmp-unified-modal-body cmp-unified-modal-body--view">
+          <div className="cmp-view-grid">
+            <div className="cmp-view-field">
+              <label>Project</label>
+              <div className="value">{record.project?.title || "—"}</div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Client</label>
+              <div className="value">{record.client_name || "—"}</div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Account Manager</label>
+              <div className="value">{record.acc_manager?.full_name || "—"}</div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Project Manager</label>
+              <div className="value">{record.manager?.full_name || "—"}</div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Status</label>
+              <div className="value">
+                {record.status ? (
+                  <span className={`cmp-status-badge ${statusClass(record.status)}`}>
+                    {formatStatus(record.status)}
+                  </span>
+                ) : "—"}
+              </div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Priority</label>
+              <div className="value">
+                {record.priority ? (
+                  <span className={`cmp-priority-badge ${priorityClass(record.priority)}`}>
+                    {record.priority.toUpperCase()}
+                  </span>
+                ) : "—"}
+              </div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Date Created</label>
+              <div className="value">
+                {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "—"}
+              </div>
+            </div>
+            <div className="cmp-view-field">
+              <label>Created By</label>
+              <div className="value">{record.createdBy?.full_name || "—"}</div>
+            </div>
 
-        <Col xs={24} sm={12}>
-          <Form.Item label="Project">
-            {record.project?.title || "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Client">
-            {record.client_name || "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Account Manager">
-            {record.acc_manager?.full_name || "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Project Manager">
-            {record.manager?.full_name || "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Status">
-            {record.status ? (
-              <span className={`cmp-status-badge ${statusClass(record.status)}`}>
-                {formatStatus(record.status)}
-              </span>
-            ) : "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Priority">
-            {record.priority
-              ? record.priority.charAt(0).toUpperCase() + record.priority.slice(1)
-              : "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Date">
-            {record.createdAt
-              ? moment(record.createdAt).format("DD-MM-YYYY")
-              : "—"}
-          </Form.Item>
-        </Col>
-
-        <Col xs={24} sm={12}>
-          <Form.Item label="Created By">
-            {record.createdBy?.full_name || "—"}
-          </Form.Item>
-        </Col>
-
-      </Row>
-
-      {record.complaint && (
-        <Row>
-          <Col span={24}>
-            <Form.Item label="Complaint">
-              <div
-                dangerouslySetInnerHTML={{ __html: record.complaint }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+            {record.complaint && (
+              <div className="cmp-view-section full-width">
+                <label>Complaint Description</label>
+                <div className="cmp-view-description">
+                  <div dangerouslySetInnerHTML={{ __html: record.complaint }} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
-    </Form>
-  )}
+
 
   {(mode === "add" || mode === "edit") && (
     <div>
       <ComplaintsForm
         key={`complaint-form-${mode}-${resolvedId || "new"}`}
         embedded
+        externalForm={form}
         complaintId={mode === "edit" ? resolvedId : undefined}
         onSuccess={() => {
           onSuccess?.();
