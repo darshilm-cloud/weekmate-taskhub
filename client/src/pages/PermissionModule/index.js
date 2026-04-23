@@ -198,12 +198,18 @@ const PermissionModule = () => {
 
   /* ── stats ── */
   const stats = useMemo(() => {
-    const total    = roleListData.length;
-    const enabled  = localPermissions.filter((p) => p.isAccess).length;
+    const total       = roleListData.length;
+    const isAdminRole = selectedRole?.role_name === "Admin";
+    const enabled     = isAdminRole
+      ? localPermissions.length
+      : localPermissions.filter((p) => {
+          const { module } = parsePermName(p.name);
+          return module === "dashboard" ? true : p.isAccess;
+        }).length;
     const disabled = localPermissions.length - enabled;
     const totalP   = localPermissions.length;
     return { total, enabled, disabled, totalP };
-  }, [roleListData, localPermissions]);
+  }, [roleListData, localPermissions, selectedRole]);
 
   /* ── dynamic permission matrix ───────────────────────────────
      Build:  { moduleKey → { actionKey → permObj } }
@@ -400,16 +406,23 @@ const PermissionModule = () => {
                           {/* Action toggle cells — always show a switch */}
                           {ACTION_COLUMNS.map((col) => {
                             const perm = modulePerms[col.key];
-                            const isOn = perm?.isAccess || false;
+                            const isDashboard = moduleKey === "dashboard";
+                            const isAdminRole = selectedRole?.role_name === "Admin";
+                            const isLocked = isDashboard || isAdminRole;
+                            const isOn = isLocked ? true : (perm?.isAccess || false);
+                            const tooltip = isAdminRole
+                              ? "Admin has all permissions by default"
+                              : isDashboard
+                              ? "Dashboard access is always enabled"
+                              : `${isOn ? "Revoke" : "Grant"} ${mod.label} ${col.label}`;
 
                             return (
                               <td key={col.key}>
                                 <div className="rpm-toggle-cell">
-                                  <Tooltip
-                                    title={`${isOn ? "Revoke" : "Grant"} ${mod.label} ${col.label}`}
-                                  >
+                                  <Tooltip title={tooltip}>
                                     <Switch
                                       checked={isOn}
+                                      disabled={isLocked}
                                       onChange={(checked) =>
                                         onPermissionChange(
                                           checked,
