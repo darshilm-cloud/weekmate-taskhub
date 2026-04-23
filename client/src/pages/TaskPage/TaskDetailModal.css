@@ -1701,13 +1701,7 @@ body[data-theme="dark"] .task-detail-section-count {
   display: block !important;
 }
 
-.task-detail-section-grid .task-detail-value .ant-select-selector {
-  border-radius: 6px !important;
-  min-height: 32px !important;
-  height: auto !important;
-  flex-wrap: wrap !important;
-  padding: 2px 4px !important;
-}
+
 
 .task-detail-section-grid .task-detail-value .ant-select-selection-overflow {
   flex-wrap: wrap !important;

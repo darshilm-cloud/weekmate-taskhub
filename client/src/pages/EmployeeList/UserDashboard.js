@@ -8,6 +8,7 @@ import {
   Empty,
   Tooltip,
   Button,
+  Input,
 } from "antd";
 import {
   PlusOutlined,
@@ -19,17 +20,38 @@ import {
   ClockCircleFilled,
   FileDoneOutlined,
   EditOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
+import dayjs from "dayjs";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
+
+/* ─── helpers ──────────────────────────────────────────────────── */
+const getTaskProjectId = (task) => {
+  if (typeof task?.project === "object") return task.project._id;
+  return task?.project || task?.project_id;
+};
+
+const mapTaskToEditFormInitial = (t) => {
+  if (!t) return {};
+  return {
+    ...t,
+    project_id: getTaskProjectId(t),
+    assignees: Array.isArray(t.assignees) ? t.assignees.map((a) => a?._id || a) : [],
+    labels: Array.isArray(t.labels) ? t.labels.map((l) => l?._id || l) : [],
+    due_date: t.due_date ? dayjs(t.due_date) : null,
+    start_date: t.start_date ? dayjs(t.start_date) : null,
+  };
+};
 
 /* ─── helpers ──────────────────────────────────────────────────── */
 const AVATAR_COLORS = [
@@ -43,6 +65,108 @@ const avatarColor = (name = "") => {
 };
 const initials = (n = "") =>
   n.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+
+const getAssigneesDisplay = (assignees) => {
+  if (!Array.isArray(assignees)) return [];
+  return assignees.map((a) => {
+    if (!a) return "Unknown";
+    if (typeof a === "object") {
+      return a.full_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || a.email || "Unknown";
+    }
+    return a;
+  });
+};
+
+const getTaskCommentCount = (task) => {
+  if (typeof task?.commentsCount === "number") return task.commentsCount;
+  if (Array.isArray(task?.comments)) return task.comments.length;
+  return 0;
+};
+
+/* ─── Sub-Components ───────────────────────────────────────────── */
+
+function TaskCard({ task, onClick }) {
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+  const assigneeNames = getAssigneesDisplay(task.assignees);
+  const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
+  const commentCount = getTaskCommentCount(task);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className="ud-kanban-card"
+      onClick={onClick}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
+    >
+      <div className="ud-kanban-card-title">{task.title}</div>
+      {task.project?.title && <div className="ud-kanban-card-project">{task.project.title}</div>}
+      <div className="ud-kanban-card-due">{dueStr}</div>
+      <div className="ud-kanban-card-footer">
+        <span className="ud-kanban-card-assignees" title={assigneesLabel}>
+          {assigneesLabel}
+        </span>
+        <span className="ud-kanban-card-comments">
+          <MessageOutlined /> {commentCount}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
+  const days = React.useMemo(() => {
+    if (mode === "month") {
+      let d = current.startOf("month").startOf("week");
+      const end = current.endOf("month").endOf("week");
+      const arr = [];
+      while (d.isBefore(end) || d.isSame(end, "day")) {
+        arr.push(d.format("DD-MM-YYYY"));
+        d = d.add(1, "day");
+      }
+      return arr;
+    }
+    if (mode === "week") {
+      const start = current.startOf("week");
+      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
+    }
+    return [current.format("DD-MM-YYYY")];
+  }, [mode, current]);
+
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <div className="ud-calendar-grid">
+      {mode === "month" && (
+        <div className="ud-calendar-weekdays">
+          {weekDays.map((d) => <div key={d} className="ud-calendar-weekday">{d}</div>)}
+        </div>
+      )}
+      <div className="ud-calendar-days" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : mode === "week" ? 7 : 1}, 1fr)` }}>
+        {days.map((dateStr) => {
+          const list = tasksByDate[dateStr] || [];
+          return (
+            <div key={dateStr} className="ud-calendar-day-cell">
+              <div className="ud-calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
+              <div className="ud-calendar-day-tasks">
+                {list.map((t) => (
+                  <button
+                    key={t._id}
+                    type="button"
+                    className="ud-calendar-task-bar"
+                    onClick={() => onOpenTask(t)}
+                    title={t.title}
+                  >
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /* ─── Stat Card ─────────────────────────────────────────────────── */
 const StatCard = ({ label, value, iconEl, variant, loading }) => (
@@ -68,12 +192,14 @@ const UserDashboard = ({ user }) => {
   );
 
   /* ── state ── */
-  const [activeTab,   setActiveTab]   = useState("overviews");
-  const [dateFilter,  setDateFilter]  = useState("all");
-  const [sortFilter,  setSortFilter]  = useState("default");
-  const [loading,     setLoading]     = useState(false);
+  const [activeTab, setActiveTab] = useState("overviews");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [sortFilter, setSortFilter] = useState("default");
+  const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   /* ── analytics state ── */
   const [stats, setStats] = useState({ completed: 0, incomplete: 0, total: 0 });
@@ -82,21 +208,22 @@ const UserDashboard = ({ user }) => {
   const [incompleteByStatus, setIncompleteByStatus] = useState([]);
   const [tasks, setTasks] = useState([]);
 
+  /* ── view states ── */
+  const [calendarDate, setCalendarDate] = useState(dayjs());
+  const [calendarMode, setCalendarMode] = useState("month");
+
   /* ── date range helper ── */
   const getDateRange = () => {
-    const now  = new Date();
-    const from = new Date();
+    const now = dayjs();
+    let from = dayjs();
     if (dateFilter === "today") {
-      from.setHours(0, 0, 0, 0);
+      from = from.startOf("day");
     } else if (dateFilter === "yesterday") {
-      from.setDate(from.getDate() - 1);
-      from.setHours(0, 0, 0, 0);
-      now.setDate(now.getDate() - 1);
-      now.setHours(23, 59, 59, 999);
+      from = from.subtract(1, "day").startOf("day");
     } else if (dateFilter === "week") {
-      from.setDate(from.getDate() - 7);
+      from = from.subtract(7, "days");
     } else if (dateFilter === "month") {
-      from.setMonth(from.getMonth() - 1);
+      from = from.subtract(1, "month");
     }
     return dateFilter === "all" ? {} : { from: from.toISOString(), to: now.toISOString() };
   };
@@ -106,9 +233,10 @@ const UserDashboard = ({ user }) => {
     const range = getDateRange();
     const filtered = range.from
       ? rawTasks.filter((t) => {
-          const d = new Date(t.due_date || t.created_at);
-          return d >= new Date(range.from) && d <= new Date(range.to);
-        })
+        const d = dayjs(t.due_date || t.created_at);
+        return (d.isAfter(dayjs(range.from)) || d.isSame(dayjs(range.from))) &&
+          (d.isBefore(dayjs(range.to)) || d.isSame(dayjs(range.to)));
+      })
       : rawTasks;
 
     const total = filtered.length;
@@ -143,7 +271,7 @@ const UserDashboard = ({ user }) => {
         perf.onTrack++;
         return;
       }
-      const due  = new Date(t.due_date);
+      const due = new Date(t.due_date);
       const done = new Date(t.updated_at || t.created_at);
       if (isDone) {
         done <= due ? perf.beforeTime++ : perf.delayed++;
@@ -174,9 +302,14 @@ const UserDashboard = ({ user }) => {
     setTasks(filtered);
   }, [dateFilter]); // eslint-disable-line
 
+  const handleOpenTask = (task) => {
+    setSelectedTask(task);
+    setTaskDetailModalOpen(true);
+  };
+
   /* ── fetch ── */
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!user?._id) return;
     setLoading(true);
     try {
       const res = await Service.makeAPICall({
@@ -186,13 +319,13 @@ const UserDashboard = ({ user }) => {
       });
 
       const rawTasks = Array.isArray(res?.data?.data) ? res.data.data : [];
-      const matchedTasks = rawTasks.filter((task) =>
-        Array.isArray(task?.assignees) &&
-        task.assignees.some(
-          (assignee) =>
-            String(assignee?._id || assignee?.id || assignee) === String(user?._id)
-        )
-      );
+      const matchedTasks = rawTasks.filter((task) => {
+        const assignees = Array.isArray(task?.assignees) ? task.assignees : [];
+        return assignees.some((assignee) => {
+          const assigneeId = String(assignee?._id || assignee?.id || assignee);
+          return assigneeId === String(user._id);
+        });
+      });
 
       processTaskArray(matchedTasks);
     } catch (err) {
@@ -206,7 +339,7 @@ const UserDashboard = ({ user }) => {
       setLoading(false);
       setPageLoading(false);
     }
-  }, [user, dateFilter, processTaskArray]);
+  }, [user?._id, dateFilter, processTaskArray]);
 
   useEffect(() => {
     fetchData();
@@ -221,7 +354,7 @@ const UserDashboard = ({ user }) => {
   /* Priority donut */
   const priorityTotal = priorityData.low + priorityData.medium + priorityData.high || 1;
   const donutOptions = {
-    chart:  { type: "donut", fontFamily: "inherit" },
+    chart: { type: "donut", fontFamily: "inherit" },
     labels: ["Low", "Medium", "High"],
     colors: ["#16a34a", "#f59e0b", "#ef4444"],
     legend: { show: false },
@@ -244,19 +377,19 @@ const UserDashboard = ({ user }) => {
       },
     },
     dataLabels: { enabled: false },
-    stroke:     { width: 0 },
-    tooltip:    { y: { formatter: (v) => `${v} tasks` } },
+    stroke: { width: 0 },
+    tooltip: { y: { formatter: (v) => `${v} tasks` } },
   };
   const donutSeries = [priorityData.low, priorityData.medium, priorityData.high];
 
   /* Performance horizontal bar */
   const perfOptions = {
-    chart:  { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: {
       bar: { horizontal: true, borderRadius: 4, barHeight: "40%" },
     },
     colors: ["#16a34a", "#f59e0b", "#ef4444"],
-    xaxis:  {
+    xaxis: {
       categories: ["On Track", "Before Time", "Delayed"],
       min: 0,
       labels: { style: { fontSize: "12px" } },
@@ -279,11 +412,11 @@ const UserDashboard = ({ user }) => {
     ? incompleteByStatus.map((d) => d.count)
     : [stats.incomplete || 0];
   const incompleteOptions = {
-    chart:  { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 5, columnWidth: "35%" } },
     colors: ["#f59e0b"],
-    xaxis:  { categories: incompleteCategories, labels: { style: { fontSize: "12px" } } },
-    yaxis:  {
+    xaxis: { categories: incompleteCategories, labels: { style: { fontSize: "12px" } } },
+    yaxis: {
       min: 0,
       forceNiceScale: true,
       labels: { style: { fontSize: "12px" }, formatter: (v) => Math.floor(v) },
@@ -324,8 +457,8 @@ const UserDashboard = ({ user }) => {
         const variant = s.toLowerCase().includes("done") || s.toLowerCase().includes("complete")
           ? "done"
           : s.toLowerCase().includes("progress")
-          ? "progress"
-          : "pending";
+            ? "progress"
+            : "pending";
         return <span className={`ud-status-tag ${variant}`}>{s}</span>;
       },
     },
@@ -342,17 +475,7 @@ const UserDashboard = ({ user }) => {
         ) : (
           <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>
         ),
-    },
-    {
-      title: "",
-      key: "actions",
-      width: 60,
-      render: () => (
-        <Tooltip title="Open task">
-          <EditOutlined style={{ color: "#94a3b8", cursor: "pointer" }} />
-        </Tooltip>
-      ),
-    },
+    }
   ];
 
   /* ────────────────────────────────────────────────
@@ -491,7 +614,7 @@ const UserDashboard = ({ user }) => {
     <div className="ud-task-table-wrap">
       {tasks.length === 0 && !loading ? (
         <div className="ud-empty-state">
-          <NoDataFoundIcon/>
+          <NoDataFoundIcon />
           <p>No tasks found for this user</p>
         </div>
       ) : (
@@ -507,23 +630,81 @@ const UserDashboard = ({ user }) => {
     </div>
   );
 
+  const tasksByStatus = React.useMemo(() => {
+    const grouped = {};
+    tasks.forEach((t) => {
+      const s = t.task_status?.title || t.status || "Pending";
+      if (!grouped[s]) grouped[s] = [];
+      grouped[s].push(t);
+    });
+    return grouped;
+  }, [tasks]);
+
+  const tasksByDate = React.useMemo(() => {
+    const grouped = {};
+    tasks.forEach((t) => {
+      const d = dayjs(t.due_date || t.created_at).format("DD-MM-YYYY");
+      if (!grouped[d]) grouped[d] = [];
+      grouped[d].push(t);
+    });
+    return grouped;
+  }, [tasks]);
+
   const kanbanContent = (
-    <div className="ud-placeholder">
-      <AppstoreOutlined className="ud-placeholder-icon" />
-      <div className="ud-placeholder-text">Kanban Board</div>
-      <span style={{ fontSize: 13, color: "#cbd5e1" }}>
-        Open a project to use the Kanban board view.
-      </span>
+    <div className="ud-kanban-view">
+      {Object.keys(tasksByStatus).length === 0 && !loading ? (
+        <div className="ud-empty-state">
+          <NoDataFoundIcon />
+          <p>No tasks found for this user</p>
+        </div>
+      ) : (
+        <div className="ud-kanban-columns">
+          {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
+            <div key={status} className="ud-kanban-column">
+              <div className="ud-kanban-column-header">
+                <span className="ud-kanban-column-title">{status}</span>
+                <span className="ud-kanban-column-count">{statusTasks.length}</span>
+              </div>
+              <div className="ud-kanban-column-cards">
+                {statusTasks.map((t) => (
+                  <TaskCard key={t._id} task={t} onClick={() => handleOpenTask(t)} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const calendarContent = (
-    <div className="ud-placeholder">
-      <CalendarOutlined className="ud-placeholder-icon" />
-      <div className="ud-placeholder-text">Calendar View</div>
-      <span style={{ fontSize: 13, color: "#cbd5e1" }}>
-        Open a project to use the Calendar view.
-      </span>
+    <div className="ud-calendar-view">
+      <div className="ud-calendar-toolbar">
+        <div className="ud-calendar-nav">
+          <Button onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</Button>
+          <span className="ud-calendar-title">
+            {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "DD-MM-YYYY")}
+          </span>
+          <Button onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</Button>
+        </div>
+        <div className="ud-calendar-modes">
+          {["month", "week", "day"].map((m) => (
+            <button
+              key={m}
+              className={`ud-mode-btn ${calendarMode === m ? "active" : ""}`}
+              onClick={() => setCalendarMode(m)}
+            >
+              {m.charAt(0).toUpperCase() + m.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <CalendarGrid
+        mode={calendarMode}
+        current={calendarDate}
+        tasksByDate={tasksByDate}
+        onOpenTask={handleOpenTask}
+      />
     </div>
   );
 
@@ -588,18 +769,18 @@ const UserDashboard = ({ user }) => {
 
       {/* ── Body ── */}
       <div className="ud-body">
-        {loading && activeTab === "overviews" && (
+        {loading && (activeTab === "overviews" || activeTab === "kanban" || activeTab === "calendar") && (
           <div className="ud-loading-overlay">
-            <Spin size="large" tip="Loading dashboard…" />
+            <Spin size="large" tip="Loading data…" />
           </div>
         )}
 
-        {(!loading || activeTab !== "overviews") && (
+        {!loading && (
           <>
-            {activeTab === "overviews"  && overviewContent}
-            {activeTab === "list"       && listContent}
-            {activeTab === "kanban"     && kanbanContent}
-            {activeTab === "calendar"   && calendarContent}
+            {activeTab === "overviews" && overviewContent}
+            {activeTab === "list" && listContent}
+            {activeTab === "kanban" && kanbanContent}
+            {activeTab === "calendar" && calendarContent}
           </>
         )}
       </div>
@@ -613,6 +794,23 @@ const UserDashboard = ({ user }) => {
         }}
         standalone
         defaultAssigneeIds={user?._id ? [user._id] : []}
+      />
+
+      <CommonTaskFormModal
+        key={selectedTask?._id || "view-task"}
+        open={taskDetailModalOpen}
+        mode="view"
+        title="View Task"
+        initialValues={mapTaskToEditFormInitial(selectedTask)}
+        lockedProjectId={selectedTask ? getTaskProjectId(selectedTask) || undefined : undefined}
+        showListSelector={false}
+        viewOnly
+        taskId={selectedTask?._id}
+        onCancel={() => {
+          setTaskDetailModalOpen(false);
+          setSelectedTask(null);
+        }}
+        onSubmit={() => { }}
       />
     </div>
   );

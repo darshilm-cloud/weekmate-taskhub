@@ -1018,14 +1018,13 @@ function CalendarGridForProject({ mode, current, tasksByDate }) {
           const list = tasksByDate[dateStr] || [];
           return (
             <div key={dateStr} className="calendar-day-cell">
-              <div className="calendar-day-num">{dayjs(dateStr).format("D")}</div>
+              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
               <div className="calendar-day-tasks">
-                {list.slice(0, 3).map((task) => (
+                {list.map((task) => (
                   <div key={task?._id} className="calendar-task-bar" title={task?.title || "Untitled task"}>
                     {task?.title || "Untitled task"}
                   </div>
                 ))}
-                {list.length > 3 && <span className="calendar-more">+{list.length - 3}</span>}
               </div>
             </div>
           );

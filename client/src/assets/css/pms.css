@@ -1349,7 +1349,7 @@ ul.tab_menu li.active-tab {
 .ant-select-multiple .ant-select-selection-overflow,
 .ant-select-multiple .ant-select-selection-overflow {
     max-height: 120px;
-    overflow: auto;
+
 }
 
 .overview-modal-wrapper .topic-cancel-wrapper .subscriber-btn .list-clear-btn {
