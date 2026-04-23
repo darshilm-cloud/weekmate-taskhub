@@ -374,7 +374,7 @@ const UserDashboard = ({ user }) => {
   /* Priority donut */
   const priorityTotal = priorityData.low + priorityData.medium + priorityData.high || 1;
   const donutOptions = {
-    chart: { type: "donut", fontFamily: "inherit" },
+    chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
     colors: ["#16a34a", "#f59e0b", "#ef4444"],
     legend: { show: false },
@@ -403,20 +403,29 @@ const UserDashboard = ({ user }) => {
   const donutSeries = [priorityData.low, priorityData.medium, priorityData.high];
 
   /* Performance horizontal bar */
+  const perfMax = Math.max(performanceData.onTrack, performanceData.beforeTime, performanceData.delayed, 1);
   const perfOptions = {
-    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: {
+      type: "bar",
+      fontFamily: "inherit",
+      toolbar: { show: false },
+      animations: { enabled: false },
+      parentHeightOffset: 0,
+    },
     plotOptions: {
-      bar: { horizontal: true, borderRadius: 4, barHeight: "40%" },
+      bar: { horizontal: true, borderRadius: 4, barHeight: "40%", dataLabels: { position: "bottom" } },
     },
     colors: ["#16a34a", "#f59e0b", "#ef4444"],
     xaxis: {
       categories: ["On Track", "Before Time", "Delayed"],
       min: 0,
-      labels: { style: { fontSize: "12px" } },
+      max: perfMax,
+      tickAmount: Math.min(perfMax, 5),
+      labels: { style: { fontSize: "11px" }, formatter: (v) => Math.floor(v) },
     },
-    yaxis: { labels: { style: { fontSize: "12px" } } },
+    yaxis: { labels: { style: { fontSize: "11px" }, maxWidth: 100 } },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } } },
+    grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, padding: { left: 10, right: 16 } },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
   };
   const perfSeries = [{
@@ -432,7 +441,7 @@ const UserDashboard = ({ user }) => {
     ? incompleteByStatus.map((d) => d.count)
     : [stats.incomplete || 0];
   const incompleteOptions = {
-    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, animations: { enabled: false } },
     plotOptions: { bar: { borderRadius: 5, columnWidth: "35%" } },
     colors: ["#f59e0b"],
     xaxis: { categories: incompleteCategories, labels: { style: { fontSize: "12px" } } },
@@ -569,12 +578,15 @@ const UserDashboard = ({ user }) => {
         {/* Priority donut */}
         <div className="ud-chart-card">
           <div className="ud-chart-title">Priority Analysis</div>
-          <ReactApexChart
-            type="donut"
-            series={donutSeries}
-            options={donutOptions}
-            height={220}
-          />
+          <div className="ud-donut-chart-wrap">
+            <ReactApexChart
+              type="donut"
+              series={donutSeries}
+              options={donutOptions}
+              width={240}
+              height={210}
+            />
+          </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
               <span className="ud-legend-dot" style={{ background: "#16a34a" }} />
@@ -592,14 +604,17 @@ const UserDashboard = ({ user }) => {
         </div>
 
         {/* Performance bar */}
-        <div className="ud-chart-card">
+        <div className="ud-chart-card ud-chart-card--perf">
           <div className="ud-chart-title">Performance Analysis</div>
-          <ReactApexChart
-            type="bar"
-            series={perfSeries}
-            options={perfOptions}
-            height={220}
-          />
+          <div className="ud-perf-chart-wrap">
+            <ReactApexChart
+              type="bar"
+              series={perfSeries}
+              options={perfOptions}
+              width="100%"
+              height={220}
+            />
+          </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
               <span className="ud-legend-dot" style={{ background: "#16a34a" }} />
@@ -624,6 +639,7 @@ const UserDashboard = ({ user }) => {
           type="bar"
           series={incompleteSeries}
           options={incompleteOptions}
+          width="100%"
           height={220}
         />
       </div>

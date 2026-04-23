@@ -81,19 +81,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     return "Dashboard";
   }, [location.pathname]);
 
-  const getDefaultOpenKeys = useCallback(() => {
-    const path = location.pathname;
-    if (path.includes("/positive-review") || path.includes("/complaints")) {
-      return ["Feedback"];
-    }
-    return [];
-  }, [location.pathname]);
-
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
     setSelectedKeys([newSelectedKey]);
-    setOpenKeys(getDefaultOpenKeys());
-  }, [location.pathname, getDefaultOpenKeys, getDefaultSelectedKey]);
+    // Do not force-open the submenu on navigation — hover trigger handles it
+    setOpenKeys([]);
+  }, [location.pathname, getDefaultSelectedKey]);
 
   const handleOpenChange = useCallback((keys) => {
     const latestKey = keys.find((k) => k === "Feedback");
