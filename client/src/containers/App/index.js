@@ -49,7 +49,15 @@ import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
 import { isEmpty } from "lodash"
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-
+import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
+import {
+  BRANDING_UPDATE_EVENT,
+  dispatchBrandingUpdate,
+  getPublicAssetUrl,
+  getStoredBranding,
+  persistBranding,
+  withCacheBuster,
+} from "../../util/branding";
 
 function RestrictedRoute({
   component: Component,
@@ -167,8 +175,10 @@ function App() {
   const location = useLocation();
   const [companySlug, setCompanySlug] = useState(localStorage.getItem("companyDomain"))
   const [siteTitle, setSiteTitle] = useState(userData?.companyDetails?.companyName || "TaskHub")
-
-  const faviconPath = localStorage.getItem(`companyFavIcoUrl-${companySlug}`);
+  const [faviconPath, setFaviconPath] = useState(
+    () => getStoredBranding(localStorage.getItem("companyDomain")).faviconPath
+  );
+  const [faviconVersion, setFaviconVersion] = useState(Date.now());
 
   const dispatch = useDispatch();
   const { locale, themeType, navStyle, layoutType, themeColor } = useSelector(
@@ -194,6 +204,37 @@ function App() {
       setCompanySlug(slug)
     }
   }, []);
+
+  useEffect(() => {
+    const { faviconPath: storedFavicon, title } = getStoredBranding(companySlug);
+    setFaviconPath(storedFavicon);
+    setFaviconVersion(Date.now());
+    if (title) {
+      setSiteTitle(title);
+    }
+  }, [companySlug]);
+
+  useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const nextSlug = event?.detail?.companySlug;
+      if (nextSlug && nextSlug !== companySlug) return;
+
+      if (typeof event?.detail?.faviconPath === "string") {
+        setFaviconPath(event.detail.faviconPath);
+        setFaviconVersion(event?.detail?.updatedAt || Date.now());
+      }
+
+      if (event?.detail?.title) {
+        setSiteTitle(event.detail.title);
+      }
+    };
+
+    window.addEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+
+    return () => {
+      window.removeEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+    };
+  }, [companySlug]);
 
   useEffect(() => {
     if (initURL === "") {
@@ -294,10 +335,21 @@ function App() {
       if (response.data.status == 1 && !isEmpty(response.data.data)) {
         dispatch(hideAuthLoader());
         setSiteTitle(response?.data?.data?.companyName)
-        localStorage.setItem("title", response?.data?.data?.companyName);
-        localStorage.setItem(`title-${companySlug}`, response?.data?.data?.companyName);
-        localStorage.setItem(`companyFavIcoUrl-${companySlug}`, response?.data?.data?.companyFavIcoUrl);
-        localStorage.setItem(`companyLogoUrl-${companySlug}`, response?.data?.data?.companyLogoUrl);
+        persistBranding({
+          companySlug,
+          title: response?.data?.data?.companyName,
+          faviconPath: response?.data?.data?.companyFavIcoUrl,
+          logoPath: response?.data?.data?.companyLogoUrl,
+        });
+        setFaviconPath(response?.data?.data?.companyFavIcoUrl || "");
+        setFaviconVersion(Date.now());
+        dispatchBrandingUpdate({
+          companySlug,
+          title: response?.data?.data?.companyName || "",
+          faviconPath: response?.data?.data?.companyFavIcoUrl || "",
+          logoPath: response?.data?.data?.companyLogoUrl || "",
+          updatedAt: Date.now(),
+        });
       }
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -307,12 +359,37 @@ function App() {
 
   const currentAppLocale = AppLocale[locale.locale];
   const renderNoDataState = () => <NoDataFoundIcon />;
+  const faviconHref = withCacheBuster(
+    getPublicAssetUrl(faviconPath) || WeekmateLogo,
+    faviconVersion
+  );
+
+  useEffect(() => {
+    const ensureHeadLink = (selector, rel) => {
+      let link = document.head.querySelector(selector);
+
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", rel);
+        document.head.appendChild(link);
+      }
+
+      link.setAttribute("href", faviconHref);
+      return link;
+    };
+
+    ensureHeadLink('link[rel="icon"]', "icon");
+    ensureHeadLink('link[rel="shortcut icon"]', "shortcut icon");
+    ensureHeadLink('link[rel="apple-touch-icon"]', "apple-touch-icon");
+  }, [faviconHref]);
 
   return (
     <>
       <Helmet>
         <title>{siteTitle}</title>
-        <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
+        <link id="app-favicon" rel="icon" href={faviconHref} />
+        <link id="app-shortcut-icon" rel="shortcut icon" href={faviconHref} />
+        <link id="app-apple-touch-icon" rel="apple-touch-icon" href={faviconHref} />
       </Helmet>
       <SocketProvider user={authUser}>
         <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)} renderEmpty={renderNoDataState}>

@@ -3135,9 +3135,20 @@ exports.getProjectsReports = async (req, res) => {
           999
         )
       : null;
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: newObjectId(companyId),
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map((s) => s._id);
+
     let matchQuery = {
       isDeleted: false,
       companyId: newObjectId(companyId),
+      ...(archivedStatusIds.length > 0
+        ? { project_status: { $nin: archivedStatusIds } }
+        : {}),
       ...(selectedDateStart && selectedDateEnd
         ? {
             start_date: { $lte: selectedDateEnd },

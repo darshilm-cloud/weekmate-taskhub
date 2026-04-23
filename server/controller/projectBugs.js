@@ -1245,6 +1245,7 @@ exports.projectBugsDetailedData = async (req, res) => {
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       task_id: Joi.string().optional(),
+      search: Joi.string().optional().allow("").default(""),
       bug_work_flow_status: Joi.array().optional().default(["all"]),
       status: Joi.string().optional().allow("").default(null),
       bug_status: Joi.string().optional().allow("").default(null),
@@ -1291,6 +1292,11 @@ exports.projectBugsDetailedData = async (req, res) => {
     if (value.status) baseMatch.status = value.status;
     if (value.start_date) baseMatch.start_date = { $gte: moment(value.start_date).startOf("day").toDate() };
     if (value.due_date) baseMatch.due_date = { $lte: moment(value.due_date).startOf("day").toDate() };
+
+    // Search by title
+    if (value.search) {
+      baseMatch.title = { $regex: value.search.trim(), $options: "i" };
+    }
 
     // Workflow status filtering
     const statusFilter = [];

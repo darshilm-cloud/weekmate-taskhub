@@ -214,10 +214,7 @@ exports.getDiscussionsTopics = async (req, res) => {
     const { companyId: decodedCompanyId } = req.user;
 
     let matchQuery = {
-      $or: [
-        { companyId: new mongoose.Types.ObjectId(decodedCompanyId) },
-        { companyId: { $exists: false } }
-      ],
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       isDeleted: false,
       ...(value.project_id
         ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
@@ -277,8 +274,20 @@ exports.getDiscussionsTopics = async (req, res) => {
       {
         $lookup: {
           from: "projects",
-          localField: "project_id",
-          foreignField: "_id",
+          let: { project_id: "$project_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
           as: "project"
         }
       },
@@ -319,7 +328,8 @@ exports.getDiscussionsTopics = async (req, res) => {
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                   ]
                 }
               }

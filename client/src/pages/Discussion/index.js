@@ -102,7 +102,9 @@ export default function DiscussionPage() {
         },
       });
 
-      const data = res?.data?.data || [];
+      const data = (res?.data?.data || []).filter(
+        (t) => t?.project?.project_status?.title?.toLowerCase() !== "archived"
+      );
       const meta = res?.data?.metadata || {};
       const total = meta.total || 0;
 

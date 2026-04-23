@@ -555,7 +555,8 @@ const Dashboard = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myProjects, body: reqBody,
       });
-      const projects = response?.data?.data?.data || response?.data?.data || [];
+      const projects = (response?.data?.data?.data || response?.data?.data || [])
+        .filter(p => p?.project_status?.title?.toLowerCase() !== "archived");
       if (projects.length >= 0) {
         setMyProj(projects);
         if (!hasFilters) sessionStorage.setItem(cacheKey, JSON.stringify(projects));
@@ -580,7 +581,7 @@ const Dashboard = () => {
 
       dispatch(hideAuthLoader());
       if (response?.data?.data && Array.isArray(response.data.data)) {
-        setMyTask(response.data.data);
+        setMyTask(response.data.data.filter(t => t?.project?.project_status?.title?.toLowerCase() !== "archived"));
       } else {
         setMyTask([]);
       }
@@ -621,7 +622,10 @@ const Dashboard = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myBugs, body: reqBody,
       });
-      if (response?.data?.data) { dispatch(hideAuthLoader()); setMyBug(response.data.data); }
+      if (response?.data?.data) { 
+        dispatch(hideAuthLoader()); 
+        setMyBug(response.data.data.filter(b => b?.project?.project_status?.title?.toLowerCase() !== "archived")); 
+      }
     } catch (error) { console.log(error, "myBug error"); }
   }, [dispatch, bugProjects, bugStatus, bugDates]);
 
@@ -639,7 +643,10 @@ const Dashboard = () => {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod, api_url: Service.myLoggedTime, body: reqBody,
       });
-      if (response?.data?.data) { dispatch(hideAuthLoader()); setMyTime(response.data.data); }
+      if (response?.data?.data) { 
+        dispatch(hideAuthLoader()); 
+        setMyTime(response.data.data.filter(t => t?.project?.project_status?.title?.toLowerCase() !== "archived")); 
+      }
     } catch (error) { console.log(error, "myLoggedTime error"); }
   }, [dispatch, timeProjects, timeDates]);
 
@@ -745,7 +752,7 @@ const Dashboard = () => {
         body: { pageNo: 1, limit: 10, sortBy: "desc" },
       });
       const data = response?.data?.data;
-      if (Array.isArray(data)) setDiscussions(data);
+      if (Array.isArray(data)) setDiscussions(data.filter(d => d?.project?.project_status?.title?.toLowerCase() !== "archived"));
     } catch (e) { console.log(e); }
   }, []);
 
@@ -756,7 +763,7 @@ const Dashboard = () => {
         api_url: Service.getNotes,
         body: { isBookmark: true, pageNo: 1, limit: 200 },
       });
-      if (response?.data?.data) setPinnedNotes(response.data.data);
+      if (response?.data?.data) setPinnedNotes(response.data.data.filter(n => n?.project?.project_status?.title?.toLowerCase() !== "archived"));
     } catch (e) { console.log(e); }
   }, []);
 

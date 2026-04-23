@@ -1503,12 +1503,12 @@ export default function CommonTaskFormModal({
                   <div className="task-detail-value">
                     <Form.Item
                       name={formName}
-                      noStyle
                       initialValue={key === "priority" ? "Low" : undefined}
                       valuePropName={field?.type === "checkbox" ? "checked" : field?.type === "file" ? "fileList" : "value"}
                       getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
+                      style={{ marginBottom: 0 }}
                       rules={[
-                        ...(field?.required
+                        ...(field?.required || key === "start_date" || key === "end_date"
                           ? [{ required: true, message: `${field?.label || toLabel(key)} is required` }]
                           : []),
                         ...(key === "end_date"

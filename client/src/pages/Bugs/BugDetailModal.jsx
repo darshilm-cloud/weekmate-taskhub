@@ -990,14 +990,13 @@ const BugDetailModal = ({
                       />
                     )}
                     <Button
-                      className="bug-detail-comment-submit"
+                      className="bug-detail-primary-btn"
                       type="primary"
                       onClick={handlePostComment}
                       loading={postingComment}
                       disabled={!commentValue.trim() && !hasCommentFiles}
                     >
-                      Add comment
-                    </Button>
+Send                    </Button>
                   </div>
                   <input
                     ref={commentFileInputRef}

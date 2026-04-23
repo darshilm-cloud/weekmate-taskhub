@@ -125,6 +125,8 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
       );
     }
 
+    const { companyId: decodedCompanyId } = req.user;
+
     const [isAdmin, isManager, isAccManager] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
@@ -183,7 +185,8 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                     { $in: ["$_id", "$$taggedUsersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                   ]
                 }
               }

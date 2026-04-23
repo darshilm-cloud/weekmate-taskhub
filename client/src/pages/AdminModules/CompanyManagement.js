@@ -23,6 +23,12 @@ import {
 import moment from "moment";
 import Service from "../../service";
 import { useHistory } from "react-router-dom";
+import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
+import {
+  dispatchBrandingUpdate,
+  getPublicAssetUrl,
+  persistBranding,
+} from "../../util/branding";
 import "./CompanyProfile.css";
 
 // Constants
@@ -195,14 +201,19 @@ export default function CompanyManagement() {
 
         // Update localStorage with latest company data
         if (first) {
-          setLocalStorageItem(
-            `companyLogoUrl-${companySlug}`,
-            first.companyLogoUrl
-          );
-          setLocalStorageItem(
-            `companyFavIcoUrl-${companySlug}`,
-            first.companyFavIcoUrl
-          );
+          persistBranding({
+            companySlug,
+            logoPath: first.companyLogoUrl,
+            faviconPath: first.companyFavIcoUrl,
+            title: first.companyName,
+          });
+          dispatchBrandingUpdate({
+            companySlug,
+            logoPath: first.companyLogoUrl || "",
+            faviconPath: first.companyFavIcoUrl || "",
+            title: first.companyName || "",
+            updatedAt: Date.now(),
+          });
         }
       } else {
         message.error("Failed to fetch company");
@@ -372,24 +383,33 @@ export default function CompanyManagement() {
         };
 
         setLocalStorageItem("user_data", updatedLocalData);
-        setLocalStorageItem(
-          `companyFavIcoUrl-${values.companySlug}`,
-          updatedCompany?.companyFavIcoUrl
-        );
-        setLocalStorageItem(
-          `companyLogoUrl-${values.companySlug}`,
-          updatedCompany?.companyLogoUrl
-        );
+        persistBranding({
+          companySlug: values.companySlug,
+          logoPath: updatedCompany?.companyLogoUrl,
+          faviconPath: updatedCompany?.companyFavIcoUrl,
+          title: updatedCompany?.companyName,
+        });
+        dispatchBrandingUpdate({
+          companySlug: values.companySlug,
+          logoPath: updatedCompany?.companyLogoUrl || "",
+          faviconPath: updatedCompany?.companyFavIcoUrl || "",
+          title: updatedCompany?.companyName || "",
+          updatedAt: Date.now(),
+        });
 
         // Handle domain change
         if (companySlug !== values.companySlug) {
           localStorage.setItem("companyDomain", values.companySlug);
           window.location.href = `/${values.companySlug}/admin/company-management`;
         } else {
-          // Refresh company data
+          setCompany(updatedCompany);
+          setLogoError(false);
+          setFaviconError(false);
           setIsModalVisible(false);
-          window.location.reload()
-          // await fetchCompany();
+          setPendingLogo(null);
+          setPendingFavicon(null);
+          setTempLogoUrl("");
+          setTempFaviconUrl("");
         }
       } else {
         message.error("Failed to save company");
@@ -414,7 +434,6 @@ export default function CompanyManagement() {
     uploadFile,
     localData,
     companySlug,
-    fetchCompany,
     handleApiError,
   ]);
 
@@ -463,13 +482,16 @@ export default function CompanyManagement() {
     ? company.companyName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
     : "C";
 
-  const logoSrc = company?.companyLogoUrl
-    ? `${process.env.REACT_APP_API_URL}/public/${company.companyLogoUrl}`
-    : null;
+  const hasCustomLogo = Boolean(company?.companyLogoUrl);
+  const hasCustomFavicon = Boolean(company?.companyFavIcoUrl);
 
-  const faviconSrc = company?.companyFavIcoUrl
-    ? `${process.env.REACT_APP_API_URL}/public/${company.companyFavIcoUrl}`
-    : null;
+  const logoSrc = hasCustomLogo && !logoError
+    ? getPublicAssetUrl(company.companyLogoUrl)
+    : WeekmateLogo;
+
+  const faviconSrc = hasCustomFavicon && !faviconError
+    ? getPublicAssetUrl(company.companyFavIcoUrl)
+    : WeekmateLogo;
 
   const STATS = [
     { label: "Company Name", value: company?.companyName || "—", icon: <BankOutlined />, color: "#e8f0f8", iconColor: "#0b3a5b" },
@@ -550,13 +572,13 @@ export default function CompanyManagement() {
         {[
           { label: "COMPANY LOGO", src: logoSrc, fallback: "No logo uploaded", hasError: logoError, onErr: () => setLogoError(true) },
           { label: "COMPANY FAVICON", src: faviconSrc, fallback: "No favicon uploaded", hasError: faviconError, onErr: () => setFaviconError(true) },
-        ].map(({ label, src, fallback, hasError, onErr }) => (
+        ].map(({ label, src, fallback, onErr }) => (
           <div className="cm-asset-card" key={label}>
             <div className="cm-asset-header">
               <span className="cm-asset-label">{label}</span>
             </div>
             <div className="cm-asset-body">
-              {src && !hasError ? (
+              {src ? (
                 <img src={src} alt={label} className="cm-asset-img" onError={onErr} />
               ) : (
                 <div className="cm-asset-empty">
