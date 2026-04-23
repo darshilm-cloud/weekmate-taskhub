@@ -46,6 +46,7 @@ import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import ProjectExpenseFormModal from "./ProjectExpenseFormModal";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -347,9 +348,10 @@ const Projectexpences = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
-  /* ── drawer ── */
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [viewData, setViewData] = useState({});
+  /* ── modal state ── */
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [formModalMode, setFormModalMode] = useState("add"); // add, edit, view
+  const [selectedExpenseId, setSelectedExpenseId] = useState(null);
 
   /* ── permissions ── */
   const userData = useMemo(() => {
@@ -699,6 +701,12 @@ const Projectexpences = () => {
     [analytics.projectData, analytics.projectLabels]
   );
 
+  const handleViewExpense = useCallback((expenseId) => {
+    setSelectedExpenseId(expenseId);
+    setFormModalMode("view");
+    setFormModalOpen(true);
+  }, []);
+
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: ["Billable", "Non-Billable"],
@@ -740,25 +748,6 @@ const Projectexpences = () => {
       console.error(err);
     }
   }, [dispatch, fetchTableData, fetchAllForAnalytics]);
-
-  const handleViewExpense = useCallback(async (expenseId) => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getprojectexpanses,
-        body: { _id: expenseId },
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data?.data) {
-        setViewData(response.data.data);
-        setDrawerOpen(true);
-      }
-    } catch (err) {
-      dispatch(hideAuthLoader());
-      message.error("Failed to fetch expense details");
-    }
-  }, [dispatch]);
 
   const exportCSV = useCallback(async () => {
     try {
@@ -904,11 +893,16 @@ const Projectexpences = () => {
             </Tooltip>
 
             <Tooltip title="Edit">
-              <Link to={`/${companySlug}/edit/projectexpenseform/${r._id}`}>
-                <button className="pe-action-btn edit">
-                  <EditOutlined />
-                </button>
-              </Link>
+              <button
+                className="pe-action-btn edit"
+                onClick={() => {
+                  setSelectedExpenseId(r._id);
+                  setFormModalMode("edit");
+                  setFormModalOpen(true);
+                }}
+              >
+                <EditOutlined />
+              </button>
             </Tooltip>
 
             {userPermissions.hasAccess && (
@@ -960,11 +954,17 @@ const Projectexpences = () => {
             <DownloadOutlined /> <span>Export CSV</span>
           </button>
           {userPermissions.canAddExpense && (
-            <Link to={`/${companySlug}/add/projectexpenseform`}>
-              <Button className="add-btn" type="primary">
-                <PlusOutlined /> Add Expense
-              </Button>
-            </Link>
+            <Button
+              className="add-btn"
+              type="primary"
+              onClick={() => {
+                setSelectedExpenseId(null);
+                setFormModalMode("add");
+                setFormModalOpen(true);
+              }}
+            >
+              <PlusOutlined /> Add Expense
+            </Button>
           )}
         </div>
       </div>
@@ -1170,132 +1170,22 @@ const Projectexpences = () => {
         />
       </div>
 
-      {/* ══ View Drawer ══ */}
-      <Modal
-        open={drawerOpen}
-        onCancel={() => { setDrawerOpen(false); setViewData({}); }}
-        title="Expense Details"
-        width={600}
-        destroyOnClose
-        footer={[
-          
-
-          userPermissions.hasAccess && (
-            <Popconfirm
-              key="delete"
-              title="Delete this expense?"
-              onConfirm={() => { deleteProjectExpences(viewData?._id); setDrawerOpen(false); }}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-            >
-              <Button icon={<DeleteOutlined />} className="delete-btn">
-                Delete
-              </Button>
-            </Popconfirm>
-          ),
-          <Link key="edit" to={`/${companySlug}/edit/projectexpenseform/${viewData?._id}`}>
-            <Button icon={<EditOutlined />} type="primary" className="add-btn">
-              Edit Expense
-            </Button>
-          </Link>,
-        ]}
-      >
-        {/* Amount highlight */}
-        <div className="pe-drawer-field">
-          <div className="pe-drawer-label">Amount</div>
-          <div className="pe-drawer-amount">
-            {fmtINR(viewData?.cost_in_usd || 0)}
-          </div>
-        </div>
-
-        <div className="pe-drawer-divider" />
-
-        <Row gutter={[16, 0]}>
-          <Col xs={24} sm={14}>
-            <div className="pe-drawer-field">
-              <div className="pe-drawer-label">Project</div>
-              <div className="pe-drawer-value">{viewData?.project?.title || "—"}</div>
-            </div>
-          </Col>
-          <Col xs={24} sm={10}>
-            <div className="pe-drawer-field">
-              <div className="pe-drawer-label">Status</div>
-              <div style={{ paddingTop: 6 }}>
-                <span className={`pe-status-badge ${statusClass(viewData?.status)}`}>
-                  {viewData?.status || "—"}
-                </span>
-              </div>
-            </div>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 0]}>
-          <Col xs={24} sm={12}>
-            <div className="pe-drawer-field">
-              <div className="pe-drawer-label">Created By</div>
-              <div className="pe-drawer-value">{viewData?.createdBy?.full_name || "—"}</div>
-            </div>
-          </Col>
-          <Col xs={24} sm={12}>
-            <div className="pe-drawer-field">
-              <div className="pe-drawer-label">Date</div>
-              <div className="pe-drawer-value">
-                {viewData?.createdAt ? moment(viewData.createdAt).format("DD-MM-YYYY") : "—"}
-              </div>
-            </div>
-          </Col>
-        </Row>
-
-        <div className="pe-drawer-field">
-          <div className="pe-drawer-label">Billable to Customer</div>
-          <div style={{ paddingTop: 6 }}>
-            {viewData?.need_to_bill_customer
-              ? <span className="pe-billable-yes">Yes – Billable</span>
-              : <span className="pe-billable-no">No – Non-billable</span>}
-          </div>
-        </div>
-
-        <div className="pe-drawer-divider" />
-
-        {viewData?.purchase_request_details && (
-          <div className="pe-drawer-field">
-            <div className="pe-drawer-label">Purchase Request Details</div>
-            <div className="pe-drawer-value">
-              {viewData.purchase_request_details.replace(/<br\s*\/?>/g, "\n")}
-            </div>
-          </div>
-        )}
-
-        {viewData?.details && (
-          <div className="pe-drawer-field">
-            <div className="pe-drawer-label">Accounting Details</div>
-            <div className="pe-drawer-value">{viewData.details}</div>
-          </div>
-        )}
-
-        {viewData?.nature_Of_expense && (
-          <div className="pe-drawer-field">
-            <div className="pe-drawer-label">Nature of Expense</div>
-            <div className="pe-drawer-value">{viewData.nature_Of_expense}</div>
-          </div>
-        )}
-
-        {viewData?.projectexpences?.length > 0 && (
-          <div className="pe-drawer-field">
-            <div className="pe-drawer-label">Document</div>
-            <a
-              href={`${process.env.REACT_APP_API_URL}/public/projectexpense/${viewData.projectexpences}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}
-            >
-              <FileTextOutlined />
-              {viewData.projectexpences}
-            </a>
-          </div>
-        )}
-      </Modal>
+      <ProjectExpenseFormModal
+        open={formModalOpen}
+        mode={formModalMode}
+        expenseId={selectedExpenseId}
+        onCancel={() => {
+          setFormModalOpen(false);
+          setSelectedExpenseId(null);
+        }}
+        onSuccess={(msg) => {
+          message.success(msg);
+          setFormModalOpen(false);
+          setSelectedExpenseId(null);
+          fetchTableData();
+          fetchAllForAnalytics();
+        }}
+      />
     </div>
   );
 };

@@ -2890,9 +2890,6 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
   if (reportKey === "daily-report") {
     return (
       <div className="reports-actions">
-        <Button className="btn-secondary" onClick={onSchedule}>
-          Schedule <ClockCircleOutlined />
-        </Button>
         <Button className="btn-secondary" onClick={onDownload}>
           Download <DownloadOutlined />
         </Button>
@@ -3066,7 +3063,8 @@ function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
     grouped[userKey] = {
       key: userKey,
       user: user.label || "Unknown",
-      project: "Multiple",
+      project: "-",
+      projectIds: new Set(),
       total: 0,
       completed: 0,
       incomplete: 0,
@@ -3089,6 +3087,9 @@ function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
       return;
     }
 
+    const projectId = task?.project?._id || task?.project_id?._id || task?.project_id || task?.project;
+    const projectTitle = task?.project?.title || task?.project_id?.title || "Unknown";
+
     normalizeTaskOwners(task, userMap).forEach((assignee) => {
       if (selectedUser && assignee.id !== String(selectedUser.value)) {
         return;
@@ -3099,7 +3100,8 @@ function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
         grouped[key] = {
           key,
           user: assignee.name || "Unassigned",
-          project: "Multiple",
+          project: "-",
+          projectIds: new Set(),
           total: 0,
           completed: 0,
           incomplete: 0,
@@ -3108,6 +3110,15 @@ function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
           overdue: 0,
         };
       }
+
+      if (projectId) {
+        grouped[key].projectIds.add(String(projectId));
+        // We store the first title encountered for single-project display
+        if (!grouped[key].firstProjectTitle || grouped[key].firstProjectTitle === "Unknown") {
+          grouped[key].firstProjectTitle = projectTitle;
+        }
+      }
+
       grouped[key].total += 1;
       if (isCompletedTask(task)) {
         grouped[key].completed += 1;
@@ -3124,7 +3135,19 @@ function buildUserRows(tasks, filters, selectedDate, userMap, users = []) {
     });
   });
 
-  return Object.values(grouped);
+  return Object.values(grouped).map((row) => {
+    const count = row.projectIds.size;
+    if (count === 0) {
+      row.project = "Not Assigned";
+    } else if (count === 1) {
+      row.project = row.firstProjectTitle || "1 Project";
+    } else {
+      row.project = `${count} Projects`;
+    }
+    delete row.projectIds;
+    delete row.firstProjectTitle;
+    return row;
+  });
 }
 
 function buildStatusRows(tasks, filters, selectedDate, userMap) {
