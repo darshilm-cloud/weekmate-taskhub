@@ -1190,25 +1190,25 @@ const BugsPMS = () => {
                 </div>
               </div>
 
-              <div className="card-row">
-                <div className="section-card">
-                  <div className="section-card-title">
-                    <span>Assignee(s)</span>
-                  </div>
-                  <div className="meta-value">
-                    <Form.Item name="selectedItems" style={ { marginBottom: 0, width: "100%" } }>
-                      <MultiSelect
-                        onSearch={ handleSearch }
-                        onChange={ handleSelectedItemsChange }
-                        values={ selectedItems && selectedItems.map((item) => item._id) }
-                        listData={ subscribersList }
-                        search={ searchKeyword }
-                        showTagLabel
-                      />
-                    </Form.Item>
-                  </div>
+              <div className="section-card add-bug-assignee-card">
+                <div className="section-card-title">
+                  <span>Assignee(s)</span>
                 </div>
+                <div className="meta-value">
+                  <Form.Item name="selectedItems" style={ { marginBottom: 0, width: "100%" } }>
+                    <MultiSelect
+                      onSearch={ handleSearch }
+                      onChange={ handleSelectedItemsChange }
+                      values={ selectedItems && selectedItems.map((item) => item._id) }
+                      listData={ subscribersList }
+                      search={ searchKeyword }
+                      showTagLabel
+                    />
+                  </Form.Item>
+                </div>
+              </div>
 
+              <div className="card-row">
                 <div className="section-card">
                   <div className="section-card-title">
                     <span>Labels</span>
