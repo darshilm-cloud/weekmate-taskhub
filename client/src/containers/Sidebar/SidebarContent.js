@@ -17,7 +17,7 @@ import {
 } from "@ant-design/icons";
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, hasPermission } from "../../util/hasPermission";
 import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
@@ -126,7 +126,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const menuItemsRaw = useMemo(
     () => [
-      // 1. Dashboard
+      // 1. Dashboard (always visible for non-clients)
       !getRoles(["Client"]) && {
         key: "Dashboard",
         icon: <DashboardOutlined />,
@@ -134,21 +134,21 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
       },
       // 2. Projects
-      {
+      (getRoles(["Admin"]) || hasPermission(["projects_view", "projects_manage", "project_add", "project_edit", "project_delete"])) && {
         key: "Projects",
         icon: <FolderOutlined />,
         label: "Projects",
         onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
       },
       // 3. Tasks
-      {
+      (getRoles(["Admin"]) || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) && {
         key: "Tasks",
         icon: <TaskSidebarIcon />,
         label: "Tasks",
         onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
       },
       // 4. Users
-      getRoles(["Admin"]) && {
+      (getRoles(["Admin"]) || hasPermission(["people_view", "people_add", "people_edit", "people_delete", "manage_people"])) && {
         key: "Users",
         icon: <TeamOutlined />,
         label: "Users",

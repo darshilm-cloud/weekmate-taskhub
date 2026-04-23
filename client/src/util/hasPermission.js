@@ -6,7 +6,7 @@ export const hasPermission = (
   permissionName,
   userPermission = JSON.parse(getCookie("user_permission")) || []
 ) => {
-  let permissionId = permissionName.map((item) => permissionsMap[item]);
+  let permissionId = permissionName.map((item) => permissionsMap[item]).filter(Boolean);
   return userPermission.some((ele) => permissionId.includes(ele));
 };
 
