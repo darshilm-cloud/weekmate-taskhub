@@ -1185,8 +1185,8 @@ const BugsPMS = () => {
                         style={{ width: "100%" }}
                         disabledDate={(current) => {
                           const startDate = parseBugUiDate(addInputTaskData?.start_date);
-                          if (!startDate) return false;
-                          return current && current < startDate.startOf("day");
+                          if (!startDate || !current) return false;
+                          return current.isBefore(startDate, "day");
                         }}
                         onChange={(date, dateString) =>
                           handleTaskInput("end_date", dateString)
@@ -1658,8 +1658,8 @@ const BugsPMS = () => {
                         format="DD-MM-YYYY"
                         disabledDate={(current) => {
                           const startDate = parseBugUiDate(addInputTaskData?.start_date);
-                          if (!startDate) return false;
-                          return current && current < startDate.startOf("day");
+                          if (!startDate || !current) return false;
+                          return current.isBefore(startDate, "day");
                         }}
                         placeholder="End Date"
                         style={{ width: "100%" }}
