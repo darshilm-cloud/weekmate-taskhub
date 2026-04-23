@@ -11,6 +11,7 @@ import {
   Select,
   Checkbox,
   Input,
+  Mentions,
   Popconfirm,
   message,
 } from "antd";
@@ -25,13 +26,13 @@ import {
   CloseOutlined,
   UserOutlined,
   CalendarOutlined,
-	  TagsOutlined,
-	  ClockCircleOutlined,
-	  CheckCircleFilled,
-	  SaveOutlined,
-	  MoreOutlined,
-	  DownloadOutlined,
-	} from "@ant-design/icons";
+  TagsOutlined,
+  ClockCircleOutlined,
+  CheckCircleFilled,
+  SaveOutlined,
+  MoreOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import moment from "moment";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -127,7 +128,7 @@ const BugDetailModal = ({
   }, [open, taskDetails?._id]);
 
   const commentValue = typeof setTextAreaValue === "function" ? (textAreaValue || "") : "";
-  const setCommentValue = typeof setTextAreaValue === "function" ? setTextAreaValue : () => {};
+  const setCommentValue = typeof setTextAreaValue === "function" ? setTextAreaValue : () => { };
   const availableFolders = Array.isArray(foldersList) ? foldersList : [];
   const hasCommentFiles = commentAttachments.length > 0;
 
@@ -270,10 +271,17 @@ const BugDetailModal = ({
     setPostingComment(true);
     try {
       let uploadedAttachments = [];
+      const taggedUsers = getTaggedUserIdsFromComment(next);
       if (hasCommentFiles) {
         uploadedAttachments = await uploadCommentFiles(commentAttachments);
       }
-      await addComments?.(taskId, [], commentFolderId || null, uploadedAttachments, next);
+      await addComments?.(
+        taskId,
+        taggedUsers,
+        commentFolderId || null,
+        uploadedAttachments,
+        next
+      );
       setCommentValue("");
       setCommentAttachments([]);
       setVoiceInterim("");
@@ -422,9 +430,9 @@ const BugDetailModal = ({
             setIsPopoverVisible(false);
           }}
         >
-          <div 
-            className="status-dot" 
-            style={{ background: config.COLORS[index % config.COLORS.length] }} 
+          <div
+            className="status-dot"
+            style={{ background: config.COLORS[index % config.COLORS.length] }}
           />
           <span>{status.title}</span>
           {selectedBugStatusTitle === status.title && (
@@ -498,10 +506,23 @@ const BugDetailModal = ({
     return options;
   })();
 
+  const mentionOptions = (Array.isArray(taggedUserList) ? taggedUserList : [])
+    .filter((user) => user?._id && user?.full_name)
+    .map((user) => ({
+      key: user._id,
+      value: removeTitle(user.full_name).trim(),
+      label: user.full_name,
+    }));
+
+  const getTaggedUserIdsFromComment = (commentText = "") =>
+    mentionOptions
+      .filter((user) => String(commentText || "").includes(`@${user.value}`))
+      .map((user) => user.key);
+
   const selectedAssigneeIds = Array.isArray(viewBug?.assignees)
     ? viewBug.assignees
-        .map((a) => (typeof a === "object" ? a?._id || a?.id : a))
-        .filter(Boolean)
+      .map((a) => (typeof a === "object" ? a?._id || a?.id : a))
+      .filter(Boolean)
     : [];
 
   const disableAllEdits = () => {
@@ -525,15 +546,15 @@ const BugDetailModal = ({
   };
 
   return (
-	    <Modal
-	      open={open}
-	      onCancel={onCancel}
-	      footer={null}
-	      width={1100}
-	      centered
-	      className="modern-bug-detail-modal"
-	      closeIcon={<CloseOutlined style={{ color: "white" }} />}
-	    >
+    <Modal
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={1100}
+      centered
+      className="modern-bug-detail-modal"
+      closeIcon={<CloseOutlined style={{ color: "white" }} />}
+    >
       <div className="bug-detail-content-premium">
         <div className="bug-detail-modal-left">
           <div className="bug-detail-header-premium">
@@ -600,8 +621,8 @@ const BugDetailModal = ({
               <div className="meta-card">
                 <div className="meta-card-label">ASSIGNEES</div>
                 <div className="meta-card-value">
-                  {Array.isArray(viewBug?.assignees) && viewBug.assignees.length > 0 
-                    ? `${viewBug.assignees.length} Member${viewBug.assignees.length > 1 ? 's' : ''}` 
+                  {Array.isArray(viewBug?.assignees) && viewBug.assignees.length > 0
+                    ? `${viewBug.assignees.length} Member${viewBug.assignees.length > 1 ? 's' : ''}`
                     : "0 member"}
                 </div>
               </div>
@@ -613,6 +634,9 @@ const BugDetailModal = ({
               </div>
             </div>
           </div>
+
+          <div className="task-detail-content-grid">
+
           <div className="section-card">
             <div className="section-card-title">
               <span>TASK BRIEF</span>
@@ -632,8 +656,8 @@ const BugDetailModal = ({
                   />
                 </div>
               ) : (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: viewBug?.descriptions || "No description provided." }} 
+                <div
+                  dangerouslySetInnerHTML={{ __html: viewBug?.descriptions || "No description provided." }}
                   onClick={() => handleFieldClick("proj_description")}
                   style={{ cursor: "pointer" }}
                 />
@@ -711,10 +735,10 @@ const BugDetailModal = ({
             <div className="section-card-title">
               <span>Attachments</span>
               {isGlobalEditActive && (
-                <Button 
-                  type="link" 
-                  size="small" 
-                  icon={<PaperClipOutlined />} 
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<PaperClipOutlined />}
                   onClick={() => attachmentViewfileRef.current.click()}
                 >
                   Add Files
@@ -769,8 +793,8 @@ const BugDetailModal = ({
             </div>
           </div>
 
-	            <div className="bug-footer-toggles">
-	            <div className="footer-left">
+          <div className="bug-footer-toggles">
+            <div className="footer-left">
               <Checkbox
                 checked={viewBug?.isRepeated}
                 onChange={(e) => handleViewBug("isRepeated", e.target.checked)}
@@ -803,24 +827,25 @@ const BugDetailModal = ({
                   />
                 </div>
               </div>
-	            </div>
-	          </div>
-		          <div className="bug-detail-modal-footer-actions">
-		            <Button
-		              className="bug-detail-primary-btn"
-		              type="primary"
-		              icon={<SaveOutlined />}
-		              onClick={() => updateviewBug(viewBug)}
-		              title="Save changes"
-		              loading={loading}
-		            >
-		              Save
-		            </Button>
-		            <Button className="bug-detail-secondary-btn" onClick={onCancel}>
-		              Close
-	            </Button>
-	          </div>
-	        </div>
+            </div>
+          </div>
+          </div>
+          <div className="bug-detail-modal-footer-actions">
+            <Button
+              className="add-btn"
+              type="primary"
+         
+              onClick={() => updateviewBug(viewBug)}
+              title="Save changes"
+              loading={loading}
+            >
+              Save
+            </Button>
+            <Button className="delete-btn" onClick={onCancel}>
+              Close
+            </Button>
+          </div>
+        </div>
 
         <div className="bug-detail-modal-right">
           <div className="sidebar-header">
@@ -830,7 +855,7 @@ const BugDetailModal = ({
             </div>
           </div>
           <div className="sidebar-tabs">
-            <div 
+            <div
               className={`sidebar-tab-btn ${activeTab === "comments" ? "active" : ""}`}
               onClick={() => onTabChange("comments")}
             >
@@ -838,14 +863,14 @@ const BugDetailModal = ({
               Comments
               <span className="tab-badge">{comments?.length || 0}</span>
             </div>
-            <div 
+            <div
               className={`sidebar-tab-btn ${activeTab === "files" ? "active" : ""}`}
               onClick={() => onTabChange("files")}
             >
               <PaperClipOutlined />
               Files
             </div>
-            <div 
+            <div
               className={`sidebar-tab-btn ${(activeTab === "history" || activeTab === "task") ? "active" : ""}`}
               onClick={() => onTabChange("history")}
             >
@@ -899,12 +924,14 @@ const BugDetailModal = ({
                 </div>
                 <div className="bug-detail-sidebar-footer-card">
                   <div className="bug-detail-composer-title">Add to the conversation</div>
-                  <Input.TextArea
+                  <Mentions
                     className="bug-detail-composer-input"
                     rows={3}
-                    placeholder="Share an update, mention blockers, or document the next step..."
+                    placeholder="Share an update, mention blockers, or document the next step with @..."
                     value={commentValue}
-                    onChange={(e) => setCommentValue(e.target.value)}
+                    onChange={setCommentValue}
+                    options={mentionOptions}
+                    prefix={["@"]}
                     disabled={!taskDetails?._id}
                   />
                   {!!voiceInterim && (
@@ -973,7 +1000,8 @@ const BugDetailModal = ({
                       loading={postingComment}
                       disabled={!commentValue.trim() && !hasCommentFiles}
                     >
-Send                    </Button>
+                    send 
+                    </Button>
                   </div>
                   <input
                     ref={commentFileInputRef}
@@ -1061,11 +1089,11 @@ Send                    </Button>
                             <strong>
                               {removeTitle(
                                 history.updatedBy?.full_name ||
-                                  history.user_id?.full_name ||
-                                  history.user?.full_name ||
-                                  history.createdBy?.full_name ||
-                                  history.sender ||
-                                  "Someone"
+                                history.user_id?.full_name ||
+                                history.user?.full_name ||
+                                history.createdBy?.full_name ||
+                                history.sender ||
+                                "Someone"
                               )}
                             </strong>{" "}
                             {history.updated_key === "createdAt" ? "added the task" : "updated the task"}
@@ -1088,21 +1116,21 @@ Send                    </Button>
                           history?.next_value != null ||
                           history?.after != null ||
                           history?.updated_key) && (
-                          <Button
-                            type="text"
-                            size="small"
-                            className="bug-history-toggle"
-                            onClick={() =>
-                              setExpandHistoryId(
-                                expandHistoryId === (history._id || String(index))
-                                  ? null
-                                  : (history._id || String(index))
-                              )
-                            }
-                          >
-                            {expandHistoryId === (history._id || String(index)) ? "▼" : "▶"}
-                          </Button>
-                        )}
+                            <Button
+                              type="text"
+                              size="small"
+                              className="bug-history-toggle"
+                              onClick={() =>
+                                setExpandHistoryId(
+                                  expandHistoryId === (history._id || String(index))
+                                    ? null
+                                    : (history._id || String(index))
+                                )
+                              }
+                            >
+                              {expandHistoryId === (history._id || String(index)) ? "▼" : "▶"}
+                            </Button>
+                          )}
                       </div>
 
                       {expandHistoryId === (history._id || String(index)) && (

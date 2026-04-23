@@ -853,7 +853,7 @@ function ProgressBoardofProject() {
           </div>
 
           {/* Mobile: show tab switcher in header-right */}
-          {windowWidth <= 991 && (
+          {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
             <div className="pb-header-right">
               <Popover
                 content={
@@ -877,7 +877,7 @@ function ProgressBoardofProject() {
         </div>
 
         {/* ── Tabs bar (desktop only) ── */}
-        {windowWidth > 991 && (
+        {windowWidth > 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
           <div className="pb-tabs-bar">
             {filteredTabOptions.map((option) => (
               <button
@@ -892,6 +892,16 @@ function ProgressBoardofProject() {
         )}
 
       </div>{/* /pb-topbar */}
+
+      {projectData?.project_status?.title?.toLowerCase() === "archived" && (
+        <div className="project-archived-overlay">
+          <div className="project-archived-message">
+            <i className="fi fi-rs-box-archive"></i>
+            <h2>This Project is Archived</h2>
+            <p>No tasks, bugs, or actions can be taken while the project is in the archive.</p>
+          </div>
+        </div>
+      )}
 
       {selectedTab === "Overview" && <Overview />}
       {selectedTab === "Tasks" && (

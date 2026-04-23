@@ -508,9 +508,9 @@ function UserProfile() {
               <li onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
                 Profile
               </li>
-              <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
+              {/* <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
                 General Settings
-              </li>
+              </li> */}
             </>
           )}
           {/* {getRoles(["Admin"]) && (

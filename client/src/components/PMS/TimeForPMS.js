@@ -62,6 +62,7 @@ import { fileImageSelect } from "../../util/FIleSelection";
 import EditCommentModal from "../Modal/EditCommentModal";
 import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
 import { TimeSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
 function TimeForPMS() {
   const { emitEvent } = useSocketAction();
@@ -900,14 +901,14 @@ function TimeForPMS() {
     }
   };
 
-  const getTimesheetById = async (id,skipArray=[]) => {
+  const getTimesheetById = async (id, skipArray = []) => {
     try {
       if (id || selectedTimesheet?._id) {
         const reqBody = {
           project_id: projectId,
           timesheet_id: id ? id : selectedTimesheet?._id,
         };
-        if(!skipArray.includes("SkipDateRange")){
+        if (!skipArray.includes("SkipDateRange")) {
           if (radioValue && radioValue !== "" && radioValue !== "Custom") {
             reqBody.dateRange = radioValue;
           }
@@ -916,7 +917,7 @@ function TimeForPMS() {
             reqBody.startDate = addInputStartDate?.start_date;
             reqBody.endDate = addInputEndDate?.end_date;
           }
-        }else{
+        } else {
           reqBody.dateRange = "this_month";
         }
 
@@ -930,7 +931,7 @@ function TimeForPMS() {
         if (users.length && !skipArray.includes("SkipUser")) {
           reqBody.users = users;
         }
-        
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getLoggedHoursById,
@@ -1084,8 +1085,8 @@ function TimeForPMS() {
     return `${H}h ${paddedM}m`;
   }
 
-          const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"]) 
-  
+  const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"])
+
 
   const columns = [
     {
@@ -1146,15 +1147,15 @@ function TimeForPMS() {
               style={{ cursor: "pointer" }}
             />
             {isDisabledTrackManually && (
-            <EditOutlined
-              style={{ color: "green" }}
-              onClick={() => {
-                setSelectedId(record._id);
-                handleRowClick(record);
-                setOnEditClick(true);
-              }}
-            />
-          )}
+              <EditOutlined
+                style={{ color: "green" }}
+                onClick={() => {
+                  setSelectedId(record._id);
+                  handleRowClick(record);
+                  setOnEditClick(true);
+                }}
+              />
+            )}
 
             <Popconfirm
               icon={
@@ -1935,7 +1936,12 @@ function TimeForPMS() {
                 );
               })
             ) : (
-              <div className="time-cards-empty">No logged time entries</div>
+              <>
+                <div className="time-cards-empty">
+                <NoDataFoundIcon />
+                
+                No logged time entries</div>
+              </>
             )}
           </div>
         </div>
@@ -1996,7 +2002,7 @@ function TimeForPMS() {
                         key={modalData._id}
                         src={
                           modalData.loggedBy_img &&
-                          modalData.loggedBy_img !== ""
+                            modalData.loggedBy_img !== ""
                             ? `${Service.HRMS_Base_URL}/uploads/emp_images/${modalData.loggedBy_img}`
                             : generateAvatarFromName1(modalData?.loggedBy)
                         }
@@ -2393,9 +2399,9 @@ function TimeForPMS() {
                                           >
                                             {file.name.length > 15
                                               ? `${file.name.slice(
-                                                  0,
-                                                  15
-                                                )}.....${file.file_type}`
+                                                0,
+                                                15
+                                              )}.....${file.file_type}`
                                               : file.name + file.file_type}
                                           </a>
                                         </p>

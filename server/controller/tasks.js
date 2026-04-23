@@ -220,8 +220,8 @@ exports.addProjectsTask = async (req, res) => {
       descriptions: Joi.string().optional().allow("").default(""),
       priority: Joi.string().valid("Low", "Medium", "High").optional().default("Low"),
       task_labels: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().allow(""),
-      start_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(""),
-      due_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(""),
+      start_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("",null),
+      due_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow("",null),
       end_date: Joi.alternatives().try(Joi.string(), Joi.date()).optional().allow(null, ""),
       assignees: Joi.array().optional(),
       pms_clients: Joi.array().optional().default([]),
@@ -376,6 +376,10 @@ exports.addProjectsTask = async (req, res) => {
       ...(await getRefModelFromLoginUser(req?.user))
     });
     await newHistory.save();
+
+    // The board/details API is cached; clear task board + main task caches
+    // so the follow-up refetch includes the newly created task immediately.
+    invalidateTaskBoardCaches(value.project_id);
 
     // send mail to assignee..
     // if (value.assignees && value.assignees.length > 0) {

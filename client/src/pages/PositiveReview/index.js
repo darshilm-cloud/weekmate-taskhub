@@ -25,6 +25,7 @@ import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import ReviewFormModal from "./ReviewFormModal";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
@@ -69,7 +70,6 @@ const StatCard = ({ icon, label, value, color }) => (
 const PositiveReview = () => {
   const dispatch = useDispatch();
 
-  const [reviewList, setReviewList] = useState([]);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [allReviews, setAllReviews] = useState([]);
 
@@ -78,11 +78,15 @@ const PositiveReview = () => {
   const [manager, setManager] = useState([]);
   const [accontManager, setAccountManager] = useState([]);
   const [feedBackTypeFilter, setFeedBackTypeFilter] = useState("");
-
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerRecord, setDrawerRecord] = useState(null);
+  const [reviewList, setReviewList] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+
+  // Modal State
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [formModalMode, setFormModalMode] = useState("add"); // add, edit, view
+  const [selectedReviewId, setSelectedReviewId] = useState(null);
+
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
   const canAddReview = useMemo(() => getRoles(ADMIN_ROLES), []);
@@ -95,8 +99,12 @@ const PositiveReview = () => {
         api_url: Service.getReviewList,
         body: { pageNo: 1, limit: 1000 },
       });
-      if (response?.data?.data) setAllReviews(response.data.data);
-    } catch { /* silent */ }
+      if (Array.isArray(response?.data?.data)) {
+        setAllReviews(response.data.data);
+      }
+    } catch (error) {
+      console.error("Analytics fetch error:", error);
+    }
   }, []);
 
   /* ── fetch paginated table ── */
@@ -155,6 +163,7 @@ const PositiveReview = () => {
 
   /* ── analytics ── */
   const analytics = useMemo(() => {
+    if (!Array.isArray(allReviews)) return { total: 0, ndaSigned: 0, thisMonth: 0, typeMap: {}, monthlyMap: {} };
     const total = allReviews.length;
     const ndaSigned = allReviews.filter((r) => r.client_nda_sign).length;
     const thisMonth = allReviews.filter((r) =>
@@ -184,8 +193,15 @@ const PositiveReview = () => {
   const chartTextColor = isDark ? "#ffffff" : "#64748b";
   const chartGridColor = isDark ? "#1e3352" : "#f1f5f9";
 
-  const donutSeries = Object.values(analytics.typeMap);
-  const donutLabels = Object.keys(analytics.typeMap);
+  const { donutSeries, donutLabels } = useMemo(() => {
+    const series = Object.values(analytics.typeMap);
+    const labels = Object.keys(analytics.typeMap);
+    return {
+      donutSeries: series.length ? series : [],
+      donutLabels: labels.length ? labels : []
+    };
+  }, [analytics.typeMap]);
+
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
@@ -290,7 +306,11 @@ const PositiveReview = () => {
             <Tooltip title="View feedback">
               <button
                 className="pr-action-btn view"
-                onClick={() => { setDrawerRecord(record); setDrawerOpen(true); }}
+                onClick={() => {
+                  setSelectedReviewId(record._id);
+                  setFormModalMode("view");
+                  setFormModalOpen(true);
+                }}
               >
                 <EyeOutlined />
               </button>
@@ -308,9 +328,16 @@ const PositiveReview = () => {
               </Tooltip>
             )}
             <Tooltip title="Edit">
-              <Link to={`/${companySlug}/edit/positiveReviewForm/${record._id}`}>
-                <button className="pr-action-btn edit"><EditOutlined /></button>
-              </Link>
+              <button
+                className="pr-action-btn edit"
+                onClick={() => {
+                  setSelectedReviewId(record._id);
+                  setFormModalMode("edit");
+                  setFormModalOpen(true);
+                }}
+              >
+                <EditOutlined />
+              </button>
             </Tooltip>
             <Popconfirm
               icon={<QuestionCircleOutlined style={{ color: "red" }} />}
@@ -342,11 +369,16 @@ const PositiveReview = () => {
         <h1 className="pr-title">Positive Reviews</h1>
         {canAddReview && (
           <div className="pr-header-actions">
-            <Link to={`/${companySlug}/add/positiveReviewForm`}  >
-              <Button type="primary">
-                <PlusOutlined /> Add Review
-              </Button>
-            </Link>
+            <Button
+              type="primary"
+              onClick={() => {
+                setSelectedReviewId(null);
+                setFormModalMode("add");
+                setFormModalOpen(true);
+              }}
+            >
+              <PlusOutlined /> Add Review
+            </Button>
           </div>
         )}
       </div>
@@ -424,110 +456,22 @@ const PositiveReview = () => {
         </div>
       </div>
 
-      {/* Detail Modal */}
-      <Modal
-        title={
-          <div className="pr-detail-modal-header">
-            <div className="pr-detail-modal-title-wrap">
-              <FileTextOutlined style={{ color: "#2563eb" }} />
-              <span>Review Detail</span>
-            </div>
-          </div>
-        }
-        open={drawerOpen}
-        width={760}
-        footer={
-          drawerRecord && userHasAccess ? (
-            <div className="pr-detail-modal-footer">
-              <Link to={`/${companySlug}/edit/positiveReviewForm/${drawerRecord._id}`}>
-                <Button type="primary" icon={<EditOutlined />} className="pr-detail-edit-btn">
-                  Edit
-                </Button>
-              </Link>
-            </div>
-          ) : null
-        }
-        className="pr-detail-modal"
-        onClose={() => { setDrawerOpen(false); setDrawerRecord(null); }}
-        onCancel={() => { setDrawerOpen(false); setDrawerRecord(null); }}
-      >
-        {drawerRecord && (
-          <>
-            <div className="pr-drawer-section">
-              <Row gutter={[16, 16]} className="pr-drawer-fields">
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Project</div>
-                  <div className="pr-drawer-value">{drawerRecord.project?.title || "—"}</div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Client</div>
-                  <div className="pr-drawer-value">{drawerRecord.client_name || "—"}</div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Account Manager</div>
-                  <div className="pr-drawer-value">{drawerRecord.acc_manager?.full_name || "—"}</div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Project Manager</div>
-                  <div className="pr-drawer-value">{drawerRecord.manager?.full_name || "—"}</div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Feedback Type</div>
-                  <div className="pr-drawer-value">
-                    <span className={`pr-type-badge ${typeBadgeClass(drawerRecord.feedback_type)}`}>
-                      {drawerRecord.feedback_type || "—"}
-                    </span>
-                  </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">NDA Signed</div>
-                  <div className="pr-drawer-value">
-                    {drawerRecord.client_nda_sign
-                      ? <span className="pr-nda-yes">YES</span>
-                      : <span className="pr-nda-no">NO</span>}
-                  </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Date</div>
-                  <div className="pr-drawer-value">
-                    {moment(drawerRecord.createdAt).format("DD-MM-YYYY")}
-                  </div>
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div className="pr-drawer-field">
-                  <div className="pr-drawer-label">Created By</div>
-                  <div className="pr-drawer-value">{drawerRecord.createdBy?.full_name || "—"}</div>
-                </div>
-                </Col>
-              </Row>
-            </div>
-
-            {drawerRecord.feedback && (
-              <div className="pr-drawer-section">
-                <div className="pr-drawer-label" style={{ marginBottom: 10 }}>Feedback</div>
-                <div
-                  className="pr-feedback-content"
-                  dangerouslySetInnerHTML={{ __html: drawerRecord.feedback }}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </Modal>
+      <ReviewFormModal
+        open={formModalOpen}
+        mode={formModalMode}
+        reviewId={selectedReviewId}
+        onCancel={() => {
+          setFormModalOpen(false);
+          setSelectedReviewId(null);
+        }}
+        onSuccess={(msg) => {
+          message.success(msg);
+          setFormModalOpen(false);
+          setSelectedReviewId(null);
+          getReviewList();
+          fetchAllForAnalytics();
+        }}
+      />
 
     </div>
   );

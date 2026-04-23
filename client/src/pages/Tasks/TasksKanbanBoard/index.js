@@ -43,6 +43,8 @@ import {
   Tooltip,
   message,
   Image,
+  Row,
+  Col,
 } from "antd";
 import dayjs from "dayjs";
 import "../style.css";
@@ -1014,546 +1016,534 @@ const TaskList = ({
             const stageTitle = stageData?.title || boardData?.title || "";
             const stageColor = stageData?.color || boardData?.color || "#3b82f6";
             return (
-          <div
-            key={`${boardData?._id}_${index}`}
-            className={`order small-box ${dragged ? "dragged-over" : ""}`}
-            style={{ "--wm-col-border-color": stageColor, ...columnShellStyle }}
-            onDragLeave={(e) => onDragLeave(e)}
-            onDragEnter={(e) => onDragEnter(e)}
-            onDragOver={(e) => onDragOver(e)}
-            onDrop={(e) => onDrop(e, stageId)}
-          >
-            <section className="drag_container" style={columnInnerStyle}>
-              <div className="container project-task-list" style={columnInnerStyle}>
-                <div className="drag_column" style={columnInnerStyle}>
-                  <h4>
-                    <span
-                      className="wm-col-title"
-                      style={{ color: stageColor }}
-                    >
-                      {stageTitle}
-                    </span>
-                    <span
-                      className="wm-col-badge"
-                      style={{
-                        background: stageColor,
-                        color: "#ffffff",
-                      }}
-                    >
-                      {boardData.tasks.length}
-                    </span>
-                  </h4>
+              <div
+                key={`${boardData?._id}_${index}`}
+                className={`order small-box ${dragged ? "dragged-over" : ""}`}
+                style={{ "--wm-col-border-color": stageColor, ...columnShellStyle }}
+                onDragLeave={(e) => onDragLeave(e)}
+                onDragEnter={(e) => onDragEnter(e)}
+                onDragOver={(e) => onDragOver(e)}
+                onDrop={(e) => onDrop(e, stageId)}
+              >
+                <section className="drag_container" style={columnInnerStyle}>
+                  <div className="container project-task-list" style={columnInnerStyle}>
+                    <div className="drag_column" style={columnInnerStyle}>
+                      <h4>
+                        <span
+                          className="wm-col-title"
+                          style={{ color: stageColor }}
+                        >
+                          {stageTitle}
+                        </span>
+                        <span
+                          className="wm-col-badge"
+                          style={{
+                            background: stageColor,
+                            color: "#ffffff",
+                          }}
+                        >
+                          {boardData.tasks.length}
+                        </span>
+                      </h4>
 
-                  <div
-                    className="drag_row"
-                    style={dragRowStyle}
-                    data-workflow-status-id={stageId}
-                    onDragLeave={(e) => onDragLeave(e)}
-                    onDragEnter={(e) => onDragEnter(e)}
-                    onDragOver={(e) => onDragOver(e)}
-                    onDragOverCapture={(e) => onDragOver(e)}
-                    onDrop={(e) => onDrop(e, stageId)}
-                    onDropCapture={(e) => onDrop(e, stageId)}
-                  >
-                    {showTextArea && index == 0 && (
-                      <div className="project-add-task">
-                        <Input.TextArea
-                          autoFocus
-                          rows={4}
-                          onClick={() => setShowTextArea(false)}
-                          placeholder="add task and hit enter key"
-                        />
-                        <div className="project-task-icons">
-                          <CalendarOutlined />
-                          <div className="project-task-inner-icon">
-                            <TagOutlined />
-                            <UserAddOutlined />
-                            <PaperClipOutlined />
+                      <div
+                        className="drag_row"
+                        style={dragRowStyle}
+                        data-workflow-status-id={stageId}
+                        onDragLeave={(e) => onDragLeave(e)}
+                        onDragEnter={(e) => onDragEnter(e)}
+                        onDragOver={(e) => onDragOver(e)}
+                        onDragOverCapture={(e) => onDragOver(e)}
+                        onDrop={(e) => onDrop(e, stageId)}
+                        onDropCapture={(e) => onDrop(e, stageId)}
+                      >
+                        {showTextArea && index == 0 && (
+                          <div className="project-add-task">
+                            <Input.TextArea
+                              autoFocus
+                              rows={4}
+                              onClick={() => setShowTextArea(false)}
+                              placeholder="add task and hit enter key"
+                            />
+                            <div className="project-task-icons">
+                              <CalendarOutlined />
+                              <div className="project-task-inner-icon">
+                                <TagOutlined />
+                                <UserAddOutlined />
+                                <PaperClipOutlined />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
 
-                    <div
-                      className="borad-task-data"
-                      id={`scrollableDiv-${boardData.workflowStatus?._id}`}
-                      style={boardScrollStyle}
-                      data-workflow-status-id={stageId}
-                      onDragLeave={(e) => onDragLeave(e)}
-                      onDragEnter={(e) => onDragEnter(e)}
-                      onDragOver={(e) => onDragOver(e)}
-                      onDragOverCapture={(e) => onDragOver(e)}
-                      onDrop={(e) => onDrop(e, stageId)}
-                      onDropCapture={(e) => onDrop(e, stageId)}
-                    >
-                      {boardData.tasks
-                        .map((task) => {
-                          const isDoneColumn =
-                            boardData.workflowStatus?.title === "Done";
-                          return (
-                            <>
-                              <div
-                                className={`wm-task-card ${dragged ? "dragged" : ""}${isDoneColumn ? " wm-task-card-done" : ""}`}
-                                key={task?._id}
-                                id={task?._id}
-                                style={boardCardStyle}
-                                draggable
-                                onDragStart={(e) => onDragStart(e)}
-                                onDragEnd={(e) => onDragEnd(e)}
-                              >
-                                <div
-                                  className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (shouldIgnoreTaskClick?.()) return;
-                                    getTaskByIdDetails(task?._id, {
-                                      projectId,
-                                      mainTaskId:
-                                        selectedTask?._id || listID || task?.mainTask?._id,
-                                    });
-                                    getComment(task?._id);
-                                    setTempBoard(boardData);
-                                    setSelectedTaskId(task?._id);
-                                  }}
-                                >
-                                  {/* Task labels */}
-                                  {task.task_labels?.length > 0 && (
-                                    <div className="wm-card-labels">
-                                      {task.task_labels.map((lbl) => (
-                                        <span
-                                          key={lbl._id}
-                                          className="wm-card-label"
-                                          style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
-                                        >
-                                          {lbl.title}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {/* Title */}
-                                  <div className="wm-card-title" style={{ textDecoration: isDoneColumn ? "line-through" : "none" }}>
-                                    {task.title}
-                                  </div>
-
-                                  {/* List name */}
-                                  {selectedTask?.title && (
-                                    <div className="wm-card-list">{selectedTask.title}</div>
-                                  )}
-
-                                  {/* Due date */}
+                        <div
+                          className="borad-task-data"
+                          id={`scrollableDiv-${boardData.workflowStatus?._id}`}
+                          style={boardScrollStyle}
+                          data-workflow-status-id={stageId}
+                          onDragLeave={(e) => onDragLeave(e)}
+                          onDragEnter={(e) => onDragEnter(e)}
+                          onDragOver={(e) => onDragOver(e)}
+                          onDragOverCapture={(e) => onDragOver(e)}
+                          onDrop={(e) => onDrop(e, stageId)}
+                          onDropCapture={(e) => onDrop(e, stageId)}
+                        >
+                          {boardData.tasks
+                            .map((task) => {
+                              const isDoneColumn =
+                                boardData.workflowStatus?.title === "Done";
+                              return (
+                                <>
                                   <div
-                                    className="wm-card-due"
-                                    style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                    className={`wm-task-card ${dragged ? "dragged" : ""}${isDoneColumn ? " wm-task-card-done" : ""}`}
+                                    key={task?._id}
+                                    id={task?._id}
+                                    style={boardCardStyle}
+                                    draggable
+                                    onDragStart={(e) => onDragStart(e)}
+                                    onDragEnd={(e) => onDragEnd(e)}
                                   >
-                                    {task.due_date ? (
-                                      <>
-                                        <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
-                                        {moment(task.due_date).format("DD-MM-YYYY")}
-                                      </>
-                                    ) : "—"}
-                                  </div>
-
-                                  {/* Footer: assignees + progress */}
-                                  <div className="wm-card-footer">
-                                    <span className="wm-card-assignees">
-                                      {task.assignees?.length > 0
-                                        ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
-                                        : "Unassigned"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div>
-                                  <input
-                                    type="checkbox"
-                                    style={{
-                                      position: "absolute",
-                                      top: "17px",
-                                      right: "25px",
-                                    }}
-                                    checked={Array.isArray(task_ids) && task_ids.includes(task?._id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      moveTaskHandler(task?._id, e?.target?.checked);
-                                    }}
-                                  />
-                                  <Dropdown
-                                    overlay={
-                                      <Menu>
-                                        {hasPermission(["task_edit"]) ? (
-                                          <Menu.Item
-                                            onClick={() => {
-                                              showEditTaskModal(
-                                                task,
-                                                boardData?.workflowStatus?._id ||
-                                                  task?._stId ||
-                                                  task?.task_status?._id ||
-                                                  task?.task_status
-                                              );
-                                            }}
-                                          >
-                                            <EditOutlined
-                                              style={{ color: "green" }}
-                                            />{" "}
-                                            Edit
-                                          </Menu.Item>
-                                        ) : null}
-
-                                        {hasPermission(["task_delete"]) && (
-                                          <Popconfirm
-                                            title="Are you sure you want to delete this task?"
-                                            onConfirm={() => {
-                                              handleDelete(task?._id);
-                                            }}
-                                            okText="Yes"
-                                            cancelText="No"
-                                          >
-                                            <Menu.Item className="ant-delete">
-                                              <DeleteOutlined
-                                                style={{ color: "red" }}
-                                              />{" "}
-                                              Delete
-                                            </Menu.Item>
-                                          </Popconfirm>
-                                        )}
-                                        {hasPermission(["task_add"]) && (
-                                          <Menu.Item
-                                            onClick={() => {
-                                              setIsCopyModalOpen(true);
-                                              copyform.setFieldsValue({
-                                                title: "",
-                                                project_id: "",
-                                                task_id: "",
-                                                task_status: "",
-                                                assignee: true,
-                                                client: true,
-                                                dates: true,
-                                                comments: true,
-                                              });
-                                              setCopyFormData({
-                                                title: "",
-                                                project_id: "",
-                                                task_id: "",
-                                                task_status: "",
-                                                isCopyAssignee: true,
-                                                isCopyClients: true,
-                                                isCopyDates: true,
-                                                isCopyComments: true,
-                                              });
-                                              getTaskByIdDetails(
-                                                task?._id,
-                                                "",
-                                                true
-                                              );
-                                            }}
-                                          >
-                                            <CopyOutlined />
-                                            Create a Copy
-                                          </Menu.Item>
-                                        )}
-
-                                        <Menu.Item
-                                          onClick={() =>
-                                            handleCopyTaskLink(task?._id)
-                                          }
-                                        >
-                                          <LinkOutlined />
-                                          Copy Task Link
-                                        </Menu.Item>
-                                        {hasPermission(
-                                          ["task_edit"] && ["manage_people"]
-                                        ) && (
-                                            <Menu.Item
-                                              onClick={() => {
-                                                setTaskId(task?._id);
-                                                setManagePeople(true);
-
-                                                managePeopleForm.setFieldsValue({
-                                                  assignees:
-                                                    detailClientSubs?.assignees?.map(
-                                                      (item) => item?._id
-                                                    ),
-                                                  clients:
-                                                    detailClientSubs?.pms_clients?.map(
-                                                      (item) => item?._id
-                                                    ),
-                                                });
-                                              }}
-                                            >
-                                              <i className="fi fi-rr-users"></i>{" "}
-                                              Manage People
-                                            </Menu.Item>
-                                          )}
-                                      </Menu>
-                                    }
-                                    trigger={["click"]}
-                                  >
-                                    <a
-                                      className="task-edit-pop-btn"
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                    <div
+                                      className={`wm-task-box ${isDoneColumn ? "wm-task-box-done" : ""}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (shouldIgnoreTaskClick?.()) return;
+                                        getTaskByIdDetails(task?._id, {
+                                          projectId,
+                                          mainTaskId:
+                                            selectedTask?._id || listID || task?.mainTask?._id,
+                                        });
+                                        getComment(task?._id);
+                                        setTempBoard(boardData);
+                                        setSelectedTaskId(task?._id);
                                       }}
-                                      onClick={(e) => e.preventDefault()}
                                     >
-                                      <MoreOutlined
-                                        onClick={() => {
-                                          getDetailsClientSubs(
-                                            projectId,
-                                            task?._id,
-                                            true
-                                          );
-                                          managePeopleForm.setFieldsValue({
-                                            assignees:
-                                              detailClientSubs?.assignees?.map(
-                                                (item) => item?._id
-                                              ),
-                                            clients:
-                                              detailClientSubs?.pms_clients?.map(
-                                                (item) => item?._id
-                                              ),
-                                          });
+                                      {/* Task labels */}
+                                      {task.task_labels?.length > 0 && (
+                                        <div className="wm-card-labels">
+                                          {task.task_labels.map((lbl) => (
+                                            <span
+                                              key={lbl._id}
+                                              className="wm-card-label"
+                                              style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
+                                            >
+                                              {lbl.title}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      {/* Title */}
+                                      <div className="wm-card-title" style={{ textDecoration: isDoneColumn ? "line-through" : "none" }}>
+                                        {task.title}
+                                      </div>
+
+                                      {/* List name */}
+                                      {selectedTask?.title && (
+                                        <div className="wm-card-list">{selectedTask.title}</div>
+                                      )}
+
+                                      {/* Due date */}
+                                      <div
+                                        className="wm-card-due"
+                                        style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                      >
+                                        {task.due_date ? (
+                                          <>
+                                            <i className="fa-regular fa-calendar-days" style={{ marginRight: 4 }}></i>
+                                            {moment(task.due_date).format("DD-MM-YYYY")}
+                                          </>
+                                        ) : "—"}
+                                      </div>
+
+                                      {/* Footer: assignees + progress */}
+                                      <div className="wm-card-footer">
+                                        <span className="wm-card-assignees">
+                                          {task.assignees?.length > 0
+                                            ? task.assignees.map((a) => a.full_name).filter(Boolean).slice(0, 2).join(", ") || "Unassigned"
+                                            : "Unassigned"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <input
+                                        type="checkbox"
+                                        style={{
+                                          position: "absolute",
+                                          top: "17px",
+                                          right: "25px",
+                                        }}
+                                        checked={Array.isArray(task_ids) && task_ids.includes(task?._id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          moveTaskHandler(task?._id, e?.target?.checked);
                                         }}
                                       />
-                                    </a>
-                                  </Dropdown>
-                                </div>
-                              </div>
-                            </>
-                          );
-                        })}
-                    </div>
-                    <div className="add-task-col-btn-wrapper" style={{ padding: "0 10px 10px", marginTop: "auto", flexShrink: 0 }}>
-                      <Button 
-                        type="text" 
-                        icon={<PlusOutlined />} 
-                        onClick={() => showModalTaskModal(boardData?.workflowStatus?._id)}
-                        className="add-task-col-btn"
-                        style={{ 
-                          width: "100%", 
-                          textAlign: "left", 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          marginTop: 8, 
-                          color: "#64748b",
-                          background: "rgba(241, 245, 249, 0.6)",
-                          borderRadius: "8px",
-                          padding: "8px 12px",
-                          fontWeight: 500,
-                          border: "1px dashed #cbd5e1",
-                          transition: "all 0.2s ease"
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#e2e8f0";
-                          e.currentTarget.style.color = "#334155";
-                          e.currentTarget.style.borderColor = "#94a3b8";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(241, 245, 249, 0.6)";
-                          e.currentTarget.style.color = "#64748b";
-                          e.currentTarget.style.borderColor = "#cbd5e1";
-                        }}
-                      >
-                        Add Task
-                      </Button>
+                                      <Dropdown
+                                        overlay={
+                                          <Menu>
+                                            {hasPermission(["task_edit"]) ? (
+                                              <Menu.Item
+                                                onClick={() => {
+                                                  showEditTaskModal(
+                                                    task,
+                                                    boardData?.workflowStatus?._id ||
+                                                    task?._stId ||
+                                                    task?.task_status?._id ||
+                                                    task?.task_status
+                                                  );
+                                                }}
+                                              >
+                                                <EditOutlined
+                                                  style={{ color: "green" }}
+                                                />{" "}
+                                                Edit
+                                              </Menu.Item>
+                                            ) : null}
+
+                                            {hasPermission(["task_delete"]) && (
+                                              <Popconfirm
+                                                title="Are you sure you want to delete this task?"
+                                                onConfirm={() => {
+                                                  handleDelete(task?._id);
+                                                }}
+                                                okText="Yes"
+                                                cancelText="No"
+                                              >
+                                                <Menu.Item className="ant-delete">
+                                                  <DeleteOutlined
+                                                    style={{ color: "red" }}
+                                                  />{" "}
+                                                  Delete
+                                                </Menu.Item>
+                                              </Popconfirm>
+                                            )}
+                                            {hasPermission(["task_add"]) && (
+                                              <Menu.Item
+                                                onClick={() => {
+                                                  setIsCopyModalOpen(true);
+                                                  copyform.setFieldsValue({
+                                                    title: "",
+                                                    project_id: "",
+                                                    task_id: "",
+                                                    task_status: "",
+                                                    assignee: true,
+                                                    client: true,
+                                                    dates: true,
+                                                    comments: true,
+                                                  });
+                                                  setCopyFormData({
+                                                    title: "",
+                                                    project_id: "",
+                                                    task_id: "",
+                                                    task_status: "",
+                                                    isCopyAssignee: true,
+                                                    isCopyClients: true,
+                                                    isCopyDates: true,
+                                                    isCopyComments: true,
+                                                  });
+                                                  getTaskByIdDetails(
+                                                    task?._id,
+                                                    "",
+                                                    true
+                                                  );
+                                                }}
+                                              >
+                                                <CopyOutlined />
+                                                Create a Copy
+                                              </Menu.Item>
+                                            )}
+
+                                            <Menu.Item
+                                              onClick={() =>
+                                                handleCopyTaskLink(task?._id)
+                                              }
+                                            >
+                                              <LinkOutlined />
+                                              Copy Task Link
+                                            </Menu.Item>
+                                            {hasPermission(
+                                              ["task_edit"] && ["manage_people"]
+                                            ) && (
+                                                <Menu.Item
+                                                  onClick={() => {
+                                                    setTaskId(task?._id);
+                                                    setManagePeople(true);
+
+                                                    managePeopleForm.setFieldsValue({
+                                                      assignees:
+                                                        detailClientSubs?.assignees?.map(
+                                                          (item) => item?._id
+                                                        ),
+                                                      clients:
+                                                        detailClientSubs?.pms_clients?.map(
+                                                          (item) => item?._id
+                                                        ),
+                                                    });
+                                                  }}
+                                                >
+                                                  <i className="fi fi-rr-users"></i>{" "}
+                                                  Manage People
+                                                </Menu.Item>
+                                              )}
+                                          </Menu>
+                                        }
+                                        trigger={["click"]}
+                                      >
+                                        <a
+                                          className="task-edit-pop-btn"
+                                          style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                          }}
+                                          onClick={(e) => e.preventDefault()}
+                                        >
+                                          <MoreOutlined
+                                            onClick={() => {
+                                              getDetailsClientSubs(
+                                                projectId,
+                                                task?._id,
+                                                true
+                                              );
+                                              managePeopleForm.setFieldsValue({
+                                                assignees:
+                                                  detailClientSubs?.assignees?.map(
+                                                    (item) => item?._id
+                                                  ),
+                                                clients:
+                                                  detailClientSubs?.pms_clients?.map(
+                                                    (item) => item?._id
+                                                  ),
+                                              });
+                                            }}
+                                          />
+                                        </a>
+                                      </Dropdown>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })}
+                        </div>
+                        <div className="add-task-col-btn-wrapper" >
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => showModalTaskModal(boardData?.workflowStatus?._id)}
+                            className="add-btn"
+
+
+                          >
+                            Add Task
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </section>
               </div>
-            </section>
-          </div>
             );
           })()
         ))}
       </div>
 
       <Modal
-        title={null}
+        title="Copy Task"
         open={isCopyModalOpen}
-        footer={null}
         onCancel={handleCancelCopyModal}
         onOk={handleOkCopyModal}
         className="copy-task-modal add-list-modal"
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleCancelCopyModal}
+            className="delete-btn ant-delete"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="save"
+            type="primary"
+            className="add-btn"
+            onClick={() => copyform.submit()}
+          >
+            Save
+          </Button>,
+
+        ]}
       >
-        <div className="modal-header">
-          <h1>Copy Task</h1>
-        </div>
         <div className="overview-modal-wrapper">
           <Form form={copyform} onFinish={addCopyOfTask}>
             <div className="topic-cancel-wrapper task-list-pop-wrapper">
-              <Form.Item>
-                <Input
-                  name="title"
-                  placeholder="Title"
-                  value={copyFormData.title || `Copy Of ${taskDetails?.title}`}
-                  onChange={(e) =>
-                    setCopyFormData({ ...copyFormData, title: e.target.value })
-                  }
-                />
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  disabled={true}
-                  placeholder="select project"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={projectTitle}
-                >
-                  <option>{projectTitle}</option>
-                </Select>
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  placeholder="select Task"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={copyFormData.task_id || taskDetails?.mainTask?.title}
-                  onChange={(value) =>
-                    setCopyFormData({ ...copyFormData, task_id: value })
-                  }
-                >
-                  {mainTask.map((item, index) => (
-                    <Option
-                      key={index}
-                      value={item._id}
-                      style={{ textTransform: "capitalize" }}
+              <Row gutter={[16, 0]}>
+                <Col xs={24}>
+                  <Form.Item>
+                    <Input
+                      name="title"
+                      placeholder="Title"
+                      value={copyFormData.title || `Copy Of ${taskDetails?.title}`}
+                      onChange={(e) =>
+                        setCopyFormData({ ...copyFormData, title: e.target.value })
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24}>
+                  <Form.Item className="subscriber-btn">
+                    <Select
+                      disabled={true}
+                      placeholder="select project"
+                      size="large"
+                      showSearch
+                      filterOption={(input, option) =>
+                        option.children
+                          ?.toLowerCase()
+                          .indexOf(input?.toLowerCase()) >= 0
+                      }
+                      filterSort={(optionA, optionB) =>
+                        optionA.children
+                          ?.toLowerCase()
+                          .localeCompare(optionB.children?.toLowerCase())
+                      }
+                      value={projectTitle}
                     >
-                      {item.title}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item className="subscriber-btn">
-                <Select
-                  placeholder="select workflow stage"
-                  size="large"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children
-                      ?.toLowerCase()
-                      .indexOf(input?.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      ?.toLowerCase()
-                      .localeCompare(optionB.children?.toLowerCase())
-                  }
-                  value={
-                    copyFormData.task_status || taskDetails?.task_status?._id
-                  }
-                  onChange={(value) =>
-                    setCopyFormData({ ...copyFormData, task_status: value })
-                  }
-                >
-                  {projectWorkflowStage.map((item, index) => (
-                    <Option
-                      key={index}
-                      value={item._id}
-                      style={{ textTransform: "capitalize" }}
+                      <option>{projectTitle}</option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24}>
+                  <Form.Item className="subscriber-btn">
+                    <Select
+                      placeholder="select Task"
+                      size="large"
+                      showSearch
+                      filterOption={(input, option) =>
+                        option.children
+                          ?.toLowerCase()
+                          .indexOf(input?.toLowerCase()) >= 0
+                      }
+                      filterSort={(optionA, optionB) =>
+                        optionA.children
+                          ?.toLowerCase()
+                          .localeCompare(optionB.children?.toLowerCase())
+                      }
+                      value={copyFormData.task_id || taskDetails?.mainTask?.title}
+                      onChange={(value) =>
+                        setCopyFormData({ ...copyFormData, task_id: value })
+                      }
                     >
-                      {item.title}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                      {mainTask.map((item, index) => (
+                        <Option
+                          key={index}
+                          value={item._id}
+                          style={{ textTransform: "capitalize" }}
+                        >
+                          {item.title}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <h2>Copy:</h2>
-              <div className="coppy-task-data">
-                <Form.Item
-                  name="assignee"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyAssignee}
-                >
-                  <Checkbox
-                    value={copyFormData.isCopyAssignee}
-                    checked={true}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyAssignee: e.target.checked,
-                      })
-                    }
-                  >
-                    Assignees
-                  </Checkbox>
-                </Form.Item>
+                <Col xs={24}>
+                  <Form.Item className="subscriber-btn">
+                    <Select
+                      placeholder="select workflow stage"
+                      size="large"
+                      showSearch
+                      filterOption={(input, option) =>
+                        option.children
+                          ?.toLowerCase()
+                          .indexOf(input?.toLowerCase()) >= 0
+                      }
+                      filterSort={(optionA, optionB) =>
+                        optionA.children
+                          ?.toLowerCase()
+                          .localeCompare(optionB.children?.toLowerCase())
+                      }
+                      value={
+                        copyFormData.task_status || taskDetails?.task_status?._id
+                      }
+                      onChange={(value) =>
+                        setCopyFormData({ ...copyFormData, task_status: value })
+                      }
+                    >
+                      {projectWorkflowStage.map((item, index) => (
+                        <Option
+                          key={index}
+                          value={item._id}
+                          style={{ textTransform: "capitalize" }}
+                        >
+                          {item.title}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-                <Form.Item
-                  name="dates"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyDates}
-                >
-                  <Checkbox
-                    value={copyFormData.isCopyDates}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyDates: e.target.checked,
-                      })
-                    }
-                  >
-                    Dates
-                  </Checkbox>
-                </Form.Item>
+                <Col xs={24}>
+                  <h2>Copy:</h2>
+                </Col>
 
-                <Form.Item
-                  name="comments"
-                  valuePropName="checked"
-                  initialValue={copyFormData.isCopyComments}
-                >
-                  <Checkbox
-                    value={copyFormData.isCopyComments}
-                    onChange={(e) =>
-                      setCopyFormData({
-                        ...copyFormData,
-                        isCopyComments: e.target.checked,
-                      })
-                    }
-                  >
-                    Comments
-                  </Checkbox>
-                </Form.Item>
-              </div>
-            </div>
+                <Col xs={24}>
+                  <div className="coppy-task-data">
+                    <Form.Item
+                      name="assignee"
+                      valuePropName="checked"
+                      initialValue={copyFormData.isCopyAssignee}
+                    >
+                      <Checkbox
+                        checked={true}
+                        onChange={(e) =>
+                          setCopyFormData({
+                            ...copyFormData,
+                            isCopyAssignee: e.target.checked,
+                          })
+                        }
+                      >
+                        Assignees
+                      </Checkbox>
+                    </Form.Item>
 
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                <Button
-                  type="primary"
-                  className="square-primary-btn"
-                  htmlType="submit"
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={handleCancelCopyModal}
-                  className="square-outline-btn ant-delete"
-                >
-                  Cancel
-                </Button>
-              </div>
+                    <Form.Item
+                      name="dates"
+                      valuePropName="checked"
+                      initialValue={copyFormData.isCopyDates}
+                    >
+                      <Checkbox
+                        onChange={(e) =>
+                          setCopyFormData({
+                            ...copyFormData,
+                            isCopyDates: e.target.checked,
+                          })
+                        }
+                      >
+                        Dates
+                      </Checkbox>
+                    </Form.Item>
+
+                    <Form.Item
+                      name="comments"
+                      valuePropName="checked"
+                      initialValue={copyFormData.isCopyComments}
+                    >
+                      <Checkbox
+                        onChange={(e) =>
+                          setCopyFormData({
+                            ...copyFormData,
+                            isCopyComments: e.target.checked,
+                          })
+                        }
+                      >
+                        Comments
+                      </Checkbox>
+                    </Form.Item>
+                  </div>
+                </Col>
+              </Row>
             </div>
           </Form>
         </div>

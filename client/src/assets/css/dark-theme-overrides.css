@@ -113,7 +113,6 @@ padding: 0;
 .admin-user .edit-details-task-model .ant-modal-close-x,
 .admin-user .disscusion-pop-wrapper .ant-modal-close-x {
   width: 30px !important;
-  height: 30px !important;
   line-height: 30px !important;
   font-size: 13px !important;
 }

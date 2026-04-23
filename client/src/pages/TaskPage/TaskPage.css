@@ -623,7 +623,9 @@
 .kanban-column-footer {
   padding: 10px 12px 14px;
 }
-
+.kanban-column-footer button {
+width: 100%;
+}
 .kanban-column-add-btn.ant-btn {
   width: 100%;
   justify-content: center;

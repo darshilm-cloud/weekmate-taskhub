@@ -3712,8 +3712,7 @@ span.anticon.anticon-down svg {
 
 /* --------------------------- 07 march --------------- */
 .profilerightbar .fileAttachment_Box {
-    /* min-width: 235px;
-    min-height: 250px; */
+
     background: none;
     border: 1px solid rgba(128, 128, 128, 0.512);
     border-radius: 10px;

@@ -13,10 +13,10 @@
   border-right: none !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
   padding: 0 !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  flex: 0 0 140px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
 }
 
 .gx-app-sidebar .ant-layout-sider-children,
@@ -36,10 +36,10 @@
 .sidebar-menu .ant-layout-sider,
 .sidebar-menu .Sidebar {
   background: var(--wm-sidebar-bg) !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  flex: 0 0 140px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
   border-right: none !important;
   box-shadow: none !important;
 }

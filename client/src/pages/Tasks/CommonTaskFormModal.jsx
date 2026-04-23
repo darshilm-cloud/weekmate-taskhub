@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
+import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
 import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import dayjs from "dayjs";
 import Service from "../../service";
+import { removeTitle } from "../../util/nameFilter";
 import "../TaskPage/TaskDetailModal.css";
 
 const BACKEND_ONLY_KEYS = new Set(["id", "created_by", "created_at", "updated_at"]);
@@ -174,6 +175,22 @@ export default function CommonTaskFormModal({
       return "";
     }
   }, []);
+
+  const mentionOptions = (assigneeOptions || [])
+    .filter((user) => user?.value && user?.label)
+    .map((user) => ({
+      key: user.value,
+      value: removeTitle(user.label).trim(),
+      label: user.label,
+    }));
+
+  const getTaggedUserIdsFromComment = useCallback(
+    (commentText = "") =>
+      mentionOptions
+        .filter((user) => String(commentText || "").includes(`@${user.value}`))
+        .map((user) => user.key),
+    [mentionOptions]
+  );
 
   const visibleFields = useMemo(() => {
     const normalized = (taskFormFields || [])
@@ -730,6 +747,7 @@ export default function CommonTaskFormModal({
     setSubmittingComment(true);
     try {
       let uploadedAttachments = [];
+      const taggedUsers = getTaggedUserIdsFromComment(commentToSend);
       if (hasFiles) {
         uploadedAttachments = await uploadCommentFiles(commentFiles);
       }
@@ -739,7 +757,7 @@ export default function CommonTaskFormModal({
         body: {
           task_id: effectiveTaskId,
           comment: commentToSend,
-          taggedUsers: [],
+          taggedUsers,
           attachments: uploadedAttachments,
           ...(hasFiles ? { folder_id: selectedCommentFolderId } : {}),
         },
@@ -757,7 +775,7 @@ export default function CommonTaskFormModal({
     } finally {
       setSubmittingComment(false);
     }
-  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments]);
+  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments, getTaggedUserIdsFromComment]);
 
   const handleCommentInputPressEnter = useCallback((event) => {
     if (event?.shiftKey) return;
@@ -801,12 +819,13 @@ export default function CommonTaskFormModal({
   const handleSaveEditComment = useCallback(async () => {
     if (!editingCommentId) return;
     try {
+      const taggedUsers = getTaggedUserIdsFromComment(editingCommentText);
       const res = await Service.makeAPICall({
         methodName: Service.putMethod,
         api_url: `${Service.editTaskComments}/${editingCommentId}`,
         body: {
           comment: editingCommentText,
-          taggedUsers: [],
+          taggedUsers,
           attachments: editingCommentAttachments,
         },
       });
@@ -822,7 +841,7 @@ export default function CommonTaskFormModal({
     } catch {
       message.error("Failed to update comment");
     }
-  }, [editingCommentId, editingCommentText, editingCommentAttachments, fetchComments]);
+  }, [editingCommentId, editingCommentText, editingCommentAttachments, fetchComments, getTaggedUserIdsFromComment]);
 
   const fetchTaskTimeLogs = useCallback(async () => {
     if (!effectiveTaskId || !effectiveProjectId) return;
@@ -1592,10 +1611,12 @@ export default function CommonTaskFormModal({
                                 >
                                   {editingCommentId === item?._id ? (
                                     <>
-                                      <Input.TextArea
+                                      <Mentions
                                         rows={3}
                                         value={editingCommentText}
-                                        onChange={(event) => setEditingCommentText(event.target.value)}
+                                        onChange={setEditingCommentText}
+                                        options={mentionOptions}
+                                        prefix={["@"]}
                                       />
                                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                                         <Button type="primary" size="small" onClick={handleSaveEditComment} disabled={!editingCommentText.trim()}>
@@ -1751,11 +1772,13 @@ export default function CommonTaskFormModal({
                       {mode === "view" ? (
                         <>
                           <div className="task-detail-composer-title">Add to the conversation</div>
-                          <Input.TextArea
+                          <Mentions
                             rows={4}
-                            placeholder="Share an update..."
+                            placeholder="Share an update with @..."
                             value={`${commentText}${voiceInterimText ? `${commentText ? " " : ""}${voiceInterimText}` : ""}`}
-                            onChange={(event) => setCommentText(event.target.value)}
+                            onChange={setCommentText}
+                            options={mentionOptions}
+                            prefix={["@"]}
                             onPressEnter={handleCommentInputPressEnter}
                             readOnly={isVoiceListening}
                           />

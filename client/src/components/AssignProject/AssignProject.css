@@ -1064,10 +1064,11 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    overflow: auto;
+    max-height: calc(100dvh - 345px);
+    padding: 0 10px;
 }
+
 
 .ap-browser-list-header {
   display: grid;
@@ -1084,6 +1085,7 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
   border: 1px solid #eef2f7;
   border-radius: 12px;
   overflow: hidden;
+  margin-top: 10px;
 }
 
 .ap-browser-list-group-title {
@@ -1241,9 +1243,9 @@ body[data-theme="dark"] .ap-browser-status-pill {
 }
 
 .ap-browser-calendar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+overflow: auto;
+    max-height: calc(100dvh - 345px);
+    padding: 0 10px
 }
 
 .ap-browser-calendar-header {
@@ -1251,6 +1253,7 @@ body[data-theme="dark"] .ap-browser-status-pill {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
 .ap-browser-calendar-title {

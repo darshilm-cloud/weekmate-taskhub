@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Form, Button, Select } from "antd";
+import { Modal, Form, Button, Select, Row, Col } from "antd";
 import MultiSelect from "../CustomSelect/MultiSelect";
 import MyAvatar from "../Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
@@ -33,13 +33,35 @@ const ManagePeopleModal = ({
   };
 
   return (
-    <Modal open={open} onCancel={cancel} footer={null}>
-      <div className="modal-header">
-        <h1>Manage People</h1>
-      </div>
-      <div className="overview-modal-wrapper">
-        <Form form={formName} onFinish={onFinish}>
-          <div className="topic-cancel-wrapper task-list-pop-wrapper">
+  <Modal
+  open={open}
+  onCancel={cancel}
+  title="Manage People"
+  footer={[
+       <Button
+      key="cancel"
+      className="delete-btn ant-delete"
+      onClick={cancel}
+    >
+      Cancel
+    </Button>,
+    <Button
+      key="save"
+      type="primary"
+      className="add-btn"
+      onClick={() => formName.submit()}
+      loading={loading}
+    >
+      Save
+    </Button>,
+ 
+  ]}
+>
+  <div className="overview-modal-wrapper">
+    <Form form={formName} layout="vertical" onFinish={onFinish}>
+      <div className="topic-cancel-wrapper task-list-pop-wrapper">
+        <Row gutter={[0, 0]}>
+          <Col xs={24}>
             <Form.Item name="assignees" label="Assignees" value={assignees}>
               <MultiSelect
                 mode="multiple"
@@ -53,13 +75,12 @@ const ManagePeopleModal = ({
                 values={formName.getFieldValue("assignees")}
               />
             </Form.Item>
-            {type == "project" && (
-              <>
-                <Form.Item
-                  label="Project Manager"
-                  name="manager"
-                  value={manager}
-                >
+          </Col>
+
+          {type == "project" && (
+            <>
+              <Col xs={24} sm={12}>
+                <Form.Item label="Project Manager" name="manager" value={manager}>
                   <Select
                     showSearch
                     filterOption={(input, option) =>
@@ -86,7 +107,6 @@ const ManagePeopleModal = ({
                           <MyAvatar
                             userName={item?.manager_name}
                             src={item.emp_img}
-                            key={item._id}
                             alt={item?.manager_name}
                           />
                         </>
@@ -95,7 +115,9 @@ const ManagePeopleModal = ({
                     ))}
                   </Select>
                 </Form.Item>
+              </Col>
 
+              <Col xs={24} sm={12}>
                 <Form.Item
                   label="Account Manager"
                   name="acc_manager"
@@ -127,7 +149,6 @@ const ManagePeopleModal = ({
                           <MyAvatar
                             userName={item?.full_name}
                             src={item.emp_img}
-                            key={item._id}
                             alt={item?.full_name}
                           />
                         </>
@@ -136,9 +157,11 @@ const ManagePeopleModal = ({
                     ))}
                   </Select>
                 </Form.Item>
-              </>
-            )}
+              </Col>
+            </>
+          )}
 
+          <Col xs={24}>
             <Form.Item label="Clients" name="clients" value={clients}>
               <MultiSelect
                 mode="multiple"
@@ -152,28 +175,12 @@ const ManagePeopleModal = ({
                 values={formName.getFieldValue("clients")}
               />
             </Form.Item>
-          </div>
-          <div className="modal-footer-flex">
-            <div className="flex-btn">
-              <Button
-                type="primary"
-                className="square-primary-btn"
-                htmlType="submit"
-                loading={loading}
-              >
-                Save
-              </Button>
-              <Button
-                className="square-outline-btn ant-delete"
-                onClick={cancel}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </Form>
+          </Col>
+        </Row>
       </div>
-    </Modal>
+    </Form>
+  </div>
+</Modal>
   );
 };
 

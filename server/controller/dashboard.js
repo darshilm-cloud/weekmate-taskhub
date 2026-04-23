@@ -14,6 +14,7 @@ const StarProject = mongoose.model("star_project");
 const ProjectMainTasks = mongoose.model("projectmaintasks");
 const WorkflowStatus = mongoose.model("workflowstatus");
 const ProjectWorkFlow = mongoose.model("projectworkflows");
+const ProjectStatus = mongoose.model("projectstatus");
 
 // const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
@@ -32,6 +33,14 @@ exports.getGlobalTeamReport = async (req, res) => {
   try {
     const { companyId } = req.user;
     const cid = new mongoose.Types.ObjectId(companyId);
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: cid,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
 
     const [empStats, projectCount, taskStats] = await Promise.all([
       // 1. Employee stats
@@ -64,7 +73,11 @@ exports.getGlobalTeamReport = async (req, res) => {
         }
       ]),
       // 2. Project counts
-      Project.countDocuments({ companyId: cid, isDeleted: false }),
+      Project.countDocuments({
+        companyId: cid,
+        isDeleted: false,
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {})
+      }),
       // 3. Task aggregation (Scoped to company projects)
       ProjectTasks.aggregate([
         {
@@ -80,7 +93,8 @@ exports.getGlobalTeamReport = async (req, res) => {
           $match: { 
             "project.companyId": cid, 
             isDeleted: false,
-            status: "active" 
+            status: "active",
+            ...(archivedStatusIds.length > 0 ? { "project.project_status": { $nin: archivedStatusIds } } : {})
           } 
         },
         {
@@ -183,23 +197,35 @@ exports.getMyProjects = async (req, res) => {
 
     const starIds = (starredProjectIds || []).map(id => new mongoose.Types.ObjectId(id));
     
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
     // 2. Build matchQuery using ONLY raw document fields
     console.log(`[getMyProjects] [${_elapsed()}] building matchQuery`);
     let matchQuery = {
       isDeleted: false,
       companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      ...(project_status.length > 0
-        ? { project_status: { $in: project_status.map((s) => new mongoose.Types.ObjectId(s)) } }
-        : {}),
+      ...(manager_id ? { manager: new mongoose.Types.ObjectId(manager_id) } : {}),
       ...(category.length > 0
         ? { technology: { $in: category.map((c) => new mongoose.Types.ObjectId(c)) } }
         : {}),
       ...(project_type.length > 0
         ? { project_type: { $in: project_type.map((t) => new mongoose.Types.ObjectId(t)) } }
         : {}),
-      ...(manager_id ? { manager: new mongoose.Types.ObjectId(manager_id) } : {}),
     };
+
+    // Filter by archived status
+    if (project_status.length > 0) {
+      matchQuery.project_status = { $in: project_status.map((s) => new mongoose.Types.ObjectId(s)) };
+    } else if (archivedStatusIds.length > 0) {
+      matchQuery.project_status = { $nin: archivedStatusIds };
+    }
 
     if (!isAdmin) {
       matchQuery.$or = [
@@ -426,6 +452,14 @@ exports.getMyTasks = async (req, res) => {
       ? new mongoose.Types.ObjectId(req.user.companyId)
       : null;
 
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
     const mainQuery = [
       {
         $lookup: {
@@ -441,6 +475,9 @@ exports.getMyTasks = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      : []),
                     ...(userCompanyId
                       ? [{ $eq: ["$companyId", "$$userCompanyId"] }]
                       : []),
@@ -789,6 +826,14 @@ exports.getTaskList = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.user._id);
     const userCompanyId = req.user.companyId ? new mongoose.Types.ObjectId(req.user.companyId) : null;
 
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
     // 1. PRE-FETCH ACCESSIBLE IDS (to avoid joins during filtering)
     let companyProjectIds = [];
     let managedProjectIds = [];
@@ -800,6 +845,7 @@ exports.getTaskList = async (req, res) => {
       Project.find({
         isDeleted: false,
         ...(userCompanyId ? { companyId: userCompanyId } : {}),
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {}),
       }).distinct("_id").then(ids => { 
         companyProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
       })
@@ -810,6 +856,7 @@ exports.getTaskList = async (req, res) => {
       Project.find({
         $or: [{ manager: userId }, { acc_manager: userId }, { createdBy: userId }],
         isDeleted: false,
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {}),
       }).distinct("_id").then(ids => { 
         managedProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
         // Sync companyProjectIds to include managed projects just in case of company mismatch
@@ -1253,6 +1300,9 @@ exports.getMyLoggedHours = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      : []),
                   ],
                 },
               },
@@ -1438,6 +1488,18 @@ exports.getMyBugs = async (req, res) => {
       ...orFilter,
     };
 
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
     const mainQuery = [
       {
         $lookup: {
@@ -1450,6 +1512,9 @@ exports.getMyBugs = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      : []),
                   ],
                 },
               },

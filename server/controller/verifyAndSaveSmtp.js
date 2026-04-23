@@ -31,7 +31,8 @@ exports.configureSmtp = async (req, res) => {
 
 
     const parsedPort = parseInt(smtpPort);
-    const isSecure = parsedPort === 465 ? true : smtpSecure;
+    // secure: true for port 465, false for 587/25
+    const isSecure = parsedPort === 465;
 
     // Create nodemailer transporter
     const transporter = nodemailer.createTransport({
@@ -39,8 +40,10 @@ exports.configureSmtp = async (req, res) => {
       port: parsedPort,
       secure: isSecure,
       auth: { user: smtpEmail, pass: smtpPassword },
-      connectionTimeout: 10000,
-      tls: { rejectUnauthorized: false }
+      connectionTimeout: 10000, // 10 seconds
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
     // Verify connection
@@ -80,7 +83,7 @@ exports.configureSmtp = async (req, res) => {
       });
     }
 
-    return successResponse(res, statusCode.SUCCESS, 'SMTP configured successfully! Test email sent.', smtpConfig);
+    return successResponse(res, statusCode.SUCCESS, 'SMTP configured successfully!', smtpConfig);
 
   } catch (error) {
     console.error('SMTP Error:', error);
@@ -89,12 +92,14 @@ exports.configureSmtp = async (req, res) => {
     if (error.code === 'ENOTFOUND') {
       message = 'SMTP host not found. Check hostname.';
     } else if (error.code === 'EAUTH') {
-      message = 'Authentication failed. Check email or password.';
+      message = 'Authentication failed. Check email or app password.';
     } else if (error.code === 'ETIMEDOUT') {
-      message = 'Connection timeout. Check port, host, or firewall settings.';
+      message = 'Connection timeout. Check port, host, or firewall.';
+    } else {
+      message = `SMTP Error: ${error.message || 'Unknown error'}`;
     }
 
-    return errorResponse(res, statusCode.BAD_REQUEST,message)
+    return errorResponse(res, statusCode.BAD_REQUEST, message);
   }
 };
 

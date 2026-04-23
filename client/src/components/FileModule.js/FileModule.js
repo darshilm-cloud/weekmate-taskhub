@@ -1344,108 +1344,103 @@ function FileModule() {
       </div>
 
       {/* Subscriber modal */}
-      <Modal
-        open={isopenModelSubscribers}
-        footer={null}
-        onCancel={handleCancelSubscribers}
-        className="add-task-modal add-list-modal"
+  <Modal
+  open={isopenModelSubscribers}
+  onCancel={handleCancelSubscribers}
+  className="add-task-modal add-list-modal"
+  title="Subscribers"
+  footer={[
+    !managePeopleVisible && IsEdit && (
+      <Button
+        key="manage"
+        type="primary"
+        onClick={() => {
+          getSubscribersList();
+          setManagePeopleVisible(true);
+        }}
       >
-        <div className="modal-header">
-          <h1>Subscribers</h1>
-          {/* <QuestionCircleOutlined /> */}
-        </div>
+        <UsergroupAddOutlined /> Manage People
+      </Button>
+    ),
 
-        <div className="overview-modal-wrapper">
-          <>
-            <div className="project-comments-block">
-              <div className="project-search">
-                <h3>
-                  {managePeopleVisible ? (
-                    subscribersList
-                      ?.filter((data) => data.full_name?.toLowerCase())
-                      .map((subscriber) => (
-                        <div key={subscriber._id}>
-                          <Checkbox
-                            onChange={() =>
-                              handleCheckboxChange(subscriber._id)
-                            }
-                            checked={manageSubscribers.includes(subscriber._id)}
-                            value={manageSubscribers}
-                          />
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              marginLeft: "10px",
-                            }}
-                          >
-                            <MyAvatar
-                              userName={subscriber.full_name}
-                              alt={subscriber.full_name}
-                              key={subscriber._id}
-                              src={subscriber.emp_img}
-                            />
+    managePeopleVisible && (
+      <Button key="update" type="primary" onClick={handleUpdateSubscribers}>
+        Update
+      </Button>
+    ),
 
-                            <h3>{removeTitle(subscriber.full_name)}</h3>
-                          </div>
-                        </div>
-                      ))
-                  ) : (
-                    <>
-                      {subscribers?.map((item, index) => (
-                        <>
-                          <p>
-                            <MyAvatar
-                              userName={item.full_name}
-                              alt={item.full_name}
-                              key={item._id}
-                              src={item.emp_img}
-                            />
-                            {item?.full_name}
-                          </p>
-                        </>
-                      ))}
-                    </>
-                  )}
-                </h3>
-              </div>
-            </div>
-            <div className="task-tab-btn">
-              {!managePeopleVisible && IsEdit && (
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    getSubscribersList();
-                    setManagePeopleVisible(true);
-                  }}
-                >
-                  <span>
-                    <UsergroupAddOutlined />
-                  </span>
-                  Manage People
-                </Button>
-              )}
-              {managePeopleVisible && (
-                <div className="manage-btn">
-                  <Button type="primary" onClick={handleUpdateSubscribers}>
-                    Update
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setManagePeopleVisible(false);
-                      getFileById1(tempFileID);
-                    }}
-                    className="ant-delete"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        </div>
-      </Modal>
-
+    managePeopleVisible && (
+      <Button
+        key="cancel"
+        onClick={() => {
+          setManagePeopleVisible(false);
+          getFileById1(tempFileID);
+        }}
+        className="ant-delete"
+      >
+        Cancel
+      </Button>
+    ),
+  ]}
+>
+  <div className="overview-modal-wrapper">
+    <div className="project-comments-block">
+      <div className="project-search">
+        <Row gutter={[16, 16]}>
+          <Col span={24}>
+            {managePeopleVisible ? (
+              subscribersList
+                ?.filter((data) => data.full_name?.toLowerCase())
+                .map((subscriber) => (
+                  <Row key={subscriber._id} align="middle" gutter={[12, 12]}>
+                    <Col>
+                      <Checkbox
+                        onChange={() =>
+                          handleCheckboxChange(subscriber._id)
+                        }
+                        checked={manageSubscribers.includes(subscriber._id)}
+                      />
+                    </Col>
+                    <Col>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <MyAvatar
+                          userName={subscriber.full_name}
+                          alt={subscriber.full_name}
+                          src={subscriber.emp_img}
+                        />
+                        <span>{removeTitle(subscriber.full_name)}</span>
+                      </div>
+                    </Col>
+                  </Row>
+                ))
+            ) : (
+              <Row gutter={[12, 12]}>
+                {subscribers?.map((item) => (
+                  <Col span={24} key={item._id}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <MyAvatar
+                        userName={item.full_name}
+                        alt={item.full_name}
+                        src={item.emp_img}
+                      />
+                      <span>{item?.full_name}</span>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Col>
+        </Row>
+      </div>
+    </div>
+  </div>
+</Modal>
       <Modal
         open={isOpenModalClients}
         footer={null}

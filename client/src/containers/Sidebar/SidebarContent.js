@@ -21,6 +21,11 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import { sideBarContentId, sideBarContentId2 } from "../../constants";
 import { BiChat } from "react-icons/bi";
+import {
+  BRANDING_UPDATE_EVENT,
+  getPublicAssetUrl,
+  getStoredBranding,
+} from "../../util/branding";
 
 const { Sider } = Layout;
 
@@ -53,6 +58,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const location = useLocation();
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [openKeys, setOpenKeys] = useState([]);
+  const [sidebarLogoPath, setSidebarLogoPath] = useState(
+    () => getStoredBranding(companySlug).logoPath
+  );
 
   const handleMenuClick = useCallback(
     (key, path) => {
@@ -87,6 +95,25 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     // Do not force-open the submenu on navigation — hover trigger handles it
     setOpenKeys([]);
   }, [location.pathname, getDefaultSelectedKey]);
+
+  useEffect(() => {
+    setSidebarLogoPath(getStoredBranding(companySlug).logoPath);
+  }, [companySlug]);
+
+  useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const nextSlug = event?.detail?.companySlug;
+      if (nextSlug && nextSlug !== companySlug) return;
+
+      setSidebarLogoPath(event?.detail?.logoPath || "");
+    };
+
+    window.addEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+
+    return () => {
+      window.removeEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+    };
+  }, [companySlug]);
 
   const handleOpenChange = useCallback((keys) => {
     const latestKey = keys.find((k) => k === "Feedback");
@@ -207,6 +234,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [userData?.name]);
 
   const userDisplayName = userData?.name?.trim() || "User";
+  const sidebarLogoSrc = sidebarLogoPath
+    ? getPublicAssetUrl(sidebarLogoPath)
+    : WeekmateLogo;
 
   const userDropdownItems = useMemo(
     () => [
@@ -236,7 +266,11 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/dashboard`)}
           >
-            <img className="weekmate-logo-img" src={WeekmateLogo} alt="WeekMate" />
+            <img
+              className="weekmate-logo-img"
+              src={sidebarLogoSrc}
+              alt="Workspace logo"
+            />
           </div>
         </div>
 
