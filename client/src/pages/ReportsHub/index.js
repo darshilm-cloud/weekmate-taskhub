@@ -340,13 +340,13 @@ function ReportsHub() {
         setLoading(true);
       }
 
-      const selectedDate = filters.date ? moment(filters.date) : null;
-      const dailyStartDate = filters.date ? moment(filters.date).startOf("day") : null;
-      const dailyEndDate = filters.date ? moment(filters.date).endOf("day") : null;
+      const selectedDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[0]) : moment(filters.date)) : null;
+      const dailyStartDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[0]).startOf("day") : moment(filters.date).startOf("day")) : null;
+      const dailyEndDate = filters.date ? (Array.isArray(filters.date) ? moment(filters.date[1]).endOf("day") : moment(filters.date).endOf("day")) : null;
       if (signal?.aborted) return;
 
-      const startDate = filters.startDate ? moment(filters.startDate).startOf("day") : moment().startOf("month");
-      const endDate = filters.endDate ? moment(filters.endDate).endOf("day") : moment().endOf("day");
+      const startDate = filters.startDate ? moment(filters.startDate).startOf("day") : (filters.date && Array.isArray(filters.date) ? moment(filters.date[0]).startOf("day") : moment().startOf("month"));
+      const endDate = filters.endDate ? moment(filters.endDate).endOf("day") : (filters.date && Array.isArray(filters.date) ? moment(filters.date[1]).endOf("day") : moment().endOf("day"));
       const selectedProjectIds = Array.isArray(filters.projectIds)
         ? filters.projectIds.filter(Boolean)
         : [];
@@ -355,9 +355,10 @@ function ReportsHub() {
 
       const commonTaskPayload = buildTaskPayload({
         viewAll: true,
-        status: "all",
-        startDate: filters.date ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
-        endDate: filters.date ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
+        status: filters.status || "all",
+        userId: filters.userId && filters.userId !== "all" ? filters.userId : undefined,
+        startDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
+        endDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
         projectIds: selectedProjectIds,
       });
 
@@ -725,7 +726,7 @@ function ReportsHub() {
         // If filtering is active (project filter, search, or date), update "Total Projects"
         // to reflect the actual filtered count, not the global total.
         const isFilteringActive = Boolean(
-          filters.startDate || filters.endDate || filters.search ||
+          filters.startDate || filters.endDate || (filters.date && Array.isArray(filters.date)) || filters.search ||
           (Array.isArray(filters.projectIds) && filters.projectIds.length > 0)
         );
         if (isFilteringActive) {
@@ -762,8 +763,8 @@ function ReportsHub() {
             page: pageNo,
             limit: pageSize,
             operationName: filters.activity || "",
-            fromDate: filters.date ? dailyStartDate.toISOString() : (filters.startDate ? moment(filters.startDate).toISOString() : undefined),
-            toDate: filters.date ? dailyEndDate.toISOString() : (filters.endDate ? moment(filters.endDate).toISOString() : undefined),
+            fromDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.toISOString() : (filters.startDate ? moment(filters.startDate).toISOString() : undefined),
+            toDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.toISOString() : (filters.endDate ? moment(filters.endDate).toISOString() : undefined),
             sortBy: "createdAt",
             sortOrder: "desc",
           },
@@ -812,7 +813,7 @@ function ReportsHub() {
           isExport: false,
         };
 
-        if (filters.date) {
+        if (filters.date && Array.isArray(filters.date)) {
           performanceRequestBody.startDate = startDate.format("DD-MM-YYYY");
           performanceRequestBody.endDate = endDate.format("DD-MM-YYYY");
         }
@@ -950,7 +951,7 @@ function ReportsHub() {
           }
         }
 
-        const dailyData = buildDailyData(dailyTaskRows, moment(), userMap);
+        const dailyData = buildDailyData(dailyTaskRows, moment(), userMap, filters.search);
         setTotal(dailyData[dailyTab]?.length || 0);
         setReportData((prev) => ({
           ...prev,
@@ -971,9 +972,11 @@ function ReportsHub() {
             api_url: Service.myTasks,
             body: buildTaskPayload({
               viewAll: true,
-              status: "all",
-              startDate: filters.date ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
-              endDate: filters.date ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
+              status: filters.status || "all",
+              userId: filters.userId && filters.userId !== "all" ? filters.userId : undefined,
+              projectIds: Array.isArray(filters.projectIds) && filters.projectIds.length > 0 ? filters.projectIds : undefined,
+              startDate: filters.date && Array.isArray(filters.date) ? dailyStartDate.format("DD-MM-YYYY") : (filters.startDate || null),
+              endDate: filters.date && Array.isArray(filters.date) ? dailyEndDate.format("DD-MM-YYYY") : (filters.endDate || null),
             }),
           }),
         ]);
@@ -1044,11 +1047,11 @@ function ReportsHub() {
       }
 
       if (reportKey === "timesheet") {
-        const timesheetStartDate = filters.date
-          ? moment(filters.date).startOf("day").format("DD-MM-YYYY")
+        const timesheetStartDate = filters.date && Array.isArray(filters.date)
+          ? moment(filters.date[0]).startOf("day").format("DD-MM-YYYY")
           : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
-        const timesheetEndDate = filters.date
-          ? moment(filters.date).endOf("day").format("DD-MM-YYYY")
+        const timesheetEndDate = filters.date && Array.isArray(filters.date)
+          ? moment(filters.date[1]).endOf("day").format("DD-MM-YYYY")
           : moment().format("DD-MM-YYYY");
 
         const response = await Service.makeAPICall({
@@ -1266,41 +1269,43 @@ function ReportsHub() {
     let filename = `report_${key}_${moment().format("DD-MM-YYYY")}.csv`;
 
     if (key === "daily-report") {
-      items = reportData.daily?.pending || [];
+      // Get the current active tab data, default to pending if not available
+      const activeDailyTab = dailyTab || "pending";
+      items = reportData.daily?.[activeDailyTab] || [];
       headers = ["Member Name", "Today", "Overdue", "Upcoming", "Total"];
       const rows = items.map((item) => [
-        item.member,
-        item.today,
-        item.overdue,
-        item.upcoming,
-        item.total,
+        item.name || "",  // Fixed: use item.name instead of item.member
+        item.today || 0,
+        item.overdue || 0,
+        item.upcoming || 0,
+        item.total || 0,
       ]);
       downloadCSV(headers, rows, filename);
     } else if (key === "user-report") {
       items = reportData.user || [];
       headers = ["User", "Project", "Total", "Completed", "Pending", "Due Today", "Overdue", "Incomplete"];
       const rows = items.map((item) => [
-        item.user,
-        item.project,
-        item.total,
-        item.completed,
-        item.pending,
-        item.dueToday,
-        item.overdue,
-        item.incomplete,
+        item.user || "",
+        item.project || "",
+        item.total || 0,
+        item.completed || 0,
+        item.pending || 0,
+        item.dueToday || 0,
+        item.overdue || 0,
+        item.incomplete || 0,
       ]);
       downloadCSV(headers, rows, filename);
     } else if (key === "project-report") {
       items = reportData.project || [];
       headers = ["Project Name", "Project Manager", "Total", "Completed", "Pending", "Overdue", "Incomplete"];
       const rows = items.map((item) => [
-        item.project,
-        item.manager,
-        item.total,
-        item.completed,
-        item.pending,
-        item.overdue,
-        item.incomplete,
+        item.project || "",
+        item.manager || "",
+        item.total || 0,
+        item.completed || 0,
+        item.pending || 0,
+        item.overdue || 0,
+        item.incomplete || 0,
       ]);
       downloadCSV(headers, rows, filename);
     } else if (key === "project-running") {
@@ -1311,8 +1316,8 @@ function ReportsHub() {
         item.managerName || "",
         item.technologyName?.join(", ") || "",
         item.project_typeName || "",
-        item.estimatedHours || "",
-        item.total_logged_time || "",
+        item.estimatedHours || 0,
+        item.total_logged_time || 0,
         formatDate(item.start_date),
         formatDate(item.end_date),
       ]);
@@ -1331,14 +1336,24 @@ function ReportsHub() {
         item.projectType || "",
       ]);
       downloadCSV(headers, rows, filename);
+    } else if (key === "activity-report") {
+      items = reportData.activity || [];
+      headers = ["User", "Operation", "Module", "Date/Time"];
+      const rows = items.map((item) => [
+        item.user || "",
+        item.operation || "",
+        item.module || "",
+        item.createdAt || "",
+      ]);
+      downloadCSV(headers, rows, filename);
     } else if (key === "status-report") {
       items = reportData.status || [];
       headers = ["Status", "Tasks", "Projects", "Users"];
       const rows = items.map((item) => [
-        item.status,
-        item.tasks,
-        item.projects,
-        item.users,
+        item.status || "",
+        item.tasks || 0,
+        item.projects || 0,
+        item.users || 0,
       ]);
       downloadCSV(headers, rows, filename);
     } else {
@@ -1359,7 +1374,8 @@ function ReportsHub() {
     const quotedRows = rows.map(row =>
       row.map(cell => {
         // Convert to string and escape quotes, then wrap in quotes
-        const cellStr = String(cell || '').replace(/"/g, '""');
+        // Handle 0 values properly - don't convert 0 to empty string
+        const cellStr = String(cell !== null && cell !== undefined ? cell : '').replace(/"/g, '""');
         return `"${cellStr}"`;
       })
     );
@@ -1457,6 +1473,9 @@ function ReportsHub() {
       { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
       { key: "status", label: "Status", placeholder: "All Status", options: projectStatusOptions, defaultValue: "all" },
       { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] }
+    ],
+    "daily-report": [
+      { key: "search", placeholder: "Search members...", type: "search" },
     ],
     "timesheet": [
       { key: "search", placeholder: "Search timesheets...", type: "search" },
@@ -1969,13 +1988,26 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           <DatePicker.RangePicker
             size="small"
             className="reports-filter-control"
-            value={filters.startDate && filters.endDate ? [dayjs(filters.startDate), dayjs(filters.endDate)] : null}
+            value={
+              rangeField.key === "date" && filters.date 
+                ? filters.date.map(d => dayjs(d, "DD-MM-YYYY"))
+                : filters.startDate && filters.endDate 
+                  ? [dayjs(filters.startDate), dayjs(filters.endDate)] 
+                  : null
+            }
             onChange={(values) => {
-              setFilters(prev => ({
-                ...prev,
-                startDate: values ? values[0].format("DD-MM-YYYY") : null,
-                endDate: values ? values[1].format("DD-MM-YYYY") : null,
-              }));
+              if (rangeField.key === "date") {
+                setFilters(prev => ({
+                  ...prev,
+                  date: values ? [values[0].format("DD-MM-YYYY"), values[1].format("DD-MM-YYYY")] : null,
+                }));
+              } else {
+                setFilters(prev => ({
+                  ...prev,
+                  startDate: values ? values[0].format("DD-MM-YYYY") : null,
+                  endDate: values ? values[1].format("DD-MM-YYYY") : null,
+                }));
+              }
             }}
             placeholder={rangeField.placeholder || ["From", "To"]}
             allowClear
@@ -2154,9 +2186,9 @@ function ProjectReportContent({
     }
 
     // Top-level Date Range Filter (Filter projects by their activity window)
-    if (filters?.startDate || filters?.endDate) {
-      const start = filters.startDate ? dayjs(filters.startDate) : null;
-      const end = filters.endDate ? dayjs(filters.endDate) : null;
+    if (filters?.startDate || filters?.endDate || (filters?.date && Array.isArray(filters.date))) {
+      const start = filters.startDate ? dayjs(filters.startDate) : (filters.date && Array.isArray(filters.date) ? dayjs(filters.date[0]) : null);
+      const end = filters.endDate ? dayjs(filters.endDate) : (filters.date && Array.isArray(filters.date) ? dayjs(filters.date[1]) : null);
 
       const projectStart = row.startDate ? dayjs(row.startDate) : null;
       const projectEnd = row.endDate ? dayjs(row.endDate) : null;
@@ -2173,7 +2205,7 @@ function ProjectReportContent({
   const hasActiveClientFilter = Boolean(
     (filters?.status && filters.status !== "all") ||
     (Array.isArray(filters?.projectIds) && filters.projectIds.length > 0) ||
-    filters?.startDate || filters?.endDate
+    filters?.startDate || filters?.endDate || (filters?.date && Array.isArray(filters.date))
   );
   const rowsAreFiltered = filteredRows.length !== (data.rows || []).length;
   const useDynamic = hasActiveClientFilter || rowsAreFiltered;
@@ -3186,7 +3218,7 @@ function buildStatusRows(tasks, filters, selectedDate, userMap) {
   }));
 }
 
-function buildTaskPayload({ viewAll = false, status = "all", startDate = null, endDate = null, projectIds = [] } = {}) {
+function buildTaskPayload({ viewAll = false, status = "all", startDate = null, endDate = null, projectIds = [], search = null, userId = null } = {}) {
   const payload = {};
 
   if (viewAll) {
@@ -3207,6 +3239,14 @@ function buildTaskPayload({ viewAll = false, status = "all", startDate = null, e
 
   if (endDate) {
     payload.end_date = endDate;
+  }
+
+  if (search && search.trim()) {
+    payload.search = search.trim();
+  }
+
+  if (userId && userId !== "all") {
+    payload.user_id = userId;
   }
 
   return payload;
@@ -3316,7 +3356,7 @@ function mergeUniqueTasks(tasks) {
   return Array.from(seen.values());
 }
 
-function buildDailyData(tasks, selectedDate, userMap) {
+function buildDailyData(tasks, selectedDate, userMap, searchQuery = null) {
   const day = selectedDate || moment();
 
   const makeGroups = (predicate) => {
@@ -3374,11 +3414,21 @@ function buildDailyData(tasks, selectedDate, userMap) {
     return [fallback];
   };
 
+  const applySearchFilter = (rows) => {
+    if (!searchQuery || !searchQuery.trim()) {
+      return rows;
+    }
+    const searchTerm = searchQuery.trim().toLowerCase();
+    return rows.filter(row => 
+      row.name && row.name.toLowerCase().includes(searchTerm)
+    );
+  };
+
   return {
-    pending: makeGroups((task) => !isCompletedTask(task)),
-    completed: makeGroups((task) => isCompletedTask(task)),
-    morning: makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() < 12),
-    evening: makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() >= 12),
+    pending: applySearchFilter(makeGroups((task) => !isCompletedTask(task))),
+    completed: applySearchFilter(makeGroups((task) => isCompletedTask(task))),
+    morning: applySearchFilter(makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() < 12)),
+    evening: applySearchFilter(makeGroups((task) => moment(task.createdAt).isSame(day, "day") && moment(task.createdAt).hour() >= 12)),
   };
 }
 

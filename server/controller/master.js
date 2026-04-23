@@ -402,6 +402,10 @@ exports.getSubscribers = async (req, res) => {
 
 exports.getTaggedUsersList = async (req, res) => {
   try {
+    const {
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       isDiscussions: Joi.boolean().optional(),
       disucssionTopicid: Joi.string().optional(), // _id
@@ -441,7 +445,8 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] }
+                      { $eq: ["$isDeleted", false] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
@@ -468,7 +473,9 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
+                      { $eq: ["$isSoftDeleted", false] },
+                      { $eq: ["$isActivate", true] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
@@ -489,7 +496,9 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$subscriber"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
+                      { $eq: ["$isSoftDeleted", false] },
+                      { $eq: ["$isActivate", true] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
