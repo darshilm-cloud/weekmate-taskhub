@@ -402,130 +402,9 @@
   .cmp-drawer-fields { grid-template-columns: 1fr; }
 }
 
-body.dark-theme .cmp-page,
-body[data-theme="dark"] .cmp-page {
-  background: #07111f;
-}
-
-body.dark-theme .cmp-chart-card,
-body.dark-theme .cmp-table-card,
-body[data-theme="dark"] .cmp-chart-card,
-body[data-theme="dark"] .cmp-table-card {
-  background: #0c182b;
-  border-color: rgba(74, 104, 150, 0.24);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-}
-
-body.dark-theme .cmp-chart-title,
-body.dark-theme .cmp-table-title,
-body[data-theme="dark"] .cmp-chart-title,
-body[data-theme="dark"] .cmp-table-title {
-  color: #e3ecfb;
-}
-
-body.dark-theme .cmp-chart-sub,
-body[data-theme="dark"] .cmp-chart-sub {
-  color: #8fa7cc;
-}
-
-body.dark-theme .cmp-table-header,
-body[data-theme="dark"] .cmp-table-header {
-  border-bottom-color: rgba(74, 104, 150, 0.2);
-}
-
-body.dark-theme .cmp-table-card .ant-table,
-body.dark-theme .cmp-table-card .ant-table-container,
-body[data-theme="dark"] .cmp-table-card .ant-table,
-body[data-theme="dark"] .cmp-table-card .ant-table-container {
-  background: #0c182b !important;
-}
-
-body.dark-theme .cmp-table-card .ant-table-thead > tr > th,
-body[data-theme="dark"] .cmp-table-card .ant-table-thead > tr > th {
-  background: #11213a;
-  color: #9bb6dd;
-  border-bottom-color: rgba(74, 104, 150, 0.24);
-}
-
-body.dark-theme .cmp-table-card .ant-table-tbody > tr > td,
-body[data-theme="dark"] .cmp-table-card .ant-table-tbody > tr > td {
-  color: #dce7fb;
-  border-bottom-color: rgba(74, 104, 150, 0.16);
-}
-
-body.dark-theme .cmp-table-card .ant-table-tbody > tr:hover > td,
-body[data-theme="dark"] .cmp-table-card .ant-table-tbody > tr:hover > td {
-  background: #132238;
-}
-
-/* ── Drawer dark mode ──────────────────────────────────────── */
-body.dark-theme .ant-drawer-content,
-body.dark-theme .ant-drawer-body,
-body[data-theme="dark"] .ant-drawer-content,
-body[data-theme="dark"] .ant-drawer-body {
-  background: #0c182b !important;
-}
-
-body.dark-theme .ant-drawer-header,
-body[data-theme="dark"] .ant-drawer-header {
-  background: #0c182b !important;
-  border-bottom-color: rgba(74, 104, 150, 0.24) !important;
-}
-
-body.dark-theme .ant-drawer-title,
-body[data-theme="dark"] .ant-drawer-title {
-  color: #e3ecfb !important;
-}
-
-body.dark-theme .ant-drawer-close,
-body[data-theme="dark"] .ant-drawer-close {
-  color: #9bb6dd !important;
-}
-
-body.dark-theme .cmp-drawer-section,
-body[data-theme="dark"] .cmp-drawer-section {
-  border-bottom-color: rgba(74, 104, 150, 0.2);
-}
-
-body.dark-theme .cmp-drawer-field,
-body.dark-theme .cmp-complaint-content,
-body[data-theme="dark"] .cmp-drawer-field,
-body[data-theme="dark"] .cmp-complaint-content {
-  background: #132238 !important;
-  border: 1px solid rgba(74, 104, 150, 0.2) !important;
-}
-
-body.dark-theme .cmp-drawer-value,
-body[data-theme="dark"] .cmp-drawer-value {
-  color: #dce7fb !important;
-}
-
-body.dark-theme .cmp-drawer-label,
-body[data-theme="dark"] .cmp-drawer-label {
-  color: #6b8ab5 !important;
-}
-
-body.dark-theme .ant-drawer-wrapper-body,
-body.dark-theme .ant-drawer-content-wrapper,
-body[data-theme="dark"] .ant-drawer-wrapper-body,
-body[data-theme="dark"] .ant-drawer-content-wrapper {
-  background: #0c182b !important;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4) !important;
-}
-
-body.dark-theme .ant-drawer-header-title .ant-drawer-title,
-body[data-theme="dark"] .ant-drawer-header-title .ant-drawer-title {
-  color: #e3ecfb !important;
-}
-
-body.dark-theme .ant-drawer .ant-btn-default,
-body[data-theme="dark"] .ant-drawer .ant-btn-default {
-  background: #132238 !important;
-  border-color: rgba(74, 104, 150, 0.3) !important;
-  color: #9bb6dd !important;
-}
 
 /* ── Unified complaint modal (view / add / edit / actions) ── */
+
 
 .cmp-unified-modal .ant-modal-body {
   padding: 0 !important;
@@ -728,62 +607,9 @@ body[data-theme="dark"] .ant-drawer .ant-btn-default {
   min-height: 80px;
 }
 
-/* ── Dark Mode Overrides ────────────────────────────────────── */
-body.dark-theme .cmp-unified-modal-body--view,
-body[data-theme="dark"] .cmp-unified-modal-body--view {
-  background: #07111f;
-}
-
-body.dark-theme .cmp-view-header,
-body[data-theme="dark"] .cmp-view-header {
-  background: #0c182b;
-  border-bottom-color: rgba(74, 104, 150, 0.24);
-}
-
-body.dark-theme .cmp-view-title,
-body[data-theme="dark"] .cmp-view-title {
-  color: #e3ecfb;
-}
-
-body.dark-theme .cmp-view-id,
-body[data-theme="dark"] .cmp-view-id {
-  color: #6b8ab5;
-}
-
-body.dark-theme .cmp-view-section,
-body[data-theme="dark"] .cmp-view-section {
-  background: #0c182b;
-  border-color: rgba(74, 104, 150, 0.24);
-}
-
-body.dark-theme .cmp-section-label,
-body[data-theme="dark"] .cmp-section-label {
-  color: #9bb6dd;
-}
-
-body.dark-theme .cmp-section-label::after,
-body[data-theme="dark"] .cmp-section-label::after {
-  background: rgba(74, 104, 150, 0.16);
-}
-
-body.dark-theme .cmp-view-field .value,
-body[data-theme="dark"] .cmp-view-field .value {
-  color: #dce7fb;
-}
-
-body.dark-theme .cmp-view-description,
-body[data-theme="dark"] .cmp-view-description {
-  background: #132238;
-  border-color: rgba(74, 104, 150, 0.24);
-  color: #cbd5e1;
-}
-
-body.dark-theme .cmp-embedded-complaint-actions,
-body[data-theme="dark"] .cmp-embedded-complaint-actions {
-  background: #07111f;
-}
 
 /* ── Responsive ───────────────────────────────────────────── */
+
 @media (max-width: 640px) {
   .cmp-view-header {
     flex-direction: column;
@@ -819,39 +645,4 @@ body[data-theme="dark"] .cmp-embedded-complaint-actions {
   padding: 12px 16px 20px;
 }
 
-/* Dark Mode Overrides */
-body.dark-theme .cmp-unified-modal .ant-modal-content,
-body[data-theme="dark"] .cmp-unified-modal .ant-modal-content {
-  background: #0c182b;
-  border: 1px solid rgba(74, 104, 150, 0.24);
-}
 
-body.dark-theme .cmp-unified-modal .ant-modal-header,
-body[data-theme="dark"] .cmp-unified-modal .ant-modal-header {
-  background: #0c182b;
-  border-bottom-color: rgba(74, 104, 150, 0.2);
-}
-
-body.dark-theme .cmp-unified-modal .ant-modal-footer,
-body[data-theme="dark"] .cmp-unified-modal .ant-modal-footer {
-  border-top-color: rgba(74, 104, 150, 0.2);
-}
-
-body.dark-theme .cmp-modal-header-text,
-body[data-theme="dark"] .cmp-modal-header-text {
-  color: #e3ecfb;
-}
-
-body.dark-theme .cmp-modal-footer-btn.secondary,
-body[data-theme="dark"] .cmp-modal-footer-btn.secondary {
-  background: #132238 !important;
-  border-color: rgba(74, 104, 150, 0.3) !important;
-  color: #9bb6dd !important;
-}
-
-body.dark-theme .cmp-modal-footer-btn.secondary:hover,
-body[data-theme="dark"] .cmp-modal-footer-btn.secondary:hover {
-  background: #1a2d4a !important;
-  border-color: rgba(74, 104, 150, 0.5) !important;
-  color: #e3ecfb !important;
-}
