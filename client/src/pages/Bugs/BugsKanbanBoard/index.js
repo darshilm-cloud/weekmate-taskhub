@@ -226,41 +226,31 @@ const BugList = ({
     overflowX: "hidden",
   };
 
-  const columnObserversRef = useRef({});
   const loadMoreBugsRef = useRef(loadMoreBugs);
+  const scrollThrottleRef = useRef({});
   loadMoreBugsRef.current = loadMoreBugs;
 
-  const lastBugSentinelRef = useCallback((node, columnId) => {
-    const key = String(columnId);
-    const existing = columnObserversRef.current[key];
-    if (existing) {
-      existing.disconnect();
-      delete columnObserversRef.current[key];
-    }
-    if (!node || typeof document === "undefined") return;
+  const handleColumnScroll = useCallback((event, columnId, boardData) => {
+    const target = event?.currentTarget;
+    if (!target || !columnId) return;
+    if (loadingMore?.[columnId]) return;
 
-    const root = document.getElementById(`scrollableDiv-${columnId}`);
-    if (!root) return;
+    const totalBugs = Number(boardData?.total_bugs) || 0;
+    const loadedBugs = Array.isArray(boardData?.bugs) ? boardData.bugs.length : 0;
+    if (!totalBugs || loadedBugs >= totalBugs) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0]?.isIntersecting) return;
-        loadMoreBugsRef.current(columnId);
-      },
-      { root, rootMargin: "0px 0px 200px 0px", threshold: 0 }
-    );
-    columnObserversRef.current[key] = observer;
-    observer.observe(node);
-  }, []);
+    const distanceFromBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight;
 
-  useEffect(() => {
-    return () => {
-      Object.keys(columnObserversRef.current).forEach((k) => {
-        columnObserversRef.current[k]?.disconnect();
-        delete columnObserversRef.current[k];
-      });
-    };
-  }, []);
+    if (distanceFromBottom > 120) return;
+
+    const now = Date.now();
+    const lastTriggeredAt = scrollThrottleRef.current[columnId] || 0;
+    if (now - lastTriggeredAt < 400) return;
+
+    scrollThrottleRef.current[columnId] = now;
+    loadMoreBugsRef.current(columnId);
+  }, [loadingMore]);
 
   useEffect(() => {
     const loadDrafts = async () => {
@@ -402,7 +392,12 @@ const BugList = ({
                       </div>
                     )}
 
-                    <div className="kanbanView-bugs-data" id={`scrollableDiv-${boardData._id}`} style={boardScrollStyle}>
+                    <div
+                      className="kanbanView-bugs-data"
+                      id={`scrollableDiv-${boardData._id}`}
+                      style={boardScrollStyle}
+                      onScroll={(event) => handleColumnScroll(event, boardData._id, boardData)}
+                    >
                       {boardData.bugs.length === 0 && (
                         <div style={{
                           display: "flex",
@@ -421,12 +416,6 @@ const BugList = ({
                             className={`wm-task-card ${dragged ? "dragged" : ""}${boardData?.title === "Closed" ? " wm-task-card-done" : ""}`}
                             key={task._id}
                             id={task._id}
-                            ref={
-                              bugIndex === boardData.bugs.length - 1 &&
-                              boardData.bugs.length < boardData.total_bugs
-                                ? (el) => lastBugSentinelRef(el, boardData._id)
-                                : undefined
-                            }
                             draggable
                             onDragStart={(e) => onDragStart(e)}
                             onDragEnd={(e) => onDragEnd(e)}

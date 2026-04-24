@@ -198,12 +198,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         label: "Reports",
         onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`),
       },
-      getRoles(["Admin"]) && {
-        key: "mira_ai",
-        icon: <BiChat />,
-        label: "Mira AI",
-        onClick: () => handleMenuClick("mira_ai", `/${companySlug}/admin/mira-ai`),
-      },
+      // getRoles(["Admin"]) && {
+      //   key: "mira_ai",
+      //   icon: <BiChat />,
+      //   label: "Mira AI",
+      //   onClick: () => handleMenuClick("mira_ai", `/${companySlug}/admin/mira-ai`),
+      // },
     ],
     [companySlug, handleMenuClick]
   );
