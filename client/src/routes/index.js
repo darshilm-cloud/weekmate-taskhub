@@ -110,9 +110,9 @@ const BugWorkflowStages = React.lazy(() =>
 const ProjectsRunning = React.lazy(() => import("../pages/Reports"));
 const TimeSheet = React.lazy(() => import("../pages/Reports/TimeSheet"));
 
-const MiraAi = React.lazy(() =>
-  import("../pages/MiraAI/MiraAI")
-);
+// const MiraAi = React.lazy(() =>
+//   import("../pages/MiraAI/MiraAI")
+// );
 
 const ProjectEntryRedirect = ({ match }) => (
   <Redirect to={`/${match.params.companySlug}/project-list`} />
@@ -531,13 +531,13 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.SUPER_ADMIN,
       ],
     },
-    {
-      path: ":companySlug/admin/mira-ai",
-      component: MiraAi,
-      roleName: [
-        config.PMS_ROLES.ADMIN,
-      ],
-    },
+    // {
+    //   path: ":companySlug/admin/mira-ai",
+    //   component: MiraAi,
+    //   roleName: [
+    //     config.PMS_ROLES.ADMIN,
+    //   ],
+    // },
     {
       path: ":companySlug/admin/activity-logs",
       component: ActivityLogs,

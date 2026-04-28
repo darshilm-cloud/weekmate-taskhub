@@ -354,7 +354,7 @@ exports.editUser = async (req, res) => {
 
     const { userId } = req.params;
 
-    const { email, firstName, lastName, companyId, isActivate,pmsRoleId } = value;
+    const { email, firstName, lastName, companyId, isActivate, pmsRoleId, password } = value;
 
     const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
     if (!oldUserData) {
@@ -371,7 +371,10 @@ exports.editUser = async (req, res) => {
       updateFields.full_name = `${firstName} ${lastName}`;
     if (companyId !== undefined) updateFields.companyId = companyId;
     if (isActivate !== undefined) updateFields.isActivate = isActivate;
-    if (pmsRoleId !== undefined) updateFields.pms_role_id=pmsRoleId;
+    if (pmsRoleId !== undefined) updateFields.pms_role_id = pmsRoleId;
+    if (password !== undefined && String(password).trim() !== "") {
+      updateFields.password = password;
+    }
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 

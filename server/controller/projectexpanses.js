@@ -164,6 +164,8 @@ exports.getProjectExpenses = async (req, res) => {
       status: Joi.string().optional(),
       need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
       createdBy: Joi.array().items(Joi.string()).optional(),
+      from_date: Joi.string().allow("").optional(),
+      to_date: Joi.string().allow("").optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -215,6 +217,13 @@ exports.getProjectExpenses = async (req, res) => {
       matchQuery.need_to_bill_customer = true;
     } else if (value.need_to_bill_customer === "No") {
       matchQuery.need_to_bill_customer = false;
+    }
+
+    if (value.from_date && value.to_date) {
+      const from = new Date(value.from_date);
+      const to = new Date(value.to_date);
+      to.setHours(23, 59, 59, 999);
+      matchQuery.createdAt = { $gte: from, $lte: to };
     }
 
     if (value.search) {
@@ -968,7 +977,7 @@ exports.exportProjectExpenses = async (req, res) => {
       let item = data[i];
       result.push({
         "Project Name": item?.projectName,
-        "Cost in USD": `$ ${item.cost}`,
+        "Cost (₹)": `₹ ${item.cost}`,
         "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
         Creator: item?.CreatedBy,
         "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
@@ -986,7 +995,7 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const csvFields = [
       "Project Name",
-      "Cost in USD",
+      "Cost (₹)",
       "Need To Bill Customer",
       "Creator",
       "Creation Date",

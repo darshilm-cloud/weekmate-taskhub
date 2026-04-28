@@ -1210,7 +1210,8 @@ export default function CommonTaskFormModal({
           disabled={viewOnly}
           disabledDate={(current) => {
             const startDate = form.getFieldValue("start_date");
-            return !!(startDate && current && current.isBefore(dayjs(startDate), "day"));
+            if (!startDate || !current) return false;
+            return current.isBefore(dayjs(startDate), "day");
           }}
         />
       );

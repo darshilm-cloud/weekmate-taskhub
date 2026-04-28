@@ -917,6 +917,20 @@ const EmployeeMasterList = () => {
             </div>
           )}
 
+          {/* Employee header actions — when an employee is selected */}
+          {sidebarMode === "employees" && selectedUser && (
+            <div className="dashboard-header-actions">
+              <Button
+                className="add-btn"
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => employeeActionsRef.current?.openEditModal(selectedUser)}
+              >
+                Edit Employee
+              </Button>
+            </div>
+          )}
+
           {/* Client header actions — overview */}
           {sidebarMode === "clients" && !selectedClient && (
             <div className="dashboard-header-actions">

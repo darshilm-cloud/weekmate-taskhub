@@ -581,14 +581,28 @@ exports.editEmployee = async (req, res) => {
       companyId: decodedCompanyId
     } = req.user || {};
 
-    const { firstName, lastName, profileImage } = req.body;
+    const { firstName, lastName, profileImage, email } = req.body;
 
     const { userId } = req.params;
+
+    if (email) {
+      const duplicate = await Employees.findOne({
+        email: email,
+        companyId: newObjectId(decodedCompanyId),
+        _id: { $ne: new mongoose.Types.ObjectId(userId) },
+        isDeleted: false,
+        isSoftDeleted: false
+      });
+      if (duplicate) {
+        return errorResponse(res, statusCode.BAD_REQUEST, "Email is already in use by another employee.");
+      }
+    }
 
     let updateObj = {};
 
     if (firstName) updateObj.first_name = firstName;
     if (lastName) updateObj.last_name = lastName;
+    if (email) updateObj.email = email;
     if (profileImage || profileImage == "") updateObj.emp_img = profileImage;
     updateObj.full_name = `${firstName} ${lastName}`;
 

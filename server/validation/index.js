@@ -119,6 +119,7 @@ class Validator {
   getEditUserSchema = () => {
     return Joi.object({
       email: this.emailValidator("Email is required"),
+      password: Joi.string().optional().allow(""),
       companyId: Joi.string().required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),

@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const moment = require("moment");
 const {
   errorResponse,
   successResponse,
@@ -27,6 +28,19 @@ const {
 const { addProjectRandomId } = require("./projects");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
 const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
+
+const dashboardDateSchema = Joi.alternatives()
+  .try(Joi.date(), Joi.string().trim().allow(""))
+  .optional()
+  .default("");
+
+const parseDashboardInputDate = (value) => {
+  if (value === "" || value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const parsed = moment(value, [moment.ISO_8601, "DD-MM-YYYY", "YYYY-MM-DD"], true);
+  return parsed.isValid() ? parsed.toDate() : null;
+};
 
 // Global Team Report (Summary for the whole company)
 exports.getGlobalTeamReport = async (req, res) => {
@@ -355,9 +369,12 @@ exports.getMyTasks = async (req, res) => {
     const validationSchema = Joi.object({
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
       view_all: Joi.boolean().optional().default(false),
+      assigned_to_me: Joi.boolean().optional().default(false),
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -369,6 +386,22 @@ exports.getMyTasks = async (req, res) => {
       );
     }
 
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
+    }
+
+    const shouldPaginate =
+      Number.isInteger(value.pageNo) && Number.isInteger(value.limit);
+    const pageNum = shouldPaginate ? parseInt(value.pageNo, 10) : 1;
+    const limitNum = shouldPaginate ? parseInt(value.limit, 10) : null;
+
     const isAdmin = await checkUserIsAdmin(req.user._id);
 
     // Or filter: non-admin only see tasks assigned to them
@@ -378,7 +411,7 @@ exports.getMyTasks = async (req, res) => {
       { $eq: ["$isDeleted", false] },
     ];
 
-    if (!isAdmin) {
+    if (!isAdmin || value.assigned_to_me) {
       orFilter = {
         $or: [
           { assignees: new mongoose.Types.ObjectId(req.user._id) },
@@ -423,19 +456,19 @@ exports.getMyTasks = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" || value.end_date !== ""
+      ...(parsedStartDate || parsedEndDate
         ? {
             $or: [
               {
                 due_date: {
-                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
-                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                  ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+                  ...(parsedEndDate ? { $lte: moment(parsedEndDate).endOf("day").toDate() } : {}),
                 },
               },
               {
                 start_date: {
-                  ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
-                  ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
+                  ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+                  ...(parsedEndDate ? { $lte: moment(parsedEndDate).endOf("day").toDate() } : {}),
                 },
               },
             ],
@@ -460,7 +493,7 @@ exports.getMyTasks = async (req, res) => {
     }).select("_id").lean();
     const archivedStatusIds = archivedStatuses.map(s => s._id);
 
-    const mainQuery = [
+    const basePipeline = [
       {
         $lookup: {
           from: "projects",
@@ -476,7 +509,7 @@ exports.getMyTasks = async (req, res) => {
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
                     ...(archivedStatusIds.length > 0
-                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
                       : []),
                     ...(userCompanyId
                       ? [{ $eq: ["$companyId", "$$userCompanyId"] }]
@@ -623,12 +656,42 @@ exports.getMyTasks = async (req, res) => {
           },
         },
       },
+    ];
+
+    let dataPipeline = [
+      ...basePipeline,
       { $sort: { _id: -1 } },
     ];
 
-    let data = await ProjectTasks.aggregate(mainQuery);
+    let metadata = {};
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+    if (shouldPaginate) {
+      const countPipeline = [
+        ...basePipeline,
+        { $count: "total" },
+      ];
+      const countResult = await ProjectTasks.aggregate(countPipeline);
+      const total = countResult?.[0]?.total || 0;
+      const totalPages = limitNum > 0 ? Math.ceil(total / limitNum) : 0;
+
+      dataPipeline = [
+        ...dataPipeline,
+        { $skip: (pageNum - 1) * limitNum },
+        { $limit: limitNum },
+      ];
+
+      metadata = {
+        pageNo: pageNum,
+        limit: limitNum,
+        total,
+        totalPages,
+        hasMore: pageNum < totalPages,
+      };
+    }
+
+    const data = await ProjectTasks.aggregate(dataPipeline);
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, metadata);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
@@ -1187,8 +1250,8 @@ exports.getMyLoggedHours = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1198,6 +1261,17 @@ exports.getMyLoggedHours = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
     // Or filter..
     let orFilter = {};
@@ -1222,26 +1296,26 @@ exports.getMyLoggedHours = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(parsedStartDate && !parsedEndDate
         ? {
           logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
           },
         }
         : {}),
-      ...(value.start_date == "" && value.end_date !== ""
+      ...(!parsedStartDate && parsedEndDate
         ? {
           logged_date: {
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date !== ""
+      ...(parsedStartDate && parsedEndDate
         ? {
           logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
@@ -1410,8 +1484,8 @@ exports.getMyBugs = async (req, res) => {
     const validationSchema = Joi.object({
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -1421,6 +1495,17 @@ exports.getMyBugs = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
     // Or filter..
     let orFilter = {};
@@ -1460,24 +1545,24 @@ exports.getMyBugs = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(parsedStartDate && !parsedEndDate
         ? {
           due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
           },
         }
         : {}),
-      ...(value.start_date == "" && value.end_date !== ""
+      ...(!parsedStartDate && parsedEndDate
         ? {
-          due_date: { $lte: moment(value.end_date).startOf("day").toDate() },
+          due_date: { $lte: moment(parsedEndDate).endOf("day").toDate() },
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date !== ""
+      ...(parsedStartDate && parsedEndDate
         ? {
           due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
@@ -1513,7 +1598,7 @@ exports.getMyBugs = async (req, res) => {
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
                     ...(archivedStatusIds.length > 0
-                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
                       : []),
                   ],
                 },

@@ -93,6 +93,7 @@ const ProjectFormModal = ({
   const companySlug = localStorage.getItem("companyDomain");
   const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companyId = userData?.companyId;
+  const { useWatch } = Form;
   const [form] = Form.useForm();
   const [departmentForm] = Form.useForm();
   const [clientCreateForm] = Form.useForm();
@@ -135,6 +136,7 @@ const ProjectFormModal = ({
   const [isLoading, setIsLoading] = useState(!cacheReady || Boolean(selectedProject));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [noEndDate, setNoEndDate] = useState(false);
+  const selectedStartDate = useWatch("start_date", form);
   const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [isSavingDepartment, setIsSavingDepartment] = useState(false);
@@ -1425,8 +1427,37 @@ const ProjectFormModal = ({
         </Form.Item>
       );
     }
-    if (key === "start_date" || key === "end_date") {
-      return <Form.Item name={key} className="pfm-form-item" rules={requiredRules}><DatePicker className="pfm-datepicker" style={{ width: "100%" }} format="DD/MM/YYYY" /></Form.Item>;
+    if (key === "start_date") {
+      return (
+        <Form.Item name="start_date" className="pfm-form-item" rules={requiredRules}>
+          <DatePicker
+            className="pfm-datepicker"
+            style={{ width: "100%" }}
+            format="DD/MM/YYYY"
+            onChange={(startVal) => {
+              const endDate = form.getFieldValue("end_date");
+              if (endDate && startVal && dayjs(endDate).isBefore(dayjs(startVal), "day")) {
+                form.setFieldValue("end_date", null);
+              }
+            }}
+          />
+        </Form.Item>
+      );
+    }
+    if (key === "end_date") {
+      return (
+        <Form.Item name="end_date" className="pfm-form-item" rules={requiredRules}>
+          <DatePicker
+            className="pfm-datepicker"
+            style={{ width: "100%" }}
+            format="DD/MM/YYYY"
+            disabledDate={(current) => {
+              if (!selectedStartDate || !current) return false;
+              return current.isBefore(dayjs(selectedStartDate), "day");
+            }}
+          />
+        </Form.Item>
+      );
     }
     if (key === "technology") {
       return <Form.Item name="technology" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" options={departmentOptions} placeholder="Select department" /></Form.Item>;
@@ -1652,9 +1683,11 @@ const ProjectFormModal = ({
                   className="pfm-datepicker"
                   bordered={false}
                   format="DD/MM/YYYY"
-                  disabledDate={(current) => {
+                  onChange={(startVal) => {
                     const endDate = form.getFieldValue("end_date");
-                    return !!(endDate && current && current.isAfter(dayjs(endDate), "day"));
+                    if (endDate && startVal && dayjs(endDate).isBefore(dayjs(startVal), "day")) {
+                      form.setFieldValue("end_date", null);
+                    }
                   }}
                 />
               </Form.Item>
@@ -1671,17 +1704,7 @@ const ProjectFormModal = ({
                 rules={
                   noEndDate
                     ? []
-                    : [
-                        { required: true, message: "Please select an end date" },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            const startDate = getFieldValue("start_date");
-                            if (!value || !startDate || dayjs(value).isAfter(dayjs(startDate).subtract(1, "day")))
-                              return Promise.resolve();
-                            return Promise.reject(new Error("End date must be later than start date"));
-                          },
-                        }),
-                      ]
+                    : [{ required: true, message: "Please select an end date" }]
                 }
               >
                 <DatePicker
@@ -1691,8 +1714,8 @@ const ProjectFormModal = ({
                   format="DD/MM/YYYY"
                   disabled={noEndDate}
                   disabledDate={(current) => {
-                    const startDate = form.getFieldValue("start_date");
-                    return !!(startDate && current && current.isBefore(dayjs(startDate), "day"));
+                    if (!selectedStartDate || !current) return false;
+                    return current.isBefore(dayjs(selectedStartDate), "day");
                   }}
                 />
               </Form.Item>

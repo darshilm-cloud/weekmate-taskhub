@@ -319,6 +319,7 @@ const CombinedEmployeeList = ({
         exportSampleCSV: exportSampleCSVfile,
         triggerImport: () => inputRef.current?.click(),
         openAddModal: () => showAddEditModal(),
+        openEditModal: (record) => showAddEditModal(record, "edit"),
       };
     }
   });
@@ -352,9 +353,12 @@ const CombinedEmployeeList = ({
         companyId,
         isActivate: values.isActivate,
         email: values.email,
-        password: values.password,
         pmsRoleId: values.pmsRoleId, // Add role ID to payload
       };
+
+      if (values.password) {
+        payload.password = values.password;
+      }
 
       const response = editData
         ? await Service.makeAPICall({
@@ -783,13 +787,15 @@ const CombinedEmployeeList = ({
               </Col>
 
               {/* Password */}
-              {!editData && modalMode !== "view" && (
+              {modalMode !== "view" && (
                 <Col xs={24}>
                   <Form.Item
                     name="password"
                     label="Password"
                     rules={[
-                      { required: true, message: "Password is required" },
+                      ...(!editData
+                        ? [{ required: true, message: "Password is required" }]
+                        : []),
                       {
                         validator: (_, value) => {
                           if (value && /\s/.test(value)) {
@@ -803,7 +809,7 @@ const CombinedEmployeeList = ({
                     ]}
                   >
                     <Input.Password
-                      placeholder="Enter password"
+                      placeholder={editData ? "Enter new password to update" : "Enter password"}
                       autoComplete="new-password"
                     />
                   </Form.Item>
