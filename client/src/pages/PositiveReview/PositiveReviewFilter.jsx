@@ -155,18 +155,20 @@ const createFilterMenuItems = (getRoles) => {
   if (getRoles(["Admin"])) {
     return [
       ...baseItems,
-      {
-        key: FILTER_TYPES.DEPARTMENT,
-        label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
-      },
+      // Department filter hidden
+      // {
+      //   key: FILTER_TYPES.DEPARTMENT,
+      //   label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
+      // },
       {
         key: FILTER_TYPES.MANAGER,
         label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
       },
-      {
-        key: FILTER_TYPES.ACCOUNT_MANAGER,
-        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
-      },
+      // Account Manager filter hidden
+      // {
+      //   key: FILTER_TYPES.ACCOUNT_MANAGER,
+      //   label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      // },
     ];
   }
 

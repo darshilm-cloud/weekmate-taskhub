@@ -67,6 +67,7 @@ import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
+import getRoleLabel from "../../util/roleLabels";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
 import "../TaskPage/TaskDetailModal.css";
@@ -564,7 +565,7 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.getAllRole,
       });
       if (response?.data?.data?.length > 0) {
-        setSubscriberRoles(response.data.data);
+        setSubscriberRoles(response.data.data.filter((r) => r.role_name !== "AM")); // AM role hidden
       } else {
         setSubscriberRoles([]);
       }
@@ -3780,7 +3781,7 @@ const TasksPMS = ({ flag }) => {
                     .filter((r) => r?._id)
                     .map((r) => (
                       <Option key={r?._id} value={r?._id}>
-                        {r?.role_name || r?.name || r?.title || "-"}
+                        {getRoleLabel(r?.role_name || r?.name || r?.title) || "-"}
                       </Option>
                     ))}
                 </Select>

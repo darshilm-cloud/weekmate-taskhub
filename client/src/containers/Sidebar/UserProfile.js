@@ -539,18 +539,19 @@ function UserProfile() {
       ),
       key: "1",
     },
-    {
-      label: (
-        <Link to={`/${companySlug}/project-technologies`}>
-          <span className="setting-menu">
-            {" "}
-            <i className="fi fi-rr-microchip"></i>
-            Departments
-          </span>
-        </Link>
-      ),
-      key: "2",
-    },
+    // Departments menu item hidden
+    // {
+    //   label: (
+    //     <Link to={`/${companySlug}/project-technologies`}>
+    //       <span className="setting-menu">
+    //         {" "}
+    //         <i className="fi fi-rr-microchip"></i>
+    //         Departments
+    //       </span>
+    //     </Link>
+    //   ),
+    //   key: "2",
+    // },
     {
       label: (
         <Link to={`/${companySlug}/manage-project-type`}>
@@ -689,7 +690,7 @@ function UserProfile() {
               </Dropdown>
             )}
 
-            <button
+            {/* <button
               type="button"
               className={`taskpad-theme-toggle ${isLightTheme ? "theme-light" : "theme-dark"}`}
               onClick={handleThemeToggle}
@@ -699,7 +700,7 @@ function UserProfile() {
               <span className="taskpad-theme-sun" aria-hidden>☀</span>
               <span className="taskpad-theme-moon" aria-hidden>🌙</span>
               <span className="taskpad-theme-knob" />
-            </button>
+            </button> */}
 
             <Popover
               placement="bottomRight"
@@ -1291,7 +1292,7 @@ function UserProfile() {
                                   noteComments: true,
                                   fileSubscribed: true,
                                 };
-                                if (getRoles(["PC", "TL", "Admin", "AM"])) next.hoursLogged = true;
+                                if (getRoles(["PC", "TL", "Admin"])) next.hoursLogged = true;
                                 emailSetting.setFieldsValue(next);
                               }}
                             >
@@ -1364,7 +1365,7 @@ function UserProfile() {
                             group: "Files",
                             items: [{ name: "fileSubscribed", label: "A file is subscribed to me" }],
                           },
-                          ...(getRoles(["PC", "TL", "Admin", "AM"])
+                          ...(getRoles(["PC", "TL", "Admin"])
                             ? [
                               {
                                 group: "Timesheet",

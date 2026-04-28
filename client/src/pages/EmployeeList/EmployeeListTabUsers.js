@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState } from "react";
+import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
   Button,
@@ -86,7 +87,7 @@ const CombinedEmployeeList = ({
       dispatch(hideAuthLoader());
 
       if (response?.data?.data?.length > 0) {
-        setRoles(response.data.data);
+        setRoles(response.data.data.filter((r) => r.role_name !== "AM")); // AM role hidden
       } else {
         setRoles([]);
       }
@@ -161,7 +162,7 @@ const CombinedEmployeeList = ({
         if (onDataLoaded) onDataLoaded([]);
       }
     } catch (err) {
-      message.error("Failed to fetch employees");
+      message.error("Failed to fetch users");
       dispatch(hideAuthLoader());
     } finally {
       setLoading(false);
@@ -386,7 +387,7 @@ const CombinedEmployeeList = ({
       }
 
       message.success(
-        editData ? "Employee updated successfully" : "Employee added successfully"
+        editData ? "User updated successfully" : "User added successfully"
       );
       setModalVisible(false);
       fetchEmployees();
@@ -402,12 +403,12 @@ const CombinedEmployeeList = ({
         methodName: Service.deleteMethod,
         api_url: `${Service.deleteUser}/${id}`,
       });
-      message.success("Employee deleted successfully");
+      message.success("User deleted successfully");
       fetchEmployees();
       onMutationSuccess?.();
     } catch (err) {
-      console.error("Failed to delete employee:", err);
-      message.error("Failed to delete employee");
+      console.error("Failed to delete user:", err);
+      message.error("Failed to delete user");
     }
   };
 
@@ -496,7 +497,7 @@ const CombinedEmployeeList = ({
       dataIndex: "role_name",
       key: "role_name",
       render: (text, record) => {
-        return <span>{record?.pms_role?.role_name || "N/A"}</span>;
+        return <span>{getRoleLabel(record?.pms_role?.role_name) || "N/A"}</span>;
       },
     },
     {
@@ -580,7 +581,7 @@ const CombinedEmployeeList = ({
       >
         <Search
           ref={searchRef}
-          placeholder={taskLikeDesign ? "Search" : "Search employees"}
+          placeholder={taskLikeDesign ? "Search" : "Search users"}
           onSearch={onSearch}
           onKeyUp={resetSearchFilter}
           style={{ width: taskLikeDesign ? 220 : 200 }}
@@ -644,7 +645,7 @@ const CombinedEmployeeList = ({
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal()}
             >
-              Add Employee
+              Add User
             </Button>
           </div>
         )}
@@ -676,17 +677,17 @@ const CombinedEmployeeList = ({
             <>
               <h2 >
                 {modalMode === "view"
-                  ? "View Employee"
+                  ? "View User"
                   : editData
-                    ? "Edit Employee"
-                    : "Add Employee"}
+                    ? "Edit User"
+                    : "Add User"}
               </h2>
               <h5 >
                 {modalMode === "view"
-                  ? "Review employee profile details and role information."
+                  ? "Review user profile details and role information."
                   : editData
-                    ? "Update employee identity, access role, and account settings."
-                    : "Create a polished employee profile with role and login access details."}
+                    ? "Update user identity, access role, and account settings."
+                    : "Create a polished user profile with role and login access details."}
               </h5>
             </>
   
@@ -779,7 +780,7 @@ const CombinedEmployeeList = ({
                   >
                     {roles.map((role) => (
                       <Option key={role._id} value={role._id}>
-                        {role.role_name}
+                        {getRoleLabel(role.role_name)}
                       </Option>
                     ))}
                   </Select>

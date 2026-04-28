@@ -601,8 +601,9 @@ const AssignProject = () => {
 
     if (!shouldSkip("skipManager") && normalizedFilters.manager.length > 0)
       reqBody.manager_id = normalizedFilters.manager;
-    if (!shouldSkip("skipAccountManager") && normalizedFilters.account_manager.length > 0)
-      reqBody.acc_manager_id = normalizedFilters.account_manager;
+    // AM hidden: skipAccountManager filter removed
+    // if (!shouldSkip("skipAccountManager") && normalizedFilters.account_manager.length > 0)
+    //   reqBody.acc_manager_id = normalizedFilters.account_manager;
     if (!shouldSkip("skipTechnology") && normalizedFilters.technology.length > 0) {
       reqBody.technology = normalizedFilters.technology;
       reqBody.category = normalizedFilters.technology;
@@ -1075,7 +1076,7 @@ const AssignProject = () => {
     if (projectTypeId) payload.project_type = projectTypeId;
     if (managerId) payload.manager = managerId;
     if (workflowId) payload.workFlow = workflowId;
-    if (accountManagerId) payload.acc_manager = accountManagerId;
+    // if (accountManagerId) payload.acc_manager = accountManagerId; // AM hidden
     if (project?.start_date) payload.start_date = project.start_date;
     if (project?.end_date) payload.end_date = project.end_date;
 
@@ -1599,26 +1600,20 @@ const AssignProject = () => {
         );
       },
     },
-    {
-      title: "AM",
-      dataIndex: "acc_manager",
-      key: "acc_manager",
-      width: 80,
-      render: (text, record) => (
-        <div className="avtar-group">
-          {record?.acc_manager ? (
-            <MyAvatar
-              userName={record.acc_manager.full_name || "-"}
-              src={record.acc_manager.emp_img}
-              key={record.acc_manager._id}
-              alt={record.acc_manager.full_name}
-            />
-          ) : (
-            " - "
-          )}
-        </div>
-      ),
-    },
+    // AM column hidden
+    // {
+    //   title: "AM",
+    //   dataIndex: "acc_manager",
+    //   key: "acc_manager",
+    //   width: 80,
+    //   render: (text, record) => (
+    //     <div className="avtar-group">
+    //       {record?.acc_manager ? (
+    //         <MyAvatar userName={record.acc_manager.full_name || "-"} src={record.acc_manager.emp_img} key={record.acc_manager._id} alt={record.acc_manager.full_name} />
+    //       ) : " - "}
+    //     </div>
+    //   ),
+    // },
     {
       title: "PM",
       dataIndex: "manager",

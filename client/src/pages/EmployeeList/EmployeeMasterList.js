@@ -32,6 +32,7 @@ import EmployeeListTabUsers from "./EmployeeListTabUsers";
 import UserDashboard from "./UserDashboard";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import getRoleLabel from "../../util/roleLabels";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
@@ -379,7 +380,7 @@ const EmployeeMasterList = () => {
     let active = 0, inactive = 0, admins = 0;
     users.forEach((u) => {
       if (u.isActivate) active++; else inactive++;
-      const role = u?.pms_role?.role_name || "N/A";
+      const role = getRoleLabel(u?.pms_role?.role_name) || "N/A";
       roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
       if (role.toLowerCase().includes("admin")) admins++;
     });
@@ -461,12 +462,12 @@ const EmployeeMasterList = () => {
         return [
           name || "—",
           user.email || "",
-          user?.pms_role?.role_name || "N/A",
+          getRoleLabel(user?.pms_role?.role_name) || "N/A",
           user.isActivate ? "Active" : "Inactive",
         ];
       }),
     ];
-    downloadCsvFile(rows, "Users Employees.csv");
+    downloadCsvFile(rows, "Users.csv");
   }, [filteredUsers, downloadCsvFile]);
 
   const exportClientsCsv = useCallback(() => {
@@ -510,7 +511,7 @@ const EmployeeMasterList = () => {
 
     filteredUsers.forEach((u) => {
       if (u.isActivate) active++; else inactive++;
-      const role = u?.pms_role?.role_name || "N/A";
+      const role = getRoleLabel(u?.pms_role?.role_name) || "N/A";
       roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
       if (role.toLowerCase().includes("admin")) admins++;
     });
@@ -663,13 +664,13 @@ const EmployeeMasterList = () => {
     },
     legend: { show: false },
     grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
-    tooltip: { y: { formatter: (v) => `${v} employees` } },
+    tooltip: { y: { formatter: (v) => `${v} users` } },
   };
 
   /* ── sidebar employee item ─────────────────────────────────────── */
   const SidebarUserItem = ({ user }) => {
     const name = removeTitle(user.full_name || `${user.first_name || ""} ${user.last_name || ""}`);
-    const role = user?.pms_role?.role_name || "";
+    const role = getRoleLabel(user?.pms_role?.role_name) || "";
     const isActive = selectedUserId === user._id;
     const isFav = favorites.includes(user._id);
     const bg = avatarColor(name);
@@ -745,7 +746,7 @@ const EmployeeMasterList = () => {
                 setEmployeeStatusFilter("all");
               }}
             >
-              Employees
+              Users
             </button>
             <button
               className={`sidebar-mode-btn ${sidebarMode === "clients" ? "active" : ""}`}
@@ -784,7 +785,7 @@ const EmployeeMasterList = () => {
                   {/* Search Bar */}
                   <div className="sidebar-search-container" style={{ padding: "8px 16px" }}>
                     <Search
-                      placeholder="Search employees..."
+                      placeholder="Search users..."
                       allowClear
                       value={localSearch}
                       onChange={(e) => {
@@ -820,7 +821,7 @@ const EmployeeMasterList = () => {
                     <>
                       <NoDataFoundIcon />
                       <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                        No employees found
+                        No users found
                       </div>
                     </>
                   )}
@@ -912,7 +913,7 @@ const EmployeeMasterList = () => {
                 </Button>
               </Tooltip>
               <Button type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
-                <PlusOutlined /> <span>Add Employee</span>
+                <PlusOutlined /> <span>Add User</span>
               </Button>
             </div>
           )}
@@ -926,7 +927,7 @@ const EmployeeMasterList = () => {
                 icon={<EditOutlined />}
                 onClick={() => employeeActionsRef.current?.openEditModal(selectedUser)}
               >
-                Edit Employee
+                Edit User
               </Button>
             </div>
           )}
@@ -1031,7 +1032,7 @@ const EmployeeMasterList = () => {
                   <AnalyticsCard
                     icon={<TeamOutlined />}
                     value={globalStats?.employees?.total ?? permanentAnalytics.total}
-                    label="Total Employees"
+                    label="Total Users"
                     colorClass="blue"
                     active={employeeStatusFilter === "all"}
                   />
@@ -1102,11 +1103,11 @@ const EmployeeMasterList = () => {
                         />
                       </div>
                       <div className="chart-card">
-                        <div className="chart-card-title">Employee Status</div>
+                        <div className="chart-card-title">User Status</div>
                         <ReactApexChart
                           type="bar"
                           series={[{
-                            name: "Employees",
+                            name: "Users",
                             data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
                           }]}
                           options={barOptions}

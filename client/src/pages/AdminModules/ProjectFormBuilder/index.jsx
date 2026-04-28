@@ -31,9 +31,9 @@ const LINKED_MODULE_OPTIONS = [
   { value: "project_types", label: "Categories" },
   { value: "project_statuses", label: "Project Statuses" },
   { value: "workflows", label: "Workflows" },
-  { value: "departments", label: "Departments" },
+  // { value: "departments", label: "Departments" }, // Department hidden
   { value: "managers", label: "Project Managers" },
-  { value: "account_managers", label: "Account Managers" },
+  // { value: "account_managers", label: "Account Managers" }, // AM hidden
 ];
 
 const toLabel = (key = "") =>
@@ -362,7 +362,7 @@ const ProjectFormBuilder = () => {
                 let rowFill = 0; // md grid out of 24
 
                 ordered.forEach((field, index) => {
-                  const isFullWidth = String(field?.key || "").trim().toLowerCase() === "descriptions";
+                  const isFullWidth = ["descriptions", "title"].includes(String(field?.key || "").trim().toLowerCase());
                   const span = isFullWidth ? 24 : 12;
 
                   if (draggingFieldKey && rowFill === 12 && span === 24) {
@@ -415,7 +415,6 @@ const ProjectFormBuilder = () => {
                               size="small"
                               checked={Boolean(field.required)}
                               onChange={(checked) => handleRequiredToggle(field.key, checked)}
-                              disabled
                             />
                             <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
                               <Button

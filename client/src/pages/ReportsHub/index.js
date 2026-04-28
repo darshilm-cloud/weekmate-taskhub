@@ -1242,11 +1242,11 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "project-running") {
       items = reportData['project-running']?.data || [];
-      headers = ["Project Name", "Manager", "Department", "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"];
+      headers = ["Project Name", "Manager", /* "Department", */ "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"]; // Department hidden
       const rows = items.map((item) => [
         item.title || "",
         item.managerName || "",
-        item.technologyName?.join(", ") || "",
+        // item.technologyName?.join(", ") || "", // Department hidden
         item.project_typeName || "",
         item.estimatedHours || 0,
         item.total_logged_time || 0,
@@ -3648,20 +3648,21 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
       dataIndex: "managerName",
       key: "managerName",
     },
-    {
-      title: "Department",
-      dataIndex: "technologyName",
-      key: "technologyName",
-      render: (techArray) => (
-        <div>
-          {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
-            <span key={index} className="tech-tag">
-              {tech}
-            </span>
-          ))}
-        </div>
-      ),
-    },
+    // Department column hidden
+    // {
+    //   title: "Department",
+    //   dataIndex: "technologyName",
+    //   key: "technologyName",
+    //   render: (techArray) => (
+    //     <div>
+    //       {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
+    //         <span key={index} className="tech-tag">
+    //           {tech}
+    //         </span>
+    //       ))}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Category",
       dataIndex: "project_typeName",

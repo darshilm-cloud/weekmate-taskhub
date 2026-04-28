@@ -75,7 +75,7 @@ const SuperAdminBillableHours = () => {
   useEffect(() => {
     if (
       (tempEmployeeRole && tempEmployeeRole == "my_emp") ||
-      getRoles(["PC", "AM"])
+      getRoles(["PC"])
     ) {
       getEmployeesListRoleWise();
     } else {
@@ -194,7 +194,7 @@ const SuperAdminBillableHours = () => {
 
   const PCColumns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -362,7 +362,7 @@ const SuperAdminBillableHours = () => {
 
   const USERColumns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -580,7 +580,7 @@ const SuperAdminBillableHours = () => {
 
   const columns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -637,14 +637,15 @@ const SuperAdminBillableHours = () => {
         );
       },
     },
-    {
-      title: "Department",
-      render: (text) => (text ? text.department : "-"),
-    },
-    {
-      title: "Sub-Department",
-      render: (text) => (text ? text.subdepartment : "-"),
-    },
+    // Department columns hidden
+    // {
+    //   title: "Department",
+    //   render: (text) => (text ? text.department : "-"),
+    // },
+    // {
+    //   title: "Sub-Department",
+    //   render: (text) => (text ? text.subdepartment : "-"),
+    // },
     {
       title: "Tracked Hours",
       render: (record) => {
@@ -1087,7 +1088,7 @@ const SuperAdminBillableHours = () => {
           <div className="status-content">
             {getRoles(["Admin"]) && (
               <div style={{ cursor: "pointer" }}>
-                <h6>Search Employee by Role</h6>
+                <h6>Search User by Role</h6>
                 <Popover
                   trigger="click"
                   visible={popOver.byRole}
@@ -1153,11 +1154,12 @@ const SuperAdminBillableHours = () => {
                   }
                 >
                   <i className="fi fi-rr-users"></i>{" "}
-                  {selectedEmployeeRole == "" ? "All Employee" : "My Employee"}
+                  {selectedEmployeeRole == "" ? "All Users" : "Users"}
                 </Popover>
               </div>
             )}
 
+            {/* Department filter hidden
             {getRoles(["Admin"]) && (
               <div
                 className="search-department-billable-hours"
@@ -1236,6 +1238,7 @@ const SuperAdminBillableHours = () => {
                 </Popover>
               </div>
             )}
+            */}
             {!getRoles(["User"]) && (
               <div style={{ cursor: "pointer" }}>
                 <h6>Search by employee</h6>

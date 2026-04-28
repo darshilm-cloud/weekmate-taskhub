@@ -17,12 +17,12 @@ const DEFAULT_PROJECT_FIELDS = [
   { key: "descriptions", label: "Description", type: "textarea", required: false, isDefault: true },
   { key: "start_date", label: "Start Date", type: "date", required: true, isDefault: true },
   { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
-  { key: "technology", label: "Department", type: "multiselect", required: true, isDefault: true },
+  { key: "technology", label: "Department", type: "multiselect", required: false, isDefault: true }, // Department hidden from UI
   { key: "project_type", label: "Category", type: "select", required: true, isDefault: true },
   { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
   { key: "assignees", label: "Assignee", type: "multiselect", required: false, isDefault: true },
   { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },
-  { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false },
+  // { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false }, // AM hidden
   { key: "workFlow", label: "Associate Workflow", type: "select", required: true, isDefault: true },
   { key: "project_status", label: "Status", type: "select", required: false, isDefault: true },
   { key: "estimatedHours", label: "Estimated Hours", type: "number", required: true, isDefault: true },
@@ -55,7 +55,7 @@ const ALLOWED_LINKED_MODULES = [
   "workflows",
   "departments",
   "managers",
-  "account_managers",
+  // "account_managers", // AM hidden
 ];
 
 const normalizeField = (field, order) => {
@@ -265,8 +265,8 @@ exports.addEditProjectFormConfig = async (req, res) => {
                 "project_statuses",
                 "workflows",
                 "departments",
-                "managers",
-                "account_managers"
+                "managers"
+                // "account_managers" // AM hidden
               )
               .allow(null, "")
               .optional(),

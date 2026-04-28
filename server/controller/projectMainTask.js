@@ -198,15 +198,12 @@ exports.getProjectsMainTask = async (req, res) => {
       if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data, cached.metadata);
     }
 
-    const [isClient, isAdmin, isManager, isAccManager] =
+    const [isClient, isAdmin, isManager/*, isAccManager*/] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
         this.checkLoginUserIsProjectManager(value.project_id, req.user._id),
-        this.checkLoginUserIsProjectAccountManager(
-          value.project_id,
-          req.user._id
-        )
+        // this.checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
       ]);
 
     let matchQuery = {
@@ -214,7 +211,7 @@ exports.getProjectsMainTask = async (req, res) => {
       project_id: new mongoose.Types.ObjectId(value.project_id),
       // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $or: [
               { isPrivateList: false },
@@ -240,7 +237,7 @@ exports.getProjectsMainTask = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager  && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager && !isClient && !isAdmin /* && !isAccManager */) { // AM hidden
       task_query = [
         ...task_query,
         {
@@ -1136,7 +1133,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data);
     }
 
-    const [isClient, isAdmin, isManager, isAccManager] =
+    const [isClient, isAdmin, isManager/*, isAccManager*/] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
@@ -1144,16 +1141,13 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           value.project_id,
           req.user._id
         ),
-        this.checkLoginUserIsProjectAccountManager(
-          value.project_id,
-          req.user._id
-        )
+        // this.checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
       ]);
 
     let initialMatch = {
       isDeleted: false,
       _id: new mongoose.Types.ObjectId(value.main_task_id),
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $or: [
               { isPrivateList: false },
@@ -1192,7 +1186,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager && !isClient && !isAdmin /* && !isAccManager */) { // AM hidden
       taskQuery = [
         ...taskQuery,
         {

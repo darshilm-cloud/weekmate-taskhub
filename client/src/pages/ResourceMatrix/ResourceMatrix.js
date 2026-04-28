@@ -356,7 +356,7 @@ const ResourceMatrix = () => {
 
   const tableColumns = [
     {
-      title: "Employee / Projects",
+      title: "User / Projects",
       dataIndex: "employee",
       key: "employee",
       fixed: "left",
@@ -461,7 +461,7 @@ const ResourceMatrix = () => {
         <div className="global-search">
           <Input.Search
             allowClear
-            placeholder="Search employee name"
+            placeholder="Search user name"
             value={employeeSearch}
             onChange={(e) => setEmployeeSearch(e.target.value)}
             style={{ width: 250 }}
@@ -517,7 +517,7 @@ const ResourceMatrix = () => {
         </div>
         <div className="rm-pagination-container">
           <div className="rm-pagination-info">
-            Showing {backendData.length} of {metadata.totalEmployees} employees
+            Showing {backendData.length} of {metadata.totalEmployees} users
           </div>
           <Pagination
             current={pagination.current}

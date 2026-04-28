@@ -290,10 +290,11 @@ const ComplaintDetailsForm = ({
               <div className="cad-info-label">Project Manager</div>
               <div className="cad-info-value">{complaintsData?.manager?.full_name || "—"}</div>
             </div>
-            <div className="cad-info-field">
+            {/* Account Manager hidden */}
+            {/* <div className="cad-info-field">
               <div className="cad-info-label">Account Manager</div>
               <div className="cad-info-value">{complaintsData?.acc_manager?.full_name || "—"}</div>
-            </div>
+            </div> */}
             <div className="cad-info-field">
               <div className="cad-info-label">Date</div>
               <div className="cad-info-value">

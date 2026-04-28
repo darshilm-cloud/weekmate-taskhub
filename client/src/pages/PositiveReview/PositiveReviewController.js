@@ -217,7 +217,7 @@ const PositiveReviewController = () => {
         project_id: selectedProject,
         technology: technology,
         manager_id: manager,
-        acc_manager_id: accontManager,
+        // acc_manager_id: accontManager, // AM hidden
         feedback_type: feedBackTypeFilter,
       };
 

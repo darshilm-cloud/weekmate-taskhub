@@ -41,7 +41,7 @@ const { sendmailToAssignees, taskData } = require("./sendEmail");
 const { taskStatusUpdateMail } = require("../template/tasks");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -3020,10 +3020,10 @@ exports.getProjectsWiseTask = async (req, res) => {
   try {
     const projectId = new mongoose.Types.ObjectId(req.params.projectId);
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(projectId, req.user._id),
-      checkLoginUserIsProjectAccountManager(projectId, req.user._id)
+      // checkLoginUserIsProjectAccountManager(projectId, req.user._id), // AM hidden
     ]);
 
     let matchQuery = {
@@ -3035,7 +3035,7 @@ exports.getProjectsWiseTask = async (req, res) => {
       { $eq: ["$_id", "$$mainTaskId"] },
       { $eq: ["$isDeleted", false] }
     ];
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       mainTaskQuery = [
         ...mainTaskQuery,
         {

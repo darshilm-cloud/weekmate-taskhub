@@ -21,7 +21,7 @@ const {
 } = require("../helpers/common");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -107,13 +107,13 @@ exports.getFileFolders = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       fileQuery = [
         ...fileQuery,
         {
@@ -157,8 +157,8 @@ exports.getFileFolders = async (req, res) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;
@@ -171,8 +171,8 @@ exports.getFileFolders = async (req, res) => {
         if (
           file.createdBy == req.user?._id ||
           isAdmin ||
-          isManager ||
-          isAccManager
+          isManager
+          // || isAccManager // AM hidden
         ) {
           file.isDeletable = true;
           file.isEditable = true;
@@ -443,16 +443,16 @@ exports.getProjectAllFiles = async (req, res) => {
       );
     }
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $expr: {
               $and: [

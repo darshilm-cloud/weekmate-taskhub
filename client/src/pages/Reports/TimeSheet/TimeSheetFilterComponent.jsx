@@ -141,29 +141,30 @@ const FILTER_CONFIG = {
       departments: selectedDepartments || [],
     }),
   },
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getsubDepartmentList,
-    method: Service.getMethod,
-    limit: 25,
-    label: "Department",
-    getName: (item) => item.title || item.department || "",
-    skipParam: "skipDepartment",
-    searchKey: "title",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.title || item.department || "-"}</span>
-      </div>
-    ),
-  },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getsubDepartmentList,
+  //   method: Service.getMethod,
+  //   limit: 25,
+  //   label: "Department",
+  //   getName: (item) => item.title || item.department || "",
+  //   skipParam: "skipDepartment",
+  //   searchKey: "title",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{item.title || item.department || "-"}</span>
+  //     </div>
+  //   ),
+  // },
 };
 
 // Create filter menu items

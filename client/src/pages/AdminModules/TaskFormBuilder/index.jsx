@@ -362,7 +362,7 @@ const TaskFormBuilder = () => {
                 let rowFill = 0; // md grid out of 24
 
                 ordered.forEach((field, index) => {
-                  const isFullWidth = String(field?.key || "").trim().toLowerCase() === "description";
+                  const isFullWidth = ["description", "title"].includes(String(field?.key || "").trim().toLowerCase());
                   const span = isFullWidth ? 24 : 12;
 
                   if (draggingFieldKey && rowFill === 12 && span === 24) {
@@ -418,7 +418,6 @@ const TaskFormBuilder = () => {
                               size="small"
                               checked={Boolean(field.required)}
                               onChange={(checked) => handleRequiredToggle(field.key, checked)}
-                              disabled
                             />
                             <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
                               <Button

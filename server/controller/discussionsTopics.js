@@ -21,7 +21,7 @@ const {
 const { discussionsTopicSubscribersMail } = require("./sendEmail");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -224,13 +224,13 @@ exports.getDiscussionsTopics = async (req, res) => {
       ...(value.type === "Task" ? { task_id: { $ne: null } } : {})
     };
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req?.user?._id),
       value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
-      value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
+      // value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false), // AM hidden
     ]);
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -417,8 +417,8 @@ exports.getDiscussionsTopics = async (req, res) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;

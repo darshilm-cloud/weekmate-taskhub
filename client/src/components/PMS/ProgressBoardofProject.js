@@ -315,25 +315,15 @@ function ProgressBoardofProject() {
     }
   };
 
-  const getAccountManager = async (values) => {
-    try {
-      dispatch(showAuthLoader());
-      const reqBody = {
-        ...values,
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getAccountManager,
-        body: reqBody,
-      });
-      dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setAccountManagerList(response?.data?.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // AM hidden: getAccountManager commented out
+  // const getAccountManager = async (values) => {
+  //   try {
+  //     dispatch(showAuthLoader());
+  //     const response = await Service.makeAPICall({ methodName: Service.getMethod, api_url: Service.getAccountManager, body: values });
+  //     dispatch(hideAuthLoader());
+  //     if (response?.data?.data) setAccountManagerList(response.data.data);
+  //   } catch (error) { console.log(error); }
+  // };
 
   const getClients = async (values) => {
     try {
@@ -380,7 +370,7 @@ function ProgressBoardofProject() {
       dispatch(showAuthLoader());
       const reqBody = {
         manager: values.manager,
-        acc_manager: values.acc_manager,
+        // acc_manager: values.acc_manager, // AM hidden
         assignees: values.assignees,
         pms_clients: values.clients,
       };
@@ -436,7 +426,7 @@ function ProgressBoardofProject() {
 
   useEffect(() => {
     getManager();
-    getAccountManager();
+    // getAccountManager(); // AM hidden
     getClients();
     getAssignees();
     getProjectByID();
@@ -1018,9 +1008,9 @@ function ProgressBoardofProject() {
         assignees={peopleValues.assignees}
         clients={peopleValues.clients}
         manager={peopleValues.manager}
-        acc_manager={peopleValues.acc_manager}
+        // acc_manager={peopleValues.acc_manager} // AM hidden
+        // accManagerList={accountManagerList} // AM hidden
         managerList={managerList}
-        accManagerList={accountManagerList}
       />
     </>
   );

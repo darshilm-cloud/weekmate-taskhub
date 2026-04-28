@@ -19,6 +19,7 @@ import PermissionModuleController from "./PermissionModuleController";
 import { PermissionPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./PermissionModule.css";
+import getRoleLabel from "../../util/roleLabels";
 
 /* ─── Role avatar colours (deterministic from name) ────────────── */
 const ROLE_COLORS = [
@@ -289,7 +290,8 @@ const PermissionModule = () => {
           <div className="rpm-sidebar-title">Roles</div>
           {roleListData.map((role) => {
             const bg      = roleColor(role.role_name);
-            const initial = (role.role_name || "?")[0].toUpperCase();
+            const label   = getRoleLabel(role.role_name);
+            const initial = (label || "?")[0].toUpperCase();
             const active  = role._id === selectedRoleId;
             return (
               <div
@@ -300,7 +302,7 @@ const PermissionModule = () => {
                 <div className="rpm-role-avatar" style={{ background: bg }}>
                   {initial}
                 </div>
-                <span className="rpm-role-name">{role.role_name}</span>
+                <span className="rpm-role-name">{label}</span>
               </div>
             );
           })}
@@ -312,7 +314,7 @@ const PermissionModule = () => {
             <div>
               <div className="rpm-panel-title">
                 {selectedRole
-                  ? `${selectedRole.role_name} — Permission Matrix`
+                  ? `${getRoleLabel(selectedRole.role_name)} — Permission Matrix`
                   : "Select a role"}
               </div>
               <div className="rpm-panel-sub">
@@ -454,7 +456,7 @@ const PermissionModule = () => {
                 <WarningOutlined />
                 You have unsaved permission changes for{" "}
                 <strong>
-                  {selectedRole?.role_name}
+                  {getRoleLabel(selectedRole?.role_name)}
                 </strong>
               </div>
               <div className="rpm-save-bar-actions">

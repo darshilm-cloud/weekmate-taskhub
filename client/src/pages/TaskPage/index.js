@@ -955,6 +955,64 @@ const TaskPage = () => {
         return acc;
       }, {});
 
+      // Fetch authoritative stage sequences + workflow names so the kanban
+      // column order always matches Workflow Stages config and duplicate-named
+      // stages can be labelled with their workflow name.
+      const uniqueWorkflowIds = [
+        ...new Set(
+          Object.values(nextStatusMetaBySection)
+            .map((m) => m.workflowId)
+            .filter((id) => id && MONGO_ID_REGEX.test(String(id)))
+        ),
+      ];
+      if (uniqueWorkflowIds.length > 0) {
+        try {
+          const [stageLists, workflowListResp] = await Promise.all([
+            Promise.all(
+              uniqueWorkflowIds.map((wfId) =>
+                Service.makeAPICall({
+                  methodName: Service.getMethod,
+                  api_url: `${Service.getworkflowStatus}/${wfId}`,
+                }).then((res) =>
+                  Array.isArray(res?.data?.data) ? res.data.data : []
+                ).catch(() => [])
+              )
+            ),
+            Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.getworkflow,
+              body: { isDropdown: true, pageNo: 1, limit: 500 },
+            }).catch(() => null),
+          ]);
+
+          const workflowNameMap = new Map();
+          (Array.isArray(workflowListResp?.data?.data) ? workflowListResp.data.data : [])
+            .forEach((wf) => {
+              if (wf?._id) workflowNameMap.set(String(wf._id), wf.project_workflow || "");
+            });
+
+          stageLists.flat().forEach((stage) => {
+            const stId = String(stage?._id || "");
+            if (!stId) return;
+            const sectionKey = Object.keys(nextStatusMetaBySection).find(
+              (k) => String(nextStatusMetaBySection[k]?.statusId || "") === stId
+            );
+            if (sectionKey) {
+              if (Number.isFinite(Number(stage?.sequence))) {
+                nextStatusMetaBySection[sectionKey].sequence = Number(stage.sequence);
+              }
+              const wfId = nextStatusMetaBySection[sectionKey].workflowId;
+              if (wfId && workflowNameMap.has(String(wfId))) {
+                nextStatusMetaBySection[sectionKey].workflowName =
+                  workflowNameMap.get(String(wfId));
+              }
+            }
+          });
+        } catch {
+          /* non-fatal: fall back to existing sequences */
+        }
+      }
+
       const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals, nextStatusMetaBySection);
       sectionOrder.forEach((bucketId) => {
         const sectionTotal = Number(statusCountBySection?.[bucketId] || nextBuckets?.[bucketId]?.total || 0);
@@ -1412,9 +1470,30 @@ const TaskPage = () => {
       };
     });
 
+    // Detect which normalized titles appear more than once (different workflows).
+    // Those get their workflow name appended and are NOT merged.
+    const titleFrequency = new Map();
+    rawColumns.forEach((col) => {
+      const key = normalizeKanbanStatusKey(col?.title || col?.id || "");
+      titleFrequency.set(key, (titleFrequency.get(key) || 0) + 1);
+    });
+
     const grouped = new Map();
     rawColumns.forEach((col) => {
       const displayKey = normalizeKanbanStatusKey(col?.title || col?.id || "");
+      const isDuplicate = (titleFrequency.get(displayKey) || 0) > 1;
+
+      if (isDuplicate) {
+        // Keep each duplicate column separate, labelled with its workflow name.
+        const wfLabel = col.workflowName ? ` (${col.workflowName})` : "";
+        grouped.set(col.id, {
+          ...col,
+          title: col.title + wfLabel,
+          tasks: [...(col?.tasks || [])],
+        });
+        return;
+      }
+
       const safeKey = displayKey || String(col?.id || "");
       if (!grouped.has(safeKey)) {
         grouped.set(safeKey, {
@@ -1672,6 +1751,26 @@ const TaskPage = () => {
     const statusToSend = targetColumn?.statusId || targetColumn?.statusMeta?._id || targetColumn?.title;
     if (!taskId || !statusToSend) {
       message.error("Unable to move task to this column");
+      return;
+    }
+
+    /* workflow mismatch guard — task belongs to a different project workflow
+       than the target stage, so moving it there would be invalid */
+    const taskWorkflowId =
+      previousTask?.task_status?.workflow_id ||
+      statusMetaBySection[
+        Object.keys(statusMetaBySection).find((sId) =>
+          String(statusMetaBySection[sId]?.statusId || "") ===
+          String(previousTask?.task_status?._id || previousTask?._stId || "")
+        )
+      ]?.workflowId;
+    const targetWorkflowId = targetColumn?.workflowId;
+    if (taskWorkflowId && targetWorkflowId && String(taskWorkflowId) !== String(targetWorkflowId)) {
+      Modal.warning({
+        title: "Stage not available",
+        content: `The stage "${targetColumn?.title || "this stage"}" does not belong to this task's project workflow. Please use only the stages configured for the task's project.`,
+        okText: "OK",
+      });
       return;
     }
 

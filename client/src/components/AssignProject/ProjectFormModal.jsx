@@ -43,6 +43,7 @@ import { removeTitle } from "../../util/nameFilter";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import { useParams, useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getRoles } from "../../util/hasPermission";
+import getRoleLabel from "../../util/roleLabels";
 import "./ProjectFormModal.css";
 
 // ── Module-level dropdown cache (persists across modal opens) ───────────────
@@ -57,7 +58,7 @@ const _dropdownCache = {
   projectManagerList: null,
   projectAssigneesList: null,
   projectClientList: null,
-  accountManagerList: null,
+  // accountManagerList: null, // AM hidden
   projectTypeSlug: null,
 };
 // track if an in-flight fetch is happening so parallel opens don't double-fetch
@@ -73,7 +74,7 @@ const PROJECT_BUILTIN_FIELD_KEYS = new Set([
   "pms_clients",
   "assignees",
   "manager",
-  "acc_manager",
+  // "acc_manager", // AM hidden
   "workFlow",
   "project_status",
   "estimatedHours",
@@ -110,7 +111,8 @@ const ProjectFormModal = ({
   const [projectManagerList, setProjectManagerList] = useState(_dropdownCache.projectManagerList || []);
   const [projectAssigneesList, setProjectAssigneesList] = useState(_dropdownCache.projectAssigneesList || []);
   const [projectClientList, setProjectClientList] = useState(_dropdownCache.projectClientList || []);
-  const [accountManagerList, setAccountManagerList] = useState(_dropdownCache.accountManagerList || []);
+  // const [accountManagerList, setAccountManagerList] = useState(_dropdownCache.accountManagerList || []); // AM hidden
+  const [accountManagerList] = useState([]);
   const [selectedClient, setSelectedClient] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [newFilteredAssignees, setNewFilteredAssignees] = useState([]);
@@ -130,7 +132,7 @@ const ProjectFormModal = ({
     _dropdownCache.projectManagerList &&
     _dropdownCache.projectAssigneesList &&
     _dropdownCache.projectClientList &&
-    _dropdownCache.accountManagerList &&
+    // _dropdownCache.accountManagerList && // AM hidden
     _dropdownCache.projectTypeSlug !== null
   );
   const [isLoading, setIsLoading] = useState(!cacheReady || Boolean(selectedProject));
@@ -170,7 +172,8 @@ const ProjectFormModal = ({
     projectManagerList: overrides.projectManagerList ?? projectManagerList,
     projectAssigneesList: overrides.projectAssigneesList ?? projectAssigneesList,
     projectClientList: overrides.projectClientList ?? projectClientList,
-    accountManagerList: overrides.accountManagerList ?? accountManagerList,
+    // accountManagerList: overrides.accountManagerList ?? accountManagerList, // AM hidden
+    accountManagerList: [],
   });
 
   const fetchProjectFormConfig = async () => {
@@ -209,7 +212,7 @@ const ProjectFormModal = ({
           projectAssigneesListResult,
           projectClientListResult,
           projectManagerListResult,
-          accountManagerListResult,
+          // accountManagerListResult, // AM hidden
           workflowResult,
         ] = await Promise.allSettled([
           getTechnologyList(),
@@ -218,7 +221,7 @@ const ProjectFormModal = ({
           getProjectassignees(),
           getProjectClients(),
           getManager(),
-          getAccountManager(),
+          // getAccountManager(), // AM hidden
           getWorkflow(),
           getProjectTypeSlug(),
           fetchProjectFormConfig(),
@@ -237,8 +240,7 @@ const ProjectFormModal = ({
             projectClientListResult.status === "fulfilled" ? projectClientListResult.value : undefined,
           projectManagerList:
             projectManagerListResult.status === "fulfilled" ? projectManagerListResult.value : undefined,
-          accountManagerList:
-            accountManagerListResult.status === "fulfilled" ? accountManagerListResult.value : undefined,
+          // accountManagerList: accountManagerListResult.status === "fulfilled" ? accountManagerListResult.value : undefined, // AM hidden
           workflow:
             workflowResult.status === "fulfilled" ? workflowResult.value : undefined,
         });
@@ -246,6 +248,19 @@ const ProjectFormModal = ({
         // Fetch project details after dropdown lists are loaded so field labels resolve correctly.
         if (selectedProject) {
           await fetchProjectDetails(selectedProject._id, lookupOverrides);
+        } else {
+          // For new projects, default the manager to the logged-in user if they are in the PM list.
+          const pmList = projectManagerListResult.status === "fulfilled" ? projectManagerListResult.value : [];
+          const isCurrentUserPM = pmList.some((pm) => String(pm._id) === String(userData._id));
+          if (isCurrentUserPM) {
+            form.setFieldValue("manager", userData._id);
+          }
+          // Default status to "Active" for new projects.
+          const statusList = projectStatusListResult.status === "fulfilled" ? projectStatusListResult.value : [];
+          const activeStatus = statusList.find((s) => s?.title?.toLowerCase() === "active");
+          if (activeStatus?._id) {
+            form.setFieldValue("project_status", activeStatus._id);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -479,8 +494,9 @@ const ProjectFormModal = ({
       projectManagerList: availableProjectManagerList,
       projectAssigneesList: availableProjectAssigneesList,
       projectClientList: availableProjectClientList,
-      accountManagerList: availableAccountManagerList,
+      // accountManagerList: availableAccountManagerList, // AM hidden
     } = getLookupCollections(lookupOverrides);
+    const availableAccountManagerList = [];
 
     const rawDescription =
       projectData?.descriptions ??
@@ -506,12 +522,14 @@ const ProjectFormModal = ({
       projectData?.work_flow ??
       projectData?.workflow_id ??
       projectData?.work_flow_id;
-    const rawAccountManager =
-      projectData?.acc_manager ??
-      projectData?.account_manager ??
-      projectData?.accManager ??
-      projectData?.accountManager ??
-      projectData?.acc_manager_id;
+    // AM hidden: rawAccountManager commented out
+    // const rawAccountManager =
+    //   projectData?.acc_manager ??
+    //   projectData?.account_manager ??
+    //   projectData?.accManager ??
+    //   projectData?.accountManager ??
+    //   projectData?.acc_manager_id;
+    const rawAccountManager = null;
     const rawClients =
       projectData?.pms_clients ??
       projectData?.clients ??
@@ -535,7 +553,7 @@ const ProjectFormModal = ({
     const normalizedFallbackTechnologyOptions = extractTechnologyCandidates(rawTechnology);
     const normalizedProjectTypeOption = normalizeProjectTypeOption(rawProjectType);
     const normalizedWorkflowOption = normalizeWorkflowOption(rawWorkflow);
-    const normalizedAccountManagerOption = normalizeAccountManagerOption(rawAccountManager);
+    const normalizedAccountManagerOption = null; // normalizeAccountManagerOption(rawAccountManager); // AM hidden
     const normalizedClientOptions = (Array.isArray(rawClients) ? rawClients : [rawClients])
       .map(normalizeClientOption)
       .filter(Boolean);
@@ -553,9 +571,9 @@ const ProjectFormModal = ({
     if (normalizedWorkflowOption?._id) {
       setWorkflow((prev) => mergeUniqueById(prev, [normalizedWorkflowOption]));
     }
-    if (normalizedAccountManagerOption?._id) {
-      setAccountManagerList((prev) => mergeUniqueById(prev, [normalizedAccountManagerOption]));
-    }
+    // if (normalizedAccountManagerOption?._id) { // AM hidden
+    //   setAccountManagerList((prev) => mergeUniqueById(prev, [normalizedAccountManagerOption]));
+    // }
     if (normalizedClientOptions.length > 0) {
       setProjectClientList((prev) => mergeUniqueById(prev, normalizedClientOptions));
     }
@@ -603,14 +621,13 @@ const ProjectFormModal = ({
       availableProjectManagerList,
       ["manager_name", "full_name", "name"]
     );
-    const accountManagerId = resolveSingleSelectValue(
-      rawAccountManager,
-      mergeUniqueById(
-        availableAccountManagerList,
-        normalizedAccountManagerOption ? [normalizedAccountManagerOption] : []
-      ),
-      ["full_name", "manager_name", "name"]
-    );
+    // AM hidden: accountManagerId commented out
+    // const accountManagerId = resolveSingleSelectValue(
+    //   rawAccountManager,
+    //   mergeUniqueById(availableAccountManagerList, normalizedAccountManagerOption ? [normalizedAccountManagerOption] : []),
+    //   ["full_name", "manager_name", "name"]
+    // );
+    const accountManagerId = null;
     const projectStatusId = resolveSingleSelectValue(
       projectData?.project_status,
       availableProjectStatusList,
@@ -646,7 +663,7 @@ const ProjectFormModal = ({
       descriptions: rawDescription ? removeHTMLTags(rawDescription) : (currentValues.descriptions || ""),
       workFlow: workflowId || currentValues.workFlow,
       manager: managerId || currentValues.manager,
-      acc_manager: accountManagerId || currentValues.acc_manager,
+      // acc_manager: accountManagerId || currentValues.acc_manager, // AM hidden
       estimatedHours: estimatedHours || currentValues.estimatedHours,
       project_status: projectStatusId || currentValues.project_status,
       start_date: projectData?.start_date ? dayjs(projectData.start_date) : currentValues.start_date,
@@ -816,23 +833,21 @@ const ProjectFormModal = ({
     return [];
   };
 
-  const getAccountManager = async () => {
-    if (_dropdownCache.accountManagerList) {
-      setAccountManagerList(_dropdownCache.accountManagerList);
-      return _dropdownCache.accountManagerList;
-    }
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getAccountManager,
-      });
-      const nextList = response?.data?.data || [];
-      _dropdownCache.accountManagerList = nextList;
-      setAccountManagerList(nextList);
-      return nextList;
-    } catch (error) { console.error(error); }
-    return [];
-  };
+  // AM hidden: getAccountManager commented out
+  // const getAccountManager = async () => {
+  //   if (_dropdownCache.accountManagerList) {
+  //     setAccountManagerList(_dropdownCache.accountManagerList);
+  //     return _dropdownCache.accountManagerList;
+  //   }
+  //   try {
+  //     const response = await Service.makeAPICall({ methodName: Service.getMethod, api_url: Service.getAccountManager });
+  //     const nextList = response?.data?.data || [];
+  //     _dropdownCache.accountManagerList = nextList;
+  //     setAccountManagerList(nextList);
+  //     return nextList;
+  //   } catch (error) { console.error(error); }
+  //   return [];
+  // };
 
   const getStatus = async () => {
     if (_dropdownCache.projectStatusList) {
@@ -845,7 +860,10 @@ const ProjectFormModal = ({
         api_url: Service.getProjectStatus,
         body: { isDropdown: true },
       });
-      if (response?.data?.data) setProjectStatusList(response.data.data);
+      const nextList = response?.data?.data || [];
+      _dropdownCache.projectStatusList = nextList;
+      setProjectStatusList(nextList);
+      return nextList;
     } catch (error) { console.error(error); }
     return [];
   };
@@ -877,7 +895,7 @@ const ProjectFormModal = ({
         if (!item) return null;
         const value = item?._id || item?.id || item?.value;
         if (!value) return null;
-        if (module === "employees" || module === "managers" || module === "account_managers") {
+        if (module === "employees" || module === "managers" /* || module === "account_managers" */) { // AM hidden
           return { value, label: removeTitle(item?.full_name || item?.manager_name || item?.name || "") };
         }
         if (module === "clients") {
@@ -932,8 +950,8 @@ const ProjectFormModal = ({
         source = technologyList.length > 0 ? technologyList : await getTechnologyList();
       } else if (module === "managers") {
         source = projectManagerList.length > 0 ? projectManagerList : await getManager();
-      } else if (module === "account_managers") {
-        source = accountManagerList.length > 0 ? accountManagerList : await getAccountManager();
+      // } else if (module === "account_managers") { // AM hidden
+      //   source = accountManagerList.length > 0 ? accountManagerList : await getAccountManager();
       }
 
       setLinkedOptionsByField((prev) => ({
@@ -1012,8 +1030,9 @@ const ProjectFormModal = ({
         methodName: Service.postMethod,
         api_url: Service.getAllRole,
       });
-      setRoles(response?.data?.data || []);
-      return response?.data?.data || [];
+      const allRoles = (response?.data?.data || []).filter((r) => r.role_name !== "AM"); // AM role hidden
+      setRoles(allRoles);
+      return allRoles;
     } catch (error) {
       console.error(error);
       message.error("Unable to fetch roles");
@@ -1026,7 +1045,7 @@ const ProjectFormModal = ({
 
   const getMatchingRoleId = (roleType, availableRoles = roles) => {
     if (roleType === "assignee") return undefined;
-    const target = roleType === "account_manager" ? "account manager" : "project manager";
+    const target = /* roleType === "account_manager" ? "account manager" : */ "project manager"; // AM hidden
     return (
       availableRoles.find((role) => role?.role_name?.trim()?.toLowerCase() === target)?._id ||
       availableRoles.find((role) => role?.role_name?.trim()?.toLowerCase()?.includes(target))?._id ||
@@ -1163,16 +1182,16 @@ const ProjectFormModal = ({
       if (resData?.status === 0) {
         return message.error(resData?.message || "Unable to add employee");
       }
-      message.success(resData?.message || "Employee added successfully");
-      if (employeeModalType === "account_manager") {
-        const nextAccountManagers = await getAccountManager();
-        const found = nextAccountManagers.find(
-          (item) =>
-            item?._id === createdEmployee?._id ||
-            item?.email?.trim()?.toLowerCase() === values.email?.trim()?.toLowerCase()
-        );
-        if (found?._id) form.setFieldValue("acc_manager", found._id);
-      } else if (employeeModalType === "assignee") {
+      message.success(resData?.message || "User added successfully");
+      // AM hidden: account_manager modal type handling commented out
+      // if (employeeModalType === "account_manager") {
+      //   const nextAccountManagers = await getAccountManager();
+      //   const found = nextAccountManagers.find(
+      //     (item) => item?._id === createdEmployee?._id || item?.email?.trim()?.toLowerCase() === values.email?.trim()?.toLowerCase()
+      //   );
+      //   if (found?._id) form.setFieldValue("acc_manager", found._id);
+      // } else if (employeeModalType === "assignee") {
+      if (employeeModalType === "assignee") {
         const nextAssignees = await getProjectassignees();
         const found = nextAssignees.find(
           (item) =>
@@ -1222,8 +1241,8 @@ const ProjectFormModal = ({
         start_date: values.start_date,
         end_date: noEndDate ? null : values.end_date,
         estimatedHours: values.estimatedHours || "0",
-        manager: values.manager,
-        acc_manager: values?.acc_manager || "",
+        manager: values.manager || userData._id,
+        // acc_manager: values?.acc_manager || "", // AM hidden
         project_status:
           values.project_status ||
           projectStatusList.find((item) => item?.title?.toLowerCase() === "active")?._id,
@@ -1279,7 +1298,7 @@ const ProjectFormModal = ({
         project_type: values.project_type,
         project_status: values?.project_status,
         manager: values.manager,
-        acc_manager: values.acc_manager,
+        // acc_manager: values.acc_manager, // AM hidden
         workFlow: values.workFlow,
         recurringType: values?.recurringType,
         end_date: values?.end_date || null,
@@ -1329,7 +1348,7 @@ const ProjectFormModal = ({
   const visibleConfiguredFields = useMemo(
     () =>
       (projectFormFields || [])
-        .filter((field) => field?.key && !BACKEND_ONLY_PROJECT_KEYS.has(String(field.key).trim()))
+        .filter((field) => field?.key && !BACKEND_ONLY_PROJECT_KEYS.has(String(field.key).trim()) && String(field.key).trim() !== "technology") // Department (technology) hidden
         .sort((a, b) => Number(a?.order || 0) - Number(b?.order || 0)),
     [projectFormFields]
   );
@@ -1374,10 +1393,12 @@ const ProjectFormModal = ({
       value: item?._id,
       label: removeTitle(item?.manager_name || item?.full_name || ""),
     }));
-    const accountManagerOptions = (accountManagerList || []).map((item) => ({
-      value: item?._id,
-      label: removeTitle(item?.full_name || ""),
-    }));
+    // AM hidden: accountManagerOptions commented out
+    // const accountManagerOptions = (accountManagerList || []).map((item) => ({
+    //   value: item?._id,
+    //   label: removeTitle(item?.full_name || ""),
+    // }));
+    const accountManagerOptions = [];
     const workflowOptions = (workflow || []).map((item) => ({
       value: item?._id,
       label: item?.project_workflow,
@@ -1474,9 +1495,9 @@ const ProjectFormModal = ({
     if (key === "manager") {
       return <Form.Item name="manager" className="pfm-form-item" rules={requiredRules}><Select options={managerOptions} placeholder="Select project manager" /></Form.Item>;
     }
-    if (key === "acc_manager") {
-      return <Form.Item name="acc_manager" className="pfm-form-item" rules={requiredRules}><Select options={accountManagerOptions} placeholder="Select account manager" /></Form.Item>;
-    }
+    // if (key === "acc_manager") { // AM hidden
+    //   return <Form.Item name="acc_manager" className="pfm-form-item" rules={requiredRules}><Select options={accountManagerOptions} placeholder="Select account manager" /></Form.Item>;
+    // }
     if (key === "workFlow") {
       return <Form.Item name="workFlow" className="pfm-form-item" rules={requiredRules}><Select options={workflowOptions} placeholder="Select workflow" /></Form.Item>;
     }
@@ -1557,12 +1578,12 @@ const ProjectFormModal = ({
                 key={field.key}
                 className="pfm-field-row"
                 style={
-                  String(field?.key || "").trim() === "descriptions"
+                  ["descriptions", "title"].includes(String(field?.key || "").trim())
                     ? { gridColumn: "1 / -1" }
                     : undefined
                 }
               >
-                <TagOutlined className="pfm-icon" />
+                {/* <TagOutlined className="pfm-icon" /> */}
 
                 <div className="pfm-input-group">
                   <div className="pfm-field-label">
@@ -1901,48 +1922,30 @@ const ProjectFormModal = ({
         </div>
         <div className="pfm-divider" />
 
-        {/* Account Manager */}
-        <div className="pfm-field-row">
+        {/* Account Manager hidden */}
+        {/* <div className="pfm-field-row">
           <UserOutlined className="pfm-icon" />
           <div className="pfm-input-group">
             <div className="pfm-field-label-row">
               <div className="pfm-field-label">Account Manager</div>
-              <button
-                type="button"
-                className="pfm-add-new-btn"
-                onClick={() => openAddEmployeeModal("account_manager")}
-              >
+              <button type="button" className="pfm-add-new-btn" onClick={() => openAddEmployeeModal("account_manager")}>
                 <PlusOutlined /> Add New
               </button>
             </div>
-            <Form.Item
-              name="acc_manager"
-              className="pfm-form-item"
-              rules={
-                projectTypeselect === "65b9e9e70f085dbd9bb12797"
-                  ? []
-                  : [{ required: true, message: "This field is required!" }]
-              }
+            <Form.Item name="acc_manager" className="pfm-form-item"
+              rules={projectTypeselect === "65b9e9e70f085dbd9bb12797" ? [] : [{ required: true, message: "This field is required!" }]}
             >
-              <Select
-                placeholder="Select account manager"
-                bordered={false}
-                className="pfm-select"
-                showSearch
-                filterOption={(input, option) =>
-                  option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0
-                }
+              <Select placeholder="Select account manager" bordered={false} className="pfm-select" showSearch
+                filterOption={(input, option) => option.children?.toLowerCase()?.indexOf(input?.toLowerCase()) >= 0}
               >
                 {accountManagerList.map((item) => (
-                  <Select.Option key={item._id} value={item._id}>
-                    {removeTitle(item.full_name)}
-                  </Select.Option>
+                  <Select.Option key={item._id} value={item._id}>{removeTitle(item.full_name)}</Select.Option>
                 ))}
               </Select>
             </Form.Item>
           </div>
         </div>
-        <div className="pfm-divider" />
+        <div className="pfm-divider" /> */}
 
         {/* Workflow */}
         <div className="pfm-field-row">
@@ -2097,6 +2100,7 @@ const ProjectFormModal = ({
       </Form>
       </Spin>
     </Modal>
+    {/* Department modal hidden
     <Modal
       title="Add Department"
       open={isAddDepartmentOpen}
@@ -2135,6 +2139,7 @@ const ProjectFormModal = ({
         </Form.Item>
       </Form>
     </Modal>
+    */}
  <Modal
   title="Add Client"
   open={isAddClientOpen}
@@ -2240,9 +2245,8 @@ const ProjectFormModal = ({
 </Modal>
     <Modal
       title={
-        employeeModalType === "account_manager"
-          ? "Add Account Manager"
-          : employeeModalType === "assignee"
+        // employeeModalType === "account_manager" ? "Add Account Manager" : // AM hidden
+        employeeModalType === "assignee"
           ? "Add Assignee"
           : "Add Project Manager"
         }
@@ -2294,7 +2298,7 @@ const ProjectFormModal = ({
           <Form.Item name="pmsRoleId" label="Role" rules={[{ required: true, message: "Please select a role" }]}>
             <Select placeholder="Select role" loading={rolesLoading} showSearch>
               {roles.map((role) => (
-                <Select.Option key={role._id} value={role._id}>{role.role_name}</Select.Option>
+                <Select.Option key={role._id} value={role._id}>{getRoleLabel(role.role_name)}</Select.Option>
               ))}
             </Select>
           </Form.Item>

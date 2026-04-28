@@ -1498,7 +1498,7 @@ export default function CommonTaskFormModal({
                 <div
                   className="task-detail-section"
                   key={key}
-                  style={key === "description" ? { gridColumn: "1 / -1" } : undefined}
+                  style={["description", "title"].includes(key) ? { gridColumn: "1 / -1" } : undefined}
                 >
                   <div className="task-detail-label">{field?.label || toLabel(key)}</div>
                   <div className="task-detail-value">

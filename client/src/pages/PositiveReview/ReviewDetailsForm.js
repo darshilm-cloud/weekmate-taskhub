@@ -119,7 +119,8 @@ const ReviewDetailsForm = () => {
                   </div>
                 </div>
               </Col>
-              <Col xs={24} md={8}>
+              {/* Account Manager hidden */}
+              {/* <Col xs={24} md={8}>
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Account Manager</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -127,7 +128,7 @@ const ReviewDetailsForm = () => {
                     {reviewData?.acc_manager?.full_name || "—"}
                   </div>
                 </div>
-              </Col>
+              </Col> */}
               <Col xs={24} md={8}>
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Submission Date</div>

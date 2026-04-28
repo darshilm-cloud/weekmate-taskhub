@@ -154,9 +154,10 @@ const buildExpenseFilterBody = ({
   if (Array.isArray(manager) && manager.length > 0) {
     body.manager_id = manager;
   }
-  if (Array.isArray(accontManager) && accontManager.length > 0) {
-    body.acc_manager_id = accontManager;
-  }
+  // AM hidden: acc_manager_id filter removed
+  // if (Array.isArray(accontManager) && accontManager.length > 0) {
+  //   body.acc_manager_id = accontManager;
+  // }
   if (Array.isArray(createdBy) && createdBy.length > 0) {
     body.createdBy = createdBy;
   }

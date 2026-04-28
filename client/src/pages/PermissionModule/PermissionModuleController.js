@@ -49,7 +49,8 @@ const PermissionModuleController = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
-        const roles = response.data.data;
+        // AM role hidden from permission management
+        const roles = response.data.data.filter((r) => r.role_name !== "AM");
         setRoleListData(roles);
         /* auto-select first role when no URL param */
         if (!selectedRoleId && roles.length > 0) {

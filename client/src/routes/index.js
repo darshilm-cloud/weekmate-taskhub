@@ -103,6 +103,9 @@ const ResourceMatrix = React.lazy(() =>
 const WorkflowStages = React.lazy(() =>
   import("../pages/WorkflowStages")
 );
+const WorkflowStagesEdit = React.lazy(() =>
+  import("../pages/WorkflowStages/WorkflowStagesEdit")
+);
 const BugWorkflowStages = React.lazy(() =>
   import("../pages/BugWorkflowStages")
 );
@@ -159,6 +162,11 @@ const index = ({ match, userPermission }) => {
     {
       path: ":companySlug/resources",
       component: Resource,
+      roleName: [config.PMS_ROLES.ADMIN],
+    },
+    {
+      path: ":companySlug/workflow-stages/:workflowId",
+      component: WorkflowStagesEdit,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {

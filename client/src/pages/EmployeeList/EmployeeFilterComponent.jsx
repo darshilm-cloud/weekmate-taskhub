@@ -23,7 +23,7 @@ const FILTER_CONFIG = {
     api: Service.getEmployeeList,
     method: Service.getMethod,
     limit: 20,
-    label: "Employee Code",
+    label: "User Code",
     getName: (item) => item?.emp_code,
     getValue: (item) => item?.emp_code,
     searchKey: "search",
@@ -33,7 +33,7 @@ const FILTER_CONFIG = {
     api: Service.getEmployeeList,
     method: Service.getMethod,
     limit: 20,
-    label: "Employee",
+    label: "User",
     getName: (item) => removeTitle(item?.full_name),
     getValue: (item) => item?._id,
     searchKey: "search",
@@ -49,24 +49,25 @@ const FILTER_CONFIG = {
     searchKey: "search",
     dataSource: "designations",
   },
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getDepartmentList,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Department",
-    getName: (item) => item?.department_name,
-    getValue: (item) => item?._id,
-    searchKey: "search",
-    dataSource: "departments",
-  },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getDepartmentList,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Department",
+  //   getName: (item) => item?.department_name,
+  //   getValue: (item) => item?._id,
+  //   searchKey: "search",
+  //   dataSource: "departments",
+  // },
 };
 
 // Filter menu items
 const FILTER_MENU_ITEMS = [
-  { key: FILTER_TYPES.EMPLOYEE_CODE, label: "Employee Code" },
-  { key: FILTER_TYPES.EMPLOYEE, label: "Employee" },
+  { key: FILTER_TYPES.EMPLOYEE_CODE, label: "User Code" },
+  { key: FILTER_TYPES.EMPLOYEE, label: "User" },
   { key: FILTER_TYPES.DESIGNATION, label: "Designation" },
-  { key: FILTER_TYPES.DEPARTMENT, label: "Department" },
+  // { key: FILTER_TYPES.DEPARTMENT, label: "Department" }, // Department hidden
 ];
 
 // FilterSection component

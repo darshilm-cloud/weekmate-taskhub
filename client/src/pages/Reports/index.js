@@ -278,24 +278,25 @@ const ProjectsRunning = () => {
         sorter: (a, b) => a.managerName.localeCompare(b.managerName),
         ellipsis: true,
       },
-      {
-        title: "Department",
-        dataIndex: "technologyName",
-        width: 150,
-        sorter: (a, b) =>
-          a.technologyName[0].localeCompare(b.technologyName[0]),
-        key: "technologyName",
-        render: (_, record) => (
-          <div className="technology-tags">
-            {record.technologyName.map((tech, index) => (
-              <span key={index} className="technology-tag">
-                {tech}
-              </span>
-            ))}
-          </div>
-        ),
-        ellipsis: true,
-      },
+      // Department column hidden
+      // {
+      //   title: "Department",
+      //   dataIndex: "technologyName",
+      //   width: 150,
+      //   sorter: (a, b) =>
+      //     a.technologyName[0].localeCompare(b.technologyName[0]),
+      //   key: "technologyName",
+      //   render: (_, record) => (
+      //     <div className="technology-tags">
+      //       {record.technologyName.map((tech, index) => (
+      //         <span key={index} className="technology-tag">
+      //           {tech}
+      //         </span>
+      //       ))}
+      //     </div>
+      //   ),
+      //   ellipsis: true,
+      // },
       {
         title: "Category",
         dataIndex: "project_typeName",
@@ -534,7 +535,7 @@ const ProjectsRunning = () => {
     () => [
       { key: "title", label: "Project Name" },
       { key: "managerName", label: "Project Manager" },
-      { key: "technologyName", label: "Department" },
+      // { key: "technologyName", label: "Department" }, // Department hidden
       { key: "project_typeName", label: "Category" },
       { key: "estimatedHours", label: "Estimated Hours" },
       { key: "total_logged_time", label: "Used Hours" },
@@ -747,9 +748,11 @@ const renderChart = useCallback(
         <div className="charts-grid">
           {renderChart(pieChartData, "pie", "Projects by Manager")}
           {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
+          {/* Department chart hidden
           <div className="project-department-chart">
             {renderChart(verticalBarChartData, "bar", "Projects by Department")}
           </div>
+          */}
         </div>
       </div>
 
