@@ -1470,47 +1470,15 @@ const TaskPage = () => {
       };
     });
 
-    // Detect which normalized titles appear more than once (different workflows).
-    // Those get their workflow name appended and are NOT merged.
-    const titleFrequency = new Map();
-    rawColumns.forEach((col) => {
-      const key = normalizeKanbanStatusKey(col?.title || col?.id || "");
-      titleFrequency.set(key, (titleFrequency.get(key) || 0) + 1);
-    });
-
+    // Always label each column with its workflow name so users can tell
+    // which workflow a stage belongs to. Columns are never merged.
     const grouped = new Map();
     rawColumns.forEach((col) => {
-      const displayKey = normalizeKanbanStatusKey(col?.title || col?.id || "");
-      const isDuplicate = (titleFrequency.get(displayKey) || 0) > 1;
-
-      if (isDuplicate) {
-        // Keep each duplicate column separate, labelled with its workflow name.
-        const wfLabel = col.workflowName ? ` (${col.workflowName})` : "";
-        grouped.set(col.id, {
-          ...col,
-          title: col.title + wfLabel,
-          tasks: [...(col?.tasks || [])],
-        });
-        return;
-      }
-
-      const safeKey = displayKey || String(col?.id || "");
-      if (!grouped.has(safeKey)) {
-        grouped.set(safeKey, {
-          ...col,
-          id: safeKey,
-          tasks: [...(col?.tasks || [])],
-        });
-        return;
-      }
-      const existing = grouped.get(safeKey);
-      const mergedTasks = [
-        ...(Array.isArray(existing?.tasks) ? existing.tasks : []),
-        ...(Array.isArray(col?.tasks) ? col.tasks : []),
-      ];
-      grouped.set(safeKey, {
-        ...existing,
-        tasks: sortTaskList(mergedTasks, sortMode),
+      const wfLabel = col.workflowName ? ` (${col.workflowName})` : "";
+      grouped.set(col.id, {
+        ...col,
+        title: col.title + wfLabel,
+        tasks: [...(col?.tasks || [])],
       });
     });
 
