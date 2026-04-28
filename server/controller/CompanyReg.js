@@ -12,7 +12,8 @@ const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 const {
   addDefaultProjectStatus,
-  addDefaultPermission
+  addDefaultPermission,
+  addDefaultWorkflowandStages
 } = require("../helpers/common");
 const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
 const { dataForJWT, getUserPermissions } = require("./authentication");
@@ -426,6 +427,9 @@ exports.registerAdminAndCompany = async (req, res) => {
 
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
+
+    // Add default workflow and stages for company
+    await addDefaultWorkflowandStages(company._id, newUser._id);
 
     // 🌐 Notify reseller panel about new registration
     try {

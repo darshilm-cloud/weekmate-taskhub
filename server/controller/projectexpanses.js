@@ -108,7 +108,7 @@ exports.addProjectExpense = async (req, res) => {
         }
 
         let data = new ProjectExpanses({
-          companyId: newObjectId(decodedCompanyId),
+          companyId: global.newObjectId(decodedCompanyId),
           project_id: value?.project_id,
           purchase_request_details:
             value?.purchase_request_details.replace(/\n/g, "<br>") || null,
@@ -195,27 +195,12 @@ exports.getProjectExpenses = async (req, res) => {
 
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(decodedCompanyId),
+      companyId: global.newObjectId(decodedCompanyId),
       ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
       ...(value.priority && { priority: value.priority }),
       ...(value.status && { status: value.status }),
-      ...(value.technology?.length && {
-        "technology._id": {
-          $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.manager_id?.length && {
-        "manager._id": {
-          $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.acc_manager_id?.length && {
-        "acc_manager._id": {
-          $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.project_id?.length && {
-        "project._id": {
+            ...(value.project_id?.length && {
+        project_id: {
           $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s))
         }
       }),
@@ -345,6 +330,31 @@ exports.getProjectExpenses = async (req, res) => {
         }
       },
       { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+
+      // Add match stages for filters that depend on looked-up fields
+      ...(value.technology?.length ? [{
+        $match: {
+          "technology._id": {
+            $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
+      
+      ...(value.manager_id?.length ? [{
+        $match: {
+          "manager._id": {
+            $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
+      
+      ...(value.acc_manager_id?.length ? [{
+        $match: {
+          "acc_manager._id": {
+            $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
 
       ...(!hasFullAccess && !hasLimitedAccess ? [{
         $match: {
@@ -889,13 +899,13 @@ exports.exportProjectExpenses = async (req, res) => {
     let orFilter = {};
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(decodedCompanyId)
+      companyId: global.newObjectId(decodedCompanyId)
     };
 
     if (!hasFullAccess) {
       if (hasLimitedAccess) {
         orFilter = {
-          $or: [{ createdBy: newObjectId(decodedUserId) }]
+          $or: [{ createdBy: global.newObjectId(decodedUserId) }]
         };
       }
     }

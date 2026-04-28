@@ -30,6 +30,7 @@ import "./TaskPage.css";
 const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
+const INITIAL_TASKS_LIMIT = 200;
 const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 const LIST_AUTOSCROLL_EDGE_PX = 56;
 const LIST_AUTOSCROLL_STEP = 18;
@@ -149,6 +150,12 @@ function getTaskPageSectionKeyFromStatus(item) {
   const statusId = String(item?.statusId || item?._id || "").trim();
   if (statusId) return statusId;
   return "";
+}
+
+function getTaskPageSectionKeyFromTask(task) {
+  const statusId = String(task?._stId || task?.task_status?._id || task?.task_status || "").trim();
+  if (statusId) return statusId;
+  return "_none_";
 }
 
 function mapTaskToEditFormInitial(task) {
@@ -865,89 +872,114 @@ const TaskPage = () => {
     dispatch(showAuthLoader());
     listSectionLoadGuardRef.current = new Set();
     try {
-      const metaRes = await Service.makeAPICall({
+      const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.taskList,
         body: {
           ...buildTaskListFilterBody(),
-          metadata_only: true,
+          pageNo: 1,
+          limit: INITIAL_TASKS_LIMIT,
         },
       });
-      if (metaRes?.status !== 200) {
+      if (response?.status !== 200) {
         setStatusTotals({});
+        setStatusMetaBySection({});
         setListSectionIds([]);
         setSectionBuckets({});
         return;
       }
-      const meta = metaRes?.data?.metadata || {};
+      const tasks = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const meta = response?.data?.metadata || {};
       const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
-      const nextStatusTotals = statusCounts.reduce((acc, item) => {
+      const statusCountBySection = statusCounts.reduce((acc, item) => {
         const key = getTaskPageSectionKeyFromStatus(item);
+        if (!key) return acc;
         acc[key] = Number(acc[key] || 0) + Number(item?.count || 0);
         return acc;
       }, {});
+
+      // Prefer server-provided status metadata/order when available.
       const nextStatusMetaBySection = statusCounts.reduce((acc, item) => {
         const key = getTaskPageSectionKeyFromStatus(item);
         if (!key) return acc;
-        const prev = acc[key] || {};
         const incomingStatusId = item?.statusId ? String(item.statusId) : null;
-        const prevStatusIds = Array.isArray(prev.statusIds) ? prev.statusIds : [];
-        const mergedStatusIds = incomingStatusId
-          ? [...prevStatusIds, incomingStatusId].filter((v, i, a) => v && a.indexOf(v) === i)
-          : prevStatusIds;
         acc[key] = {
-          statusId: prev.statusId || incomingStatusId || null,
-          statusIds: mergedStatusIds,
-          title: prev.title || item?.title || "Untitled",
-          color: prev.color || item?.color || "#d9d9d9",
-          sequence:
-            Number.isFinite(Number(prev.sequence))
-              ? Number(prev.sequence)
-              : Number.isFinite(Number(item?.sequence))
-                ? Number(item.sequence)
-                : null,
-          isDefault: Boolean(prev.isDefault || item?.isDefault),
-          workflowId: prev.workflowId || item?.workflowId || null,
-          workflowName: prev.workflowName || item?.workflowName || "",
+          statusId: incomingStatusId || key,
+          statusIds: incomingStatusId ? [incomingStatusId] : [key],
+          title: item?.title || "Untitled",
+          color: item?.color || "#d9d9d9",
+          sequence: Number.isFinite(Number(item?.sequence)) ? Number(item.sequence) : null,
+          isDefault: Boolean(item?.isDefault),
+          workflowId: item?.workflowId || null,
+          workflowName: item?.workflowName || "",
         };
         return acc;
       }, {});
+
+      const nextBuckets = {};
+      tasks.forEach((task) => {
+        const bucketId = getTaskPageSectionKeyFromTask(task);
+        if (!nextBuckets[bucketId]) {
+          nextBuckets[bucketId] = {
+            tasks: [],
+            pageNo: 0,
+            hasMore: false,
+            loading: false,
+            total: 0,
+          };
+        }
+        nextBuckets[bucketId].tasks.push(task);
+        nextBuckets[bucketId].total += 1;
+
+        if (!nextStatusMetaBySection[bucketId]) {
+          nextStatusMetaBySection[bucketId] = {
+            statusId:
+              String(task?._stId || task?.task_status?._id || "").trim() || bucketId,
+            statusIds: [
+              String(task?._stId || task?.task_status?._id || "").trim() || bucketId,
+            ],
+            title: task?.task_status?.title || task?.task_status?.name || "No status",
+            color: task?.task_status?.color || "#d9d9d9",
+            sequence: Number.isFinite(Number(task?.task_status?.sequence))
+              ? Number(task.task_status.sequence)
+              : null,
+            isDefault: Boolean(task?.task_status?.isDefault),
+            workflowId: task?.task_status?.workflow_id || null,
+            workflowName: "",
+          };
+        }
+      });
+
+      const nextStatusTotals = Object.keys(nextBuckets).reduce((acc, bucketId) => {
+        acc[bucketId] = Number(nextBuckets?.[bucketId]?.tasks?.length || 0);
+        return acc;
+      }, {});
+
       const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals, nextStatusMetaBySection);
+      sectionOrder.forEach((bucketId) => {
+        const sectionTotal = Number(statusCountBySection?.[bucketId] || nextBuckets?.[bucketId]?.total || 0);
+        const loadedCount = Number(nextBuckets?.[bucketId]?.tasks?.length || 0);
+        if (!nextBuckets[bucketId]) {
+          nextBuckets[bucketId] = {
+            tasks: [],
+            pageNo: 0,
+            hasMore: sectionTotal > 0,
+            loading: false,
+            total: sectionTotal,
+          };
+        } else {
+          nextBuckets[bucketId] = {
+            ...nextBuckets[bucketId],
+            pageNo: 0,
+            total: sectionTotal,
+            hasMore: loadedCount < sectionTotal,
+          };
+        }
+      });
+
       setStatusTotals(nextStatusTotals);
       setStatusMetaBySection(nextStatusMetaBySection);
       setListSectionIds(sectionOrder);
-
-      const bucketResults = await Promise.all(
-        sectionOrder.map((bucketId) =>
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.taskList,
-            body: {
-              ...buildTaskListFilterBody(),
-              kanban_bucket: bucketId,
-              pageNo: 1,
-              limit: SECTION_PAGE_LIMIT,
-            },
-          }).then((r) => ({ bucketId, r }))
-        )
-      );
-
-      const nextBuckets = {};
-      bucketResults.forEach(({ bucketId, r }) => {
-        const raw = r?.status === 200 ? r?.data?.data : [];
-        const m = r?.data?.metadata || {};
-        const fetchedTasks = Array.isArray(raw) ? raw : [];
-        const total = Number(m.total || 0);
-        const pageNo = Number(m.page) > 0 ? Number(m.page) : 1;
-        const mergedLen = fetchedTasks.length;
-        nextBuckets[bucketId] = {
-          tasks: fetchedTasks,
-          pageNo,
-          hasMore: computeBucketHasMore(mergedLen, fetchedTasks.length, total, m),
-          loading: false,
-          total,
-        };
-      });
       setSectionBuckets(nextBuckets);
     } catch (e) {
       setStatusTotals({});
@@ -970,7 +1002,7 @@ const TaskPage = () => {
         [sectionId]: { ...prev[sectionId], loading: true },
       }));
       try {
-        const nextPage = (snap.pageNo || 1) + 1;
+        const nextPage = Number(snap?.pageNo) > 0 ? Number(snap.pageNo) + 1 : 1;
         const res = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.taskList,
@@ -987,8 +1019,14 @@ const TaskPage = () => {
         const total = Number(m.total || sectionBucketsRef.current[sectionId]?.total || 0);
         const respPage = Number(m.page) > 0 ? Number(m.page) : nextPage;
         setSectionBuckets((prev) => {
-          const cur = prev[sectionId] || { tasks: [], pageNo: 1, hasMore: false, total: 0, loading: false };
-          const merged = [...(cur.tasks || []), ...fetchedTasks];
+          const cur = prev[sectionId] || { tasks: [], pageNo: 0, hasMore: false, total: 0, loading: false };
+          const mergedById = new Map();
+          [...(cur.tasks || []), ...fetchedTasks].forEach((task) => {
+            const key = String(task?._id || "");
+            if (!key) return;
+            mergedById.set(key, task);
+          });
+          const merged = [...mergedById.values()];
           const metaForHasMore = { ...m, page: respPage };
           return {
             ...prev,

@@ -407,31 +407,12 @@ const Projectexpences = () => {
         createdBy,
         need_to_bill_customer,
       });
-      const shouldFilterLocally = hasLocalExpenseFilters({
-        selectedProject,
-        technology,
-        manager,
-        accontManager,
-        createdBy,
-        need_to_bill_customer,
-      });
 
       let { rows: serverExpenses } = await fetchExpenseRecords({
         pageNo: 1,
         limit: 1000,
-        filters: shouldFilterLocally ? {} : activeFilters,
+        filters: activeFilters,
       });
-
-      if (shouldFilterLocally) {
-        serverExpenses = filterExpensesLocally(serverExpenses, {
-          selectedProject,
-          technology,
-          manager,
-          accontManager,
-          createdBy,
-          need_to_bill_customer,
-        });
-      }
 
       setAllExpenses(serverExpenses);
       setOptimisticExpenses([]);
@@ -465,40 +446,12 @@ const Projectexpences = () => {
         createdBy,
         need_to_bill_customer,
       });
-      const shouldFilterLocally = hasLocalExpenseFilters({
-        selectedProject,
-        technology,
-        manager,
-        accontManager,
-        createdBy,
-        need_to_bill_customer,
-      });
 
       let { rows: serverExpenses, total: serverTotal } = await fetchExpenseRecords({
         pageNo: pagination.current,
         limit: pagination.pageSize,
-        filters: shouldFilterLocally ? {} : activeFilters,
+        filters: activeFilters,
       });
-
-      if (shouldFilterLocally) {
-        const { rows: allServerExpenses } = await fetchExpenseRecords({
-          pageNo: 1,
-          limit: 1000,
-        });
-        const locallyFilteredExpenses = filterExpensesLocally(allServerExpenses, {
-          selectedProject,
-          technology,
-          manager,
-          accontManager,
-          createdBy,
-          need_to_bill_customer,
-        });
-        const startIndex = (pagination.current - 1) * pagination.pageSize;
-        const endIndex = startIndex + pagination.pageSize;
-
-        serverExpenses = locallyFilteredExpenses.slice(startIndex, endIndex);
-        serverTotal = locallyFilteredExpenses.length;
-      }
 
       dispatch(hideAuthLoader());
 
@@ -757,13 +710,20 @@ const Projectexpences = () => {
         body: { exportFileType: "csv", isExport: true },
       });
       if (response?.data?.data) {
+        const decodedCsv = atob(String(response.data.data || ""));
+        const normalizedCsv = decodedCsv.replace(/\$/g, "₹");
+        const csvBlob = new Blob([`\uFEFF${normalizedCsv}`], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const objectUrl = URL.createObjectURL(csvBlob);
         const link = document.createElement("a");
-        link.href = "data:text/csv;base64," + response.data.data;
+        link.href = objectUrl;
         link.download = "Project Expense.csv";
         link.style.display = "none";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
       } else {
         message.error(response?.data?.message || "Export failed");
       }
