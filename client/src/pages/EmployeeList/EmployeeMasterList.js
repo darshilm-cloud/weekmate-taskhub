@@ -608,12 +608,12 @@ const EmployeeMasterList = () => {
     ? (selectedUser
       ? removeTitle(selectedUser.full_name || `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`)
       : employeeStatusFilter === "active"
-        ? "Active Employees"
+        ? "Active Users"
         : employeeStatusFilter === "inactive"
-          ? "Inactive Employees"
+          ? "Inactive Users"
           : employeeStatusFilter === "admins"
             ? "Admins"
-            : "All Employees")
+            : "All Users")
     : (selectedClient
       ? removeTitle(selectedClient.full_name || `${selectedClient.first_name || ""} ${selectedClient.last_name || ""}`)
       : "All Clients");
