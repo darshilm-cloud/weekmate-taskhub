@@ -1174,6 +1174,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   border-bottom: 0;
   border-radius: 14px 14px 0 0;
   background: #fff;
+  padding: 12px;
 }
 
 .daily-report-tabs {
