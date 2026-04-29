@@ -46,6 +46,7 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import NoGraphFound from "../common/NoGraphFound";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -2203,7 +2204,11 @@ const AssignProject = () => {
                       <div className="ap-browser-card ap-browser-chart-card">
                         <div className="ap-browser-card-title">User Analysis</div>
                         <div className="ap-browser-chart">
-                          <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
+                          {userAnalysisSeries.every(s => !s.data || s.data.length === 0) ? (
+                            <NoGraphFound />
+                          ) : (
+                            <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
+                          )}
                         </div>
                       </div>
 
@@ -2228,7 +2233,11 @@ const AssignProject = () => {
                           </div>
                         </div>
                         <div style={{ flexShrink: 0 }}>
-                          <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
+                          {(closedCount + pendingCount) === 0 ? (
+                            <NoGraphFound />
+                          ) : (
+                            <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
+                          )}
                         </div>
                       </div>
 

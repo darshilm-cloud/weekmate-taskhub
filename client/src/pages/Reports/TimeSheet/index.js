@@ -37,6 +37,7 @@ import {
   SkeletonBlock,
 } from "../../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../../components/common/NoGraphFound";
 
 dayjs.extend(quarterOfYear);
 const { RangePicker } = DatePicker;
@@ -703,20 +704,32 @@ const TimeSheet = () => {
 
   const renderChart = useCallback(
     (config, type, title) => {
-      if (!config) return null;
+      let hasData = false;
+      if (config && config.series) {
+        hasData = config.series.some((s) => {
+          if (typeof s === "number") return s > 0;
+          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
+          return false;
+        });
+      }
+
       return (
         <div className="timesheet-chart-card">
           <div className="timesheet-chart-header">
             <h3>{title}</h3>
           </div>
           <div className="timesheet-chart-content">
-            <ReactApexChart
-              key={type === "pie" ? chartKey : undefined}
-              options={config.options}
-              series={config.series}
-              type={type}
-              height={230}
-            />
+            {!config || !hasData ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                key={type === "pie" ? chartKey : undefined}
+                options={config.options}
+                series={config.series}
+                type={type}
+                height={230}
+              />
+            )}
           </div>
         </div>
       );

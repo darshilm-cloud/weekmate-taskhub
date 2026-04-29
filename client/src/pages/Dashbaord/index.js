@@ -28,6 +28,7 @@ import {
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import AddTaskModal from "../Tasks/AddTaskModal";
 
 const Dashboard = () => {
@@ -1061,12 +1062,16 @@ const Dashboard = () => {
                     />
                   ))}
               </div>
-              <ReactApexChart
-                options={chartOptions}
-                series={chartSeries}
-                type="line"
-                height={190}
-              />
+              {completedCounts.every(v => v === 0) && incompleteCounts.every(v => v === 0) ? (
+                <NoGraphFound />
+              ) : (
+                <ReactApexChart
+                  options={chartOptions}
+                  series={chartSeries}
+                  type="line"
+                  height={190}
+                />
+              )}
             </div>
 
             <div className="chart-legend">
@@ -1236,10 +1241,7 @@ const Dashboard = () => {
             <h4>Priority Task Summary</h4>
             {(priorityLow + priorityMedium + priorityHigh) === 0 ? (
               <div className="priority-donut-empty">
-                <svg width="150" height="150" viewBox="0 0 150 150">
-                  <circle cx="75" cy="75" r="52" fill="none" stroke={isDarkTheme ? "#2d3f55" : "#e2e8f0"} strokeWidth="22" />
-                  <text x="75" y="82" textAnchor="middle" fontSize="26" fontWeight="700" fill={isDarkTheme ? "#94a3b8" : "#94a3b8"}>0</text>
-                </svg>
+                <NoGraphFound />
               </div>
             ) : (
               <div className="priority-chart-wrap">

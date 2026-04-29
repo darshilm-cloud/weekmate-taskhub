@@ -46,6 +46,7 @@ import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import ProjectExpenseFormModal from "./ProjectExpenseFormModal";
 
 const { Text } = Typography;
@@ -976,12 +977,18 @@ const Projectexpences = () => {
               <div className="pe-chart-sub">Last 6 months · INR</div>
             </div>
           </div>
-          <ReactApexChart
-            type="area"
-            series={lineSeries}
-            options={lineOptions}
-            height={300}
-          />
+          {analyticsLoading ? (
+            <div className="pe-chart-skeleton" />
+          ) : analytics.totalCount === 0 || analytics.monthlyData.every(v => v === 0) ? (
+            <NoGraphFound />
+          ) : (
+            <ReactApexChart
+              type="area"
+              series={lineSeries}
+              options={lineOptions}
+              height={300}
+            />
+          )}
         </div>
 
         {/* Expense by Project */}
@@ -1027,12 +1034,18 @@ const Projectexpences = () => {
               <div className="pe-chart-sub">Total spend allocation</div>
             </div>
           </div>
-          <ReactApexChart
-            type="donut"
-            series={donutSeries}
-            options={donutOptions}
-            height={260}
-          />
+          {analyticsLoading ? (
+            <div className="pe-chart-skeleton" />
+          ) : analytics.totalCount === 0 ? (
+            <NoGraphFound />
+          ) : (
+            <ReactApexChart
+              type="donut"
+              series={donutSeries}
+              options={donutOptions}
+              height={260}
+            />
+          )}
           <div className="pe-legend">
             <div className="pe-legend-row">
               <div className="pe-legend-left">

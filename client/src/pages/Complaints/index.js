@@ -23,6 +23,7 @@ import ComplaintFilterComponent from "./ComplaintFilterComponent";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 
 /* ── constants ─────────────────────────────────────────────── */
@@ -432,30 +433,36 @@ const Complaints = () => {
       </div>
 
       {/* Charts */}
-      {analytics.total > 0 && (
-        <div className="cmp-charts-grid">
-          <div className="cmp-chart-card">
-            <div className="cmp-chart-title">Status Distribution</div>
-            <div className="cmp-chart-sub">Breakdown of complaints by current status</div>
+      <div className="cmp-charts-grid">
+        <div className="cmp-chart-card">
+          <div className="cmp-chart-title">Status Distribution</div>
+          <div className="cmp-chart-sub">Breakdown of complaints by current status</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
             <ReactApexChart
               type="donut"
               series={donutSeries.length ? donutSeries : [1]}
               options={donutOptions}
               height={260}
             />
-          </div>
-          <div className="cmp-chart-card">
-            <div className="cmp-chart-title">Monthly Trend</div>
-            <div className="cmp-chart-sub">Complaints raised over the last 6 months</div>
+          )}
+        </div>
+        <div className="cmp-chart-card">
+          <div className="cmp-chart-title">Monthly Trend</div>
+          <div className="cmp-chart-sub">Complaints raised over the last 6 months</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
             <ReactApexChart
               type="bar"
               series={barSeries}
               options={barOptions}
               height={260}
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Table */}
       <div className="cmp-table-card">

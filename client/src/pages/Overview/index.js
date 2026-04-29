@@ -9,6 +9,7 @@ import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
+import NoGraphFound from "../../components/common/NoGraphFound";
 
 const Overview = () => {
   const {
@@ -134,7 +135,6 @@ const Overview = () => {
     <div className="new-project-overview">
       {/* ── Top Row: Timeline | Priority | Status ── */}
       <div className="overview-top-row">
-        {/* Timeline Card */}
         <div className="overview-card">
           <div className="card-header">
             <span className="card-icon-wrap date-icon">
@@ -142,21 +142,25 @@ const Overview = () => {
             </span>
             <span className="card-title">Timeline</span>
           </div>
-          <div className="date-timeline">
-            <div className="date-block">
-              <span className="date-lbl">Start Date</span>
-              <span className="date-val">{startDate}</span>
-            </div>
-            <div className="date-divider">
-              <div className="date-line"></div>
-              <i className="fi fi-rr-arrow-right date-arrow-icon"></i>
-            </div>
-            <div className="date-block">
-              <span className="date-lbl">End Date</span>
-              <span className="date-val">{endDate}</span>
-              {!projectOverviewData?.end_date && (
-                <span className="no-end-badge">No End Date</span>
-              )}
+          <div className="timeline-centered-wrapper">
+            <div className="timeline-inner-box">
+              <span className="inner-icon">
+                <i className="fi fi-rr-calendar"></i>
+              </span>
+              <div className="timeline-segment">
+                <span className="timeline-lbl">START DATE</span>
+                <span className="timeline-val">{startDate}</span>
+              </div>
+              <div className="timeline-arrow">
+                <i className="fi fi-rr-arrow-right"></i>
+              </div>
+              <div className="timeline-segment">
+                <span className="timeline-lbl">END DATE</span>
+                <span className="timeline-val">{endDate}</span>
+                {!projectOverviewData?.end_date && (
+                  <span className="no-end-badge">No End Date</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -170,16 +174,20 @@ const Overview = () => {
             <span className="card-title">Priority Analysis</span>
           </div>
           <div className="chart-body">
-            <ReactApexChart
-              options={priorityChartOptions}
-              series={[
-                priorityAnalysis.low,
-                priorityAnalysis.medium,
-                priorityAnalysis.high,
-              ]}
-              type="donut"
-              width={180}
-            />
+            {priorityAnalysis.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                options={priorityChartOptions}
+                series={[
+                  priorityAnalysis.low,
+                  priorityAnalysis.medium,
+                  priorityAnalysis.high,
+                ]}
+                type="donut"
+                width={180}
+              />
+            )}
             <div className="chart-legend-vertical">
               <div className="legend-pill low">
                 <span className="pill-dot"></span>
@@ -209,12 +217,16 @@ const Overview = () => {
             <span className="card-title">Status Analysis</span>
           </div>
           <div className="chart-body">
-            <ReactApexChart
-              options={statusChartOptions}
-              series={[statusAnalysis.closed, statusAnalysis.pending]}
-              type="donut"
-              width={180}
-            />
+            {statusAnalysis.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                options={statusChartOptions}
+                series={[statusAnalysis.closed, statusAnalysis.pending]}
+                type="donut"
+                width={180}
+              />
+            )}
             <div className="chart-legend-vertical">
               <div className="legend-pill closed">
                 <span className="pill-dot"></span>

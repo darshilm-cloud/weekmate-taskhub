@@ -36,6 +36,7 @@ import { removeTitle } from "../../util/nameFilter";
 import getRoleLabel from "../../util/roleLabels";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 
 const { Search } = Input;
 
@@ -1109,29 +1110,35 @@ const EmployeeMasterList = () => {
                     <div className="charts-section">
                       <div className="chart-card">
                         <div className="chart-card-title">Role Distribution</div>
-                        <ReactApexChart
-                          type="donut"
-                          series={Object.values(filteredAnalytics.roleBreakdown).length ? Object.values(filteredAnalytics.roleBreakdown) : [1]}
-                          options={{
-                            ...donutOptions,
-                            labels: Object.keys(filteredAnalytics.roleBreakdown).length
-                              ? Object.keys(filteredAnalytics.roleBreakdown)
-                              : ["No Data"],
-                          }}
-                          height={280}
-                        />
+                        {Object.keys(filteredAnalytics.roleBreakdown || {}).length === 0 ? (
+                          <NoGraphFound />
+                        ) : (
+                          <ReactApexChart
+                            type="donut"
+                            series={Object.values(filteredAnalytics.roleBreakdown)}
+                            options={{
+                              ...donutOptions,
+                              labels: Object.keys(filteredAnalytics.roleBreakdown),
+                            }}
+                            height={280}
+                          />
+                        )}
                       </div>
                       <div className="chart-card">
                         <div className="chart-card-title">User Status</div>
-                        <ReactApexChart
-                          type="bar"
-                          series={[{
-                            name: "Users",
-                            data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
-                          }]}
-                          options={barOptions}
-                          height={280}
-                        />
+                        {(filteredAnalytics.statusBreakdown.active === 0 && filteredAnalytics.statusBreakdown.inactive === 0) ? (
+                          <NoGraphFound />
+                        ) : (
+                          <ReactApexChart
+                            type="bar"
+                            series={[{
+                              name: "Users",
+                              data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
+                            }]}
+                            options={barOptions}
+                            height={280}
+                          />
+                        )}
                       </div>
                     </div>
                   )}
@@ -1149,48 +1156,50 @@ const EmployeeMasterList = () => {
                   <div className="charts-section">
                     <div className="chart-card">
                       <div className="chart-card-title">Client Distribution</div>
-                      <ReactApexChart
-                        type="donut"
-                        series={
-                          Object.values(filteredClientAnalytics.companyBreakdown).length
-                            ? Object.values(filteredClientAnalytics.companyBreakdown)
-                            : [1]
-                        }
-                        options={{
-                          ...donutOptions,
-                          labels: Object.keys(filteredClientAnalytics.companyBreakdown).length
-                            ? Object.keys(filteredClientAnalytics.companyBreakdown)
-                            : ["No Data"],
-                          tooltip: {
-                            y: {
-                              formatter: (v) => `${v} clients`,
+                      {Object.keys(filteredClientAnalytics.companyBreakdown || {}).length === 0 ? (
+                        <NoGraphFound />
+                      ) : (
+                        <ReactApexChart
+                          type="donut"
+                          series={Object.values(filteredClientAnalytics.companyBreakdown)}
+                          options={{
+                            ...donutOptions,
+                            labels: Object.keys(filteredClientAnalytics.companyBreakdown),
+                            tooltip: {
+                              y: {
+                                formatter: (v) => `${v} clients`,
+                              },
                             },
-                          },
-                        }}
-                        height={280}
-                      />
+                          }}
+                          height={280}
+                        />
+                      )}
                     </div>
                     <div className="chart-card">
                       <div className="chart-card-title">Client Status</div>
-                      <ReactApexChart
-                        type="bar"
-                        series={[{
-                          name: "Clients",
-                          data: [
-                            filteredClientAnalytics.statusBreakdown.active,
-                            filteredClientAnalytics.statusBreakdown.inactive,
-                          ],
-                        }]}
-                        options={{
-                          ...barOptions,
-                          tooltip: {
-                            y: {
-                              formatter: (v) => `${v} clients`,
+                      {(filteredClientAnalytics.statusBreakdown.active === 0 && filteredClientAnalytics.statusBreakdown.inactive === 0) ? (
+                        <NoGraphFound />
+                      ) : (
+                        <ReactApexChart
+                          type="bar"
+                          series={[{
+                            name: "Clients",
+                            data: [
+                              filteredClientAnalytics.statusBreakdown.active,
+                              filteredClientAnalytics.statusBreakdown.inactive,
+                            ],
+                          }]}
+                          options={{
+                            ...barOptions,
+                            tooltip: {
+                              y: {
+                                formatter: (v) => `${v} clients`,
+                              },
                             },
-                          },
-                        }}
-                        height={280}
-                      />
+                          }}
+                          height={280}
+                        />
+                      )}
                     </div>
                   </div>
                 )}

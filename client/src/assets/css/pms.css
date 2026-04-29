@@ -5766,15 +5766,19 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     margin-top: auto !important;
 }
 
+.no-graph-found,
 .no-data-found {
     text-align: center;
     margin: 0 auto;
     display: block;
     opacity: 0.6;
 }
-.no-data-found svg{
+
+.no-graph-found svg,
+.no-data-found svg {
     margin: 5px 0;
 }
+
 .ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper {
     align-items: center;
     display: flex;

@@ -30,6 +30,7 @@ import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 
 const { TabPane } = Tabs;
@@ -579,13 +580,17 @@ const UserDashboard = ({ user }) => {
         <div className="ud-chart-card">
           <div className="ud-chart-title">Priority Analysis</div>
           <div className="ud-donut-chart-wrap">
-            <ReactApexChart
-              type="donut"
-              series={donutSeries}
-              options={donutOptions}
-              width={240}
-              height={210}
-            />
+            {stats.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                type="donut"
+                series={donutSeries}
+                options={donutOptions}
+                width={240}
+                height={210}
+              />
+            )}
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
@@ -607,13 +612,17 @@ const UserDashboard = ({ user }) => {
         <div className="ud-chart-card ud-chart-card--perf">
           <div className="ud-chart-title">Performance Analysis</div>
           <div className="ud-perf-chart-wrap">
-            <ReactApexChart
-              type="bar"
-              series={perfSeries}
-              options={perfOptions}
-              width="100%"
-              height={220}
-            />
+            {stats.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                type="bar"
+                series={perfSeries}
+                options={perfOptions}
+                width="100%"
+                height={220}
+              />
+            )}
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
@@ -635,13 +644,17 @@ const UserDashboard = ({ user }) => {
       {/* Incomplete tasks chart */}
       <div className="ud-chart-card" style={{ marginBottom: 0 }}>
         <div className="ud-chart-title">Incompleted Task Analysis</div>
-        <ReactApexChart
-          type="bar"
-          series={incompleteSeries}
-          options={incompleteOptions}
-          width="100%"
-          height={220}
-        />
+        {stats.total === 0 ? (
+          <NoGraphFound />
+        ) : (
+          <ReactApexChart
+            type="bar"
+            series={incompleteSeries}
+            options={incompleteOptions}
+            width="100%"
+            height={220}
+          />
+        )}
       </div>
     </>
   );

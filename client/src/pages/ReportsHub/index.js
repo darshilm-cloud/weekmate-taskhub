@@ -36,6 +36,7 @@ import ReactApexChart from "react-apexcharts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import {
   ReportsDetailSkeleton,
   TimesheetChartsSkeleton,
@@ -2551,7 +2552,11 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
 
             {chartRows.length > 0 && hasChartData ? (
               <div className="user-report-chart-wrap">
+              {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
+                <NoGraphFound />
+              ) : (
                 <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+              )}
               </div>
             ) : (
               <div className="user-report-chart-empty">
@@ -3652,27 +3657,22 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
             <div className="chart-card chart-card--manager">
               <h3>Projects by Manager</h3>
               <ChartErrorBoundary>
-                <ReactApexChart
-                  options={{
-                    chart: { type: "pie" },
-                    legend: {
-                      show: false,
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      formatter: (val) => val.toFixed(0),
-                    },
-                    stroke: {
-                      width: 2,
-                      colors: ["#ffffff"],
-                    },
-                    labels: managerChartData.map((item) => String(item.name || "")),
-                    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316"],
-                  }}
-                  series={managerChartData.map((item) => Number(item.value || 0))}
-                  type="pie"
-                  height={290}
-                />
+                {managerChartData.length === 0 ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart
+                    options={{
+                      chart: { type: "pie" },
+                      labels: managerChartData.map((item) => item.name),
+                      legend: { position: "bottom" },
+                      dataLabels: { enabled: true },
+                      colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
+                    }}
+                    series={managerChartData.map((item) => item.value)}
+                    type="pie"
+                    height={230}
+                  />
+                )}
               </ChartErrorBoundary>
             </div>
           )}
@@ -3681,31 +3681,29 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
             <div className="chart-card chart-card--type">
               <h3>Projects by Type</h3>
               <ChartErrorBoundary>
-                <ReactApexChart
-                  options={{
-                    chart: { type: "bar" },
-                    legend: { show: false },
-                    plotOptions: {
-                      bar: {
-                        horizontal: true,
-                        borderRadius: 6,
-                        barHeight: "52%",
+                {typeChartData.length === 0 ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart
+                    options={{
+                      chart: { type: "bar" },
+                      plotOptions: {
+                        bar: {
+                          horizontal: true,
+                          borderRadius: 4,
+                        },
                       },
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      style: { fontSize: "11px", colors: ["#fff"] },
-                    },
-                    xaxis: {
-                      categories: typeChartData.map((item) => String(item.name || "")),
-                      labels: { style: { fontSize: "12px", colors: "#374151" } },
-                    },
-                    colors: ["#3b82f6"],
-                  }}
-                  series={[{ data: typeChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
-                  type="bar"
-                  height={290}
-                />
+                      dataLabels: { enabled: false },
+                      xaxis: {
+                        categories: typeChartData.map((item) => item.name),
+                      },
+                      colors: ["#6366f1"],
+                    }}
+                    series={[{ data: typeChartData.map((item) => item.value), name: "Projects" }]}
+                    type="bar"
+                    height={230}
+                  />
+                )}
               </ChartErrorBoundary>
             </div>
           )}
@@ -3714,28 +3712,32 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
             <div className="chart-card chart-card--technology">
               <h3>Projects by Technology</h3>
               <ChartErrorBoundary>
-                <ReactApexChart
-                  options={{
-                    chart: { type: "bar" },
-                    legend: { show: false },
-                    plotOptions: {
-                      bar: {
-                        borderRadius: 6,
-                        columnWidth: "42%",
+                {techChartData.length === 0 || techChartData.every(item => Number(item.value || 0) === 0) ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart
+                    options={{
+                      chart: { type: "bar" },
+                      legend: { show: false },
+                      plotOptions: {
+                        bar: {
+                          borderRadius: 6,
+                          columnWidth: "42%",
+                        },
                       },
-                    },
-                    dataLabels: { enabled: false },
-                    xaxis: {
-                      categories: techChartData.map((item) => String(item.name || "")),
-                      labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
-                    },
-                    colors: ["#10b981"],
-                    grid: { borderColor: "#e5e7eb" },
-                  }}
-                  series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
-                  type="bar"
-                  height={260}
-                />
+                      dataLabels: { enabled: false },
+                      xaxis: {
+                        categories: techChartData.map((item) => String(item.name || "")),
+                        labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
+                      },
+                      colors: ["#10b981"],
+                      grid: { borderColor: "#e5e7eb" },
+                    }}
+                    series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
+                    type="bar"
+                    height={260}
+                  />
+                )}
               </ChartErrorBoundary>
             </div>
           )}
@@ -3987,63 +3989,71 @@ function TimesheetReportContent({
             {managerChartData.length > 0 && (
               <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
                 <h3>Hours by Manager</h3>
-                <ReactApexChart
-                  options={{
-                    chart: { type: 'bar', toolbar: { show: false } },
-                    legend: { show: false },
-                    plotOptions: {
-                      bar: {
-                        horizontal: true,
-                        borderRadius: 6,
-                        barHeight: "46%",
+                {managerChartData.length === 0 || managerChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart
+                    options={{
+                      chart: { type: 'bar', toolbar: { show: false } },
+                      legend: { show: false },
+                      plotOptions: {
+                        bar: {
+                          horizontal: true,
+                          borderRadius: 6,
+                          barHeight: "46%",
+                        },
                       },
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      style: { fontSize: "11px", colors: ["#ffffff"] },
-                    },
-                    xaxis: {
-                      categories: managerChartData.map(item => item.projectManager),
-                      labels: { style: { fontSize: "12px", colors: "#64748b" } },
-                    },
-                    grid: { borderColor: "#e2e8f0" },
-                    colors: ["#60a5fa"],
-                  }}
-                  series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                  type="bar"
-                  height={250}
-                />
+                      dataLabels: {
+                        enabled: true,
+                        style: { fontSize: "11px", colors: ["#ffffff"] },
+                      },
+                      xaxis: {
+                        categories: managerChartData.map(item => item.projectManager),
+                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                      },
+                      grid: { borderColor: "#e2e8f0" },
+                      colors: ["#60a5fa"],
+                    }}
+                    series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                    type="bar"
+                    height={250}
+                  />
+                )}
               </div>
             )}
 
             {typeChartData.length > 0 && (
               <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
                 <h3>Hours by Category</h3>
-                <ReactApexChart
-                  options={{
-                    chart: { type: 'bar', toolbar: { show: false } },
-                    legend: { show: false },
-                    plotOptions: {
-                      bar: {
-                        borderRadius: 8,
-                        columnWidth: "42%",
+                {typeChartData.length === 0 || typeChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart
+                    options={{
+                      chart: { type: 'bar', toolbar: { show: false } },
+                      legend: { show: false },
+                      plotOptions: {
+                        bar: {
+                          borderRadius: 8,
+                          columnWidth: "42%",
+                        },
                       },
-                    },
-                    dataLabels: { enabled: false },
-                    xaxis: {
-                      categories: typeChartData.map(item => item.projectType),
-                      labels: { style: { fontSize: "12px", colors: "#64748b" } },
-                    },
-                    yaxis: {
-                      labels: { style: { colors: "#64748b" } },
-                    },
-                    grid: { borderColor: "#e2e8f0" },
-                    colors: ["#34d399"],
-                  }}
-                  series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                  type="bar"
-                  height={240}
-                />
+                      dataLabels: { enabled: false },
+                      xaxis: {
+                        categories: typeChartData.map(item => item.projectType),
+                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                      },
+                      yaxis: {
+                        labels: { style: { colors: "#64748b" } },
+                      },
+                      grid: { borderColor: "#e2e8f0" },
+                      colors: ["#34d399"],
+                    }}
+                    series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
+                    type="bar"
+                    height={240}
+                  />
+                )}
               </div>
             )}
           </div>

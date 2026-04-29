@@ -18,6 +18,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import ProjectRunningFilterComponent from "./ProjectRunningFilterComponent";
 import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
+import NoGraphFound from "../../components/common/NoGraphFound";
 
 // Memoized components
 const SortIcon = React.memo(({ sortOrder }) =>
@@ -606,80 +607,103 @@ const ProjectsRunning = () => {
 
 
 
-const renderChart = useCallback(
-  (chartData, type, title) => {
-    if (!chartData) return null;
-
-    const colors = chartData.options.colors || [];
-    const chartHeight = type === "pie" ? 200 : 210;
-
-    // Helper function to capitalize each word
-    const capitalizeWords = (str) => {
-      return str.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ');
-    };
-
-    // Modify chart options to include capitalized tooltips
-    const modifiedChartData = {
-      ...chartData,
-      options: {
-        ...chartData.options,
-        tooltip: {
-          ...chartData.options.tooltip,
-          y: {
-            formatter: function(val) {
-              return val;
-            },
-            title: {
-              formatter: function(seriesName) {
-                return capitalizeWords(seriesName);
-              }
-            }
-          }
-        }
+  const renderChart = useCallback(
+    (chartData, type, title) => {
+      let hasData = false;
+      if (chartData && chartData.series) {
+        hasData = chartData.series.some((s) => {
+          if (typeof s === "number") return s > 0;
+          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
+          return false;
+        });
       }
-    };
 
-    // Prepare legend data
-    let legendData = [];
-    let legendLabels = [];
-    if (type === "pie") {
-      legendData = pieeChartData;
-      // Capitalize each word in legend labels
-      legendLabels = pieechartDataMangerNames.map(name => capitalizeWords(name));
-    } else if (type === "bar" && title === "Projects by Type") {
-      legendData = chartData.series[0].data;
-      legendLabels = processedChartData.projectTypeLabels.map(label => capitalizeWords(label));
-    }
+      if (!chartData || !hasData) {
+        return (
+          <div className="chart-container">
+            <div className="chart-header">
+              <h3>{title}</h3>
+            </div>
+            <div className="chart-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '250px' }}>
+              <NoGraphFound />
+            </div>
+          </div>
+        );
+      }
 
-    return (
-      <div className="chart-container">
-        <div className="chart-header">
-          <h3>{title}</h3>
-        </div>
-        <div className={`chart-content${type === "pie" ? " pie-chart-content" : ""}`}>
-          <ReactApexChart
-            key={type === "pie" ? chartKey : undefined}
-            options={modifiedChartData.options}
-            series={modifiedChartData.series}
-            type={type}
-            height={type === "pie" ? 250 : chartHeight}
-            width={type === "pie" ? 260 : "100%"}
-          />
-          {(type === "pie" || title === "Projects by Type") && (
-            <CustomLegend 
-              data={legendData} 
-              labels={legendLabels}
-              colors={colors}
+      const colors = chartData.options.colors || [];
+      const chartHeight = type === "pie" ? 200 : 210;
+
+      // Helper function to capitalize each word
+      const capitalizeWords = (str) => {
+        return str
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
+      };
+
+      // Modify chart options to include capitalized tooltips
+      const modifiedChartData = {
+        ...chartData,
+        options: {
+          ...chartData.options,
+          tooltip: {
+            ...chartData.options.tooltip,
+            y: {
+              formatter: function (val) {
+                return val;
+              },
+              title: {
+                formatter: function (seriesName) {
+                  return capitalizeWords(seriesName);
+                },
+              },
+            },
+          },
+        },
+      };
+
+      // Prepare legend data
+      let legendData = [];
+      let legendLabels = [];
+      if (type === "pie") {
+        legendData = pieeChartData;
+        // Capitalize each word in legend labels
+        legendLabels = pieechartDataMangerNames.map((name) =>
+          capitalizeWords(name)
+        );
+      } else if (type === "bar" && title === "Projects by Type") {
+        legendData = chartData.series[0].data;
+        legendLabels = processedChartData.projectTypeLabels.map((label) =>
+          capitalizeWords(label)
+        );
+      }
+
+      return (
+        <div className="chart-container">
+          <div className="chart-header">
+            <h3>{title}</h3>
+          </div>
+          <div
+            className={`chart-content${type === "pie" ? " pie-chart-content" : ""}`}
+          >
+            <ReactApexChart
+              key={type === "pie" ? chartKey : undefined}
+              options={modifiedChartData.options}
+              series={modifiedChartData.series}
+              type={type}
+              height={type === "pie" ? 250 : chartHeight}
+              width={type === "pie" ? 260 : "100%"}
             />
-          )}
+            {(type === "pie" || title === "Projects by Type") && (
+              <CustomLegend data={legendData} labels={legendLabels} colors={colors} />
+            )}
+          </div>
         </div>
-      </div>
-    );
-  },
-  [chartKey, pieeChartData, pieechartDataMangerNames, processedChartData]
-);
+      );
+    },
+    [chartKey, pieeChartData, pieechartDataMangerNames, processedChartData]
+  );
 
 
   // Action menu items

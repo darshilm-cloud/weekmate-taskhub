@@ -25,6 +25,7 @@ import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
 import ReviewFormModal from "./ReviewFormModal";
 
 /* ── constants ─────────────────────────────────────────────── */
@@ -392,30 +393,36 @@ const PositiveReview = () => {
       </div>
 
       {/* Charts */}
-      {analytics.total > 0 && (
-        <div className="pr-charts-grid">
-          <div className="pr-chart-card">
-            <div className="pr-chart-title">Feedback Type Distribution</div>
-            <div className="pr-chart-sub">Breakdown by review category</div>
+      <div className="pr-charts-grid">
+        <div className="pr-chart-card">
+          <div className="pr-chart-title">Feedback Type Distribution</div>
+          <div className="pr-chart-sub">Breakdown by review category</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
             <ReactApexChart
               type="donut"
               series={donutSeries.length ? donutSeries : [1]}
               options={donutOptions}
               height={260}
             />
-          </div>
-          <div className="pr-chart-card">
-            <div className="pr-chart-title">Monthly Trend</div>
-            <div className="pr-chart-sub">Reviews submitted over the last 6 months</div>
+          )}
+        </div>
+        <div className="pr-chart-card">
+          <div className="pr-chart-title">Monthly Trend</div>
+          <div className="pr-chart-sub">Reviews submitted over the last 6 months</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
             <ReactApexChart
               type="bar"
               series={barSeries}
               options={barOptions}
               height={260}
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Table */}
       <div className="pr-table-card">
