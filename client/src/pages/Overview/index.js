@@ -23,11 +23,12 @@ const Overview = () => {
   const [memberTab, setMemberTab] = React.useState("Staff member");
 
   const priorityChartOptions = {
-    chart: { type: "donut" },
+    chart: { type: "donut", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
     colors: ["#35c03b", "#3b82f6", "#ef4444"],
     legend: { show: false },
     dataLabels: { enabled: false },
+    stroke: { width: 0 },
     plotOptions: {
       pie: {
         donut: {
@@ -45,11 +46,12 @@ const Overview = () => {
   };
 
   const statusChartOptions = {
-    chart: { type: "donut" },
+    chart: { type: "donut", animations: { enabled: false } },
     labels: ["Closed", "Pending"],
     colors: ["#35C03B", "#FBBF24"],
     legend: { show: false },
     dataLabels: { enabled: false },
+    stroke: { width: 0 },
     plotOptions: {
       pie: {
         donut: {

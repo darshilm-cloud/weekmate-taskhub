@@ -46,6 +46,7 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import TasksTableView from "./TasksTableView/TasksTableView";
 import FilterUI from "./FilterUI";
+import AddTaskModal from "./AddTaskModal";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -1009,33 +1010,20 @@ function TasksPMS({ flag }) {
         </div>
       </Modal>
 
-      <Modal
-        title="Add Task"
+      <AddTaskModal
         open={isModalOpenTaskModal}
         onCancel={handleCancelTaskModal}
-        className="add-task-modal edit-details-task-model"
-        width={800}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelTaskModal}
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={() => addform.submit()}
-          >
-            Save
-          </Button>,
-        ]}
-      >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
+        projectId={projectId}
+        mainTaskId={selectedTask?._id}
+        initialStatusId={boardTasks?.[0]?.workflowStatus?._id}
+        initialStatusMeta={boardTasks?.[0]?.workflowStatus}
+        onSuccess={() => {
+          handleCancelTaskModal();
+          getProjectMianTask("", true);
+        }}
+      />
+      {false && (
+      <div style={{display:"none"}}>
           <Form
             form={addform}
             layout="vertical"
@@ -1402,7 +1390,8 @@ function TasksPMS({ flag }) {
             </Row>
           </Form>
         </div>
-      </Modal>
+      </div>
+      )}
 
       <Modal
         open={isEditTaskModalOpen}

@@ -80,9 +80,21 @@ const PermissionModuleController = () => {
         api_url:    `${Service.getPermissionByRole}/${roleId}`,
       });
       const data = response?.data?.data || [];
-      const mapped = data.map((p) => ({ ...p }));
+
+      /* Default all "view" permissions to true if not explicitly saved */
+      const mapped = data.map((p) => {
+        const nameLower = (p.name || "").toLowerCase().replace(/[\s_]+/g, "_");
+        const isViewPerm =
+          nameLower.endsWith("_view") ||
+          nameLower.startsWith("view_");
+        if (isViewPerm && !p.isAccess) {
+          return { ...p, isAccess: true };
+        }
+        return { ...p };
+      });
+
       setPermissionListData(data);
-      originalRef.current = mapped;
+      originalRef.current = mapped.map((p) => ({ ...p }));
       setPermissions(mapped);          // updates ref + state together
     } catch (error) {
       message.error("Failed to load permissions");
