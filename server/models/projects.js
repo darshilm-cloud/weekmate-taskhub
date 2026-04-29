@@ -6,7 +6,7 @@ const ProjectSchema = new mongoose.Schema({
   companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   title: {
     type: String,
-    required: true,
+    required: false,
   },
   projectId: {
     type: String,
@@ -29,19 +29,17 @@ const ProjectSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "projecttypes",
     default: null,
-    required: true,
   },
   project_status: {
     type: Schema.Types.ObjectId,
     ref: "projectstatus",
     default: null,
-    required: true,
   },
   manager: {
     type: Schema.Types.ObjectId,
     ref: "employees",
     default: null,
-    required: true,
+    required: false,
   },
   acc_manager: {
     type: Schema.Types.ObjectId,
@@ -60,7 +58,7 @@ const ProjectSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "projectworkflows",
     default: null,
-    required: true,
+    required: false,
   },
   estimatedHours: {
     type: String,

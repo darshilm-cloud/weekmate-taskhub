@@ -227,6 +227,11 @@
   margin-left: auto;
 }
 
+.task-workflow-select {
+  min-width: 160px;
+  padding: 4px 0;
+}
+
 .task-view-all {
   white-space: nowrap;
   font-size: 13px;

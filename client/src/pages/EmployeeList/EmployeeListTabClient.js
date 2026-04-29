@@ -30,6 +30,7 @@ const EmployeeListTabClient = ({
   taskLikeDesign = false,
   actionsRef = null,
   onMutationSuccess = null,
+  onImportHistoryOpen = null,
 }) => {
   const dispatch = useDispatch();
   const Search = Input.Search;

@@ -491,6 +491,11 @@ export default class Service {
   static importUndo = "/adminManage/admin/users/import-undo"
   static importErrorCsv = "/adminManage/admin/users/import-error-csv"
   static importClients = "/pms/client/upload-csv"
+  static clientImportHistory = "/pms/client/import-history"
+  static clientImportProgress = "/pms/client/import-progress"
+  static clientImportCancel = "/pms/client/import-cancel"
+  static clientImportUndo = "/pms/client/import-undo"
+  static clientImportErrorCsv = "/pms/client/import-error-csv"
 
   static smtpConfig = '/smtpConfig/verifyAndSaveSMTP'
   static smtpGetConfig = '/smtpConfig/getSmtpConfig'

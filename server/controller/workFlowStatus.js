@@ -56,7 +56,7 @@ exports.addProjectWorkFlowStatus = async (req, res) => {
     }
 
     if (
-      !(await this.projectWorkFlowStatusExists(value.title, companyObjectId))
+      !(await this.projectWorkFlowStatusExists(value.title, companyObjectId, null, value.workflow_id))
     ) {
       // Get last sequence for ..
       const getWorkFlowLastData = await ProjectWorkFlowStatus.find({
@@ -240,17 +240,14 @@ exports.listProjectWorkFlowStages = async (req, res) => {
 };
 
 // Check is exists..
-exports.projectWorkFlowStatusExists = async (title, companyObjectId, id = null) => {
+exports.projectWorkFlowStatusExists = async (title, companyObjectId, id = null, workflow_id = null) => {
   try {
     const data = await ProjectWorkFlowStatus.aggregate([
       {
         $match: {
           isDeleted: false,
-          ...(id
-            ? {
-                _id: { $ne: new mongoose.Types.ObjectId(id) },
-              }
-            : {}),
+          ...(id ? { _id: { $ne: new mongoose.Types.ObjectId(id) } } : {}),
+          ...(workflow_id ? { workflow_id: new mongoose.Types.ObjectId(workflow_id) } : {}),
         },
       },
       {
@@ -275,12 +272,12 @@ exports.projectWorkFlowStatusExists = async (title, companyObjectId, id = null) 
       },
       {
         $addFields: {
-          titleLower: { $toLower: "$title" }, // Add a temporary field with lowercase title
+          titleLower: { $toLower: "$title" },
         },
       },
       {
         $match: {
-          titleLower: title.trim().toLowerCase(), // Match the lowercase title
+          titleLower: title.trim().toLowerCase(),
         },
       },
     ]);
@@ -329,7 +326,8 @@ exports.updateProjectWorkFlowStatus = async (req, res) => {
       !(await this.projectWorkFlowStatusExists(
         value.title,
         companyObjectId,
-        req.params.id
+        req.params.id,
+        value.workflow_id
       ))
     ) {
       const data = await ProjectWorkFlowStatus.findByIdAndUpdate(

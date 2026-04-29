@@ -721,6 +721,9 @@ const TaskPage = () => {
   const [stageRenaming, setStageRenaming] = useState(false);
   const [draggingStageId, setDraggingStageId] = useState(null);
   const [defaultWorkflowId, setDefaultWorkflowId] = useState("");
+  const [workflowList, setWorkflowList] = useState([]);
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState("");
+  const selectedWorkflowIdRef = useRef("");
   const tasksContainerRef = React.useRef(null);
   const sectionBucketsRef = useRef({});
   const listSectionLoadGuardRef = useRef(new Set());
@@ -729,6 +732,10 @@ const TaskPage = () => {
   useEffect(() => {
     sectionBucketsRef.current = sectionBuckets;
   }, [sectionBuckets]);
+
+  useEffect(() => {
+    selectedWorkflowIdRef.current = selectedWorkflowId;
+  }, [selectedWorkflowId]);
 
 
   // Project select infinite loading state
@@ -814,8 +821,12 @@ const TaskPage = () => {
       });
 
       const workflows = Array.isArray(response?.data?.data) ? response.data.data : [];
+      setWorkflowList(workflows);
+      // API sorts isDefault:-1 so Standard comes first
       const firstWorkflow = workflows[0]?._id || "";
       setDefaultWorkflowId(firstWorkflow);
+      // Only set selectedWorkflowId on first load (empty string means not yet set)
+      setSelectedWorkflowId((prev) => prev || firstWorkflow);
       return firstWorkflow;
     } catch (error) {
       setDefaultWorkflowId("");
@@ -1208,15 +1219,23 @@ const TaskPage = () => {
     setView(nextView);
   }, [ganttAppliedDefaultRange, taskEndDate, taskStartDate, view]);
 
+  // Sections visible for the currently selected workflow
+  const filteredSectionIds = useMemo(() => {
+    if (!selectedWorkflowId) return listSectionIds;
+    return listSectionIds.filter(
+      (id) => String(statusMetaBySection[id]?.workflowId || "") === String(selectedWorkflowId)
+    );
+  }, [listSectionIds, selectedWorkflowId, statusMetaBySection]);
+
   const mergedTasksFromBuckets = useMemo(() => {
     const map = new Map();
-    listSectionIds.forEach((bucketId) => {
+    filteredSectionIds.forEach((bucketId) => {
       (sectionBuckets[bucketId]?.tasks || []).forEach((t) => {
         if (t?._id) map.set(t._id, t);
       });
     });
     return Array.from(map.values());
-  }, [listSectionIds, sectionBuckets]);
+  }, [filteredSectionIds, sectionBuckets]);
 
   const filteredTasks = useMemo(() => mergedTasksFromBuckets, [mergedTasksFromBuckets]);
 
@@ -1248,7 +1267,7 @@ const TaskPage = () => {
       message.error("You do not have permission to add stage.");
       return;
     }
-    const workflowId = await resolveTaskPageWorkflowId();
+    const workflowId = selectedWorkflowIdRef.current || await resolveTaskPageWorkflowId();
     if (!workflowId) {
       message.error("No workflow found to add stage.");
       return;
@@ -1263,7 +1282,7 @@ const TaskPage = () => {
     }
     try {
       const values = await stageForm.validateFields();
-      const workflowId = await resolveTaskPageWorkflowId();
+      const workflowId = selectedWorkflowIdRef.current || await resolveTaskPageWorkflowId();
 
       if (!workflowId) {
         message.error("No workflow found to add stage.");
@@ -1448,7 +1467,7 @@ const TaskPage = () => {
   }, [canManageStageOrder, persistStageOrder]);
 
   const kanbanColumns = useMemo(() => {
-    const rawColumns = listSectionIds.map((bucketId) => {
+    const rawColumns = filteredSectionIds.map((bucketId) => {
       const sectionMeta = statusMetaBySection[bucketId] || {};
       const meta = getKanbanStatusMeta({ title: sectionMeta.title || bucketId, name: sectionMeta.title || bucketId });
       const colTasks = sectionBuckets[bucketId]?.tasks || [];
@@ -1493,7 +1512,7 @@ const TaskPage = () => {
         String(col.statusId || "") === needle
     );
     return filtered.length ? filtered : all;
-  }, [listSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
+  }, [filteredSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
 
   // Convert kanbanColumns → format expected by TasksGanttView
   const ganttBoards = useMemo(() =>
@@ -2075,6 +2094,19 @@ const TaskPage = () => {
             <BarChartOutlined className="task-tab-icon" /> Gantt
           </button>
         </div>
+        {workflowList.length > 0 && (
+          <Select
+            value={selectedWorkflowId || undefined}
+            onChange={(val) => setSelectedWorkflowId(val)}
+            placeholder="Select Workflow"
+            className="task-workflow-select"
+            style={{ minWidth: 160 }}
+            options={workflowList.map((w) => ({
+              value: w._id,
+              label: w.project_workflow || "Unnamed",
+            }))}
+          />
+        )}
       </div>
 
       <AddTaskModal
