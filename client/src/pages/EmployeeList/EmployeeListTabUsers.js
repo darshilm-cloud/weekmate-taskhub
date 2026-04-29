@@ -192,7 +192,7 @@ const CombinedEmployeeList = ({
           "Import queued! Processing in background — open Import History to track progress.",
           5
         );
-        onImportHistoryOpen?.();
+        onImportHistoryOpen?.(response.data?.jobId);
       } else {
         message.error(response?.data?.message || "Import failed. Please try again.");
       }

@@ -40,13 +40,17 @@ const statusConfig = {
   undone:     { color: "warning",   icon: <UndoOutlined />,              label: "Undone" },
 };
 
-const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
+const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId }) => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [actionLoading, setActionLoading] = useState({});
   const pollRef = useRef(null);
+
+  // Always-current mirror of records state — lets the interval read latest without stale closure
+  const recordsRef = useRef([]);
+  recordsRef.current = records;
 
   // ── Fetch history list ────────────────────────────────────────────────────
   const fetchHistory = useCallback(async (page = pagination.current, silent = false) => {
@@ -76,58 +80,42 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
   }, [statusFilter, pagination.pageSize]);
 
   // ── Polling: refresh while any job is active, fire onImportComplete when one finishes ──
-  const prevActiveJobIds = useRef(new Set());
-  const prevCompletedJobIds = useRef(new Set());
 
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
-      const hasActive = records.some((r) => IN_PROGRESS_STATUSES.has(r.status));
+      // Use ref so the interval always sees the latest records, not the stale closure
+      const currentRecords = recordsRef.current;
+      const hasActive = currentRecords.some((r) => IN_PROGRESS_STATUSES.has(r.status));
       if (!hasActive) {
         stopPolling();
         return;
       }
 
-      // Snapshot the currently active and completed job IDs before fetching
+      // Snapshot active job IDs before fetching (from latest records via ref)
       const activeBeforeFetch = new Set(
-        records.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
+        currentRecords.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
       );
-      const completedBeforeFetch = new Set(
-        records.filter((r) => r.status === "completed").map((r) => r.jobId)
-      );
-
-      // Update previous completed jobs ref
-      prevCompletedJobIds.current = completedBeforeFetch;
 
       await fetchHistory(pagination.current, true);
 
-      // After fetch, setRecords triggers a re-render. Use a callback-based set to
-      // read the latest records inside the interval closure.
+      // Use functional updater to read the latest state set by fetchHistory above
       setRecords((latest) => {
         const nowActive = new Set(
           latest.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
         );
-        // Any job that was active before but is now completed → trigger refresh
+        // A job was active before this poll and is now completed → trigger refresh
         const justCompleted = [...activeBeforeFetch].some(
           (id) => !nowActive.has(id) && latest.find((r) => r.jobId === id)?.status === "completed"
         );
-        
-        // Also check if any new completed jobs appeared (for quick imports that were already done)
-        const nowCompleted = new Set(
-          latest.filter((r) => r.status === "completed").map((r) => r.jobId)
-        );
-        const hasNewCompleted = [...nowCompleted].some(
-          (id) => !prevCompletedJobIds.current.has(id)
-        );
 
-        if (justCompleted || hasNewCompleted) {
-          prevCompletedJobIds.current = nowCompleted;
+        if (justCompleted) {
           onImportComplete?.();
         }
         return latest;
       });
     }, POLL_INTERVAL_MS);
-  }, [records, pagination.current, fetchHistory, onImportComplete]);
+  }, [fetchHistory, pagination.current, onImportComplete]);
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -154,6 +142,17 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
       stopPolling();
     }
   }, [records, visible]);
+
+  // Fast-completion: if the recently uploaded job is already done by the time the
+  // modal opens (import finished before the first 3-second poll fires), trigger
+  // onImportComplete directly from the fetched records.
+  useEffect(() => {
+    if (!recentJobId || !visible) return;
+    const job = records.find((r) => r.jobId === recentJobId);
+    if (job?.status === "completed") {
+      onImportComplete?.();
+    }
+  }, [records, recentJobId, visible, onImportComplete]);
 
   // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (jobId) => {

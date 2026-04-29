@@ -316,7 +316,7 @@ const EmployeeListTabClient = ({
           "Import queued! Processing in background — open Import History to track progress.",
           5
         );
-        onImportHistoryOpen?.();
+        onImportHistoryOpen?.(response.data?.jobId);
       } else if (response?.data?.statusCode === 200 || response?.data?.status === true) {
         // Fallback for sync import (if still supported)
         const { summary } = response.data.data || {};

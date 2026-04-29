@@ -40,13 +40,17 @@ const statusConfig = {
   undone:     { color: "warning",   icon: <UndoOutlined />,              label: "Undone" },
 };
 
-const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
+const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId }) => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [actionLoading, setActionLoading] = useState({});
   const pollRef = useRef(null);
+
+  // Always-current mirror of records state — lets the interval read latest without stale closure
+  const recordsRef = useRef([]);
+  recordsRef.current = records;
 
   const fetchHistory = useCallback(async (page = pagination.current, silent = false) => {
     if (!silent) setLoading(true);
@@ -74,52 +78,41 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   }, [statusFilter, pagination.pageSize]);
 
-  const prevActiveJobIds = useRef(new Set());
-  const prevCompletedJobIds = useRef(new Set());
-
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
-      const hasActive = records.some((r) => IN_PROGRESS_STATUSES.has(r.status));
+      // Use ref so the interval always sees the latest records, not the stale closure
+      const currentRecords = recordsRef.current;
+      const hasActive = currentRecords.some((r) => IN_PROGRESS_STATUSES.has(r.status));
       if (!hasActive) {
         stopPolling();
         return;
       }
 
+      // Snapshot active job IDs before fetching (from latest records via ref)
       const activeBeforeFetch = new Set(
-        records.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
+        currentRecords.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
       );
-      const completedBeforeFetch = new Set(
-        records.filter((r) => r.status === "completed").map((r) => r.jobId)
-      );
-
-      prevCompletedJobIds.current = completedBeforeFetch;
 
       await fetchHistory(pagination.current, true);
 
+      // Use functional updater to read the latest state set by fetchHistory above
       setRecords((latest) => {
         const nowActive = new Set(
           latest.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
         );
+        // A job was active before this poll and is now completed → trigger refresh
         const justCompleted = [...activeBeforeFetch].some(
           (id) => !nowActive.has(id) && latest.find((r) => r.jobId === id)?.status === "completed"
         );
-        
-        const nowCompleted = new Set(
-          latest.filter((r) => r.status === "completed").map((r) => r.jobId)
-        );
-        const hasNewCompleted = [...nowCompleted].some(
-          (id) => !prevCompletedJobIds.current.has(id)
-        );
 
-        if (justCompleted || hasNewCompleted) {
-          prevCompletedJobIds.current = nowCompleted;
+        if (justCompleted) {
           onImportComplete?.();
         }
         return latest;
       });
     }, POLL_INTERVAL_MS);
-  }, [records, pagination.current, fetchHistory, onImportComplete]);
+  }, [fetchHistory, pagination.current, onImportComplete]);
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -146,6 +139,17 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
       stopPolling();
     }
   }, [records, visible]);
+
+  // Fast-completion: if the recently uploaded job is already done by the time the
+  // modal opens (import finished before the first 3-second poll fires), trigger
+  // onImportComplete directly from the fetched records.
+  useEffect(() => {
+    if (!recentJobId || !visible) return;
+    const job = records.find((r) => r.jobId === recentJobId);
+    if (job?.status === "completed") {
+      onImportComplete?.();
+    }
+  }, [records, recentJobId, visible, onImportComplete]);
 
   const handleCancel = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "cancel" }));

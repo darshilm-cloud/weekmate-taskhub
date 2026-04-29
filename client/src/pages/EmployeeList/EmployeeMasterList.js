@@ -99,6 +99,8 @@ const EmployeeMasterList = () => {
   /* ── import history modal ── */
   const [importHistoryVisible, setImportHistoryVisible] = useState(false);
   const [clientImportHistoryVisible, setClientImportHistoryVisible] = useState(false);
+  const [recentEmployeeJobId, setRecentEmployeeJobId] = useState(null);
+  const [recentClientJobId, setRecentClientJobId] = useState(null);
 
   /* ── sidebar ui ── */
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -1226,20 +1228,22 @@ const EmployeeMasterList = () => {
           actionsRef={employeeActionsRef}
           onDataLoaded={computeAnalytics}
           onMutationSuccess={fetchSidebarUsers}
-          onImportHistoryOpen={() => setImportHistoryVisible(true)}
+          onImportHistoryOpen={(jobId) => { setRecentEmployeeJobId(jobId ?? null); setImportHistoryVisible(true); }}
         />
         <EmployeeListTabClient
           taskLikeDesign
           actionsRef={clientActionsRef}
           onMutationSuccess={fetchSidebarClients}
-          onImportHistoryOpen={() => setClientImportHistoryVisible(true)}
+          onImportHistoryOpen={(jobId) => { setRecentClientJobId(jobId ?? null); setClientImportHistoryVisible(true); }}
         />
       </div>
 
       <EmployeeImportHistory
         visible={importHistoryVisible}
         onClose={() => setImportHistoryVisible(false)}
+        recentJobId={recentEmployeeJobId}
         onImportComplete={() => {
+          setRecentEmployeeJobId(null);
           fetchSidebarUsers();
           employeeActionsRef.current?.refreshEmployees?.();
         }}
@@ -1248,7 +1252,9 @@ const EmployeeMasterList = () => {
       <ClientImportHistory
         visible={clientImportHistoryVisible}
         onClose={() => setClientImportHistoryVisible(false)}
+        recentJobId={recentClientJobId}
         onImportComplete={() => {
+          setRecentClientJobId(null);
           fetchSidebarClients();
           clientActionsRef.current?.refreshClients?.();
         }}

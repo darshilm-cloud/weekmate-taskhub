@@ -81,17 +81,7 @@ const PermissionModuleController = () => {
       });
       const data = response?.data?.data || [];
 
-      /* Default all "view" permissions to true if not explicitly saved */
-      const mapped = data.map((p) => {
-        const nameLower = (p.name || "").toLowerCase().replace(/[\s_]+/g, "_");
-        const isViewPerm =
-          nameLower.endsWith("_view") ||
-          nameLower.startsWith("view_");
-        if (isViewPerm && !p.isAccess) {
-          return { ...p, isAccess: true };
-        }
-        return { ...p };
-      });
+      const mapped = data.map((p) => ({ ...p }));
 
       setPermissionListData(data);
       originalRef.current = mapped.map((p) => ({ ...p }));
