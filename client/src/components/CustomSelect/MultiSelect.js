@@ -98,7 +98,6 @@ const MultiSelect = ({
             <span style={{ fontWeight: isSelected ? "700" : "400", color: "#1f2937" }}>
               {getDisplayName(ele) || "-"}
             </span>
-            {isSelected && <span style={{ color: "#3b82f6", fontSize: "14px" }}>✓</span>}
           </div>
         ),
       };
@@ -128,7 +127,7 @@ const MultiSelect = ({
         tagRender={tagRender}
         options={sortedOptions}
         onFocus={calculateMaxTagCount}
-        suffixIcon={<span style={{ color: "#9ca3af", fontSize: "12px" }}>🔍</span>}
+        suffixIcon={null}
         dropdownStyle={{ borderRadius: "8px", padding: "4px" }}
         {...otherProps}
       />

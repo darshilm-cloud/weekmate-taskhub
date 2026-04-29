@@ -2893,6 +2893,7 @@ function SimplePieChart({ data, colors, size = 240 }) {
           const midAngle = startAngle + sliceAngle / 2;
           const labelPosition = polarToCartesian(center, center, radius * 0.72, midAngle);
           const tooltipPosition = polarToCartesian(center, center, radius * 0.95, midAngle);
+          const isFullCircle = sliceAngle >= 359.99;
 
           return (
             <g
@@ -2907,6 +2908,18 @@ function SimplePieChart({ data, colors, size = 240 }) {
               }
               onMouseLeave={() => setHoveredSlice(null)}
             >
+              {isFullCircle ? (
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={radius}
+                  fill={colors[index % colors.length]}
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                >
+                  <title>{`${item.label}: ${value}`}</title>
+                </circle>
+              ) : (
               <path
                 d={describePieSlice(center, center, radius, startAngle, endAngle)}
                 fill={colors[index % colors.length]}
@@ -2915,6 +2928,7 @@ function SimplePieChart({ data, colors, size = 240 }) {
               >
                 <title>{`${item.label}: ${value}`}</title>
               </path>
+              )}
               {percentage >= 0.06 ? (
                 <text
                   x={labelPosition.x}
@@ -3915,12 +3929,13 @@ function TimesheetReportContent({
             {loading && timesheets.length === 0 ? (
               <SkeletonBlock w={60} h={32} />
             ) : (
-              calculateTimesheetChartData(timesheets)
-                .users.reduce(
-                  (sum, user) => sum + parseFloat(user.totalLoggedHours),
-                  0
-                )
-                .toFixed(1)
+              (() => {
+                const totalMins = timesheets.reduce((sum, ts) => {
+                  const [h, m] = (ts.logged_time || "0:00").split(":").map(Number);
+                  return sum + (h || 0) * 60 + (m || 0);
+                }, 0);
+                return `${Math.floor(totalMins / 60)}:${String(totalMins % 60).padStart(2, "0")}`;
+              })()
             )}
           </span>
         </div>
