@@ -223,7 +223,7 @@ const ProjectFormModal = ({
           getManager(),
           // getAccountManager(), // AM hidden
           getWorkflow(),
-          getProjectTypeSlug(),
+          // getProjectTypeSlug(),
           fetchProjectFormConfig(),
         ]);
 
@@ -779,22 +779,22 @@ const ProjectFormModal = ({
     return [];
   };
 
-  const getProjectTypeSlug = async () => {
-    if (_dropdownCache.projectTypeSlug) {
-      setProjectTypeSlug(_dropdownCache.projectTypeSlug);
-      return _dropdownCache.projectTypeSlug;
-    }
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getProjectTypeSLug,
-      });
-      if (response?.data?.data) {
-        _dropdownCache.projectTypeSlug = response.data.data.slug;
-        setProjectTypeSlug(response.data.data.slug);
-      }
-    } catch (error) { console.error(error); }
-  };
+  // const getProjectTypeSlug = async () => {
+  //   if (_dropdownCache.projectTypeSlug) {
+  //     setProjectTypeSlug(_dropdownCache.projectTypeSlug);
+  //     return _dropdownCache.projectTypeSlug;
+  //   }
+  //   try {
+  //     const response = await Service.makeAPICall({
+  //       methodName: Service.getMethod,
+  //       api_url: Service.getProjectTypeSLug,
+  //     });
+  //     if (response?.data?.data) {
+  //       _dropdownCache.projectTypeSlug = response.data.data.slug;
+  //       setProjectTypeSlug(response.data.data.slug);
+  //     }
+  //   } catch (error) { console.error(error); }
+  // };
 
   const getProjectClients = async () => {
     if (_dropdownCache.projectClientList) {
