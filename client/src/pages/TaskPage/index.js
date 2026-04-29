@@ -2027,14 +2027,13 @@ const TaskPage = () => {
             projectSearch={projectSearch}
           />
           {canDeleteTask && selectedTaskIds.length > 0 && (
-            <button
+            <Button
               type="button"
-              className="task-btn-ghost"
-              style={{ color: "#ff4d4f", borderColor: "#ff4d4f" }}
+        className="delete-btn"
               onClick={handleDeleteSelected}
             >
               <PlusOutlined rotate={45} /> Delete Selected ({selectedTaskIds.length})
-            </button>
+            </Button>
           )}
           {canAddTask && (
             <Button
@@ -2504,7 +2503,7 @@ function TaskListSection({
         >
           {tasks.length === 0 ? (
             <div className="task-list-empty" style={{ padding: "24px 0", display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <NoDataFoundIcon style={{ width: 80, height: 80, marginBottom: 8 }} />
+              <NoDataFoundIcon style={{  marginBottom: 8 }} />
               <div className="" style={{ marginTop: 12, textAlign: "center", width: "100%" }}>
                 <strong className="no-task-span">No Tasks to show.</strong>
               </div>

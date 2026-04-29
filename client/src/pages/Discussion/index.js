@@ -9,6 +9,7 @@ import {
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Discussion.css";
+import NoChatIcon from "../../components/common/NoChatIcon";
 
 const checkIsDark = () =>
   document.body.classList.contains("dark-theme") ||
@@ -454,7 +455,7 @@ export default function DiscussionPage() {
       <div className="disc-right">
         {!selectedTopic ? (
           <div className="disc-no-selection">
-            <div className="disc-no-selection-icon">💬</div>
+            <div className="disc-no-selection-icon"><NoChatIcon/></div>
             <p className="disc-no-selection-title">No Discussion selected</p>
             <p className="disc-no-selection-sub">Please add new discussion for chat room view.</p>
           </div>

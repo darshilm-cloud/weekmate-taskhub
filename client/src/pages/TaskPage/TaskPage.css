@@ -531,9 +531,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0;
+  gap: 2px;
 }
-
+.task-row-actions .task-row-action-btn.ant-btn{
+  padding: 0;
+}
 .task-row-action-btn.ant-btn {
   padding:6px;
 }

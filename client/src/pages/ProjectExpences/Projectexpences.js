@@ -1089,8 +1089,8 @@ const Projectexpences = () => {
         />
 
         {(statusFilter !== "All" || billableToggle || dateRange[0]) && (
-          <button
-            className="pe-clear-filters-btn"
+          <Button
+            className="pe-clear-filters-btn delete-btn"
             onClick={() => {
               setStatusFilter("All");
               setBillableToggle(false);
@@ -1099,7 +1099,7 @@ const Projectexpences = () => {
             }}
           >
             × Clear filters
-          </button>
+          </Button>
         )}
       </div>
 

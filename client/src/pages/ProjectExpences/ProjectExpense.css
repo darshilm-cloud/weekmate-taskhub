@@ -301,22 +301,11 @@
   background: #2563eb;
 }
 
-.pe-clear-filters-btn {
+.admin-user  .pe-clear-filters-btn.delete-btn.ant-btn{
   margin-left: auto;
-  font-size: 12px;
-  color: #94a3b8;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+
 }
 
-.pe-clear-filters-btn:hover {
-  background: #f1f5f9;
-  color: #475569;
-}
 
 /* ── Expense Table ───────────────────────────────────────────── */
 .pe-table-card {

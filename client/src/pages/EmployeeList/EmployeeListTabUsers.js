@@ -663,6 +663,7 @@ const CombinedEmployeeList = ({
               </Button>,
               <Button
                 key="submit"
+                   type="primary"
                 className="add-btn"
                 onClick={handleSubmit}
         
@@ -678,7 +679,7 @@ const CombinedEmployeeList = ({
             <Row gutter={[16, 0]}>
 
               {/* First Name */}
-              <Col xs={24} sm={12}>
+              <Col xs={24} md={12}>
                 <Form.Item
                   name="first_name"
                   label="First Name"
@@ -692,7 +693,7 @@ const CombinedEmployeeList = ({
               </Col>
 
               {/* Last Name */}
-              <Col xs={24} sm={12}>
+              <Col xs={24} md={12}>
                 <Form.Item
                   name="last_name"
                   label="Last Name"
@@ -706,7 +707,7 @@ const CombinedEmployeeList = ({
               </Col>
 
               {/* Email */}
-              <Col xs={24}>
+              <Col xs={24} md={12}>
                 <Form.Item
                   name="email"
                   label="Email"
@@ -720,7 +721,7 @@ const CombinedEmployeeList = ({
               </Col>
 
               {/* Role */}
-              <Col xs={24}>
+              <Col xs={24 } md={12}>
                 <Form.Item
                   name="pmsRoleId"
                   label="Role"
@@ -773,7 +774,7 @@ const CombinedEmployeeList = ({
 
               {/* Is Active */}
               {editData && (
-                <Col xs={24} sm={12}>
+                <Col xs={24} md={12}>
                   <Form.Item
                     name="isActivate"
                     label="Is Active"

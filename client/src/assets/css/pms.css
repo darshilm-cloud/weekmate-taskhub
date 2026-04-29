@@ -5772,7 +5772,9 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     display: block;
     opacity: 0.6;
 }
-
+.no-data-found svg{
+    margin: 5px 0;
+}
 .ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper {
     align-items: center;
     display: flex;

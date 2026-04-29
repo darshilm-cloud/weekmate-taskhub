@@ -1529,13 +1529,7 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 
 /* ── OK / Save / Create button → blue ── */
 
-/* ── Form inputs inside ── */
-.admin-user .global-app-modal .ant-input,
-.admin-user .global-app-modal .ant-select-selector,
-.admin-user .global-app-modal .ant-picker {
-  border-radius: 8px ;
-  border-color: #e2e8f0 !important;
-}
+
 .admin-user .global-app-modal .ant-input:focus,
 .admin-user .global-app-modal .ant-select-selector:focus-within {
   border-color: #3b82f6 !important;
