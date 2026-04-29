@@ -598,7 +598,7 @@ const TasksPMS = ({ flag }) => {
   }, []);
 
   const fetchWorkflowStagesById = useCallback(
-    async () => {
+    async (workflowId) => {
       try {
         const aggregated = [];
         let pageNo = 1;
@@ -623,7 +623,7 @@ const TasksPMS = ({ flag }) => {
           if (list.length === 0) break;
         } while (aggregated.length < total);
 
-        const stages = aggregated
+        let stages = aggregated
           .map((stage) => ({
             ...stage,
             _id: stage?._id || stage?.id,
@@ -634,6 +634,15 @@ const TasksPMS = ({ flag }) => {
             return arr.findIndex((row) => String(row?._id || "") === id) === index;
           })
           .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
+
+        if (workflowId) {
+          stages = stages.filter(
+            (stage) => {
+              const stageWorkflowId = stage?.workflowId || stage?.workflow_id || stage?.workFlow?._id || stage?.workflow?._id;
+              return String(stageWorkflowId) === String(workflowId);
+            }
+          );
+        }
 
         setWorkflowStatusList(stages);
         return stages;
@@ -1446,7 +1455,7 @@ const TasksPMS = ({ flag }) => {
   const getListWorkflowStatus = async () => {
     try {
       dispatch(showAuthLoader());
-      const response = await fetchWorkflowStagesById();
+      const response = await fetchWorkflowStagesById(stagesId);
       dispatch(hideAuthLoader());
       if (Array.isArray(response) && response.length > 0) {
         setWorkflowStatusList(response);
@@ -2213,7 +2222,7 @@ const TasksPMS = ({ flag }) => {
       dispatch(getSpecificProjectWorkflowStage(workflowId));
     }
     getListWorkflowStatus();
-    fetchWorkflowStagesById();
+    fetchWorkflowStagesById(stagesId);
   }, [currentListWorkflowId, stagesId, fetchWorkflowStagesById]);
 
   useEffect(() => {
@@ -2231,7 +2240,7 @@ const TasksPMS = ({ flag }) => {
     if (workflowId) {
       dispatch(getSpecificProjectWorkflowStage(workflowId));
     }
-    fetchWorkflowStagesById();
+    fetchWorkflowStagesById(stagesId);
 
     // Load full employee master list (for "pure data" in Subscribers dropdown)
     Service.makeAPICall({
